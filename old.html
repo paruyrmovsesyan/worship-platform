@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="hy">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wolarm Youth Worship</title>
+<link rel="icon" href="wolarm_youth.png" type="image/png">
+    <link rel="shortcut icon" type="image/x-icon" href="wolarm_youth.png">
+    <meta name="author" content="Wolarm Youth Worship">
+    <meta name="icon" content="wolarm_youth.png">
+<style>
+body{font-family:system-ui,sans-serif;padding:10px;background:#f6f7fb;color:#0f1222;}
+input[type="text"]{max-width:400px;width:95%;padding:10px;margin-bottom:12px;border-radius:10px;border:1px solid #dde3ee;}
+table{width:100%;border-collapse:collapse;margin-top:12px;}
+th,td{padding:10px;border-bottom:1px solid #eef0f6;text-align:left;font-size:14px;}
+th{color:#6b7280;font-weight:600;}
+button{padding:6px 10px;border:0;border-radius:8px;background:#0b69d6;color:#fff;cursor:pointer;margin:2px;}
+.heart-btn{color:#666;font-size:18px;background:none;border:none;cursor:pointer;padding:0;transition:color 0.2s,transform 0.2s;}
+.heart-btn.active{color:#e63946;}
+.heart-btn.animate{transform:scale(1.3);}
+.footer{max-width:1000px;margin:0 auto;position:static;bottom:0;left:0;right:0;height:50px;background:#fff;display:flex;align-items:center;justify-content:center;border-radius:14px;box-shadow:0 -2px 5px rgba(0,0,0,0.05);}
+.link-modern {
+  display: inline-block;
+  padding: 10px 20px;
+  color: #fff;
+  font-weight: bold;
+  text-decoration: none;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  border-radius: 14px;
+  -webkit-border-radius: 14px;
+
+  /* Հին գունային անցում Safari 5-ի համար */
+  background: -webkit-gradient(linear, left top, right bottom,
+              from(#ff5f6d), to(#ffc371));
+  border: 1px solid #e0494a;
+
+  /* Հին ստվեր */
+  -webkit-box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+  text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+}
+
+.link-modern:active {
+  position: relative;
+  top: 1px;
+  -webkit-box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.link-modern:hover {
+  background: -webkit-gradient(linear, left top, right bottom,
+              from(#ff7f50), to(#ffd86f));
+  text-decoration: none;
+}
+.footer {
+  max-width: 1000px;
+  position: static;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: #fff;
+  text-align: center;
+  line-height: 30px;
+  border-top: 1px solid #eee;
+}
+</style>
+</head>
+<body>
+
+<h1>Որոնում և երգերի ցուցակ</h1>
+<p><a href="favorites_old.html" class="link-modern">❤Իմ պահպանված երգերը</a></p>
+<label>Որոնել երգը ըստ անունի</label>
+<div style="padding-top: 10px;"> 
+  <input type="text" id="searchBox" placeholder="Օր. Մեր սուրբ Աստված">
+</div>
+<hr>
+<h2>Բոլոր պահպանված երգերը</h2>
+<table>
+<thead>
+<tr><th>Անուն</th><th>Տեգեր</th><th>Հավանել</th><th>Դիտել</th></tr>
+</thead>
+<tbody id="songsTable"></tbody>
+</table>
+<br><br><br><br><br><br><br><br>
+<footer class="footer">
+  <p style="text-align: center; font-size: 11px"><b>Wolarm Youth 2025 | PM Studio 2025</b></p>
+</footer>
+
+<script>
+var tableBody = document.getElementById('songsTable');
+var allSongs = [];
+var favoriteIds = [];
+
+function loadAllSongs() {
+  var songsRequest = new XMLHttpRequest();
+  var favsRequest = new XMLHttpRequest();
+
+  songsRequest.open('GET', 'api.php', true);
+  songsRequest.onreadystatechange = function() {
+    if (songsRequest.readyState === 4 && songsRequest.status === 200) {
+      allSongs = JSON.parse(songsRequest.responseText);
+
+      // Երբ երգերը բեռնվեցին, բեռնենք նաև ֆավորիտները
+      favsRequest.open('GET', 'favorites_api.php?action=get_favorites', true);
+      favsRequest.onreadystatechange = function() {
+        if (favsRequest.readyState === 4 && favsRequest.status === 200) {
+          var favs = JSON.parse(favsRequest.responseText);
+          favoriteIds = [];
+          for (var i = 0; i < favs.length; i++) {
+            favoriteIds.push(String(favs[i].id));
+          }
+          renderSongs(allSongs);
+        }
+      };
+      favsRequest.send();
+    }
+  };
+  songsRequest.send();
+}
+
+function renderSongs(songs) {
+  tableBody.innerHTML = '';
+  for (var i = 0; i < songs.length; i++) {
+    var s = songs[i];
+    var songId = String(s.id);
+    var isFav = favoriteIds.indexOf(songId) !== -1;
+
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + (s.title || '') + '</td>' +
+      '<td>' + (s.tags || '') + '</td>' +
+      '<td>' +
+        '<button class="heart-btn ' + (isFav ? 'active' : '') + '" onclick="toggleFavorite(\'' + songId + '\', this)">❤</button>' +
+      '</td>' +
+      '<td><button onclick="openSong(\'' + songId + '\')">Դիտել</button></td>';
+    tableBody.appendChild(tr);
+  }
+}
+
+function toggleFavorite(id, el) {
+  el.classList.add('animate');
+  setTimeout(function() {
+    el.classList.remove('animate');
+  }, 200);
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'favorites_api.php?action=toggle_favorite', true);
+  xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        if (data.favorite) {
+          if (favoriteIds.indexOf(String(id)) === -1) {
+            favoriteIds.push(String(id));
+          }
+          el.classList.add('active');
+        } else {
+          var idx = favoriteIds.indexOf(String(id));
+          if (idx !== -1) favoriteIds.splice(idx, 1);
+          el.classList.remove('active');
+        }
+      } catch(e) { console.log(e); }
+    }
+  };
+  xhr.send(JSON.stringify({ song_id: id }));
+}
+
+function openSong(id) {
+  window.location.href = "song_view_old.html?id=" + id;
+}
+
+document.getElementById('searchBox').addEventListener('keyup', function() {
+  var query = this.value.toLowerCase();
+  var filtered = [];
+  for (var i = 0; i < allSongs.length; i++) {
+    var s = allSongs[i];
+    var title = s.title ? s.title.toLowerCase() : '';
+    var tags = s.tags ? s.tags.toLowerCase() : '';
+    if (title.indexOf(query) !== -1 || tags.indexOf(query) !== -1) {
+      filtered.push(s);
+    }
+  }
+  renderSongs(filtered);
+});
+
+loadAllSongs();
+</script>
+
+</body>
+</html>

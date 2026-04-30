@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="hy">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="/manifest.json">
+<title>Տրանսպոզ գործիք — Worship Platform</title>
+<meta name="description" content="Տրանսպոզ արա երգի ակորդները արագ և հարմար՝ ընտրելով սկզբնական ու նպատակային տոնայնությունը Worship Platform-ում։">
+<meta property="og:title" content="Տրանսպոզ գործիք — Worship Platform">
+<meta property="og:description" content="Տրանսպոզ արա երգի ակորդները արագ և հարմար՝ ընտրելով սկզբնական ու նպատակային տոնայնությունը Worship Platform-ում։">
+<meta property="og:image" content="https://worship.pmstudio.am/wolarmyouth.jpg">
+<meta property="og:url" content="https://worship.pmstudio.am/transpose.html">
+<meta property="og:type" content="website">
+<link rel="icon" href="wolarm_youth.png" type="image/png">
+<link rel="apple-touch-icon" href="/wolarmyouth.jpg" type="image/jpeg">
+<meta name="theme-color" content="#0b1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Worship Platform">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root{
+  --bg: radial-gradient(circle at top, #141a33, #05070c 70%);
+  --surface: rgba(16,23,40,0.76);
+  --surface-strong: rgba(16,23,40,0.92);
+  --line: rgba(255,255,255,0.09);
+  --text: #eef2ff;
+  --muted: #a3afca;
+  --accent: #4d7cff;
+  --accent-2: #2d5fe6;
+  --ok: #4cc38a;
+  --radius: 16px;
+  --shadow: 0 20px 40px rgba(0,0,0,0.35);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+.wrap{
+  max-width:1100px;
+  margin:0 auto;
+  padding:40px 18px 28px;
+}
+.hero{
+  margin-bottom:18px;
+}
+.kicker{
+  display:inline-flex;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(77,124,255,0.4);
+  background:rgba(77,124,255,0.12);
+  color:#c8d8ff;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:0.05em;
+  text-transform:uppercase;
+}
+h1{
+  margin:12px 0 8px;
+  font-size:34px;
+  line-height:1.15;
+}
+.hero p{
+  margin:0;
+  color:var(--muted);
+  max-width:64ch;
+}
+.grid{
+  display:grid;
+  grid-template-columns:1.05fr 1fr;
+  gap:14px;
+}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(10px) saturate(130%);
+}
+.card-body{padding:16px}
+.label{
+  display:block;
+  margin:0 0 6px;
+  font-size:13px;
+  font-weight:700;
+  color:#c9d4f2;
+}
+.input{
+  width:100%;
+  padding:11px 12px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  outline:none;
+  color:var(--text);
+  background:rgba(255,255,255,0.04);
+  font-size:16px;
+}
+.input:focus{
+  border-color:rgba(77,124,255,0.7);
+  box-shadow:0 0 0 3px rgba(77,124,255,0.18);
+}
+.key-buttons{
+  display:grid;
+  grid-template-columns:repeat(6, minmax(0,1fr));
+  gap:8px;
+  margin:10px 0 12px;
+}
+.key-buttons button{
+  appearance:none;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,0.03);
+  color:var(--text);
+  border-radius:12px;
+  padding:9px 8px;
+  cursor:pointer;
+  font-weight:700;
+  transition:transform .14s ease, border-color .14s ease, background .14s ease;
+}
+.key-buttons button:hover{
+  transform:translateY(-1px);
+  border-color:rgba(77,124,255,0.45);
+  background:rgba(77,124,255,0.1);
+}
+.key-buttons button.active{
+  border-color:rgba(77,124,255,0.8);
+  background:linear-gradient(145deg,var(--accent),var(--accent-2));
+  color:#fff;
+}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:4px;
+}
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.04);
+  color:#d8e0f7;
+  font-size:12px;
+  font-weight:600;
+}
+.chip.ok{
+  border-color:rgba(76,195,138,0.5);
+  background:rgba(76,195,138,0.13);
+  color:#bff0da;
+}
+.mode-btn{
+  appearance:none;
+  border:1px solid rgba(255,255,255,0.12);
+  background:rgba(255,255,255,0.05);
+  color:var(--text);
+  border-radius:999px;
+  padding:8px 12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.mode-btn.active{
+  border-color:rgba(76,195,138,0.55);
+  background:rgba(76,195,138,0.14);
+  color:#bff0da;
+}
+textarea{
+  width:100%;
+  min-height:260px;
+  resize:vertical;
+  font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size:16px;
+  line-height:1.6;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  color:var(--text);
+  background:rgba(255,255,255,0.03);
+  outline:none;
+}
+textarea:focus{
+  border-color:rgba(77,124,255,0.7);
+  box-shadow:0 0 0 3px rgba(77,124,255,0.18);
+}
+.preview{
+  min-height:260px;
+  white-space:pre-wrap;
+  font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size:15px;
+  line-height:1.6;
+  border:1px solid var(--line);
+  background:var(--surface-strong);
+  border-radius:12px;
+  padding:12px;
+}
+.actions{
+  margin-top:12px;
+  display:flex;
+  gap:10px;
+}
+.btn{
+  appearance:none;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,0.04);
+  color:var(--text);
+  border-radius:12px;
+  padding:10px 14px;
+  font-weight:700;
+  cursor:pointer;
+}
+.btn.primary{
+  border-color:rgba(77,124,255,0.8);
+  background:linear-gradient(145deg,var(--accent),var(--accent-2));
+  color:#fff;
+}
+.btn:active{transform:translateY(1px)}
+@media (max-width: 940px){
+  .grid{grid-template-columns:1fr}
+  h1{font-size:29px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <span class="kicker">Worship Platform</span>
+    <h1>Տրանսպոզ գործիք</h1>
+    <p>Ընտրիր սկզբնական և նպատակային տոնայնությունները, հետո տեղադրիր երգի տեքստը ակորդներով։ Արդյունքը կթարմացվի անմիջապես։</p>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <div class="card-body">
+        <label class="label" for="keyInput">Սկզբնական տոնայնություն</label>
+        <input id="keyInput" class="input" placeholder="օր. C, Am, Cm, F#m...">
+
+        <label class="label" style="margin-top:12px;">Ընտրիր նպատակային տոնայնությունը</label>
+        <div class="key-buttons" id="keys"></div>
+
+        <div class="meta">
+          <span class="chip" id="fromChip">Սկզբնական՝ -</span>
+          <span class="chip" id="toChip">Նպատակային՝ -</span>
+          <span class="chip ok" id="semiChip">Տրանսպոզ՝ 0</span>
+          <button id="flatToggleBtn" class="mode-btn" type="button">Բեմոլներով ցույց տալ</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-body">
+        <label class="label" for="lyrics">Երգի տեքստ / ակորդներ</label>
+        <textarea id="lyrics" placeholder="Գրիր տեքստը ակորդներով (օր. C Am F G)"></textarea>
+      </div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:14px;">
+    <div class="card-body">
+      <label class="label">Արդյունք</label>
+      <div id="preview" class="preview"></div>
+      <div class="actions">
+        <button id="copyBtn" class="btn primary" type="button">Պատճենել արդյունքը</button>
+        <button id="clearBtn" class="btn" type="button">Մաքրել</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const SHARPS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const FLATS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+const NATURAL_TO_INDEX = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+
+function noteIndex(note) {
+  const parsed = String(note || '').trim().match(/^([A-G])([#b]*)(?:.*)$/i);
+  if (!parsed) return -1;
+
+  const letter = parsed[1].toUpperCase();
+  const accidentals = parsed[2] || '';
+  let index = NATURAL_TO_INDEX[letter];
+  if (typeof index !== 'number') return -1;
+
+  for (const accidental of accidentals) {
+    index += accidental === '#' ? 1 : -1;
+  }
+
+  return (index + 120) % 12;
+}
+
+function transposeNote(note, semi) {
+  const parsed = String(note || '').trim().match(/^([A-G])([#b]*)(?:.*)$/i);
+  if (!parsed) return note;
+
+  const i = noteIndex(note);
+  if (i === -1) return note;
+
+  const preferFlats = Boolean(window.__transposePreferFlats) || (parsed[2] || '').includes('b');
+  const nextIndex = (i + semi + 12) % 12;
+  return preferFlats ? FLATS[nextIndex] : SHARPS[nextIndex];
+}
+
+function parseKeySignature(note) {
+  const value = String(note || '').trim().replace(/♭/g, 'b').replace(/\s+/g, '');
+  if (!value) return null;
+  const match = value.match(/^([A-Ga-g])([#b]*)(m|min|minor)?$/i);
+  if (!match) return null;
+  const root = (match[1].toUpperCase() + (match[2] || ''));
+  const index = noteIndex(root);
+  if (index === -1) return null;
+  const suffix = String(match[3] || '').toLowerCase();
+  const isMinor = suffix === 'm' || suffix === 'min' || suffix === 'minor';
+  return {
+    root,
+    index,
+    isMinor,
+    display: root + (isMinor ? 'm' : '')
+  };
+}
+
+function getEffectiveTargetKey(originalKey, targetKey) {
+  const target = parseKeySignature(targetKey);
+  if (!target) return String(targetKey || '').trim();
+  const original = parseKeySignature(originalKey);
+  return target.root + (original && original.isMinor ? 'm' : '');
+}
+
+function transposeChord(chord, semi) {
+  const segments = String(chord || '').split('/');
+  if (!segments.length) return chord;
+
+  return segments.map((segment) => {
+    const match = String(segment || '').match(/^([A-G][#b]*)(.*)$/i);
+    if (!match) return segment;
+    const root = match[1];
+    const rest = match[2] || '';
+    return transposeNote(root, semi) + rest;
+  }).join('/');
+}
+
+function renderWithChords(text, semi) {
+  return String(text || '').replace(
+    /(^|[^A-Za-z0-9#b/])([A-G][#b]*(?:[A-Za-z0-9]*)(?:\/[A-G][#b]*(?:[A-Za-z0-9]*)?)?)(?=$|[^A-Za-z0-9#b/])/g,
+    (_, prefix, chord) => prefix + transposeChord(chord, semi)
+  );
+}
+
+const lyricsI = document.getElementById('lyrics');
+const preview = document.getElementById('preview');
+const keyInput = document.getElementById('keyInput');
+const keysDiv = document.getElementById('keys');
+const fromChip = document.getElementById('fromChip');
+const toChip = document.getElementById('toChip');
+const semiChip = document.getElementById('semiChip');
+const copyBtn = document.getElementById('copyBtn');
+const clearBtn = document.getElementById('clearBtn');
+const flatToggleBtn = document.getElementById('flatToggleBtn');
+let targetKey = '';
+window.__transposePreferFlats = false;
+
+function syncModeButton() {
+  flatToggleBtn.classList.toggle('active', !!window.__transposePreferFlats);
+  flatToggleBtn.textContent = window.__transposePreferFlats ? 'Բեմոլներով ցույց է տրվում' : 'Բեմոլներով ցույց տալ';
+}
+
+for (const key of SHARPS) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = key;
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.key-buttons button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    targetKey = key;
+    renderPreview();
+  });
+  keysDiv.appendChild(btn);
+}
+
+function renderPreview() {
+  syncModeButton();
+  const originalKey = keyInput.value.trim();
+  const effectiveTargetKey = getEffectiveTargetKey(originalKey, targetKey);
+  const inputText = lyricsI.value;
+  if (!originalKey || !effectiveTargetKey) {
+    preview.textContent = inputText;
+    fromChip.textContent = 'Սկզբնական՝ ' + (originalKey || '-');
+    toChip.textContent = 'Նպատակային՝ ' + (effectiveTargetKey || '-');
+    semiChip.textContent = 'Տրանսպոզ՝ 0';
+    return;
+  }
+
+  const from = parseKeySignature(originalKey);
+  const to = parseKeySignature(effectiveTargetKey);
+  if (!from || !to) {
+    preview.textContent = inputText;
+    fromChip.textContent = 'Սկզբնական՝ ' + (originalKey || '-');
+    toChip.textContent = 'Նպատակային՝ ' + (effectiveTargetKey || '-');
+    semiChip.textContent = 'Տրանսպոզ՝ 0';
+    return;
+  }
+
+  const semi = (to.index - from.index + 12) % 12;
+  preview.textContent = renderWithChords(inputText, semi);
+  fromChip.textContent = 'Սկզբնական՝ ' + (from.display || originalKey);
+  toChip.textContent = 'Նպատակային՝ ' + (to.display || effectiveTargetKey);
+  semiChip.textContent = 'Տրանսպոզ՝ ' + (semi > 6 ? ('-' + (12 - semi)) : ('+' + semi));
+}
+
+lyricsI.addEventListener('input', renderPreview);
+keyInput.addEventListener('input', renderPreview);
+
+copyBtn.addEventListener('click', async () => {
+  const text = preview.textContent || '';
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    copyBtn.textContent = 'Պատճենվեց';
+    setTimeout(() => { copyBtn.textContent = 'Պատճենել արդյունքը'; }, 1200);
+  } catch (_) {
+    copyBtn.textContent = 'Չհաջողվեց';
+    setTimeout(() => { copyBtn.textContent = 'Պատճենել արդյունքը'; }, 1200);
+  }
+});
+
+clearBtn.addEventListener('click', () => {
+  lyricsI.value = '';
+  preview.textContent = '';
+  renderPreview();
+});
+
+flatToggleBtn.addEventListener('click', () => {
+  window.__transposePreferFlats = !window.__transposePreferFlats;
+  renderPreview();
+});
+
+renderPreview();
+</script>
+</body>
+</html>

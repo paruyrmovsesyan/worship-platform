@@ -1,0 +1,47 @@
+RewriteEngine On
+
+# =========================
+# MAINTENANCE MODE (global)
+# Միացվում է եթե site root-ում կա maintenance.flag ֆայլը
+# =========================
+ErrorDocument 503 /maintenance.html
+ErrorDocument 500 /maintenance.html
+
+
+# =========================
+# OPTIONAL: Remove .html extension (եթե պետք է)
+# =========================
+#RewriteCond %{REQUEST_FILENAME} !-d
+#RewriteCond %{REQUEST_FILENAME}.html -f
+#RewriteRule ^(.*)$ $1.html [L]
+
+# =========================
+# OPTIONAL: Force HTTPS (եթե պետք է)
+# =========================
+#RewriteCond %{HTTPS} off
+#RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+# =========================
+# Default index
+# Քեզ մոտ հիմա index.html է. Եթե իրականում index.php ես ուզում՝ փոխիր։
+# =========================
+DirectoryIndex index.html
+
+<IfModule mod_headers.c>
+  Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+  Header set Pragma "no-cache"
+  Header set Expires "0"
+</IfModule>
+
+# NOTE: քո մոտ ExpiresActive Off + հետո On կա նույն IfModule-ում.
+# Առաջինը անիմաստ է (և կարող է override անի), թողնենք միայն On մասը։
+
+# cache static files
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/png "access plus 10 days"
+  ExpiresByType image/jpeg "access plus 10 days"
+  ExpiresByType image/webp "access plus 10 days"
+  ExpiresByType image/svg+xml "access plus 10 days"
+  ExpiresByType video/mp4 "access plus 10 days"
+</IfModule>

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="hy">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Տեխնիկական աշխատանքներ — Worship Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:Inter,system-ui,sans-serif}
+    body{
+      min-height:100vh; display:flex; align-items:center; justify-content:center;
+      background:radial-gradient(circle at top,#141a33,#05070c 70%);
+      color:#fff; padding:20px;
+    }
+    .card{
+      width:min(520px, 92vw);
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);
+      padding:22px;
+      backdrop-filter: blur(10px);
+      box-shadow:0 20px 60px rgba(0,0,0,.35);
+      text-align:center;
+    }
+    h1{font-size:22px;font-weight:800;margin-bottom:10px}
+    p{opacity:.85;line-height:1.55;font-size:14px}
+    .muted{opacity:.6;font-size:12px;margin-top:12px}
+    .btn{
+      margin-top:16px; padding:10px 14px; border-radius:12px; border:none;
+      cursor:pointer; font-weight:800; color:#fff;
+      background:linear-gradient(135deg,#3367ff,#2247d6);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>⚠ Տեխնիկական աշխատանքներ</h1>
+    <p>Կայքում այս պահին ընթանում են տեխնիկական աշխատանքներ։ Խնդրում ենք փորձել մի փոքր ուշ։</p>
+    <div class="muted">Եթե խնդիրն երկար է՝ կապնվեք ադմինի հետ։</div>
+    <button class="btn" onclick="location.reload()">Փորձել նորից</button>
+  </div>
+</body>
+</html>

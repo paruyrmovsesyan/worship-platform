@@ -1,0 +1,1460 @@
+<!doctype html>
+<html lang="hy">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="manifest" href="/manifest.json">
+<title>Account — Worship Platform</title>
+<link rel="icon" href="wolarm_youth.png" type="image/png" />
+<link rel="apple-touch-icon" href="/wolarmyouth.jpg" type="image/jpeg" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Worship Platform">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b1020">
+<style id="wp-prepaint-bg">html,body{background:#0b1020;color-scheme:dark}</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="nav.css">
+<script src="/i18n.js" defer></script>
+<script src="loader.js" defer></script>
+<script>
+(function(){
+  try{
+    var stored = localStorage.getItem('wolarm_isDark');
+    var isDark = (stored === null) ? true : (stored === '1');
+    if(isDark) document.documentElement.classList.add('dark');
+  }catch(e){
+    document.documentElement.classList.add('dark');
+  }
+})();
+</script>
+
+<style>
+:root{
+  --bg:#f3f6fb; --surface:rgba(255,255,255,0.75); --text:#0f1222; --muted:#6b7280;
+  --primary:#3367ff; --primary-variant:#2247d6; --glass-border:rgba(255,255,255,0.45);
+  --card-elev:0 6px 18px rgba(18,25,40,0.08); --shadow-soft:0 8px 24px rgba(21,32,84,0.08);
+  --radius:16px;
+}
+:root.dark{
+  --bg:radial-gradient(circle at top,#141a33,#05070c 70%);
+  --surface:rgba(18,24,32,0.6); --text:#e6eef8; --muted:#9aa7bf;
+  --primary:#6ea8ff; --primary-variant:#4a90ff; --glass-border:rgba(255,255,255,0.04);
+  --card-elev:0 10px 30px rgba(0,0,0,0.5); --shadow-soft:0 10px 30px rgba(0,0,0,0.5);
+}
+
+*{box-sizing:border-box;}
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);transition:.2s;}
+.container{max-width:1100px;margin:0 auto;padding:90px 16px 40px;}
+.card{
+  background:linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.45));
+  border:1px solid var(--glass-border);
+  box-shadow:var(--card-elev);
+  border-radius:var(--radius);
+  backdrop-filter: blur(10px) saturate(120%);
+  padding:18px;
+}
+:root.dark .card{background:linear-gradient(180deg, rgba(14,20,28,0.60), rgba(14,20,28,0.45));}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:900px){.grid{grid-template-columns:1fr;} .container{padding-top:70px;}}
+
+h1{margin:0 0 10px;font-size:22px;}
+.sub{color:var(--muted);margin:0 0 14px;font-size:13px;}
+
+.field{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
+label{font-size:12px;color:var(--muted);font-weight:700;}
+input{
+  padding:12px 12px;
+  border-radius:12px;
+  border:1px solid var(--glass-border);
+  background:rgba(255,255,255,0.12);
+  color:var(--text);
+  outline:none;
+}
+:root.dark input{background:rgba(255,255,255,0.03);}
+input:focus{box-shadow:0 6px 18px rgba(51,103,255,0.18); border-color: rgba(51,103,255,0.5);}
+
+.btn{
+  margin-top:12px;
+  padding:10px 14px;
+  border-radius:12px;
+  border:none;
+  cursor:pointer;
+  font-weight:800;
+  color:#fff;
+  background:linear-gradient(135deg,var(--primary),var(--primary-variant));
+}
+.btn.secondary{
+  background:transparent;
+  color:var(--text);
+  border:1px solid var(--glass-border);
+}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+
+.msg{margin-top:10px;font-weight:700;font-size:13px;}
+.msg.ok{color:#22c55e;}
+.msg.err{color:#ff6b6b;}
+
+hr{border:none;border-top:1px solid var(--glass-border);margin:16px 0;}
+small{color:var(--muted);}
+
+/* better headings */
+.panel-title{margin:0 0 10px;font-size:16px;font-weight:800;letter-spacing:-.2px;}
+.panel-card{padding:16px;}
+.hint{color:var(--muted);font-size:12px;display:block;margin-top:6px}
+
+/* input with eye button */
+.inp-wrap{position:relative;display:flex;align-items:center;}
+.inp-wrap input{width:100%;padding-right:44px;}
+.eye{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  width:34px;height:34px;border-radius:10px;
+  border:1px solid var(--glass-border);
+  background:rgba(255,255,255,0.06);
+  color:var(--text);
+  cursor:pointer;
+}
+:root.dark .eye{background:rgba(255,255,255,0.03);}
+
+/* notices */
+.notice{
+  margin-top:12px;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid var(--glass-border);
+  background:rgba(255,255,255,0.06);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.notice.warn{border-color:rgba(255,107,107,0.35);}
+.notice.neutral{border-color:rgba(110,168,255,0.28);}
+
+/* danger card */
+.danger{margin-top:14px;}
+.danger-btn{
+  background:linear-gradient(135deg,#ff4b5c,#b91c1c);
+}
+
+/* mobile */
+@media (max-width: 900px){
+  .container{padding:72px 12px 24px;}
+  .panel-card{padding:14px;}
+  .row{flex-direction:column;align-items:stretch;}
+  .row .btn{width:100%;}
+}
+
+@media (max-width:700px){
+  .container{
+    padding:68px 10px 110px;
+  }
+
+  .container > .card{
+    padding:14px;
+    border-radius:14px;
+  }
+
+  h1{
+    font-size:20px;
+    line-height:1.2;
+  }
+
+  .panel-title{
+    font-size:15px;
+  }
+
+  .sub,
+  small,
+  .hint{
+    font-size:12px;
+    line-height:1.45;
+  }
+
+  .field{
+    margin-top:12px;
+    gap:7px;
+  }
+
+  input{
+    min-height:46px;
+    padding:13px 12px;
+    font-size:16px;
+  }
+
+  .btn{
+    min-height:46px;
+    padding:12px 14px;
+    font-size:15px;
+    border-radius:12px;
+  }
+
+  .notice{
+    align-items:flex-start;
+    flex-direction:column;
+    padding:12px;
+  }
+
+  .notice > div{
+    width:100%;
+  }
+}
+
+/* iOS/Android viewport */
+@supports (height: 100svh){ body{min-height:100svh;} }
+@supports (height: 100dvh){ body{min-height:100dvh;} }
+
+#verifyMsg{
+  display:block;            /* մենք display-ը կառավարում ենք JS-ով, բայց սա օգնում է */
+  min-height:18px;
+  margin-top:10px;
+}
+#verifyMsg.msg{ display:block; }
+
+.session-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  padding:14px;
+  border-radius:14px;
+  border:1px solid var(--glass-border);
+  background:rgba(255,255,255,0.06);
+}
+
+:root.dark .session-item{
+  background:rgba(255,255,255,0.03);
+}
+
+.session-main{
+  min-width:0;
+  flex:1;
+}
+
+.session-title{
+  font-weight:800;
+  margin-bottom:6px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.session-meta{
+  color:var(--muted);
+  font-size:13px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  line-height:1.5;
+}
+
+.session-badge{
+  display:inline-flex;
+  align-items:center;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+  border:1px solid transparent;
+}
+
+.session-badge.current{
+  background:rgba(34,197,94,0.12);
+  border-color:rgba(34,197,94,0.28);
+  color:#22c55e;
+}
+
+.session-badge.remembered{
+  background:rgba(59,130,246,0.12);
+  border-color:rgba(59,130,246,0.28);
+  color:#60a5fa;
+}
+
+.session-actions{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+}
+
+@media (max-width:700px){
+  .session-item{
+    flex-direction:column;
+  }
+
+  .session-actions{
+    width:100%;
+  }
+
+  .session-actions .btn{
+    width:100%;
+  }
+}
+
+@media (max-width:700px){
+  .session-item{
+    padding:12px;
+    gap:10px;
+    border-radius:12px;
+  }
+
+  .session-main{
+    width:100%;
+  }
+
+  .session-title{
+    margin-bottom:8px;
+    gap:6px;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+
+  .session-device{
+    display:block;
+    width:100%;
+    font-size:15px;
+    font-weight:800;
+    line-height:1.25;
+    margin-bottom:2px;
+  }
+
+  .session-badge{
+    padding:3px 8px;
+    font-size:11px;
+  }
+
+  .session-meta{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:4px;
+    font-size:12px;
+    line-height:1.4;
+  }
+
+  .session-meta span{
+    display:block;
+  }
+
+.session-actions{
+  width:100%;
+  margin-top:2px;
+}
+
+  .session-actions .btn{
+    width:100%;
+    margin-top:0;
+    padding:10px 12px;
+    font-size:14px;
+    border-radius:10px;
+  }
+
+  #closeOtherSessionsBtn{
+    width:100%;
+  }
+}
+
+.account-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.account-head-copy{
+  min-width:0;
+}
+
+.app-quick-logout{
+  display:none;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border:none;
+  border-radius:999px;
+  cursor:pointer;
+  color:#fff;
+  flex:0 0 auto;
+  white-space:nowrap;
+  font-weight:800;
+  letter-spacing:-0.2px;
+  background:linear-gradient(135deg,#ff5f6d,#d93b57);
+  box-shadow:0 14px 34px rgba(217,59,87,0.28);
+}
+
+.app-quick-logout svg{
+  width:16px;
+  height:16px;
+  stroke:currentColor;
+}
+
+.app-quick-logout:active{
+  transform:scale(.98);
+}
+
+@media (max-width:700px){
+  .account-head{
+    flex-direction:column;
+    align-items:stretch;
+    gap:10px;
+  }
+
+  .app-quick-logout{
+    gap:6px;
+    width:100%;
+    justify-content:center;
+    padding:10px 12px;
+    font-size:13px;
+    box-shadow:0 10px 24px rgba(217,59,87,0.18);
+  }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><a class="logo" href="/">WORSHIP PLATFORM</a></div>
+  <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+  <div class="menu" id="menu">
+    <a href="/">ԳԼԽԱՎՈՐ</a>
+    <a href="/main.html">ԵՐԳԵՐ</a>
+    <a href="/favorites.html">ՊԱՀՊԱՆԱԾ ԵՐԳԵՐ</a>
+    <a href="/news.html">ՆՈՐՈՒԹՅՈՒՆՆԵՐ</a>
+
+    <a id="loginBtn" class="login-btn" href="/loginuser.php">Մուտք</a>
+    <a id="registerBtn" class="login-btn" href="/registeruser.php">Գրանցում</a>
+
+    <span id="userBox" class="user-chip" style="display:none;">
+      <span class="user-avatar" aria-hidden="true">👤</span>
+      <span class="user-meta">
+        <span id="userName" class="user-name">User</span>
+        <span class="user-sub">Account</span>
+      </span>
+      <a href="/account.html" class="icon-btn" title="Account" aria-label="Account"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-1.41 3.41h-.1a2 2 0 0 1-1.41-.59l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82V22a2 2 0 0 1-4 0v-.1a1.65 1.65 0 0 0-.33-1.82 1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 0 1 2 18.59v-.1a2 2 0 0 1 .59-1.41l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33H2a2 2 0 0 1 0-4h.1a1.65 1.65 0 0 0 1.82-.33 1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 0 1 5.41 2h.1a2 2 0 0 1 1.41.59l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.82V2a2 2 0 0 1 4 0v.1a1.65 1.65 0 0 0 .33 1.82 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06A2 2 0 0 1 22 5.41v.1a2 2 0 0 1-.59 1.41l-.06.06A1.65 1.65 0 0 0 19.4 9c.23.31.39.66.6 1a1.65 1.65 0 0 0 1.82.33H22a2 2 0 0 1 0 4h-.1a1.65 1.65 0 0 0-1.82.33c-.21.34-.37.69-.6 1z"></path>
+    </svg>️</a>
+      <button id="logoutBtn" class="icon-btn" type="button" title="Logout" aria-label="Logout">⎋</button>
+    </span>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="card">
+    <div class="account-head">
+      <div class="account-head-copy">
+        <h1>Օգտահաշիվ</h1>
+        <p class="sub">Կարգավորիր անունը, էլ. փոստը և գաղտնաբառը։</p>
+        <div id="authHintMsg" class="msg" style="display:none;"></div>
+      </div>
+      <button id="appQuickLogout" class="app-quick-logout" type="button" aria-label="Արագ դուրս գալ">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <path d="M16 17l5-5-5-5"></path>
+          <path d="M21 12H9"></path>
+        </svg>
+        <span>Դուրս գալ</span>
+      </button>
+    </div>
+
+    <div class="grid">
+  <!-- LEFT: Profile -->
+  <div class="card panel-card">
+    <h2 class="panel-title">Պրոֆիլ</h2>
+
+    <div class="field">
+      <label>Անուն</label>
+      <input id="nameInp" placeholder="Քո անունը" />
+    </div>
+
+    <div class="field">
+  <label>Էլ.փոստ</label>
+  <input id="emailInp" disabled />
+  <small class="hint">Email-ը փոխելու համար օգտագործիր ներքևի «Էլ․ փոստի հաստատում» բաժինը։</small>
+</div>
+
+
+    <div class="row">
+      <button id="saveProfileBtn" class="btn">Պահպանել</button>
+      <button id="reloadBtn" class="btn secondary" type="button">Թարմացնել</button>
+    </div>
+
+    <div id="profileMsg" class="msg" style="display:none;"></div>
+    <small id="createdAt" style="display:block;margin-top:10px;"></small>
+    
+  </div>
+
+  <!-- RIGHT: Password + Logout -->
+  <div class="card panel-card">
+    <h2 class="panel-title">Անվտանգություն</h2>
+
+    <div class="field">
+      <label>Ներկայիս գաղտնաբառ</label>
+      <div class="inp-wrap">
+        <input id="curPass" type="password" placeholder="••••••••" />
+        <button class="eye" type="button" data-eye="curPass">👁</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Նոր գաղտնաբառ (մին. 8 նիշ)</label>
+      <div class="inp-wrap">
+        <input id="newPass" type="password" placeholder="••••••••" />
+        <button class="eye" type="button" data-eye="newPass">👁</button>
+      </div>
+    </div>
+
+    <button id="changePassBtn" class="btn">Փոխել գաղտնաբառը</button>
+    <button id="forgotPassBtn" class="btn secondary" type="button">Մոռացել եմ գաղտնաբառը</button>
+<div id="forgotMsg" class="msg" style="display:none;"></div>
+    <div id="passMsg" class="msg" style="display:none;"></div>
+
+    <hr>
+    
+
+    <button id="logoutBig" class="btn secondary" type="button">Դուրս գալ</button>
+  </div>
+</div>
+<br>
+
+   <!-- Email Verification Card -->
+<div class="card" style="padding:16px;">
+  <h1 style="font-size:16px;margin:0 0 8px;">Էլ․ փոստի հաստատում</h1>
+  <p class="sub" style="margin:0 0 10px;">
+    Հաստատված Էլ. փոստը պետք է «Forgot password» և անվտանգության համար։
+  </p>
+
+  <div class="row" style="justify-content:space-between;">
+    <div>
+      <div style="font-weight:800;" id="verifStatusText">Վիճակ՝ …</div>
+      <small id="verifStatusHint"></small>
+    </div>
+
+    <span id="verifBadge"
+      style="padding:6px 10px;border-radius:999px;font-weight:800;font-size:12px;border:1px solid var(--glass-border);">
+      ...
+    </span>
+  </div>
+
+  <hr>
+
+  <div class="field">
+    <label>Էլ.փոստ</label>
+    <input id="verifyEmailInp" placeholder="name@example.com" />
+    <small>Եթե փոխես Էլ. փոստը՝ նորից պետք է հաստատվի։</small>
+  </div>
+
+  <div class="row">
+    <button id="sendVerifyBtn" class="btn" type="button">Ուղարկել հաստատման նամակ</button>
+    <button id="saveEmailBtn" class="btn secondary" type="button">Պահպանել Էլ. փոստը</button>
+  </div>
+
+  <div id="verifyMsg" class="msg" style="display:none;"></div>
+</div>
+
+<div class="card" style="padding:16px; margin-top:14px;">
+  <h1 style="font-size:16px;margin:0 0 8px;">Push ծանուցումներ</h1>
+  <p class="sub" style="margin:0 0 10px;">
+    Push ծանուցումները հասանելի են միայն տեղադրված ծրագրի համար, ոչ սովորական կայքի browser տարբերակում։
+  </p>
+
+  <div id="pushNotice" class="notice neutral">
+    <div>
+      <div style="font-weight:800;" id="pushStatusText">Վիճակ՝ ստուգվում է…</div>
+      <small id="pushStatusHint">Մի փոքր սպասիր, մինչև բեռնվեն push կարգավորումները։</small>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:10px;">
+    <button id="enablePushBtn" class="btn" type="button">Միացնել ծանուցումները</button>
+    <button id="disablePushBtn" class="btn secondary" type="button">Անջատել ծանուցումները</button>
+  </div>
+
+  <div id="pushMsg" class="msg" style="display:none;"></div>
+</div>
+
+
+<div class="card" style="padding:16px; margin-top:14px;">
+  <h1 style="font-size:16px;margin:0 0 8px;">Ակտիվ սեսիաներ</h1>
+  <p class="sub" style="margin:0 0 10px;">
+    Այստեղ կտեսնես այն սարքերը, որտեղ բացված է քո հաշիվը։
+  </p>
+
+  <div class="row" style="justify-content:space-between; align-items:center;">
+    <div>
+      <div style="font-weight:800;">Այս սարքը կնշվի որպես «Ընթացիկ սարք»։</div>
+      <small>Սեսիաները կարող ես փակել մեկ առ մեկ կամ բոլոր մյուսները միասին։</small>
+    </div>
+
+    <button id="closeOtherSessionsBtn" class="btn secondary" type="button">
+      Փակել մյուս սեսիաները
+    </button>
+  </div>
+
+  <div id="sessionsMsg" class="msg" style="display:none;"></div>
+  <div id="sessionsList" style="margin-top:12px; display:grid; gap:10px;"></div>
+</div>
+
+
+<!-- ✅ Danger zone՝ grid-ից դուրս, առանձին card -->
+<div class="card panel-card danger">
+  <h2 class="panel-title" style="color:#ff6b6b;">Վտանգավոր գործողություն</h2>
+  <small>Օգտահաշվի ջնջումը անշրջելի է։ Կկորչեն պահպանած երգերը և տվյալները։</small>
+
+  <div class="row" style="margin-top:10px;">
+    <button id="deleteAccountBtn" class="btn danger-btn" type="button">
+      Ջնջել օգտահաշիվը
+    </button>
+  </div>
+</div>
+
+<!-- Delete modal -->
+<div id="delModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:200000; align-items:center; justify-content:center; padding:16px;">
+  <div class="card" style="max-width:420px; width:100%; padding:16px;">
+    <h1 style="font-size:16px;margin:0 0 8px;color:#ff6b6b;">Հաստատում</h1>
+    <p class="sub" style="margin:0 0 10px;">
+      Սա կջնջի քո օգտահաշիվը և տվյալները։ Շարունակելու համար գրիր գաղտնաբառը։
+    </p>
+
+    <div class="field">
+      <label>Գաղտնաբառ</label>
+      <input id="delPass" type="password" placeholder="••••••••" />
+    </div>
+
+    <div class="row" style="margin-top:10px;justify-content:flex-end;">
+      <button id="delCancel" class="btn secondary" type="button">Չեղարկել</button>
+      <button id="delConfirm" class="btn" type="button" style="background:linear-gradient(135deg,#ff4b5c,#b91c1c);">
+        Ջնջել վերջնականապես
+      </button>
+    </div>
+
+    <div id="delMsg" class="msg" style="display:none;"></div>
+  </div>
+</div>
+    </div>
+  </div>
+
+
+<script>
+/* hamburger */
+function initMobileMenuDrawer(){
+  const hamburger = document.getElementById('hamburger');
+  const menu = document.getElementById('menu');
+  if(!hamburger || !menu || hamburger.dataset.drawerBound === '1') return;
+  hamburger.dataset.drawerBound = '1';
+
+  let backdrop = document.querySelector('.mobile-nav-backdrop');
+  if(!backdrop){
+    backdrop = document.createElement('div');
+    backdrop.className = 'mobile-nav-backdrop';
+    document.body.appendChild(backdrop);
+  }
+
+  const finishClose = () => menu.classList.remove('closing');
+  const closeMenu = (animated = true) => {
+    hamburger.classList.remove('active');
+    document.body.classList.remove('menu-open');
+    menu.classList.remove('open');
+    if(animated){
+      menu.classList.add('closing');
+      window.setTimeout(finishClose, 260);
+    } else {
+      finishClose();
+    }
+  };
+  const openMenu = () => {
+    menu.classList.remove('closing');
+    menu.classList.add('open');
+    hamburger.classList.add('active');
+    document.body.classList.add('menu-open');
+  };
+
+  hamburger.addEventListener('click', ()=>{
+    if(window.innerWidth > 900) return;
+    if(menu.classList.contains('open')) closeMenu(false);
+    else openMenu();
+  });
+
+  backdrop.addEventListener('click', ()=> closeMenu(false));
+  menu.querySelectorAll('a').forEach(link => link.addEventListener('click', ()=> closeMenu(true)));
+  window.addEventListener('resize', ()=> {
+    if(window.innerWidth > 900) closeMenu(false);
+  });
+  document.addEventListener('keydown', (event)=>{
+    if(event.key === 'Escape' && menu.classList.contains('open')) closeMenu(false);
+  });
+}
+
+initMobileMenuDrawer();
+
+const nameInp = document.getElementById('nameInp');
+const emailInp = document.getElementById('emailInp');
+const createdAt = document.getElementById('createdAt');
+const profileMsg = document.getElementById('profileMsg');
+const authHintMsg = document.getElementById('authHintMsg');
+
+const curPass = document.getElementById('curPass');
+const newPass = document.getElementById('newPass');
+const passMsg = document.getElementById('passMsg');
+const changePassBtn = document.getElementById('changePassBtn');
+const forgotPassBtn = document.getElementById('forgotPassBtn');
+const forgotMsg = document.getElementById('forgotMsg');
+
+const sessionsList = document.getElementById('sessionsList');
+const sessionsMsg = document.getElementById('sessionsMsg');
+const closeOtherSessionsBtn = document.getElementById('closeOtherSessionsBtn');
+const pushNotice = document.getElementById('pushNotice');
+const pushStatusText = document.getElementById('pushStatusText');
+const pushStatusHint = document.getElementById('pushStatusHint');
+const pushMsg = document.getElementById('pushMsg');
+const enablePushBtn = document.getElementById('enablePushBtn');
+const disablePushBtn = document.getElementById('disablePushBtn');
+
+function withAppSource(url){
+  try{
+    if(window.WP && typeof window.WP.withAppSource === 'function'){
+      return window.WP.withAppSource(url);
+    }
+  }catch(e){}
+  return url;
+}
+
+function setPushNotice(kind, title, hint){
+  if(!pushNotice) return;
+  pushNotice.className = 'notice ' + (kind || 'neutral');
+  if(pushStatusText) pushStatusText.textContent = title || '';
+  if(pushStatusHint) pushStatusHint.textContent = hint || '';
+}
+
+async function loadPushStatus(){
+  const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+
+  if(!isStandalone){
+    setPushNotice('warn', 'Վիճակ՝ միայն ծրագրի համար է', 'Ծանուցումները կարող ես միացնել միայն Worship Platform-ի տեղադրված ծրագրի մեջ։ Բացիր ծրագիրը և այնտեղ միացրու push-ը։');
+    if(enablePushBtn) enablePushBtn.disabled = true;
+    if(disablePushBtn) disablePushBtn.disabled = true;
+    return;
+  }
+
+  if(!window.WPPushManager){
+    setPushNotice('warn', 'Վիճակ՝ անհասանելի է', 'Այս browser-ը կամ սարքը չի աջակցում push ծանուցումները։');
+    if(enablePushBtn) enablePushBtn.disabled = true;
+    if(disablePushBtn) disablePushBtn.disabled = true;
+    return;
+  }
+
+  const status = await window.WPPushManager.getStatus();
+
+  if(!status.supported || !status.enabledBySite){
+    setPushNotice('warn', 'Վիճակ՝ անջատված է', 'Push ծանուցումները կամ server-side անջատված են, կամ այս browser-ը չի աջակցում դրանք։');
+    if(enablePushBtn) enablePushBtn.disabled = !status.enabledBySite;
+    if(disablePushBtn) disablePushBtn.disabled = true;
+    return;
+  }
+
+  if(status.permission === 'granted' && status.subscribed){
+    setPushNotice('neutral', 'Վիճակ՝ միացված է', 'Այս տեղադրված ծրագիրը այժմ ստանում է Worship Platform-ի push ծանուցումները։');
+    if(enablePushBtn) enablePushBtn.disabled = true;
+    if(disablePushBtn) disablePushBtn.disabled = false;
+    return;
+  }
+
+  if(status.permission === 'denied'){
+    setPushNotice('warn', 'Վիճակ՝ browser-ը արգելափակել է', 'Ծանուցումները անջատված են browser settings-ում։ Եթե ուզենաս նորից միացնել, պետք է browser-ից թույլ տաս։');
+    if(enablePushBtn) enablePushBtn.disabled = false;
+    if(disablePushBtn) disablePushBtn.disabled = true;
+    return;
+  }
+
+  setPushNotice('neutral', 'Վիճակ՝ դեռ միացված չէ', 'Դու կարող ես միացնել ծանուցումները այս տեղադրված ծրագրի համար, կամ թողնել անջատված։');
+  if(enablePushBtn) enablePushBtn.disabled = false;
+  if(disablePushBtn) disablePushBtn.disabled = !status.subscribed;
+}
+
+enablePushBtn?.addEventListener('click', async ()=>{
+  if(!window.WPPushManager){
+    showMsg(pushMsg, false, 'Այս browser-ը չի աջակցում push ծանուցումները։');
+    return;
+  }
+
+  const result = await window.WPPushManager.enable();
+  if(result && result.ok){
+    showMsg(pushMsg, true, 'Push ծանուցումները միացվեցին ծրագրի համար։');
+  }else if(result && result.permission === 'denied'){
+    showMsg(pushMsg, false, 'Browser-ը մերժեց permission-ը։ Եթե ուզենաս նորից միացնել, բացիր browser settings-ը։');
+  }else{
+    showMsg(pushMsg, false, 'Չստացվեց միացնել push ծանուցումները։');
+  }
+  await loadPushStatus();
+});
+
+disablePushBtn?.addEventListener('click', async ()=>{
+  if(!window.WPPushManager){
+    showMsg(pushMsg, false, 'Այս browser-ը չի աջակցում push ծանուցումները։');
+    return;
+  }
+
+  const result = await window.WPPushManager.disable();
+  if(result && result.ok){
+    showMsg(pushMsg, true, 'Push ծանուցումները անջատվեցին ծրագրի համար։');
+  }else{
+    showMsg(pushMsg, false, 'Չստացվեց անջատել push ծանուցումները։');
+  }
+  await loadPushStatus();
+});
+
+
+async function loadMe(){
+  profileMsg.style.display='none';
+  passMsg.style.display='none';
+
+  const r = await fetch('/account_api.php?action=me', { credentials:'include' });
+  if(r.status === 401){
+    const next = location.pathname + location.search + location.hash;
+    location.href = withAppSource('/loginuser.php?next=' + encodeURIComponent(next));
+    return;
+  }
+  const me = await r.json();
+  nameInp.value = me.name || '';
+  emailInp.value = me.email || '';
+  createdAt.textContent = me.created_at ? ('Հաշիվը ստեղծվել է՝ ' + me.created_at) : '';
+  try{
+    if(me && me.id && window.WPInstallTracker && typeof window.WPInstallTracker.forceSyncCurrentInstall === 'function'){
+      window.WPInstallTracker.forceSyncCurrentInstall();
+    }
+  }catch(e){}
+}
+
+
+const verifyEmailInp = document.getElementById('verifyEmailInp');
+const verifyMsg = document.getElementById('verifyMsg');
+const verifBadge = document.getElementById('verifBadge');
+const verifStatusText = document.getElementById('verifStatusText');
+const verifStatusHint = document.getElementById('verifStatusHint');
+
+let isEditingEmail = false;
+let editTimer = null;
+
+function markEmailEditing(){
+  isEditingEmail = true;
+  if(editTimer) clearTimeout(editTimer);
+  editTimer = setTimeout(()=>{ isEditingEmail = false; }, 2000);
+}
+
+verifyEmailInp.addEventListener('input', markEmailEditing);
+verifyEmailInp.addEventListener('focus', markEmailEditing);
+verifyEmailInp.addEventListener('blur', ()=>{ isEditingEmail = false; });
+
+function setBadge(ok){
+  if(ok){
+    verifBadge.textContent = 'Հաստատված ✅';
+    verifBadge.style.background = 'rgba(34,197,94,0.12)';
+    verifBadge.style.borderColor = 'rgba(34,197,94,0.35)';
+    verifBadge.style.color = '#22c55e';
+    verifStatusText.textContent = 'Վիճակ՝ հաստատված';
+    verifStatusHint.textContent = 'Email-ը հաստատված է։';
+  }else{
+    verifBadge.textContent = 'Չհաստատված ⚠️';
+    verifBadge.style.background = 'rgba(255,107,107,0.10)';
+    verifBadge.style.borderColor = 'rgba(255,107,107,0.35)';
+    verifBadge.style.color = '#ff6b6b';
+    verifStatusText.textContent = 'Վիճակ՝ չհաստատված';
+    verifStatusHint.textContent = 'Սեղմիր «Ուղարկել հաստատման նամակ»։';
+  }
+}
+
+function normalizeEmail(s){
+  return (s || '').trim().toLowerCase();
+}
+
+async function loadVerification(){
+  
+
+  const r = await fetch('/account_api.php?action=email_status', { credentials:'include' });
+  const d = await r.json();
+
+  if(!r.ok){ setBadge(false); return; }
+
+  const nextVal = (d.pending ? (d.pending_email || '') : (d.email || ''));
+
+// ✅ միայն եթե user-ը հիմա չի edit անում
+if(!isEditingEmail){
+  verifyEmailInp.value = nextVal;
+}
+
+// ✅ data-pending-ը միշտ գրիր (ոչ միայն pending-ի դեպքում)
+verifyEmailInp.setAttribute('data-pending', d.pending_email || '');
+
+if(d.pending){
+  verifBadge.textContent = 'Սպասում է հաստատման ⏳';
+  verifBadge.style.background = 'rgba(250,204,21,0.12)';
+  verifBadge.style.borderColor = 'rgba(250,204,21,0.35)';
+  verifBadge.style.color = '#facc15';
+  verifStatusText.textContent = 'Վիճակ՝ սպասում է հաստատման';
+  verifStatusHint.textContent = 'Ուղարկված է հաստատման նամակ նոր Էլ. փոստին։ Ստուգիր Inbox/Spam։';
+} else {
+  setBadge(!!d.verified);
+}
+// վերևի email դաշտը միշտ ցույց տա ներկայիս email-ը,
+// իսկ եթե pending կա՝ ցույց տա pending-ը որպես hint
+emailInp.value = d.email || '';
+
+document.getElementById('sendVerifyBtn').textContent = d.pending ? 'Ուղարկել նորից' : 'Ուղարկել հաստատման նամակ';
+
+// ✅ disable password change if not verified
+
+const changePassBtn = document.getElementById('changePassBtn');
+
+const canChangePass = !!d.verified && !d.pending;
+
+changePassBtn.disabled = !canChangePass;
+changePassBtn.style.opacity = canChangePass ? '1' : '0.55';
+changePassBtn.style.cursor = canChangePass ? 'pointer' : 'not-allowed';
+const canReset = !!d.verified && !d.pending;
+forgotPassBtn.disabled = !canReset;
+forgotPassBtn.style.opacity = canReset ? '1' : '0.55';
+forgotPassBtn.style.cursor = canReset ? 'pointer' : 'not-allowed';
+
+if(!canChangePass){
+  passMsg.style.display = 'block';
+  passMsg.className = 'msg err';
+  passMsg.textContent = d.pending
+    ? 'Email-ը սպասում է հաստատման։ Նախ հաստատիր նոր email-ը, հետո փոխիր գաղտնաբառը։'
+    : 'Գաղտնաբառը փոխելու համար նախ պետք է հաստատել email-ը։';
+} else {
+  passMsg.style.display = 'none';
+}
+}
+
+function escapeHtml(str){
+  return String(str ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+
+document.getElementById('sendVerifyBtn').onclick = async ()=>{
+  const newEmail = normalizeEmail(verifyEmailInp.value);
+const currentEmail = normalizeEmail(emailInp.value);
+const pendingEmail = normalizeEmail(verifyEmailInp.getAttribute('data-pending') || '');
+
+// եթե user-ը typed է լրիվ ուրիշ email, բայց դեռ չի պահել pending_email,
+// ապա send-ը anyway DB-ից target է վերցնում (pending եթե կա, այլապես current),
+// դրա համար այստեղ միայն “նույնն է” դեպքը ցույց տալը UX-ի համար է։
+if(newEmail && newEmail === currentEmail && !pendingEmail){
+  showMsg(verifyMsg, false, 'Էլ. փոստը արդեն նույնն է․ հաստատման նամակ ուղարկելու կարիք չկա։');
+  return;
+}
+
+  try{
+    const r = await fetch('/account_api.php?action=send_verify_email', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      body: JSON.stringify({})
+    });
+
+    const raw = await r.text();      // 👈 երբեք չի crash անում
+    let d = null;
+    try { d = JSON.parse(raw); } catch(e) {}
+
+    if(r.ok && d && d.ok){
+      if(d.rateLimited){
+  showMsg(verifyMsg, false, 'Արդեն ուղարկվել է։ Սպասիր 1 րոպե ու նորից փորձիր։');
+  return;
+}else if(d.alreadyVerified){
+        showMsg(verifyMsg, true, 'Էլ. փոստը արդեն հաստատված է ✅');
+      }else{
+        showMsg(verifyMsg, true, 'Նամակը ուղարկվեց։ Ստուգիր Inbox/Spam։');
+      }
+    }else{
+      showMsg(verifyMsg, false, (d && d.error) ? d.error : ('Server RAW: ' + raw.slice(0,200)));
+    }
+
+    await loadVerification().catch(()=>{});
+  }catch(e){
+    showMsg(verifyMsg, false, 'JS/Network error: ' + e.message);
+  }
+};
+
+document.getElementById('saveEmailBtn').onclick = async ()=>{
+  const newEmail = normalizeEmail(verifyEmailInp.value);
+const currentEmail = normalizeEmail(emailInp.value);          // disabled field-ում current email կա
+// pending-ի դեպքում input-ը արդեն pending_email է ցույց տալիս, դրա համար երկրորդը էլ ստուգենք
+const currentPending = normalizeEmail(verifyEmailInp.getAttribute('data-pending') || '');
+
+// եթե նույնն է current email-ին կամ pending email-ին՝ չանենք ոչինչ
+if(newEmail && (newEmail === currentEmail || newEmail === currentPending)){
+  showMsg(verifyMsg, false, 'Այս Էլ. փոստը արդեն նույնն է․ փոփոխություն չի կատարվել։');
+  return;
+}
+  
+
+  try{
+    // 1) save pending email
+    const r1 = await fetch('/account_api.php?action=update_email_only', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      body: JSON.stringify({ email: verifyEmailInp.value })
+    });
+
+    const raw1 = await r1.text();
+    let d1 = null;
+    try { d1 = JSON.parse(raw1); } catch(e) {}
+
+    if(!(r1.ok && d1 && d1.ok)){
+      showMsg(verifyMsg, false, (d1 && d1.error) ? d1.error : ('Server RAW: ' + raw1.slice(0,200)));
+      return;
+    }
+
+    // 2) auto send verification
+    const r2 = await fetch('/account_api.php?action=send_verify_email', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      body: JSON.stringify({})
+    });
+
+    const raw2 = await r2.text();
+    let d2 = null;
+    try { d2 = JSON.parse(raw2); } catch(e) {}
+
+    if(r2.ok && d2 && d2.ok){
+      if(d2.rateLimited){
+        showMsg(verifyMsg, true, 'Էլ. փոստը պահպանվեց ✅ Նամակը արդեն ուղարկվել է, սպասիր ~1 րոպե։');
+      }else{
+        showMsg(verifyMsg, true, 'Էլ. փոստը պահպանվեց ✅ Հաստատման նամակը ուղարկվեց։');
+      }
+    }else{
+      showMsg(verifyMsg, false, (d2 && d2.error) ? ('Պահպանվեց, բայց ' + d2.error) : ('Պահպանվեց, բայց Server RAW: ' + raw2.slice(0,200)));
+    }
+
+    await loadVerification().catch(()=>{});
+  }catch(e){
+    showMsg(verifyMsg, false, 'JS/Network error: ' + e.message);
+  }
+};
+
+let msgTimer = null;
+function showMsg(el, ok, text){
+  el.style.display = 'block';
+  el.className = 'msg ' + (ok ? 'ok' : 'err');
+  el.textContent = text;
+  el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+
+  if(msgTimer) clearTimeout(msgTimer);
+  msgTimer = setTimeout(()=>{ el.style.display='none'; }, 4000);
+}
+
+function showAuthHintFromQuery(){
+  if(!authHintMsg) return;
+  try{
+    const params = new URLSearchParams(location.search);
+    if(params.get('social_registered') === '1' && params.get('password_hint') === '1'){
+      authHintMsg.style.display = 'block';
+      authHintMsg.className = 'msg ok';
+      authHintMsg.textContent = 'Google-ով գրանցումը հաջողվեց։ Եթե հետո ուզենաս մուտք գործել նաև գաղտնաբառով, սեղմիր «Մոռացել եմ գաղտնաբառը» և սահմանիր նոր գաղտնաբառ։';
+    }
+  }catch(e){}
+}
+
+// loadMe-ից հետո կանչիր նաև սա
+const oldLoadMe = loadMe;
+loadMe = async function(){
+  await oldLoadMe();
+  await loadVerification();
+  showAuthHintFromQuery();
+};
+
+document.getElementById('reloadBtn').onclick = loadMe;
+
+document.getElementById('saveProfileBtn').onclick = async ()=>{
+  profileMsg.style.display='none';
+  const payload = { name: nameInp.value };
+  const r = await fetch('/account_api.php?action=update_profile', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    credentials:'include',
+    body: JSON.stringify(payload)
+  });
+  const d = await r.json();
+  if(r.ok && d.ok){
+    showMsg(profileMsg, true, 'Պրոֆիլը պահպանվեց։');
+  }else{
+    showMsg(profileMsg, false, d.error || 'Չստացվեց պահպանել։');
+  }
+};
+
+document.getElementById('changePassBtn').onclick = async ()=>{
+  passMsg.style.display='none';
+  const payload = { current_password: curPass.value, new_password: newPass.value };
+  const r = await fetch('/account_api.php?action=change_password', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    credentials:'include',
+    body: JSON.stringify(payload)
+  });
+  const d = await r.json();
+  if(r.ok && d.ok){
+    curPass.value=''; newPass.value='';
+    showMsg(passMsg, true, 'Գաղտնաբառը փոխվեց։');
+  }else{
+    showMsg(passMsg, false, d.error || 'Չստացվեց փոխել։');
+  }
+};
+
+// 👁 show/hide password
+document.querySelectorAll('.eye').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const id = btn.getAttribute('data-eye');
+    const inp = document.getElementById(id);
+    if(!inp) return;
+    inp.type = (inp.type === 'password') ? 'text' : 'password';
+  });
+});
+
+// (placeholder) resend verification
+document.getElementById('resendVerifyBtn')?.addEventListener('click', async ()=>{
+  showMsg(profileMsg, false, 'Այս ֆունկցիան դեռ միացված չէ (պետք է email verify endpoint)։');
+});
+
+const delModal = document.getElementById('delModal');
+const delPass = document.getElementById('delPass');
+const delMsg = document.getElementById('delMsg');
+
+document.getElementById('deleteAccountBtn').onclick = ()=>{
+  delMsg.style.display='none';
+  delPass.value='';
+  delModal.style.display='flex';
+};
+
+document.getElementById('delCancel').onclick = ()=>{
+  delModal.style.display='none';
+};
+
+document.getElementById('delConfirm').onclick = async ()=>{
+  delMsg.style.display='none';
+
+  const r = await fetch('/account_api.php?action=delete_account', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    credentials:'include',
+    body: JSON.stringify({ password: delPass.value })
+  });
+
+  const d = await r.json();
+
+  if(r.ok && d.ok){
+    showMsg(delMsg, true, 'Օգտահաշիվը ջնջվեց։');
+    // logout + redirect
+    setTimeout(()=>{ location.href = '/logout_users.php'; }, 700);
+  }else{
+    showMsg(delMsg, false, d.error || 'Չստացվեց ջնջել։');
+  }
+};
+
+function isProgramAccountContext(){
+  try{
+    if(document.documentElement.classList.contains('wp-standalone-app')) return true;
+    if(document.body.classList.contains('wp-standalone-app')) return true;
+    const params = new URLSearchParams(location.search);
+    const source = String(params.get('source') || '').toLowerCase();
+    if(source === 'pwa' || source === 'admin-app') return true;
+    if(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true;
+    if(window.navigator && window.navigator.standalone) return true;
+  }catch(e){}
+  return false;
+}
+
+function goLogout(){
+  const target = isProgramAccountContext()
+    ? '/logout_users.php?source=pwa'
+    : '/logout_users.php';
+  location.href = target;
+}
+
+document.getElementById('logoutBig').onclick = goLogout;
+document.getElementById('logoutBtn').onclick = goLogout;
+
+const appQuickLogoutBtn = document.getElementById('appQuickLogout');
+if(appQuickLogoutBtn){
+  if(isProgramAccountContext()){
+    appQuickLogoutBtn.style.display = 'inline-flex';
+  }
+  appQuickLogoutBtn.onclick = goLogout;
+}
+
+// ----- realtime refresh for verification status -----
+let verifTimer = null;
+
+function startVerifPolling(){
+  stopVerifPolling();
+  // ամեն 7 վրկ թարմացնի
+  verifTimer = setInterval(()=>{
+    // page visible + logged-in only
+    if(document.visibilityState === 'visible'){
+      loadVerification().catch(()=>{});
+    }
+  }, 7000);
+}
+
+function stopVerifPolling(){
+  if(verifTimer){ clearInterval(verifTimer); verifTimer = null; }
+}
+
+// tab-ի վրա վերադառնալիս անմիջապես թարմացնի
+window.addEventListener('focus', ()=>{
+  loadVerification().catch(()=>{});
+  loadActiveSessions().catch(()=>{});
+});
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible'){
+    loadVerification().catch(()=>{});
+    loadActiveSessions().catch(()=>{});
+    startVerifPolling();
+    startSessionsPolling();
+  }else{
+    stopVerifPolling();
+    stopSessionsPolling();
+  }
+});
+
+forgotPassBtn.onclick = async ()=>{
+  const r = await fetch('/account_api.php?action=forgot_password_email', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    credentials:'include',
+    body: JSON.stringify({})
+  });
+
+  const raw = await r.text();
+  let d = null;
+  try { d = JSON.parse(raw); } catch(e) {}
+
+  if(r.ok && d && d.ok){
+    if(d.rateLimited){
+  const s = d.retry_in ? d.retry_in : 60;
+  showMsg(forgotMsg, false, 'Արդեն ուղարկվել է։ Փորձիր ' + s + ' վրկ հետո։');
+} else {
+  showMsg(forgotMsg, true, 'Վերականգնման նամակը ուղարկվեց ✅ Ստուգիր Inbox/Spam։');
+}
+  }else{
+    showMsg(forgotMsg, false, (d && d.error) ? d.error : ('Server RAW: ' + raw.slice(0,200)));
+  }
+};
+
+function formatSessionTime(value){
+  if(!value) return '—';
+  return value.replace('T', ' ').replace('.000Z', '');
+}
+
+function sessionLabel(s){
+  let deviceName = String(s.device_name || '').trim();
+  deviceName = deviceName.replace(/\s*\|\s*origin:(app|admin-app|web)\s*$/i, '').trim();
+  deviceName = deviceName.replace(/\s*•\s*(Ծրագիր|Ադմին ծրագիր|Կայք|app|admin-app|web)\s*$/u, '').trim();
+  const browser = String(s.browser || '').trim();
+  const platform = String(s.platform || '').trim();
+
+  if(deviceName){
+    const normalizedDevice = deviceName.toLowerCase();
+    const normalizedBrowser = browser.toLowerCase();
+    const normalizedPlatform = platform.toLowerCase();
+
+    const hasBrowser = normalizedBrowser && normalizedDevice.includes(normalizedBrowser);
+    const hasPlatform = normalizedPlatform && normalizedDevice.includes(normalizedPlatform);
+
+    if(hasBrowser && hasPlatform){
+      return deviceName;
+    }
+  }
+
+  const parts = [];
+  if(platform) parts.push(platform);
+  if(browser && browser.toLowerCase() !== platform.toLowerCase()) parts.push(browser);
+
+  if(parts.length) return parts.join(' • ');
+  if(deviceName) return deviceName;
+
+  return (s.device_name && String(s.device_name).trim())
+    || [s.platform, s.browser].filter(Boolean).join(' • ')
+    || 'Անհայտ սարք';
+}
+
+async function loadActiveSessions(){
+  if(!sessionsList) return;
+
+  try{
+    const r = await fetch('/account_api.php?action=get_active_sessions', {
+      credentials:'include'
+    });
+
+    const raw = await r.text();
+    let list = null;
+
+    try{
+      list = JSON.parse(raw);
+    }catch(e){
+      console.error('get_active_sessions JSON parse error:', raw);
+      showMsg(sessionsMsg, false, 'Սերվերի պատասխանը JSON չէ։');
+      sessionsList.innerHTML = '<div class="empty">Սեանսները հասանելի չեն</div>';
+      return;
+    }
+
+    console.log('get_active_sessions =>', list);
+
+    if(!r.ok){
+      showMsg(sessionsMsg, false, (list && list.error) ? list.error : 'Չհաջողվեց բեռնել սեանսները։');
+      sessionsList.innerHTML = '<div class="empty">Սեանսները հասանելի չեն</div>';
+      return;
+    }
+
+    if(!Array.isArray(list)){
+      showMsg(sessionsMsg, false, 'Սխալ տվյալների ձևաչափ։');
+      sessionsList.innerHTML = '<div class="empty">Սեանսները հասանելի չեն</div>';
+      return;
+    }
+
+    if(!list.length){
+      sessionsMsg.style.display = 'none';
+      sessionsList.innerHTML = '<div class="empty">Ակտիվ սեանսներ չկան</div>';
+      return;
+    }
+
+    sessionsMsg.style.display = 'none';
+
+    sessionsList.innerHTML = list.map(s => `
+      <div class="session-item">
+        <div class="session-main">
+          <div class="session-title">
+  <span class="session-device">${escapeHtml(sessionLabel(s))}</span>
+  ${s.session_origin ? `<span class="session-badge">${escapeHtml(s.session_origin)}</span>` : ``}
+  ${s.is_current ? `<span class="session-badge current">Ընթացիկ</span>` : ``}
+  ${s.remembered ? `<span class="session-badge remembered">Հիշել ինձ</span>` : ``}
+</div>
+
+          <div class="session-meta">
+            <span>IP: ${escapeHtml(s.ip_address || '—')}</span>
+            <span>Վերջին ակտիվություն: ${escapeHtml(formatSessionTime(s.last_used_at || s.created_at))}</span>
+            <span>Մինչև: ${escapeHtml(formatSessionTime(s.expires_at))}</span>
+          </div>
+        </div>
+
+        <div class="session-actions">
+          ${s.is_current
+  ? `<button class="btn secondary" type="button" onclick="window.closeSession(${Number(s.id)})">Դուրս գալ</button>`
+  : `<button class="btn secondary" type="button" onclick="window.closeSession(${Number(s.id)})">Փակել սեսիան</button>`
+}
+        </div>
+      </div>
+    `).join('');
+  }catch(e){
+    console.error('loadActiveSessions error:', e);
+    showMsg(sessionsMsg, false, 'Ցանցային սխալ։');
+    sessionsList.innerHTML = '<div class="empty">Սեանսները հասանելի չեն</div>';
+  }
+}
+
+window.closeSession = async function(sessionId){
+  try{
+    const r = await fetch('/account_api.php?action=delete_session', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      body: JSON.stringify({ session_id: sessionId })
+    });
+
+    const raw = await r.text();
+    let d = null;
+    try { d = JSON.parse(raw); } catch(e) {}
+
+    if(r.ok && d && d.ok){
+      if(d.logged_out){
+        location.href = withAppSource('/loginuser.php');
+        return;
+      }
+
+      showMsg(sessionsMsg, true, 'Սեանսը փակվեց։');
+      await loadActiveSessions();
+    }else{
+      showMsg(sessionsMsg, false, (d && d.error) ? d.error : 'Չհաջողվեց փակել սեանսը։');
+    }
+  }catch(e){
+    showMsg(sessionsMsg, false, 'Ցանցային սխալ։');
+  }
+};
+
+closeOtherSessionsBtn?.addEventListener('click', async ()=>{
+  try{
+    const r = await fetch('/account_api.php?action=delete_other_sessions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      body: JSON.stringify({})
+    });
+
+    const raw = await r.text();
+    let d = null;
+    try { d = JSON.parse(raw); } catch(e) {}
+
+    if(r.ok && d && d.ok){
+      showMsg(sessionsMsg, true, 'Մյուս սեանսները փակվեցին։');
+      await loadActiveSessions();
+    }else{
+      showMsg(sessionsMsg, false, (d && d.error) ? d.error : 'Չհաջողվեց փակել մյուս սեանսները։');
+    }
+  }catch(e){
+    showMsg(sessionsMsg, false, 'Ցանցային սխալ։');
+  }
+});
+
+let sessionsTimer = null;
+const accountLoaderHoldKey = 'account-bootstrap';
+window.WP?.holdLoader?.(accountLoaderHoldKey);
+
+function startSessionsPolling(){
+  if(sessionsTimer) clearInterval(sessionsTimer);
+  sessionsTimer = setInterval(()=>{
+    if(document.visibilityState === 'visible'){
+      loadActiveSessions().catch(()=>{});
+    }
+  }, 15000);
+}
+
+function stopSessionsPolling(){
+  if(sessionsTimer){
+    clearInterval(sessionsTimer);
+    sessionsTimer = null;
+  }
+}
+
+window.addEventListener('DOMContentLoaded', async ()=>{
+  try{
+    await loadMe();
+    await loadPushStatus();
+    await loadActiveSessions();
+    startVerifPolling();
+    startSessionsPolling();
+
+    verifyEmailInp.addEventListener('focus', ()=> stopVerifPolling());
+    verifyEmailInp.addEventListener('blur',  ()=> startVerifPolling());
+  } finally {
+    window.WP?.releaseLoader?.(accountLoaderHoldKey, 60);
+  }
+});
+
+</script>
+
+<script type="module">
+  import { initNavbarAuthUI, favApiBase } from '/fav_bridge.js';
+  initNavbarAuthUI();
+  window.__favApiBase = favApiBase;
+</script>
+
+</body>
+</html>

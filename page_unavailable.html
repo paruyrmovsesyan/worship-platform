@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="hy">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Էջը ժամանակավորապես հասանելի չէ — Worship Platform</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/wolarmyouth.jpg" type="image/jpeg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Worship Platform">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#070910">
+  <script src="/loader.js" defer></script>
+  <script src="/pwa-init.js" defer></script>
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%}
+    body{
+      font-family:Inter,system-ui,sans-serif;
+      color:#eef3ff;
+      background:
+        radial-gradient(circle at top left,rgba(107,124,255,.18),transparent 28%),
+        radial-gradient(circle at top right,rgba(87,214,195,.12),transparent 24%),
+        linear-gradient(180deg,#05070d 0%,#0b1020 100%);
+    }
+    body.mode-web{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    body.mode-app{
+      min-height:100vh;
+      padding:18px 16px 122px;
+    }
+    .shell{
+      width:min(1040px,100%);
+      margin:0 auto;
+    }
+    .hero{
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:30px;
+      background:linear-gradient(180deg,rgba(11,16,32,.84),rgba(11,16,32,.64));
+      box-shadow:0 26px 70px rgba(0,0,0,.28);
+      backdrop-filter:blur(18px) saturate(130%);
+      -webkit-backdrop-filter:blur(18px) saturate(130%);
+      overflow:hidden;
+    }
+    .hero-inner{
+      display:grid;
+      grid-template-columns:minmax(0,1.2fr) minmax(260px,.8fr);
+      gap:18px;
+      padding:28px;
+      align-items:stretch;
+    }
+    .copy{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      width:max-content;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);
+      color:#f6c87a;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+    }
+    h1{
+      margin:0;
+      font-size:clamp(28px,4vw,42px);
+      line-height:.98;
+      letter-spacing:-.04em;
+      color:#f7f9ff;
+    }
+    p{
+      margin:0;
+      font-size:15px;
+      line-height:1.65;
+      color:#aeb9cf;
+      max-width:58ch;
+    }
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:4px;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:12px 16px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.08);
+      text-decoration:none;
+      color:#eef3ff;
+      background:rgba(255,255,255,.05);
+      font-weight:800;
+      font-size:13px;
+      cursor:pointer;
+    }
+    .btn.primary{
+      background:linear-gradient(135deg,#6b7cff,#8ea1ff);
+      border-color:transparent;
+      color:#fff;
+      box-shadow:0 14px 30px rgba(107,124,255,.28);
+    }
+    .stats{
+      display:grid;
+      gap:10px;
+      align-content:start;
+    }
+    .stat{
+      padding:16px;
+      border-radius:20px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.05);
+    }
+    .stat strong{
+      display:block;
+      margin-bottom:6px;
+      font-size:14px;
+      font-weight:800;
+      color:#eef3ff;
+    }
+    .stat span{
+      display:block;
+      font-size:13px;
+      line-height:1.5;
+      color:#9eabc4;
+    }
+    .context{
+      margin-top:14px;
+      padding:16px 18px;
+      border-top:1px solid rgba(255,255,255,.06);
+      background:rgba(255,255,255,.03);
+      color:#95a4c0;
+      font-size:13px;
+      line-height:1.55;
+    }
+    body.mode-app .hero{
+      margin-top:8px;
+    }
+    body.mode-web .hero{
+      max-width:980px;
+    }
+    @media (max-width: 860px){
+      .hero-inner{grid-template-columns:1fr;padding:22px}
+    }
+    @media (max-width: 720px){
+      body.mode-web{padding:14px}
+      body.mode-app{padding:12px 12px 108px}
+      .hero{border-radius:24px}
+      .hero-inner{padding:18px;gap:14px}
+      .eyebrow{font-size:11px;padding:7px 10px}
+      p{font-size:14px}
+      .actions{display:grid;grid-template-columns:1fr;gap:8px}
+      .btn{width:100%}
+      .stat{padding:14px;border-radius:16px}
+      .context{padding:14px 16px}
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="copy">
+          <span class="eyebrow" id="modeEyebrow">Worship Platform</span>
+          <h1 id="pageTitle">Այս էջը ժամանակավորապես հասանելի չէ</h1>
+          <p id="pageText">Այս պահին տվյալ բաժնի վրա կատարվում են տեխնիկական աշխատանքներ։ Խնդրում ենք փորձել մի փոքր ուշ կամ բացել մեկ այլ հասանելի բաժին։</p>
+          <div class="actions">
+            <a class="btn primary" id="primaryAction" href="/">Գնալ գլխավոր էջ</a>
+            <button class="btn" id="retryBtn" type="button">Փորձել նորից</button>
+          </div>
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <strong id="scopeTitle">Կայքային տարբերակ</strong>
+            <span id="scopeText">Այս պահին տվյալ էջը կայքի համար փակված է տեխնիկական սպասարկման պատճառով։</span>
+          </div>
+          <div class="stat">
+            <strong>Ինչ կարող ես անել</strong>
+            <span id="helpText">Վերադարձրու գլխավոր էջը կամ օգտագործիր ներքևի ծրագրային բաժինները, եթե դրանք հասանելի են։</span>
+          </div>
+          <div class="stat">
+            <strong>Հաղորդագրություն</strong>
+            <span id="messageText">Տվյալ բաժինը ժամանակավորապես անհասանելի է։</span>
+          </div>
+        </div>
+      </div>
+      <div class="context" id="pageContext">Տեխնիկական սպասարկման ընթացքում տվյալ էջը ժամանակավորապես փակված է, բայց մնացած հասանելի բաժինները կարող են շարունակել աշխատել։</div>
+    </section>
+  </main>
+  <script>
+    (function(){
+      var params = new URLSearchParams(window.location.search);
+      var source = (params.get("source") || "").toLowerCase();
+      var mode = (params.get("mode") || "").toLowerCase();
+      var page = (params.get("page") || "").toLowerCase();
+      var message = params.get("message") || "";
+      var isApp = source === "pwa" || source === "admin-app" || mode === "app" ||
+        (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+        window.navigator.standalone === true;
+
+      var labels = {
+        landing: "գլխավոր էջը",
+        main: "երգերի գրադարանը",
+        song: "երգի դիտման էջը",
+        favorites: "պահպանված երգերը",
+        setlists: "սեթլիստների բաժինը",
+        account: "հաշվի բաժինը",
+        news: "նորությունների բաժինը",
+        auth: "մուտք/գրանցման բաժինը"
+      };
+
+      var pageLabel = labels[page] || "այս բաժինը";
+      document.body.classList.add(isApp ? "mode-app" : "mode-web");
+
+      var modeEyebrow = document.getElementById("modeEyebrow");
+      var pageTitle = document.getElementById("pageTitle");
+      var pageText = document.getElementById("pageText");
+      var scopeTitle = document.getElementById("scopeTitle");
+      var scopeText = document.getElementById("scopeText");
+      var helpText = document.getElementById("helpText");
+      var messageText = document.getElementById("messageText");
+      var pageContext = document.getElementById("pageContext");
+      var primaryAction = document.getElementById("primaryAction");
+      var retryBtn = document.getElementById("retryBtn");
+
+      if(isApp){
+        modeEyebrow.textContent = "Worship ծրագիր";
+        pageTitle.textContent = "Այս էջը հիմա ծրագրում հասանելի չէ";
+        pageText.textContent = "Այս պահին " + pageLabel + " փակված է ծրագրի համար։ Կարող ես օգտվել մյուս հասանելի բաժիններից կամ մի փոքր ուշ կրկին փորձել։";
+        scopeTitle.textContent = "Ծրագրային տարբերակ";
+        scopeText.textContent = "Տվյալ բաժինը ծրագրի ներսում ժամանակավորապես անջատված է։ Եթե ներքևում տեսնում ես tab bar-ը, կարող ես անցնել մեկ այլ հասանելի բաժին։";
+        helpText.textContent = "Օգտվիր ներքևի tab bar-ից կամ բացիր երգերի գրադարանը, եթե այն հասանելի է։";
+        pageContext.textContent = "Ծրագրային էջերի կառավարումը կատարվում է ադմինից, և այս պահին փակված է միայն տվյալ բաժինը, ոչ ամբողջ ծրագիրը։";
+        primaryAction.href = "/main.html?source=" + encodeURIComponent(source || "pwa");
+        primaryAction.textContent = "Բացել երգերի բաժինը";
+      } else {
+        modeEyebrow.textContent = "Worship կայք";
+        pageTitle.textContent = "Այս էջը հիմա կայքում հասանելի չէ";
+        pageText.textContent = "Այս պահին " + pageLabel + " փակված է կայքի համար։ Կարող ես վերադառնալ գլխավոր էջ կամ մի փոքր ուշ կրկին փորձել։";
+        scopeTitle.textContent = "Կայքային տարբերակ";
+        scopeText.textContent = "Տվյալ բաժինը կայքում ժամանակավորապես անջատված է տեխնիկական սպասարկման պատճառով։";
+        helpText.textContent = "Վերադարձիր գլխավոր էջ կամ փորձիր քիչ հետո։";
+        pageContext.textContent = "Փակված է միայն տվյալ բաժինը, ոչ ամբողջ կայքը։ Մնացած ակտիվ էջերը կարող են շարունակել աշխատել։";
+        primaryAction.href = "/";
+        primaryAction.textContent = "Գնալ գլխավոր էջ";
+      }
+
+      if(message){
+        messageText.textContent = message;
+      } else {
+        messageText.textContent = "Տվյալ պահին " + pageLabel + " ժամանակավորապես անհասանելի է։";
+      }
+
+      retryBtn.addEventListener("click", function(){
+        window.location.reload();
+      });
+    })();
+  </script>
+</body>
+</html>

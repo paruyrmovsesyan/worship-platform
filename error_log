@@ -1,0 +1,867 @@
+[07-Sep-2025 18:58:24 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Access denied for user 'paruyr2005_wolarm'@'localhost' to database 'paruyr2005_wolarm' in /home3/paruyr2005/wolarm.pmstudio.am/api.php:8
+Stack trace:
+#0 /home3/paruyr2005/wolarm.pmstudio.am/api.php(8): mysqli->__construct('localhost', 'paruyr2005_wola...', 'wolarm2025', 'paruyr2005_wola...')
+#1 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/api.php on line 8
+[07-Sep-2025 18:58:30 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Access denied for user 'paruyr2005_wolarm'@'localhost' to database 'paruyr2005_wolarm' in /home3/paruyr2005/wolarm.pmstudio.am/api.php:8
+Stack trace:
+#0 /home3/paruyr2005/wolarm.pmstudio.am/api.php(8): mysqli->__construct('localhost', 'paruyr2005_wola...', 'wolarm2025', 'paruyr2005_wola...')
+#1 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/api.php on line 8
+[07-Sep-2025 18:58:31 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Access denied for user 'paruyr2005_wolarm'@'localhost' to database 'paruyr2005_wolarm' in /home3/paruyr2005/wolarm.pmstudio.am/api.php:8
+Stack trace:
+#0 /home3/paruyr2005/wolarm.pmstudio.am/api.php(8): mysqli->__construct('localhost', 'paruyr2005_wola...', 'wolarm2025', 'paruyr2005_wola...')
+#1 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/api.php on line 8
+[07-Sep-2025 18:58:32 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Access denied for user 'paruyr2005_wolarm'@'localhost' to database 'paruyr2005_wolarm' in /home3/paruyr2005/wolarm.pmstudio.am/api.php:8
+Stack trace:
+#0 /home3/paruyr2005/wolarm.pmstudio.am/api.php(8): mysqli->__construct('localhost', 'paruyr2005_wola...', 'wolarm2025', 'paruyr2005_wola...')
+#1 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/api.php on line 8
+[07-Sep-2025 18:58:50 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Access denied for user 'paruyr2005_wolarm'@'localhost' to database 'paruyr2005_wolarm' in /home3/paruyr2005/wolarm.pmstudio.am/api.php:8
+Stack trace:
+#0 /home3/paruyr2005/wolarm.pmstudio.am/api.php(8): mysqli->__construct('localhost', 'paruyr2005_wola...', 'wolarm2025', 'paruyr2005_wola...')
+#1 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/api.php on line 8
+[07-Sep-2025 18:59:57 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Access denied for user 'paruyr2005_wolarm'@'localhost' to database 'paruyr2005_wolarm' in /home3/paruyr2005/wolarm.pmstudio.am/api.php:10
+Stack trace:
+#0 /home3/paruyr2005/wolarm.pmstudio.am/api.php(10): mysqli->__construct('localhost', 'paruyr2005_wola...', 'wolarm2025', 'paruyr2005_wola...')
+#1 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/api.php on line 10
+[08-Sep-2025 11:40:41 UTC] PHP Warning:  Undefined variable $mysqli in /home3/paruyr2005/wolarm.pmstudio.am/api.php on line 50
+[08-Sep-2025 11:40:41 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/api.php:50
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/api.php on line 50
+[08-Sep-2025 11:41:14 UTC] PHP Warning:  Undefined variable $mysqli in /home3/paruyr2005/wolarm.pmstudio.am/api.php on line 50
+[08-Sep-2025 11:41:14 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/api.php:50
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/api.php on line 50
+[08-Oct-2025 18:34:03 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:34:03 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:34:03 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:34:03 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:34:04 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:34:04 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:34:04 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:34:04 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:34:06 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:34:06 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:34:06 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:34:06 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:34:11 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:34:11 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:34:11 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:34:11 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:34:13 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:34:13 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:34:13 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:34:13 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:35:08 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:35:08 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:35:08 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:35:08 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:22 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:22 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:22 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:22 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:25 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:25 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:25 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:25 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:26 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:26 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:26 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:26 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:26 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:26 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:26 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:26 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:26 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:26 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:26 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:26 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:27 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:27 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:27 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:27 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:27 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:27 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:27 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:27 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:27 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:27 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:27 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:27 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:27 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:27 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:27 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:27 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:33 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:33 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:33 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:33 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:33 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:33 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:35 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:35 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:35 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:35 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:35 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:35 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:35 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:35 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:35 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:35 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:35 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:35 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:36 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:36 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:36 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:36 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:36 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:36 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:36 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:36 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:36 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:36 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:36 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:36 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:36 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:36 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:36 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:36 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:36 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:36 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:37 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:37 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:37 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:37 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:37 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:37 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:45 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:45 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:45 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:45 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:45 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:45 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:45 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:45 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:45 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:45 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:45 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:45 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:45 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:45 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:45 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:45 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:45 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:45 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:50 UTC] PHP Warning:  include(db.php): Failed to open stream: No such file or directory in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:50 UTC] PHP Warning:  include(): Failed opening 'db.php' for inclusion (include_path='.:/opt/cpanel/ea-php81/root/usr/share/pear') in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 2
+[08-Oct-2025 18:39:50 UTC] PHP Warning:  Undefined variable $pdo in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:39:50 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:9
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 9
+[08-Oct-2025 18:42:31 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [1044] Access denied for user 'paruyr2005_wolarm'@'localhost' to database 'wolarm' in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:3
+Stack trace:
+#0 /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php(3): PDO->__construct('mysql:host=loca...', 'paruyr2005_wola...', 'wolarm2025')
+#1 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 3
+[08-Oct-2025 18:42:32 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [1044] Access denied for user 'paruyr2005_wolarm'@'localhost' to database 'wolarm' in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:3
+Stack trace:
+#0 /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php(3): PDO->__construct('mysql:host=loca...', 'paruyr2005_wola...', 'wolarm2025')
+#1 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 3
+[08-Oct-2025 18:42:35 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [1044] Access denied for user 'paruyr2005_wolarm'@'localhost' to database 'wolarm' in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:3
+Stack trace:
+#0 /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php(3): PDO->__construct('mysql:host=loca...', 'paruyr2005_wola...', 'wolarm2025')
+#1 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 3
+[08-Oct-2025 18:42:40 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [1044] Access denied for user 'paruyr2005_wolarm'@'localhost' to database 'wolarm' in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:3
+Stack trace:
+#0 /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php(3): PDO->__construct('mysql:host=loca...', 'paruyr2005_wola...', 'wolarm2025')
+#1 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 3
+[08-Oct-2025 18:42:42 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [1044] Access denied for user 'paruyr2005_wolarm'@'localhost' to database 'wolarm' in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:3
+Stack trace:
+#0 /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php(3): PDO->__construct('mysql:host=loca...', 'paruyr2005_wola...', 'wolarm2025')
+#1 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 3
+[08-Oct-2025 18:43:29 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [1044] Access denied for user 'paruyr2005_wolarm'@'localhost' to database 'wolarm' in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:3
+Stack trace:
+#0 /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php(3): PDO->__construct('mysql:host=loca...', 'paruyr2005_wola...', 'wolarm2025')
+#1 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 3
+[08-Oct-2025 18:43:29 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [1044] Access denied for user 'paruyr2005_wolarm'@'localhost' to database 'wolarm' in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:3
+Stack trace:
+#0 /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php(3): PDO->__construct('mysql:host=loca...', 'paruyr2005_wola...', 'wolarm2025')
+#1 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 3
+[08-Oct-2025 18:43:48 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [1044] Access denied for user 'paruyr2005_wolarm'@'localhost' to database 'wolarm' in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:3
+Stack trace:
+#0 /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php(3): PDO->__construct('mysql:host=loca...', 'paruyr2005_wola...', 'wolarm2025')
+#1 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 3
+[08-Oct-2025 18:44:05 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [1044] Access denied for user 'paruyr2005_wolarm'@'localhost' to database 'wolarm' in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:3
+Stack trace:
+#0 /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php(3): PDO->__construct('mysql:host=loca...', 'paruyr2005_wola...', 'wolarm2025')
+#1 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 3
+[08-Oct-2025 18:44:07 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [1044] Access denied for user 'paruyr2005_wolarm'@'localhost' to database 'wolarm' in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php:3
+Stack trace:
+#0 /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php(3): PDO->__construct('mysql:host=loca...', 'paruyr2005_wola...', 'wolarm2025')
+#1 {main}
+  thrown in /home3/paruyr2005/wolarm.pmstudio.am/favorites_api.php on line 3
+[06-Nov-2025 21:25:27 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Field 'id' doesn't have a default value in /home3/paruyr2005/worship.pmstudio.am/api.php:40
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(40): mysqli_stmt->execute()
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 40
+[06-Nov-2025 21:25:42 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Field 'id' doesn't have a default value in /home3/paruyr2005/worship.pmstudio.am/api.php:40
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(40): mysqli_stmt->execute()
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 40
+[06-Nov-2025 21:25:43 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Field 'id' doesn't have a default value in /home3/paruyr2005/worship.pmstudio.am/api.php:40
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(40): mysqli_stmt->execute()
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 40
+[06-Nov-2025 21:25:52 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Field 'id' doesn't have a default value in /home3/paruyr2005/worship.pmstudio.am/api.php:40
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(40): mysqli_stmt->execute()
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 40
+[06-Nov-2025 21:29:55 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Out of range value for column 'id' at row 1 in /home3/paruyr2005/worship.pmstudio.am/api.php:40
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(40): mysqli_stmt->execute()
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 40
+[06-Nov-2025 21:30:03 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Out of range value for column 'id' at row 1 in /home3/paruyr2005/worship.pmstudio.am/api.php:40
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(40): mysqli_stmt->execute()
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 40
+[06-Nov-2025 21:30:04 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Out of range value for column 'id' at row 1 in /home3/paruyr2005/worship.pmstudio.am/api.php:40
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(40): mysqli_stmt->execute()
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 40
+[06-Nov-2025 21:30:05 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Out of range value for column 'id' at row 1 in /home3/paruyr2005/worship.pmstudio.am/api.php:40
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(40): mysqli_stmt->execute()
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 40
+[06-Nov-2025 21:30:05 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Out of range value for column 'id' at row 1 in /home3/paruyr2005/worship.pmstudio.am/api.php:40
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(40): mysqli_stmt->execute()
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 40
+[06-Nov-2025 21:30:05 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Out of range value for column 'id' at row 1 in /home3/paruyr2005/worship.pmstudio.am/api.php:40
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(40): mysqli_stmt->execute()
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 40
+[18-Jan-2026 20:33:22 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [1045] Access denied for user 'USER'@'localhost' (using password: YES) in /home3/paruyr2005/worship.pmstudio.am/login_api.php:5
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/login_api.php(5): PDO->__construct('mysql:host=loca...', 'USER', Object(SensitiveParameterValue))
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/login_api.php on line 5
+[18-Jan-2026 20:33:24 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [1045] Access denied for user 'USER'@'localhost' (using password: YES) in /home3/paruyr2005/worship.pmstudio.am/login_api.php:5
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/login_api.php(5): PDO->__construct('mysql:host=loca...', 'USER', Object(SensitiveParameterValue))
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/login_api.php on line 5
+[18-Jan-2026 20:33:25 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [1045] Access denied for user 'USER'@'localhost' (using password: YES) in /home3/paruyr2005/worship.pmstudio.am/login_api.php:5
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/login_api.php(5): PDO->__construct('mysql:host=loca...', 'USER', Object(SensitiveParameterValue))
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/login_api.php on line 5
+[18-Jan-2026 22:47:49 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function opcache_reset() in /home3/paruyr2005/worship.pmstudio.am/reset.php:2
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/reset.php on line 2
+[18-Jan-2026 22:47:52 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function opcache_reset() in /home3/paruyr2005/worship.pmstudio.am/reset.php:2
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/reset.php on line 2
+[18-Jan-2026 22:47:53 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function opcache_reset() in /home3/paruyr2005/worship.pmstudio.am/reset.php:2
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/reset.php on line 2
+[18-Jan-2026 22:47:54 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function opcache_reset() in /home3/paruyr2005/worship.pmstudio.am/reset.php:2
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/reset.php on line 2
+[18-Jan-2026 22:47:55 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function opcache_reset() in /home3/paruyr2005/worship.pmstudio.am/reset.php:2
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/reset.php on line 2
+[18-Jan-2026 22:48:10 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function opcache_reset() in /home3/paruyr2005/worship.pmstudio.am/reset.php:2
+Stack trace:
+#0 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/reset.php on line 2
+[25-Jan-2026 19:05:34 UTC] PHP Warning:  file_get_contents(/home3/paruyr2005/worship.pmstudio.amsite_status.json): Failed to open stream: No such file or directory in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 5
+[25-Jan-2026 19:05:34 UTC] PHP Warning:  Undefined array key "mode" in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 38
+[25-Jan-2026 19:05:34 UTC] PHP Warning:  Undefined array key "manual_mode" in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 44
+[25-Jan-2026 19:05:34 UTC] PHP Warning:  Undefined array key "manual_message" in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 45
+[25-Jan-2026 19:05:35 UTC] PHP Warning:  Undefined array key "mode" in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 38
+[25-Jan-2026 19:05:35 UTC] PHP Warning:  Undefined array key "manual_mode" in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 44
+[25-Jan-2026 19:05:35 UTC] PHP Warning:  Undefined array key "manual_message" in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 45
+[25-Jan-2026 19:05:42 UTC] PHP Warning:  Undefined array key "mode" in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 38
+[25-Jan-2026 19:05:42 UTC] PHP Warning:  Undefined array key "manual_mode" in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 44
+[25-Jan-2026 19:05:42 UTC] PHP Warning:  Undefined array key "manual_message" in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 45
+[25-Jan-2026 19:05:44 UTC] PHP Warning:  Undefined array key "mode" in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 38
+[25-Jan-2026 19:05:44 UTC] PHP Warning:  Undefined array key "manual_mode" in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 44
+[25-Jan-2026 19:05:44 UTC] PHP Warning:  Undefined array key "manual_message" in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 45
+[25-Jan-2026 19:41:58 UTC] PHP Warning:  file_get_contents(/home3/paruyr2005/worship.pmstudio.am/site_status.json): Failed to open stream: No such file or directory in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 5
+[25-Jan-2026 19:41:58 UTC] PHP Warning:  Undefined array key "mode" in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 38
+[25-Jan-2026 19:41:58 UTC] PHP Warning:  Undefined array key "manual_mode" in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 44
+[25-Jan-2026 19:41:58 UTC] PHP Warning:  Undefined array key "manual_message" in /home3/paruyr2005/worship.pmstudio.am/api_health.php on line 45
+[30-Jan-2026 15:24:04 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:24:07 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:24:10 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:24:11 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:24:13 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:24:13 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:24:14 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:24:14 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:24:15 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:24:16 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:25:02 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:25:06 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:25:06 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:25:08 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:25:21 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:25:25 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:25:29 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:25:29 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:25:31 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:26:28 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:26:34 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:26:34 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:26:35 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:26:35 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:26:36 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 15:26:36 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 18:10:41 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:38
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(38): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 38
+[30-Jan-2026 18:10:42 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:38
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(38): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 38
+[30-Jan-2026 18:10:42 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:38
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(38): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 38
+[30-Jan-2026 18:19:11 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 18:19:12 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 18:19:13 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 18:19:14 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 18:20:11 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 18:20:23 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 18:20:49 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 18:20:52 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 18:21:02 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:38
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(38): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 38
+[30-Jan-2026 18:21:04 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:38
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(38): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 38
+[30-Jan-2026 18:21:05 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:38
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(38): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 38
+[30-Jan-2026 18:21:16 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:38
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(38): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 38
+[30-Jan-2026 18:21:17 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:38
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(38): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 38
+[30-Jan-2026 18:32:49 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 18:32:55 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:51
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(51): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 51
+[30-Jan-2026 18:33:19 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:38
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(38): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 38
+[30-Jan-2026 18:33:22 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:38
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(38): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 38
+[30-Jan-2026 18:33:22 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:38
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(38): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 38
+[30-Jan-2026 18:33:23 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:38
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(38): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 38
+[30-Jan-2026 18:33:23 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:38
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(38): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 38
+[30-Jan-2026 18:33:24 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:38
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(38): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 38
+[30-Jan-2026 18:46:02 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:38
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(38): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 38
+[30-Jan-2026 18:46:27 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:38
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(38): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 38
+[30-Jan-2026 18:51:43 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:78
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(78): mysqli->prepare('UPDATE songs SE...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 78
+[30-Jan-2026 18:56:24 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'lyrics' in 'field list' in /home3/paruyr2005/worship.pmstudio.am/api.php:48
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(48): mysqli->prepare('INSERT INTO son...')
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 48
+[31-Jan-2026 09:10:01 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /home3/paruyr2005/worship.pmstudio.am/api.php:52
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(52): mysqli_stmt->bind_param('sssssi', '\xD5\x84\xD5\xA5\xD5\xAF \xD5\xB1\xD5\xA1\xD5\xB5\xD5\xB6...', 'Wolarm Youth', 'D', '', 'Verse\nBm l Em7 ...', '\xD5\x84\xD5\xA5\xD5\xAF \xD5\x81\xD5\xA1\xD5\xB5\xD5\xB6...', 86)
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 52
+[31-Jan-2026 09:10:06 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /home3/paruyr2005/worship.pmstudio.am/api.php:52
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(52): mysqli_stmt->bind_param('sssssi', '\xD5\x84\xD5\xA5\xD5\xAF \xD5\xB1\xD5\xA1\xD5\xB5\xD5\xB6...', 'Wolarm Youth', 'D', '', 'Verse\nBm l Em7 ...', '\xD5\x84\xD5\xA5\xD5\xAF \xD5\x81\xD5\xA1\xD5\xB5\xD5\xB6...', 86)
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 52
+[31-Jan-2026 09:14:12 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /home3/paruyr2005/worship.pmstudio.am/api.php:52
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(52): mysqli_stmt->bind_param('sssssi', '\xD5\x84\xD5\xA5\xD5\xAF \xD5\xB1\xD5\xA1\xD5\xB5\xD5\xB6...', 'Wolarm Youth', 'D', '', 'Verse\nBm l Em7 ...', '\xD5\x84\xD5\xA5\xD5\xAF \xD5\x81\xD5\xA1\xD5\xB5\xD5\xB6...', 86)
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 52
+[31-Jan-2026 09:14:14 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /home3/paruyr2005/worship.pmstudio.am/api.php:52
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(52): mysqli_stmt->bind_param('sssssi', '\xD5\x84\xD5\xA5\xD5\xAF \xD5\xB1\xD5\xA1\xD5\xB5\xD5\xB6...', 'Wolarm Youth', 'D', '', 'Verse\nBm l Em7 ...', '\xD5\x84\xD5\xA5\xD5\xAF \xD5\x81\xD5\xA1\xD5\xB5\xD5\xB6...', 86)
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 52
+[31-Jan-2026 09:14:25 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /home3/paruyr2005/worship.pmstudio.am/api.php:52
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(52): mysqli_stmt->bind_param('sssssi', '\xD5\x84\xD5\xA5\xD5\xAF \xD5\xB1\xD5\xA1\xD5\xB5\xD5\xB6...', 'Wolarm Youth', 'D', '', 'Verse\nBm l Em7 ...', '\xD5\x84\xD5\xA5\xD5\xAF \xD5\x81\xD5\xA1\xD5\xB5\xD5\xB6...', 86)
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 52
+[31-Jan-2026 09:17:06 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /home3/paruyr2005/worship.pmstudio.am/api.php:52
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(52): mysqli_stmt->bind_param('sssssi', '\xD5\x84\xD5\xA5\xD5\xAF \xD5\xB1\xD5\xA1\xD5\xB5\xD5\xB6...', 'Wolarm Youth', 'D', '', 'Verse\nBm l Em7 ...', '\xD5\x84\xD5\xA5\xD5\xAF \xD5\x81\xD5\xA1\xD5\xB5\xD5\xB6...', 86)
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 52
+[31-Jan-2026 09:17:15 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /home3/paruyr2005/worship.pmstudio.am/api.php:52
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(52): mysqli_stmt->bind_param('sssssi', '\xD5\x84\xD5\xA5\xD5\xAF \xD5\xB1\xD5\xA1\xD5\xB5\xD5\xB6...', 'Wolarm Youth', 'D', '', 'Verse\nBm l Em7 ...', '\xD5\x84\xD5\xA5\xD5\xAF \xD5\x81\xD5\xA1\xD5\xB5\xD5\xB6...', 86)
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 52
+[31-Jan-2026 09:18:54 UTC] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in /home3/paruyr2005/worship.pmstudio.am/api.php:52
+Stack trace:
+#0 /home3/paruyr2005/worship.pmstudio.am/api.php(52): mysqli_stmt->bind_param('sssssi', '\xD5\x84\xD5\xA5\xD5\xAF \xD5\xB1\xD5\xA1\xD5\xB5\xD5\xB6...', 'Wolarm Youth', 'D', '', 'Verse\nBm l Em7 ...', '\xD5\x84\xD5\xA5\xD5\xAF \xD5\x81\xD5\xA1\xD5\xB5\xD5\xB6...', 86)
+#1 {main}
+  thrown in /home3/paruyr2005/worship.pmstudio.am/api.php on line 52
+[01-Mar-2026 14:27:43 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[28000] [1045] Access denied for user 'pmstudio_wolarm'@'localhost' (using password: YES) in /home2/pmstudio/worship.pmstudio/loginuser.php:10
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio/loginuser.php(10): PDO->__construct()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio/loginuser.php on line 10
+[01-Mar-2026 14:27:43 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[28000] [1045] Access denied for user 'pmstudio_wolarm'@'localhost' (using password: YES) in /home2/pmstudio/worship.pmstudio/registeruser.php:10
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio/registeruser.php(10): PDO->__construct()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio/registeruser.php on line 10
+[01-Mar-2026 16:49:53 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'email_last_password_reset_sent_at' in 'field list' in /home2/pmstudio/worship.pmstudio.am/account_api.php:300
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/account_api.php(300): PDOStatement->execute()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/account_api.php on line 300
+[01-Mar-2026 16:49:57 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'email_last_password_reset_sent_at' in 'field list' in /home2/pmstudio/worship.pmstudio.am/account_api.php:300
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/account_api.php(300): PDOStatement->execute()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/account_api.php on line 300
+[01-Mar-2026 16:49:58 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'email_last_password_reset_sent_at' in 'field list' in /home2/pmstudio/worship.pmstudio.am/account_api.php:300
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/account_api.php(300): PDOStatement->execute()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/account_api.php on line 300
+[01-Mar-2026 16:49:59 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'email_last_password_reset_sent_at' in 'field list' in /home2/pmstudio/worship.pmstudio.am/account_api.php:300
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/account_api.php(300): PDOStatement->execute()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/account_api.php on line 300
+[01-Mar-2026 16:52:08 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'email_last_password_reset_sent_at' in 'field list' in /home2/pmstudio/worship.pmstudio.am/account_api.php:300
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/account_api.php(300): PDOStatement->execute()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/account_api.php on line 300
+[15-Mar-2026 15:20:06 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[22007]: Invalid datetime format: 1366 Incorrect string value: '\xD4\xBF\xD5\xAB\xD6\x80...' for column `pmstudio_wolarm`.`setlists`.`name` at row 1 in /home2/pmstudio/worship.pmstudio.am/setlists_api.php:69
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/setlists_api.php(69): PDOStatement->execute()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 69
+[15-Mar-2026 15:26:00 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[22007]: Invalid datetime format: 1366 Incorrect string value: '\xD4\xBF\xD5\xAB\xD6\x80...' for column `pmstudio_wolarm`.`setlists`.`name` at row 1 in /home2/pmstudio/worship.pmstudio.am/setlists_api.php:69
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/setlists_api.php(69): PDOStatement->execute()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 69
+[15-Mar-2026 15:27:09 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[22007]: Invalid datetime format: 1366 Incorrect string value: '\xD4\xBF\xD5\xAB\xD6\x80...' for column `pmstudio_wolarm`.`setlists`.`name` at row 1 in /home2/pmstudio/worship.pmstudio.am/setlists_api.php:69
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/setlists_api.php(69): PDOStatement->execute()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 69
+[15-Mar-2026 15:30:06 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[22007]: Invalid datetime format: 1366 Incorrect string value: '\xD4\xBF\xD5\xAB\xD6\x80...' for column `pmstudio_wolarm`.`setlists`.`name` at row 1 in /home2/pmstudio/worship.pmstudio.am/setlists_api.php:69
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/setlists_api.php(69): PDOStatement->execute()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 69
+[15-Mar-2026 15:33:14 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[22007]: Invalid datetime format: 1366 Incorrect string value: '\xD4\xBF\xD5\xAB\xD6\x80...' for column `pmstudio_wolarm`.`setlists`.`name` at row 1 in /home2/pmstudio/worship.pmstudio.am/setlists_api.php:70
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/setlists_api.php(70): PDOStatement->execute()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 70
+[18-Mar-2026 20:54:01 UTC] PHP Warning:  Undefined variable $action in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 16
+[18-Mar-2026 20:54:05 UTC] PHP Warning:  Undefined variable $action in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 16
+[19-Mar-2026 07:34:29 UTC] PHP Warning:  Undefined variable $action in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 16
+[19-Mar-2026 07:56:40 UTC] PHP Warning:  Undefined variable $action in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 16
+[19-Mar-2026 07:56:42 UTC] PHP Warning:  Undefined variable $action in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 16
+[19-Mar-2026 07:57:00 UTC] PHP Warning:  Undefined variable $action in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 16
+[19-Mar-2026 07:57:36 UTC] PHP Warning:  Undefined variable $action in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 16
+[19-Mar-2026 07:57:39 UTC] PHP Warning:  Undefined variable $action in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 16
+[19-Mar-2026 07:57:42 UTC] PHP Warning:  Undefined variable $action in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 16
+[19-Mar-2026 07:57:48 UTC] PHP Warning:  Undefined variable $action in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 16
+[19-Mar-2026 09:52:24 UTC] PHP Warning:  Undefined variable $action in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 16
+[20-Mar-2026 09:16:38 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'session_key' in 'field list' in /home2/pmstudio/worship.pmstudio.am/loginuser.php:179
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/loginuser.php(179): PDOStatement->execute()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/loginuser.php on line 179
+[20-Mar-2026 14:12:42 UTC] PHP Warning:  Undefined variable $action in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 16
+[20-Mar-2026 15:23:07 UTC] PHP Warning:  Undefined variable $action in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 16
+[20-Mar-2026 16:08:52 UTC] PHP Warning:  Undefined variable $action in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 16
+[20-Mar-2026 16:08:54 UTC] PHP Warning:  Undefined variable $action in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 16
+[20-Mar-2026 16:11:47 UTC] PHP Warning:  Undefined variable $action in /home2/pmstudio/worship.pmstudio.am/setlists_api.php on line 16
+[20-Mar-2026 18:15:29 UTC] PHP Warning:  Undefined variable $conn in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:29 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php:62
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/auth_me.php(9): require_once()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:29 UTC] PHP Warning:  Undefined variable $conn in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:29 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php:62
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/auth_me.php(9): require_once()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:32 UTC] PHP Warning:  Undefined variable $conn in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:32 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php:62
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/loginuser.php(2): require_once()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:34 UTC] PHP Warning:  Undefined variable $conn in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:34 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php:62
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/loginuser.php(2): require_once()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:35 UTC] PHP Warning:  Undefined variable $conn in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:35 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php:62
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/loginuser.php(2): require_once()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:36 UTC] PHP Warning:  Undefined variable $conn in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:36 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php:62
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/loginuser.php(2): require_once()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:36 UTC] PHP Warning:  Undefined variable $conn in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:36 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php:62
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/loginuser.php(2): require_once()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:37 UTC] PHP Warning:  Undefined variable $conn in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:37 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php:62
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/loginuser.php(2): require_once()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:37 UTC] PHP Warning:  Undefined variable $conn in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:37 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php:62
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/loginuser.php(2): require_once()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:47 UTC] PHP Warning:  Undefined variable $conn in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:47 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php:62
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/setlists_api.php(12): require_once()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:52 UTC] PHP Warning:  Undefined variable $conn in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:52 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php:62
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/auth_me.php(9): require_once()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:52 UTC] PHP Warning:  Undefined variable $conn in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:52 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php:62
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/account_api.php(2): require_once()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:52 UTC] PHP Warning:  Undefined variable $conn in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62
+[20-Mar-2026 18:15:52 UTC] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php:62
+Stack trace:
+#0 /home2/pmstudio/worship.pmstudio.am/auth_me.php(9): require_once()
+#1 {main}
+  thrown in /home2/pmstudio/worship.pmstudio.am/auth_bootstrap.php on line 62

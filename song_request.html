@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="manifest" href="/manifest.json">
+<title>Երգի հարցում — Worship Platform</title>
+<meta name="description" content="Ուղարկիր նոր երգի կամ երգի խմբագրման հարցում Worship Platform-ի մոդերացիային։" />
+<link rel="icon" href="wolarm_youth.png" type="image/png" />
+<link rel="apple-touch-icon" href="/wolarmyouth.jpg" type="image/jpeg" />
+<meta name="theme-color" content="#0b1020">
+<link rel="stylesheet" href="/nav.css">
+<script src="/site_guard.js" defer></script>
+<script src="/i18n.js" defer></script>
+<script src="/loader.js" defer></script>
+<style>
+:root{
+  --bg:#0b1020;
+  --bg2:#131a34;
+  --card:rgba(255,255,255,.06);
+  --card-2:rgba(255,255,255,.04);
+  --line:rgba(255,255,255,.1);
+  --text:#eef3ff;
+  --muted:#a7b3d1;
+  --accent:#3a67ff;
+  --accent-2:#5d82ff;
+  --danger:#ff5c73;
+  --success:#33c48d;
+  --radius:20px;
+  --shadow:0 20px 60px rgba(0,0,0,.34);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:
+  radial-gradient(circle at top, rgba(69,107,255,.18), transparent 36%),
+  linear-gradient(180deg, var(--bg2) 0%, var(--bg) 58%, #070a14 100%);
+  color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+body{padding:0}
+.page{
+  max-width:1080px;
+  margin:0 auto;
+  padding:96px 18px 48px;
+}
+.hero{
+  display:grid;
+  grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);
+  gap:18px;
+  align-items:start;
+}
+.hero-card,.form-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(16px) saturate(125%);
+}
+.hero-card{padding:28px}
+.eyebrow{
+  display:inline-flex;
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.05);
+  color:#f2cc8f;
+  font-weight:800;
+  font-size:12px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.hero h1{
+  margin:16px 0 8px;
+  font-size:34px;
+  line-height:1.06;
+  letter-spacing:-.03em;
+}
+.hero p{
+  margin:0;
+  color:var(--muted);
+  line-height:1.7;
+  font-size:15px;
+}
+.hero-points{
+  display:grid;
+  gap:10px;
+  margin-top:20px;
+}
+.hero-point{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  padding:12px 14px;
+  border-radius:16px;
+  background:var(--card-2);
+  border:1px solid rgba(255,255,255,.08);
+}
+.hero-point strong{display:block;font-size:14px}
+.hero-point span{display:block;color:var(--muted);font-size:13px;line-height:1.55}
+.hero-side{
+  padding:22px;
+  display:grid;
+  gap:14px;
+}
+.mini-stat{
+  padding:14px 16px;
+  border-radius:16px;
+  background:var(--card-2);
+  border:1px solid rgba(255,255,255,.08);
+}
+.mini-stat strong{display:block;font-size:15px}
+.mini-stat span{display:block;margin-top:6px;color:var(--muted);font-size:13px;line-height:1.55}
+.form-card{
+  margin-top:18px;
+  padding:22px;
+  display:grid;
+  gap:18px;
+}
+.section-head h2{margin:0 0 8px;font-size:22px}
+.section-head p{margin:0;color:var(--muted);line-height:1.6}
+.status-banner{
+  display:none;
+  padding:14px 16px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.05);
+  line-height:1.55;
+}
+.status-banner.show{display:block}
+.status-banner.success{border-color:rgba(51,196,141,.35);background:rgba(51,196,141,.1)}
+.status-banner.error{border-color:rgba(255,92,115,.35);background:rgba(255,92,115,.1)}
+.status-banner.info{border-color:rgba(93,130,255,.28);background:rgba(93,130,255,.1)}
+.grid-2{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+.field{
+  display:grid;
+  gap:8px;
+}
+.field label{
+  font-weight:700;
+  font-size:13px;
+  color:#dbe3ff;
+}
+.field input,
+.field textarea,
+.field select{
+  width:100%;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(7,10,20,.66);
+  color:var(--text);
+  padding:14px 15px;
+  outline:none;
+  font:inherit;
+  transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.field textarea{min-height:140px;resize:vertical}
+.field input:focus,
+.field textarea:focus,
+.field select:focus{
+  border-color:rgba(93,130,255,.55);
+  box-shadow:0 0 0 4px rgba(93,130,255,.12);
+  background:rgba(7,10,20,.78);
+}
+.field-help{
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.55;
+}
+.form-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  align-items:center;
+}
+.btn{
+  border:0;
+  border-radius:16px;
+  min-height:50px;
+  padding:0 20px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  font:inherit;
+  font-weight:800;
+  text-decoration:none;
+  transition:transform .16s ease, opacity .16s ease, box-shadow .16s ease;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn-primary{
+  color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  box-shadow:0 14px 32px rgba(58,103,255,.28);
+}
+.btn-secondary{
+  color:var(--text);
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+}
+.btn-danger{
+  color:#fff;
+  background:linear-gradient(135deg,#cb3f5a,var(--danger));
+}
+.lock-box{
+  display:none;
+  padding:16px;
+  border-radius:18px;
+  border:1px dashed rgba(255,255,255,.18);
+  background:rgba(255,255,255,.04);
+}
+.lock-box.show{display:block}
+.lock-box strong{display:block;margin-bottom:6px}
+.lock-box p{margin:0;color:var(--muted);line-height:1.6}
+.pill-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.09);
+  color:#d9e3ff;
+  font-size:12px;
+  font-weight:700;
+}
+@media (max-width:900px){
+  .page{padding:88px 14px 30px}
+  .hero{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  .hero-card,.hero-side,.form-card{padding:18px}
+  .hero h1{font-size:28px}
+  .grid-2{grid-template-columns:1fr}
+  .form-actions{flex-direction:column;align-items:stretch}
+  .btn{width:100%}
+}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo"><a class="logo" href="/">WORSHIP PLATFORM</a></div>
+  <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+  <div class="menu" id="menu">
+    <a href="/">ԳԼԽԱՎՈՐ</a>
+    <a href="/main.html">ԵՐԳԵՐ</a>
+    <a href="/favorites.html">ՊԱՀՊԱՆԱԾ ԵՐԳԵՐ</a>
+    <a href="/news.html">ՆՈՐՈՒԹՅՈՒՆՆԵՐ</a>
+    <a id="loginBtn" class="login-btn" href="/loginuser.php">Մուտք</a>
+    <a id="registerBtn" class="login-btn" href="/registeruser.php">Գրանցում</a>
+    <span id="userBox" class="user-chip" style="display:none;">
+      <span class="user-meta">
+        <span id="userName" class="user-name">User</span>
+        <span class="user-sub">Account</span>
+      </span>
+      <a href="/account.html" class="icon-btn" title="Account" aria-label="Account">⚙</a>
+      <button id="logoutBtn" class="icon-btn" type="button" title="Logout" aria-label="Logout">⎋</button>
+    </span>
+  </div>
+</nav>
+
+<div class="page">
+  <section class="hero">
+    <article class="hero-card">
+      <span class="eyebrow" id="requestEyebrow">Մոդերացիա</span>
+      <h1 id="requestTitle">Ուղարկել նոր երգ</h1>
+      <p id="requestSubtitle">Լրացրու երգի տվյալները, իսկ ադմինը կստուգի և կհաստատի կամ կմերժի հարցումը։ Եթե սա արդեն առկա երգ է, այստեղ կարող ես ուղարկել դրա ուղղված տարբերակը։</p>
+
+      <div class="hero-points">
+        <div class="hero-point">
+          <div>1</div>
+          <div>
+            <strong>Ուղարկում ես հարցում</strong>
+            <span>Երգի վերնագիրը, տոնայնությունը, ակորդները, բառերը և անհրաժեշտ բացատրությունը գալիս են մոդերացիայի հերթ։</span>
+          </div>
+        </div>
+        <div class="hero-point">
+          <div>2</div>
+          <div>
+            <strong>Ադմինը նայում է փոփոխությունը</strong>
+            <span>Ադմինը տեսնում է նախորդ և առաջարկվող տարբերակները և որոշում է հաստատե՞լ, թե՞ մերժել։</span>
+          </div>
+        </div>
+        <div class="hero-point">
+          <div>3</div>
+          <div>
+            <strong>Հաստատվածը գնում է երգերի բազա</strong>
+            <span>Եթե հարցումը հաստատվի, այն անմիջապես կիրառվում է երգերի ցուցակում։</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <aside class="hero-card hero-side">
+      <div class="mini-stat">
+        <strong id="requestModeLabel">Նոր երգի հարցում</strong>
+        <span id="requestModeText">Այս ռեժիմը նախատեսված է նոր երգ առաջարկելու համար։</span>
+      </div>
+      <div class="mini-stat">
+        <strong>Մուտք պարտադիր է</strong>
+        <span>Հարցումը կապվում է կոնկրետ օգտահաշվին, որպեսզի ադմինը տեսնի թե ով է ուղարկել այն։</span>
+      </div>
+      <div class="mini-stat">
+        <strong>Լավագույն արդյունքի համար</strong>
+        <span>Փորձիր ուղարկել հնարավորինս ամբողջական տարբերակը, հատկապես եթե կա տարբեր լեզուներով վերնագիր կամ պատրաստ chord sheet։</span>
+      </div>
+    </aside>
+  </section>
+
+  <section class="form-card">
+    <div class="section-head">
+      <h2 id="formTitle">Հարցման ձև</h2>
+      <p id="formSubtitle">Սա ուղղակի չի փոխում երգը. նախ գնում է մոդերացիայի հերթ, հետո միայն ադմինը հաստատում կամ մերժում է։</p>
+    </div>
+
+    <div id="requestStatus" class="status-banner"></div>
+
+    <div id="loginLockBox" class="lock-box">
+      <strong>Հարցում ուղարկելու համար նախ մուտք գործիր</strong>
+      <p>Երբ մուտք գործես, այս էջը կվերաբացվի նույն հարցման համար, և դու կշարունակես լրացումը առանց նորից փնտրելու։</p>
+      <div class="form-actions" style="margin-top:12px;">
+        <a id="loginRequestBtn" class="btn btn-primary" href="/loginuser.php">Մուտք</a>
+        <a id="registerRequestBtn" class="btn btn-secondary" href="/registeruser.php">Գրանցում</a>
+      </div>
+    </div>
+
+    <div class="pill-row">
+      <span class="pill" id="requestTypePill">Տեսակ՝ նոր երգ</span>
+      <span class="pill" id="requestSongPill">Երգ՝ ընտրված չէ</span>
+    </div>
+
+    <form id="songRequestForm">
+      <input type="hidden" id="requestTypeInput" value="new">
+      <input type="hidden" id="requestSongIdInput" value="">
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="titleHy">Երգի վերնագիր հայերեն</label>
+          <input id="titleHy" type="text" placeholder="Օր. Եգիպտոս">
+        </div>
+        <div class="field">
+          <label for="songKey">Սկզբնական տոնայնություն</label>
+          <input id="songKey" type="text" placeholder="Օր. C կամ Am">
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="titleLat">Հայերեն լատինատառ</label>
+          <input id="titleLat" type="text" placeholder="Օր. Egiptos">
+        </div>
+        <div class="field">
+          <label for="artist">Կատարող / հեղինակ</label>
+          <input id="artist" type="text" placeholder="Եթե կա՝ գրիր այստեղ">
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="titleEn">Անգլերեն վերնագիր</label>
+          <input id="titleEn" type="text" placeholder="Օր. Egypt">
+        </div>
+        <div class="field">
+          <label for="titleRu">Ռուսերեն վերնագիր</label>
+          <input id="titleRu" type="text" placeholder="Օր. Египет">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="tags">Տեգեր</label>
+        <input id="tags" type="text" placeholder="Օր. worship, oldies, communion">
+      </div>
+
+      <div class="field">
+        <label for="chords">Ակորդներ</label>
+        <textarea id="chords" placeholder="Ակորդներով տարբերակը գրիր այստեղ"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="lyrics">Բառեր</label>
+        <textarea id="lyrics" placeholder="Եթե կա, երգի բառերը գրիր այստեղ"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="submittedMessage">Մեկնաբանություն ադմինի համար</label>
+        <textarea id="submittedMessage" placeholder="Օր. սա գործող երգի ուղղված տարբերակն է, կամ՝ սա նոր երգ է, որն ուզում եմ ավելացնել"></textarea>
+        <div class="field-help">Այս դաշտը կօգնի ադմինին ավելի արագ հասկանալ ինչն է փոխվել կամ ինչ ես առաջարկում։</div>
+      </div>
+
+      <div class="form-actions">
+        <button id="submitRequestBtn" class="btn btn-primary" type="submit">Ուղարկել մոդերացիայի</button>
+        <a id="cancelRequestBtn" class="btn btn-secondary" href="/main.html">Վերադառնալ</a>
+      </div>
+    </form>
+  </section>
+</div>
+
+<script type="module">
+import { initNavbarAuthUI } from '/fav_bridge.js';
+
+const params = new URLSearchParams(window.location.search);
+const songId = parseInt(params.get('song_id') || '0', 10) || 0;
+const sourcePath = songId > 0 ? `/song_view.html?id=${encodeURIComponent(String(songId))}` : '/main.html';
+const nextPath = window.location.pathname + window.location.search + window.location.hash;
+
+const requestStatus = document.getElementById('requestStatus');
+const requestTypeInput = document.getElementById('requestTypeInput');
+const requestSongIdInput = document.getElementById('requestSongIdInput');
+const requestTitle = document.getElementById('requestTitle');
+const requestSubtitle = document.getElementById('requestSubtitle');
+const requestModeLabel = document.getElementById('requestModeLabel');
+const requestModeText = document.getElementById('requestModeText');
+const formTitle = document.getElementById('formTitle');
+const formSubtitle = document.getElementById('formSubtitle');
+const requestTypePill = document.getElementById('requestTypePill');
+const requestSongPill = document.getElementById('requestSongPill');
+const loginLockBox = document.getElementById('loginLockBox');
+const loginRequestBtn = document.getElementById('loginRequestBtn');
+const registerRequestBtn = document.getElementById('registerRequestBtn');
+const submitRequestBtn = document.getElementById('submitRequestBtn');
+const cancelRequestBtn = document.getElementById('cancelRequestBtn');
+const form = document.getElementById('songRequestForm');
+
+const fields = {
+  titleHy: document.getElementById('titleHy'),
+  titleLat: document.getElementById('titleLat'),
+  titleEn: document.getElementById('titleEn'),
+  titleRu: document.getElementById('titleRu'),
+  artist: document.getElementById('artist'),
+  songKey: document.getElementById('songKey'),
+  tags: document.getElementById('tags'),
+  chords: document.getElementById('chords'),
+  lyrics: document.getElementById('lyrics'),
+  submittedMessage: document.getElementById('submittedMessage')
+};
+
+let authState = { ready: false, loggedIn: false, userId: null };
+
+function withAppSource(url){
+  if(window.WP && typeof window.WP.withAppSource === 'function'){
+    return window.WP.withAppSource(url);
+  }
+  return url;
+}
+
+function showStatus(message, type = 'info'){
+  requestStatus.textContent = message;
+  requestStatus.className = `status-banner show ${type}`;
+}
+
+function setLockedState(locked){
+  loginLockBox.classList.toggle('show', !!locked);
+  submitRequestBtn.disabled = !!locked;
+  form.querySelectorAll('input, textarea').forEach((input) => {
+    if (input === requestTypeInput || input === requestSongIdInput) return;
+    input.disabled = !!locked;
+  });
+}
+
+function buildSongApiUrl(id){
+  const url = new URL('/api.php', window.location.origin);
+  url.searchParams.set('id', String(id));
+  const lang = window.wpI18n?.getLang?.();
+  if(lang && lang !== 'hy'){
+    url.searchParams.set('lang', lang);
+  }
+  return url.toString();
+}
+
+async function loadAuthStatus(){
+  try{
+    const res = await fetch('/account_api.php?action=auth_status', { credentials:'include' });
+    const data = await res.json();
+    authState = {
+      ready: true,
+      loggedIn: !!(data && data.logged_in),
+      userId: data && data.user_id ? Number(data.user_id) : null
+    };
+  }catch(error){
+    authState = { ready: true, loggedIn: false, userId: null };
+  }
+
+  const loginTarget = withAppSource('/loginuser.php?next=' + encodeURIComponent(nextPath));
+  const registerTarget = withAppSource('/registeruser.php?next=' + encodeURIComponent(nextPath));
+  loginRequestBtn.href = loginTarget;
+  registerRequestBtn.href = registerTarget;
+
+  setLockedState(!authState.loggedIn);
+  if(!authState.loggedIn){
+    showStatus('Հարցում ուղարկելու համար նախ մուտք գործիր։', 'info');
+  }
+}
+
+function applyRequestMode(){
+  const isEdit = songId > 0;
+  requestTypeInput.value = isEdit ? 'edit' : 'new';
+  requestSongIdInput.value = isEdit ? String(songId) : '';
+  requestTitle.textContent = isEdit ? 'Ուղարկել խմբագրման առաջարկ' : 'Ուղարկել նոր երգ';
+  requestSubtitle.textContent = isEdit
+    ? 'Բաց երգի նոր տարբերակը կգնա մոդերացիայի, և ադմինը կհաստատի կամ կմերժի այն։'
+    : 'Լրացրու նոր երգի տվյալները, իսկ ադմինը կստուգի և կհաստատի կամ կմերժի հարցումը։';
+  requestModeLabel.textContent = isEdit ? 'Գոյություն ունեցող երգի փոփոխություն' : 'Նոր երգի հարցում';
+  requestModeText.textContent = isEdit
+    ? 'Այս ռեժիմը ստեղծված է արդեն առկա երգի ուղղված տարբերակ ուղարկելու համար։'
+    : 'Այս ռեժիմը նախատեսված է նոր երգ առաջարկելու համար։';
+  formTitle.textContent = isEdit ? 'Խմբագրման հարցման ձև' : 'Նոր երգի հարցման ձև';
+  formSubtitle.textContent = isEdit
+    ? 'Ադմինը կտեսնի գործող տարբերակը և քո առաջարկած փոփոխությունը կողք կողքի։'
+    : 'Նոր երգը նախ կանցնի ստուգում, հետո միայն կհայտնվի ընդհանուր ցանկում։';
+  requestTypePill.textContent = isEdit ? 'Տեսակ՝ խմբագրման առաջարկ' : 'Տեսակ՝ նոր երգ';
+  cancelRequestBtn.href = withAppSource(sourcePath);
+}
+
+function fillSong(song){
+  const variants = song && song.title_variants && typeof song.title_variants === 'object' ? song.title_variants : {};
+  fields.titleHy.value = variants.hy || song.title || '';
+  fields.titleLat.value = variants.lat || '';
+  fields.titleEn.value = variants.en || '';
+  fields.titleRu.value = variants.ru || '';
+  fields.artist.value = song.artist || '';
+  fields.songKey.value = song.song_key || song.key || '';
+  fields.tags.value = song.tags || '';
+  fields.chords.value = song.chords || '';
+  fields.lyrics.value = song.lyrics || '';
+  requestSongPill.textContent = `Երգ՝ ${variants.hy || song.title || ('#' + songId)}`;
+}
+
+async function loadSongIfNeeded(){
+  if(!(songId > 0)) {
+    requestSongPill.textContent = 'Երգ՝ նոր առաջարկ';
+    return;
+  }
+
+  try{
+    const res = await fetch(buildSongApiUrl(songId), { credentials:'include' });
+    const song = await res.json();
+    if(!res.ok || !song || !song.id){
+      showStatus('Չհաջողվեց բեռնել ընտրված երգը։ Կարող ես հարցումը լրացնել նաև ձեռքով։', 'error');
+      return;
+    }
+    fillSong(song);
+  }catch(error){
+    showStatus('Չհաջողվեց բեռնել ընտրված երգը։ Կարող ես հարցումը լրացնել նաև ձեռքով։', 'error');
+  }
+}
+
+function collectPayload(){
+  return {
+    request_type: requestTypeInput.value,
+    song_id: requestSongIdInput.value ? Number(requestSongIdInput.value) : 0,
+    title_hy: fields.titleHy.value.trim(),
+    title_lat: fields.titleLat.value.trim(),
+    title_en: fields.titleEn.value.trim(),
+    title_ru: fields.titleRu.value.trim(),
+    artist: fields.artist.value.trim(),
+    song_key: fields.songKey.value.trim(),
+    tags: fields.tags.value.trim(),
+    chords: fields.chords.value,
+    lyrics: fields.lyrics.value,
+    submitted_message: fields.submittedMessage.value.trim()
+  };
+}
+
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  if(!authState.loggedIn){
+    showStatus('Հարցում ուղարկելու համար նախ մուտք գործիր։', 'error');
+    return;
+  }
+
+  const payload = collectPayload();
+  submitRequestBtn.disabled = true;
+  showStatus('Հարցումը ուղարկվում է մոդերացիայի...', 'info');
+
+  try{
+    const res = await fetch('/song_requests_api.php?action=submit_request', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if(!res.ok || !data || data.ok === false){
+      throw new Error((data && data.message) ? data.message : 'Չհաջողվեց ուղարկել հարցումը։');
+    }
+
+    showStatus(data.message || 'Հարցումը ուղարկվեց։', 'success');
+    fields.submittedMessage.value = '';
+    if(payload.request_type === 'new'){
+      fields.titleHy.value = '';
+      fields.titleLat.value = '';
+      fields.titleEn.value = '';
+      fields.titleRu.value = '';
+      fields.artist.value = '';
+      fields.songKey.value = '';
+      fields.tags.value = '';
+      fields.chords.value = '';
+      fields.lyrics.value = '';
+    }
+  }catch(error){
+    showStatus(error && error.message ? error.message : 'Չհաջողվեց ուղարկել հարցումը։', 'error');
+  } finally {
+    submitRequestBtn.disabled = !authState.loggedIn;
+  }
+});
+
+function initMobileMenuDrawer(){
+  const hamburger = document.getElementById('hamburger');
+  const menu = document.getElementById('menu');
+  if(!hamburger || !menu || hamburger.dataset.drawerBound === '1') return;
+  hamburger.dataset.drawerBound = '1';
+
+  let backdrop = document.querySelector('.mobile-nav-backdrop');
+  if(!backdrop){
+    backdrop = document.createElement('div');
+    backdrop.className = 'mobile-nav-backdrop';
+    document.body.appendChild(backdrop);
+  }
+
+  const closeMenu = () => {
+    hamburger.classList.remove('active');
+    document.body.classList.remove('menu-open');
+    menu.classList.remove('open');
+  };
+  const openMenu = () => {
+    menu.classList.add('open');
+    hamburger.classList.add('active');
+    document.body.classList.add('menu-open');
+  };
+
+  hamburger.addEventListener('click', () => {
+    if(window.innerWidth > 900) return;
+    if(menu.classList.contains('open')) closeMenu();
+    else openMenu();
+  });
+  backdrop.addEventListener('click', closeMenu);
+  menu.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMenu));
+  document.addEventListener('keydown', (event) => {
+    if(event.key === 'Escape' && menu.classList.contains('open')) closeMenu();
+  });
+}
+
+window.WP?.holdLoader?.('song-request-page');
+await Promise.all([
+  initNavbarAuthUI().catch(() => {}),
+  loadAuthStatus(),
+  loadSongIfNeeded()
+]);
+applyRequestMode();
+initMobileMenuDrawer();
+window.WP?.releaseLoader?.('song-request-page', 60);
+</script>
+</body>
+</html>

@@ -1,0 +1,2652 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="manifest" href="/manifest.json">
+<title>Երգի դիտում — Worship Platform</title>
+<meta name="description" content="Դիտիր երգի բառերը, ակորդները, տոնայնությունը և հարմարեցրու երգը Worship Platform-ում։" />
+<meta property="og:title" content="Երգի դիտում — Worship Platform" />
+<meta property="og:description" content="Դիտիր երգի բառերը, ակորդները, տոնայնությունը և հարմարեցրու երգը Worship Platform-ում։" />
+<meta property="og:image" content="https://worship.pmstudio.am/wolarmyouth.jpg" />
+<meta property="og:url" content="https://worship.pmstudio.am/song_view.html" />
+<meta property="og:type" content="website" />
+<link rel="icon" href="wolarm_youth.png" type="image/png" />
+<link rel="apple-touch-icon" href="/wolarmyouth.jpg" type="image/jpeg" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Worship Platform">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b1020">
+<style id="wp-prepaint-bg">html,body{background:#0b1020;color-scheme:dark}</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="nav.css">
+<script src="/i18n.js" defer></script>
+<script src="loader.js" defer></script>
+<script src="/site_guard.js" defer></script>
+<style>
+:root {
+  --bg: #0f1222;
+  --card: rgba(255,255,255,0.05);
+  --glass: rgba(255,255,255,0.08);
+  --muted: #98a0b3;
+  --accent: #3367ff;
+  --accent-2: #2247d6;
+  --heart: #ff4b5c;
+  --radius: 16px;
+  --shadow: 0 8px 24px rgba(0,0,0,0.3);
+  --fs: 16px;
+  --gold:#f6c87a;
+  --gold2:#ffe1a8;
+  --purple:#6b4eff;
+  --blue:#2b6cff;
+  --dark:#070910;
+  --dark2:#0f1424;
+  --text:#f0f1f6;
+}
+
+:root.light .font-panel{
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(15,18,34,0.08);
+}
+
+:root.light {
+  --bg: #f3f6fb;
+  --card: rgba(255,255,255,0.9);
+  --glass: rgba(255,255,255,0.85);
+  --text: #0f1222;
+  --muted: #667085;
+  --accent: #3367ff;
+  --accent-2: #2247d6;
+  --heart: #ff3b30;
+  --radius: 14px;
+  --shadow: 0 6px 18px rgba(21,32,84,0.06);
+  --fs: 16px;
+}
+
+* {box-sizing:border-box;}
+html,body {height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;font-size:var(--fs);background:var(--bg);color:var(--text);}
+body{-moz-osx-font-smoothing:grayscale; padding:0px;}
+.app{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  padding-top: 70px;
+}
+.brand .subtitle {font-size:12px;color:var(--muted);margin:0; }
+.theme-btn {border:1px solid rgba(255,255,255,0.1);background:transparent;border-radius:12px;padding:6px 10px;cursor:pointer;color:var(--text);}
+.fav-btn {width:35px;height:35px;border-radius:12px;border:0;background: linear-gradient(135deg,var(--accent),var(--accent-2));color:white;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(50,80,200,0.2);}
+.fav-btn.inactive {background:rgba(255,255,255,0.06); color:var(--muted); border:1px solid rgba(255,255,255,0.06); box-shadow:none;}
+.main {display:flex;flex:1 1 auto;gap:20px;padding:18px;}
+.content {flex:1; display:flex;flex-direction:column;gap:14px;}
+.card{
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px) saturate(120%);
+}
+.content .card{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.song-header {display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;}
+.song-title {font-size:22px;font-weight:800;margin:0;}
+.song-artist {font-size:13px;color:var(--muted);margin:2px 0 0 0;}
+.info-row {display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
+.info-pill {background: rgba(255,255,255,0.02);padding:6px 10px;border-radius:999px;font-weight:600;font-size:13px;color:var(--muted);border:1px solid rgba(255,255,255,0.06);}
+.chords {
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  margin-top:12px;
+  padding:16px 18px;
+  box-sizing:border-box;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:15px;
+  font-weight:700;
+  line-height:1.65;
+  white-space:pre-wrap;
+  text-align:left;
+  word-break:normal;
+  overflow-wrap:anywhere;
+  tab-size:4;
+  font-variant-ligatures:none;
+  background: rgba(255,255,255,0.01);
+  border-radius:12px;
+  border:1px dashed rgba(255,255,255,0.03);
+  min-height:280px;
+  color:var(--text);
+}
+.chord {font-weight:inherit;color:var(--accent);}
+.panel {
+  width:350px;
+  max-height: calc(100vh - 110px);
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  align-self:flex-start;
+  position: sticky;
+  top: 90px;
+}
+@media (max-width:900px){
+  .panel{
+    width:100%;
+    order:2;
+    position: static;
+    max-height: none;
+  }
+}
+.panel.card {padding:14px;}
+.panel-header {display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.panel-title {font-weight:700;font-size:15px;}
+.keys-grid {display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px;}
+.keys-grid button {padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--text);cursor:pointer;font-weight:700;}
+.keys-grid button.active {background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;box-shadow:0 6px 18px rgba(34,71,214,0.18);}
+#steps:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+#steps[disabled]{
+  pointer-events:none;
+}
+@media (max-width:900px){.main {flex-direction:column;padding:12px;gap:12px;margin:0;}.panel {width:100%;order:2;}.chords{min-height:220px;padding:14px;line-height:1.58;}.song-title {font-size:16px;font-weight:800;margin:0;}}
+
+#maintenance{
+  position:fixed;
+  inset:0;
+  background:#0f172a;
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:99999;
+}
+
+#maintenance .box{
+  text-align:center;
+  max-width:420px;
+  padding:30px;
+  border-radius:16px;
+  background:rgba(255,255,255,0.08);
+}
+
+.fav-nav{
+  position: fixed;
+  z-index: 1600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+  padding: 8px;
+  border-radius: 24px;
+  background: rgba(8,12,24,0.38);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.24);
+}
+
+.fav-nav > *{
+  pointer-events: auto;
+}
+
+.fav-nav-meta{
+  min-width: 130px;
+  max-width: 190px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(8,12,24,0.72);
+  color: var(--text);
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  box-shadow:
+    0 14px 34px rgba(0,0,0,0.34),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+  text-align: center;
+}
+
+.fav-nav-count{
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.fav-nav-title{
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fav-nav-btn{
+  width: 50px;
+  height: 50px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(8,12,24,0.72);
+  color: var(--text);
+  cursor: pointer;
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  box-shadow:
+    0 14px 34px rgba(0,0,0,0.34),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .12s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
+}
+
+.fav-nav-btn:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.22);
+}
+
+.fav-nav-btn:active{
+  transform: scale(.97);
+}
+
+.fav-nav-btn:disabled{
+  opacity: .35;
+  cursor: default;
+  transform: none;
+}
+
+.fav-nav-ico{
+  width: 22px;
+  height: 22px;
+}
+
+@media (min-width: 901px){
+  .fav-nav{
+    left: 24px;
+    right: auto;
+    bottom: 18px;
+    top: auto;
+    transform: none;
+    flex-direction: row;
+    justify-content: center;
+    max-width: 320px;
+  }
+
+  .fav-nav-meta{
+    max-width: 180px;
+  }
+}
+
+/* mobile / tablet */
+@media (max-width: 900px){
+  .fav-nav{
+    left: 50%;
+    right: auto;
+    top: auto !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+    transform: translateX(-50%);
+    flex-direction: row;
+    width: calc(100% - 18px);
+    max-width: 420px;
+    justify-content: center;
+    padding:6px;
+    gap:6px;
+  }
+
+  .fav-nav-meta{
+    flex:1 1 auto;
+    min-width:0;
+    max-width:none;
+    padding:8px 10px;
+  }
+
+  .fav-nav-count{
+    font-size:11px;
+  }
+
+  .fav-nav-title{
+    font-size:11px;
+    margin-top:2px;
+  }
+
+  .fav-nav-btn{
+    flex:0 0 44px;
+    width:44px;
+    height:44px;
+  }
+
+  .main{
+    padding-bottom: 88px;
+  }
+}
+
+/* very small phones */
+@media (max-width: 420px){
+  .fav-nav{
+    width: calc(100% - 16px);
+    gap: 6px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+  }
+
+  .fav-nav-meta{
+    padding: 9px 10px;
+  }
+
+  .fav-nav-count{
+    font-size: 11px;
+  }
+
+  .fav-nav-title{
+    font-size: 11px;
+  }
+
+  .fav-nav-btn{
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+  }
+}
+
+:fullscreen nav,
+:fullscreen .topbar{
+  display:none !important;
+}
+
+:fullscreen .main{
+  padding-top: 10px;
+}
+html.fullscreen-mode nav,
+html.fullscreen-mode .topbar{
+  display:none !important;
+}
+
+.skeleton{
+  position: relative;
+  overflow: hidden;
+  background: rgba(255,255,255,0.06);
+  border-radius: 12px;
+}
+
+.skeleton::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,0.12),
+    transparent
+  );
+  animation: skeleton-loading 1.2s infinite;
+}
+
+@keyframes skeleton-loading{
+  100%{
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-line{
+  height: 16px;
+  margin-bottom: 10px;
+}
+
+.skeleton-line.lg{
+  height: 26px;
+}
+
+.skeleton-line.sm{
+  height: 12px;
+  width: 60%;
+}
+
+.topbar{
+  display:grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  align-items:center;
+  gap:14px;
+  padding:14px;
+  background: var(--glass);
+  backdrop-filter: blur(12px) saturate(120%);
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  border-radius:var(--radius);
+  margin:12px;
+}
+
+.brand{
+  min-width:0;
+  display:flex;
+  align-items:center;
+}
+
+.brand .title{
+  font-size:18px;
+  font-weight:700;
+  margin:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+
+.topbar-icons{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex:0 0 auto;
+}
+
+.topbar-controls{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  min-width:0;
+}
+
+.font-panel{
+  display:grid;
+  grid-template-columns: repeat(4, auto);
+  align-items:center;
+  gap:6px;
+  padding:5px 6px;
+  border-radius:12px;
+  background: rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  flex:0 0 auto;
+}
+
+.font-btn{
+  min-width:40px;
+  padding:6px 8px;
+}
+
+.reset-btn{
+  min-width:48px;
+}
+
+.font-size-hint{
+  min-width:42px;
+  text-align:center;
+  font-size:12px;
+  color:var(--muted);
+  font-weight:700;
+}
+
+.icon-only-btn,
+.topbar-fav{
+  width:40px;
+  height:40px;
+  min-width:40px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+}
+
+.panel-title-sm{
+  font-size:13px;
+  font-weight:700;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+
+.font-controls{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+@media (max-width:900px){
+  .topbar{
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:8px;
+    padding:10px;
+    margin:8px;
+    align-items:center;
+  }
+
+  .brand{
+    min-width:0;
+  }
+
+  .brand .title{
+    font-size:14px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .topbar-controls{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:6px;
+    min-width:0;
+  }
+
+  .font-panel{
+    display:grid;
+    grid-template-columns:repeat(4, auto);
+    gap:3px;
+    padding:3px 4px;
+    flex:0 0 auto;
+  }
+
+  .font-btn,
+  .reset-btn{
+    min-width:30px;
+    padding:5px 5px;
+    font-size:10px;
+    border-radius:10px;
+  }
+
+  .font-size-hint{
+    min-width:28px;
+    font-size:9px;
+  }
+
+  .icon-only-btn,
+  .topbar-fav{
+    width:32px;
+    height:32px;
+    min-width:32px;
+    font-size:13px;
+  }
+
+  #fullscreenBtn{
+    display:none !important;
+  }
+
+  .main{
+    flex-direction:column;
+    padding:12px;
+    gap:12px;
+    margin:0;
+    padding-bottom:96px;
+  }
+
+  .panel{
+    width:100%;
+    order:2;
+    position:static;
+    max-height:none;
+  }
+
+  .chords{
+    min-height:220px;
+  }
+
+  .song-title{
+    font-size:16px;
+  }
+}
+
+@media (max-width:480px){
+  .brand .title{
+    font-size:13px;
+  }
+
+  .font-btn,
+  .reset-btn{
+    min-width:28px;
+    padding:5px 4px;
+    font-size:9px;
+  }
+
+  .font-size-hint{
+    min-width:26px;
+    font-size:8px;
+  }
+
+  .icon-only-btn,
+  .topbar-fav{
+    width:30px;
+    height:30px;
+    min-width:30px;
+    font-size:12px;
+  }
+}
+
+.view-modes{
+  margin-top:10px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.request-edit-btn{
+  width:100%;
+  margin-top:10px;
+  min-height:46px;
+  justify-content:center;
+}
+
+.view-modes .theme-btn{
+  min-width:0;
+}
+
+.view-modes .theme-btn.active{
+  background: linear-gradient(90deg,var(--accent),var(--accent-2));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 6px 18px rgba(34,71,214,0.18);
+}
+
+@media (max-width:480px){
+  .view-modes{
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap:6px;
+  }
+
+  .view-modes .theme-btn{
+    width:100%;
+    flex:unset;
+    min-width:0;
+    min-height:5px;
+    padding:10px 6px;
+    font-size:10px;
+    line-height:1.2;
+  }
+}
+
+@media (max-width:480px){
+  .song-title{
+    font-size:15px;
+    line-height:1.25;
+  }
+
+  .song-artist{
+    font-size:12px;
+  }
+
+  .info-row{
+    gap:6px;
+  }
+
+  .info-pill{
+    font-size:12px;
+    padding:5px 8px;
+  }
+}
+
+
+.setlist-nav{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:0 12px 12px;
+  padding:10px;
+  border-radius:16px;
+  background:var(--glass);
+  border:1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(12px) saturate(120%);
+}
+
+.setlist-nav-meta{
+  flex:1;
+  min-width:0;
+  text-align:center;
+}
+
+.setlist-nav-name{
+  font-weight:800;
+  font-size:14px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.setlist-nav-count{
+  margin-top:4px;
+  font-size:12px;
+  color:var(--muted);
+  font-weight:700;
+}
+
+.setlist-nav-btn{
+  min-width:110px;
+  height:42px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.05);
+  color:var(--text);
+  cursor:pointer;
+  font-weight:700;
+}
+
+.setlist-nav-btn:disabled{
+  opacity:.45;
+  cursor:default;
+}
+
+@media (max-width:640px){
+  .setlist-nav{
+    gap:8px;
+    padding:8px;
+    margin:0 8px 10px;
+  }
+
+  .setlist-nav-btn{
+    min-width:90px;
+    height:38px;
+    font-size:12px;
+    padding:0 10px;
+  }
+
+  .setlist-nav-name{
+    font-size:13px;
+  }
+
+  .setlist-nav-count{
+    font-size:11px;
+  }
+}
+
+
+#saveFavKey.is-hidden{
+  display:none;
+}
+.save-key-btn{
+  width:100%;
+  min-height:48px;
+  padding:12px 16px;
+  border:none;
+  border-radius:14px;
+  color:#fff;
+  font-weight:800;
+  font-size:14px;
+  letter-spacing:.2px;
+  background: linear-gradient(90deg, #2247d6 0%, #3367ff 35%, #6b8cff 50%, #3367ff 65%, #2247d6 100%);
+  background-size: 200% 100%;
+  box-shadow:
+    0 8px 20px rgba(51,103,255,.22),
+    inset 0 1px 0 rgba(255,255,255,.16);
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease,
+    filter .2s ease,
+    opacity .2s ease;
+}
+
+.save-key-btn:hover{
+  transform: translateY(-1px);
+  box-shadow:
+    0 10px 24px rgba(51,103,255,.28),
+    inset 0 1px 0 rgba(255,255,255,.18);
+}
+
+.save-key-btn:active{
+  transform: scale(.99);
+}
+
+.save-key-btn:not(.is-hidden){
+  animation: saveBgShift 2.6s ease-in-out infinite;
+}
+
+@keyframes saveBgShift{
+  0%{
+    background-position: 0% 50%;
+  }
+  50%{
+    background-position: 100% 50%;
+  }
+  100%{
+    background-position: 0% 50%;
+  }
+}
+
+@media (max-width:480px){
+  .save-key-btn{
+    min-height:46px;
+    font-size:13px;
+    padding:11px 14px;
+  }
+}
+
+.capo-wrap{
+  margin-top:12px;
+  padding:12px;
+  border-radius:14px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.06);
+}
+
+.capo-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.capo-title{
+  font-size:13px;
+  font-weight:800;
+  color:var(--text);
+}
+
+.capo-sub{
+  font-size:11px;
+  color:var(--muted);
+  margin-top:2px;
+}
+
+.capo-controls{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:8px;
+  align-items:center;
+}
+
+.capo-select{
+  width:100%;
+  min-height:42px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.04);
+  color:var(--text);
+  padding:10px 12px;
+  outline:none;
+}
+
+.capo-select option{
+  background:#111827;
+  color:#eef3ff;
+}
+
+.capo-toggle{
+  min-width:110px;
+  min-height:42px;
+  border-radius:12px;
+  font-weight:800;
+  border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.04);
+  color:var(--text);
+  cursor:pointer;
+}
+
+.capo-toggle.active{
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  color:#fff;
+  border-color:transparent;
+  box-shadow:0 6px 18px rgba(34,71,214,0.18);
+}
+
+.capo-pills{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+
+.capo-save-btn{
+  width:100%;
+  min-height:44px;
+  margin-top:10px;
+  border:none;
+  border-radius:12px;
+  color:#fff;
+  font-weight:800;
+  background:linear-gradient(90deg,#5b8cff,#3367ff,#2247d6);
+  box-shadow:0 8px 18px rgba(51,103,255,.22);
+}
+
+.capo-save-btn.is-hidden{
+  display:none;
+}
+
+.capo-clear-btn{
+  width:100%;
+  min-height:40px;
+  margin-top:8px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.04);
+  color:var(--muted);
+  font-weight:700;
+}
+
+.capo-clear-btn:hover{
+  background:rgba(255,255,255,0.08);
+  color:var(--text);
+}
+
+.capo-clear-btn.is-hidden{
+  display:none;
+}
+
+@media (max-width:900px){
+  .capo-clear-btn{
+    min-height:38px;
+    font-size:12px;
+  }
+}
+
+@media (max-width:900px){
+  .capo-wrap{
+    padding:10px;
+    border-radius:12px;
+  }
+
+  .capo-controls{
+    grid-template-columns:1fr 92px;
+    gap:6px;
+  }
+
+  .capo-select{
+    min-height:40px;
+    font-size:13px;
+    padding:9px 10px;
+  }
+
+  .capo-toggle{
+    min-width:92px;
+    min-height:40px;
+    font-size:12px;
+    padding:0 8px;
+  }
+
+  .capo-pills{
+    gap:6px;
+    margin-top:8px;
+  }
+
+  .capo-save-btn{
+    min-height:42px;
+    font-size:13px;
+    margin-top:8px;
+  }
+}
+</style>
+<script>
+  document.documentElement.classList.add('auth-lock');
+</script>
+</head>
+<body>
+
+    
+    <nav>
+  <div class="logo"><a class="logo" href="/">WORSHIP PLATFORM</a></div>
+  <div class="hamburger" id="hamburger">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+  <div class="menu" id="menu">
+    <a href="/">ԳԼԽԱՎՈՐ</a>
+    <a href="/main.html">ԵՐԳԵՐ</a>
+    <a href="/favorites.html">ՊԱՀՊԱՆԱԾ ԵՐԳԵՐ</a>
+    <a href="/news.html">ՆՈՐՈՒԹՅՈՒՆՆԵՐ</a>
+    <a id="loginBtn" class="login-btn" href="/loginuser.php">
+  <span class="ico" aria-hidden="true">
+    <!-- login icon -->
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 17l5-5-5-5"></path>
+      <path d="M15 12H3"></path>
+      <path d="M21 3v18"></path>
+    </svg>
+  </span>
+  Մուտք
+</a>
+
+<a id="registerBtn" class="login-btn" href="/registeruser.php">
+  <span class="ico" aria-hidden="true">
+    <!-- user-plus / register icon -->
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+      <circle cx="9" cy="7" r="4"></circle>
+      <path d="M19 8v6"></path>
+      <path d="M22 11h-6"></path>
+    </svg>
+  </span>
+  Գրանցում
+</a>
+     <!-- ավելացրու loginBtn-ի կողքին -->
+<span id="userBox" class="user-chip" style="display:none;">
+  <span class="user-avatar" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+      <circle cx="12" cy="7" r="4"></circle>
+    </svg>
+  </span>
+
+  <span class="user-meta">
+    <span id="userName" class="user-name">User</span>
+    <span class="user-sub">Account</span>
+  </span>
+
+  <a href="/account.html" class="icon-btn" title="Account" aria-label="Account">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-1.41 3.41h-.1a2 2 0 0 1-1.41-.59l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82V22a2 2 0 0 1-4 0v-.1a1.65 1.65 0 0 0-.33-1.82 1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 0 1 2 18.59v-.1a2 2 0 0 1 .59-1.41l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33H2a2 2 0 0 1 0-4h.1a1.65 1.65 0 0 0 1.82-.33 1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 0 1 5.41 2h.1a2 2 0 0 1 1.41.59l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.82V2a2 2 0 0 1 4 0v.1a1.65 1.65 0 0 0 .33 1.82 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06A2 2 0 0 1 22 5.41v.1a2 2 0 0 1-.59 1.41l-.06.06A1.65 1.65 0 0 0 19.4 9c.23.31.39.66.6 1a1.65 1.65 0 0 0 1.82.33H22a2 2 0 0 1 0 4h-.1a1.65 1.65 0 0 0-1.82.33c-.21.34-.37.69-.6 1z"></path>
+    </svg>
+  </a>
+
+  <button id="logoutBtn" class="icon-btn" type="button" title="Logout" aria-label="Logout">
+    ⎋  </button>
+</span>
+
+  </div>
+</nav>
+
+
+<div class="app">
+  <div class="topbar">
+  <div class="brand">
+    <div class="title">Երգի դիտում</div>
+  </div>
+
+  <div class="topbar-controls">
+    <div class="font-panel" aria-label="Տեքստի չափ">
+      <button id="fontMinus" class="theme-btn font-btn" type="button" title="Փոքրացնել">A-</button>
+      <button id="fontReset" class="theme-btn font-btn reset-btn" type="button" title="Վերականգնել">Reset</button>
+      <button id="fontPlus" class="theme-btn font-btn" type="button" title="Մեծացնել">A+</button>
+      <span id="fontSizeHint" class="font-size-hint">16px</span>
+    </div>
+
+    <div class="topbar-icons">
+      <button id="shareBtn" class="theme-btn icon-only-btn" type="button" aria-label="Share">⤴</button>
+      <button id="themeBtn" class="theme-btn icon-only-btn" type="button" aria-label="Փոխել թեման">
+        <span id="themeIcon">🌙</span>
+      </button>
+
+      <button id="fullscreenBtn" class="theme-btn icon-only-btn" type="button" aria-label="Fullscreen">⛶</button>
+
+      <button id="favBtn" class="fav-btn topbar-fav inactive" aria-pressed="false" style="display:none;">♡</button>
+    </div>
+  </div>
+</div>
+
+<div id="setlistNav" class="setlist-nav" style="display:none;">
+  <button id="setlistPrev" class="setlist-nav-btn" type="button">← Նախորդ</button>
+
+  <div class="setlist-nav-meta">
+    <div id="setlistNavName" class="setlist-nav-name">Setlist</div>
+    <div id="setlistNavCount" class="setlist-nav-count">1 / 1</div>
+  </div>
+
+  <button id="setlistNext" class="setlist-nav-btn" type="button">Հաջորդ →</button>
+</div>
+
+  <!-- Favorites navigation (prev/next) -->
+<div id="favNav" class="fav-nav" style="display:none" aria-label="Պահպանած երգերի նավիգացիա">
+  <button id="favPrev" class="fav-nav-btn" title="Նախորդ պահպանված երգը" aria-label="Նախորդ">
+    <svg viewBox="0 0 24 24" class="fav-nav-ico" aria-hidden="true">
+      <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <div id="favNavMeta" class="fav-nav-meta">
+    <div id="favNavCount" class="fav-nav-count">1 / 1</div>
+    <div id="favNavTitle" class="fav-nav-title">Song title</div>
+  </div>
+
+  <button id="favNext" class="fav-nav-btn" title="Հաջորդ պահպանված երգը" aria-label="Հաջորդ">
+    <svg viewBox="0 0 24 24" class="fav-nav-ico" aria-hidden="true">
+      <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+  <div class="main">
+    <div class="content">
+      <div class="card">
+        <div class="song-header">
+          <div>
+            <h1 id="songTitle" class="song-title">Բեռնում…</h1>
+            <div class="song-artist" id="songArtist"></div>
+            <div class="info-row">
+              <div class="info-pill" id="songKey">Տոնայնություն: —</div>
+              <div class="info-pill" id="songPlayKey" style="display:none;">Նվագել որպես: —</div>
+              <div class="info-pill" id="songTags">Tags</div>
+            </div>
+          </div>
+        </div>
+       
+<div id="chords" class="chords">Բեռնվում է…</div>
+<div class="view-modes">
+  <button id="viewChordsOnly" class="theme-btn" type="button">Միայն ակորդներ</button>
+  <button id="viewLyricsOnly" class="theme-btn" type="button">Միայն բառեր</button>
+  <button id="viewBoth" class="theme-btn" type="button">Ակորդներ + բառեր</button>
+</div>
+<button id="requestEditBtn" class="theme-btn request-edit-btn" type="button">Ուղարկել խմբագրման առաջարկ</button>
+
+<div id="lyrics" class="chords" style="display:none;margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <div class="panel card">
+      <div class="panel-header">
+        <div class="panel-title">Տրանսպոզիցիա</div>
+        <label class="switch"><input id="useFlats" type="checkbox"><span style="margin-left:6px;color:var(--muted);font-weight:700;">Use flats</span></label>
+      </div>
+      <div class="keys-grid" id="keysGrid"></div>
+      <input type="range" min="-11" max="11" value="0" id="steps" style="margin-top:8px;width:100%">
+      <div style="display:flex;justify-content:space-between;margin-top:6px"><small style="color:var(--muted)"><span id="stepsLabel">0</span> կիսատոն</small></div>
+      <button id="saveFavKey" class="theme-btn save-key-btn is-hidden" style="margin-top:8px;">
+  💾 Պահպանել նոր տոնայնությունը
+</button>
+<small id="favKeyHint" style="color:var(--muted);display:block;margin-top:6px;"></small>
+
+<div id="capoBox" class="capo-wrap" style="display:none;">
+  <div class="capo-top">
+    <div>
+      <div class="capo-title">Capo</div>
+      <div class="capo-sub">Գիթառի նվագելու դիրք</div>
+    </div>
+  </div>
+
+  <div class="capo-controls">
+    <select id="capoSelect" class="capo-select">
+      <option value="0">No capo</option>
+      <option value="1">Capo 1</option>
+      <option value="2">Capo 2</option>
+      <option value="3">Capo 3</option>
+      <option value="4">Capo 4</option>
+      <option value="5">Capo 5</option>
+      <option value="6">Capo 6</option>
+      <option value="7">Capo 7</option>
+      <option value="8">Capo 8</option>
+      <option value="9">Capo 9</option>
+      <option value="10">Capo 10</option>
+      <option value="11">Capo 11</option>
+      <option value="12">Capo 12</option>
+    </select>
+
+    <button id="capoModeBtn" class="capo-toggle" type="button">OFF</button>
+  </div>
+
+  <div class="capo-pills">
+    <div class="info-pill" id="capoValuePill">Capo: 0</div>
+    <div class="info-pill" id="capoPlayKeyPill">Play as: —</div>
+  </div>
+
+  <button id="saveCapoBtn" class="capo-save-btn is-hidden" type="button">
+    💾 Պահպանել capo-ն
+  </button>
+  <button id="clearCapoBtn" class="theme-btn capo-clear-btn" type="button">
+  ✕ Ջնջել capo-ն
+</button>
+</div>
+
+
+      <button id="downloadTxt" class="theme-btn" style="margin-top:8px;">Ներբեռնել TXT</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+  async function waitFavBase(){
+  let tries = 0;
+  while(typeof window.__favApiBase !== 'function'){
+    await new Promise(r => setTimeout(r, 25));
+    tries++;
+    if(tries > 200) throw new Error('__favApiBase not ready');
+  }
+}
+
+async function favFetch(action, opts={}, queryObj=null){
+  await waitFavBase();
+  const base = await window.__favApiBase();
+  const url = new URL(base, window.location.origin);
+  url.searchParams.set('action', action);
+  if(queryObj){
+    for(const [k,v] of Object.entries(queryObj)){
+      url.searchParams.set(k, String(v));
+    }
+  }
+  // credentials include՝ որ session cookie-ն հաստատ գնա
+  return fetch(url.toString(), { credentials:'include', ...opts });
+}
+
+const SHARPS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const FLATS  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+
+function noteIndex(note) {
+  if (!note) return -1;
+  note = String(note).trim().replace(/♭/g,'b');
+  const parsed = note.match(/^([A-G](?:#|b)?)/i);
+  if (parsed) {
+    note = parsed[1].charAt(0).toUpperCase() + parsed[1].slice(1);
+  }
+  if(SHARPS.includes(note)) return SHARPS.indexOf(note);
+  if(FLATS.includes(note)) return FLATS.indexOf(note);
+  if(note==='E#') return SHARPS.indexOf('F');
+  if(note==='B#') return SHARPS.indexOf('C');
+  if(note==='Fb') return SHARPS.indexOf('E');
+  if(note==='Cb') return SHARPS.indexOf('B');
+  return -1;
+}
+
+function parseKeySignature(note) {
+  const value = String(note || '').trim().replace(/♭/g, 'b').replace(/\s+/g, '');
+  if (!value) return null;
+  const match = value.match(/^([A-Ga-g])([#b]?)(m|min|minor)?$/i);
+  if (!match) return null;
+  const root = (match[1].toUpperCase() + (match[2] || ''));
+  const index = noteIndex(root);
+  if (index < 0) return null;
+  const suffix = String(match[3] || '').toLowerCase();
+  const isMinor = suffix === 'm' || suffix === 'min' || suffix === 'minor';
+  return {
+    root,
+    index,
+    isMinor,
+    display: root + (isMinor ? 'm' : '')
+  };
+}
+
+function normalizeTargetKeyValue(value) {
+  const parsed = parseKeySignature(value);
+  return parsed ? parsed.root : String(value || '').trim();
+}
+
+function getEffectiveTargetKey(originalKey, targetKey) {
+  const target = parseKeySignature(targetKey);
+  if (!target) return String(targetKey || '').trim();
+  const original = parseKeySignature(originalKey);
+  return target.root + (original && original.isMinor ? 'm' : '');
+}
+
+function transposeRoot(root, semi, useFlats){
+  const i = noteIndex(root);
+  if(i<0) return root;
+  const autoFlats = root.includes('b') && !root.includes('#');
+  const flat = useFlats || autoFlats;
+  const idx = (i+semi+12)%12;
+  return flat ? FLATS[idx] : SHARPS[idx];
+}
+
+
+/* Capo */
+function transposeKeyName(key, semi, useFlats = false){
+  if(!key) return '';
+  const parsed = parseKeySignature(key);
+  if(!parsed) return transposeRoot(String(key).trim(), semi, useFlats);
+  return transposeRoot(parsed.root, semi, useFlats) + (parsed.isMinor ? 'm' : '');
+}
+
+function getSoundingKey(){
+  if(selectedTargetKey){
+    return getEffectiveTargetKey(originalSongKey, selectedTargetKey) || '';
+  }
+  return originalSongKey || '';
+}
+
+function getCapoPlayKey(){
+  const soundingKey = getSoundingKey();
+  if(!soundingKey) return '';
+  if(!capoValue) return soundingKey;
+  return transposeKeyName(soundingKey, -capoValue, useFlats.checked);
+}
+
+function refreshCapoUI(){
+  if(!capoBox || !capoModeBtn || !capoValuePill || !capoPlayKeyPill || !songPlayKey) return;
+
+  if(capoSelect){
+    capoSelect.value = String(capoValue || 0);
+  }
+
+  capoBox.style.display = 'block';
+
+  const playKey = getCapoPlayKey();
+
+  capoValuePill.textContent = `Capo: ${capoValue || 0}`;
+  capoPlayKeyPill.textContent = rtFmt('playAsLabel', 'Play as: {{key}}', { key: playKey || getSoundingKey() || '—' });
+
+  capoModeBtn.textContent = capoMode ? 'ON' : 'OFF';
+  capoModeBtn.classList.toggle('active', !!capoMode);
+
+  if(capoMode && capoValue > 0){
+    songPlayKey.style.display = 'inline-flex';
+    songPlayKey.textContent = rtFmt('playAsLabel', 'Նվագել որպես: {{key}}', { key: playKey || '—' });
+  } else {
+    songPlayKey.style.display = 'none';
+  }
+
+  refreshCapoSaveState();
+
+if(clearCapoBtn){
+  clearCapoBtn.classList.toggle('is-hidden', !(capoValue > 0 || savedCapoValue > 0));
+}
+}
+
+
+function renderWithChords(text = '', semi = 0, useFlats = false){
+
+  const chordRegex = /(^|[\s([])((?:[A-G](?:#|b)?)(?:maj7|maj9|maj|min7|min9|min|m7b5|m7|m9|m|dim7|dim|aug|sus2|sus4|sus7|sus|add9|add2|add4|add|no5|no3|2|4|5|6|7|9|11|13)?(?:\([#b0-9+\-]+\))?(?:\/[A-G](?:#|b)?)?)(?=[\s)\],:;]|$)/g;
+
+
+  return text.split('\n').map(line =>
+    line.replace(chordRegex, (m, prefix, chordToken) => {
+      let main = chordToken;
+      let bass = '';
+
+      if(chordToken.includes('/')){
+        const parts = chordToken.split('/');
+        main = parts[0];
+        bass = parts[1] || '';
+      }
+
+      const rootMatch = main.match(/^([A-G](?:#|b)?)(.*)$/);
+      if(!rootMatch) return m;
+
+      const root = rootMatch[1];
+      const type = rootMatch[2] || '';
+
+      const newRoot = transposeRoot(root, semi, useFlats);
+      const newBass = bass ? transposeRoot(bass, semi, useFlats) : '';
+
+      return `${prefix}<span class="chord">${newRoot}${type}${newBass ? '/' + newBass : ''}</span>`;
+    })
+  ).join('\n');
+}
+
+
+/* DOM */
+const songTitle = document.getElementById('songTitle');
+/*const titleSmall = document.getElementById('titleSmall');*/
+const songArtist = document.getElementById('songArtist');
+const songKey = document.getElementById('songKey');
+const songTags = document.getElementById('songTags');
+const chordsEl = document.getElementById('chords');
+const lyricsEl = document.getElementById('lyrics');
+const preview = chordsEl;
+
+const favBtn = document.getElementById('favBtn');
+const keysGrid = document.getElementById('keysGrid');
+const steps = document.getElementById('steps');
+const stepsLabel = document.getElementById('stepsLabel');
+const useFlats = document.getElementById('useFlats');
+const themeBtn = document.getElementById('themeBtn');
+const themeIcon = document.getElementById('themeIcon');
+const downloadTxt = document.getElementById('downloadTxt');
+
+const saveFavKey = document.getElementById('saveFavKey');
+const favKeyHint = document.getElementById('favKeyHint');
+
+const favNav  = document.getElementById('favNav');
+const favPrev = document.getElementById('favPrev');
+const favNext = document.getElementById('favNext');
+
+const fontMinus = document.getElementById('fontMinus');
+const fontReset = document.getElementById('fontReset');
+const fontPlus = document.getElementById('fontPlus');
+const fontSizeHint = document.getElementById('fontSizeHint');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+const viewChordsOnly = document.getElementById('viewChordsOnly');
+const viewLyricsOnly = document.getElementById('viewLyricsOnly');
+const viewBoth = document.getElementById('viewBoth');
+const requestEditBtn = document.getElementById('requestEditBtn');
+
+const favNavCount = document.getElementById('favNavCount');
+const favNavTitle = document.getElementById('favNavTitle');
+
+const setlistNav = document.getElementById('setlistNav');
+const setlistPrev = document.getElementById('setlistPrev');
+const setlistNext = document.getElementById('setlistNext');
+const setlistNavName = document.getElementById('setlistNavName');
+const setlistNavCount = document.getElementById('setlistNavCount');
+
+const capoBox = document.getElementById('capoBox');
+const capoModeBtn = document.getElementById('capoModeBtn');
+const capoValuePill = document.getElementById('capoValuePill');
+const capoPlayKeyPill = document.getElementById('capoPlayKeyPill');
+const songPlayKey = document.getElementById('songPlayKey');
+const capoSelect = document.getElementById('capoSelect');
+const saveCapoBtn = document.getElementById('saveCapoBtn');
+const clearCapoBtn = document.getElementById('clearCapoBtn');
+
+let currentChords = '';
+let selectedTargetKey = '';
+let savedTargetKey = '';
+let favorite = false;
+let originalSongKey = '';
+let contentFontSize = parseInt(localStorage.getItem('song_font_size') || '16', 10);
+let currentViewMode = localStorage.getItem('song_view_mode') || 'chords';
+
+let capoValue = 0;
+let capoMode = false;
+let savedCapoValue = 0;
+let savedCapoMode = false;
+
+/*  Fullscreen */
+async function toggleFullscreen(){
+  try{
+    if(!document.fullscreenElement){
+      await document.documentElement.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  }catch(e){
+    console.error(e);
+  }
+}
+
+fullscreenBtn?.addEventListener('click', toggleFullscreen);
+
+/*  Share link */
+function showToast(message){
+  const el = document.getElementById('toast');
+  if(!el) return;
+
+  el.textContent = message;
+  el.style.opacity = '1';
+  el.style.transform = 'translateX(-50%) translateY(0)';
+
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(-50%) translateY(20px)';
+  }, 2200);
+}
+
+async function copyShareLink(){
+  try{
+    const url = new URL(window.location.href);
+    url.searchParams.set('id', id);
+
+        if(selectedTargetKey){
+      url.searchParams.set('tkey', selectedTargetKey);
+    } else {
+      url.searchParams.delete('tkey');
+    }
+
+    if(capoValue > 0){
+      url.searchParams.set('capo', String(capoValue));
+    } else {
+      url.searchParams.delete('capo');
+    }
+
+    url.searchParams.set('capo_mode', capoMode ? '1' : '0');
+    url.searchParams.set('view', currentViewMode);
+    url.searchParams.set('font', String(contentFontSize));
+
+    await navigator.clipboard.writeText(url.toString());
+    showToast('Հղումը պատճենվեց');
+  }catch(e){
+    console.error(e);
+    showToast('Չհաջողվեց պատճենել հղումը');
+  }
+}
+
+document.getElementById('shareBtn')?.addEventListener('click', copyShareLink);
+
+/*  refresh function */
+function normalizeKeyValue(v){
+  return v ? String(v).trim() : '';
+}
+
+function getCapoStorageKey(){
+  if(!id) return '';
+  return `song_capo_pref:${id}`;
+}
+
+function saveLocalCapoPref(){
+  const key = getCapoStorageKey();
+  if(!key) return;
+
+  const payload = {
+    capo: Number(capoValue || 0),
+    capo_mode: capoMode ? 1 : 0
+  };
+
+  localStorage.setItem(key, JSON.stringify(payload));
+}
+
+function loadLocalCapoPref(){
+  const key = getCapoStorageKey();
+  if(!key) return;
+
+  // default
+  capoValue = 0;
+  capoMode = false;
+  savedCapoValue = 0;
+  savedCapoMode = false;
+
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw) return;
+
+    const data = JSON.parse(raw);
+    if(!data || typeof data !== 'object') return;
+
+    const savedCapo = parseInt(data.capo || '0', 10);
+    const savedMode = Number(data.capo_mode || 0) === 1;
+
+    if(Number.isFinite(savedCapo)){
+      capoValue = Math.max(0, Math.min(12, savedCapo));
+      savedCapoValue = capoValue;
+    }
+
+    savedCapoMode = savedMode;
+    capoMode = savedMode && capoValue > 0;
+  }catch(e){
+    console.error('capo localStorage parse error', e);
+  }
+}
+
+function getCurrentKeyToSave(){
+  return normalizeKeyValue(selectedTargetKey);
+}
+
+function getSavedKeyValue(){
+  return normalizeKeyValue(savedTargetKey);
+}
+
+function refreshSaveButtonState(){
+  if(!isUserLoggedIn()){
+    saveFavKey.classList.add('is-hidden');
+    favKeyHint.textContent = '';
+    return;
+  }
+
+  const current = getCurrentKeyToSave();
+  const saved = getSavedKeyValue();
+  const changed = current !== saved;
+
+  saveFavKey.classList.toggle('is-hidden', !changed);
+
+  if(changed){
+    if(current){
+      favKeyHint.textContent = `Տոնայնությունը փոխվեց (${current}), բայց դեռ չի պահպանվել`;
+    } else {
+      favKeyHint.textContent = 'Կվերադառնա հիմնական տոնայնությանը, բայց դեռ չի պահպանվել';
+    }
+  } else {
+    if(saved){
+      favKeyHint.textContent = `Պահպանված տոնայնություն՝ ${saved}`;
+    } else {
+      favKeyHint.textContent = '';
+    }
+  }
+}
+
+function refreshCapoSaveState(){
+  if(!saveCapoBtn) return;
+
+  if(!isUserLoggedIn()){
+    saveCapoBtn.classList.add('is-hidden');
+    return;
+  }
+
+  const changed =
+    Number(capoValue || 0) !== Number(savedCapoValue || 0) ||
+    Boolean(capoMode) !== Boolean(savedCapoMode);
+
+  saveCapoBtn.classList.toggle('is-hidden', !changed);
+}
+
+
+/*  Font size */
+function applyFontSize(){
+  const size = Math.max(12, Math.min(30, contentFontSize));
+  chordsEl.style.fontSize = size + 'px';
+  lyricsEl.style.fontSize = size + 'px';
+  fontSizeHint.textContent = size + 'px';
+  localStorage.setItem('song_font_size', String(size));
+}
+
+fontMinus?.addEventListener('click', ()=>{
+  contentFontSize -= 1;
+  applyFontSize();
+});
+
+fontPlus?.addEventListener('click', ()=>{
+  contentFontSize += 1;
+  applyFontSize();
+});
+
+fontReset?.addEventListener('click', ()=>{
+  contentFontSize = 16;
+  applyFontSize();
+});
+
+function adaptFontPanelForScreen(){
+  const resetBtn = document.getElementById('fontReset');
+  if(!resetBtn) return;
+
+  if(window.innerWidth <= 480){
+    resetBtn.textContent = 'R';
+  } else {
+    resetBtn.textContent = 'Reset';
+  }
+}
+
+window.addEventListener('resize', adaptFontPanelForScreen);
+adaptFontPanelForScreen();
+
+/* Theme */
+function setTheme(mode){
+  const root = document.documentElement;
+  root.classList.remove('dark', 'light');
+  root.classList.add(mode);
+
+  themeIcon.textContent = mode === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('theme', mode);
+}
+
+themeBtn.addEventListener('click', ()=>{
+  const isDark = document.documentElement.classList.contains('dark');
+  setTheme(isDark ? 'light' : 'dark');
+});
+
+(function initTheme(){
+  const saved = localStorage.getItem('theme') || 'dark';
+  setTheme(saved);
+})();
+
+/* Favorite */
+favBtn.addEventListener('click', async ()=>{
+  if(!id) return;
+
+  try{
+    const authRes = await accountFetch('auth_status');
+    const auth = await authRes.json();
+
+    if(!auth || !auth.logged_in){
+      showToast('Երգը պահպանելու համար նախ մուտք գործիր');
+      setTimeout(() => {
+        const next = location.pathname + location.search + location.hash;
+        const target = (window.WP && typeof window.WP.withAppSource === 'function')
+          ? window.WP.withAppSource('/loginuser.php?next=' + encodeURIComponent(next))
+          : '/loginuser.php?next=' + encodeURIComponent(next);
+        location.href = target;
+      }, 700);
+      return;
+    }
+
+    toggleFavorite(id, favBtn);
+  }catch(e){
+    console.error(e);
+    showToast('Երգը պահպանելու համար նախ մուտք գործիր');
+  }
+});
+
+/* Toggle favorite (API) */
+async function toggleFavorite(id, el){
+  try{
+    el.classList.add('pulse');
+    setTimeout(()=>el.classList.remove('pulse'),700);
+
+    el.style.transform='scale(1.05)';
+    setTimeout(()=>el.style.transform='',160);
+
+    const res = await favFetch('toggle_favorite', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ song_id: id })
+    });
+
+    if(res.status === 401){
+      showToast('Երգը պահպանելու համար նախ մուտք գործիր');
+      return;
+    }
+
+    const data = await res.json();
+
+    if(data && data.favorite){
+      el.classList.remove('inactive');
+      el.classList.add('active');
+      el.textContent = '❤';
+    } else {
+      el.classList.remove('active');
+      el.classList.add('inactive');
+      el.textContent = '♡';
+    }
+  }catch(e){
+    console.error(e);
+    showToast('Չհաջողվեց պահպանել երգը');
+  }
+}
+
+
+/* Build keys grid */
+const KEY_OPTIONS = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+KEY_OPTIONS.forEach(k=>{
+  const b = document.createElement('button');
+  b.textContent = k;
+
+  b.addEventListener('click', ()=> {
+    const normalizedSelected = normalizeTargetKeyValue(selectedTargetKey);
+    if(normalizedSelected === k){
+      selectedTargetKey = '';
+      b.classList.remove('active');
+    } else {
+      selectedTargetKey = k;
+      keysGrid.querySelectorAll('button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+    }
+
+    renderPreview();
+    refreshSaveButtonState();
+  });
+
+  keysGrid.appendChild(b);
+});
+
+
+/* Fetch song */
+function currentUiLang(){
+  const runtimeLang = window.wpI18n?.getLang?.();
+  if(runtimeLang && ['hy','ru','en'].includes(runtimeLang)) return runtimeLang;
+  try{
+    const storedLang = localStorage.getItem('wp_language');
+    if(storedLang && ['hy','ru','en'].includes(storedLang)) return storedLang;
+  }catch(e){}
+  const queryLang = new URLSearchParams(window.location.search).get('lang');
+  if(queryLang && ['hy','ru','en'].includes(queryLang)) return queryLang;
+  const htmlLang = document.documentElement?.lang;
+  if(htmlLang && ['hy','ru','en'].includes(htmlLang)) return htmlLang;
+  return 'hy';
+}
+
+const SONG_VIEW_RUNTIME_I18N = {
+  hy: {
+    noSongId: 'Երգի համարանիշը նշված չէ',
+    loadingTitle: 'Բեռնում…',
+    loadingContent: 'Բեռնվում է…',
+    keyLabel: 'Տոնայնություն: {{key}}',
+    playAsLabel: 'Նվագել որպես: {{key}}',
+    lyricsUnavailable: 'Բառերը հասանելի չեն',
+    loadFailed: 'Չհաջողվեց բեռնել երգը',
+    offlineUnavailable: 'Օֆֆլայն ռեժիմում այս երգը հասանելի չէ, եթե դեռ չի ներբեռնվել սարքի մեջ։',
+    selectedTargetKey: 'Ընտրված թիրախ տոնայնություն՝ {{key}}',
+    loginToSave: 'Երգը պահպանելու համար նախ մուտք գործիր',
+    keySaved: 'Տոնայնությունը պահպանվեց',
+    keySaveFailed: 'Չստացվեց պահպանել տոնայնությունը',
+    serverError: 'Սխալ՝ server',
+    viewChordsOnly: 'Միայն ակորդներ',
+    viewLyricsOnly: 'Միայն բառեր',
+    viewBoth: 'Ակորդներ + բառեր',
+    useFlats: 'Բեմոլներով',
+    semitone: 'կիսատոն',
+    saveNewKey: 'Պահպանել նոր տոնայնությունը',
+    capoSub: 'Գիթառի նվագելու դիրք',
+    saveCapo: 'Պահպանել capo-ն',
+    clearCapo: 'Ջնջել capo-ն',
+    downloadTxt: 'Ներբեռնել TXT'
+  },
+  ru: {
+    noSongId: 'Не указан идентификатор песни',
+    loadingTitle: 'Загрузка…',
+    loadingContent: 'Загрузка…',
+    keyLabel: 'Тональность: {{key}}',
+    playAsLabel: 'Играть как: {{key}}',
+    lyricsUnavailable: 'Слова недоступны',
+    loadFailed: 'Не удалось загрузить песню',
+    offlineUnavailable: 'В оффлайн-режиме эта песня недоступна, если она ещё не была загружена на устройство.',
+    selectedTargetKey: 'Выбранная целевая тональность: {{key}}',
+    loginToSave: 'Чтобы сохранить песню, сначала войдите',
+    keySaved: 'Тональность сохранена',
+    keySaveFailed: 'Не удалось сохранить тональность',
+    serverError: 'Ошибка сервера',
+    viewChordsOnly: 'Только аккорды',
+    viewLyricsOnly: 'Только слова',
+    viewBoth: 'Аккорды + слова',
+    useFlats: 'Бемоли',
+    semitone: 'полутон',
+    saveNewKey: 'Сохранить новую тональность',
+    capoSub: 'Позиция для игры на гитаре',
+    saveCapo: 'Сохранить capo',
+    clearCapo: 'Удалить capo',
+    downloadTxt: 'Скачать TXT'
+  },
+  en: {
+    noSongId: 'No song id specified',
+    loadingTitle: 'Loading…',
+    loadingContent: 'Loading…',
+    keyLabel: 'Key: {{key}}',
+    playAsLabel: 'Play as: {{key}}',
+    lyricsUnavailable: 'Lyrics are unavailable',
+    loadFailed: 'Failed to load the song',
+    offlineUnavailable: 'This song is not available offline unless it has already been downloaded to this device.',
+    selectedTargetKey: 'Selected target key: {{key}}',
+    loginToSave: 'Log in first to save the song',
+    keySaved: 'Key saved',
+    keySaveFailed: 'Failed to save the key',
+    serverError: 'Server error',
+    viewChordsOnly: 'Chords only',
+    viewLyricsOnly: 'Lyrics only',
+    viewBoth: 'Chords + lyrics',
+    useFlats: 'Use flats',
+    semitone: 'semitone',
+    saveNewKey: 'Save new key',
+    capoSub: 'Guitar playing position',
+    saveCapo: 'Save capo',
+    clearCapo: 'Clear capo',
+    downloadTxt: 'Download TXT'
+  }
+};
+
+function rt(key, fallback){
+  const lang = currentUiLang();
+  return SONG_VIEW_RUNTIME_I18N[lang]?.[key] || SONG_VIEW_RUNTIME_I18N.hy[key] || fallback || key;
+}
+
+function rtFmt(key, fallback, vars){
+  let text = rt(key, fallback);
+  Object.entries(vars || {}).forEach(([name, value]) => {
+    text = text.replace(new RegExp(`{{${name}}}`, 'g'), String(value));
+  });
+  return text;
+}
+
+function buildSongApiUrl(songId){
+  const url = new URL('api.php', window.location.href);
+  url.searchParams.set('id', songId);
+  const lang = currentUiLang();
+  if(lang && lang !== 'hy'){
+    url.searchParams.set('lang', lang);
+  }
+  return url.toString();
+}
+
+function applySongViewStaticText(){
+  const titleEl = document.getElementById('songTitle');
+  const chordsTextEl = document.getElementById('chords');
+  if(titleEl && !titleEl.dataset.loaded) titleEl.textContent = rt('loadingTitle', 'Բեռնում…');
+  if(chordsTextEl && !chordsTextEl.dataset.loaded) chordsTextEl.textContent = rt('loadingContent', 'Բեռնվում է…');
+  document.getElementById('viewChordsOnly')?.replaceChildren(document.createTextNode(rt('viewChordsOnly', 'Միայն ակորդներ')));
+  document.getElementById('viewLyricsOnly')?.replaceChildren(document.createTextNode(rt('viewLyricsOnly', 'Միայն բառեր')));
+  document.getElementById('viewBoth')?.replaceChildren(document.createTextNode(rt('viewBoth', 'Ակորդներ + բառեր')));
+  document.querySelector('.switch span')?.replaceChildren(document.createTextNode(rt('useFlats', 'Use flats')));
+  document.querySelector('#stepsLabel')?.parentElement?.replaceChildren(document.getElementById('stepsLabel'), document.createTextNode(' ' + rt('semitone', 'կիսատոն')));
+  document.getElementById('saveFavKey')?.replaceChildren(document.createTextNode('💾 ' + rt('saveNewKey', 'Պահպանել նոր տոնայնությունը')));
+  document.querySelector('.capo-sub')?.replaceChildren(document.createTextNode(rt('capoSub', 'Գիթառի նվագելու դիրք')));
+  document.getElementById('saveCapoBtn')?.replaceChildren(document.createTextNode('💾 ' + rt('saveCapo', 'Պահպանել capo-ն')));
+  document.getElementById('clearCapoBtn')?.replaceChildren(document.createTextNode('✕ ' + rt('clearCapo', 'Ջնջել capo-ն')));
+  document.getElementById('downloadTxt')?.replaceChildren(document.createTextNode(rt('downloadTxt', 'Ներբեռնել TXT')));
+}
+
+const songViewLoaderHoldKey = 'song-view-bootstrap';
+applySongViewStaticText();
+window.WP?.holdLoader?.(songViewLoaderHoldKey);
+const params = new URLSearchParams(window.location.search);
+const id = params.get('id');
+const tkey = params.get('tkey');
+const setlistId = params.get('setlist_id');
+const capoParam = parseInt(params.get('capo') || '0', 10);
+const capoModeParam = params.get('capo_mode');
+const sharedView = params.get('view');
+const sharedFont = parseInt(params.get('font') || '', 10);
+
+if(Number.isFinite(capoParam)){
+  capoValue = Math.max(0, Math.min(12, capoParam));
+  savedCapoValue = capoValue;
+}
+
+if(capoModeParam === '1'){
+  capoMode = capoValue > 0;
+  savedCapoMode = capoValue > 0;
+} else if(capoModeParam === '0'){
+  capoMode = false;
+  savedCapoMode = false;
+}
+
+if(sharedView && ['chords','lyrics','both'].includes(sharedView)){
+  currentViewMode = sharedView;
+}
+
+if(Number.isFinite(sharedFont)){
+  contentFontSize = Math.max(12, Math.min(30, sharedFont));
+}
+
+if(!id){
+  chordsEl.textContent = rt('noSongId', 'Երգի համարանիշը նշված չէ');
+  window.WP?.releaseLoader?.(songViewLoaderHoldKey, 60);
+}else{
+  fetch(buildSongApiUrl(encodeURIComponent(id)))
+    .then(r => r.json())
+    .then(async song => {
+      songTitle.textContent = song.title || '';
+      songTitle.dataset.loaded = '1';
+      songArtist.textContent = song.artist || '';
+      originalSongKey = song.song_key || '';
+      songKey.textContent = rtFmt('keyLabel', 'Տոնայնություն: {{key}}', { key: originalSongKey || '—' });
+      songTags.textContent = song.tags || '';
+      currentChords = song.chords || '';
+      chordsEl.dataset.loaded = '1';
+      lyricsEl.textContent = song.lyrics || rt('lyricsUnavailable', 'Բառերը հասանելի չեն');
+
+      setTimeout(() => {
+  addRecentlyViewedSong(song);
+}, 150);
+
+      if(!authState.ready){
+        await loadAuthStatus();
+      }
+
+      // URL-ից եկած tkey-ն՝ եթե կա
+      if(tkey){
+  selectedTargetKey = normalizeTargetKeyValue(tkey);
+  savedTargetKey = selectedTargetKey;
+
+  keysGrid.querySelectorAll('button').forEach(btn=>{
+    btn.classList.toggle('active', btn.textContent === selectedTargetKey);
+  });
+}
+
+      if(isUserLoggedIn()){
+        favFetch('get_favorite', {}, { song_id: id })
+          .then(r => r.json())
+          .then(f => {
+            if(f && f.favorite){
+              favBtn.classList.remove('inactive');
+              favBtn.classList.add('active');
+              favBtn.textContent = '❤';
+
+              if(!tkey && f.target_key){
+                selectedTargetKey = normalizeTargetKeyValue(f.target_key);
+                savedTargetKey = selectedTargetKey;
+              }
+
+              if(selectedTargetKey){
+                keysGrid.querySelectorAll('button').forEach(btn => {
+                  btn.classList.toggle('active', btn.textContent === selectedTargetKey);
+                });
+              }
+            } else {
+              savedTargetKey = '';
+            }
+
+            if(params.get('capo') === null && params.get('capo_mode') === null){
+              loadLocalCapoPref();
+            }
+          })
+          .catch(() => {})
+          .finally(() => {
+            renderPreview();
+            setupFavNav();
+            setupSetlistNav();
+          });
+        return;
+      }
+
+      savedTargetKey = '';
+
+      if(params.get('capo') === null && params.get('capo_mode') === null){
+        loadLocalCapoPref();
+      }
+
+      renderPreview();
+      setupFavNav();
+      setupSetlistNav();
+      window.WP?.releaseLoader?.(songViewLoaderHoldKey, 60);
+      })
+.catch(err => {
+  chordsEl.textContent = rt('loadFailed', 'Չհաջողվեց բեռնել երգը');
+  chordsEl.dataset.loaded = '1';
+  lyricsEl.textContent = rt('offlineUnavailable', 'Օֆֆլայն ռեժիմում այս երգը հասանելի չէ, եթե դեռ չի ներբեռնվել սարքի մեջ։');
+  console.error(err);
+  window.WP?.releaseLoader?.(songViewLoaderHoldKey, 60);
+});
+}
+    
+
+
+
+/* Transpose / preview */
+function computeSemiForLive(originalKey, targetKey){
+  if(!originalKey || !targetKey) return 0;
+  const from = parseKeySignature(originalKey);
+  const to = parseKeySignature(targetKey);
+  if(!from || !to) return 0;
+
+  let diff = to.index - from.index;
+  if(diff > 6) diff -= 12;
+  if(diff < -6) diff += 12;
+  return diff;
+}
+
+function updateTransposeUI(){
+  const hasTargetKey = !!selectedTargetKey;
+  const effectiveTargetKey = getEffectiveTargetKey(originalSongKey, selectedTargetKey);
+
+  steps.disabled = hasTargetKey;
+
+  if(hasTargetKey){
+    favKeyHint.textContent = rtFmt('selectedTargetKey', 'Ընտրված թիրախ տոնայնություն՝ {{key}}', { key: effectiveTargetKey || selectedTargetKey });
+  } else {
+    favKeyHint.textContent = '';
+  }
+
+  const soundingKey = getSoundingKey();
+  songKey.textContent = rtFmt('keyLabel', 'Տոնայնություն: {{key}}', { key: soundingKey || '—' });
+}
+
+function renderPreview(){
+  updateTransposeUI();
+
+  const originalKey = originalSongKey;
+  const effectiveTargetKey = getEffectiveTargetKey(originalKey, selectedTargetKey);
+  const soundingSemi = selectedTargetKey
+    ? computeSemiForLive(originalKey, effectiveTargetKey)
+    : parseInt(steps.value) || 0;
+
+  let finalSemi = soundingSemi;
+
+  if(capoMode && capoValue > 0){
+    finalSemi = soundingSemi - capoValue;
+  }
+
+  preview.innerHTML = renderWithChords(currentChords, finalSemi, useFlats.checked);
+  stepsLabel.textContent = selectedTargetKey ? '-' : steps.value;
+
+  refreshCapoUI();
+  refreshCapoSaveState();
+}
+steps.addEventListener('input', () => {
+  renderPreview();
+  refreshSaveButtonState();
+});
+
+useFlats.addEventListener('change', () => {
+  renderPreview();
+});
+
+capoSelect?.addEventListener('change', () => {
+  capoValue = parseInt(capoSelect.value || '0', 10) || 0;
+
+  if(capoValue <= 0){
+    capoMode = false;
+  }
+
+  saveLocalCapoPref();
+  renderPreview();
+  refreshCapoSaveState();
+});
+
+capoModeBtn?.addEventListener('click', () => {
+  if(!capoValue) return;
+
+  capoMode = !capoMode;
+  saveLocalCapoPref();
+  renderPreview();
+  refreshCapoSaveState();
+});
+
+/* Download TXT */
+downloadTxt.addEventListener('click', ()=>{
+  const text = preview.textContent||'';
+  const blob = new Blob([text],{type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const fileName = `${songTitle.textContent||'song'} (${selectedTargetKey||songKey.textContent||''}).txt`.replace(/[\\/:*?"<>|]+/g,'');
+  const a=document.createElement('a'); a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+});
+
+async function updateFavoriteKey(){
+  if(!id) return;
+  if(!isUserLoggedIn()){
+    showToast(rt('loginToSave', 'Երգը պահպանելու համար նախ մուտք գործիր'));
+    return;
+  }
+
+  const keyToSave = selectedTargetKey ? selectedTargetKey : null;
+
+  try{
+    // 1) ensure favorite exists
+    await favFetch('ensure_favorite', {
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body: JSON.stringify({ song_id: id })
+});
+
+    // 2) update target key
+    const res = await favFetch('update_favorite_key', {
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body: JSON.stringify({ song_id: id, target_key: keyToSave })
+});
+    const data = await res.json();
+
+    if(data && data.ok){
+  savedTargetKey = normalizeKeyValue(data.target_key);
+
+  favBtn.classList.remove('inactive');
+  favBtn.classList.add('active');
+  favBtn.textContent = '❤';
+
+  refreshSaveButtonState();
+  showToast(rt('keySaved', 'Տոնայնությունը պահպանվեց'));
+} else {
+  favKeyHint.textContent = rt('keySaveFailed', 'Չստացվեց պահպանել տոնայնությունը');
+}
+  }catch(e){
+    console.error(e);
+    favKeyHint.textContent = rt('serverError', 'Սխալ՝ server');
+  }
+}
+
+async function updateFavoriteCapo(){
+  if(!id) return;
+  if(!isUserLoggedIn()){
+    showToast('Երգը պահպանելու համար նախ մուտք գործիր');
+    return;
+  }
+
+  try{
+    // եթե երգը favorite չէ՝ նախ ավելացնի favorites
+    await favFetch('ensure_favorite', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ song_id: id })
+    });
+
+    // UI-ում էլ favorite դարձնի
+    favBtn.classList.remove('inactive');
+    favBtn.classList.add('active');
+    favBtn.textContent = '❤';
+    favorite = true;
+
+    savedCapoValue = Number(capoValue || 0);
+    savedCapoMode = !!capoMode;
+
+    saveLocalCapoPref();
+    refreshCapoSaveState();
+
+    showToast('Երգը պահպանվեց և capo-ն պահպանվեց այս սարքի համար');
+  }catch(e){
+    console.error(e);
+    showToast('Չստացվեց պահպանել capo-ն');
+  }
+}
+
+function clearCapoPref(){
+  const key = getCapoStorageKey();
+  if(key){
+    localStorage.removeItem(key);
+  }
+
+  capoValue = 0;
+  capoMode = false;
+  savedCapoValue = 0;
+  savedCapoMode = false;
+
+  if(capoSelect){
+    capoSelect.value = '0';
+  }
+
+  renderPreview();
+  refreshCapoSaveState();
+  showToast('Capo-ն ջնջվեց');
+}
+
+function goToFavorite(item){
+  if(!item || !item.id) return;
+
+  const url = new URL('song_view.html', window.location.href);
+  url.searchParams.set('id', item.id);
+
+  if(item.target_key){
+    url.searchParams.set('tkey', item.target_key);
+  }
+
+  const localKey = `song_capo_pref:${item.id}`;
+  try{
+    const raw = localStorage.getItem(localKey);
+    if(raw){
+      const pref = JSON.parse(raw);
+      const c = parseInt(pref?.capo || '0', 10) || 0;
+      const m = Number(pref?.capo_mode || 0) === 1;
+
+      if(c > 0){
+        url.searchParams.set('capo', String(c));
+      }
+      url.searchParams.set('capo_mode', m ? '1' : '0');
+    }
+  }catch(e){
+    console.error(e);
+  }
+
+  window.location.href = url.toString();
+}
+
+async function setupFavNav(){
+  if(!isUserLoggedIn()){
+    favNav.style.display = 'none';
+    return;
+  }
+
+  if (setlistId) {
+    favNav.style.display = 'none';
+    return;
+  }
+
+  try{
+    const res = await favFetch('get_favorites');
+    const list = await res.json();
+
+    if(!Array.isArray(list) || list.length < 2){
+      favNav.style.display = 'none';
+      return;
+    }
+
+    const idx = list.findIndex(x => String(x.id) === String(id));
+    if(idx < 0){
+      favNav.style.display = 'none';
+      return;
+    }
+
+    const prev = idx > 0 ? list[idx - 1] : null;
+    const next = idx < list.length - 1 ? list[idx + 1] : null;
+    const current = list[idx];
+
+    favPrev.disabled = !prev;
+    favNext.disabled = !next;
+
+    favPrev.onclick = (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      goToFavorite(prev);
+    };
+
+    favNext.onclick = (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      goToFavorite(next);
+    };
+
+    if(favNavCount){
+      favNavCount.textContent = `${idx + 1} / ${list.length}`;
+    }
+
+    if(favNavTitle){
+      favNavTitle.textContent =
+        (current && (current.title || current.song_title)) ||
+        songTitle.textContent ||
+        'Երգ';
+    }
+
+    favNav.style.display = 'flex';
+  }catch(e){
+    console.error(e);
+    favNav.style.display = 'none';
+  }
+}
+
+
+function getSongCapoStorageKey(songId){
+  return `song_capo_pref:${songId}`;
+}
+
+function loadSongCapoPref(songId){
+  try{
+    const raw = localStorage.getItem(getSongCapoStorageKey(songId));
+    if(!raw) return { capo: 0, capo_mode: 0 };
+
+    const data = JSON.parse(raw);
+    return {
+      capo: Math.max(0, Math.min(12, parseInt(data?.capo || '0', 10) || 0)),
+      capo_mode: Number(data?.capo_mode || 0) === 1 ? 1 : 0
+    };
+  }catch(e){
+    console.error('loadSongCapoPref error', e);
+    return { capo: 0, capo_mode: 0 };
+  }
+}
+
+function goToSetlistSong(item){
+  if(!item || !item.id) return;
+
+  const url = new URL('song_view.html', window.location.href);
+  url.searchParams.set('id', item.id);
+
+  if(item.target_key){
+    url.searchParams.set('tkey', item.target_key);
+  } else {
+    url.searchParams.delete('tkey');
+  }
+
+  const pref = loadSongCapoPref(item.id);
+
+  if(pref.capo_mode === 1 && pref.capo > 0){
+    url.searchParams.set('capo', String(pref.capo));
+    url.searchParams.set('capo_mode', '1');
+  } else {
+    url.searchParams.delete('capo');
+    url.searchParams.set('capo_mode', '0');
+  }
+
+  if(setlistId){
+    url.searchParams.set('setlist_id', setlistId);
+  }
+
+  window.location.href = url.toString();
+}
+
+async function setupSetlistNav(){
+  if(!setlistId || !id){
+    if(setlistNav) setlistNav.style.display = 'none';
+    return;
+  }
+
+  try{
+    const url = new URL('/setlists_api.php', window.location.origin);
+    url.searchParams.set('action', 'get_setlist_song_nav');
+    url.searchParams.set('setlist_id', setlistId);
+    url.searchParams.set('song_id', id);
+
+    const res = await fetch(url.toString(), {
+      credentials: 'include'
+    });
+
+    const data = await res.json();
+
+    if(!res.ok || data.error || !data.current){
+      setlistNav.style.display = 'none';
+      return;
+    }
+
+    setlistNavName.textContent = data.setlist?.name || 'Setlist';
+    setlistNavCount.textContent = `${data.index} / ${data.total}`;
+
+    setlistPrev.disabled = !data.prev;
+    setlistNext.disabled = !data.next;
+
+    setlistPrev.onclick = () => goToSetlistSong(data.prev);
+    setlistNext.onclick = () => goToSetlistSong(data.next);
+
+    setlistNav.style.display = 'flex';
+  }catch(e){
+    console.error(e);
+    if(setlistNav) setlistNav.style.display = 'none';
+  }
+}
+
+
+let touchStartX = 0;
+let touchEndX = 0;
+let touchStartY = 0;
+let touchEndY = 0;
+
+document.addEventListener('touchstart', (e)=>{
+  if(favNav.style.display !== 'flex') return;
+  touchStartX = e.changedTouches[0].clientX;
+  touchStartY = e.changedTouches[0].clientY;
+}, { passive:true });
+
+document.addEventListener('touchend', (e)=>{
+  if(favNav.style.display !== 'flex') return;
+  touchEndX = e.changedTouches[0].clientX;
+  touchEndY = e.changedTouches[0].clientY;
+
+  const dx = touchEndX - touchStartX;
+  const dy = touchEndY - touchStartY;
+
+  if(Math.abs(dx) < 60) return;
+  if(Math.abs(dx) < Math.abs(dy)) return;
+
+  if(dx > 0 && !favPrev.disabled){
+    favPrev.click();
+  } else if(dx < 0 && !favNext.disabled){
+    favNext.click();
+  }
+}, { passive:true });
+
+
+saveFavKey.addEventListener('click', updateFavoriteKey);
+saveCapoBtn?.addEventListener('click', updateFavoriteCapo);
+clearCapoBtn?.addEventListener('click', clearCapoPref);
+
+function applyViewMode(mode){
+  currentViewMode = mode;
+  localStorage.setItem('song_view_mode', mode);
+
+  viewChordsOnly?.classList.toggle('active', mode === 'chords');
+  viewLyricsOnly?.classList.toggle('active', mode === 'lyrics');
+  viewBoth?.classList.toggle('active', mode === 'both');
+
+  if(mode === 'chords'){
+    chordsEl.style.display = 'block';
+    lyricsEl.style.display = 'none';
+  } else if(mode === 'lyrics'){
+    chordsEl.style.display = 'none';
+    lyricsEl.style.display = 'block';
+  } else {
+    chordsEl.style.display = 'block';
+    lyricsEl.style.display = 'block';
+  }
+}
+
+viewChordsOnly?.addEventListener('click', () => applyViewMode('chords'));
+viewLyricsOnly?.addEventListener('click', () => applyViewMode('lyrics'));
+viewBoth?.addEventListener('click', () => applyViewMode('both'));
+requestEditBtn?.addEventListener('click', () => {
+  if(!id) return;
+  const target = `/song_request.html?song_id=${encodeURIComponent(String(id))}`;
+  window.location.href = (window.WP && typeof window.WP.withAppSource === 'function')
+    ? window.WP.withAppSource(target)
+    : target;
+});
+
+/* HAMBURGER MENU */
+function initMobileMenuDrawer(){
+  const hamburger = document.getElementById('hamburger');
+  const menu = document.getElementById('menu');
+  if(!hamburger || !menu || hamburger.dataset.drawerBound === '1') return;
+  hamburger.dataset.drawerBound = '1';
+
+  let backdrop = document.querySelector('.mobile-nav-backdrop');
+  if(!backdrop){
+    backdrop = document.createElement('div');
+    backdrop.className = 'mobile-nav-backdrop';
+    document.body.appendChild(backdrop);
+  }
+
+  const finishClose = () => menu.classList.remove('closing');
+  const closeMenu = (animated = true) => {
+    hamburger.classList.remove('active');
+    document.body.classList.remove('menu-open');
+    menu.classList.remove('open');
+    if(animated){
+      menu.classList.add('closing');
+      window.setTimeout(finishClose, 260);
+    } else {
+      finishClose();
+    }
+  };
+  const openMenu = () => {
+    menu.classList.remove('closing');
+    menu.classList.add('open');
+    hamburger.classList.add('active');
+    document.body.classList.add('menu-open');
+  };
+
+  hamburger.addEventListener('click', ()=>{
+    if(window.innerWidth > 900) return;
+    if(menu.classList.contains('open')) closeMenu(false);
+    else openMenu();
+  });
+
+  backdrop.addEventListener('click', ()=> closeMenu(false));
+  menu.querySelectorAll('a').forEach(link => link.addEventListener('click', ()=> closeMenu(true)));
+  window.addEventListener('resize', ()=> {
+    if(window.innerWidth > 900) closeMenu(false);
+  });
+  document.addEventListener('keydown', (event)=>{
+    if(event.key === 'Escape' && menu.classList.contains('open')) closeMenu(false);
+  });
+}
+
+initMobileMenuDrawer();
+
+/* Active menu */
+const links = document.querySelectorAll('nav .menu a');
+
+function setActiveMenu(){
+  const path = window.location.pathname;
+  const hash = window.location.hash;
+
+  links.forEach(link=>{
+    link.classList.remove('active');
+
+    const href = link.getAttribute('href');
+
+    // page link (օր. /index.php)
+    if(href.startsWith('/') && href === path){
+      link.classList.add('active');
+    }
+
+    // section link (օր. #features)
+    if(href.startsWith('#') && href === hash){
+      link.classList.add('active');
+    }
+  });
+}
+
+// initial load
+setActiveMenu();
+
+// when clicking menu
+links.forEach(link=>{
+  link.addEventListener('click', ()=>{
+    setTimeout(setActiveMenu, 50);
+  });
+});
+
+/*Recently viewed songs*/
+let authState = {
+  ready: false,
+  loggedIn: false,
+  userId: null
+};
+
+async function accountFetch(action, opts = {}, queryObj = null){
+  const url = new URL('/account_api.php', window.location.origin);
+  url.searchParams.set('action', action);
+
+  if(queryObj){
+    for(const [k, v] of Object.entries(queryObj)){
+      url.searchParams.set(k, String(v));
+    }
+  }
+
+  return fetch(url.toString(), {
+    credentials: 'include',
+    ...opts
+  });
+}
+
+async function loadAuthStatus(){
+  try{
+    const res = await accountFetch('auth_status');
+    const data = await res.json();
+
+    authState.ready = true;
+    authState.loggedIn = !!data.logged_in;
+    authState.userId = data.user_id || null;
+    try{
+      if(data && data.logged_in && data.user_id && window.WPInstallTracker && typeof window.WPInstallTracker.forceSyncCurrentInstall === 'function'){
+        window.WPInstallTracker.forceSyncCurrentInstall();
+      }
+    }catch(e){}
+  }catch(e){
+    console.error('auth_status failed', e);
+    authState.ready = true;
+    authState.loggedIn = false;
+    authState.userId = null;
+  }
+
+  applyGuestRestrictedUI();
+}
+
+function isUserLoggedIn(){
+  return !!authState.loggedIn;
+}
+
+function applyGuestRestrictedUI(){
+  if(favBtn){
+    favBtn.style.display = isUserLoggedIn() ? '' : 'none';
+  }
+
+  if(!isUserLoggedIn()){
+    saveFavKey.classList.add('is-hidden');
+    saveCapoBtn?.classList.add('is-hidden');
+    favNav.style.display = 'none';
+    favKeyHint.textContent = '';
+  }
+}
+
+async function addRecentlyViewedSong(song){
+  if(!song || !song.id) return;
+
+  try{
+    const authRes = await accountFetch('auth_status');
+    const auth = await authRes.json();
+
+    if(!auth || !auth.logged_in) return;
+
+    await accountFetch('add_recent_view', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ song_id: song.id })
+    });
+  }catch(e){
+    console.error('Failed to save recent view', e);
+  }
+}
+
+
+applyFontSize();
+applyViewMode(currentViewMode);
+refreshSaveButtonState();
+refreshCapoSaveState();
+</script>
+<script type="module">
+  import { initNavbarAuthUI, favApiBase } from '/fav_bridge.js';
+
+  const loaderHoldKey = 'song-view-auth';
+  window.WP?.holdLoader?.(loaderHoldKey);
+
+  try{
+    await Promise.all([
+      initNavbarAuthUI(),
+      loadAuthStatus()
+    ]);
+    window.__favApiBase = favApiBase;
+  } finally {
+    window.WP?.releaseLoader?.(loaderHoldKey, 60);
+  }
+</script>
+<div id="toast" style="
+  position:fixed;
+  left:50%;
+  bottom:90px;
+  transform:translateX(-50%) translateY(20px);
+  background:rgba(15,18,34,.92);
+  color:#fff;
+  padding:10px 14px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 12px 30px rgba(0,0,0,.28);
+  opacity:0;
+  pointer-events:none;
+  transition:.22s ease;
+  z-index:99999;
+  font-size:14px;
+  white-space:nowrap;
+  max-width:calc(100vw - 24px);
+  text-align:center;
+"></div>
+</body>
+</html>

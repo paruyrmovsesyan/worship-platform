@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="hy">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Պահպանված երգեր | Wolarm Youth Worship</title>
+<style>
+body {
+  font-family: Helvetica, Arial, sans-serif;
+  background: #f6f7fb;
+  color: #0f1222;
+  padding: 15px;
+}
+h1 {
+  color: #0b3c78;
+  text-align: center;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  background: #fff;
+  border: 1px solid #dce0eb;
+}
+th, td {
+  padding: 10px;
+  border-bottom: 1px solid #eef0f6;
+  text-align: left;
+  font-size: 14px;
+}
+th {
+  background: #f1f4f9;
+  color: #374151;
+}
+button {
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: #0b69d6;
+  color: #fff;
+  cursor: pointer;
+}
+.heart {
+  cursor: pointer;
+  font-size: 18px;
+  color: #ccc;
+}
+.heart.active {
+  color: #e63946;
+}
+.footer {
+  max-width: 1000px;
+  margin: 40px auto 0 auto;
+  position: static;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: #fff;
+  text-align: center;
+  line-height: 50px;
+  border-top: 1px solid #eee;
+}
+</style>
+</head>
+<body>
+
+<h1>❤Պահպանված երգեր</h1>
+<p style="text-align:center;color:#555;">Այստեղ այն երգերն են, որոնք դուք հավանել եք։</p>
+<p><a href="old.html">⬅Վերադառնալ հիմնական էջ</a></p>
+
+<table>
+  <thead>
+    <tr><th>Անուն</th><th>Տեգեր</th><th>Դիտել</th><th>Հեռացնել</th></tr>
+  </thead>
+  <tbody id="favoritesTable">
+    <tr><td colspan="4" style="text-align:center;color:#777;">Բեռնվում է...</td></tr>
+  </tbody>
+</table>
+
+<div class="footer">
+  <b>Wolarm Youth 2025 | PM Studio 2025</b>
+</div>
+
+<script>
+// XMLHttpRequest-ի տարբերակ՝ fetch-ի փոխարեն
+function loadFavorites() {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', 'favorites_api.php?action=get_favorites', true);
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      try {
+        var list = JSON.parse(xhr.responseText);
+        renderFavorites(list);
+      } catch (e) {
+        document.getElementById('favoritesTable').innerHTML =
+          '<tr><td colspan="4" style="text-align:center;color:#777;">Սխալ տվյալներ</td></tr>';
+      }
+    }
+  };
+  xhr.send();
+}
+
+function renderFavorites(list) {
+  var tbody = document.getElementById('favoritesTable');
+  tbody.innerHTML = '';
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#777;">Դու դեռ երգեր չես պահել</td></tr>';
+    return;
+  }
+
+  for (var i = 0; i < list.length; i++) {
+    var s = list[i];
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + (s.title || '') + '</td>' +
+      '<td>' + (s.tags || '') + '</td>' +
+      '<td><button onclick="openSong(' + s.id + ')">Դիտել</button></td>' +
+      '<td><span class="heart active" onclick="toggleFavorite(' + s.id + ', this)">❤</span></td>';
+    tbody.appendChild(tr);
+  }
+}
+
+function toggleFavorite(songId, el) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'favorites_api.php?action=toggle_favorite', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        if (data.favorite === false) {
+          var tr = el.parentNode.parentNode;
+          tr.parentNode.removeChild(tr);
+        }
+      } catch (e) {}
+    }
+  };
+  xhr.send(JSON.stringify({ song_id: songId }));
+}
+
+// --- Открыть песню ---
+function openSong(id) {
+  window.location.href = 'song_view_old.html?id=' + id;
+}
+
+loadFavorites();
+</script>
+</body>
+</html>

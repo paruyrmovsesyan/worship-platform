@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Երգի դիտում</title>
+<link rel="icon" href="wolarm_youth.png" type="image/png" />
+<style>
+:root {
+  --bg: #0f1222;
+  --card: rgba(255,255,255,0.05);
+  --glass: rgba(255,255,255,0.08);
+  --text: #eef6ff;
+  --muted: #98a0b3;
+  --accent: #3367ff;
+  --accent-2: #2247d6;
+  --heart: #ff4b5c;
+  --radius: 16px;
+  --shadow: 0 8px 24px rgba(0,0,0,0.3);
+  --fs: 15px;
+}
+
+:root.light {
+  --bg: #f3f6fb;
+  --card: rgba(255,255,255,0.9);
+  --glass: rgba(255,255,255,0.85);
+  --text: #0f1222;
+  --muted: #667085;
+  --accent: #3367ff;
+  --accent-2: #2247d6;
+  --heart: #ff3b30;
+  --radius: 14px;
+  --shadow: 0 6px 18px rgba(21,32,84,0.06);
+  --fs: 15px;
+}
+
+* {box-sizing:border-box;}
+html,body {height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;font-size:var(--fs);line-height:1.45;background:var(--bg);color:var(--text);}
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+.app {min-height:100vh;display:flex;flex-direction:column;align-items:stretch;}
+.topbar {display:flex;justify-content:space-between;align-items:center;padding:18px 18px;background: var(--glass);backdrop-filter: blur(12px) saturate(120%);border-bottom:1px solid rgba(255,255,255,0.05);border-radius:var(--radius);margin:12px;}
+.brand .title {font-size:18px;font-weight:700;margin:0;}
+.brand .subtitle {font-size:12px;color:var(--muted);margin:0; }
+.theme-btn {border:1px solid rgba(255,255,255,0.1);background:transparent;border-radius:12px;padding:6px 10px;cursor:pointer;color:var(--text);}
+.fav-float {position:fixed;top:19px;right:65px;z-index:1400;}
+.fav-btn {width:35px;height:35px;border-radius:12px;border:0;background: linear-gradient(135deg,var(--accent),var(--accent-2));color:white;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(50,80,200,0.2);}
+.fav-btn.inactive {background:rgba(255,255,255,0.06); color:var(--muted); border:1px solid rgba(255,255,255,0.06); box-shadow:none;}
+.main {display:flex;flex:1 1 auto;gap:20px;padding:18px;}
+.content {flex:1; display:flex;flex-direction:column;gap:14px;}
+.card {background: var(--card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);backdrop-filter: blur(12px) saturate(120%);overflow:auto;}
+.card {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.song-header {display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;}
+.song-title {font-size:22px;font-weight:800;margin:0;}
+.song-artist {font-size:13px;color:var(--muted);margin:2px 0 0 0;}
+.info-row {display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
+.info-pill {background: rgba(255,255,255,0.02);padding:6px 10px;border-radius:999px;font-weight:600;font-size:13px;color:var(--muted);border:1px solid rgba(255,255,255,0.06);}
+.chords {margin-top:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;background: rgba(255,255,255,0.01);border-radius:12px;padding:16px;border:1px dashed rgba(255,255,255,0.03);min-height:280px;font-weight:600;font-size:15px;color:var(--text);}
+.chord {font-weight:800;color:var(--accent);}
+.panel {width:280px; height:420px;display:flex;flex-direction:column;gap:12px;align-self:flex-start;}
+.panel.card {padding:14px;}
+.panel-header {display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.panel-title {font-weight:700;font-size:15px;}
+.keys-grid {display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px;}
+.keys-grid button {padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--text);cursor:pointer;font-weight:700;}
+.keys-grid button.active {background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;box-shadow:0 6px 18px rgba(34,71,214,0.18);}
+@media (max-width:900px){.main {flex-direction:column;padding:12px;gap:12px;}.panel {width:100%;order:2;}.chords{min-height:220px;}.fav-float{top:19px;right:65px;}.song-title {font-size:16px;font-weight:800;margin:0;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="title">Երգի դիտում</div>
+      <!--<div class="subtitle" id="titleSmall">Բեռնվում է…</div> -->
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div id="themeBtn" class="theme-btn"><span id="themeIcon">🌙</span></div>
+    </div>
+    <div class="fav-float">
+    <button id="favBtn" class="fav-btn inactive" aria-pressed="false">♡</button>
+  </div>
+  </div>
+
+  
+
+  <div class="main">
+    <div class="content">
+      <div class="card">
+        <div class="song-header">
+          <div>
+            <h1 id="songTitle" class="song-title">Բեռնվում է…</h1>
+            <div class="song-artist" id="songArtist"></div>
+            <div class="info-row">
+              <div class="info-pill" id="songKey">Տոնայնություն: —</div>
+              <div class="info-pill" id="songTags">Tags</div>
+            </div>
+          </div>
+        </div>
+        <div id="chords" class="chords">Բեռնվում է ակկորդները…</div>
+      </div>
+    </div>
+
+    <div class="panel card">
+      <div class="panel-header">
+        <div class="panel-title">Տրանսպոզիցիա</div>
+        <label class="switch"><input id="useFlats" type="checkbox"><span style="margin-left:6px;color:var(--muted);font-weight:700;">Use flats</span></label>
+      </div>
+      <div class="keys-grid" id="keysGrid"></div>
+      <input type="range" min="-11" max="11" value="0" id="steps" style="margin-top:8px;width:100%">
+      <div style="display:flex;justify-content:space-between;margin-top:6px"><small style="color:var(--muted)"><span id="stepsLabel">0</span> կիսատոն</small></div>
+      <button id="downloadTxt" class="theme-btn" style="margin-top:8px;">Ներբեռնել TXT</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SHARPS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const FLATS  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+
+function noteIndex(note) {
+  if (!note) return -1;
+  note = note.replace(/♭/g,'b');
+  if(SHARPS.includes(note)) return SHARPS.indexOf(note);
+  if(FLATS.includes(note)) return FLATS.indexOf(note);
+  if(note==='E#') return SHARPS.indexOf('F');
+  if(note==='B#') return SHARPS.indexOf('C');
+  if(note==='Fb') return SHARPS.indexOf('E');
+  if(note==='Cb') return SHARPS.indexOf('B');
+  return -1;
+}
+
+function transposeRoot(root, semi, useFlats){
+  const i = noteIndex(root);
+  if(i<0) return root;
+  const autoFlats = root.includes('b') && !root.includes('#');
+  const flat = useFlats || autoFlats;
+  const idx = (i+semi+12)%12;
+  return flat ? FLATS[idx] : SHARPS[idx];
+}
+
+function renderWithChords(text='', semi=0, useFlats=false){
+  const chordRegex = /(^|[\s\(\[])([A-G](?:#|b)?)([mM0-9majdimaugaddsus]*)(?:\/([A-G](?:#|b)?))?(?=[\s\)\]\,]|$)/g;
+  return text.split('\n').map(line=>
+    line.replace(chordRegex,(m,prefix,root,type='',bass='')=>{
+      const newRoot = transposeRoot(root,semi,useFlats);
+      let result = `${prefix}<span class="chord">${newRoot}${type}`;
+      if(bass){ result += '/'+transposeRoot(bass,semi,useFlats); }
+      result += '</span>'; return result;
+    })
+  ).join('\n');
+}
+
+/* DOM */
+const songTitle = document.getElementById('songTitle');
+/*const titleSmall = document.getElementById('titleSmall');*/
+const songArtist = document.getElementById('songArtist');
+const songKey = document.getElementById('songKey');
+const songTags = document.getElementById('songTags');
+const chordsEl = document.getElementById('chords');
+const preview = chordsEl;
+
+const favBtn = document.getElementById('favBtn');
+const keysGrid = document.getElementById('keysGrid');
+const steps = document.getElementById('steps');
+const stepsLabel = document.getElementById('stepsLabel');
+const useFlats = document.getElementById('useFlats');
+const themeBtn = document.getElementById('themeBtn');
+const themeIcon = document.getElementById('themeIcon');
+const downloadTxt = document.getElementById('downloadTxt');
+
+let currentChords = '';
+let selectedTargetKey = '';
+let favorite = false;
+
+/* Theme */
+themeBtn.addEventListener('click', ()=>{
+  const dark = document.documentElement.classList.toggle('dark');
+  document.documentElement.classList.toggle('light');
+  themeIcon.textContent = dark?'☀️':'🌙';
+});
+
+/* Favorite */
+favBtn.addEventListener('click', ()=>{
+  if(!id) return;
+  toggleFavorite(id, favBtn);
+});
+
+/* Toggle favorite (API) */
+async function toggleFavorite(id, el){
+  try{
+    // Pulse animation
+    el.classList.add('pulse');
+    setTimeout(()=>el.classList.remove('pulse'),700);
+
+    el.style.transform='scale(1.05)';
+    setTimeout(()=>el.style.transform='',160);
+
+    // Send request to API
+    const res = await fetch('favorites_users.php?action=toggle_favorite',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({song_id:id})
+    });
+    
+    const data = await res.json();
+
+    if(data && data.favorite){
+      el.classList.remove('inactive');
+      el.classList.add('active');
+      el.textContent = '❤';
+    } else {
+      el.classList.remove('active');
+      el.classList.add('inactive');
+      el.textContent = '♡';
+    }
+  } catch(e){
+    console.error(e);
+  }
+}
+
+
+/* Build keys grid */
+const KEY_OPTIONS = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+KEY_OPTIONS.forEach(k=>{
+  const b = document.createElement('button'); b.textContent=k;
+  b.addEventListener('click', ()=> {
+    if(selectedTargetKey===k){ selectedTargetKey=''; b.classList.remove('active'); }
+    else { selectedTargetKey=k; keysGrid.querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); }
+    renderPreview();
+  });
+  keysGrid.appendChild(b);
+});
+
+/* Fetch song */
+const params = new URLSearchParams(window.location.search);
+const id = params.get('id');
+if(!id){ chordsEl.textContent='No song id specified'; }
+else{
+  fetch('api.php?id='+id)
+    .then(r=>r.json())
+    .then(song=>{
+      songTitle.textContent = song.title||'';
+      /*titleSmall.textContent = song.title||'';*/
+      songArtist.textContent = song.artist||'';
+      songKey.textContent = song.song_key||'';
+      songTags.textContent = song.tags||'';
+      currentChords = song.chords||'';
+      chordsEl.textContent = currentChords;
+      renderPreview();
+    })
+    .catch(err=>{ chordsEl.textContent='Error loading song'; console.error(err); });
+}
+
+/* Transpose / preview */
+function computeSemiForLive(originalKey,targetKey){
+  if(!originalKey||!targetKey) return 0;
+  const from=noteIndex(originalKey), to=noteIndex(targetKey);
+  if(from<0||to<0) return 0;
+  return (to-from+12)%12;
+}
+
+function renderPreview(){
+  const originalKey = songKey.textContent.trim();
+  const semi = selectedTargetKey ? computeSemiForLive(originalKey,selectedTargetKey) : parseInt(steps.value)||0;
+  preview.innerHTML = renderWithChords(currentChords,semi,useFlats.checked);
+  stepsLabel.textContent = steps.value;
+}
+steps.addEventListener('input',renderPreview);
+useFlats.addEventListener('change',renderPreview);
+
+
+/* Download TXT */
+downloadTxt.addEventListener('click', ()=>{
+  const text = preview.textContent||'';
+  const blob = new Blob([text],{type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const fileName = `${songTitle.textContent||'song'} (${selectedTargetKey||songKey.textContent||''}).txt`.replace(/[\\/:*?"<>|]+/g,'');
+  const a=document.createElement('a'); a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+});
+</script>
+</body>
+</html>

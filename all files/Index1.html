@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="hy">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Երգերի Բազա + Տրանսպոզեր (Brackets-Free)</title>
+  <style>
+    :root{
+      --bg:#f6f7fb; --fg:#0f1222; --muted:#667085; --card:#ffffff;
+      --primary:#0b69d6; --danger:#d64545; --ring:#d9e4ff;
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Arial;
+         background:var(--bg); color:var(--fg); padding:24px; line-height:1.45}
+    .app{max-width:1000px;margin:0 auto;background:var(--card);padding:20px;border-radius:14px;
+         box-shadow:0 10px 30px rgba(20,20,50,.06)}
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
+    header h2{margin:0}
+    header small{color:var(--muted)}
+    label{font-size:14px;color:var(--muted);display:block;margin-top:10px}
+    input[type="text"]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #dde3ee;outline:none}
+    input[type="text"]:focus, textarea:focus{box-shadow:0 0 0 4px var(--ring)}
+    textarea{width:100%;height:160px;resize:vertical;font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+             padding:10px 12px;border-radius:10px;border:1px solid #dde3ee}
+    .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+    .row .spacer{flex:1}
+    button{padding:9px 12px;border:0;border-radius:10px;background:var(--primary);color:white;cursor:pointer}
+    button.secondary{background:#eef2ff;color:#21315b}
+    button.danger{background:var(--danger);}
+    .preview{white-space:pre-wrap;background:#fbfcff;border:1px dashed #e6e9f5;border-radius:12px;padding:12px;margin-top:12px}
+    .chord{font-weight:700;color:#0b3c78}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th, td{padding:10px;border-bottom:1px solid #eef0f6;text-align:left;font-size:14px}
+    th{color:#6b7280;font-weight:600}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#eef2ff;color:#21315b;font-size:12px}
+    .hint{color:#6b7280;font-size:12px}
+    .controls{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+    input[type="range"]{flex:1}
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h2>Երգերի բազա + տրանսպոզեր (Brackets-Free)</h2>
+        <small>Պահպանեք, փնտրեք, տրանսպոզ արեք և արտահանեք երգերը</small>
+      </div>
+      <div class="pill">Server • MySQL</div>
+    </header>
+
+    <section aria-label="editor">
+      <label>Երգի անունը</label>
+      <input id="title" type="text" placeholder="Օր. Մեր սուրբ Աստված">
+      <label>Կատարողը</label>
+      <input id="artist" type="text" placeholder="Օր. Խմբի անուն">
+      <label>Սկզբնական տոնայնություն (օր. C, G, F#m)</label>
+      <input id="key" type="text" placeholder="Օր. C">
+      <label>Տեգեր (բաժանեք `,`-ով)</label>
+      <input id="tags" type="text" placeholder="օր. worship, fast, armenian">
+
+      <label>Երգի բառերը և акорդները (ուղիղ, առանց [])</label>
+      <textarea id="lyrics" placeholder="C Օրինակ տող
+G Երկրորդ տող
+Am F Եւ այլն"></textarea>
+
+      <div class="controls">
+        <span class="hint">Transpose: <strong id="stepsLabel">0</strong> semitones</span>
+        <input id="steps" type="range" min="-11" max="11" value="0">
+        <label style="display:flex;align-items:center;gap:6px" title="Օգտագործել bemol-ներ (Db, Eb...)">
+          <input id="useFlats" type="checkbox"> Use flats
+        </label>
+        <div class="spacer"></div>
+        <button id="saveSong">Պահպանել</button>
+        <button id="clearForm" class="secondary">Մաքրել</button>
+        <button id="downloadTxt" class="secondary">.txt</button>
+        <button id="exportPdf" class="secondary">PDF</button>
+      </div>
+
+      <div id="preview" class="preview" aria-live="polite"></div>
+    </section>
+
+    <hr>
+
+    <section aria-label="list">
+      <h3 style="margin:10px 0 6px">Երգերի ցանկ</h3>
+      <input id="search" type="text" placeholder="Որոնել անունով, կատարողով, բառերով կամ տեգերով…">
+      <table aria-label="songs table">
+        <thead>
+          <tr><th>Անուն</th><th>Կատարող</th><th>Տոնայն.</th><th>Տեգեր</th><th>Գործողություններ</th></tr>
+        </thead>
+        <tbody id="songsTable"></tbody>
+      </table>
+    </section>
+  </div>
+
+<script>
+// ---------- Music theory helpers ----------
+const SHARPS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const FLATS  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+
+function noteIndex(note){
+  if(!note) return -1;
+  const norm = (''+note).replace(/♭/g,'b');
+  let i = SHARPS.indexOf(norm);
+  if(i>=0) return i;
+  i = FLATS.indexOf(norm);
+  if(i>=0) return i;
+  if(norm==='E#') return SHARPS.indexOf('F');
+  if(norm==='B#') return SHARPS.indexOf('C');
+  if(norm==='Fb') return SHARPS.indexOf('E');
+  if(norm==='Cb') return SHARPS.indexOf('B');
+  return -1;
+}
+function chooseName(idx, useFlats){ idx=(idx+12)%12; return useFlats?FLATS[idx]:SHARPS[idx]; }
+function transposeRoot(root, semi, useFlats){
+  const i = noteIndex(root);
+  return i<0 ? root : chooseName(i+semi, useFlats);
+}
+function transposeChordText(chordText, semi, useFlats){
+  return (chordText||'').replace(
+    /([A-Ga-g])([#b♭]?)([^\/\s]*)?(?:\/([A-Ga-g])([#b♭]?))?/g,
+    (m, r, acc, rest, br, bacc) => {
+      const root = (r.toUpperCase() + (acc||'')).replace('♭','b');
+      const newRoot = transposeRoot(root, semi, useFlats);
+      let out = newRoot + (rest||'');
+      if(br){
+        const bass = (br.toUpperCase() + (bacc||'')).replace('♭','b');
+        const newBass = transposeRoot(bass, semi, useFlats);
+        out += '/' + newBass;
+      }
+      return out;
+    }
+  );
+}
+function escapeHtml(s){ return (''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ---------- Render without brackets ----------
+function renderWithChords(text, semi=0, useFlats=false){
+  const lines = (text||'').split('\n');
+  let html = '';
+  for(const line of lines){
+    let safe = escapeHtml(line);
+    safe = safe.replace(/\b([A-Ga-g][#b♭]?)([^\/\s]*)?(?:\/([A-Ga-g][#b♭]?))?\b/g,
+      (m, root, rest, bass)=>{
+        const newRoot = transposeRoot(root, semi, useFlats);
+        let out = newRoot + (rest||'');
+        if(bass){
+          const newBass = transposeRoot(bass, semi, useFlats);
+          out += '/' + newBass;
+        }
+        return '<span class="chord">'+out+'</span>';
+      }
+    );
+    html += safe + '\n';
+  }
+  return html;
+}
+
+// ---------- DOM refs ----------
+const $ = (id)=>document.getElementById(id);
+const titleI=$('title'), artistI=$('artist'), keyI=$('key'), tagsI=$('tags'), lyricsI=$('lyrics');
+const stepsI=$('steps'), stepsLabel=$('stepsLabel'), useFlatsI=$('useFlats'), preview=$('preview');
+const saveBtn=$('saveSong'), clearBtn=$('clearForm'), downloadTxtBtn=$('downloadTxt'), exportPdfBtn=$('exportPdf');
+const searchI=$('search'), tableBody=$('songsTable');
+
+// ---------- Live preview ----------
+function renderPreview(){
+  const semi = parseInt(stepsI.value||'0',10) || 0;
+  stepsLabel.textContent = semi;
+  preview.innerHTML = renderWithChords(lyricsI.value, semi, useFlatsI.checked);
+}
+lyricsI.addEventListener('input', renderPreview);
+stepsI.addEventListener('input', renderPreview);
+useFlatsI.addEventListener('change', renderPreview);
+lyricsI.value = 'C Օրինակ տող\nG Երկրորդ տող\nAm F Եվ այլն';
+renderPreview();
+
+// ---------- Server CRUD ----------
+async function fetchSongs(filter='') {
+  const res = await fetch('api.php');
+  let songs = await res.json();
+  if (filter) {
+    songs = songs.filter(s => 
+      (s.title+s.artist+s.song_key+s.tags+s.lyrics).toLowerCase().includes(filter.toLowerCase())
+    );
+  }
+  renderTable(songs);
+}
+async function saveSong() {
+  const song = {
+    title: titleI.value.trim(),
+    artist: artistI.value.trim(),
+    key: keyI.value.trim(),
+    tags: tagsI.value.trim(),
+    lyrics: lyricsI.value
+  };
+  const res = await fetch('api.php', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify(song)
+  });
+  await res.json();
+  alert("Պահպանված է!");
+  clearForm();
+  fetchSongs();
+}
+async function deleteSong(id) {
+  if (!confirm("Իսկապե՞ս ջնջել այս երգը։")) return;
+  await fetch('api.php?id='+id, { method:'DELETE' });
+  fetchSongs();
+}
+async function loadSong(id) {
+  const res = await fetch('api.php?id='+id);
+  const s = await res.json();
+  titleI.value = s.title;
+  artistI.value = s.artist;
+  keyI.value = s.song_key;
+  tagsI.value = s.tags;
+  lyricsI.value = s.lyrics;
+  renderPreview();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function renderTable(songs=[]) {
+  tableBody.innerHTML='';
+  for (const s of songs) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escapeHtml(s.title||'')}</td>
+      <td>${escapeHtml(s.artist||'')}</td>
+      <td>${escapeHtml(s.song_key||'')}</td>
+      <td>${escapeHtml(s.tags||'')}</td>
+      <td>
+        <button class="secondary" onclick="loadSong(${s.id})">Բեռնել</button>
+        <button class="danger" onclick="deleteSong(${s.id})">Ջնջել</button>
+      </td>
+    `;
+    tableBody.appendChild(tr);
+  }
+}
+searchI.addEventListener('input', ()=> fetchSongs(searchI.value));
+saveBtn.addEventListener('click', saveSong);
+clearBtn.addEventListener('click', ()=>{ clearForm(); });
+function clearForm(){
+  titleI.value=''; artistI.value=''; keyI.value=''; tagsI.value='';
+  lyricsI.value=''; stepsI.value='0'; useFlatsI.checked=false; renderPreview();
+}
+
+// ---------- TXT export ----------
+downloadTxtBtn.addEventListener('click', ()=>{
+  const blob = new Blob([lyricsI.value||''], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = (titleI.value||'song')+'.txt';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+});
+
+// ---------- PDF export ----------
+exportPdfBtn.addEventListener('click', ()=>{
+  if(!window.jspdf || !window.jspdf.jsPDF){ alert('jsPDF չի բեռնվել'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y=20;
+  doc.setFontSize(14);
+  doc.text(titleI.value || 'Untitled', 10, y); y+=8;
+  if(artistI.value){ doc.setFontSize(12); doc.text('Կատարող: '+artistI.value, 10, y); y+=8; }
+  if(keyI.value){ doc.text('Տոնայնություն: '+keyI.value, 10, y); y+=8; }
+  const semi = parseInt(stepsI.value||'0',10) || 0;
+  const lines = (lyricsI.value||'').split('\n');
+  doc.setFontSize(12);
+  for(const line of lines){
+    const plain = line.replace(/\b([A-Ga-g][#b♭]?)([^\/\s]*)?(?:\/([A-Ga-g][#b♭]?))?\b/g,
+      (m, r, acc, br, bacc)=>{
+        return '(' + transposeRoot(r+ (acc||''), semi, useFlatsI.checked) + (bacc?'/'+transposeRoot(bacc, semi, useFlatsI.checked):'') + ')';
+      });
+    const chunks = doc.splitTextToSize(plain, 180);
+    for(const chunk of chunks){
+      if(y>280){ doc.addPage(); y=20; }
+      doc.text(chunk, 10, y); y+=7;
+    }
+  }
+  doc.save((titleI.value||'song')+'.pdf');
+});
+
+// load songs at start
+fetchSongs();
+</script>
+</body>
+</html>

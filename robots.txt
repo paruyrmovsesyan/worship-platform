@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin_login.php
+Disallow: /admin_updates.php
+Disallow: /admin_access.php
+Disallow: /account.html
+Disallow: /account_api.php
+Disallow: /favorites.html
+Disallow: /favorites_api.php
+Disallow: /setlists.html
+Disallow: /setlist_view.html
+Disallow: /setlists_api.php
+Disallow: /loginuser.php
+Disallow: /registeruser.php
+Disallow: /logout_users.php
+
+Sitemap: https://worship.pmstudio.am/sitemap.xml

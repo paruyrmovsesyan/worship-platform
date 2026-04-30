@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="hy">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Երգի դիտում</title>
+<style>
+body{font-family:system-ui,sans-serif; padding:20px; background:#f6f7fb; color:#0f1222;}
+h1{margin-bottom:5px;}
+h2{margin-top:0; font-weight:400; color:#667085;}
+pre{white-space:pre-wrap; background:#fff; padding:12px; border-radius:10px; border:1px dashed #e6e9f5; font-weight:bold; font-size:15px;}
+button{padding:9px 12px;border:0;border-radius:10px;background:#0b69d6;color:white;cursor:pointer;}
+button.secondary{background:#eef2ff;color:#21315b;}
+.footer{max-width:1000px;margin:0 auto;position:static;bottom:0;left:0;right:0;height:50px;background:#fff;display:flex;align-items:center;justify-content:center;border-radius:14px;box-shadow:0 -2px 5px rgba(0,0,0,0.05);}
+.footer {
+  max-width: 1000px;
+  position: static;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: #fff;
+  text-align: center;
+  line-height: 30px;
+  border-top: 1px solid #eee;
+}
+</style>
+</head>
+<body>
+<div class="app">
+<h1 id="title">Բեռնվում է...</h1>
+<h2 id="artist"></h2>
+<p><strong>Տոնայնություն:</strong> <span id="key"></span></p>
+<p><strong>Տեգեր:</strong> <span id="tags"></span></p>
+<label>Օրիգինալ</label>
+<pre id="lyrics"></pre>
+
+<div class="controls">
+  <span>Transpose: <strong id="stepsLabel">0</strong></span>
+  <button id="minusStep" class="secondary">–</button>
+  <button id="plusStep" class="secondary">+</button>
+  <label><input id="useFlats" type="checkbox"> Use flats</label>
+</div>
+
+<label>Նախադիտում (Transpose / Chords)</label>
+<div id="preview" style="white-space:pre-wrap;background:#fbfcff;border:1px dashed #e6e9f5;border-radius:12px;padding:12px;margin-top:12px"></div>
+</div>
+<br>
+<footer class="footer">
+  <p style="text-align:center;font-size:11px"><b>Wolarm Youth 2025 | PM Studio 2025</b></p>
+</footer>
+
+<script>
+var SHARPS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+var FLATS  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+
+// Նոտայի ինդեքսի հաշվարկ (#, b և հատուկ դեպքերով)
+function noteIndex(note) {
+  if (!note) return -1;
+  note = note.replace(/♭/g, 'b');
+
+  if (note === '#') return 1;
+  if (note === 'b') return 11;
+
+  var sharpIndex = SHARPS.indexOf(note);
+  if (sharpIndex !== -1) return sharpIndex;
+
+  var flatIndex = FLATS.indexOf(note);
+  if (flatIndex !== -1) return flatIndex;
+
+  if (note === 'E#') return SHARPS.indexOf('F');
+  if (note === 'B#') return SHARPS.indexOf('C');
+  if (note === 'Fb') return SHARPS.indexOf('E');
+  if (note === 'Cb') return SHARPS.indexOf('B');
+
+  return -1;
+}
+
+// Տրանսպոզ
+function transposeRoot(root, semi, useFlats) {
+  var i = noteIndex(root);
+  if (i < 0) return root;
+
+  var autoFlats = root.indexOf('b') !== -1 && root.indexOf('#') === -1;
+  var useFlat = useFlats || autoFlats;
+
+  var idx = (i + semi + 12) % 12;
+  return useFlat ? FLATS[idx] : SHARPS[idx];
+}
+
+// Ռենդեր նոտաների և ակորդների
+function renderWithChords(text, semi, useFlats) {
+  if (typeof text === 'undefined') text = '';
+  if (typeof semi === 'undefined') semi = 0;
+  if (typeof useFlats === 'undefined') useFlats = false;
+
+  // regex՝ Ակորդների որոնման համար
+  var chordRegex = /(^|[\s\(\[])([A-G](?:#|b)?|#|b)([mM0-9majdimaugaddsus]*)(?:\/([A-G](?:#|b)?|#|b))?(?=[\s\)\]\,]|$)/g;
+
+  var lines = text.split('\n');
+  var resultLines = [];
+
+  for (var l = 0; l < lines.length; l++) {
+    var line = lines[l].replace(chordRegex, function(match, prefix, root, type, bass) {
+      if (typeof type === 'undefined') type = '';
+      if (typeof bass === 'undefined') bass = '';
+
+      var newRoot = transposeRoot(root, semi, useFlats);
+      var out = prefix + '<span class="chord">' + newRoot + type;
+
+      if (bass) {
+        var newBass = transposeRoot(bass, semi, useFlats);
+        out += '/' + newBass;
+      }
+
+      out += '</span>';
+      return out;
+    });
+
+    resultLines.push(line);
+  }
+
+  return resultLines.join('\n');
+}
+
+
+  
+
+// ------------------------
+// DOM helpers
+// ------------------------
+function $(id){return document.getElementById(id);}
+var titleI=$('title'), artistI=$('artist'), keyI=$('key'), tagsI=$('tags');
+var lyricsI=$('lyrics'), preview=$('preview');
+var stepsLabel=$('stepsLabel'), useFlatsI=$('useFlats');
+var plusStep=$('plusStep'), minusStep=$('minusStep'), downloadTxtBtn=$('downloadTxt');
+var transposeValue = 0;
+var currentSongLyrics = "";
+
+// ------------------------
+// Բեռնում ենք երգը (XHR ձևով)
+// ------------------------
+function getParam(name){
+  var match = RegExp('[?&]'+name+'=([^&]*)').exec(window.location.search);
+  return match && decodeURIComponent(match[1].replace(/\+/g,' '));
+}
+var id = getParam('id');
+if(!id){ document.body.innerHTML='<p>Song ID not found.</p>'; }
+
+function loadSong(){
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', 'api.php?id='+encodeURIComponent(id), true);
+  xhr.onreadystatechange = function(){
+    if(xhr.readyState==4){
+      if(xhr.status==200){
+        try{
+          var song = JSON.parse(xhr.responseText);
+          titleI.innerHTML = song.title || '';
+          artistI.innerHTML = song.artist || '';
+          keyI.innerHTML = song.song_key || '';
+          tagsI.innerHTML = song.tags || '';
+          currentSongLyrics = song.lyrics || '';
+          lyricsI.innerHTML = currentSongLyrics;
+          document.title = (song.title || 'Երգ') + ' – Wolarm';
+          renderPreview();
+        }catch(e){
+          document.body.innerHTML='<p>Սխալ պատասխան սերվերից</p>';
+        }
+      } else {
+        document.body.innerHTML='<p>Չհաջողվեց բեռնել երգը</p>';
+      }
+    }
+  };
+  xhr.send();
+}
+loadSong();
+
+// ------------------------
+// Transpose
+// ------------------------
+function renderPreview(){
+  stepsLabel.innerHTML = transposeValue;
+  preview.innerHTML = renderWithChords(currentSongLyrics, transposeValue, useFlatsI.checked);
+}
+
+function changeTranspose(step){
+  transposeValue += step;
+  if(transposeValue>11) transposeValue=11;
+  if(transposeValue<-11) transposeValue=-11;
+  renderPreview();
+}
+
+plusStep.onclick=function(){changeTranspose(1)};
+minusStep.onclick=function(){changeTranspose(-1)};
+useFlatsI.onchange=function(){renderPreview()};
+
+// ------------------------
+// TXT ներբեռնում
+// ------------------------
+downloadTxtBtn.onclick=function(){
+  var text = preview.textContent || '';
+  var blob;
+  try{
+    blob = new Blob([text], {type:'text/plain'});
+  }catch(e){
+    // iOS 5 fallback
+    alert('Հին բրաուզերներում ներբեռնումը չի աշխատում։');
+    return;
+  }
+  var url = (window.URL || window.webkitURL).createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = (titleI.innerHTML||'song')+'.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
+</script>
+</body>
+</html>

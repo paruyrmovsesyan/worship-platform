@@ -1,0 +1,129 @@
+{
+  "name": "Worship Platform",
+  "short_name": "Worship Platform",
+  "id": "/main.html?source=pwa",
+  "start_url": "/main.html?source=pwa",
+  "scope": "/",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "display": "standalone",
+  "description": "Worship songs, chords, and setlists for ministry teams.",
+  "categories": [
+    "music",
+    "productivity",
+    "utilities"
+  ],
+  "launch_handler": {
+    "client_mode": [
+      "focus-existing",
+      "auto"
+    ]
+  },
+  "prefer_related_applications": false,
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "/manifest.json",
+      "id": "/main.html?source=pwa"
+    }
+  ],
+  "share_target": {
+    "action": "/share_target.php",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "background_color": "#070910",
+  "theme_color": "#070910",
+  "orientation": "portrait",
+  "shortcuts": [
+    {
+      "name": "Երգերի ցանկ",
+      "short_name": "Երգեր",
+      "description": "Բացել ամբողջ երգերի ցանկը",
+      "url": "/main.html?source=pwa",
+      "icons": [
+        {
+          "src": "/wolarm_youth.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Պահպանված երգեր",
+      "short_name": "Պահպանված",
+      "description": "Բացել պահպանված երգերը",
+      "url": "/favorites.html?source=pwa",
+      "icons": [
+        {
+          "src": "/wolarm_youth.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Սեթլիստներ",
+      "short_name": "Setlists",
+      "description": "Բացել սեթլիստների բաժինը",
+      "url": "/setlists.html?source=pwa",
+      "icons": [
+        {
+          "src": "/wolarm_youth.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Իմ հաշիվը",
+      "short_name": "Հաշիվ",
+      "description": "Բացել հաշվի էջը",
+      "url": "/account.html?source=pwa",
+      "icons": [
+        {
+          "src": "/wolarm_youth.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/app-screenshot-home.svg",
+      "sizes": "1242x2688",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "Worship Platform ծրագրի երգերի ցանկի հիմնական էկրանը"
+    },
+    {
+      "src": "/app-screenshot-song.svg",
+      "sizes": "1600x900",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "Worship Platform ծրագրի երգի դիտման և աշխատանքային էկրանը"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/wolarm_youth.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/wolarmyouth.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}
