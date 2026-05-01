@@ -8,128 +8,403 @@
 <meta name="description" content="Ուղարկիր նոր երգի կամ երգի խմբագրման հարցում Worship Platform-ի մոդերացիային։" />
 <link rel="icon" href="wolarm_youth.png" type="image/png" />
 <link rel="apple-touch-icon" href="/wolarmyouth.jpg" type="image/jpeg" />
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Worship Platform">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0b1020">
+<style id="wp-prepaint-bg">html,body{background:#0b1020;color-scheme:dark}</style>
 <link rel="stylesheet" href="/nav.css">
 <script src="/site_guard.js" defer></script>
 <script src="/i18n.js" defer></script>
 <script src="/loader.js" defer></script>
 <style>
 :root{
-  --bg:#0b1020;
-  --bg2:#131a34;
-  --card:rgba(255,255,255,.06);
-  --card-2:rgba(255,255,255,.04);
-  --line:rgba(255,255,255,.1);
+  --page-bg:
+    radial-gradient(circle at top, rgba(74,103,255,.22), transparent 30%),
+    radial-gradient(circle at 80% 18%, rgba(246,200,122,.12), transparent 26%),
+    linear-gradient(180deg, #141a33 0%, #0b1020 56%, #060911 100%);
+  --surface:rgba(18,24,44,.72);
+  --surface-strong:rgba(13,18,34,.88);
+  --surface-soft:rgba(255,255,255,.05);
+  --line:rgba(255,255,255,.09);
+  --line-strong:rgba(255,255,255,.14);
   --text:#eef3ff;
-  --muted:#a7b3d1;
-  --accent:#3a67ff;
-  --accent-2:#5d82ff;
-  --danger:#ff5c73;
-  --success:#33c48d;
-  --radius:20px;
-  --shadow:0 20px 60px rgba(0,0,0,.34);
+  --muted:#a6b2d2;
+  --gold:#f6c87a;
+  --gold-2:#ffe1a8;
+  --blue:#4c79ff;
+  --blue-2:#335dff;
+  --green:#32c48d;
+  --danger:#ff6b7f;
+  --shadow:0 28px 80px rgba(0,0,0,.34);
+  --radius-xl:28px;
+  --radius-lg:22px;
+  --radius-md:18px;
+  --radius-sm:14px;
 }
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:
-  radial-gradient(circle at top, rgba(69,107,255,.18), transparent 36%),
-  linear-gradient(180deg, var(--bg2) 0%, var(--bg) 58%, #070a14 100%);
-  color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-body{padding:0}
-.page{
-  max-width:1080px;
-  margin:0 auto;
-  padding:96px 18px 48px;
+html,body{
+  margin:0;
+  min-height:100%;
+  background:var(--page-bg);
+  color:var(--text);
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
 }
-.hero{
+body{
+  padding:0;
+}
+.page{
+  width:min(1240px, calc(100% - 28px));
+  margin:0 auto;
+  padding:calc(96px + env(safe-area-inset-top, 0px)) 0 calc(42px + env(safe-area-inset-bottom, 0px));
+}
+body.wp-standalone-app .page{
+  padding-bottom:140px;
+}
+body.wp-main-app[data-page="song-request"] .page,
+body.wp-main-app[data-wp-app-page="song-request"] .page{
+  width:min(100%, calc(100% - 4px));
+  padding-top:0;
+  padding-bottom:128px;
+}
+body.wp-main-app[data-page="song-request"] .request-shell,
+body.wp-main-app[data-wp-app-page="song-request"] .request-shell{
+  grid-template-columns:1fr;
+  gap:12px;
+}
+body.wp-main-app[data-page="song-request"] .overview-card,
+body.wp-main-app[data-wp-app-page="song-request"] .overview-card,
+body.wp-main-app[data-page="song-request"] .side-stack,
+body.wp-main-app[data-wp-app-page="song-request"] .side-stack{
+  display:none;
+}
+body.wp-main-app[data-page="song-request"] .request-form-card,
+body.wp-main-app[data-wp-app-page="song-request"] .request-form-card{
+  margin-top:0;
+  padding:14px;
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.07);
+  background:linear-gradient(180deg, rgba(14,20,36,.86), rgba(10,15,28,.82));
+}
+body.wp-main-app[data-page="song-request"] .form-topbar,
+body.wp-main-app[data-wp-app-page="song-request"] .form-topbar{
+  margin-bottom:12px;
+}
+body.wp-main-app[data-page="song-request"] .form-topbar h2,
+body.wp-main-app[data-wp-app-page="song-request"] .form-topbar h2{
+  font-size:20px;
+}
+body.wp-main-app[data-page="song-request"] .form-topbar p,
+body.wp-main-app[data-wp-app-page="song-request"] .form-topbar p{
+  font-size:12px;
+  line-height:1.55;
+}
+body.wp-main-app[data-page="song-request"] .pill-row,
+body.wp-main-app[data-wp-app-page="song-request"] .pill-row{
+  margin-top:10px;
+}
+body.wp-main-app[data-page="song-request"] .pill,
+body.wp-main-app[data-wp-app-page="song-request"] .pill{
+  padding:7px 10px;
+  font-size:11px;
+}
+body.wp-main-app[data-page="song-request"] .form-body,
+body.wp-main-app[data-wp-app-page="song-request"] .form-body{
+  grid-template-columns:1fr;
+  gap:12px;
+}
+body.wp-main-app[data-page="song-request"] .form-main,
+body.wp-main-app[data-page="song-request"] .form-side,
+body.wp-main-app[data-wp-app-page="song-request"] .form-main,
+body.wp-main-app[data-wp-app-page="song-request"] .form-side{
+  gap:12px;
+}
+body.wp-main-app[data-page="song-request"] .panel,
+body.wp-main-app[data-wp-app-page="song-request"] .panel{
+  padding:14px;
+  border-radius:18px;
+}
+body.wp-main-app[data-page="song-request"] .panel h3,
+body.wp-main-app[data-wp-app-page="song-request"] .panel h3{
+  font-size:16px;
+}
+body.wp-main-app[data-page="song-request"] .panel p,
+body.wp-main-app[data-wp-app-page="song-request"] .panel p{
+  font-size:12px;
+  line-height:1.55;
+}
+body.wp-main-app[data-page="song-request"] .field input,
+body.wp-main-app[data-page="song-request"] .field textarea,
+body.wp-main-app[data-wp-app-page="song-request"] .field input,
+body.wp-main-app[data-wp-app-page="song-request"] .field textarea{
+  padding:12px 13px;
+  border-radius:14px;
+}
+body.wp-main-app[data-page="song-request"] .field textarea,
+body.wp-main-app[data-wp-app-page="song-request"] .field textarea{
+  min-height:124px;
+}
+body.wp-main-app[data-page="song-request"] .field textarea.compact,
+body.wp-main-app[data-wp-app-page="song-request"] .field textarea.compact{
+  min-height:96px;
+}
+body.wp-main-app[data-page="song-request"] .request-note,
+body.wp-main-app[data-wp-app-page="song-request"] .request-note{
+  margin-top:12px;
+  padding:12px 13px;
+  border-radius:16px;
+  font-size:12px;
+}
+body.wp-main-app[data-page="song-request"] .submit-bar,
+body.wp-main-app[data-wp-app-page="song-request"] .submit-bar{
+  margin-top:12px;
+  padding:12px;
+  border-radius:18px;
+  bottom:max(84px, calc(env(safe-area-inset-bottom) + 84px));
+}
+body.wp-main-app[data-page="song-request"] .submit-copy strong,
+body.wp-main-app[data-wp-app-page="song-request"] .submit-copy strong{
+  font-size:14px;
+}
+body.wp-main-app[data-page="song-request"] .submit-copy span,
+body.wp-main-app[data-wp-app-page="song-request"] .submit-copy span{
+  font-size:12px;
+}
+.request-shell{
   display:grid;
-  grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);
+  grid-template-columns:minmax(0, 1.18fr) minmax(320px, .82fr);
   gap:18px;
   align-items:start;
 }
-.hero-card,.form-card{
-  background:var(--card);
+.card{
+  background:linear-gradient(180deg, rgba(28,36,66,.86), rgba(11,16,31,.86));
   border:1px solid var(--line);
-  border-radius:var(--radius);
+  border-radius:var(--radius-xl);
   box-shadow:var(--shadow);
-  backdrop-filter:blur(16px) saturate(125%);
 }
-.hero-card{padding:28px}
+.overview-card{
+  padding:28px;
+  position:relative;
+  overflow:hidden;
+}
+.overview-card::before{
+  content:"";
+  position:absolute;
+  inset:auto -80px -120px auto;
+  width:240px;
+  height:240px;
+  border-radius:999px;
+  background:radial-gradient(circle, rgba(76,121,255,.24), transparent 68%);
+  pointer-events:none;
+}
 .eyebrow{
   display:inline-flex;
-  padding:8px 12px;
+  align-items:center;
+  gap:8px;
+  padding:9px 14px;
   border-radius:999px;
   border:1px solid rgba(255,255,255,.12);
   background:rgba(255,255,255,.05);
-  color:#f2cc8f;
-  font-weight:800;
+  color:var(--gold);
   font-size:12px;
+  font-weight:800;
   letter-spacing:.06em;
   text-transform:uppercase;
 }
-.hero h1{
-  margin:16px 0 8px;
-  font-size:34px;
-  line-height:1.06;
-  letter-spacing:-.03em;
+.overview-head{
+  display:flex;
+  gap:18px;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-top:18px;
 }
-.hero p{
+.overview-copy h1{
+  margin:0 0 10px;
+  font-size:42px;
+  line-height:1.02;
+  letter-spacing:-.04em;
+}
+.overview-copy p{
   margin:0;
   color:var(--muted);
-  line-height:1.7;
-  font-size:15px;
+  line-height:1.72;
+  font-size:16px;
+  max-width:700px;
 }
-.hero-points{
-  display:grid;
-  gap:10px;
-  margin-top:20px;
-}
-.hero-point{
+.overview-badges{
   display:flex;
+  flex-wrap:wrap;
   gap:10px;
-  align-items:flex-start;
-  padding:12px 14px;
-  border-radius:16px;
-  background:var(--card-2);
+  margin-top:18px;
+}
+.overview-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  color:#dce6ff;
+  font-size:13px;
+  font-weight:700;
+}
+.guide-grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0,1fr));
+  gap:12px;
+  margin-top:22px;
+}
+.guide-item{
+  padding:16px;
+  border-radius:20px;
+  background:rgba(255,255,255,.045);
   border:1px solid rgba(255,255,255,.08);
 }
-.hero-point strong{display:block;font-size:14px}
-.hero-point span{display:block;color:var(--muted);font-size:13px;line-height:1.55}
-.hero-side{
-  padding:22px;
+.guide-item strong{
+  display:block;
+  margin-bottom:8px;
+  font-size:15px;
+}
+.guide-item span{
+  display:block;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.6;
+}
+.side-stack{
   display:grid;
   gap:14px;
 }
-.mini-stat{
-  padding:14px 16px;
-  border-radius:16px;
-  background:var(--card-2);
+.side-card{
+  padding:20px;
+}
+.side-card h2{
+  margin:0 0 8px;
+  font-size:18px;
+}
+.side-card p{
+  margin:0;
+  color:var(--muted);
+  line-height:1.65;
+  font-size:14px;
+}
+.pill-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:16px;
+}
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.08);
+  color:#d8e2ff;
+  font-size:12px;
+  font-weight:800;
 }
-.mini-stat strong{display:block;font-size:15px}
-.mini-stat span{display:block;margin-top:6px;color:var(--muted);font-size:13px;line-height:1.55}
-.form-card{
-  margin-top:18px;
+.mode-highlight{
+  padding:16px;
+  border-radius:20px;
+  background:linear-gradient(135deg, rgba(51,93,255,.2), rgba(255,255,255,.03));
+  border:1px solid rgba(102,138,255,.24);
+}
+.mode-highlight strong{
+  display:block;
+  margin-bottom:6px;
+  font-size:16px;
+}
+.mode-highlight span{
+  color:var(--muted);
+  line-height:1.6;
+  font-size:14px;
+}
+.request-form-card{
+  grid-column:1 / -1;
   padding:22px;
-  display:grid;
-  gap:18px;
 }
-.section-head h2{margin:0 0 8px;font-size:22px}
-.section-head p{margin:0;color:var(--muted);line-height:1.6}
+.form-topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:18px;
+  margin-bottom:18px;
+}
+.form-topbar h2{
+  margin:0 0 8px;
+  font-size:25px;
+}
+.form-topbar p{
+  margin:0;
+  color:var(--muted);
+  line-height:1.68;
+}
 .status-banner{
   display:none;
+  margin-bottom:16px;
   padding:14px 16px;
-  border-radius:16px;
+  border-radius:18px;
   border:1px solid rgba(255,255,255,.08);
   background:rgba(255,255,255,.05);
   line-height:1.55;
 }
 .status-banner.show{display:block}
-.status-banner.success{border-color:rgba(51,196,141,.35);background:rgba(51,196,141,.1)}
-.status-banner.error{border-color:rgba(255,92,115,.35);background:rgba(255,92,115,.1)}
-.status-banner.info{border-color:rgba(93,130,255,.28);background:rgba(93,130,255,.1)}
+.status-banner.success{border-color:rgba(50,196,141,.35);background:rgba(50,196,141,.12)}
+.status-banner.error{border-color:rgba(255,107,127,.35);background:rgba(255,107,127,.12)}
+.status-banner.info{border-color:rgba(76,121,255,.34);background:rgba(76,121,255,.12)}
+.lock-box{
+  display:none;
+  margin-bottom:16px;
+  padding:18px;
+  border-radius:22px;
+  border:1px dashed rgba(255,255,255,.18);
+  background:rgba(255,255,255,.04);
+}
+.lock-box.show{display:block}
+.lock-box strong{
+  display:block;
+  margin-bottom:8px;
+  font-size:16px;
+}
+.lock-box p{
+  margin:0;
+  color:var(--muted);
+  line-height:1.65;
+}
+.form-body{
+  display:grid;
+  grid-template-columns:minmax(0, 1.1fr) minmax(290px, .9fr);
+  gap:16px;
+}
+.form-main,
+.form-side{
+  display:grid;
+  gap:16px;
+}
+.panel{
+  padding:18px;
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.035);
+}
+.panel h3{
+  margin:0 0 6px;
+  font-size:18px;
+}
+.panel p{
+  margin:0;
+  color:var(--muted);
+  line-height:1.62;
+  font-size:14px;
+}
 .grid-2{
   display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-columns:repeat(2, minmax(0,1fr));
   gap:14px;
 }
 .field{
@@ -137,34 +412,89 @@ body{padding:0}
   gap:8px;
 }
 .field label{
-  font-weight:700;
   font-size:13px;
-  color:#dbe3ff;
+  font-weight:800;
+  color:#dde6ff;
 }
 .field input,
-.field textarea,
-.field select{
+.field textarea{
   width:100%;
-  border-radius:16px;
+  border-radius:18px;
   border:1px solid rgba(255,255,255,.1);
-  background:rgba(7,10,20,.66);
+  background:rgba(7,10,20,.76);
   color:var(--text);
   padding:14px 15px;
   outline:none;
   font:inherit;
   transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
 }
-.field textarea{min-height:140px;resize:vertical}
+.field input,
+.field textarea{
+  font-size:16px;
+}
+.field textarea{
+  min-height:150px;
+  resize:vertical;
+}
+.field textarea.compact{
+  min-height:120px;
+}
 .field input:focus,
-.field textarea:focus,
-.field select:focus{
-  border-color:rgba(93,130,255,.55);
-  box-shadow:0 0 0 4px rgba(93,130,255,.12);
-  background:rgba(7,10,20,.78);
+.field textarea:focus{
+  border-color:rgba(102,138,255,.62);
+  box-shadow:0 0 0 4px rgba(76,121,255,.12);
+  background:rgba(7,10,20,.9);
 }
 .field-help{
   color:var(--muted);
   font-size:12px;
+  line-height:1.55;
+}
+.mini-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:12px;
+}
+.mini-info{
+  padding:14px;
+  border-radius:18px;
+  background:rgba(255,255,255,.035);
+  border:1px solid rgba(255,255,255,.08);
+}
+.mini-info strong{
+  display:block;
+  margin-bottom:6px;
+  font-size:13px;
+}
+.mini-info span{
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.55;
+}
+.submit-bar{
+  margin-top:18px;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:16px;
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,.08);
+  background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+}
+.submit-copy{
+  min-width:0;
+}
+.submit-copy strong{
+  display:block;
+  margin-bottom:6px;
+  font-size:15px;
+}
+.submit-copy span{
+  display:block;
+  color:var(--muted);
+  font-size:13px;
   line-height:1.55;
 }
 .form-actions{
@@ -174,231 +504,367 @@ body{padding:0}
   align-items:center;
 }
 .btn{
-  border:0;
-  border-radius:16px;
-  min-height:50px;
+  min-height:52px;
   padding:0 20px;
+  border-radius:18px;
+  border:0;
   display:inline-flex;
   align-items:center;
   justify-content:center;
   cursor:pointer;
+  text-decoration:none;
   font:inherit;
   font-weight:800;
-  text-decoration:none;
-  transition:transform .16s ease, opacity .16s ease, box-shadow .16s ease;
+  transition:transform .16s ease, opacity .16s ease, box-shadow .16s ease, background .16s ease;
 }
 .btn:hover{transform:translateY(-1px)}
 .btn-primary{
   color:#fff;
-  background:linear-gradient(135deg,var(--accent),var(--accent-2));
-  box-shadow:0 14px 32px rgba(58,103,255,.28);
+  background:linear-gradient(135deg, var(--blue), var(--blue-2));
+  box-shadow:0 16px 34px rgba(51,93,255,.24);
 }
 .btn-secondary{
   color:var(--text);
   background:rgba(255,255,255,.06);
   border:1px solid rgba(255,255,255,.1);
 }
-.btn-danger{
-  color:#fff;
-  background:linear-gradient(135deg,#cb3f5a,var(--danger));
+.btn-ghost{
+  color:#dfe8ff;
+  background:transparent;
+  border:1px solid rgba(255,255,255,.1);
 }
-.lock-box{
-  display:none;
-  padding:16px;
+.request-note{
+  margin-top:16px;
+  padding:15px 16px;
   border-radius:18px;
-  border:1px dashed rgba(255,255,255,.18);
   background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  color:var(--muted);
+  line-height:1.6;
+  font-size:13px;
 }
-.lock-box.show{display:block}
-.lock-box strong{display:block;margin-bottom:6px}
-.lock-box p{margin:0;color:var(--muted);line-height:1.6}
-.pill-row{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-}
-.pill{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:7px 12px;
-  border-radius:999px;
-  background:rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.09);
-  color:#d9e3ff;
-  font-size:12px;
-  font-weight:700;
+@media (max-width:1100px){
+  .request-shell{
+    grid-template-columns:1fr;
+  }
+  .form-body{
+    grid-template-columns:1fr;
+  }
 }
 @media (max-width:900px){
-  .page{padding:88px 14px 30px}
-  .hero{grid-template-columns:1fr}
+  .page{
+    width:min(100% - 20px, 100%);
+    padding-top:calc(82px + env(safe-area-inset-top, 0px));
+  }
+  .overview-card,
+  .side-card,
+  .request-form-card{
+    border-radius:24px;
+  }
+  .overview-head{
+    flex-direction:column;
+  }
+  .overview-copy h1{
+    font-size:34px;
+  }
+  .guide-grid{
+    grid-template-columns:1fr;
+  }
+  .form-topbar{
+    flex-direction:column;
+  }
 }
 @media (max-width:640px){
-  .hero-card,.hero-side,.form-card{padding:18px}
-  .hero h1{font-size:28px}
-  .grid-2{grid-template-columns:1fr}
-  .form-actions{flex-direction:column;align-items:stretch}
-  .btn{width:100%}
+  .page{
+    width:min(100% - 14px, 100%);
+    padding-top:calc(78px + env(safe-area-inset-top, 0px));
+  }
+  .overview-card,
+  .side-card,
+  .request-form-card{
+    padding:18px;
+  }
+  .overview-copy h1{
+    font-size:28px;
+  }
+  .grid-2,
+  .mini-grid{
+    grid-template-columns:1fr;
+  }
+  .submit-bar{
+    position:sticky;
+    bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index:4;
+    backdrop-filter:blur(12px);
+  }
+  body.wp-standalone-app .submit-bar{
+    bottom:calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+  .form-actions{
+    width:100%;
+  }
+  .btn{
+    width:100%;
+  }
+  body.wp-main-app[data-page="song-request"] .page,
+  body.wp-main-app[data-wp-app-page="song-request"] .page{
+    width:min(100% - 8px, 100%);
+    padding-top:0;
+    padding-bottom:118px;
+  }
 }
 </style>
 </head>
-<body>
+<body data-page="song-request">
 <nav>
   <div class="logo"><a class="logo" href="/">WORSHIP PLATFORM</a></div>
-  <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+  <div class="hamburger" id="hamburger">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
   <div class="menu" id="menu">
     <a href="/">ԳԼԽԱՎՈՐ</a>
-    <a href="/main.html">ԵՐԳԵՐ</a>
+    <a href="/main.html" class="active">ԵՐԳԵՐ</a>
     <a href="/favorites.html">ՊԱՀՊԱՆԱԾ ԵՐԳԵՐ</a>
     <a href="/news.html">ՆՈՐՈՒԹՅՈՒՆՆԵՐ</a>
-    <a id="loginBtn" class="login-btn" href="/loginuser.php">Մուտք</a>
-    <a id="registerBtn" class="login-btn" href="/registeruser.php">Գրանցում</a>
+    <a id="loginBtn" class="login-btn" href="/loginuser.php">
+      <span class="ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 17l5-5-5-5"></path>
+          <path d="M15 12H3"></path>
+          <path d="M21 3v18"></path>
+        </svg>
+      </span>
+      Մուտք
+    </a>
+    <a id="registerBtn" class="login-btn" href="/registeruser.php">
+      <span class="ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M19 8v6"></path>
+          <path d="M22 11h-6"></path>
+        </svg>
+      </span>
+      Գրանցում
+    </a>
     <span id="userBox" class="user-chip" style="display:none;">
+      <span class="user-avatar" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </span>
       <span class="user-meta">
         <span id="userName" class="user-name">User</span>
         <span class="user-sub">Account</span>
       </span>
-      <a href="/account.html" class="icon-btn" title="Account" aria-label="Account">⚙</a>
+      <a href="/account.html" class="icon-btn" title="Account" aria-label="Account">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-1.41 3.41h-.1a2 2 0 0 1-1.41-.59l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82V22a2 2 0 0 1-4 0v-.1a1.65 1.65 0 0 0-.33-1.82 1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 0 1 2 18.59v-.1a2 2 0 0 1 .59-1.41l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33H2a2 2 0 0 1 0-4h.1a1.65 1.65 0 0 0 1.82-.33 1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 0 1 5.41 2h.1a2 2 0 0 1 1.41.59l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.82V2a2 2 0 0 1 4 0v.1a1.65 1.65 0 0 0 .33 1.82 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06A2 2 0 0 1 22 5.41v.1a2 2 0 0 1-.59 1.41l-.06.06A1.65 1.65 0 0 0 19.4 9c.23.31.39.66.6 1a1.65 1.65 0 0 0 1.82.33H22a2 2 0 0 1 0 4h-.1a1.65 1.65 0 0 0-1.82.33c-.21.34-.37.69-.6 1z"></path>
+        </svg>
+      </a>
       <button id="logoutBtn" class="icon-btn" type="button" title="Logout" aria-label="Logout">⎋</button>
     </span>
   </div>
 </nav>
 
-<div class="page">
-  <section class="hero">
-    <article class="hero-card">
+<main class="page">
+  <section class="request-shell">
+    <article class="card overview-card">
       <span class="eyebrow" id="requestEyebrow">Մոդերացիա</span>
-      <h1 id="requestTitle">Ուղարկել նոր երգ</h1>
-      <p id="requestSubtitle">Լրացրու երգի տվյալները, իսկ ադմինը կստուգի և կհաստատի կամ կմերժի հարցումը։ Եթե սա արդեն առկա երգ է, այստեղ կարող ես ուղարկել դրա ուղղված տարբերակը։</p>
 
-      <div class="hero-points">
-        <div class="hero-point">
-          <div>1</div>
-          <div>
-            <strong>Ուղարկում ես հարցում</strong>
-            <span>Երգի վերնագիրը, տոնայնությունը, ակորդները, բառերը և անհրաժեշտ բացատրությունը գալիս են մոդերացիայի հերթ։</span>
-          </div>
+      <div class="overview-head">
+        <div class="overview-copy">
+          <h1 id="requestTitle">Ուղարկել նոր երգ</h1>
+          <p id="requestSubtitle">Լրացրու երգի հիմնական տվյալները, BPM տեմպը, ակորդներն ու բառերը։ Հետո ադմինը կստուգի և կհաստատի կամ կմերժի հարցումը։ Եթե սա արդեն առկա երգ է, այստեղ կարող ես ուղարկել դրա ուղղված տարբերակը։</p>
         </div>
-        <div class="hero-point">
-          <div>2</div>
-          <div>
-            <strong>Ադմինը նայում է փոփոխությունը</strong>
-            <span>Ադմինը տեսնում է նախորդ և առաջարկվող տարբերակները և որոշում է հաստատե՞լ, թե՞ մերժել։</span>
-          </div>
+      </div>
+
+      <div class="overview-badges">
+        <span class="overview-badge" id="requestTypePill">Տեսակ՝ նոր երգ</span>
+        <span class="overview-badge" id="requestSongPill">Երգ՝ ընտրված չէ</span>
+        <span class="overview-badge">Տոնայնություն + BPM + ակորդներ</span>
+      </div>
+
+      <div class="guide-grid">
+        <div class="guide-item">
+          <strong>1. Լրացնում ես ամբողջական տվյալները</strong>
+          <span>Վերնագիրը, տարբեր լեզուներով տարբերակները, սկզբնական տոնայնությունը, BPM տեմպը, ակորդներն ու բառերը գնում են մեկ հարցման մեջ։</span>
         </div>
-        <div class="hero-point">
-          <div>3</div>
-          <div>
-            <strong>Հաստատվածը գնում է երգերի բազա</strong>
-            <span>Եթե հարցումը հաստատվի, այն անմիջապես կիրառվում է երգերի ցուցակում։</span>
-          </div>
+        <div class="guide-item">
+          <strong>2. Ադմինը համեմատում է տարբերակները</strong>
+          <span>Եթե սա խմբագրման հարցում է, գործող տարբերակն ու քո ուղարկած տարբերակը երևում են կողք կողքի։</span>
+        </div>
+        <div class="guide-item">
+          <strong>3. Հաստատվածը անմիջապես պահվում է</strong>
+          <span>Հաստատված հարցումը միանգամից գնում է երգերի բազա, որ հետո հասանելի լինի թե կայքում, թե ծրագրում։</span>
         </div>
       </div>
     </article>
 
-    <aside class="hero-card hero-side">
-      <div class="mini-stat">
-        <strong id="requestModeLabel">Նոր երգի հարցում</strong>
-        <span id="requestModeText">Այս ռեժիմը նախատեսված է նոր երգ առաջարկելու համար։</span>
-      </div>
-      <div class="mini-stat">
-        <strong>Մուտք պարտադիր է</strong>
-        <span>Հարցումը կապվում է կոնկրետ օգտահաշվին, որպեսզի ադմինը տեսնի թե ով է ուղարկել այն։</span>
-      </div>
-      <div class="mini-stat">
-        <strong>Լավագույն արդյունքի համար</strong>
-        <span>Փորձիր ուղարկել հնարավորինս ամբողջական տարբերակը, հատկապես եթե կա տարբեր լեզուներով վերնագիր կամ պատրաստ chord sheet։</span>
-      </div>
+    <aside class="side-stack">
+      <section class="card side-card">
+        <div class="mode-highlight">
+          <strong id="requestModeLabel">Նոր երգի հարցում</strong>
+          <span id="requestModeText">Այս ռեժիմը նախատեսված է նոր երգ առաջարկելու համար։</span>
+        </div>
+        <div class="pill-row">
+          <span class="pill">Մուտքը պարտադիր է</span>
+          <span class="pill">Մոդերացիան պահում է պատմությունը</span>
+          <span class="pill">BPM-ը նույնպես կպահվի</span>
+        </div>
+      </section>
+
+      <section class="card side-card">
+        <h2>Լավ արդյունքի համար</h2>
+        <p>Եթե երգն ունի հայերեն, լատինատառ, անգլերեն կամ ռուսերեն վերնագիր, գրիր բոլոր առկա տարբերակները։ Եթե BPM-ը գիտես, պարտադիր ավելացրու, որ հետո rehearsal-ում և օգտագործման պահին երգը լինի ավելի ամբողջական։</p>
+      </section>
     </aside>
+
+    <section class="card request-form-card">
+      <div class="form-topbar">
+        <div>
+          <h2 id="formTitle">Հարցման ձև</h2>
+          <p id="formSubtitle">Սա անմիջապես չի փոխում երգը։ Նախ գնում է մոդերացիայի հերթ, հետո միայն ադմինը հաստատում կամ մերժում է։</p>
+        </div>
+      </div>
+
+      <div id="requestStatus" class="status-banner"></div>
+
+      <div id="loginLockBox" class="lock-box">
+        <strong>Հարցում ուղարկելու համար նախ մուտք գործիր</strong>
+        <p>Երբ մուտք գործես, այս էջը կվերաբացվի նույն հարցման համար, և դու կշարունակես լրացումը առանց նորից փնտրելու։</p>
+        <div class="form-actions" style="margin-top:12px;">
+          <a id="loginRequestBtn" class="btn btn-primary" href="/loginuser.php">Մուտք</a>
+          <a id="registerRequestBtn" class="btn btn-secondary" href="/registeruser.php">Գրանցում</a>
+        </div>
+      </div>
+
+      <form id="songRequestForm">
+        <input type="hidden" id="requestTypeInput" value="new">
+        <input type="hidden" id="requestSongIdInput" value="">
+
+        <div class="form-body">
+          <div class="form-main">
+            <section class="panel">
+              <h3>Վերնագրեր և հիմնական տվյալներ</h3>
+              <p>Սա հիմնական ինֆորմացիան է, որով երգը հետո հեշտ կգտնվի և ճիշտ կներկայացվի տարբեր լեզուներով։</p>
+
+              <div class="grid-2" style="margin-top:16px;">
+                <div class="field">
+                  <label for="titleHy">Երգի վերնագիր հայերեն</label>
+                  <input id="titleHy" type="text" placeholder="Օր. Եգիպտոս">
+                </div>
+                <div class="field">
+                  <label for="titleLat">Հայերեն լատինատառ</label>
+                  <input id="titleLat" type="text" placeholder="Օր. Egiptos">
+                </div>
+              </div>
+
+              <div class="grid-2" style="margin-top:14px;">
+                <div class="field">
+                  <label for="titleEn">Անգլերեն վերնագիր</label>
+                  <input id="titleEn" type="text" placeholder="Օր. Egypt">
+                </div>
+                <div class="field">
+                  <label for="titleRu">Ռուսերեն վերնագիր</label>
+                  <input id="titleRu" type="text" placeholder="Օր. Египет">
+                </div>
+              </div>
+
+              <div class="grid-2" style="margin-top:14px;">
+                <div class="field">
+                  <label for="artist">Կատարող / հեղինակ</label>
+                  <input id="artist" type="text" placeholder="Եթե կա՝ գրիր այստեղ">
+                </div>
+                <div class="field">
+                  <label for="tags">Տեգեր</label>
+                  <input id="tags" type="text" placeholder="Օր. worship, oldies, communion">
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <h3>Երաժշտական տվյալներ</h3>
+              <p>Սկզբնական տոնայնությունն ու BPM-ը լավ է ուղարկել հենց սկզբից, որ երգը rehearsal-ի և թարգմանված ցուցադրման մեջ ամբողջական լինի։</p>
+
+              <div class="grid-2" style="margin-top:16px;">
+                <div class="field">
+                  <label for="songKey">Սկզբնական տոնայնություն</label>
+                  <input id="songKey" type="text" placeholder="Օր. C, Eb, Am կամ Dm">
+                </div>
+                <div class="field">
+                  <label for="bpm">BPM տեմպ</label>
+                  <input id="bpm" type="number" min="20" max="400" step="1" inputmode="numeric" placeholder="Օր. 72 կամ 128">
+                  <div class="field-help">Եթե գիտես տեմպը, գրիր այստեղ։ 20-400 միջակայքը բավարար է երգերի մեծ մասի համար։</div>
+                </div>
+              </div>
+
+              <div class="mini-grid" style="margin-top:14px;">
+                <div class="mini-info">
+                  <strong>Տոնայնություն</strong>
+                  <span>Կարող ես գրել նաև minor տարբերակ, օրինակ՝ <code>Am</code>, <code>Dm</code>, <code>F#m</code>։</span>
+                </div>
+                <div class="mini-info">
+                  <strong>BPM</strong>
+                  <span>Եթե exact թիվը չգիտես, մոտավոր rehearsal tempo-ն էլ օգտակար կլինի ադմինի համար։</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <h3>Ակորդներ և բառեր</h3>
+              <p>Եթե ունես ամբողջ chord sheet-ը, ուղարկիր հնարավորինս մաքուր և ամբողջական տարբերակը։</p>
+
+              <div class="field" style="margin-top:16px;">
+                <label for="chords">Ակորդներ</label>
+                <textarea id="chords" placeholder="Verse&#10;Am | Dm | F |&#10;Esus E | Bdim/A Am"></textarea>
+              </div>
+
+              <div class="field" style="margin-top:14px;">
+                <label for="lyrics">Բառեր</label>
+                <textarea id="lyrics" placeholder="Եթե կա, երգի բառերը գրիր այստեղ"></textarea>
+              </div>
+            </section>
+          </div>
+
+          <aside class="form-side">
+            <section class="panel">
+              <h3>Նշում ադմինի համար</h3>
+              <p>Կարճ բացատրի՛ր, սա նոր երգ է, գործող երգի ուղղո՞ւմ է, թե պարզապես ավելի ամբողջական տարբերակ։</p>
+
+              <div class="field" style="margin-top:16px;">
+                <label for="submittedMessage">Մեկնաբանություն ադմինի համար</label>
+                <textarea id="submittedMessage" class="compact" placeholder="Օր. սա գործող երգի ուղղված տարբերակն է, կամ՝ սա նոր երգ է, որն ուզում եմ ավելացնել"></textarea>
+                <div class="field-help">Այս դաշտը օգնում է ադմինին ավելի արագ հասկանալ ինչն է փոխվել, հատկապես եթե ուղարկել ես BPM, նոր վերնագիր կամ ուղղված ակորդներ։</div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <h3>Ինչն է գնալու մոդերացիայի</h3>
+              <p>Ադմինը կտեսնի վերնագրերը, տոնայնությունը, BPM-ը, տեգերը, ակորդներն ու բառերը, ինչպես նաև քո մեկնաբանությունը։</p>
+              <div class="request-note">Եթե սա արդեն առկա երգի խմբագրում է, գործող տարբերակն էլ բացված կլինի ադմինի առջև, որ նա հեշտ համեմատի տարբերությունները։</div>
+            </section>
+          </aside>
+        </div>
+
+        <div class="submit-bar">
+          <div class="submit-copy">
+            <strong>Պատրաստ ես ուղարկելու՞</strong>
+            <span>Սեղմելուց հետո հարցումը կգնա մոդերացիայի հերթ, և ադմինը կկարողանա հաստատել կամ մերժել այն։</span>
+          </div>
+          <div class="form-actions">
+            <button id="submitRequestBtn" class="btn btn-primary" type="submit">Ուղարկել մոդերացիայի</button>
+            <a id="cancelRequestBtn" class="btn btn-secondary" href="/main.html">Վերադառնալ</a>
+          </div>
+        </div>
+      </form>
+    </section>
   </section>
-
-  <section class="form-card">
-    <div class="section-head">
-      <h2 id="formTitle">Հարցման ձև</h2>
-      <p id="formSubtitle">Սա ուղղակի չի փոխում երգը. նախ գնում է մոդերացիայի հերթ, հետո միայն ադմինը հաստատում կամ մերժում է։</p>
-    </div>
-
-    <div id="requestStatus" class="status-banner"></div>
-
-    <div id="loginLockBox" class="lock-box">
-      <strong>Հարցում ուղարկելու համար նախ մուտք գործիր</strong>
-      <p>Երբ մուտք գործես, այս էջը կվերաբացվի նույն հարցման համար, և դու կշարունակես լրացումը առանց նորից փնտրելու։</p>
-      <div class="form-actions" style="margin-top:12px;">
-        <a id="loginRequestBtn" class="btn btn-primary" href="/loginuser.php">Մուտք</a>
-        <a id="registerRequestBtn" class="btn btn-secondary" href="/registeruser.php">Գրանցում</a>
-      </div>
-    </div>
-
-    <div class="pill-row">
-      <span class="pill" id="requestTypePill">Տեսակ՝ նոր երգ</span>
-      <span class="pill" id="requestSongPill">Երգ՝ ընտրված չէ</span>
-    </div>
-
-    <form id="songRequestForm">
-      <input type="hidden" id="requestTypeInput" value="new">
-      <input type="hidden" id="requestSongIdInput" value="">
-
-      <div class="grid-2">
-        <div class="field">
-          <label for="titleHy">Երգի վերնագիր հայերեն</label>
-          <input id="titleHy" type="text" placeholder="Օր. Եգիպտոս">
-        </div>
-        <div class="field">
-          <label for="songKey">Սկզբնական տոնայնություն</label>
-          <input id="songKey" type="text" placeholder="Օր. C կամ Am">
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div class="field">
-          <label for="titleLat">Հայերեն լատինատառ</label>
-          <input id="titleLat" type="text" placeholder="Օր. Egiptos">
-        </div>
-        <div class="field">
-          <label for="artist">Կատարող / հեղինակ</label>
-          <input id="artist" type="text" placeholder="Եթե կա՝ գրիր այստեղ">
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div class="field">
-          <label for="titleEn">Անգլերեն վերնագիր</label>
-          <input id="titleEn" type="text" placeholder="Օր. Egypt">
-        </div>
-        <div class="field">
-          <label for="titleRu">Ռուսերեն վերնագիր</label>
-          <input id="titleRu" type="text" placeholder="Օր. Египет">
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="tags">Տեգեր</label>
-        <input id="tags" type="text" placeholder="Օր. worship, oldies, communion">
-      </div>
-
-      <div class="field">
-        <label for="chords">Ակորդներ</label>
-        <textarea id="chords" placeholder="Ակորդներով տարբերակը գրիր այստեղ"></textarea>
-      </div>
-
-      <div class="field">
-        <label for="lyrics">Բառեր</label>
-        <textarea id="lyrics" placeholder="Եթե կա, երգի բառերը գրիր այստեղ"></textarea>
-      </div>
-
-      <div class="field">
-        <label for="submittedMessage">Մեկնաբանություն ադմինի համար</label>
-        <textarea id="submittedMessage" placeholder="Օր. սա գործող երգի ուղղված տարբերակն է, կամ՝ սա նոր երգ է, որն ուզում եմ ավելացնել"></textarea>
-        <div class="field-help">Այս դաշտը կօգնի ադմինին ավելի արագ հասկանալ ինչն է փոխվել կամ ինչ ես առաջարկում։</div>
-      </div>
-
-      <div class="form-actions">
-        <button id="submitRequestBtn" class="btn btn-primary" type="submit">Ուղարկել մոդերացիայի</button>
-        <a id="cancelRequestBtn" class="btn btn-secondary" href="/main.html">Վերադառնալ</a>
-      </div>
-    </form>
-  </section>
-</div>
+</main>
 
 <script type="module">
 import { initNavbarAuthUI } from '/fav_bridge.js';
@@ -433,6 +899,7 @@ const fields = {
   titleRu: document.getElementById('titleRu'),
   artist: document.getElementById('artist'),
   songKey: document.getElementById('songKey'),
+  bpm: document.getElementById('bpm'),
   tags: document.getElementById('tags'),
   chords: document.getElementById('chords'),
   lyrics: document.getElementById('lyrics'),
@@ -446,6 +913,14 @@ function withAppSource(url){
     return window.WP.withAppSource(url);
   }
   return url;
+}
+
+function getCurrentLang(){
+  return window.wpI18n?.getLang?.()
+    || localStorage.getItem('wp_lang')
+    || new URLSearchParams(location.search).get('lang')
+    || document.documentElement.lang
+    || 'hy';
 }
 
 function showStatus(message, type = 'info'){
@@ -465,7 +940,7 @@ function setLockedState(locked){
 function buildSongApiUrl(id){
   const url = new URL('/api.php', window.location.origin);
   url.searchParams.set('id', String(id));
-  const lang = window.wpI18n?.getLang?.();
+  const lang = getCurrentLang();
   if(lang && lang !== 'hy'){
     url.searchParams.set('lang', lang);
   }
@@ -502,11 +977,11 @@ function applyRequestMode(){
   requestSongIdInput.value = isEdit ? String(songId) : '';
   requestTitle.textContent = isEdit ? 'Ուղարկել խմբագրման առաջարկ' : 'Ուղարկել նոր երգ';
   requestSubtitle.textContent = isEdit
-    ? 'Բաց երգի նոր տարբերակը կգնա մոդերացիայի, և ադմինը կհաստատի կամ կմերժի այն։'
-    : 'Լրացրու նոր երգի տվյալները, իսկ ադմինը կստուգի և կհաստատի կամ կմերժի հարցումը։';
+    ? 'Բաց երգի նոր տարբերակը, BPM-ը, ակորդներն ու վերնագրերը կգնան մոդերացիայի, և ադմինը կհաստատի կամ կմերժի այն։'
+    : 'Լրացրու նոր երգի տվյալները, BPM տեմպը, ակորդներն ու բառերը, իսկ ադմինը կստուգի և կհաստատի կամ կմերժի հարցումը։';
   requestModeLabel.textContent = isEdit ? 'Գոյություն ունեցող երգի փոփոխություն' : 'Նոր երգի հարցում';
   requestModeText.textContent = isEdit
-    ? 'Այս ռեժիմը ստեղծված է արդեն առկա երգի ուղղված տարբերակ ուղարկելու համար։'
+    ? 'Այս ռեժիմը ստեղծված է արդեն առկա երգի ուղղված տարբերակ, BPM կամ ավելի ամբողջական տվյալներ ուղարկելու համար։'
     : 'Այս ռեժիմը նախատեսված է նոր երգ առաջարկելու համար։';
   formTitle.textContent = isEdit ? 'Խմբագրման հարցման ձև' : 'Նոր երգի հարցման ձև';
   formSubtitle.textContent = isEdit
@@ -524,6 +999,7 @@ function fillSong(song){
   fields.titleRu.value = variants.ru || '';
   fields.artist.value = song.artist || '';
   fields.songKey.value = song.song_key || song.key || '';
+  fields.bpm.value = song.bpm ? String(song.bpm) : '';
   fields.tags.value = song.tags || '';
   fields.chords.value = song.chords || '';
   fields.lyrics.value = song.lyrics || '';
@@ -559,6 +1035,7 @@ function collectPayload(){
     title_ru: fields.titleRu.value.trim(),
     artist: fields.artist.value.trim(),
     song_key: fields.songKey.value.trim(),
+    bpm: fields.bpm.value ? Number(fields.bpm.value) : 0,
     tags: fields.tags.value.trim(),
     chords: fields.chords.value,
     lyrics: fields.lyrics.value,
@@ -600,6 +1077,7 @@ form.addEventListener('submit', async (event) => {
       fields.titleRu.value = '';
       fields.artist.value = '';
       fields.songKey.value = '';
+      fields.bpm.value = '';
       fields.tags.value = '';
       fields.chords.value = '';
       fields.lyrics.value = '';

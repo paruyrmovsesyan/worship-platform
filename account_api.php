@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/auth_bootstrap.php';
 require_once __DIR__ . '/translation_runtime.php';
+require_once __DIR__ . '/song_request_service.php';
 
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
@@ -323,6 +324,47 @@ if($action === 'get_recent_views' && $method === 'GET'){
   ], $lang);
   $rows = wp_translation_localize_row_fields($rows, [
     'title' => 'account.recent.title',
+  ], $lang);
+
+  out($rows);
+}
+
+if($action === 'get_my_song_requests' && $method === 'GET'){
+  $limit = (int)($_GET["limit"] ?? 10);
+  if($limit < 1) $limit = 10;
+  if($limit > 20) $limit = 20;
+
+  $rows = wp_song_request_list_for_submitter($uid, $limit);
+  $rows = array_map(function(array $row): array {
+    return [
+      "id" => (int)($row["id"] ?? 0),
+      "song_id" => (int)($row["song_id"] ?? 0),
+      "resolved_song_id" => (int)($row["resolved_song_id"] ?? 0),
+      "request_type" => (string)($row["request_type"] ?? ''),
+      "request_type_label" => wp_song_request_type_label((string)($row["request_type"] ?? '')),
+      "status" => (string)($row["status"] ?? ''),
+      "status_label" => wp_song_request_status_label((string)($row["status"] ?? '')),
+      "title" => (string)($row["title_hy"] ?? $row["title"] ?? ''),
+      "artist" => (string)($row["artist"] ?? ''),
+      "song_key" => (string)($row["song_key"] ?? ''),
+      "bpm" => (int)($row["bpm"] ?? 0),
+      "tags" => (string)($row["tags"] ?? ''),
+      "submitted_message" => (string)($row["submitted_message"] ?? ''),
+      "review_note" => (string)($row["review_note"] ?? ''),
+      "created_at" => (string)($row["created_at"] ?? ''),
+      "reviewed_at" => (string)($row["reviewed_at"] ?? ''),
+    ];
+  }, $rows);
+
+  $rows = wp_translation_translate_rows($rows, [
+    'title' => 'account.song_requests.title',
+    'artist' => 'account.song_requests.artist',
+    'tags' => 'account.song_requests.tags',
+    'submitted_message' => 'account.song_requests.submitted_message',
+    'review_note' => 'account.song_requests.review_note',
+  ], $lang);
+  $rows = wp_translation_localize_row_fields($rows, [
+    'title' => 'account.song_requests.title',
   ], $lang);
 
   out($rows);

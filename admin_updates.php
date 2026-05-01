@@ -2509,12 +2509,14 @@ $csrfToken = wp_admin_updates_csrf_token();
                     $requestTitleValue = trim((string)($request['title_hy'] ?? $request['title'] ?? ''));
                     $requestArtistValue = trim((string)($request['artist'] ?? ''));
                     $requestKeyValue = trim((string)($request['song_key'] ?? ''));
+                    $requestBpmValue = (int)($request['bpm'] ?? 0);
                     $requestTagsValue = trim((string)($request['tags'] ?? ''));
                     $requestMessageValue = trim((string)($request['submitted_message'] ?? ''));
                     $sourceSnapshot = is_array($request['source_snapshot_data'] ?? null) ? $request['source_snapshot_data'] : [];
                     $sourceTitleValue = trim((string)($sourceSnapshot['title_hy'] ?? $sourceSnapshot['title'] ?? ''));
                     $sourceArtistValue = trim((string)($sourceSnapshot['artist'] ?? ''));
                     $sourceKeyValue = trim((string)($sourceSnapshot['song_key'] ?? ''));
+                    $sourceBpmValue = (int)($sourceSnapshot['bpm'] ?? 0);
                     $sourceTagsValue = trim((string)($sourceSnapshot['tags'] ?? ''));
                   ?>
                   <article class="device-card">
@@ -2539,6 +2541,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                       <div class="device-meta"><strong>Ռուսերեն</strong><span><?= htmlspecialchars((string)($request['title_ru'] ?? ''), ENT_QUOTES) ?: '—' ?></span></div>
                       <div class="device-meta"><strong>Կատարող</strong><span><?= htmlspecialchars($requestArtistValue !== '' ? $requestArtistValue : '—', ENT_QUOTES) ?></span></div>
                       <div class="device-meta"><strong>Տոնայնություն</strong><span><?= htmlspecialchars($requestKeyValue !== '' ? $requestKeyValue : '—', ENT_QUOTES) ?></span></div>
+                      <div class="device-meta"><strong>BPM</strong><span><?= $requestBpmValue > 0 ? (int)$requestBpmValue : '—' ?></span></div>
                       <div class="device-meta"><strong>Տեգեր</strong><span><?= htmlspecialchars($requestTagsValue !== '' ? $requestTagsValue : '—', ENT_QUOTES) ?></span></div>
                       <div class="device-meta"><strong>Կապված երգ</strong><span><?= !empty($request['song_id']) ? '#' . (int)$request['song_id'] : 'Նոր երգ' ?></span></div>
                     </div>
@@ -2554,6 +2557,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                           <div class="device-meta"><strong>Վերնագիր</strong><span><?= htmlspecialchars($sourceTitleValue !== '' ? $sourceTitleValue : '—', ENT_QUOTES) ?></span></div>
                           <div class="device-meta"><strong>Կատարող</strong><span><?= htmlspecialchars($sourceArtistValue !== '' ? $sourceArtistValue : '—', ENT_QUOTES) ?></span></div>
                           <div class="device-meta"><strong>Տոնայնություն</strong><span><?= htmlspecialchars($sourceKeyValue !== '' ? $sourceKeyValue : '—', ENT_QUOTES) ?></span></div>
+                          <div class="device-meta"><strong>BPM</strong><span><?= $sourceBpmValue > 0 ? (int)$sourceBpmValue : '—' ?></span></div>
                           <div class="device-meta"><strong>Տեգեր</strong><span><?= htmlspecialchars($sourceTagsValue !== '' ? $sourceTagsValue : '—', ENT_QUOTES) ?></span></div>
                         </div>
                         <?php if (!empty($sourceSnapshot['chords'])): ?>

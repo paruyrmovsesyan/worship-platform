@@ -1671,6 +1671,11 @@ endif;
                       </div>
 
                       <div class="field">
+                        <label for="bpm">BPM տեմպ</label>
+                        <input id="bpm" type="number" min="20" max="400" step="1" inputmode="numeric" placeholder="Օր. 72 կամ 128">
+                      </div>
+
+                      <div class="field">
                         <label for="tags">Տեգեր</label>
                         <input id="tags" type="text" placeholder="օր. worship, easter, youth">
                       </div>
@@ -1870,6 +1875,7 @@ const titleRuI = $('title_ru');
 const titleEnI = $('title_en');
 const artistI = $('artist');
 const keyI = $('key');
+const bpmI = $('bpm');
 const tagsI = $('tags');
 const chordsI = $('chords');
 const lyricsI = $('lyrics');
@@ -2537,7 +2543,8 @@ function renderPreview() {
   const raw = chordsI.value.trim();
 
   previewTitle.textContent = titleI.value.trim() || titleLatI.value.trim() || titleRuI.value.trim() || titleEnI.value.trim() || 'Չկա վերնագիր';
-  previewMeta.textContent = [artistI.value.trim(), originalKey ? `Սկզբնական: ${originalKey}` : '', effectiveTargetKey ? `Թիրախ: ${effectiveTargetKey}` : '']
+  const bpmText = bpmI && bpmI.value.trim() ? `BPM: ${bpmI.value.trim()}` : '';
+  previewMeta.textContent = [artistI.value.trim(), originalKey ? `Սկզբնական: ${originalKey}` : '', effectiveTargetKey ? `Թիրախ: ${effectiveTargetKey}` : '', bpmText]
     .filter(Boolean)
     .join(' • ') || 'Ակորդների նախադիտում';
 
@@ -2563,6 +2570,7 @@ function getFormData() {
     title_ru: titleRuI.value.trim(),
     artist: artistI.value.trim(),
     key: keyI.value.trim(),
+    bpm: bpmI.value ? Number(bpmI.value) : 0,
     tags: tagsI.value.trim(),
     chords: chordsI.value,
     lyrics: lyricsI.value
@@ -2571,6 +2579,7 @@ function getFormData() {
 
 function validateSong(song) {
   if (!song.title) return 'Լրացրու երգի անունը';
+  if (song.bpm && (song.bpm < 20 || song.bpm > 400)) return 'BPM-ը գրիր 20-ից 400 միջակայքում';
   if (!song.chords.trim() && !song.lyrics.trim()) return 'Լրացրու գոնե ակորդները կամ բառերը';
   return '';
 }
@@ -2584,6 +2593,7 @@ function fillForm(song) {
   titleEnI.value = apiVariants.en || titleVariants.en || '';
   artistI.value = song.artist || '';
   keyI.value = song.song_key || song.key || '';
+  bpmI.value = song.bpm ? String(song.bpm) : '';
   tagsI.value = song.tags || '';
   chordsI.value = song.chords || '';
   lyricsI.value = song.lyrics || '';
@@ -2602,6 +2612,7 @@ function clearForm() {
   titleEnI.value = '';
   artistI.value = '';
   keyI.value = '';
+  bpmI.value = '';
   tagsI.value = '';
   chordsI.value = '';
   lyricsI.value = '';
@@ -2669,7 +2680,7 @@ function getFilteredSongs() {
   const tagFilter = tagFilterI.value.trim().toLowerCase();
 
   const filtered = ALL_SONGS.filter(song => {
-    const haystack = [song.title, song.artist, song.tags, song.lyrics, song.chords, song.song_key].filter(Boolean).join(' ').toLowerCase();
+    const haystack = [song.title, song.artist, song.tags, song.lyrics, song.chords, song.song_key, song.bpm].filter(Boolean).join(' ').toLowerCase();
     if (q && !haystack.includes(q)) return false;
     const hasLyrics = !!(song.lyrics && song.lyrics.trim());
     if (lyricsMode === 'with' && !hasLyrics) return false;
@@ -2723,6 +2734,7 @@ function renderTable(songs = [], totalCount = songs.length) {
           <div class="song-meta">${escapeHtml(s.artist || 'Կատարող նշված չէ')}</div>
           <div class="mini-pills">
             <span class="mini-pill mobile-key-pill">${escapeHtml(s.song_key || '—')}</span>
+            ${s.bpm ? `<span class="mini-pill">BPM ${escapeHtml(String(s.bpm))}</span>` : ''}
             <span class="mini-pill status-pill ${hasLyrics ? 'has-lyrics' : 'no-lyrics'}">${hasLyrics ? 'Բառերը առկա են' : 'Բառերը չկան'}</span>
             ${s.tags ? s.tags.split(',').filter(Boolean).slice(0, 3).map(tag => `<span class="mini-pill">${escapeHtml(tag.trim())}</span>`).join('') : '<span class="mini-pill">առանց տեգերի</span>'}
           </div>
@@ -2731,6 +2743,7 @@ function renderTable(songs = [], totalCount = songs.length) {
       <td>
         <div class="mini-pills">
           <span class="mini-pill">${escapeHtml(s.song_key || '—')}</span>
+          ${s.bpm ? `<span class="mini-pill">BPM ${escapeHtml(String(s.bpm))}</span>` : ''}
         </div>
       </td>
       <td>
@@ -2860,6 +2873,7 @@ exportPdfBtn.addEventListener('click', () => {
   doc.setFontSize(12);
   if (artistI.value) { doc.text('Կատարող: ' + artistI.value, 10, y); y += 8; }
   if (keyI.value) { doc.text('Տոնայնություն: ' + keyI.value, 10, y); y += 8; }
+  if (bpmI.value) { doc.text('BPM: ' + bpmI.value, 10, y); y += 8; }
   if (selectedTargetKey) { doc.text('Թիրախային տոնայնություն: ' + selectedTargetKey, 10, y); y += 8; }
 
   const lines = (chordsI.value || '').split('\n');
@@ -2907,6 +2921,7 @@ exportAllPdfBtn.addEventListener('click', async () => {
     doc.setFontSize(12);
     if (song.artist) { doc.text('Կատարող: ' + song.artist, 10, y); y += 7; }
     if (song.song_key) { doc.text('Տոնայնություն: ' + song.song_key, 10, y); y += 7; }
+    if (song.bpm) { doc.text('BPM: ' + song.bpm, 10, y); y += 7; }
     if (song.tags) { doc.text('Տեգեր: ' + song.tags, 10, y); y += 7; }
     y += 3;
 

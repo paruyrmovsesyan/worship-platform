@@ -33,6 +33,7 @@ if (!function_exists('wp_song_request_ensure_table_mysqli')) {
             title_ru VARCHAR(255) NULL,
             artist VARCHAR(255) NULL,
             song_key VARCHAR(64) NULL,
+            bpm SMALLINT UNSIGNED NULL,
             tags VARCHAR(255) NULL,
             chords MEDIUMTEXT NULL,
             lyrics MEDIUMTEXT NULL,
@@ -51,6 +52,29 @@ if (!function_exists('wp_song_request_ensure_table_mysqli')) {
 
         if (!$conn->query($sql)) {
             return false;
+        }
+
+        $requiredColumns = [
+            'title_hy' => "ALTER TABLE " . wp_song_request_table_name() . " ADD COLUMN title_hy VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL AFTER title",
+            'title_lat' => "ALTER TABLE " . wp_song_request_table_name() . " ADD COLUMN title_lat VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL AFTER title_hy",
+            'title_en' => "ALTER TABLE " . wp_song_request_table_name() . " ADD COLUMN title_en VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL AFTER title_lat",
+            'title_ru' => "ALTER TABLE " . wp_song_request_table_name() . " ADD COLUMN title_ru VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL AFTER title_en",
+            'artist' => "ALTER TABLE " . wp_song_request_table_name() . " ADD COLUMN artist VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL AFTER title_ru",
+            'song_key' => "ALTER TABLE " . wp_song_request_table_name() . " ADD COLUMN song_key VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL AFTER artist",
+            'bpm' => "ALTER TABLE " . wp_song_request_table_name() . " ADD COLUMN bpm SMALLINT UNSIGNED NULL AFTER song_key",
+            'tags' => "ALTER TABLE " . wp_song_request_table_name() . " ADD COLUMN tags VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL AFTER bpm",
+        ];
+
+        foreach ($requiredColumns as $column => $alterSql) {
+            $safeColumn = preg_replace('/[^A-Za-z0-9_]+/', '', $column);
+            $check = $conn->query("SHOW COLUMNS FROM " . wp_song_request_table_name() . " LIKE '{$safeColumn}'");
+            $exists = $check instanceof mysqli_result && $check->num_rows > 0;
+            if ($check instanceof mysqli_result) {
+                $check->free();
+            }
+            if (!$exists && !$conn->query($alterSql)) {
+                return false;
+            }
         }
 
         $done = true;
@@ -96,6 +120,7 @@ if (!function_exists('wp_song_request_normalize_payload')) {
             'title_ru' => wp_song_request_trim($payload['title_ru'] ?? ''),
             'artist' => wp_song_request_trim($payload['artist'] ?? ''),
             'song_key' => wp_song_request_trim($payload['song_key'] ?? ($payload['key'] ?? '')),
+            'bpm' => max(0, (int)($payload['bpm'] ?? 0)),
             'tags' => wp_song_request_trim($payload['tags'] ?? ''),
             'chords' => (string)($payload['chords'] ?? ''),
             'lyrics' => (string)($payload['lyrics'] ?? ''),
@@ -117,6 +142,9 @@ if (!function_exists('wp_song_request_validate_payload')) {
         if ($payload['title'] === '') {
             return 'Լրացրու երգի վերնագիրը։';
         }
+        if (!empty($payload['bpm']) && ((int)$payload['bpm'] < 20 || (int)$payload['bpm'] > 400)) {
+            return 'BPM-ը գրիր 20-ից 400 միջակայքում։';
+        }
         if (trim($payload['chords']) === '' && trim($payload['lyrics']) === '') {
             return 'Լրացրու գոնե ակորդները կամ բառերը։';
         }
@@ -134,7 +162,7 @@ if (!function_exists('wp_song_request_fetch_song_snapshot')) {
             return null;
         }
 
-        $stmt = $conn->prepare("SELECT id, title, title_hy, title_lat, title_en, title_ru, artist, song_key, tags, chords, lyrics FROM songs WHERE id = ? LIMIT 1");
+        $stmt = $conn->prepare("SELECT id, title, title_hy, title_lat, title_en, title_ru, artist, song_key, bpm, tags, chords, lyrics FROM songs WHERE id = ? LIMIT 1");
         if (!$stmt) {
             return null;
         }
@@ -186,8 +214,8 @@ if (!function_exists('wp_song_request_create')) {
                 song_id, request_type, status,
                 submitted_by_user_id, submitted_by_name, submitted_by_email, submitted_message,
                 title, title_hy, title_lat, title_en, title_ru,
-                artist, song_key, tags, chords, lyrics, source_snapshot
-            ) VALUES (?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                artist, song_key, bpm, tags, chords, lyrics, source_snapshot
+            ) VALUES (?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         if (!$stmt) {
             $message = 'Չհաջողվեց ստեղծել հարցումը։';
@@ -200,7 +228,7 @@ if (!function_exists('wp_song_request_create')) {
 
         $songId = $data['song_id'] > 0 ? $data['song_id'] : null;
         $stmt->bind_param(
-            "isissssssssssssss",
+            "isissssssssssissss",
             $songId,
             $data['request_type'],
             $submittedByUserId,
@@ -214,6 +242,7 @@ if (!function_exists('wp_song_request_create')) {
             $data['title_ru'],
             $data['artist'],
             $data['song_key'],
+            $data['bpm'],
             $data['tags'],
             $data['chords'],
             $data['lyrics'],
@@ -337,6 +366,54 @@ if (!function_exists('wp_song_request_list')) {
     }
 }
 
+if (!function_exists('wp_song_request_list_for_submitter')) {
+    function wp_song_request_list_for_submitter(int $userId, int $limit = 20): array {
+        if ($userId <= 0) {
+            return [];
+        }
+
+        try {
+            $conn = wp_runtime_open_mysqli();
+            if (!wp_song_request_ensure_table_mysqli($conn)) {
+                $conn->close();
+                return [];
+            }
+
+            $limit = max(1, min($limit, 50));
+            $sql = "SELECT * FROM " . wp_song_request_table_name() . " WHERE submitted_by_user_id = ? ORDER BY created_at DESC LIMIT {$limit}";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                $conn->close();
+                return [];
+            }
+
+            $stmt->bind_param("i", $userId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $rows = [];
+            if ($result instanceof mysqli_result) {
+                while ($row = $result->fetch_assoc()) {
+                    $row['source_snapshot_data'] = [];
+                    if (!empty($row['source_snapshot'])) {
+                        $decoded = json_decode((string)$row['source_snapshot'], true);
+                        if (is_array($decoded)) {
+                            $row['source_snapshot_data'] = $decoded;
+                        }
+                    }
+                    $rows[] = $row;
+                }
+                $result->free();
+            }
+            $stmt->close();
+            $conn->close();
+
+            return $rows;
+        } catch (Throwable $e) {
+            return [];
+        }
+    }
+}
+
 if (!function_exists('wp_song_request_status_label')) {
     function wp_song_request_status_label(string $status): string {
         return match ($status) {
@@ -406,6 +483,7 @@ if (!function_exists('wp_song_request_apply_decision')) {
                 $titleRu = wp_song_request_trim($request['title_ru'] ?? '');
                 $artist = wp_song_request_trim($request['artist'] ?? '');
                 $songKey = wp_song_request_trim($request['song_key'] ?? '');
+                $bpm = max(0, (int)($request['bpm'] ?? 0));
                 $tags = wp_song_request_trim($request['tags'] ?? '');
                 $chords = (string)($request['chords'] ?? '');
                 $lyrics = (string)($request['lyrics'] ?? '');
@@ -413,11 +491,11 @@ if (!function_exists('wp_song_request_apply_decision')) {
                 $requestType = (string)($request['request_type'] ?? 'edit');
 
                 if ($requestType === 'edit' && $songId > 0) {
-                    $update = $conn->prepare("UPDATE songs SET title = ?, title_hy = ?, title_lat = ?, title_en = ?, title_ru = ?, artist = ?, song_key = ?, tags = ?, chords = ?, lyrics = ? WHERE id = ?");
+                    $update = $conn->prepare("UPDATE songs SET title = ?, title_hy = ?, title_lat = ?, title_en = ?, title_ru = ?, artist = ?, song_key = ?, bpm = ?, tags = ?, chords = ?, lyrics = ? WHERE id = ?");
                     if (!$update) {
                         throw new RuntimeException('Չհաջողվեց թարմացնել երգը։');
                     }
-                    $update->bind_param("ssssssssssi", $title, $titleHy, $titleLat, $titleEn, $titleRu, $artist, $songKey, $tags, $chords, $lyrics, $songId);
+                    $update->bind_param("sssssssisssi", $title, $titleHy, $titleLat, $titleEn, $titleRu, $artist, $songKey, $bpm, $tags, $chords, $lyrics, $songId);
                     if (!$update->execute()) {
                         $error = $update->error;
                         $update->close();
@@ -426,11 +504,11 @@ if (!function_exists('wp_song_request_apply_decision')) {
                     $update->close();
                     $resolvedSongId = $songId;
                 } else {
-                    $insert = $conn->prepare("INSERT INTO songs (title, title_hy, title_lat, title_en, title_ru, artist, song_key, tags, chords, lyrics) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    $insert = $conn->prepare("INSERT INTO songs (title, title_hy, title_lat, title_en, title_ru, artist, song_key, bpm, tags, chords, lyrics) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                     if (!$insert) {
                         throw new RuntimeException('Չհաջողվեց ստեղծել նոր երգը։');
                     }
-                    $insert->bind_param("ssssssssss", $title, $titleHy, $titleLat, $titleEn, $titleRu, $artist, $songKey, $tags, $chords, $lyrics);
+                    $insert->bind_param("sssssssisss", $title, $titleHy, $titleLat, $titleEn, $titleRu, $artist, $songKey, $bpm, $tags, $chords, $lyrics);
                     if (!$insert->execute()) {
                         $error = $insert->error;
                         $insert->close();

@@ -1113,6 +1113,7 @@ html.fullscreen-mode .topbar{
             <div class="song-artist" id="songArtist"></div>
             <div class="info-row">
               <div class="info-pill" id="songKey">Տոնայնություն: —</div>
+              <div class="info-pill" id="songBpm">BPM: —</div>
               <div class="info-pill" id="songPlayKey" style="display:none;">Նվագել որպես: —</div>
               <div class="info-pill" id="songTags">Tags</div>
             </div>
@@ -1366,6 +1367,7 @@ const songTitle = document.getElementById('songTitle');
 /*const titleSmall = document.getElementById('titleSmall');*/
 const songArtist = document.getElementById('songArtist');
 const songKey = document.getElementById('songKey');
+const songBpm = document.getElementById('songBpm');
 const songTags = document.getElementById('songTags');
 const chordsEl = document.getElementById('chords');
 const lyricsEl = document.getElementById('lyrics');
@@ -1923,6 +1925,7 @@ if(!id){
       songArtist.textContent = song.artist || '';
       originalSongKey = song.song_key || '';
       songKey.textContent = rtFmt('keyLabel', 'Տոնայնություն: {{key}}', { key: originalSongKey || '—' });
+      songBpm.textContent = `BPM: ${song.bpm ? song.bpm : '—'}`;
       songTags.textContent = song.tags || '';
       currentChords = song.chords || '';
       chordsEl.dataset.loaded = '1';

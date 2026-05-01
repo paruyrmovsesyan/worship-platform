@@ -72,6 +72,20 @@ function wp_api_song_title_columns_present(mysqli $conn): bool {
     return true;
 }
 
+function wp_api_song_bpm_column_present(mysqli $conn): bool {
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+
+    $res = $conn->query("SHOW COLUMNS FROM songs LIKE 'bpm'");
+    $cached = $res instanceof mysqli_result && $res->num_rows > 0;
+    if ($res instanceof mysqli_result) {
+        $res->free();
+    }
+    return $cached;
+}
+
 function wp_api_json_error(string $message, int $status = 500): void {
     http_response_code($status);
     echo json_encode(["success" => false, "error" => $message], JSON_UNESCAPED_UNICODE);
@@ -79,6 +93,7 @@ function wp_api_json_error(string $message, int $status = 500): void {
 }
 
 $hasSeparateTitleColumns = wp_api_song_title_columns_present($conn);
+$hasBpmColumn = wp_api_song_bpm_column_present($conn);
 
 $method = $_SERVER['REQUEST_METHOD'];
 $lang = wp_translation_requested_lang();
@@ -176,23 +191,37 @@ if ($method === "POST") {
     $titleEn = trim((string)($data['title_en'] ?? ''));
     $titleRu = trim((string)($data['title_ru'] ?? ''));
     $artist = trim((string)($data['artist'] ?? ''));
-    $songKey = trim((string)($data['key'] ?? ''));
+    $songKey = trim((string)($data['key'] ?? ($data['song_key'] ?? '')));
+    $bpm = max(0, (int)($data['bpm'] ?? 0));
     $tags = trim((string)($data['tags'] ?? ''));
     $chords = (string)($data['chords'] ?? '');
     $lyrics = (string)($data['lyrics'] ?? '');
 
-    if ($hasSeparateTitleColumns) {
+    if ($hasSeparateTitleColumns && $hasBpmColumn) {
+        $stmt = $conn->prepare("INSERT INTO songs (title, title_hy, title_lat, title_en, title_ru, artist, song_key, bpm, tags, chords, lyrics) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+        if (!$stmt) {
+            wp_api_json_error('Չհաջողվեց պատրաստել նոր երգի պահպանումը: ' . $conn->error);
+        }
+        $stmt->bind_param("sssssssisss", $title, $titleHy, $titleLat, $titleEn, $titleRu, $artist, $songKey, $bpm, $tags, $chords, $lyrics);
+    } elseif ($hasSeparateTitleColumns) {
         $stmt = $conn->prepare("INSERT INTO songs (title, title_hy, title_lat, title_en, title_ru, artist, song_key, tags, chords, lyrics) VALUES (?,?,?,?,?,?,?,?,?,?)");
         if (!$stmt) {
             wp_api_json_error('Չհաջողվեց պատրաստել նոր երգի պահպանումը: ' . $conn->error);
         }
         $stmt->bind_param("ssssssssss", $title, $titleHy, $titleLat, $titleEn, $titleRu, $artist, $songKey, $tags, $chords, $lyrics);
     } else {
-        $stmt = $conn->prepare("INSERT INTO songs (title, artist, song_key, tags, chords, lyrics) VALUES (?,?,?,?,?,?)");
+        $stmt = $conn->prepare($hasBpmColumn
+            ? "INSERT INTO songs (title, artist, song_key, bpm, tags, chords, lyrics) VALUES (?,?,?,?,?,?,?)"
+            : "INSERT INTO songs (title, artist, song_key, tags, chords, lyrics) VALUES (?,?,?,?,?,?)"
+        );
         if (!$stmt) {
             wp_api_json_error('Չհաջողվեց պատրաստել երգի պահպանումը: ' . $conn->error);
         }
-        $stmt->bind_param("ssssss", $title, $artist, $songKey, $tags, $chords, $lyrics);
+        if ($hasBpmColumn) {
+            $stmt->bind_param("sssisss", $title, $artist, $songKey, $bpm, $tags, $chords, $lyrics);
+        } else {
+            $stmt->bind_param("ssssss", $title, $artist, $songKey, $tags, $chords, $lyrics);
+        }
     }
 
     if (!$stmt->execute()) {
@@ -215,23 +244,37 @@ if ($method === "PUT") {
         $titleEn = trim((string)($data['title_en'] ?? ''));
         $titleRu = trim((string)($data['title_ru'] ?? ''));
         $artist = trim((string)($data['artist'] ?? ''));
-        $songKey = trim((string)($data['key'] ?? ''));
+        $songKey = trim((string)($data['key'] ?? ($data['song_key'] ?? '')));
+        $bpm = max(0, (int)($data['bpm'] ?? 0));
         $tags = trim((string)($data['tags'] ?? ''));
         $chords = (string)($data['chords'] ?? '');
         $lyrics = (string)($data['lyrics'] ?? '');
 
-        if ($hasSeparateTitleColumns) {
+        if ($hasSeparateTitleColumns && $hasBpmColumn) {
+            $stmt = $conn->prepare("UPDATE songs SET title=?, title_hy=?, title_lat=?, title_en=?, title_ru=?, artist=?, song_key=?, bpm=?, tags=?, chords=?, lyrics=? WHERE id=?");
+            if (!$stmt) {
+                wp_api_json_error('Չհաջողվեց պատրաստել երգի թարմացումը: ' . $conn->error);
+            }
+            $stmt->bind_param("sssssssisssi", $title, $titleHy, $titleLat, $titleEn, $titleRu, $artist, $songKey, $bpm, $tags, $chords, $lyrics, $id);
+        } elseif ($hasSeparateTitleColumns) {
             $stmt = $conn->prepare("UPDATE songs SET title=?, title_hy=?, title_lat=?, title_en=?, title_ru=?, artist=?, song_key=?, tags=?, chords=?, lyrics=? WHERE id=?");
             if (!$stmt) {
                 wp_api_json_error('Չհաջողվեց պատրաստել երգի թարմացումը: ' . $conn->error);
             }
             $stmt->bind_param("ssssssssssi", $title, $titleHy, $titleLat, $titleEn, $titleRu, $artist, $songKey, $tags, $chords, $lyrics, $id);
         } else {
-            $stmt = $conn->prepare("UPDATE songs SET title=?, artist=?, song_key=?, tags=?, chords=?, lyrics=? WHERE id=?");
+            $stmt = $conn->prepare($hasBpmColumn
+                ? "UPDATE songs SET title=?, artist=?, song_key=?, bpm=?, tags=?, chords=?, lyrics=? WHERE id=?"
+                : "UPDATE songs SET title=?, artist=?, song_key=?, tags=?, chords=?, lyrics=? WHERE id=?"
+            );
             if (!$stmt) {
                 wp_api_json_error('Չհաջողվեց պատրաստել երգի թարմացումը: ' . $conn->error);
             }
-            $stmt->bind_param("ssssssi", $title, $artist, $songKey, $tags, $chords, $lyrics, $id);
+            if ($hasBpmColumn) {
+                $stmt->bind_param("sssisssi", $title, $artist, $songKey, $bpm, $tags, $chords, $lyrics, $id);
+            } else {
+                $stmt->bind_param("ssssssi", $title, $artist, $songKey, $tags, $chords, $lyrics, $id);
+            }
         }
 
         $ok = $stmt->execute();

@@ -103,20 +103,41 @@ if (!function_exists('wp_runtime_ensure_song_title_columns_mysqli')) {
         }
 
         $varcharUtf8 = "VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL";
+        $smallIntUnsigned = "SMALLINT UNSIGNED NULL";
         $required = [
-            'title_hy' => "ALTER TABLE songs ADD COLUMN title_hy {$varcharUtf8} AFTER title",
-            'title_lat' => "ALTER TABLE songs ADD COLUMN title_lat {$varcharUtf8} AFTER title_hy",
-            'title_en' => "ALTER TABLE songs ADD COLUMN title_en {$varcharUtf8} AFTER title_lat",
-            'title_ru' => "ALTER TABLE songs ADD COLUMN title_ru {$varcharUtf8} AFTER title_en",
-        ];
-        $repair = [
-            'title_hy' => "ALTER TABLE songs MODIFY COLUMN title_hy {$varcharUtf8}",
-            'title_lat' => "ALTER TABLE songs MODIFY COLUMN title_lat {$varcharUtf8}",
-            'title_en' => "ALTER TABLE songs MODIFY COLUMN title_en {$varcharUtf8}",
-            'title_ru' => "ALTER TABLE songs MODIFY COLUMN title_ru {$varcharUtf8}",
+            'title_hy' => [
+                'add' => "ALTER TABLE songs ADD COLUMN title_hy {$varcharUtf8} AFTER title",
+                'repair' => "ALTER TABLE songs MODIFY COLUMN title_hy {$varcharUtf8}",
+                'type' => 'varchar(255)',
+                'collation' => 'utf8mb4_unicode_ci',
+            ],
+            'title_lat' => [
+                'add' => "ALTER TABLE songs ADD COLUMN title_lat {$varcharUtf8} AFTER title_hy",
+                'repair' => "ALTER TABLE songs MODIFY COLUMN title_lat {$varcharUtf8}",
+                'type' => 'varchar(255)',
+                'collation' => 'utf8mb4_unicode_ci',
+            ],
+            'title_en' => [
+                'add' => "ALTER TABLE songs ADD COLUMN title_en {$varcharUtf8} AFTER title_lat",
+                'repair' => "ALTER TABLE songs MODIFY COLUMN title_en {$varcharUtf8}",
+                'type' => 'varchar(255)',
+                'collation' => 'utf8mb4_unicode_ci',
+            ],
+            'title_ru' => [
+                'add' => "ALTER TABLE songs ADD COLUMN title_ru {$varcharUtf8} AFTER title_en",
+                'repair' => "ALTER TABLE songs MODIFY COLUMN title_ru {$varcharUtf8}",
+                'type' => 'varchar(255)',
+                'collation' => 'utf8mb4_unicode_ci',
+            ],
+            'bpm' => [
+                'add' => "ALTER TABLE songs ADD COLUMN bpm {$smallIntUnsigned} AFTER song_key",
+                'repair' => "ALTER TABLE songs MODIFY COLUMN bpm {$smallIntUnsigned}",
+                'type' => 'smallint unsigned',
+                'collation' => '',
+            ],
         ];
 
-        foreach ($required as $column => $sql) {
+        foreach ($required as $column => $meta) {
             $safeColumn = preg_replace('/[^A-Za-z0-9_]+/', '', $column);
             $check = $conn->query("SHOW FULL COLUMNS FROM songs LIKE '{$safeColumn}'");
             $exists = $check instanceof mysqli_result && $check->num_rows > 0;
@@ -125,7 +146,12 @@ if (!function_exists('wp_runtime_ensure_song_title_columns_mysqli')) {
                 $info = $check->fetch_assoc() ?: [];
                 $collation = strtolower((string)($info['Collation'] ?? ''));
                 $type = strtolower((string)($info['Type'] ?? ''));
-                $needsRepair = $collation !== 'utf8mb4_unicode_ci' || $type !== 'varchar(255)';
+                $expectedType = strtolower((string)($meta['type'] ?? ''));
+                $expectedCollation = strtolower((string)($meta['collation'] ?? ''));
+                $needsRepair = $type !== $expectedType;
+                if ($expectedCollation !== '') {
+                    $needsRepair = $needsRepair || $collation !== $expectedCollation;
+                }
                 $check->data_seek(0);
             }
             if ($check instanceof mysqli_result) {
@@ -133,14 +159,14 @@ if (!function_exists('wp_runtime_ensure_song_title_columns_mysqli')) {
             }
 
             if (!$exists) {
-                if (!$conn->query($sql)) {
+                if (!$conn->query((string)$meta['add'])) {
                     return false;
                 }
                 continue;
             }
 
             if ($needsRepair) {
-                if (!$conn->query($repair[$column])) {
+                if (!$conn->query((string)$meta['repair'])) {
                     return false;
                 }
             }
