@@ -187,6 +187,9 @@
           kicker: "Worship Setlists",
           title: "Սեթլիստների աշխատանքային տարածք",
           text: "Ստեղծիր ծառայության, փորձի կամ երիտասարդական հավաքի երգացանկ, պահիր կառուցվածքը և բացիր այն մեկ հպումով դիտման ռեժիմում։",
+          editKicker: "Setlist Editor",
+          editTitle: "Սեթլիստի խմբագրում",
+          editText: "Փոխիր կառուցվածքը, ավելացրու երգեր ու բաժիններ և պատրաստիր ծառայության հոսքը միանգամից։",
           totalSetlists: "Ընդհանուր սեթլիստներ",
           active: "Ակտիվ",
           public: "Հանրային",
@@ -207,8 +210,13 @@
           mySetlists: "Իմ սեթլիստները",
           latestFirst: "Վերջին թարմացվածներն առաջինն են",
           emptyState: "Ընտրիր setlist կամ ստեղծիր նորը",
+          overviewTitle: "Արագ դիտում",
+          overviewText: "Բացիր սեթլիստի կազմը, տես հիմնական տվյալները և հետո մեկ սեղմումով անցիր դիտման կամ խմբագրման ռեժիմի։",
+          previewEmpty: "Այս սեթլիստում դեռ item չկա",
           private: "Անձնական",
           open: "Բացել",
+          editWorkspace: "Խմբագրել",
+          backToLibrary: "Վերադառնալ ցանկ",
           share: "Բացել հասանելիությունը",
           copyLink: "Պատճենել հղումը",
           disableShare: "Փակել հասանելիությունը",
@@ -233,6 +241,92 @@
           metaDescription: "Կարդա Worship Platform-ի նորությունները, թարմացումները և հայտարարությունները։",
           title: "Նորություններ"
         },
+        songRequest: {
+          metaTitle: "Երգի հարցում — Worship Platform",
+          metaDescription: "Ուղարկիր նոր երգի կամ երգի խմբագրման հարցում Worship Platform-ի մոդերացիային։",
+          eyebrow: "Մոդերացիա",
+          titleNew: "Ուղարկել նոր երգ",
+          subtitleNew: "Լրացրու երգի հիմնական տվյալները, BPM տեմպը, ակորդներն ու բառերը։ Հետո ադմինը կստուգի և կհաստատի կամ կմերժի հարցումը։ Եթե սա արդեն առկա երգ է, այստեղ կարող ես ուղարկել դրա ուղղված տարբերակը։",
+          titleEdit: "Ուղարկել խմբագրման առաջարկ",
+          subtitleEdit: "Բաց երգի նոր տարբերակը, BPM-ը, ակորդներն ու վերնագրերը կգնան մոդերացիայի, և ադմինը կհաստատի կամ կմերժի այն։",
+          typeNew: "Տեսակ՝ նոր երգ",
+          typeEdit: "Տեսակ՝ խմբագրման առաջարկ",
+          songEmpty: "Երգ՝ ընտրված չէ",
+          songNew: "Երգ՝ նոր առաջարկ",
+          badgeMusic: "Տոնայնություն + BPM + ակորդներ",
+          guide1Title: "1. Լրացնում ես ամբողջական տվյալները",
+          guide1Text: "Վերնագիրը, տարբեր լեզուներով տարբերակները, սկզբնական տոնայնությունը, BPM տեմպը, ակորդներն ու բառերը գնում են մեկ հարցման մեջ։",
+          guide2Title: "2. Ադմինը համեմատում է տարբերակները",
+          guide2Text: "Եթե սա խմբագրման հարցում է, գործող տարբերակն ու քո ուղարկած տարբերակը երևում են կողք կողքի։",
+          guide3Title: "3. Հաստատվածը անմիջապես պահվում է",
+          guide3Text: "Հաստատված հարցումը միանգամից գնում է երգերի բազա, որ հետո հասանելի լինի թե կայքում, թե ծրագրում։",
+          modeNewLabel: "Նոր երգի հարցում",
+          modeNewText: "Այս ռեժիմը նախատեսված է նոր երգ առաջարկելու համար։",
+          modeEditLabel: "Գոյություն ունեցող երգի փոփոխություն",
+          modeEditText: "Այս ռեժիմը ստեղծված է արդեն առկա երգի ուղղված տարբերակ, BPM կամ ավելի ամբողջական տվյալներ ուղարկելու համար։",
+          pillLogin: "Մուտքը պարտադիր է",
+          pillHistory: "Մոդերացիան պահում է պատմությունը",
+          pillBpm: "BPM-ը նույնպես կպահվի",
+          tipsTitle: "Լավ արդյունքի համար",
+          tipsText: "Եթե երգն ունի հայերեն, լատինատառ, անգլերեն կամ ռուսերեն վերնագիր, գրիր բոլոր առկա տարբերակները։ Եթե BPM-ը գիտես, պարտադիր ավելացրու, որ հետո rehearsal-ում և օգտագործման պահին երգը լինի ավելի ամբողջական։",
+          formTitleNew: "Նոր երգի հարցման ձև",
+          formTitleEdit: "Խմբագրման հարցման ձև",
+          formSubtitleNew: "Նոր երգը նախ կանցնի ստուգում, հետո միայն կհայտնվի ընդհանուր ցանկում։",
+          formSubtitleEdit: "Ադմինը կտեսնի գործող տարբերակը և քո առաջարկած փոփոխությունը կողք կողքի։",
+          successTitle: "Հարցումը ուղարկվեց",
+          successText: "Քո հարցումը արդեն գնացել է մոդերացիայի հերթ, և ադմինը շուտով կստուգի այն։",
+          successHint: "Մոդերացիայի հերթում է",
+          loginLockTitle: "Հարցում ուղարկելու համար նախ մուտք գործիր",
+          loginLockText: "Երբ մուտք գործես, այս էջը կվերաբացվի նույն հարցման համար, և դու կշարունակես լրացումը առանց նորից փնտրելու։",
+          basicsTitle: "Վերնագրեր և հիմնական տվյալներ",
+          basicsText: "Սա հիմնական ինֆորմացիան է, որով երգը հետո հեշտ կգտնվի և ճիշտ կներկայացվի տարբեր լեզուներով։",
+          titleHy: "Երգի վերնագիր հայերեն",
+          titleHyPh: "Օր. Եգիպտոս",
+          titleLat: "Հայերեն լատինատառ",
+          titleLatPh: "Օր. Egiptos",
+          titleEn: "Անգլերեն վերնագիր",
+          titleEnPh: "Օր. Egypt",
+          titleRu: "Ռուսերեն վերնագիր",
+          titleRuPh: "Օր. Египет",
+          artist: "Կատարող / հեղինակ",
+          artistPh: "Եթե կա՝ գրիր այստեղ",
+          tags: "Տեգեր",
+          tagsPh: "Օր. worship, oldies, communion",
+          musicTitle: "Երաժշտական տվյալներ",
+          musicText: "Սկզբնական տոնայնությունն ու BPM-ը լավ է ուղարկել հենց սկզբից, որ երգը rehearsal-ի և թարգմանված ցուցադրման մեջ ամբողջական լինի։",
+          songKey: "Սկզբնական տոնայնություն",
+          songKeyPh: "Օր. C, Eb, Am կամ Dm",
+          bpm: "BPM տեմպ",
+          bpmPh: "Օր. 72 կամ 128",
+          bpmHelp: "Եթե գիտես տեմպը, գրիր այստեղ։ 20-400 միջակայքը բավարար է երգերի մեծ մասի համար։",
+          miniKeyTitle: "Տոնայնություն",
+          miniKeyText: "Կարող ես գրել նաև minor տարբերակ, օրինակ՝ Am, Dm, F#m։",
+          miniBpmTitle: "BPM",
+          miniBpmText: "Եթե exact թիվը չգիտես, մոտավոր rehearsal tempo-ն էլ օգտակար կլինի ադմինի համար։",
+          chordsTitle: "Ակորդներ և բառեր",
+          chordsText: "Եթե ունես ամբողջ chord sheet-ը, ուղարկիր հնարավորինս մաքուր և ամբողջական տարբերակը։",
+          chords: "Ակորդներ",
+          chordsPh: "Verse\nAm | Dm | F |\nEsus E | Bdim/A Am",
+          lyrics: "Բառեր",
+          lyricsPh: "Եթե կա, երգի բառերը գրիր այստեղ",
+          noteTitle: "Նշում ադմինի համար",
+          noteText: "Կարճ բացատրի՛ր, սա նոր երգ է, գործող երգի ուղղո՞ւմ է, թե պարզապես ավելի ամբողջական տարբերակ։",
+          noteLabel: "Մեկնաբանություն ադմինի համար",
+          notePh: "Օր. սա գործող երգի ուղղված տարբերակն է, կամ՝ սա նոր երգ է, որն ուզում եմ ավելացնել",
+          noteHelp: "Այս դաշտը օգնում է ադմինին ավելի արագ հասկանալ ինչն է փոխվել, հատկապես եթե ուղարկել ես BPM, նոր վերնագիր կամ ուղղված ակորդներ։",
+          reviewTitle: "Ինչն է գնալու մոդերացիայի",
+          reviewText: "Ադմինը կտեսնի վերնագրերը, տոնայնությունը, BPM-ը, տեգերը, ակորդներն ու բառերը, ինչպես նաև քո մեկնաբանությունը։",
+          reviewNote: "Եթե սա արդեն առկա երգի խմբագրում է, գործող տարբերակն էլ բացված կլինի ադմինի առջև, որ նա հեշտ համեմատի տարբերությունները։",
+          submitReady: "Պատրաստ ես ուղարկելու՞",
+          submitText: "Սեղմելուց հետո հարցումը կգնա մոդերացիայի հերթ, և ադմինը կկարողանա հաստատել կամ մերժել այն։",
+          submit: "Ուղարկել մոդերացիայի",
+          cancel: "Վերադառնալ",
+          statusNeedLogin: "Հարցում ուղարկելու համար նախ մուտք գործիր։",
+          statusLoadSongError: "Չհաջողվեց բեռնել ընտրված երգը։ Կարող ես հարցումը լրացնել նաև ձեռքով։",
+          statusSubmitting: "Հարցումը ուղարկվում է մոդերացիայի...",
+          statusSent: "Հարցումը ուղարկվեց։",
+          statusSubmitError: "Չհաջողվեց ուղարկել հարցումը։"
+        },
         songView: {
           transpose: "Տրանսպոզիցիա"
         }
@@ -253,6 +347,8 @@
           authSubtitle: "Ծրագրային մուտք, գրանցում և հաշվի վերականգնում",
           songTitle: "Երգի դիտում",
           songSubtitle: "Ակորդներ, transpose և պահպանում",
+          songRequestTitle: "Մոդերացիա",
+          songRequestSubtitle: "Նոր երգի և խմբագրման հարցումների ուղարկում",
           newsTitle: "Նորություններ",
           newsSubtitle: "Վերջին հայտարարություններն ու թարմացումները",
           appTitle: "Worship ծրագիր",
@@ -495,6 +591,9 @@
           kicker: "Worship Setlists",
           title: "Рабочее пространство сетлистов",
           text: "Создавай список песен для служения, репетиции или молодёжной встречи, сохраняй структуру и открывай его в режиме просмотра одним касанием.",
+          editKicker: "Setlist Editor",
+          editTitle: "Редактирование сетлиста",
+          editText: "Меняй структуру, добавляй песни и разделы и сразу подготавливай порядок служения.",
           totalSetlists: "Всего сетлистов",
           active: "Активные",
           public: "Публичные",
@@ -515,8 +614,13 @@
           mySetlists: "Мои сетлисты",
           latestFirst: "Сначала последние обновлённые",
           emptyState: "Выбери сетлист или создай новый",
+          overviewTitle: "Быстрый обзор",
+          overviewText: "Посмотри состав сетлиста, основные данные и затем одним нажатием перейди в режим просмотра или редактирования.",
+          previewEmpty: "В этом сетлисте пока нет элементов",
           private: "Личный",
           open: "Открыть",
+          editWorkspace: "Редактировать",
+          backToLibrary: "Вернуться к списку",
           share: "Открыть доступ",
           copyLink: "Копировать ссылку",
           disableShare: "Закрыть доступ",
@@ -541,6 +645,92 @@
           metaDescription: "Читайте новости, обновления и объявления Worship Platform.",
           title: "Новости"
         },
+        songRequest: {
+          metaTitle: "Запрос песни — Worship Platform",
+          metaDescription: "Отправь запрос на новую песню или редактирование песни в модерацию Worship Platform.",
+          eyebrow: "Модерация",
+          titleNew: "Отправить новую песню",
+          subtitleNew: "Заполни основные данные песни, BPM, аккорды и слова. Потом админ проверит и подтвердит или отклонит запрос. Если это уже существующая песня, здесь можно отправить её исправленную версию.",
+          titleEdit: "Отправить предложение по правке",
+          subtitleEdit: "Новая версия песни, BPM, аккорды и названия уйдут в модерацию, и админ подтвердит или отклонит её.",
+          typeNew: "Тип: новая песня",
+          typeEdit: "Тип: предложение по правке",
+          songEmpty: "Песня: не выбрана",
+          songNew: "Песня: новое предложение",
+          badgeMusic: "Тональность + BPM + аккорды",
+          guide1Title: "1. Ты заполняешь полные данные",
+          guide1Text: "Название, варианты на разных языках, исходная тональность, BPM, аккорды и слова уходят в одном запросе.",
+          guide2Title: "2. Админ сравнивает версии",
+          guide2Text: "Если это запрос на редактирование, текущая версия и твоя отправленная версия будут показаны рядом.",
+          guide3Title: "3. Подтверждённое сразу сохраняется",
+          guide3Text: "Подтверждённый запрос сразу попадает в базу песен и потом доступен и на сайте, и в приложении.",
+          modeNewLabel: "Запрос новой песни",
+          modeNewText: "Этот режим предназначен для предложения новой песни.",
+          modeEditLabel: "Изменение существующей песни",
+          modeEditText: "Этот режим создан для отправки исправленной версии уже существующей песни, BPM или более полных данных.",
+          pillLogin: "Вход обязателен",
+          pillHistory: "Модерация хранит историю",
+          pillBpm: "BPM тоже сохранится",
+          tipsTitle: "Для лучшего результата",
+          tipsText: "Если у песни есть армянское, латиницей, английское или русское название, впиши все доступные варианты. Если знаешь BPM, обязательно добавь его, чтобы позже на rehearsal и при использовании песня была более полной.",
+          formTitleNew: "Форма запроса новой песни",
+          formTitleEdit: "Форма запроса на редактирование",
+          formSubtitleNew: "Новая песня сначала пройдёт проверку и только потом появится в общем списке.",
+          formSubtitleEdit: "Админ увидит текущую версию и предложенное тобой изменение рядом.",
+          successTitle: "Запрос отправлен",
+          successText: "Твой запрос уже отправлен в очередь модерации, и админ скоро его проверит.",
+          successHint: "В очереди модерации",
+          loginLockTitle: "Чтобы отправить запрос, сначала войди",
+          loginLockText: "Когда войдёшь, эта страница откроется снова с тем же запросом, и ты продолжишь заполнение без повторного поиска.",
+          basicsTitle: "Названия и основные данные",
+          basicsText: "Это основная информация, по которой песню потом будет легко найти и правильно показывать на разных языках.",
+          titleHy: "Название песни на армянском",
+          titleHyPh: "Напр. Египет",
+          titleLat: "Армянское латиницей",
+          titleLatPh: "Напр. Egiptos",
+          titleEn: "Название на английском",
+          titleEnPh: "Напр. Egypt",
+          titleRu: "Название на русском",
+          titleRuPh: "Напр. Египет",
+          artist: "Исполнитель / автор",
+          artistPh: "Если есть — напиши здесь",
+          tags: "Теги",
+          tagsPh: "Напр. worship, oldies, communion",
+          musicTitle: "Музыкальные данные",
+          musicText: "Исходную тональность и BPM лучше отправить сразу, чтобы песня в rehearsal и в переведённом показе была полной.",
+          songKey: "Исходная тональность",
+          songKeyPh: "Напр. C, Eb, Am или Dm",
+          bpm: "Темп BPM",
+          bpmPh: "Напр. 72 или 128",
+          bpmHelp: "Если знаешь темп, впиши его сюда. Диапазона 20-400 достаточно для большинства песен.",
+          miniKeyTitle: "Тональность",
+          miniKeyText: "Можно писать и minor вариант, например Am, Dm, F#m.",
+          miniBpmTitle: "BPM",
+          miniBpmText: "Если не знаешь точное число, даже примерный rehearsal tempo будет полезен для админа.",
+          chordsTitle: "Аккорды и слова",
+          chordsText: "Если у тебя есть весь chord sheet, отправь максимально чистую и полную версию.",
+          chords: "Аккорды",
+          chordsPh: "Verse\nAm | Dm | F |\nEsus E | Bdim/A Am",
+          lyrics: "Слова",
+          lyricsPh: "Если есть, напиши здесь слова песни",
+          noteTitle: "Заметка для админа",
+          noteText: "Кратко объясни, это новая песня, правка существующей песни или просто более полная версия.",
+          noteLabel: "Комментарий для админа",
+          notePh: "Напр. это исправленная версия существующей песни, или: это новая песня, которую хочу добавить",
+          noteHelp: "Это поле помогает админу быстрее понять, что изменилось, особенно если ты отправил BPM, новое название или исправленные аккорды.",
+          reviewTitle: "Что уйдёт в модерацию",
+          reviewText: "Админ увидит названия, тональность, BPM, теги, аккорды и слова, а также твой комментарий.",
+          reviewNote: "Если это уже редактирование существующей песни, текущая версия тоже будет открыта перед админом, чтобы он легко сравнил отличия.",
+          submitReady: "Готов отправить?",
+          submitText: "После нажатия запрос уйдёт в очередь модерации, и админ сможет подтвердить или отклонить его.",
+          submit: "Отправить в модерацию",
+          cancel: "Вернуться",
+          statusNeedLogin: "Чтобы отправить запрос, сначала войди.",
+          statusLoadSongError: "Не удалось загрузить выбранную песню. Ты можешь заполнить запрос и вручную.",
+          statusSubmitting: "Запрос отправляется в модерацию...",
+          statusSent: "Запрос отправлен.",
+          statusSubmitError: "Не удалось отправить запрос."
+        },
         songView: {
           transpose: "Транспозиция"
         }
@@ -561,6 +751,8 @@
           authSubtitle: "Вход в приложении, регистрация и восстановление аккаунта",
           songTitle: "Просмотр песни",
           songSubtitle: "Аккорды, транспозиция и сохранение",
+          songRequestTitle: "Модерация",
+          songRequestSubtitle: "Отправка запросов на новые песни и правки",
           newsTitle: "Новости",
           newsSubtitle: "Последние объявления и обновления",
           appTitle: "Приложение Worship",
@@ -803,6 +995,9 @@
           kicker: "Worship Setlists",
           title: "Setlist workspace",
           text: "Create a song order for a service, rehearsal or youth gathering, keep the structure and open it in view mode with one tap.",
+          editKicker: "Setlist Editor",
+          editTitle: "Edit setlist",
+          editText: "Adjust the structure, add songs and sections, and prepare the service flow right away.",
           totalSetlists: "Total setlists",
           active: "Active",
           public: "Public",
@@ -823,8 +1018,13 @@
           mySetlists: "My setlists",
           latestFirst: "Most recently updated first",
           emptyState: "Choose a setlist or create a new one",
+          overviewTitle: "Quick overview",
+          overviewText: "Review the setlist contents and key details, then move into viewing or editing with one action.",
+          previewEmpty: "This setlist has no items yet",
           private: "Private",
           open: "Open",
+          editWorkspace: "Edit",
+          backToLibrary: "Back to library",
           share: "Enable sharing",
           copyLink: "Copy link",
           disableShare: "Disable sharing",
@@ -848,6 +1048,92 @@
           metaTitle: "News and updates — Worship Platform",
           metaDescription: "Read Worship Platform news, updates and announcements.",
           title: "News"
+        },
+        songRequest: {
+          metaTitle: "Song request — Worship Platform",
+          metaDescription: "Send a new song request or a song edit request to Worship Platform moderation.",
+          eyebrow: "Moderation",
+          titleNew: "Send a new song",
+          subtitleNew: "Fill in the main song details, BPM, chords and lyrics. Then the admin will review and approve or reject the request. If this is already an existing song, you can send its corrected version here.",
+          titleEdit: "Send an edit suggestion",
+          subtitleEdit: "The new song version, BPM, chords and titles will go to moderation, and the admin will approve or reject it.",
+          typeNew: "Type: new song",
+          typeEdit: "Type: edit suggestion",
+          songEmpty: "Song: not selected",
+          songNew: "Song: new suggestion",
+          badgeMusic: "Key + BPM + chords",
+          guide1Title: "1. You fill in the full data",
+          guide1Text: "The title, language variants, original key, BPM, chords and lyrics all go in one request.",
+          guide2Title: "2. The admin compares the versions",
+          guide2Text: "If this is an edit request, the current version and your submitted version are shown side by side.",
+          guide3Title: "3. The approved request is saved right away",
+          guide3Text: "The approved request goes straight into the songs database and then becomes available both on the site and in the app.",
+          modeNewLabel: "New song request",
+          modeNewText: "This mode is meant for suggesting a new song.",
+          modeEditLabel: "Existing song change",
+          modeEditText: "This mode is made for sending a corrected version of an existing song, BPM or more complete data.",
+          pillLogin: "Login is required",
+          pillHistory: "Moderation keeps history",
+          pillBpm: "BPM will also be saved",
+          tipsTitle: "For a better result",
+          tipsText: "If the song has an Armenian, Latin Armenian, English or Russian title, enter every available version. If you know the BPM, be sure to add it so the song is more complete later during rehearsal and usage.",
+          formTitleNew: "New song request form",
+          formTitleEdit: "Edit request form",
+          formSubtitleNew: "The new song will first go through review and only then appear in the main list.",
+          formSubtitleEdit: "The admin will see the current version and your proposed change side by side.",
+          successTitle: "Request sent",
+          successText: "Your request has already been sent to the moderation queue, and the admin will review it soon.",
+          successHint: "In moderation queue",
+          loginLockTitle: "Log in first to send a request",
+          loginLockText: "After you log in, this page will reopen for the same request and you will continue filling it in without searching again.",
+          basicsTitle: "Titles and main details",
+          basicsText: "This is the core information that helps the song be found later and shown correctly in different languages.",
+          titleHy: "Song title in Armenian",
+          titleHyPh: "Ex. Egypt",
+          titleLat: "Armenian in Latin letters",
+          titleLatPh: "Ex. Egiptos",
+          titleEn: "English title",
+          titleEnPh: "Ex. Egypt",
+          titleRu: "Russian title",
+          titleRuPh: "Ex. Египет",
+          artist: "Performer / author",
+          artistPh: "If there is one, write it here",
+          tags: "Tags",
+          tagsPh: "Ex. worship, oldies, communion",
+          musicTitle: "Music data",
+          musicText: "It is best to send the original key and BPM right away so the song is complete in rehearsal and translated display.",
+          songKey: "Original key",
+          songKeyPh: "Ex. C, Eb, Am or Dm",
+          bpm: "BPM tempo",
+          bpmPh: "Ex. 72 or 128",
+          bpmHelp: "If you know the tempo, enter it here. The 20-400 range is enough for most songs.",
+          miniKeyTitle: "Key",
+          miniKeyText: "You can also write a minor variant, for example Am, Dm, F#m.",
+          miniBpmTitle: "BPM",
+          miniBpmText: "If you do not know the exact number, even an approximate rehearsal tempo will help the admin.",
+          chordsTitle: "Chords and lyrics",
+          chordsText: "If you have the full chord sheet, send the cleanest and most complete version you can.",
+          chords: "Chords",
+          chordsPh: "Verse\nAm | Dm | F |\nEsus E | Bdim/A Am",
+          lyrics: "Lyrics",
+          lyricsPh: "If available, write the song lyrics here",
+          noteTitle: "Note for the admin",
+          noteText: "Briefly explain whether this is a new song, a correction for an existing song, or simply a more complete version.",
+          noteLabel: "Comment for the admin",
+          notePh: "Ex. this is a corrected version of an existing song, or: this is a new song I want to add",
+          noteHelp: "This field helps the admin understand faster what changed, especially if you sent BPM, a new title or corrected chords.",
+          reviewTitle: "What will go to moderation",
+          reviewText: "The admin will see the titles, key, BPM, tags, chords and lyrics, as well as your comment.",
+          reviewNote: "If this is already an edit of an existing song, the current version will also be open for the admin so the differences are easy to compare.",
+          submitReady: "Ready to send?",
+          submitText: "After pressing, the request will go to the moderation queue, and the admin will be able to approve or reject it.",
+          submit: "Send to moderation",
+          cancel: "Go back",
+          statusNeedLogin: "Log in first to send a request.",
+          statusLoadSongError: "Failed to load the selected song. You can still fill in the request manually.",
+          statusSubmitting: "The request is being sent to moderation...",
+          statusSent: "The request was sent.",
+          statusSubmitError: "Failed to send the request."
         },
         songView: {
           transpose: "Transpose"
@@ -1357,9 +1643,10 @@
 
   function applySetlists() {
     updateMeta(t("pages.setlists.metaTitle"), t("pages.setlists.metaDescription"));
-    setText(".page-kicker", t("pages.setlists.kicker"));
-    setText(".page-title", t("pages.setlists.title"));
-    setText(".page-copy", t("pages.setlists.text"));
+    var isEditMode = document.body && document.body.dataset && document.body.dataset.setlistsMode === "edit";
+    setText(".page-kicker", isEditMode ? t("pages.setlists.editKicker") : t("pages.setlists.kicker"));
+    setText(".page-title", isEditMode ? t("pages.setlists.editTitle") : t("pages.setlists.title"));
+    setText(".page-copy", isEditMode ? t("pages.setlists.editText") : t("pages.setlists.text"));
     setText(".stat-card:nth-child(1) .stat-label", t("pages.setlists.totalSetlists"));
     setText(".stat-card:nth-child(2) .stat-label", t("pages.setlists.active"));
     setText(".stat-card:nth-child(3) .stat-label", t("pages.setlists.public"));
@@ -1380,7 +1667,11 @@
     setText(".row .stack h3", t("pages.setlists.mySetlists"));
     setText(".row .stack .small", t("pages.setlists.latestFirst"));
     setText("#emptyState", t("pages.setlists.emptyState"));
+    setText("#overviewTitle", t("pages.setlists.overviewTitle"));
+    setText("#overviewCopy", t("pages.setlists.overviewText"));
     setText("#shareStatusBadge", t("pages.setlists.private"));
+    setText("#editWorkspaceBtn .btn-text", t("pages.setlists.editWorkspace"));
+    setText("#backToLibraryBtn .btn-text", t("pages.setlists.backToLibrary"));
     setText("#openViewBtn .btn-text", t("pages.setlists.open"));
     setText("#shareBtn .btn-text", t("pages.setlists.share"));
     setText("#copyShareBtn .btn-text", t("pages.setlists.copyLink"));
@@ -1408,7 +1699,77 @@
   }
 
   function applySongView() {
+    setText(".topbar .title", t("app.meta.songTitle", "Երգի դիտում"));
     setText(".panel-title", t("pages.songView.transpose"));
+  }
+
+  function applySongRequest() {
+    updateMeta(t("pages.songRequest.metaTitle"), t("pages.songRequest.metaDescription"));
+    setText("#requestEyebrow", t("pages.songRequest.eyebrow"));
+    setText("#requestTypePill", t("pages.songRequest.typeNew"));
+    setText("#requestSongPill", t("pages.songRequest.songEmpty"));
+    setText(".overview-badges .overview-badge:nth-child(3)", t("pages.songRequest.badgeMusic"));
+    setText(".guide-grid .guide-item:nth-child(1) strong", t("pages.songRequest.guide1Title"));
+    setText(".guide-grid .guide-item:nth-child(1) span", t("pages.songRequest.guide1Text"));
+    setText(".guide-grid .guide-item:nth-child(2) strong", t("pages.songRequest.guide2Title"));
+    setText(".guide-grid .guide-item:nth-child(2) span", t("pages.songRequest.guide2Text"));
+    setText(".guide-grid .guide-item:nth-child(3) strong", t("pages.songRequest.guide3Title"));
+    setText(".guide-grid .guide-item:nth-child(3) span", t("pages.songRequest.guide3Text"));
+    setText(".pill-row .pill:nth-child(1)", t("pages.songRequest.pillLogin"));
+    setText(".pill-row .pill:nth-child(2)", t("pages.songRequest.pillHistory"));
+    setText(".pill-row .pill:nth-child(3)", t("pages.songRequest.pillBpm"));
+    setText(".side-stack .side-card:nth-child(2) h2", t("pages.songRequest.tipsTitle"));
+    setText(".side-stack .side-card:nth-child(2) p", t("pages.songRequest.tipsText"));
+    setText("#requestSuccessTitle", t("pages.songRequest.successTitle"));
+    setText("#requestSuccessText", t("pages.songRequest.successText"));
+    setText(".success-modal-hint", t("pages.songRequest.successHint"));
+    setText("#loginLockBox strong", t("pages.songRequest.loginLockTitle"));
+    setText("#loginLockBox p", t("pages.songRequest.loginLockText"));
+    setText("#loginRequestBtn", t("common.login"));
+    setText("#registerRequestBtn", t("common.register"));
+    setText(".form-main .panel:nth-child(1) h3", t("pages.songRequest.basicsTitle"));
+    setText(".form-main .panel:nth-child(1) p", t("pages.songRequest.basicsText"));
+    setText("label[for='titleHy']", t("pages.songRequest.titleHy"));
+    setPlaceholder("#titleHy", t("pages.songRequest.titleHyPh"));
+    setText("label[for='titleLat']", t("pages.songRequest.titleLat"));
+    setPlaceholder("#titleLat", t("pages.songRequest.titleLatPh"));
+    setText("label[for='titleEn']", t("pages.songRequest.titleEn"));
+    setPlaceholder("#titleEn", t("pages.songRequest.titleEnPh"));
+    setText("label[for='titleRu']", t("pages.songRequest.titleRu"));
+    setPlaceholder("#titleRu", t("pages.songRequest.titleRuPh"));
+    setText("label[for='artist']", t("pages.songRequest.artist"));
+    setPlaceholder("#artist", t("pages.songRequest.artistPh"));
+    setText("label[for='tags']", t("pages.songRequest.tags"));
+    setPlaceholder("#tags", t("pages.songRequest.tagsPh"));
+    setText(".form-main .panel:nth-child(2) h3", t("pages.songRequest.musicTitle"));
+    setText(".form-main .panel:nth-child(2) p", t("pages.songRequest.musicText"));
+    setText("label[for='songKey']", t("pages.songRequest.songKey"));
+    setPlaceholder("#songKey", t("pages.songRequest.songKeyPh"));
+    setText("label[for='bpm']", t("pages.songRequest.bpm"));
+    setPlaceholder("#bpm", t("pages.songRequest.bpmPh"));
+    setText("label[for='bpm'] + input + .field-help", t("pages.songRequest.bpmHelp"));
+    setText(".mini-grid .mini-info:nth-child(1) strong", t("pages.songRequest.miniKeyTitle"));
+    setText(".mini-grid .mini-info:nth-child(1) span", t("pages.songRequest.miniKeyText"));
+    setText(".mini-grid .mini-info:nth-child(2) strong", t("pages.songRequest.miniBpmTitle"));
+    setText(".mini-grid .mini-info:nth-child(2) span", t("pages.songRequest.miniBpmText"));
+    setText(".form-main .panel:nth-child(3) h3", t("pages.songRequest.chordsTitle"));
+    setText(".form-main .panel:nth-child(3) p", t("pages.songRequest.chordsText"));
+    setText("label[for='chords']", t("pages.songRequest.chords"));
+    setPlaceholder("#chords", t("pages.songRequest.chordsPh"));
+    setText("label[for='lyrics']", t("pages.songRequest.lyrics"));
+    setPlaceholder("#lyrics", t("pages.songRequest.lyricsPh"));
+    setText(".form-side .panel:nth-child(1) h3", t("pages.songRequest.noteTitle"));
+    setText(".form-side .panel:nth-child(1) p", t("pages.songRequest.noteText"));
+    setText("label[for='submittedMessage']", t("pages.songRequest.noteLabel"));
+    setPlaceholder("#submittedMessage", t("pages.songRequest.notePh"));
+    setText("label[for='submittedMessage'] + textarea + .field-help", t("pages.songRequest.noteHelp"));
+    setText(".form-side .panel:nth-child(2) h3", t("pages.songRequest.reviewTitle"));
+    setText(".form-side .panel:nth-child(2) p", t("pages.songRequest.reviewText"));
+    setText(".request-note", t("pages.songRequest.reviewNote"));
+    setText(".submit-copy strong", t("pages.songRequest.submitReady"));
+    setText(".submit-copy span", t("pages.songRequest.submitText"));
+    setText("#submitRequestBtn", t("pages.songRequest.submit"));
+    setText("#cancelRequestBtn", t("pages.songRequest.cancel"));
   }
 
   function resolvePageKey() {
@@ -1419,9 +1780,10 @@
     if (path === "/account.html") return "account";
     if (path === "/loginuser.php") return "login";
     if (path === "/registeruser.php") return "register";
-    if (path === "/setlists.html") return "setlists";
+    if (path === "/setlists.html" || path === "/setlist_edit.html") return "setlists";
     if (path === "/news.html") return "news";
     if (path === "/song_view.html") return "songView";
+    if (path === "/song_request.html") return "songRequest";
     return "";
   }
 
@@ -1440,6 +1802,7 @@
       case "setlists": applySetlists(); break;
       case "news": applyNews(); break;
       case "songView": applySongView(); break;
+      case "songRequest": applySongRequest(); break;
     }
   }
 

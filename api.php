@@ -111,8 +111,35 @@ if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'search')
     // lyrics search only
     if ($mode === 'lyrics') {
         $like = '%' . $q . '%';
-        $stmt = $conn->prepare("SELECT id, title, artist, song_key, tags, created_at FROM songs WHERE lyrics LIKE ? ORDER BY created_at DESC LIMIT 200");
-        $stmt->bind_param("s", $like);
+        if ($hasSeparateTitleColumns) {
+            $stmt = $conn->prepare("
+                SELECT id, title, title_hy, title_lat, title_en, title_ru, artist, song_key, tags, created_at, lyrics
+                FROM songs
+                WHERE lyrics LIKE ?
+                   OR title LIKE ?
+                   OR title_hy LIKE ?
+                   OR title_lat LIKE ?
+                   OR title_en LIKE ?
+                   OR title_ru LIKE ?
+                   OR artist LIKE ?
+                   OR tags LIKE ?
+                ORDER BY created_at DESC
+                LIMIT 200
+            ");
+            $stmt->bind_param("ssssssss", $like, $like, $like, $like, $like, $like, $like, $like);
+        } else {
+            $stmt = $conn->prepare("
+                SELECT id, title, artist, song_key, tags, created_at, lyrics
+                FROM songs
+                WHERE lyrics LIKE ?
+                   OR title LIKE ?
+                   OR artist LIKE ?
+                   OR tags LIKE ?
+                ORDER BY created_at DESC
+                LIMIT 200
+            ");
+            $stmt->bind_param("ssss", $like, $like, $like, $like);
+        }
         $stmt->execute();
         $res = $stmt->get_result();
 

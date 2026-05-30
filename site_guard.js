@@ -10,7 +10,7 @@
       if(path === "/main.html") return "main";
       if(path === "/song_view.html") return "song";
       if(path === "/favorites.html") return "favorites";
-      if(path === "/setlists.html" || path === "/setlist_view.html" || path === "/setlist_public.html") return "setlists";
+      if(path === "/setlists.html" || path === "/setlist_edit.html" || path === "/setlist_view.html" || path === "/setlist_public.html") return "setlists";
       if(path === "/account.html") return "account";
       if(path === "/news.html") return "news";
       if(

@@ -877,11 +877,22 @@ function escapeHtml(s){
   return String(s).replace(/[&<>"'`=\/]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60','=':'&#x3D;'}[c]));
 }
 function currentUiLang(){
-  return window.wpI18n?.getLang?.() || 'hy';
+  const runtimeLang = window.wpI18n?.getLang?.();
+  if(runtimeLang && ['hy','ru','en'].includes(runtimeLang)) return runtimeLang;
+  try{
+    const storedLang = localStorage.getItem('wp_language');
+    if(storedLang && ['hy','ru','en'].includes(storedLang)) return storedLang;
+  }catch(e){}
+  const queryLang = new URLSearchParams(window.location.search).get('lang');
+  if(queryLang && ['hy','ru','en'].includes(queryLang)) return queryLang;
+  const htmlLang = document.documentElement?.lang;
+  if(htmlLang && ['hy','ru','en'].includes(htmlLang)) return htmlLang;
+  return 'hy';
 }
 const FAVORITES_RUNTIME_I18N = {
   hy: {
     addToSetlist: 'Ավելացնել setlist',
+    saved: 'Պահպանված',
     removeFromSaved: 'Հանել պահպանածներից',
     remove: 'Հանել',
     emptyTitle: 'Պահպանած երգեր չկան',
@@ -901,6 +912,7 @@ const FAVORITES_RUNTIME_I18N = {
   },
   ru: {
     addToSetlist: 'Добавить в сетлист',
+    saved: 'Сохранено',
     removeFromSaved: 'Убрать из сохранённых',
     remove: 'Убрать',
     emptyTitle: 'Сохранённых песен нет',
@@ -920,6 +932,7 @@ const FAVORITES_RUNTIME_I18N = {
   },
   en: {
     addToSetlist: 'Add to setlist',
+    saved: 'Saved',
     removeFromSaved: 'Remove from saved',
     remove: 'Remove',
     emptyTitle: 'No saved songs yet',
@@ -949,21 +962,89 @@ function rtFmt(key, fallback, vars){
   });
   return text;
 }
-function getDisplayTitle(title){
-  if(!title) return '';
-  if(currentUiLang() !== 'hy') return title;
-  const parts = title.split('/').map(p => p.trim());
-  let mainAr = '';
-  let arParens = [];
-  for(const part of parts){
-    if(part.startsWith('(') && part.endsWith(')')){
-      if (/[\u0530-\u058F]/.test(part)) arParens.push(part);
-    } else if(!mainAr && /[\u0530-\u058F]/.test(part)){
-      mainAr = part;
-    }
+
+function hasArmenianText(text){
+  return /[\u0530-\u058F]/.test(String(text || ''));
+}
+
+function hasCyrillicText(text){
+  return /[\u0400-\u04FF]/.test(String(text || ''));
+}
+
+function hasLatinText(text){
+  return /[A-Za-z]/.test(String(text || ''));
+}
+
+function splitTitleVariants(title){
+  return String(title || '')
+    .split('/')
+    .map(part => part.trim())
+    .filter(Boolean);
+}
+
+function pickVariant(parts, predicate){
+  return parts.find(part => predicate(part)) || '';
+}
+
+function getDisplayTitle(songOrTitle){
+  const lang = currentUiLang();
+  if(songOrTitle && typeof songOrTitle === 'object'){
+    if(lang === 'hy' && songOrTitle.title_hy) return songOrTitle.title_hy;
+    if(lang === 'ru' && songOrTitle.title_ru) return songOrTitle.title_ru;
+    if(lang === 'en' && songOrTitle.title_en) return songOrTitle.title_en;
   }
-  if(mainAr) return mainAr + (arParens.length ? ' ' + arParens.join(' ') : '');
-  return title;
+
+  const title = typeof songOrTitle === 'object' ? (songOrTitle.title || '') : songOrTitle;
+  const parts = splitTitleVariants(title);
+  if(!parts.length) return String(title || '');
+  const latinParts = parts.filter(part => hasLatinText(part) && !hasArmenianText(part) && !hasCyrillicText(part));
+
+  if(lang === 'hy'){
+    let mainAr = '';
+    let arParens = [];
+
+    for(const part of parts){
+      if(part.startsWith('(') && part.endsWith(')')){
+        if(hasArmenianText(part)) arParens.push(part);
+      } else if(!mainAr && hasArmenianText(part)){
+        mainAr = part;
+      }
+    }
+
+    if(mainAr) return mainAr + (arParens.length ? ' ' + arParens.join(' ') : '');
+    return parts[0];
+  }
+
+  if(lang === 'ru'){
+    const cyrillic = pickVariant(parts, part => hasCyrillicText(part) && !hasArmenianText(part));
+    if(cyrillic) return cyrillic;
+
+    if(hasArmenianText(parts[0] || '') && latinParts.length >= 2){
+      return latinParts[latinParts.length - 1];
+    }
+
+    const nonArmenian = pickVariant(parts, part => !hasArmenianText(part));
+    if(nonArmenian) return nonArmenian;
+    return parts[0];
+  }
+
+  if(lang === 'en'){
+    if(hasArmenianText(parts[0] || '') && latinParts.length >= 2){
+      return latinParts.join(' / ');
+    }
+
+    const latin = pickVariant(parts, part => hasLatinText(part) && !hasArmenianText(part) && !hasCyrillicText(part));
+    if(latin) return latin;
+
+    const nonArmenian = pickVariant(parts, part => !hasArmenianText(part) && !hasCyrillicText(part));
+    if(nonArmenian) return nonArmenian;
+
+    const fallbackForeign = pickVariant(parts, part => !hasArmenianText(part));
+    if(fallbackForeign) return fallbackForeign;
+    return parts[0];
+  }
+
+  return parts[0];
 }
 
 /* render */
@@ -1002,7 +1083,7 @@ function renderSongs(list){
     const tr = document.createElement('tr');
     tr.onclick = ()=> openSong(id, song.target_key || '');
 
-    const displayTitle = getDisplayTitle(song.title || '');
+    const displayTitle = getDisplayTitle(song);
     const shownKey = song.target_key || song.song_key || '';
 const keyHtml = shownKey ? `<span class="song-key">${escapeHtml(shownKey)}</span>` : '';
     const tagHtml = song.tags ? `<span class="song-tag">${escapeHtml(song.tags)}</span>` : '';
@@ -1023,7 +1104,7 @@ const keyHtml = shownKey ? `<span class="song-key">${escapeHtml(shownKey)}</span
       <svg class="save-icon" viewBox="0 0 24 24">
         <path d="M5 3h14a2 2 0 0 1 2 2v16l-9-4-9 4V5a2 2 0 0 1 2-2z"/>
       </svg>
-      <span class="btn-text">${escapeHtml(rt('remove', 'Հանել'))}</span>
+      <span class="btn-text">${escapeHtml(rt('saved', 'Պահպանված'))}</span>
     </button>
   </div>
 ` : '';
@@ -1153,7 +1234,7 @@ async function openSetlistModal(songId){
   if(!song) return;
 
   currentSetlistSong = song;
-  setlistModalSongName.textContent = getDisplayTitle(song.title || 'Untitled');
+  setlistModalSongName.textContent = getDisplayTitle(song) || 'Untitled';
   setlistTargetKey.value = song.target_key || song.song_key || '';
   setlistNotes.value = '';
   setlistRequired.checked = false;
@@ -1238,10 +1319,16 @@ window.openSetlistModal = openSetlistModal;
 /* search within favorites */
 function applySearch(){
   const q = (searchBox.value || '').trim().toLowerCase();
-  const filtered = favoritesOrdered.filter(s =>
-    (s.title||'').toLowerCase().includes(q) ||
-    (s.tags||'').toLowerCase().includes(q)
-  );
+  const filtered = favoritesOrdered.filter(s => [
+    s.title,
+    s.title_hy,
+    s.title_lat,
+    s.title_en,
+    s.title_ru,
+    s.artist,
+    s.tags,
+    s.lyrics
+  ].some(value => String(value || '').toLowerCase().includes(q)));
   renderSongs(filtered);
 }
 searchBox.addEventListener('input', ()=>{
@@ -1266,7 +1353,9 @@ async function loadFavorites(){
     showLoggedInFavoritesState();
 
     const base = await window.__favApiBase();
-    const favsRes = await fetch(base + '?action=get_favorites', {
+    const lang = currentUiLang();
+    const favsUrl = base + '?action=get_favorites' + (lang && lang !== 'hy' ? '&lang=' + encodeURIComponent(lang) : '');
+    const favsRes = await fetch(favsUrl, {
       credentials:'include'
     });
 
@@ -1566,7 +1655,7 @@ async function renderRecentlyViewed(){
     wrap.style.display = 'block';
 
     listEl.innerHTML = list.map(item => {
-      const displayTitle = getDisplayTitle(item.title || '');
+      const displayTitle = getDisplayTitle(item);
       const tags = item.tags ? `<span class="recent-pill">${escapeHtml(item.tags)}</span>` : '';
       const key = item.song_key ? `<span class="recent-pill">${escapeHtml(rtFmt('keyLabel', 'Տոնայնություն: {{key}}', { key: item.song_key }))}</span>` : '';
       const songHref = buildSongViewHref(item.id, item.target_key || item.song_key || '');

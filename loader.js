@@ -69,7 +69,7 @@
     if (path === "/main.html") return "main";
     if (path === "/song_view.html") return "song";
     if (path === "/favorites.html") return "favorites";
-    if (path === "/setlists.html" || path === "/setlist_view.html" || path === "/setlist_public.html") return "setlists";
+    if (path === "/setlists.html" || path === "/setlist_edit.html" || path === "/setlist_view.html" || path === "/setlist_public.html") return "setlists";
     if (path === "/account.html") return "account";
     if (path === "/news.html") return "news";
     if (
@@ -332,7 +332,7 @@
         subtitle: i18nText("app.meta.favoritesSubtitle", "Արագ մուտք քո ընտրված երգերին"),
       };
     }
-    if (path === "/setlists.html" || path === "/setlist_view.html" || path === "/setlist_public.html") {
+    if (path === "/setlists.html" || path === "/setlist_edit.html" || path === "/setlist_view.html" || path === "/setlist_public.html") {
       return {
         key: "setlists",
         title: i18nText("app.meta.setlistsTitle", "Սեթլիստներ"),
@@ -365,6 +365,13 @@
         key: "song",
         title: i18nText("app.meta.songTitle", "Երգի դիտում"),
         subtitle: i18nText("app.meta.songSubtitle", "Ակորդներ, transpose և պահպանում"),
+      };
+    }
+    if (path === "/song_request.html") {
+      return {
+        key: "song-request",
+        title: i18nText("app.meta.songRequestTitle", "Մոդերացիա"),
+        subtitle: i18nText("app.meta.songRequestSubtitle", "Նոր երգի և խմբագրման հարցումների ուղարկում"),
       };
     }
     if (path === "/news.html") {
@@ -1231,6 +1238,7 @@
   document.addEventListener("submit", function(event) {
     var form = event.target;
     if (!form || !form.tagName || form.tagName.toLowerCase() !== "form") return;
+    if (form.hasAttribute("data-wp-no-loader") || form.hasAttribute("data-wp-ajax-form")) return;
     if (event.defaultPrevented) return;
     scheduleLoaderShow(120);
   }, true);

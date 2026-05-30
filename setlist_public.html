@@ -83,6 +83,37 @@
     .song-title:hover{
       color:#9fc0ff;
     }
+
+    .song-chip-row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    .song-chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:5px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.045);
+      border:1px solid rgba(255,255,255,.06);
+      color:var(--text);
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .song-note{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.05);
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.55;
+    }
     .muted{color:var(--muted)}
     .pill{
       display:inline-flex;
@@ -112,7 +143,7 @@
 
     .summary-strip{
       display:grid;
-      grid-template-columns:repeat(3, minmax(0,1fr));
+      grid-template-columns:repeat(4, minmax(0,1fr));
       gap:10px;
       margin:0 0 18px;
     }
@@ -352,6 +383,10 @@
             <strong id="summarySongsCount">0</strong>
           </div>
           <div class="summary-card">
+            <span class="muted">Բաժիններ</span>
+            <strong id="summarySectionsCount">0</strong>
+          </div>
+          <div class="summary-card">
             <span class="muted">Պարտադիր երգեր</span>
             <strong id="summaryRequiredCount">0</strong>
           </div>
@@ -466,6 +501,7 @@
     const itemsList = document.getElementById('itemsList');
     const summaryItemsCount = document.getElementById('summaryItemsCount');
     const summarySongsCount = document.getElementById('summarySongsCount');
+    const summarySectionsCount = document.getElementById('summarySectionsCount');
     const summaryRequiredCount = document.getElementById('summaryRequiredCount');
 
     function formatServiceDate(value){
@@ -542,13 +578,14 @@ function withProgramSource(path){
   return url;
 }
 
-function openSong(songId, targetKey, songTitle = ''){
+function openSong(songId, targetKey, songTitle = '', itemId = 0){
   if(!songId) return;
 
   pendingSongOpen = {
     songId: Number(songId),
     targetKey: targetKey || '',
-    songTitle: songTitle || 'Երգ'
+    songTitle: songTitle || 'Երգ',
+    itemId: Number(itemId || 0)
   };
 
   const savedPref = loadSongCapoPref(songId);
@@ -604,6 +641,9 @@ capoAskOpenBtn?.addEventListener('click', () => {
 
   const url = withProgramSource('/song_view.html');
   url.searchParams.set('id', String(songId));
+  if(token){
+    url.searchParams.set('setlist_token', String(token));
+  }
 
   if(pendingSongOpen.targetKey){
     url.searchParams.set('tkey', String(pendingSongOpen.targetKey));
@@ -614,6 +654,13 @@ capoAskOpenBtn?.addEventListener('click', () => {
     url.searchParams.set('capo_mode', '1');
   } else {
     url.searchParams.set('capo_mode', '0');
+  }
+
+  if(window.currentPublicSetlistId){
+    url.searchParams.set('setlist_id', String(window.currentPublicSetlistId));
+  }
+  if(pendingSongOpen.itemId > 0){
+    url.searchParams.set('setlist_item_id', String(pendingSongOpen.itemId));
   }
 
   capoAskModal.classList.remove('show');
@@ -638,8 +685,10 @@ capoAskOpenBtn?.addEventListener('click', () => {
         }
 
         const setlist = data.setlist || {};
+        window.currentPublicSetlistId = Number(setlist.id || 0) || 0;
         const items = Array.isArray(data.items) ? data.items : [];
         const songsCount = items.filter(item => item.item_type !== 'section').length;
+        const sectionsCount = items.filter(item => item.item_type === 'section').length;
         const requiredCount = items.filter(item => item.item_type !== 'section' && Number(item.is_required)).length;
 
         setlistName.textContent = setlist.name || 'Անանուն սեթլիստ';
@@ -648,6 +697,7 @@ capoAskOpenBtn?.addEventListener('click', () => {
         setlistDate.textContent = formatServiceDate(setlist.service_date || '');
         if(summaryItemsCount) summaryItemsCount.textContent = String(items.length);
         if(summarySongsCount) summarySongsCount.textContent = String(songsCount);
+        if(summarySectionsCount) summarySectionsCount.textContent = String(sectionsCount);
         if(summaryRequiredCount) summaryRequiredCount.textContent = String(requiredCount);
 
         if(!items.length){
@@ -663,19 +713,21 @@ capoAskOpenBtn?.addEventListener('click', () => {
           return `
             <div class="song-row">
              <div class="song-title song-link-title"
+     data-item-id="${Number(item.id || 0)}"
      data-song-id="${Number(item.song_id || 0)}"
      data-target-key="${escapeHtml(item.target_key || item.original_key || '')}"
      data-song-title="${escapeHtml(item.song_title || item.title || ('Song #' + item.song_id))}">
   ${escapeHtml(item.song_title || item.title || ('Song #' + item.song_id))}
 </div>
 
-              <div class="muted" style="font-size:13px;">
-                Տոն: ${escapeHtml(item.target_key || item.original_key || '—')} |
-                Կատարող: ${escapeHtml(item.song_artist || '—')}
-                ${Number(item.is_required) ? ' | ★ Պարտադիր' : ''}
+              <div class="song-chip-row">
+                <span class="song-chip">Տոն: ${escapeHtml(item.target_key || item.original_key || '—')}</span>
+                <span class="song-chip">Կատարող: ${escapeHtml(item.song_artist || '—')}</span>
+                ${Number(item.capo || 0) > 0 ? `<span class="song-chip">Capo ${escapeHtml(item.capo)}</span>` : ''}
+                ${Number(item.is_required) ? '<span class="required-badge">★ Պարտադիր</span>' : ''}
               </div>
 
-              ${item.notes ? `<div style="margin-top:8px;" class="muted">${escapeHtml(item.notes)}</div>` : ''}
+              ${item.notes ? `<div class="song-note">${escapeHtml(item.notes)}</div>` : ''}
             </div>
           `;
         }).join('');
@@ -684,7 +736,8 @@ capoAskOpenBtn?.addEventListener('click', () => {
     openSong(
       Number(el.dataset.songId || '0'),
       el.dataset.targetKey || '',
-      el.dataset.songTitle || 'Երգ'
+      el.dataset.songTitle || 'Երգ',
+      Number(el.dataset.itemId || '0')
     );
   });
 });

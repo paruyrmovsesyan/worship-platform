@@ -352,6 +352,7 @@ if (!function_exists('wp_song_request_list')) {
                             $row['source_snapshot_data'] = $decoded;
                         }
                     }
+                    $row['change_set'] = wp_song_request_build_change_set($row, is_array($row['source_snapshot_data']) ? $row['source_snapshot_data'] : []);
                     $rows[] = $row;
                 }
                 $result->free();
@@ -400,6 +401,7 @@ if (!function_exists('wp_song_request_list_for_submitter')) {
                             $row['source_snapshot_data'] = $decoded;
                         }
                     }
+                    $row['change_set'] = wp_song_request_build_change_set($row, is_array($row['source_snapshot_data']) ? $row['source_snapshot_data'] : []);
                     $rows[] = $row;
                 }
                 $result->free();
@@ -432,6 +434,126 @@ if (!function_exists('wp_song_request_type_label')) {
             'edit' => 'Խմբագրման առաջարկ',
             default => $type !== '' ? $type : 'Հարցում',
         };
+    }
+}
+
+if (!function_exists('wp_song_request_change_field_labels')) {
+    function wp_song_request_change_field_labels(): array {
+        return [
+            'title_hy' => 'Հայերեն վերնագիր',
+            'title_lat' => 'Լատինատառ վերնագիր',
+            'title_en' => 'Անգլերեն վերնագիր',
+            'title_ru' => 'Ռուսերեն վերնագիր',
+            'artist' => 'Կատարող / հեղինակ',
+            'song_key' => 'Տոնայնություն',
+            'bpm' => 'BPM',
+            'tags' => 'Տեգեր',
+            'chords' => 'Ակորդներ',
+            'lyrics' => 'Բառեր',
+        ];
+    }
+}
+
+if (!function_exists('wp_song_request_row_payload')) {
+    function wp_song_request_row_payload(array $row): array {
+        return [
+            'title_hy' => wp_song_request_trim($row['title_hy'] ?? ''),
+            'title_lat' => wp_song_request_trim($row['title_lat'] ?? ''),
+            'title_en' => wp_song_request_trim($row['title_en'] ?? ''),
+            'title_ru' => wp_song_request_trim($row['title_ru'] ?? ''),
+            'artist' => wp_song_request_trim($row['artist'] ?? ''),
+            'song_key' => wp_song_request_trim($row['song_key'] ?? ''),
+            'bpm' => max(0, (int)($row['bpm'] ?? 0)),
+            'tags' => wp_song_request_trim($row['tags'] ?? ''),
+            'chords' => (string)($row['chords'] ?? ''),
+            'lyrics' => (string)($row['lyrics'] ?? ''),
+        ];
+    }
+}
+
+if (!function_exists('wp_song_request_build_change_set')) {
+    function wp_song_request_build_change_set(array $requestRow, array $sourceSnapshot = []): array {
+        $labels = wp_song_request_change_field_labels();
+        $requestPayload = wp_song_request_row_payload($requestRow);
+        $sourcePayload = wp_song_request_row_payload($sourceSnapshot);
+        $changes = [];
+
+        foreach ($labels as $field => $label) {
+            $before = $sourcePayload[$field] ?? '';
+            $after = $requestPayload[$field] ?? '';
+
+            if (is_int($before) || is_int($after)) {
+                $before = (int)$before;
+                $after = (int)$after;
+                if ($before === $after) {
+                    continue;
+                }
+                $beforeDisplay = $before > 0 ? (string)$before : '—';
+                $afterDisplay = $after > 0 ? (string)$after : '—';
+            } else {
+                $before = trim((string)$before);
+                $after = trim((string)$after);
+                if ($before === $after) {
+                    continue;
+                }
+                $beforeDisplay = $before !== '' ? $before : '—';
+                $afterDisplay = $after !== '' ? $after : '—';
+            }
+
+            $kind = 'changed';
+            if ($beforeDisplay === '—' && $afterDisplay !== '—') {
+                $kind = 'added';
+            } elseif ($beforeDisplay !== '—' && $afterDisplay === '—') {
+                $kind = 'removed';
+            }
+
+            $changes[] = [
+                'field' => $field,
+                'label' => $label,
+                'before' => $beforeDisplay,
+                'after' => $afterDisplay,
+                'kind' => $kind,
+                'is_long' => in_array($field, ['chords', 'lyrics'], true),
+            ];
+        }
+
+        return $changes;
+    }
+}
+
+if (!function_exists('wp_song_request_append_history')) {
+    function wp_song_request_append_history(array $request, string $decision, array $adminUser, string $reviewNote, int $resolvedSongId, array $changeSet): void {
+        if (!function_exists('wp_version_history_append')) {
+            require_once __DIR__ . '/version_config.php';
+        }
+        if (!function_exists('wp_version_history_append') || !function_exists('wp_version_now_iso')) {
+            return;
+        }
+
+        $actor = wp_song_request_trim($adminUser['name'] ?? ($adminUser['email'] ?? 'admin'));
+        $title = wp_song_request_trim($request['title_hy'] ?? ($request['title'] ?? ''));
+        $submittedBy = wp_song_request_trim($request['submitted_by_name'] ?? ($request['submitted_by_email'] ?? 'Օգտատեր'));
+
+        wp_version_history_append([
+            'id' => bin2hex(random_bytes(8)),
+            'at' => wp_version_now_iso(),
+            'actor' => $actor !== '' ? $actor : 'admin',
+            'ip' => (string)($_SERVER['REMOTE_ADDR'] ?? ''),
+            'action' => $decision === 'approved' ? 'approve_song_request' : 'reject_song_request',
+            'changed_fields' => array_values(array_unique(array_column($changeSet, 'field'))),
+            'snapshot' => [
+                'moderation_request_id' => (int)($request['id'] ?? 0),
+                'moderation_status' => $decision,
+                'moderation_type' => (string)($request['request_type'] ?? 'edit'),
+                'moderation_title' => $title,
+                'moderation_submitted_by' => $submittedBy,
+                'moderation_submitted_email' => (string)($request['submitted_by_email'] ?? ''),
+                'moderation_resolved_song_id' => $resolvedSongId,
+                'moderation_review_note' => $reviewNote,
+                'moderation_change_set' => $changeSet,
+            ],
+            'note' => $reviewNote !== '' ? $reviewNote : ($title !== '' ? $title : 'Մոդերացիայի հարցում'),
+        ]);
     }
 }
 
@@ -475,6 +597,14 @@ if (!function_exists('wp_song_request_apply_decision')) {
             }
 
             $resolvedSongId = 0;
+            $sourceSnapshotData = [];
+            if (!empty($request['source_snapshot'])) {
+                $decodedSnapshot = json_decode((string)$request['source_snapshot'], true);
+                if (is_array($decodedSnapshot)) {
+                    $sourceSnapshotData = $decodedSnapshot;
+                }
+            }
+            $changeSet = wp_song_request_build_change_set($request, $sourceSnapshotData);
             if ($decision === 'approved') {
                 $title = wp_song_request_trim($request['title'] ?? '');
                 $titleHy = wp_song_request_trim($request['title_hy'] ?? '');
@@ -538,6 +668,7 @@ if (!function_exists('wp_song_request_apply_decision')) {
             $updateRequest->close();
 
             $conn->commit();
+            wp_song_request_append_history($request, $decision, $adminUser, $reviewNote, $resolvedSongId, $changeSet);
             $conn->close();
 
             return [

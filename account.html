@@ -59,6 +59,48 @@ body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 @media(max-width:900px){.grid{grid-template-columns:1fr;} .container{padding-top:70px;}}
 
+.account-section-switcher{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin:10px 0 14px;
+}
+
+.account-section-btn{
+  border:1px solid var(--glass-border);
+  background:rgba(255,255,255,0.06);
+  color:var(--text);
+  border-radius:999px;
+  padding:10px 14px;
+  cursor:pointer;
+  font:800 13px/1 Inter,system-ui,sans-serif;
+  transition:transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+
+.account-section-btn:hover{
+  transform:translateY(-1px);
+  border-color:rgba(110,168,255,0.28);
+}
+
+.account-section-btn.is-active{
+  color:#fff;
+  border-color:transparent;
+  background:linear-gradient(135deg,var(--primary),var(--primary-variant));
+  box-shadow:0 12px 28px rgba(51,103,255,0.22);
+}
+
+.account-sections-grid{
+  display:block;
+}
+
+.account-section-panel{
+  margin-top:14px;
+}
+
+.account-section-panel[hidden]{
+  display:none !important;
+}
+
 h1{margin:0 0 10px;font-size:22px;}
 .sub{color:var(--muted);margin:0 0 14px;font-size:13px;}
 
@@ -144,6 +186,14 @@ small{color:var(--muted);}
   .panel-card{padding:14px;}
   .row{flex-direction:column;align-items:stretch;}
   .row .btn{width:100%;}
+  .account-section-switcher{
+    gap:8px;
+  }
+  .account-section-btn{
+    flex:1 1 calc(50% - 8px);
+    justify-content:center;
+    text-align:center;
+  }
 }
 
 @media (max-width:700px){
@@ -198,6 +248,19 @@ small{color:var(--muted);}
 
   .notice > div{
     width:100%;
+  }
+
+  .account-section-switcher{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .account-section-btn{
+    width:100%;
+    min-height:42px;
+    padding:10px 12px;
+    font-size:12px;
   }
 }
 
@@ -494,9 +557,19 @@ small{color:var(--muted);}
       </button>
     </div>
 
-    <div class="grid">
+    <div class="account-section-switcher" id="accountSectionSwitcher" role="tablist" aria-label="Հաշվի բաժիններ">
+      <button class="account-section-btn is-active" type="button" data-account-section="profile">Պրոֆիլ</button>
+      <button class="account-section-btn" type="button" data-account-section="security">Անվտանգություն</button>
+      <button class="account-section-btn" type="button" data-account-section="email">Էլ․ փոստ</button>
+      <button class="account-section-btn" type="button" data-account-section="push">Push</button>
+      <button class="account-section-btn" type="button" data-account-section="sessions">Սեանսներ</button>
+      <button class="account-section-btn" type="button" data-account-section="requests">Հարցումներ</button>
+      <button class="account-section-btn" type="button" data-account-section="danger">Վտանգավոր</button>
+    </div>
+
+    <div class="grid account-sections-grid">
   <!-- LEFT: Profile -->
-  <div class="card panel-card">
+  <div class="card panel-card account-section-panel" data-account-panel="profile">
     <h2 class="panel-title">Պրոֆիլ</h2>
 
     <div class="field">
@@ -522,7 +595,7 @@ small{color:var(--muted);}
   </div>
 
   <!-- RIGHT: Password + Logout -->
-  <div class="card panel-card">
+  <div class="card panel-card account-section-panel" data-account-panel="security" hidden>
     <h2 class="panel-title">Անվտանգություն</h2>
 
     <div class="field">
@@ -555,7 +628,7 @@ small{color:var(--muted);}
 <br>
 
    <!-- Email Verification Card -->
-<div class="card" style="padding:16px;">
+<div class="card account-section-panel" data-account-panel="email" style="padding:16px;" hidden>
   <h1 style="font-size:16px;margin:0 0 8px;">Էլ․ փոստի հաստատում</h1>
   <p class="sub" style="margin:0 0 10px;">
     Հաստատված Էլ. փոստը պետք է «Forgot password» և անվտանգության համար։
@@ -589,7 +662,7 @@ small{color:var(--muted);}
   <div id="verifyMsg" class="msg" style="display:none;"></div>
 </div>
 
-<div class="card" style="padding:16px; margin-top:14px;">
+<div class="card account-section-panel" data-account-panel="push" style="padding:16px;" hidden>
   <h1 style="font-size:16px;margin:0 0 8px;">Push ծանուցումներ</h1>
   <p class="sub" style="margin:0 0 10px;">
     Push ծանուցումները հասանելի են միայն տեղադրված ծրագրի համար, ոչ սովորական կայքի browser տարբերակում։
@@ -611,7 +684,7 @@ small{color:var(--muted);}
 </div>
 
 
-<div class="card" style="padding:16px; margin-top:14px;">
+<div class="card account-section-panel" data-account-panel="sessions" style="padding:16px;" hidden>
   <h1 style="font-size:16px;margin:0 0 8px;">Ակտիվ սեսիաներ</h1>
   <p class="sub" style="margin:0 0 10px;">
     Այստեղ կտեսնես այն սարքերը, որտեղ բացված է քո հաշիվը։
@@ -632,7 +705,7 @@ small{color:var(--muted);}
   <div id="sessionsList" style="margin-top:12px; display:grid; gap:10px;"></div>
 </div>
 
-<div class="card" style="padding:16px; margin-top:14px;">
+<div class="card account-section-panel" data-account-panel="requests" style="padding:16px;" hidden>
   <h1 style="font-size:16px;margin:0 0 8px;">Իմ ուղարկած հարցումները</h1>
   <p class="sub" style="margin:0 0 10px;">
     Այստեղ կտեսնես այն նոր երգերի և խմբագրման հարցումների վիճակը, որոնք ուղարկել ես մոդերացիայի։
@@ -644,7 +717,7 @@ small{color:var(--muted);}
 
 
 <!-- ✅ Danger zone՝ grid-ից դուրս, առանձին card -->
-<div class="card panel-card danger">
+<div class="card panel-card danger account-section-panel" data-account-panel="danger" hidden>
   <h2 class="panel-title" style="color:#ff6b6b;">Վտանգավոր գործողություն</h2>
   <small>Օգտահաշվի ջնջումը անշրջելի է։ Կկորչեն պահպանած երգերը և տվյալները։</small>
 
@@ -733,6 +806,46 @@ function initMobileMenuDrawer(){
 }
 
 initMobileMenuDrawer();
+
+const ACCOUNT_SECTION_STORAGE_KEY = 'wp_account_section';
+
+function setActiveAccountSection(sectionKey){
+  const nextKey = String(sectionKey || 'profile');
+  document.querySelectorAll('[data-account-panel]').forEach((panel)=>{
+    panel.hidden = panel.getAttribute('data-account-panel') !== nextKey;
+  });
+  document.querySelectorAll('[data-account-section]').forEach((button)=>{
+    const active = button.getAttribute('data-account-section') === nextKey;
+    button.classList.toggle('is-active', active);
+    button.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  try{
+    localStorage.setItem(ACCOUNT_SECTION_STORAGE_KEY, nextKey);
+  }catch(e){}
+}
+
+function initAccountSections(){
+  const switcher = document.getElementById('accountSectionSwitcher');
+  if(!switcher) return;
+
+  switcher.addEventListener('click', (event)=>{
+    const btn = event.target.closest('[data-account-section]');
+    if(!btn) return;
+    setActiveAccountSection(btn.getAttribute('data-account-section'));
+  });
+
+  let initialSection = 'profile';
+  try{
+    const stored = localStorage.getItem(ACCOUNT_SECTION_STORAGE_KEY);
+    if(stored && document.querySelector('[data-account-panel="' + stored + '"]')){
+      initialSection = stored;
+    }
+  }catch(e){}
+
+  setActiveAccountSection(initialSection);
+}
+
+initAccountSections();
 
 const nameInp = document.getElementById('nameInp');
 const emailInp = document.getElementById('emailInp');

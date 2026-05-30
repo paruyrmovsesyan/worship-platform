@@ -4,12 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="manifest" href="/manifest.json">
-  <title>Սեթլիստներ — Worship Platform</title>
-  <meta name="description" content="Ստեղծիր, կառավարիր և բացիր սեթլիստներ Worship Platform-ում՝ ծառայությունների, փորձերի և խմբային օգտագործման համար։" />
-  <meta property="og:title" content="Սեթլիստներ — Worship Platform" />
-  <meta property="og:description" content="Ստեղծիր, կառավարիր և բացիր սեթլիստներ Worship Platform-ում՝ ծառայությունների, փորձերի և խմբային օգտագործման համար։" />
+  <title>Սեթլիստի խմբագրում — Worship Platform</title>
+  <meta name="description" content="Խմբագրիր Worship Platform-ի սեթլիստները, ավելացրու երգեր ու բաժիններ և պատրաստիր ծառայության հոսքը։" />
+  <meta property="og:title" content="Սեթլիստի խմբագրում — Worship Platform" />
+  <meta property="og:description" content="Խմբագրիր Worship Platform-ի սեթլիստները, ավելացրու երգեր ու բաժիններ և պատրաստիր ծառայության հոսքը։" />
   <meta property="og:image" content="https://worship.pmstudio.am/wolarmyouth.jpg" />
-  <meta property="og:url" content="https://worship.pmstudio.am/setlists.html" />
+  <meta property="og:url" content="https://worship.pmstudio.am/setlist_edit.html" />
   <meta property="og:type" content="website" />
   <link rel="icon" href="wolarm_youth.png" type="image/png" />
   <link rel="apple-touch-icon" href="/wolarmyouth.jpg" type="image/jpeg" />
@@ -251,49 +251,39 @@
     }
 
     .setlist-card{
-      padding:18px;
+      padding:15px;
       border:1px solid rgba(255,255,255,.07);
-      border-radius:20px;
-      background:
-        linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.024)),
-        radial-gradient(circle at top right,rgba(96,124,255,.16),transparent 50%);
+      border-radius:16px;
+      background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.025));
       transition:transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
       cursor:pointer;
-      position:relative;
-      overflow:hidden;
     }
 
     .setlist-card:hover{
-      transform:translateY(-3px);
-      background:
-        linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.03)),
-        radial-gradient(circle at top right,rgba(96,124,255,.18),transparent 54%);
+      transform:translateY(-1px);
+      background:rgba(255,255,255,.05);
       border-color:rgba(51,103,255,.24);
       box-shadow:0 18px 36px rgba(3,9,25,.22);
     }
 
     .setlist-card.active{
-      background:
-        linear-gradient(180deg, rgba(69,107,255,.2), rgba(255,255,255,.05)),
-        radial-gradient(circle at top right,rgba(127,152,255,.24),transparent 56%);
+      background:linear-gradient(180deg, rgba(69,107,255,.18), rgba(255,255,255,.04));
       border-color:rgba(105,141,255,.42);
-      box-shadow:0 24px 42px rgba(24,44,104,.26);
+      box-shadow:0 18px 38px rgba(24,44,104,.22);
     }
 
     .setlist-name{
-      font-weight:900;
-      font-size:19px;
+      font-weight:800;
+      font-size:18px;
       margin-bottom:8px;
       word-break:break-word;
-      letter-spacing:-.02em;
     }
 
     .setlist-desc{
       color:var(--muted);
       font-size:14px;
-      min-height:42px;
+      min-height:20px;
       margin-bottom:10px;
-      line-height:1.55;
     }
 
     .setlist-meta{
@@ -312,35 +302,14 @@
     .setlist-topline{
       display:flex;
       justify-content:space-between;
-      gap:14px;
+      gap:10px;
       align-items:flex-start;
-      margin-bottom:14px;
+      margin-bottom:10px;
     }
 
     .setlist-heading{
       min-width:0;
       flex:1;
-    }
-
-    .setlist-card-eyebrow{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      margin-bottom:8px;
-      color:#cad6ff;
-      font-size:11px;
-      font-weight:800;
-      letter-spacing:.08em;
-      text-transform:uppercase;
-    }
-
-    .setlist-card-dot{
-      width:10px;
-      height:10px;
-      border-radius:999px;
-      background:linear-gradient(135deg,#7ca0ff,#c3d3ff);
-      box-shadow:0 0 0 4px rgba(124,160,255,.16);
-      flex:0 0 auto;
     }
 
     .setlist-card-badge{
@@ -417,40 +386,10 @@
       justify-content:flex-end;
     }
 
-    .setlist-quick-actions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:14px;
-    }
-
-    .setlist-quick-actions button{
-      flex:1 1 calc(50% - 8px);
-      min-height:42px;
-      border-radius:14px;
-      font-weight:800;
-    }
-
     .small-btn{
       padding:9px 12px;
       border-radius:10px;
       font-size:13px;
-    }
-
-    .setlist-card-foot{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      margin-top:14px;
-      padding-top:12px;
-      border-top:1px solid rgba(255,255,255,.06);
-    }
-
-    .setlist-foot-note{
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.4;
     }
 
     .empty{
@@ -476,38 +415,18 @@
     .details-hero{
       display:grid;
       gap:16px;
-      margin-bottom:18px;
-    }
-
-    .toolbar{
-      display:grid;
-      grid-template-columns:minmax(0,1fr) auto;
-      gap:16px;
-      align-items:start;
-      padding:18px;
-      border-radius:22px;
-      background:
-        linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.025)),
-        radial-gradient(circle at top right,rgba(86,116,255,.16),transparent 42%);
-      border:1px solid rgba(255,255,255,.08);
-    }
-
-    .toolbar h2{
-      margin:0;
-      font-size:32px;
-      line-height:1.05;
-      letter-spacing:-.03em;
+      margin-bottom:16px;
     }
 
     .details-stats{
       display:grid;
       grid-template-columns:repeat(4, minmax(0,1fr));
-      gap:12px;
+      gap:10px;
     }
 
     .detail-stat{
-      padding:16px;
-      border-radius:18px;
+      padding:15px;
+      border-radius:16px;
       background:rgba(255,255,255,.04);
       border:1px solid rgba(255,255,255,.07);
     }
@@ -518,9 +437,7 @@
     }
 
     .detail-stat strong{
-      display:block;
-      margin-top:4px;
-      font-size:28px;
+      font-size:24px;
       font-weight:900;
       letter-spacing:-.03em;
     }
@@ -560,40 +477,16 @@
     }
 
     .preview-list{
-      display:grid;
-      gap:12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
     }
 
     .preview-item{
-      padding:16px;
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.08);
-      background:
-        linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.024)),
-        radial-gradient(circle at top right,rgba(86,116,255,.12),transparent 46%);
-      display:grid;
-      grid-template-columns:auto minmax(0,1fr);
-      gap:14px;
-      align-items:flex-start;
-    }
-
-    .preview-item-index{
-      width:34px;
-      height:34px;
-      border-radius:12px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:rgba(255,255,255,.07);
-      border:1px solid rgba(255,255,255,.08);
-      color:#d7e0ff;
-      font-size:13px;
-      font-weight:900;
-      flex:0 0 auto;
-    }
-
-    .preview-item-content{
-      min-width:0;
+      padding:14px 15px;
+      border-radius:16px;
+      background:rgba(255,255,255,.035);
+      border:1px solid rgba(255,255,255,.06);
       display:grid;
       gap:8px;
     }
@@ -622,10 +515,8 @@
     }
 
     .preview-item.section{
-      background:
-        linear-gradient(180deg,rgba(78,95,148,.22),rgba(78,95,148,.12)),
-        radial-gradient(circle at top right,rgba(175,141,255,.14),transparent 48%);
-      border-color:rgba(115,136,212,.2);
+      background:rgba(107,78,255,.12);
+      border-color:rgba(107,78,255,.22);
     }
 
     .preview-empty{
@@ -641,20 +532,21 @@
       display:none !important;
     }
 
-    body[data-setlists-mode="library"] .stats-grid{
-      display:none;
+    body[data-setlist-editor="1"] .stats-grid,
+    body[data-setlist-editor="1"] .search-tools{
+      display:none !important;
     }
 
-    #setlistsList{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:12px;
+    body[data-setlist-editor="1"] .grid{
+      grid-template-columns:320px minmax(0,1fr);
     }
 
-    .overview-shell .card{
-      background:
-        linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.03)),
-        radial-gradient(circle at top right,rgba(95,121,255,.18),transparent 46%);
+    body[data-setlist-editor="1"] .library-panel{
+      top:86px;
+    }
+
+    body[data-setlist-editor="1"] .page-copy{
+      max-width:34ch;
     }
 
     @media (max-width:1100px){
@@ -678,10 +570,6 @@
 
       .details-stats{
         grid-template-columns:repeat(2, minmax(0,1fr));
-      }
-
-      .toolbar{
-        grid-template-columns:1fr;
       }
     }
 
@@ -720,12 +608,13 @@
         flex:1 1 calc(50% - 8px);
       }
 
-      .setlist-quick-actions button{
-        flex:1 1 100%;
-      }
-
       .setlist-info-grid{
         grid-template-columns:1fr;
+      }
+
+      .toolbar{
+        flex-direction:column;
+        align-items:stretch;
       }
 
       .top-actions{
@@ -734,15 +623,6 @@
 
       .top-actions button{
         flex:1 1 calc(50% - 8px);
-      }
-
-      .preview-item{
-        grid-template-columns:1fr;
-      }
-
-      .preview-item-index{
-        width:30px;
-        height:30px;
       }
     }
 
@@ -872,6 +752,181 @@
   justify-content:flex-end;
 }
 
+.editor-shell{
+  display:grid;
+  grid-template-columns:320px minmax(0, 1fr);
+  gap:18px;
+}
+
+.editor-rail{
+  display:grid;
+  gap:14px;
+  align-self:start;
+  position:sticky;
+  top:86px;
+}
+
+.editor-board{
+  display:grid;
+  gap:14px;
+}
+
+.compact-card{
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.026)),
+    radial-gradient(circle at top right,rgba(94,121,255,.12),transparent 46%);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:22px;
+  padding:18px;
+}
+
+.builder-summary{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.builder-title{
+  display:grid;
+  gap:6px;
+}
+
+.builder-title h3{
+  margin:0;
+  font-size:24px;
+  font-weight:900;
+  letter-spacing:-.03em;
+}
+
+.builder-toolbar{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.builder-stat-row{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.builder-step{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:10px;
+  color:#cdd7ff;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.builder-step-dot{
+  width:9px;
+  height:9px;
+  border-radius:999px;
+  background:linear-gradient(135deg,#7f99ff,#cad5ff);
+  box-shadow:0 0 0 4px rgba(113,137,255,.14);
+  flex:0 0 auto;
+}
+
+.item-shell{
+  display:grid;
+  gap:12px;
+  padding:18px;
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,.08);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.028)),
+    radial-gradient(circle at top right,rgba(79,112,255,.12),transparent 44%);
+}
+
+.item-shell-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.item-shell-main{
+  min-width:0;
+  display:grid;
+  gap:8px;
+}
+
+.item-shell-eyebrow{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#ccd6ff;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.item-shell-title{
+  font-size:16px;
+  font-weight:800;
+  line-height:1.4;
+  word-break:break-word;
+}
+
+.item-shell-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.item-shell-note{
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.05);
+  background:rgba(255,255,255,.03);
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.55;
+}
+
+.item-shell-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-top:2px;
+}
+
+.item-shell-actions .secondary,
+.item-shell-actions .danger{
+  min-height:40px;
+}
+
+.move-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.move-actions .secondary{
+  min-width:44px;
+}
+
+.editor-panel[hidden]{
+  display:none !important;
+}
+
+.editor-compact-empty{
+  padding:22px;
+  border-radius:18px;
+  border:1px dashed rgba(255,255,255,.1);
+  color:var(--muted);
+  background:rgba(255,255,255,.02);
+  text-align:center;
+}
+
 @media (max-width:700px){
   .item-edit-grid-4{
     grid-template-columns:1fr;
@@ -883,6 +938,34 @@
 
   .item-actions button{
     width:100%;
+  }
+
+  .editor-shell{
+    grid-template-columns:1fr;
+  }
+
+  .editor-rail{
+    position:static;
+  }
+
+  .item-shell-head{
+    grid-template-columns:1fr;
+  }
+
+  .item-shell-actions{
+    justify-content:stretch;
+  }
+
+  .item-shell-actions button{
+    flex:1 1 calc(50% - 8px);
+  }
+
+  .move-actions{
+    width:100%;
+  }
+
+  .move-actions .secondary{
+    flex:1 1 calc(50% - 8px);
   }
 }
 
@@ -989,62 +1072,6 @@ textarea::placeholder{
   background:rgba(255,107,107,.14);
   color:#ffb3b3;
   border-color:rgba(255,107,107,.22);
-}
-
-.access-panel{
-  margin-bottom:14px;
-  border:1px solid rgba(137,164,255,.18);
-  background:
-    linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.022)),
-    radial-gradient(circle at top right,rgba(34,197,94,.12),transparent 48%);
-}
-
-.access-grid{
-  display:grid;
-  grid-template-columns:minmax(180px,1fr) minmax(180px,.8fr) auto;
-  gap:10px;
-  align-items:end;
-}
-
-.access-list{
-  display:grid;
-  gap:8px;
-}
-
-.access-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:12px;
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:16px;
-  background:rgba(255,255,255,.035);
-}
-
-.access-row strong{
-  display:block;
-}
-
-.access-row .small{
-  line-height:1.5;
-}
-
-.shared-badge{
-  background:rgba(96,124,255,.15);
-  color:#c9d5ff;
-  border-color:rgba(137,164,255,.28);
-}
-
-@media (max-width: 760px){
-  .access-grid{
-    grid-template-columns:1fr;
-  }
-
-  .access-row{
-    align-items:flex-start;
-    flex-direction:column;
-  }
 }
 
 .icon-only-mobile{
@@ -1323,71 +1350,84 @@ textarea::placeholder{
             </div>
           </div>
 
-          <div id="accessPanel" class="card access-panel" style="display:none;">
-            <div class="card-body stack">
-              <div class="overview-head">
-                <div class="stack" style="gap:6px;">
-                  <h3 class="panel-title">Օգտատերերի հասանելիություն</h3>
-                  <p class="overview-copy">Տուր կարդալու հասանելիություն կոնկրետ օգտատիրոջը՝ նշված ժամկետով։ Նա կտեսնի սեթլիստը իր բաժնում, բայց չի կարող խմբագրել։</p>
-                </div>
-                <span class="pill">Read-only</span>
-              </div>
-              <div class="access-grid">
-                <label class="stack" style="gap:6px;">
-                  <span class="small">Օգտատիրոջ email</span>
-                  <input id="accessEmailInput" type="email" placeholder="user@example.com">
-                </label>
-                <label class="stack" style="gap:6px;">
-                  <span class="small">Մինչև երբ</span>
-                  <input id="accessExpiresInput" type="datetime-local">
-                </label>
-                <button id="grantAccessBtn" type="button">Տալ հասանելիություն</button>
-              </div>
-              <div id="accessStatus" class="small"></div>
-              <div id="accessList" class="access-list"></div>
-            </div>
-          </div>
-
           <div id="editorTools" class="mode-only">
-          <div class="card" style="margin-bottom:14px;">
-            <div class="card-body stack">
-              <div class="split">
-                <input id="editName" type="text" placeholder="Անուն">
-                <input id="editServiceType" type="text" placeholder="Ծառայության տեսակ">
+            <div class="editor-shell">
+              <div class="editor-rail">
+                <div class="compact-card stack">
+                  <div class="builder-step">
+                    <span class="builder-step-dot"></span>
+                    <span>Քայլ 1</span>
+                  </div>
+                  <div class="builder-summary">
+                    <div class="builder-title">
+                      <h3>Սեթլիստի կառուցում</h3>
+                      <p class="helper-copy">Փոխիր հիմնական տվյալները, հետո երգերն ու բաժինները դասավորիր հերթականությամբ։</p>
+                    </div>
+                    <div class="builder-toolbar">
+                      <button id="saveSetlistMetaBtn" type="button">Պահպանել</button>
+                    </div>
+                  </div>
+
+                  <div class="split">
+                    <input id="editName" type="text" placeholder="Անուն">
+                    <input id="editServiceType" type="text" placeholder="Ծառայության տեսակ">
+                  </div>
+                  <div class="split">
+                    <input id="editServiceDate" type="date">
+                    <input id="editDescription" type="text" placeholder="Նկարագրություն">
+                  </div>
+                </div>
+
+                <div class="compact-card stack">
+                  <div class="builder-step">
+                    <span class="builder-step-dot"></span>
+                    <span>Քայլ 2</span>
+                  </div>
+                  <div class="stack" style="gap:6px;">
+                    <h3 class="panel-title">Ավելացնել երգ</h3>
+                    <p class="helper-copy">Գրիր անունը, կատարողը կամ tag-ը, հետո անմիջապես ավելացրու սեթլիստի մեջ։</p>
+                  </div>
+                  <input id="songSearchInput" type="text" placeholder="Որոնել երգ անունով, կատարողով կամ tag-ով">
+                  <input id="addSongTargetKey" type="text" placeholder="Թիրախային տոն (օր. G)">
+                  <div id="songSearchResults" class="items-list"></div>
+                </div>
+
+                <div class="compact-card stack">
+                  <div class="builder-step">
+                    <span class="builder-step-dot"></span>
+                    <span>Քայլ 3</span>
+                  </div>
+                  <div class="stack" style="gap:6px;">
+                    <h3 class="panel-title">Ավելացնել բաժին</h3>
+                    <p class="helper-copy">Օրինակ` Փառաբանություն, Խոսք, Աղոթք, Ավարտ։</p>
+                  </div>
+                  <input id="addSectionTitle" type="text" placeholder="Օր. Փառաբանություն / Աղոթք / Խոսք">
+                  <button id="addSectionBtn" type="button">Ավելացնել բաժին</button>
+                </div>
               </div>
-              <div class="split">
-                <input id="editServiceDate" type="date">
-                <input id="editDescription" type="text" placeholder="Նկարագրություն">
+
+              <div class="editor-board">
+                <div class="compact-card stack">
+                  <div class="builder-step">
+                    <span class="builder-step-dot"></span>
+                    <span>Քայլ 4</span>
+                  </div>
+                  <div class="row" style="justify-content:space-between; align-items:flex-start; gap:12px;">
+                    <div class="stack" style="gap:6px;">
+                      <h3 class="panel-title" style="margin:0;">Սեթլիստի հերթականությունը</h3>
+                      <p class="helper-copy">Item-ները default փակ են, որ սեթլիստը մաքուր երևա։ Խմբագրելու համար բացիր կոնկրետ item-ը։</p>
+                    </div>
+                    <div class="builder-stat-row">
+                      <span id="itemsCount" class="pill">0</span>
+                      <span id="summarySongsCountInline" class="pill">0 երգ</span>
+                      <span id="summarySectionsCountInline" class="pill">0 բաժին</span>
+                    </div>
+                  </div>
+
+                  <div id="itemsList" class="items-list"></div>
+                </div>
               </div>
-              <button id="saveSetlistMetaBtn" type="button">Պահպանել տվյալները</button>
             </div>
-          </div>
-
-          <div class="split" style="margin-bottom:14px;">
-            <div class="card">
-              <div class="card-body stack">
-                <h3>Ավելացնել երգ</h3>
-                <input id="songSearchInput" type="text" placeholder="Որոնել երգ անունով, կատարողով կամ tag-ով">
-                <input id="addSongTargetKey" type="text" placeholder="Թիրախային տոն (օր. G)">
-                <div id="songSearchResults" class="items-list"></div>
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="card-body stack">
-                <h3>Ավելացնել բաժին</h3>
-                <input id="addSectionTitle" type="text" placeholder="Օր. Փառաբանություն / Աղոթք / Խոսք">
-                <button id="addSectionBtn" type="button">Ավելացնել բաժին</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="row" style="justify-content:space-between; margin-bottom:10px;">
-            <h3>Սեթլիստի item-ներ</h3>
-            <span id="itemsCount" class="pill">0</span>
-          </div>
-
-          <div id="itemsList" class="items-list"></div>
           </div>
         </div>
       </div>
@@ -1397,7 +1437,7 @@ textarea::placeholder{
 
   <script type="module">
     import { initNavbarAuthUI } from '/fav_bridge.js';
-    const loaderHoldKey = 'setlists-bootstrap';
+    const loaderHoldKey = 'setlist-edit-bootstrap';
     window.WP?.holdLoader?.(loaderHoldKey);
     await initNavbarAuthUI();
 
@@ -1518,12 +1558,8 @@ const disableShareBtn = $('disableShareBtn');
 
 const shareStatusWrap = $('shareStatusWrap');
 const shareStatusBadge = $('shareStatusBadge');
-const accessPanel = $('accessPanel');
-const accessEmailInput = $('accessEmailInput');
-const accessExpiresInput = $('accessExpiresInput');
-const grantAccessBtn = $('grantAccessBtn');
-const accessStatus = $('accessStatus');
-const accessList = $('accessList');
+const summarySongsCountInline = $('summarySongsCountInline');
+const summarySectionsCountInline = $('summarySectionsCountInline');
 
 let currentSetlists = [];
 let currentSetlistId = 0;
@@ -1533,15 +1569,16 @@ let songSearchTimer = null;
 let currentSetlistFilter = 'all';
 
 let currentShareUrl = null;
-const SETLISTS_UI_STATE_KEY = 'wp_setlists_library_ui_state';
+let expandedItemId = 0;
+const SETLISTS_UI_STATE_KEY = 'wp_setlists_editor_ui_state';
 const urlParams = new URLSearchParams(window.location.search);
-const editId = Number(urlParams.get('edit') || '0');
-const isEditMode = false;
-document.body.dataset.setlistsMode = 'library';
-if(editId > 0){
-  const nextUrl = withProgramSource('/setlist_edit.html');
-  nextUrl.searchParams.set('id', String(editId));
-  window.location.replace(nextUrl.toString());
+const editId = Number(urlParams.get('id') || urlParams.get('edit') || '0');
+const isEditMode = true;
+document.body.dataset.setlistsMode = 'edit';
+document.body.dataset.setlistEditor = '1';
+
+function canEditSetlist(setlist){
+  return !!setlist && Number(setlist.can_edit ?? 1) === 1 && (setlist.access_role || 'owner') !== 'shared';
 }
 
 function readSetlistsUiState(){
@@ -1663,23 +1700,7 @@ const SETLISTS_RUNTIME_I18N = {
     selected: 'Ընտրված',
     lastUpdated: 'Վերջին թարմացում',
     descriptionLabel: 'Նկարագրություն',
-    noDescription: 'Նկարագրություն չկա',
-    sharedReadonly: 'Տրված հասանելիություն',
-    readonly: 'Միայն դիտում',
-    accessUntil: 'Մինչև',
-    owner: 'Ստեղծող',
-    sharedBy: 'Կիսվել է',
-    noUserAccess: 'Օգտատերերի հասանելիություն դեռ չկա',
-    revoked: 'Փակված',
-    expired: 'Ժամկետանց',
-    active: 'Ակտիվ',
-    unknownUser: 'Օգտատեր',
-    revokeAccess: 'Փակել',
-    accessLoadFailed: 'Չհաջողվեց բեռնել հասանելիությունները',
-    fillAccessFields: 'Լրացրու email-ը և ժամկետը',
-    saving: 'Պահպանվում է...',
-    accessGranted: 'Հասանելիությունը տրվեց',
-    accessRevoked: 'Հասանելիությունը փակվեց'
+    noDescription: 'Նկարագրություն չկա'
   },
   ru: {
     statusArchived: 'Архив',
@@ -1743,23 +1764,7 @@ const SETLISTS_RUNTIME_I18N = {
     editWorkspace: 'Редактировать',
     overviewTitle: 'Быстрый обзор',
     overviewText: 'Посмотри состав сетлиста, основные данные и затем одним нажатием перейди в режим просмотра или редактирования.',
-    previewEmpty: 'В этом сетлисте пока нет элементов',
-    sharedReadonly: 'Доступ предоставлен',
-    readonly: 'Только просмотр',
-    accessUntil: 'До',
-    owner: 'Создатель',
-    sharedBy: 'Поделился',
-    noUserAccess: 'Доступ пользователям пока не предоставлен',
-    revoked: 'Закрыт',
-    expired: 'Истёк',
-    active: 'Активный',
-    unknownUser: 'Пользователь',
-    revokeAccess: 'Закрыть',
-    accessLoadFailed: 'Не удалось загрузить доступы',
-    fillAccessFields: 'Заполните email и срок',
-    saving: 'Сохраняется...',
-    accessGranted: 'Доступ предоставлен',
-    accessRevoked: 'Доступ закрыт'
+    previewEmpty: 'В этом сетлисте пока нет элементов'
   },
   en: {
     statusArchived: 'Archived',
@@ -1823,23 +1828,7 @@ const SETLISTS_RUNTIME_I18N = {
     editWorkspace: 'Edit',
     overviewTitle: 'Quick overview',
     overviewText: 'Review the setlist contents and key details, then move into viewing or editing with one action.',
-    previewEmpty: 'This setlist has no items yet',
-    sharedReadonly: 'Shared access',
-    readonly: 'View only',
-    accessUntil: 'Until',
-    owner: 'Owner',
-    sharedBy: 'Shared by',
-    noUserAccess: 'No user access yet',
-    revoked: 'Revoked',
-    expired: 'Expired',
-    active: 'Active',
-    unknownUser: 'User',
-    revokeAccess: 'Revoke',
-    accessLoadFailed: 'Could not load access list',
-    fillAccessFields: 'Fill email and expiration',
-    saving: 'Saving...',
-    accessGranted: 'Access granted',
-    accessRevoked: 'Access revoked'
+    previewEmpty: 'This setlist has no items yet'
   }
 };
 
@@ -1865,42 +1854,6 @@ function formatServiceDate(value){
     month:'short',
     day:'numeric'
   });
-}
-
-function canEditCurrentSetlist(setlist = currentSetlist){
-  return !!setlist && Number(setlist.can_edit ?? 1) === 1 && (setlist.access_role || 'owner') !== 'shared';
-}
-
-function formatAccessDateTime(value){
-  const raw = String(value || '').trim();
-  if(!raw) return rt('noDate', 'Ամսաթիվ չկա');
-  const date = new Date(raw.replace(' ', 'T'));
-  if(Number.isNaN(date.getTime())) return raw;
-  try{
-    return new Intl.DateTimeFormat(document.documentElement?.lang || 'hy', {
-      year:'numeric',
-      month:'short',
-      day:'numeric',
-      hour:'2-digit',
-      minute:'2-digit'
-    }).format(date);
-  }catch(e){
-    return raw;
-  }
-}
-
-function setDefaultAccessExpiry(){
-  if(!accessExpiresInput || accessExpiresInput.value) return;
-  const date = new Date();
-  date.setDate(date.getDate() + 7);
-  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-  accessExpiresInput.value = date.toISOString().slice(0, 16);
-}
-
-function datetimeLocalToSql(value){
-  const raw = String(value || '').trim();
-  if(!raw) return '';
-  return raw.replace('T', ' ') + (raw.length === 16 ? ':00' : '');
 }
 
 function updateModeUi(){
@@ -1964,25 +1917,12 @@ function updateLibraryStats(){
 }
 
 async function refreshShareStatus(){
-  if(currentSetlist && !canEditCurrentSetlist()){
-    currentShareUrl = null;
-    if(shareBtn) shareBtn.style.display = 'none';
-    if(copyShareBtn) copyShareBtn.style.display = 'none';
-    if(disableShareBtn) disableShareBtn.style.display = 'none';
-    if(shareStatusWrap) shareStatusWrap.style.display = '';
-    if(shareStatusBadge){
-      shareStatusBadge.textContent = rt('sharedReadonly', 'Տրված հասանելիություն');
-      shareStatusBadge.className = 'share-badge shared-badge';
-    }
-    return;
-  }
-
   if(!currentSetlistId){
     currentShareUrl = null;
 
-    if(shareBtn) shareBtn.style.display = '';
-    if(copyShareBtn) copyShareBtn.style.display = 'none';
-    if(disableShareBtn) disableShareBtn.style.display = 'none';
+    shareBtn.style.display = '';
+    copyShareBtn.style.display = 'none';
+    disableShareBtn.style.display = 'none';
 
     if(shareStatusWrap) shareStatusWrap.style.display = 'none';
     if(shareStatusBadge){
@@ -1997,9 +1937,9 @@ async function refreshShareStatus(){
     currentShareUrl = res.share_url ? (window.location.origin + res.share_url) : null;
 
     if(res.enabled && currentShareUrl){
-      if(shareBtn) shareBtn.style.display = 'none';
-      if(copyShareBtn) copyShareBtn.style.display = '';
-      if(disableShareBtn) disableShareBtn.style.display = '';
+      shareBtn.style.display = 'none';
+      copyShareBtn.style.display = '';
+      disableShareBtn.style.display = '';
 
       if(shareStatusWrap) shareStatusWrap.style.display = '';
       if(shareStatusBadge){
@@ -2007,9 +1947,9 @@ async function refreshShareStatus(){
         shareStatusBadge.className = 'share-badge share-on';
       }
     }else{
-      if(shareBtn) shareBtn.style.display = '';
-      if(copyShareBtn) copyShareBtn.style.display = 'none';
-      if(disableShareBtn) disableShareBtn.style.display = 'none';
+      shareBtn.style.display = '';
+      copyShareBtn.style.display = 'none';
+      disableShareBtn.style.display = 'none';
 
       if(shareStatusWrap) shareStatusWrap.style.display = '';
       if(shareStatusBadge){
@@ -2021,9 +1961,9 @@ async function refreshShareStatus(){
     console.error(err);
     currentShareUrl = null;
 
-    if(shareBtn) shareBtn.style.display = '';
-    if(copyShareBtn) copyShareBtn.style.display = 'none';
-    if(disableShareBtn) disableShareBtn.style.display = 'none';
+    shareBtn.style.display = '';
+    copyShareBtn.style.display = 'none';
+    disableShareBtn.style.display = 'none';
 
     if(shareStatusWrap) shareStatusWrap.style.display = 'none';
   }
@@ -2093,19 +2033,12 @@ function renderSetlists(){
     const div = document.createElement('div');
     div.className = 'setlist-card' + (Number(item.id) === Number(currentSetlistId) ? ' active' : '');
     const isActiveCard = Number(item.id) === Number(currentSetlistId);
-    const canEditItem = canEditCurrentSetlist(item);
-    const isSharedItem = (item.access_role || 'owner') === 'shared';
     const description = String(item.description || '').trim();
     const updatedLabel = formatSetlistTimestamp(item.updated_at || item.created_at || '');
-    const ownerLabel = item.owner_name || item.owner_email || '';
 
     div.innerHTML = `
   <div class="setlist-topline">
     <div class="setlist-heading">
-      <div class="setlist-card-eyebrow">
-        <span class="setlist-card-dot"></span>
-        <span>${escapeHtml(isSharedItem ? rt('sharedReadonly', 'Տրված հասանելիություն') : (item.service_type || rt('serviceSetlist', 'Ծառայության սեթլիստ')))}</span>
-      </div>
       <div class="setlist-name">${escapeHtml(item.name || rt('unnamedSetlist', 'Անանուն սեթլիստ'))}</div>
       <div class="setlist-desc">${escapeHtml(description || rt('noDescription', 'Նկարագրություն չկա'))}</div>
     </div>
@@ -2114,11 +2047,10 @@ function renderSetlists(){
 
   <div class="setlist-chip-row">
     <span class="pill">${escapeHtml(getStatusLabel(item.status || 'active'))}</span>
-    <span class="share-badge ${isSharedItem ? 'shared-badge' : (item.share_token ? 'share-on' : 'share-off')}">
-      ${isSharedItem ? rt('readonly', 'Միայն դիտում') : (item.share_token ? rt('public', 'Հանրային') : rt('private', 'Անձնական'))}
+    <span class="share-badge ${item.share_token ? 'share-on' : 'share-off'}">
+      ${item.share_token ? rt('public', 'Հանրային') : rt('private', 'Անձնական')}
     </span>
     <span class="pill">${escapeHtml(rtFmt('itemCount', '{{count}} միավոր', { count: Number(item.items_count || 0) }))}</span>
-    ${isSharedItem ? `<span class="pill">${escapeHtml(rt('accessUntil', 'Մինչև'))}: ${escapeHtml(formatAccessDateTime(item.access_expires_at || ''))}</span>` : ''}
   </div>
 
   <div class="setlist-info-grid">
@@ -2135,34 +2067,13 @@ function renderSetlists(){
       <span class="setlist-info-value">${escapeHtml(updatedLabel)}</span>
     </div>
     <div class="setlist-info-cell">
-      <span class="setlist-info-label">${escapeHtml(isSharedItem ? rt('owner', 'Ստեղծող') : rt('descriptionLabel', 'Նկարագրություն'))}</span>
-      <span class="setlist-info-value">${escapeHtml(isSharedItem ? (ownerLabel || '—') : (description || rt('noDescription', 'Նկարագրություն չկա')))}</span>
+      <span class="setlist-info-label">${escapeHtml(rt('descriptionLabel', 'Նկարագրություն'))}</span>
+      <span class="setlist-info-value">${escapeHtml(description || rt('noDescription', 'Նկարագրություն չկա'))}</span>
     </div>
-  </div>
-
-  <div class="setlist-card-foot">
-    <div class="setlist-foot-note">${escapeHtml(rtFmt('updatedAgo', 'Թարմացվել է {{date}}', { count: updatedLabel, date: updatedLabel }))}</div>
-    <span class="pill">${escapeHtml(rtFmt('itemCount', '{{count}} միավոր', { count: Number(item.items_count || 0) }))}</span>
-  </div>
-
-  <div class="setlist-quick-actions">
-    <button class="secondary small-btn" type="button" data-open-view="${Number(item.id)}">${escapeHtml(rt('open', 'Բացել'))}</button>
-    ${canEditItem ? `<button class="secondary small-btn" type="button" data-open-edit="${Number(item.id)}">${escapeHtml(rt('editWorkspace', 'Խմբագրել'))}</button>` : ''}
   </div>
 `;
 
     div.addEventListener('click', () => openSetlist(item.id));
-    div.querySelector('[data-open-view]')?.addEventListener('click', (event) => {
-      event.stopPropagation();
-      const nextUrl = withProgramSource('/setlist_view.html?id=' + encodeURIComponent(item.id));
-      window.location.href = nextUrl.toString();
-    });
-    div.querySelector('[data-open-edit]')?.addEventListener('click', (event) => {
-      event.stopPropagation();
-      const nextUrl = withProgramSource('/setlist_edit.html');
-      nextUrl.searchParams.set('id', String(Number(item.id)));
-      window.location.href = nextUrl.toString();
-    });
     setlistsList.appendChild(div);
   });
 }
@@ -2175,27 +2086,15 @@ function renderDetails(){
     if(summarySongsCount) summarySongsCount.textContent = '0';
     if(summarySectionsCount) summarySectionsCount.textContent = '0';
     if(summaryRequiredCount) summaryRequiredCount.textContent = '0';
-    if(accessPanel) accessPanel.style.display = 'none';
     return;
   }
 
   emptyState.style.display = 'none';
   detailsView.style.display = 'block';
 
-  const canEdit = canEditCurrentSetlist();
-  if(editWorkspaceBtn) editWorkspaceBtn.style.display = canEdit ? '' : 'none';
-  if(archiveBtn) archiveBtn.style.display = canEdit ? '' : 'none';
-  if(duplicateBtn) duplicateBtn.style.display = canEdit ? '' : 'none';
-  if(deleteBtn) deleteBtn.style.display = canEdit ? '' : 'none';
-  if(saveSetlistMetaBtn) saveSetlistMetaBtn.disabled = !canEdit;
-  if(accessPanel) accessPanel.style.display = canEdit ? '' : 'none';
-  if(canEdit) setDefaultAccessExpiry();
-
   detailName.textContent = currentSetlist.name || rt('unnamedSetlist', 'Անանուն սեթլիստ');
-  const sharedMeta = currentSetlist.access_role === 'shared'
-    ? `${rt('sharedBy', 'Կիսվել է')} ${currentSetlist.owner_name || currentSetlist.owner_email || '—'} • ${rt('accessUntil', 'Մինչև')} ${formatAccessDateTime(currentSetlist.access_expires_at || '')}`
-    : `${getStatusLabel(currentSetlist.status || 'active')} • ${currentSetlist.service_type || rt('noType', 'Տեսակ չկա')} • ${formatServiceDate(currentSetlist.service_date || '')}`;
-  detailMeta.textContent = sharedMeta;
+  detailMeta.textContent =
+    `${getStatusLabel(currentSetlist.status || 'active')} • ${currentSetlist.service_type || rt('noType', 'Տեսակ չկա')} • ${formatServiceDate(currentSetlist.service_date || '')}`;
   if(archiveBtnText) archiveBtnText.textContent = currentSetlist.status === 'archived' ? rt('unarchive', 'Հանել արխիվից') : rt('archive', 'Արխիվ');
   if(archiveBtnIcon) archiveBtnIcon.textContent = currentSetlist.status === 'archived' ? '📂' : '🗂️';
   if(archiveBtn){
@@ -2216,14 +2115,20 @@ function renderDetails(){
   if(summarySongsCount) summarySongsCount.textContent = String(songsCount);
   if(summarySectionsCount) summarySectionsCount.textContent = String(sectionsCount);
   if(summaryRequiredCount) summaryRequiredCount.textContent = String(requiredCount);
+  if(summarySongsCountInline) summarySongsCountInline.textContent = rtFmt('songsInlineCount', '{{count}} երգ', { count: Number(songsCount || 0) });
+  if(summarySectionsCountInline) summarySectionsCountInline.textContent = rtFmt('sectionsInlineCount', '{{count}} բաժին', { count: Number(sectionsCount || 0) });
 
   if(overviewItemsBadge){
     overviewItemsBadge.textContent = rtFmt('itemCount', '{{count}} միավոր', { count: Number(currentItems.length || 0) });
   }
 
+  if(expandedItemId && !currentItems.some(item => Number(item.id) === Number(expandedItemId))){
+    expandedItemId = 0;
+  }
+
   if(!currentItems.length){
     if(isEditMode){
-      itemsList.innerHTML = `<div class="empty">${escapeHtml(rt('noItems', 'Դեռ ոչ մի item չկա'))}</div>`;
+      itemsList.innerHTML = `<div class="editor-compact-empty">${escapeHtml(rt('noItems', 'Դեռ ոչ մի item չկա'))}</div>`;
     }else if(previewItemsList){
       previewItemsList.innerHTML = `<div class="preview-empty">${escapeHtml(rt('previewEmpty', 'Այս սեթլիստում դեռ item չկա'))}</div>`;
     }
@@ -2231,32 +2136,26 @@ function renderDetails(){
   }
 
   if(!isEditMode && previewItemsList){
-    previewItemsList.innerHTML = currentItems.map((item, index) => {
+    previewItemsList.innerHTML = currentItems.map(item => {
       if(item.item_type === 'section'){
         return `
           <div class="preview-item section">
-            <div class="preview-item-index">${index + 1}</div>
-            <div class="preview-item-content">
-              <div class="preview-item-title">${escapeHtml(item.title || rt('section', 'Բաժին'))}</div>
-              ${item.notes ? `<div class="preview-item-note">${escapeHtml(item.notes)}</div>` : ''}
-            </div>
+            <div class="preview-item-title">${escapeHtml(item.title || rt('section', 'Բաժին'))}</div>
+            ${item.notes ? `<div class="preview-item-note">${escapeHtml(item.notes)}</div>` : ''}
           </div>
         `;
       }
 
       return `
         <div class="preview-item">
-          <div class="preview-item-index">${index + 1}</div>
-          <div class="preview-item-content">
-            <div class="preview-item-title">${escapeHtml(item.song_title || item.title || ('Song #' + item.song_id))}</div>
-            <div class="preview-item-meta">
-              <span class="pill">${escapeHtml(rt('original', 'Սկզբնական'))}: ${escapeHtml(item.original_key || '—')}</span>
-              <span class="pill">${escapeHtml(rt('target', 'Թիրախ'))}: ${escapeHtml(item.target_key || item.original_key || '—')}</span>
-              <span class="pill">${escapeHtml(rt('artist', 'Կատարող'))}: ${escapeHtml(item.song_artist || '—')}</span>
-              ${Number(item.is_required) ? `<span class="required-badge">★ ${escapeHtml(rt('required', 'պարտադիր'))}</span>` : ''}
-            </div>
-            ${item.notes ? `<div class="preview-item-note">${escapeHtml(item.notes)}</div>` : ''}
+          <div class="preview-item-title">${escapeHtml(item.song_title || item.title || ('Song #' + item.song_id))}</div>
+          <div class="preview-item-meta">
+            <span class="pill">${escapeHtml(rt('original', 'Սկզբնական'))}: ${escapeHtml(item.original_key || '—')}</span>
+            <span class="pill">${escapeHtml(rt('target', 'Թիրախ'))}: ${escapeHtml(item.target_key || item.original_key || '—')}</span>
+            <span class="pill">${escapeHtml(rt('artist', 'Կատարող'))}: ${escapeHtml(item.song_artist || '—')}</span>
+            ${Number(item.is_required) ? `<span class="required-badge">★ ${escapeHtml(rt('required', 'պարտադիր'))}</span>` : ''}
           </div>
+          ${item.notes ? `<div class="preview-item-note">${escapeHtml(item.notes)}</div>` : ''}
         </div>
       `;
     }).join('');
@@ -2264,107 +2163,118 @@ function renderDetails(){
     return;
   }
 
-  itemsList.innerHTML = currentItems.map(item => {
-  if(item.item_type === 'section'){
+  itemsList.innerHTML = currentItems.map((item, index) => {
+    const itemId = Number(item.id);
+    const isOpen = Number(expandedItemId) === itemId;
+    const canMoveUp = index > 0;
+    const canMoveDown = index < currentItems.length - 1;
+
+    if(item.item_type === 'section'){
+      return `
+        <div class="sortable-item" draggable="true" data-item-id="${itemId}">
+          <div class="item-shell">
+            <div class="item-shell-head">
+              <div class="item-shell-main">
+                <div class="item-shell-eyebrow">
+                  <span class="builder-step-dot"></span>
+                  <span>${escapeHtml(rtFmt('sequenceNumber', 'Քայլ {{count}}', { count: index + 1 }))}</span>
+                </div>
+                <div class="item-shell-title">${escapeHtml(item.title || rt('section', 'Բաժին'))}</div>
+                <div class="item-shell-meta">
+                  <span class="pill">${escapeHtml(rt('section', 'Բաժին'))}</span>
+                  ${item.notes ? `<span class="pill">${escapeHtml(rt('hasNote', 'Նշում կա'))}</span>` : ''}
+                </div>
+              </div>
+              <div class="row" style="gap:8px; align-items:center;">
+                <span class="drag-handle" title="${escapeHtml(rt('drag', 'Քաշել'))}">⋮⋮</span>
+                <div class="move-actions">
+                  <button class="secondary" type="button" onclick="window.moveSetlistItem(${itemId}, -1)" ${canMoveUp ? '' : 'disabled'}>↑</button>
+                  <button class="secondary" type="button" onclick="window.moveSetlistItem(${itemId}, 1)" ${canMoveDown ? '' : 'disabled'}>↓</button>
+                </div>
+              </div>
+            </div>
+
+            ${item.notes ? `<div class="item-shell-note">${escapeHtml(item.notes)}</div>` : ''}
+
+            <div class="item-shell-actions">
+              <button class="secondary" type="button" onclick="window.toggleSetlistItemEditor(${itemId})">${escapeHtml(isOpen ? rt('close', 'Փակել') : rt('edit', 'Խմբագրել'))}</button>
+              <button class="danger" type="button" onclick="window.removeSetlistItem(${itemId})">${escapeHtml(rt('remove', 'Հեռացնել'))}</button>
+            </div>
+
+            <div class="editor-panel" ${isOpen ? '' : 'hidden'}>
+              <div class="item-edit-box">
+                <input id="sectionTitle_${itemId}" type="text" value="${escapeHtml(item.title || rt('section', 'Բաժին'))}">
+                <textarea id="sectionNotes_${itemId}" class="item-note" placeholder="${escapeHtml(rt('note', 'Նշում'))}">${escapeHtml(item.notes || '')}</textarea>
+                <div class="item-actions">
+                  <button class="secondary" type="button" onclick="window.saveSectionItem(${itemId})">${escapeHtml(rt('save', 'Պահպանել'))}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     return `
-      <div class="sortable-item" draggable="true" data-item-id="${Number(item.id)}">
-        <div class="card" style="padding:12px;">
-          <div style="display:grid; gap:10px;">
-            <div class="row" style="justify-content:space-between; align-items:center;">
-              <strong>${escapeHtml(rt('section', 'Բաժին'))}</strong>
+      <div class="sortable-item" draggable="true" data-item-id="${itemId}">
+        <div class="item-shell">
+          <div class="item-shell-head">
+            <div class="item-shell-main">
+              <div class="item-shell-eyebrow">
+                <span class="builder-step-dot"></span>
+                <span>${escapeHtml(rtFmt('sequenceNumber', 'Քայլ {{count}}', { count: index + 1 }))}</span>
+              </div>
+              <div class="item-shell-title">${escapeHtml(item.song_title || item.title || ('Song #' + item.song_id))}</div>
+              <div class="item-shell-meta">
+                <span class="pill">${escapeHtml(rt('original', 'Սկզբնական'))}: ${escapeHtml(item.original_key || '—')}</span>
+                <span class="pill">${escapeHtml(rt('target', 'Թիրախ'))}: ${escapeHtml(item.target_key || item.original_key || '—')}</span>
+                <span class="pill">${escapeHtml(rt('artist', 'Կատարող'))}: ${escapeHtml(item.song_artist || '—')}</span>
+                ${item.capo !== null && item.capo !== '' ? `<span class="pill">Capo ${escapeHtml(String(item.capo))}</span>` : ''}
+                ${Number(item.is_required) ? `<span class="required-badge">★ ${escapeHtml(rt('required', 'պարտադիր'))}</span>` : ''}
+              </div>
+            </div>
+            <div class="row" style="gap:8px; align-items:center;">
               <span class="drag-handle" title="${escapeHtml(rt('drag', 'Քաշել'))}">⋮⋮</span>
-            </div>
-
-            <input id="sectionTitle_${Number(item.id)}" type="text" value="${escapeHtml(item.title || rt('section', 'Բաժին'))}">
-            <textarea id="sectionNotes_${Number(item.id)}" class="item-note" placeholder="${escapeHtml(rt('note', 'Նշում'))}">${escapeHtml(item.notes || '')}</textarea>
-
-            <div class="item-actions">
-              <button class="secondary" type="button" onclick="window.saveSectionItem(${Number(item.id)})">${escapeHtml(rt('save', 'Պահպանել'))}</button>
-              <button class="danger" type="button" onclick="window.removeSetlistItem(${Number(item.id)})">${escapeHtml(rt('remove', 'Հեռացնել'))}</button>
+              <div class="move-actions">
+                <button class="secondary" type="button" onclick="window.moveSetlistItem(${itemId}, -1)" ${canMoveUp ? '' : 'disabled'}>↑</button>
+                <button class="secondary" type="button" onclick="window.moveSetlistItem(${itemId}, 1)" ${canMoveDown ? '' : 'disabled'}>↓</button>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    `;
-  }
 
-  return `
-    <div class="sortable-item" draggable="true" data-item-id="${Number(item.id)}">
-      <div class="card" style="padding:12px;">
-        <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <div style="font-weight:800;">
-            ${escapeHtml(item.song_title || item.title || ('Song #' + item.song_id))}
-          </div>
-          <span class="drag-handle" title="${escapeHtml(rt('drag', 'Քաշել'))}">⋮⋮</span>
-        </div>
+          ${item.notes ? `<div class="item-shell-note">${escapeHtml(item.notes)}</div>` : ''}
 
-        <div class="muted" style="font-size:13px; margin-bottom:10px;">
-          ${escapeHtml(rt('original', 'Սկզբնական'))}: ${escapeHtml(item.original_key || '—')} |
-          ${escapeHtml(rt('target', 'Թիրախ'))}: ${escapeHtml(item.target_key || item.original_key || '—')} |
-          ${escapeHtml(rt('artist', 'Կատարող'))}: ${escapeHtml(item.song_artist || '—')}
-        </div>
-
-        <div class="item-edit-box">
-          <div class="item-edit-grid-4">
-            <input id="targetKey_${Number(item.id)}" type="text" placeholder="Թիրախային տոն" value="${escapeHtml(item.target_key || '')}">
-            <input id="capo_${Number(item.id)}" type="number" min="0" max="12" placeholder="Capo" value="${item.capo ?? ''}">
-            <label class="check-row">
-              <input id="required_${Number(item.id)}" type="checkbox" ${Number(item.is_required) ? 'checked' : ''}>
-              ${escapeHtml(rt('required', 'պարտադիր'))}
-            </label>
-            <div></div>
+          <div class="item-shell-actions">
+            <button class="secondary" type="button" onclick="window.toggleSetlistItemEditor(${itemId})">${escapeHtml(isOpen ? rt('close', 'Փակել') : rt('edit', 'Խմբագրել'))}</button>
+            <button class="secondary" type="button" onclick="window.openSongFromEditor(${itemId})">${escapeHtml(rt('openSong', 'Բացել երգը'))}</button>
+            <button class="danger" type="button" onclick="window.removeSetlistItem(${itemId})">${escapeHtml(rt('remove', 'Հեռացնել'))}</button>
           </div>
 
-          <textarea id="notes_${Number(item.id)}" class="item-note" placeholder="${escapeHtml(rt('noteOrReminder', 'Նշում կամ հիշեցում'))}">${escapeHtml(item.notes || '')}</textarea>
+          <div class="editor-panel" ${isOpen ? '' : 'hidden'}>
+            <div class="item-edit-box">
+              <div class="item-edit-grid-4">
+                <input id="targetKey_${itemId}" type="text" placeholder="Թիրախային տոն" value="${escapeHtml(item.target_key || '')}">
+                <input id="capo_${itemId}" type="number" min="0" max="12" placeholder="Capo" value="${item.capo ?? ''}">
+                <label class="check-row">
+                  <input id="required_${itemId}" type="checkbox" ${Number(item.is_required) ? 'checked' : ''}>
+                  ${escapeHtml(rt('required', 'պարտադիր'))}
+                </label>
+                <div></div>
+              </div>
 
-          <div class="item-actions">
-  <button class="secondary" type="button" onclick="window.saveSetlistItem(${Number(item.id)})">${escapeHtml(rt('save', 'Պահպանել'))}</button>
-  <button class="secondary" type="button" onclick="window.openSongFromEditor(${Number(item.id)})">${escapeHtml(rt('openSong', 'Բացել երգը'))}</button>
-  <button class="danger" type="button" onclick="window.removeSetlistItem(${Number(item.id)})">${escapeHtml(rt('remove', 'Հեռացնել'))}</button>
-</div>
+              <textarea id="notes_${itemId}" class="item-note" placeholder="${escapeHtml(rt('noteOrReminder', 'Նշում կամ հիշեցում'))}">${escapeHtml(item.notes || '')}</textarea>
+
+              <div class="item-actions">
+                <button class="secondary" type="button" onclick="window.saveSetlistItem(${itemId})">${escapeHtml(rt('save', 'Պահպանել'))}</button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  `;
-}).join('');
-
-  initDragAndDrop();
-}
-
-function renderAccessList(rows){
-  if(!accessList) return;
-  if(!rows.length){
-    accessList.innerHTML = `<div class="empty">${escapeHtml(rt('noUserAccess', 'Օգտատերերի հասանելիություն դեռ չկա'))}</div>`;
-    return;
-  }
-
-  accessList.innerHTML = rows.map(row => {
-    const isActive = row.status === 'active';
-    const statusText = row.status === 'revoked'
-      ? rt('revoked', 'Փակված')
-      : (row.status === 'expired' ? rt('expired', 'Ժամկետանց') : rt('active', 'Ակտիվ'));
-    return `
-      <div class="access-row">
-        <div>
-          <strong>${escapeHtml(row.grantee_name || row.email || rt('unknownUser', 'Օգտատեր'))}</strong>
-          <div class="small">${escapeHtml(row.email || '')}</div>
-          <div class="small">${escapeHtml(rt('accessUntil', 'Մինչև'))}: ${escapeHtml(formatAccessDateTime(row.expires_at || ''))} • ${escapeHtml(statusText)}</div>
-        </div>
-        ${isActive ? `<button class="secondary small-btn" type="button" data-revoke-access="${Number(row.id)}">${escapeHtml(rt('revokeAccess', 'Փակել'))}</button>` : ''}
       </div>
     `;
   }).join('');
-}
 
-async function loadAccessList(){
-  if(!currentSetlistId || !canEditCurrentSetlist() || !accessList) return;
-  try{
-    const rows = await api('list_setlist_access', 'GET', null, { setlist_id: currentSetlistId });
-    renderAccessList(Array.isArray(rows) ? rows : []);
-  }catch(err){
-    console.error(err);
-    accessList.innerHTML = `<div class="empty">${escapeHtml(rt('accessLoadFailed', 'Չհաջողվեց բեռնել հասանելիությունները'))}</div>`;
-  }
+initDragAndDrop();
 }
 
 async function openSetlist(setlistId){
@@ -2372,26 +2282,27 @@ async function openSetlist(setlistId){
   syncSetlistsUiState();
   if(isEditMode){
     const url = new URL(window.location.href);
-    url.searchParams.set('edit', String(currentSetlistId));
+    url.searchParams.set('id', String(currentSetlistId));
+    url.searchParams.delete('edit');
     window.history.replaceState({}, '', url);
   }
 
   const data = await api('get_setlist_items', 'GET', null, { setlist_id: currentSetlistId });
   currentSetlist = data.setlist || null;
-  if(isEditMode && currentSetlist && !canEditCurrentSetlist(currentSetlist)){
+  if(currentSetlist && !canEditSetlist(currentSetlist)){
     window.location.href = withProgramSource('/setlist_view.html?id=' + encodeURIComponent(currentSetlistId)).toString();
     return;
   }
   currentItems = Array.isArray(data.items) ? data.items : [];
+  expandedItemId = 0;
 
   renderSetlists();
   renderDetails();
   await refreshShareStatus();
-  await loadAccessList();
 }
 
     async function loadSetlists(){
-      currentSetlists = await api('get_setlists', 'GET');
+      currentSetlists = (await api('get_setlists', 'GET')).filter(canEditSetlist);
       currentSetlists.sort((a, b) => {
         const aArchived = a.status === 'archived' ? 1 : 0;
         const bArchived = b.status === 'archived' ? 1 : 0;
@@ -2598,57 +2509,6 @@ disableShareBtn?.addEventListener('click', async () => {
   }
 });
 
-grantAccessBtn?.addEventListener('click', async () => {
-  if(!currentSetlistId || !canEditCurrentSetlist()) return;
-
-  const email = (accessEmailInput?.value || '').trim();
-  const expiresAt = datetimeLocalToSql(accessExpiresInput?.value || '');
-  if(!email || !expiresAt){
-    if(accessStatus) accessStatus.textContent = rt('fillAccessFields', 'Լրացրու email-ը և ժամկետը');
-    return;
-  }
-
-  try{
-    grantAccessBtn.disabled = true;
-    if(accessStatus) accessStatus.textContent = rt('saving', 'Պահպանվում է...');
-    await api('grant_setlist_access', 'POST', {
-      setlist_id: currentSetlistId,
-      email,
-      expires_at: expiresAt
-    });
-    if(accessEmailInput) accessEmailInput.value = '';
-    if(accessStatus) accessStatus.textContent = rt('accessGranted', 'Հասանելիությունը տրվեց');
-    await loadAccessList();
-    showMiniMessage(rt('accessGranted', 'Հասանելիությունը տրվեց'));
-  }catch(err){
-    if(accessStatus) accessStatus.textContent = err.message;
-    alert(err.message);
-  }finally{
-    grantAccessBtn.disabled = false;
-  }
-});
-
-accessList?.addEventListener('click', async (event) => {
-  const btn = event.target.closest('[data-revoke-access]');
-  if(!btn || !currentSetlistId || !canEditCurrentSetlist()) return;
-  const accessId = Number(btn.dataset.revokeAccess || 0);
-  if(!accessId) return;
-
-  try{
-    btn.disabled = true;
-    await api('revoke_setlist_access', 'POST', {
-      setlist_id: currentSetlistId,
-      access_id: accessId
-    });
-    if(accessStatus) accessStatus.textContent = rt('accessRevoked', 'Հասանելիությունը փակվեց');
-    await loadAccessList();
-  }catch(err){
-    alert(err.message);
-  }finally{
-    btn.disabled = false;
-  }
-});
-
 window.saveSetlistItem = async function(itemId){
   try{
     const targetKeyEl = document.getElementById(`targetKey_${itemId}`);
@@ -2699,6 +2559,45 @@ window.removeSetlistItem = async function(itemId){
     await loadSetlists();
     await openSetlist(currentSetlistId);
     showMiniMessage(rt('itemRemoved', 'Item-ը հեռացվեց'));
+  }catch(err){
+    alert(err.message);
+  }
+};
+
+window.toggleSetlistItemEditor = function(itemId){
+  const nextId = Number(itemId);
+  expandedItemId = Number(expandedItemId) === nextId ? 0 : nextId;
+  renderDetails();
+};
+
+window.moveSetlistItem = async function(itemId, delta){
+  const currentIndex = currentItems.findIndex((item) => Number(item.id) === Number(itemId));
+  if(currentIndex < 0) return;
+
+  const nextIndex = currentIndex + Number(delta || 0);
+  if(nextIndex < 0 || nextIndex >= currentItems.length) return;
+
+  const reordered = currentItems.slice();
+  const [picked] = reordered.splice(currentIndex, 1);
+  reordered.splice(nextIndex, 0, picked);
+
+  const payload = reordered.map((row, index) => ({
+    id: Number(row.id),
+    position: index + 1
+  }));
+
+  try{
+    await api('reorder_setlist_items', 'POST', {
+      setlist_id: currentSetlistId,
+      items: payload
+    });
+
+    currentItems = reordered.map((row, index) => ({
+      ...row,
+      position: index + 1
+    }));
+    renderDetails();
+    showMiniMessage(rt('orderUpdated', 'Հերթականությունը թարմացվեց'));
   }catch(err){
     alert(err.message);
   }
@@ -2826,7 +2725,9 @@ updateModeUi();
 
 try{
   await loadSetlists();
-  if(currentSetlistId > 0) {
+  if(editId > 0){
+    await openSetlist(editId);
+  } else if(currentSetlistId > 0) {
     const restored = currentSetlists.find(item => Number(item.id) === Number(currentSetlistId));
     if(restored){
       await openSetlist(currentSetlistId);

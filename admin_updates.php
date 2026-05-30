@@ -615,6 +615,10 @@ function wp_admin_updates_history_search_haystack(array $item): string {
         (string)($snapshot['web_version'] ?? ''),
         (string)($snapshot['app_release_summary'] ?? ''),
         (string)($snapshot['web_release_summary'] ?? ''),
+        (string)($snapshot['moderation_title'] ?? ''),
+        (string)($snapshot['moderation_submitted_by'] ?? ''),
+        (string)($snapshot['moderation_submitted_email'] ?? ''),
+        (string)($snapshot['moderation_review_note'] ?? ''),
         (string)($item['note'] ?? ''),
         $changedFields,
     ];
@@ -698,6 +702,69 @@ function wp_admin_updates_build_release_push_payload(array $previousConfig, arra
         'tag' => 'worship-release-update',
         'actor' => $actorLabel,
     ];
+}
+
+function wp_admin_updates_release_compare_fields(): array {
+    return [
+        'app_version',
+        'web_version',
+        'app_release_type',
+        'web_release_type',
+        'app_release_summary',
+        'web_release_summary',
+        'app_title',
+        'web_title',
+        'app_message',
+        'web_message',
+        'app_release_stamp',
+        'web_release_stamp',
+    ];
+}
+
+function wp_admin_updates_release_diff_fields(array $before, array $after): array {
+    $changed = [];
+    foreach (wp_admin_updates_release_compare_fields() as $field) {
+        if ((string)($before[$field] ?? '') !== (string)($after[$field] ?? '')) {
+            $changed[] = $field;
+        }
+    }
+    return $changed;
+}
+
+function wp_admin_updates_last_committed_release_snapshot(): ?array {
+    foreach (wp_version_history_load(200) as $item) {
+        $action = trim((string)($item['action'] ?? ''));
+        if (!in_array($action, ['save_release', 'publish_release', 'rollback', 'save_general'], true)) {
+            continue;
+        }
+
+        $snapshot = $item['snapshot'] ?? null;
+        if (is_array($snapshot) && $snapshot) {
+            return $snapshot;
+        }
+    }
+
+    return null;
+}
+
+function wp_admin_updates_append_release_history(array $snapshot, array $changedFields, string $actorLabel, string $actorIp, string $action = 'save_release'): string {
+    $historyId = bin2hex(random_bytes(8));
+    $historyAt = wp_version_now_iso();
+    $historySnapshot = $snapshot;
+    $historySnapshot['updated_at'] = $historyAt;
+
+    wp_version_history_append([
+        'id' => $historyId,
+        'at' => $historyAt,
+        'actor' => $actorLabel,
+        'ip' => $actorIp,
+        'action' => $action,
+        'changed_fields' => array_values($changedFields),
+        'snapshot' => $historySnapshot,
+        'note' => (string)($historySnapshot['meta_note'] ?? ''),
+    ]);
+
+    return $historyId;
 }
 
 function wp_admin_updates_prepare_release_stamps(array $currentConfig, array $nextConfig, bool $withPackage): array {
@@ -1040,6 +1107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $input = wp_admin_updates_prepare_release_stamps($config, $input, $withPackage);
 
         if (!$withPackage) {
+            $releaseBaseline = wp_admin_updates_last_committed_release_snapshot() ?: $config;
             $ok = wp_version_save($input, [
                 'actor' => $actorLabel,
                 'ip' => $actorIp,
@@ -1048,11 +1116,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($ok) {
                 $saveResult = wp_version_last_save_result();
-                if (!empty($saveResult['changed'])) {
+                $releaseSnapshot = !empty($saveResult['config']) && is_array($saveResult['config']) ? $saveResult['config'] : $config;
+                $releaseDiffFields = wp_admin_updates_release_diff_fields($releaseBaseline, $releaseSnapshot);
+                $shouldAnnounceRelease = !empty($saveResult['changed']) || !empty($releaseDiffFields);
+
+                if ($shouldAnnounceRelease) {
+                    if (empty($saveResult['changed']) && $releaseDiffFields) {
+                        wp_admin_updates_append_release_history($releaseSnapshot, $releaseDiffFields, $actorLabel, $actorIp, 'save_release');
+                    }
+
                     $message = 'Թարմացման տվյալները պահպանվեցին առանց ֆայլի տեղադրման։';
 
                     $pushResult = wp_push_send_notification(
-                        wp_admin_updates_build_release_push_payload($config, $input, $actorLabel)
+                        wp_admin_updates_build_release_push_payload($releaseBaseline, $releaseSnapshot, $actorLabel)
                     );
 
                     if (!empty($pushResult['ok'])) {
@@ -1757,6 +1833,36 @@ $csrfToken = wp_admin_updates_csrf_token();
     }
     .device-meta strong{display:block;font-size:11px;color:#a8b7dc;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
     .device-meta span{display:block;font-size:13px;color:var(--text);line-height:1.45;word-break:break-word}
+    .moderation-diff-grid{display:grid;gap:10px;margin-top:12px}
+    .moderation-diff-item{
+      padding:14px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.03)
+    }
+    .moderation-diff-item[data-kind="added"]{border-color:rgba(24,169,87,.28);background:rgba(24,169,87,.08)}
+    .moderation-diff-item[data-kind="removed"]{border-color:rgba(210,75,95,.28);background:rgba(210,75,95,.08)}
+    .moderation-diff-item[data-kind="changed"]{border-color:rgba(122,162,255,.24);background:rgba(79,124,255,.08)}
+    .moderation-diff-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+    .moderation-diff-title{font-weight:800;font-size:14px}
+    .moderation-diff-badge{
+      display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);font-size:11px;font-weight:800;color:#dce5ff
+    }
+    .moderation-diff-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .moderation-diff-box{
+      padding:12px;border-radius:14px;background:rgba(9,14,28,.42);border:1px solid rgba(255,255,255,.06)
+    }
+    .moderation-diff-box strong{display:block;font-size:11px;color:#a8b7dc;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+    .moderation-diff-box span{display:block;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+    .moderation-diff-box pre{
+      margin:0;white-space:pre-wrap;word-break:break-word;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text)
+    }
+    .moderation-history{
+      margin-top:12px;padding:12px 14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)
+    }
+    .moderation-history strong{display:block;margin-bottom:6px;font-size:13px}
+    .moderation-history span{display:block;color:var(--muted);font-size:12px;line-height:1.55}
     .device-toolbar{
       margin-top:16px;padding:14px;border-radius:18px;border:1px solid var(--line);
       background:var(--panel-2);display:grid;gap:12px
@@ -1812,6 +1918,7 @@ $csrfToken = wp_admin_updates_csrf_token();
       .panel::before{left:14px;right:14px}
       .panel h2{font-size:18px}
       .panel p{font-size:13px;line-height:1.45}
+      .moderation-diff-values{grid-template-columns:1fr}
       .section-switcher{grid-template-columns:repeat(2,minmax(0,1fr));padding:10px}
       .section-tab{min-height:64px;padding:12px;border-radius:16px}
       .section-tab span{font-size:13px}
@@ -1896,9 +2003,11 @@ $csrfToken = wp_admin_updates_csrf_token();
       </div>
     </div>
 
-    <?php if ($message !== ''): ?>
-      <div class="banner <?= htmlspecialchars($messageType, ENT_QUOTES) ?>"><?= htmlspecialchars($message, ENT_QUOTES) ?></div>
-    <?php endif; ?>
+    <div
+      class="banner <?= htmlspecialchars($messageType, ENT_QUOTES) ?>"
+      id="adminBanner"
+      <?= $message !== '' ? '' : 'hidden' ?>
+    ><?= htmlspecialchars($message, ENT_QUOTES) ?></div>
 
     <?php if ($hasAnyAdminSectionAccess): ?>
     <div class="section-switcher" role="tablist" aria-label="Admin բաժիններ">
@@ -2471,7 +2580,7 @@ $csrfToken = wp_admin_updates_csrf_token();
               </div>
             </div>
 
-            <form method="get" class="stack" style="margin-top:16px">
+            <form method="get" class="stack" style="margin-top:16px" data-moderation-filter-form="1">
             <div class="row-2">
               <div class="field">
                 <label for="moderation_status">Վիճակ</label>
@@ -2490,7 +2599,7 @@ $csrfToken = wp_admin_updates_csrf_token();
 
             <div class="action-buttons">
               <button class="btn" type="submit">Կիրառել զտումը</button>
-              <a class="btn" href="/admin_updates.php">Մաքրել</a>
+              <a class="btn" href="/admin_updates.php" data-moderation-clear-filters="1">Մաքրել</a>
             </div>
             </form>
 
@@ -2513,6 +2622,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                     $requestTagsValue = trim((string)($request['tags'] ?? ''));
                     $requestMessageValue = trim((string)($request['submitted_message'] ?? ''));
                     $sourceSnapshot = is_array($request['source_snapshot_data'] ?? null) ? $request['source_snapshot_data'] : [];
+                    $requestChanges = is_array($request['change_set'] ?? null) ? $request['change_set'] : [];
                     $sourceTitleValue = trim((string)($sourceSnapshot['title_hy'] ?? $sourceSnapshot['title'] ?? ''));
                     $sourceArtistValue = trim((string)($sourceSnapshot['artist'] ?? ''));
                     $sourceKeyValue = trim((string)($sourceSnapshot['song_key'] ?? ''));
@@ -2548,6 +2658,53 @@ $csrfToken = wp_admin_updates_csrf_token();
 
                     <?php if ($requestMessageValue !== ''): ?>
                       <div class="note" style="margin-top:10px"><strong>Օգտատիրոջ մեկնաբանություն.</strong> <?= htmlspecialchars($requestMessageValue, ENT_QUOTES) ?></div>
+                    <?php endif; ?>
+
+                    <?php if ($requestType === 'edit' && $requestChanges): ?>
+                      <div class="moderation-history">
+                        <strong>Խմբագրման տարբերությունները</strong>
+                        <span>Սա պահվում է մոդերացիայի պատմության մեջ նաև հաստատելուց կամ մերժելուց հետո։ Ընդամենը փոփոխված դաշտեր՝ <?= count($requestChanges) ?>։</span>
+                      </div>
+                      <div class="moderation-diff-grid">
+                        <?php foreach ($requestChanges as $change): ?>
+                          <?php
+                            $changeLabel = (string)($change['label'] ?? 'Դաշտ');
+                            $changeKind = (string)($change['kind'] ?? 'changed');
+                            $changeKindLabel = match ($changeKind) {
+                                'added' => 'Ավելացված է',
+                                'removed' => 'Հեռացված է',
+                                default => 'Փոխված է',
+                            };
+                            $beforeValue = (string)($change['before'] ?? '—');
+                            $afterValue = (string)($change['after'] ?? '—');
+                            $isLongChange = !empty($change['is_long']);
+                          ?>
+                          <div class="moderation-diff-item" data-kind="<?= htmlspecialchars($changeKind, ENT_QUOTES) ?>">
+                            <div class="moderation-diff-head">
+                              <div class="moderation-diff-title"><?= htmlspecialchars($changeLabel, ENT_QUOTES) ?></div>
+                              <div class="moderation-diff-badge"><?= htmlspecialchars($changeKindLabel, ENT_QUOTES) ?></div>
+                            </div>
+                            <div class="moderation-diff-values">
+                              <div class="moderation-diff-box">
+                                <strong>Գործող տարբերակ</strong>
+                                <?php if ($isLongChange): ?>
+                                  <pre><?= htmlspecialchars($beforeValue, ENT_QUOTES) ?></pre>
+                                <?php else: ?>
+                                  <span><?= htmlspecialchars($beforeValue, ENT_QUOTES) ?></span>
+                                <?php endif; ?>
+                              </div>
+                              <div class="moderation-diff-box">
+                                <strong>Առաջարկված տարբերակ</strong>
+                                <?php if ($isLongChange): ?>
+                                  <pre><?= htmlspecialchars($afterValue, ENT_QUOTES) ?></pre>
+                                <?php else: ?>
+                                  <span><?= htmlspecialchars($afterValue, ENT_QUOTES) ?></span>
+                                <?php endif; ?>
+                              </div>
+                            </div>
+                          </div>
+                        <?php endforeach; ?>
+                      </div>
                     <?php endif; ?>
 
                     <?php if ($sourceSnapshot): ?>
@@ -2594,7 +2751,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                     <?php endif; ?>
 
                     <?php if ($requestStatus === 'pending'): ?>
-                      <form method="post" class="stack" style="margin-top:14px">
+                      <form method="post" class="stack" style="margin-top:14px" data-moderation-decision-form="1">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
                         <input type="hidden" name="song_request_id" value="<?= $requestId ?>">
                         <div class="field" style="margin-top:0">
@@ -4161,6 +4318,74 @@ $csrfToken = wp_admin_updates_csrf_token();
         return result;
       }
 
+      function setAdminBanner(type, text) {
+        const banner = document.getElementById('adminBanner');
+        if (!(banner instanceof HTMLElement)) {
+          return;
+        }
+
+        banner.hidden = !text;
+        banner.classList.remove('success', 'error', 'warning');
+        banner.classList.add(type === 'error' ? 'error' : (type === 'warning' ? 'warning' : 'success'));
+        banner.textContent = text || '';
+      }
+
+      function getModerationFilterState() {
+        const statusInput = document.getElementById('moderation_status');
+        const searchInput = document.getElementById('moderation_search');
+        return {
+          status: statusInput instanceof HTMLSelectElement ? String(statusInput.value || 'pending').trim() : 'pending',
+          search: searchInput instanceof HTMLInputElement ? String(searchInput.value || '').trim() : ''
+        };
+      }
+
+      async function refreshModerationPanel(nextFilters) {
+        const panel = document.getElementById('moderationPanel');
+        if (!(panel instanceof HTMLElement)) {
+          return;
+        }
+
+        const url = new URL(window.location.href);
+        const filterState = nextFilters || getModerationFilterState();
+
+        if (!filterState.status || filterState.status === 'pending') {
+          url.searchParams.delete('moderation_status');
+        } else {
+          url.searchParams.set('moderation_status', filterState.status);
+        }
+
+        if (!filterState.search) {
+          url.searchParams.delete('moderation_search');
+        } else {
+          url.searchParams.set('moderation_search', filterState.search);
+        }
+
+        const response = await fetch(url.toString(), {
+          credentials: 'same-origin',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'text/html'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Չհաջողվեց թարմացնել մոդերացիայի ցանկը։');
+        }
+
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const nextPanel = doc.getElementById('moderationPanel');
+        if (!(nextPanel instanceof HTMLElement)) {
+          throw new Error('Մոդերացիայի նոր բլոկը չգտնվեց։');
+        }
+
+        panel.innerHTML = nextPanel.innerHTML;
+
+        const title = doc.title || document.title;
+        window.history.replaceState({}, title, url.toString());
+      }
+
       function setAutosaveState(statusElement, state, text) {
         if (!statusElement) {
           return;
@@ -4893,6 +5118,124 @@ $csrfToken = wp_admin_updates_csrf_token();
         } catch (error) {
           setTranslationStatus(statusEl, 'error', error.message || 'Չհաջողվեց ջնջել գրառումը։');
           setTranslationStatus(translationActionStatus, 'error', error.message || 'Չհաջողվեց ջնջել թարգմանության գրառումը։');
+        }
+      });
+
+      document.addEventListener('submit', async (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLFormElement)) {
+          return;
+        }
+
+        if (target.matches('[data-moderation-filter-form]')) {
+          event.preventDefault();
+          const submitButton = target.querySelector('button[type="submit"]');
+          if (submitButton instanceof HTMLButtonElement) {
+            submitButton.disabled = true;
+          }
+          setAdminBanner('success', 'Մոդերացիայի ցանկը թարմացվում է…');
+          try {
+            await refreshModerationPanel(getModerationFilterState());
+            setAdminBanner('success', 'Մոդերացիայի զտումը կիրառվեց։');
+          } catch (error) {
+            setAdminBanner('error', (error && error.message) ? error.message : 'Չհաջողվեց կիրառել մոդերացիայի զտումը։');
+          } finally {
+            if (submitButton instanceof HTMLButtonElement) {
+              submitButton.disabled = false;
+            }
+          }
+          return;
+        }
+
+        if (target.matches('[data-moderation-decision-form]')) {
+          event.preventDefault();
+          const submitter = event.submitter;
+          if (!(submitter instanceof HTMLButtonElement)) {
+            return;
+          }
+
+          const action = String(submitter.value || '').trim();
+          if (!action) {
+            return;
+          }
+
+          const requestIdInput = target.querySelector('input[name="song_request_id"]');
+          const reviewNoteInput = target.querySelector('textarea[name="song_request_review_note"]');
+          const requestId = requestIdInput instanceof HTMLInputElement ? String(requestIdInput.value || '').trim() : '';
+          const reviewNote = reviewNoteInput instanceof HTMLTextAreaElement ? reviewNoteInput.value : '';
+
+          if (!requestId) {
+            setAdminBanner('error', 'Հարցման նույնականացուցիչը չգտնվեց։');
+            return;
+          }
+
+          const formButtons = Array.from(target.querySelectorAll('button[type="submit"]'));
+          formButtons.forEach((button) => {
+            button.disabled = true;
+          });
+
+          setAdminBanner('success', action === 'approve_song_request'
+            ? 'Հարցումը հաստատվում է…'
+            : 'Հարցումը մերժվում է…');
+
+          try {
+            const result = await postAdminAction(action, {
+              song_request_id: requestId,
+              song_request_review_note: reviewNote
+            });
+            await refreshModerationPanel();
+            setAdminBanner(result.type === 'error' ? 'error' : 'success', result.message || 'Մոդերացիայի հարցումը մշակվեց։');
+          } catch (error) {
+            setAdminBanner('error', (error && error.message) ? error.message : 'Չհաջողվեց մշակել մոդերացիայի հարցումը։');
+          } finally {
+            formButtons.forEach((button) => {
+              button.disabled = false;
+            });
+          }
+        }
+      });
+
+      document.addEventListener('change', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return;
+        }
+
+        if (target.id === 'moderation_status') {
+          const form = target.closest('form[data-moderation-filter-form]');
+          if (form instanceof HTMLFormElement) {
+            form.requestSubmit();
+          }
+        }
+      });
+
+      document.addEventListener('click', async (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return;
+        }
+
+        const clearButton = target.closest('[data-moderation-clear-filters]');
+        if (!(clearButton instanceof HTMLElement)) {
+          return;
+        }
+
+        event.preventDefault();
+        const statusInput = document.getElementById('moderation_status');
+        const searchInput = document.getElementById('moderation_search');
+        if (statusInput instanceof HTMLSelectElement) {
+          statusInput.value = 'pending';
+        }
+        if (searchInput instanceof HTMLInputElement) {
+          searchInput.value = '';
+        }
+
+        setAdminBanner('success', 'Մոդերացիայի զտումը մաքրվում է…');
+        try {
+          await refreshModerationPanel({ status: 'pending', search: '' });
+          setAdminBanner('success', 'Մոդերացիայի զտումը մաքրվեց։');
+        } catch (error) {
+          setAdminBanner('error', (error && error.message) ? error.message : 'Չհաջողվեց մաքրել մոդերացիայի զտումը։');
         }
       });
 

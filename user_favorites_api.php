@@ -10,6 +10,7 @@ header("Pragma: no-cache");
 header("Expires: 0");
 
 require_once __DIR__ . '/auth_bootstrap.php';
+require_once __DIR__ . '/translation_runtime.php';
 
 if (empty($_SESSION['user_id'])) {
   http_response_code(401);
@@ -19,6 +20,7 @@ if (empty($_SESSION['user_id'])) {
 
 try {
   $conn = wp_runtime_open_mysqli();
+  wp_runtime_ensure_song_title_columns_mysqli($conn);
 } catch (Throwable $e) {
   http_response_code(500);
   echo json_encode(["error" => "DB connection failed"], JSON_UNESCAPED_UNICODE);
@@ -28,6 +30,7 @@ try {
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $action = $_GET['action'] ?? '';
 $user_id = (int)$_SESSION['user_id'];
+$lang = wp_translation_requested_lang();
 
 function norm_key($k){
   if ($k === null) return null;
@@ -109,7 +112,15 @@ switch($action){
 
     $out = [];
     while($r = $res->fetch_assoc()) $out[] = $r;
-    echo json_encode($out);
+    $out = wp_translation_translate_rows($out, [
+      'title' => 'api.song.title',
+      'artist' => 'api.song.artist',
+      'tags' => 'api.song.tags',
+    ], $lang);
+    $out = wp_translation_localize_row_fields($out, [
+      'title' => 'api.song.title',
+    ], $lang);
+    echo json_encode($out, JSON_UNESCAPED_UNICODE);
     break;
 
   // ✅ view էջում ցույց տալ՝ տվյալ երգը favorite՞ է + ինչ key-ով

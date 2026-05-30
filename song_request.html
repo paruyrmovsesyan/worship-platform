@@ -64,20 +64,93 @@ body.wp-standalone-app .page{
 }
 body.wp-main-app[data-page="song-request"] .page,
 body.wp-main-app[data-wp-app-page="song-request"] .page{
-  width:min(100%, calc(100% - 4px));
+  width:100%;
   padding-top:0;
-  padding-bottom:128px;
+  padding-bottom:122px;
+}
+body.wp-main-app[data-page="song-request"],
+body.wp-main-app[data-wp-app-page="song-request"]{
+  padding-top:max(10px,env(safe-area-inset-top));
+  padding-right:max(10px,env(safe-area-inset-right));
+  padding-bottom:0;
+  padding-left:max(10px,env(safe-area-inset-left));
+}
+body.wp-main-app[data-page="song-request"] #wpAppPagebar,
+body.wp-main-app[data-wp-app-page="song-request"] #wpAppPagebar{
+  margin-bottom:12px;
+}
+body.wp-main-app[data-page="song-request"] .container,
+body.wp-main-app[data-wp-app-page="song-request"] .container{
+  padding-bottom:122px !important;
+}
+body.wp-main-app[data-page="song-request"] .wp-app-pagebar-title,
+body.wp-main-app[data-wp-app-page="song-request"] .wp-app-pagebar-title{
+  font-size:21px;
+  line-height:1.08;
+}
+body.wp-main-app[data-page="song-request"] .wp-app-pagebar-subtitle,
+body.wp-main-app[data-wp-app-page="song-request"] .wp-app-pagebar-subtitle{
+  font-size:11px;
+  line-height:1.45;
 }
 body.wp-main-app[data-page="song-request"] .request-shell,
 body.wp-main-app[data-wp-app-page="song-request"] .request-shell{
   grid-template-columns:1fr;
   gap:12px;
 }
-body.wp-main-app[data-page="song-request"] .overview-card,
-body.wp-main-app[data-wp-app-page="song-request"] .overview-card,
 body.wp-main-app[data-page="song-request"] .side-stack,
 body.wp-main-app[data-wp-app-page="song-request"] .side-stack{
   display:none;
+}
+body.wp-main-app[data-page="song-request"] .overview-card,
+body.wp-main-app[data-wp-app-page="song-request"] .overview-card{
+  display:block;
+  padding:14px;
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.06);
+  background:rgba(9,16,32,.38);
+  box-shadow:0 18px 50px rgba(0,0,0,.2);
+}
+body.wp-main-app[data-page="song-request"] .overview-card::before,
+body.wp-main-app[data-wp-app-page="song-request"] .overview-card::before,
+body.wp-main-app[data-page="song-request"] .guide-grid,
+body.wp-main-app[data-wp-app-page="song-request"] .guide-grid{
+  display:none;
+}
+body.wp-main-app[data-page="song-request"] .eyebrow,
+body.wp-main-app[data-wp-app-page="song-request"] .eyebrow{
+  padding:7px 11px;
+  font-size:11px;
+  letter-spacing:.12em;
+}
+body.wp-main-app[data-page="song-request"] .overview-head,
+body.wp-main-app[data-wp-app-page="song-request"] .overview-head{
+  margin-top:10px;
+  gap:10px;
+  flex-direction:column;
+}
+body.wp-main-app[data-page="song-request"] .overview-copy h1,
+body.wp-main-app[data-wp-app-page="song-request"] .overview-copy h1{
+  margin-bottom:8px;
+  font-size:18px;
+  line-height:1.12;
+  letter-spacing:-.03em;
+}
+body.wp-main-app[data-page="song-request"] .overview-copy p,
+body.wp-main-app[data-wp-app-page="song-request"] .overview-copy p{
+  font-size:12px;
+  line-height:1.55;
+  max-width:none;
+}
+body.wp-main-app[data-page="song-request"] .overview-badges,
+body.wp-main-app[data-wp-app-page="song-request"] .overview-badges{
+  gap:8px;
+  margin-top:12px;
+}
+body.wp-main-app[data-page="song-request"] .overview-badge,
+body.wp-main-app[data-wp-app-page="song-request"] .overview-badge{
+  padding:7px 10px;
+  font-size:11px;
 }
 body.wp-main-app[data-page="song-request"] .request-form-card,
 body.wp-main-app[data-wp-app-page="song-request"] .request-form-card{
@@ -89,15 +162,15 @@ body.wp-main-app[data-wp-app-page="song-request"] .request-form-card{
 }
 body.wp-main-app[data-page="song-request"] .form-topbar,
 body.wp-main-app[data-wp-app-page="song-request"] .form-topbar{
-  margin-bottom:12px;
+  display:none;
 }
 body.wp-main-app[data-page="song-request"] .form-topbar h2,
 body.wp-main-app[data-wp-app-page="song-request"] .form-topbar h2{
-  font-size:20px;
+  font-size:18px;
 }
 body.wp-main-app[data-page="song-request"] .form-topbar p,
 body.wp-main-app[data-wp-app-page="song-request"] .form-topbar p{
-  font-size:12px;
+  font-size:11px;
   line-height:1.55;
 }
 body.wp-main-app[data-page="song-request"] .pill-row,
@@ -158,10 +231,11 @@ body.wp-main-app[data-wp-app-page="song-request"] .request-note{
 }
 body.wp-main-app[data-page="song-request"] .submit-bar,
 body.wp-main-app[data-wp-app-page="song-request"] .submit-bar{
-  margin-top:12px;
+  margin-top:10px;
   padding:12px;
   border-radius:18px;
-  bottom:max(84px, calc(env(safe-area-inset-bottom) + 84px));
+  position:static;
+  bottom:auto;
 }
 body.wp-main-app[data-page="song-request"] .submit-copy strong,
 body.wp-main-app[data-wp-app-page="song-request"] .submit-copy strong{
@@ -357,6 +431,83 @@ body.wp-main-app[data-wp-app-page="song-request"] .submit-copy span{
 .status-banner.success{border-color:rgba(50,196,141,.35);background:rgba(50,196,141,.12)}
 .status-banner.error{border-color:rgba(255,107,127,.35);background:rgba(255,107,127,.12)}
 .status-banner.info{border-color:rgba(76,121,255,.34);background:rgba(76,121,255,.12)}
+.success-modal{
+  position:fixed;
+  inset:0;
+  z-index:100120;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .24s ease, visibility .24s ease;
+}
+.success-modal.show{
+  opacity:1;
+  visibility:visible;
+}
+.success-modal-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(6,10,18,.72);
+  backdrop-filter:blur(12px) saturate(122%);
+  -webkit-backdrop-filter:blur(12px) saturate(122%);
+}
+.success-modal-card{
+  position:relative;
+  width:min(460px, calc(100vw - 28px));
+  padding:24px 22px 22px;
+  border-radius:26px;
+  border:1px solid rgba(255,255,255,.1);
+  background:
+    radial-gradient(circle at top right, rgba(50,196,141,.16), transparent 34%),
+    linear-gradient(180deg, rgba(15,21,38,.96), rgba(10,15,27,.95));
+  box-shadow:0 28px 70px rgba(0,0,0,.4);
+  text-align:center;
+}
+.success-modal-icon{
+  width:72px;
+  height:72px;
+  margin:0 auto 16px;
+  border-radius:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg, rgba(50,196,141,.28), rgba(34,95,255,.18));
+  border:1px solid rgba(255,255,255,.12);
+  color:#dff9ec;
+  font-size:34px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+}
+.success-modal-title{
+  margin:0 0 8px;
+  font-size:28px;
+  line-height:1.05;
+  letter-spacing:-.03em;
+  color:#f4f8ff;
+}
+.success-modal-text{
+  margin:0;
+  color:var(--muted);
+  font-size:15px;
+  line-height:1.65;
+}
+.success-modal-hint{
+  margin-top:14px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.05);
+  color:#dce6ff;
+  font-size:12px;
+  font-weight:800;
+}
 .lock-box{
   display:none;
   margin-bottom:16px;
@@ -608,9 +759,70 @@ body.wp-main-app[data-wp-app-page="song-request"] .submit-copy span{
   }
   body.wp-main-app[data-page="song-request"] .page,
   body.wp-main-app[data-wp-app-page="song-request"] .page{
-    width:min(100% - 8px, 100%);
+    width:100%;
     padding-top:0;
-    padding-bottom:118px;
+    padding-bottom:114px;
+  }
+body.wp-main-app[data-page="song-request"],
+body.wp-main-app[data-wp-app-page="song-request"]{
+    padding-top:max(8px,env(safe-area-inset-top));
+    padding-right:max(8px,env(safe-area-inset-right));
+    padding-bottom:0;
+    padding-left:max(8px,env(safe-area-inset-left));
+  }
+  body.wp-main-app[data-page="song-request"] #wpAppPagebar,
+  body.wp-main-app[data-wp-app-page="song-request"] #wpAppPagebar{
+    margin-bottom:12px;
+  }
+  body.wp-main-app[data-page="song-request"] .container,
+  body.wp-main-app[data-wp-app-page="song-request"] .container{
+    padding-bottom:114px !important;
+  }
+  body.wp-main-app[data-page="song-request"] .overview-card,
+  body.wp-main-app[data-wp-app-page="song-request"] .overview-card{
+    padding:12px;
+    border-radius:18px;
+  }
+  body.wp-main-app[data-page="song-request"] .overview-copy h1,
+  body.wp-main-app[data-wp-app-page="song-request"] .overview-copy h1{
+    font-size:15px;
+  }
+  body.wp-main-app[data-page="song-request"] .overview-copy p,
+  body.wp-main-app[data-wp-app-page="song-request"] .overview-copy p{
+    font-size:11px;
+  }
+  body.wp-main-app[data-page="song-request"] .overview-badge,
+  body.wp-main-app[data-wp-app-page="song-request"] .overview-badge{
+    padding:8px 10px;
+    border-radius:16px;
+  }
+  body.wp-main-app[data-page="song-request"] .submit-bar,
+  body.wp-main-app[data-wp-app-page="song-request"] .submit-bar{
+    position:static;
+    bottom:auto;
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+  }
+  .success-modal{
+    padding:18px;
+  }
+  .success-modal-card{
+    width:min(400px, calc(100vw - 20px));
+    padding:20px 18px 18px;
+    border-radius:22px;
+  }
+  .success-modal-icon{
+    width:64px;
+    height:64px;
+    margin-bottom:14px;
+    border-radius:18px;
+    font-size:30px;
+  }
+  .success-modal-title{
+    font-size:24px;
+  }
+  .success-modal-text{
+    font-size:14px;
   }
 }
 </style>
@@ -733,6 +945,15 @@ body.wp-main-app[data-wp-app-page="song-request"] .submit-copy span{
       </div>
 
       <div id="requestStatus" class="status-banner"></div>
+      <div id="requestSuccessModal" class="success-modal" aria-hidden="true">
+        <div class="success-modal-backdrop"></div>
+        <div class="success-modal-card" role="status" aria-live="polite">
+          <div class="success-modal-icon" aria-hidden="true">✓</div>
+          <h3 id="requestSuccessTitle" class="success-modal-title">Հարցումը ուղարկվեց</h3>
+          <p id="requestSuccessText" class="success-modal-text">Քո հարցումը արդեն գնացել է մոդերացիայի հերթ, և ադմինը շուտով կստուգի այն։</p>
+          <div class="success-modal-hint">Մոդերացիայի հերթում է</div>
+        </div>
+      </div>
 
       <div id="loginLockBox" class="lock-box">
         <strong>Հարցում ուղարկելու համար նախ մուտք գործիր</strong>
@@ -743,7 +964,7 @@ body.wp-main-app[data-wp-app-page="song-request"] .submit-copy span{
         </div>
       </div>
 
-      <form id="songRequestForm">
+      <form id="songRequestForm" data-wp-no-loader="1" data-wp-ajax-form="1">
         <input type="hidden" id="requestTypeInput" value="new">
         <input type="hidden" id="requestSongIdInput" value="">
 
@@ -875,6 +1096,9 @@ const sourcePath = songId > 0 ? `/song_view.html?id=${encodeURIComponent(String(
 const nextPath = window.location.pathname + window.location.search + window.location.hash;
 
 const requestStatus = document.getElementById('requestStatus');
+const requestSuccessModal = document.getElementById('requestSuccessModal');
+const requestSuccessTitle = document.getElementById('requestSuccessTitle');
+const requestSuccessText = document.getElementById('requestSuccessText');
 const requestTypeInput = document.getElementById('requestTypeInput');
 const requestSongIdInput = document.getElementById('requestSongIdInput');
 const requestTitle = document.getElementById('requestTitle');
@@ -907,6 +1131,16 @@ const fields = {
 };
 
 let authState = { ready: false, loggedIn: false, userId: null };
+let successModalTimer = 0;
+
+function tr(path, fallback){
+  try{
+    if(window.wpI18n && typeof window.wpI18n.t === 'function'){
+      return window.wpI18n.t(path, fallback);
+    }
+  }catch(e){}
+  return fallback;
+}
 
 function withAppSource(url){
   if(window.WP && typeof window.WP.withAppSource === 'function'){
@@ -926,6 +1160,19 @@ function getCurrentLang(){
 function showStatus(message, type = 'info'){
   requestStatus.textContent = message;
   requestStatus.className = `status-banner show ${type}`;
+}
+
+function showSuccessModal(message){
+  if(!requestSuccessModal) return;
+  window.clearTimeout(successModalTimer);
+  requestSuccessTitle.textContent = tr('pages.songRequest.successTitle', 'Հարցումը ուղարկվեց');
+  requestSuccessText.textContent = message || tr('pages.songRequest.successText', 'Քո հարցումը արդեն գնացել է մոդերացիայի հերթ, և ադմինը շուտով կստուգի այն։');
+  requestSuccessModal.classList.add('show');
+  requestSuccessModal.setAttribute('aria-hidden', 'false');
+  successModalTimer = window.setTimeout(() => {
+    requestSuccessModal.classList.remove('show');
+    requestSuccessModal.setAttribute('aria-hidden', 'true');
+  }, 2400);
 }
 
 function setLockedState(locked){
@@ -967,7 +1214,7 @@ async function loadAuthStatus(){
 
   setLockedState(!authState.loggedIn);
   if(!authState.loggedIn){
-    showStatus('Հարցում ուղարկելու համար նախ մուտք գործիր։', 'info');
+    showStatus(tr('pages.songRequest.statusNeedLogin', 'Հարցում ուղարկելու համար նախ մուտք գործիր։'), 'info');
   }
 }
 
@@ -975,19 +1222,27 @@ function applyRequestMode(){
   const isEdit = songId > 0;
   requestTypeInput.value = isEdit ? 'edit' : 'new';
   requestSongIdInput.value = isEdit ? String(songId) : '';
-  requestTitle.textContent = isEdit ? 'Ուղարկել խմբագրման առաջարկ' : 'Ուղարկել նոր երգ';
+  requestTitle.textContent = isEdit
+    ? tr('pages.songRequest.titleEdit', 'Ուղարկել խմբագրման առաջարկ')
+    : tr('pages.songRequest.titleNew', 'Ուղարկել նոր երգ');
   requestSubtitle.textContent = isEdit
-    ? 'Բաց երգի նոր տարբերակը, BPM-ը, ակորդներն ու վերնագրերը կգնան մոդերացիայի, և ադմինը կհաստատի կամ կմերժի այն։'
-    : 'Լրացրու նոր երգի տվյալները, BPM տեմպը, ակորդներն ու բառերը, իսկ ադմինը կստուգի և կհաստատի կամ կմերժի հարցումը։';
-  requestModeLabel.textContent = isEdit ? 'Գոյություն ունեցող երգի փոփոխություն' : 'Նոր երգի հարցում';
+    ? tr('pages.songRequest.subtitleEdit', 'Բաց երգի նոր տարբերակը, BPM-ը, ակորդներն ու վերնագրերը կգնան մոդերացիայի, և ադմինը կհաստատի կամ կմերժի այն։')
+    : tr('pages.songRequest.subtitleNew', 'Լրացրու նոր երգի տվյալները, BPM տեմպը, ակորդներն ու բառերը, իսկ ադմինը կստուգի և կհաստատի կամ կմերժի հարցումը։');
+  requestModeLabel.textContent = isEdit
+    ? tr('pages.songRequest.modeEditLabel', 'Գոյություն ունեցող երգի փոփոխություն')
+    : tr('pages.songRequest.modeNewLabel', 'Նոր երգի հարցում');
   requestModeText.textContent = isEdit
-    ? 'Այս ռեժիմը ստեղծված է արդեն առկա երգի ուղղված տարբերակ, BPM կամ ավելի ամբողջական տվյալներ ուղարկելու համար։'
-    : 'Այս ռեժիմը նախատեսված է նոր երգ առաջարկելու համար։';
-  formTitle.textContent = isEdit ? 'Խմբագրման հարցման ձև' : 'Նոր երգի հարցման ձև';
+    ? tr('pages.songRequest.modeEditText', 'Այս ռեժիմը ստեղծված է արդեն առկա երգի ուղղված տարբերակ, BPM կամ ավելի ամբողջական տվյալներ ուղարկելու համար։')
+    : tr('pages.songRequest.modeNewText', 'Այս ռեժիմը նախատեսված է նոր երգ առաջարկելու համար։');
+  formTitle.textContent = isEdit
+    ? tr('pages.songRequest.formTitleEdit', 'Խմբագրման հարցման ձև')
+    : tr('pages.songRequest.formTitleNew', 'Նոր երգի հարցման ձև');
   formSubtitle.textContent = isEdit
-    ? 'Ադմինը կտեսնի գործող տարբերակը և քո առաջարկած փոփոխությունը կողք կողքի։'
-    : 'Նոր երգը նախ կանցնի ստուգում, հետո միայն կհայտնվի ընդհանուր ցանկում։';
-  requestTypePill.textContent = isEdit ? 'Տեսակ՝ խմբագրման առաջարկ' : 'Տեսակ՝ նոր երգ';
+    ? tr('pages.songRequest.formSubtitleEdit', 'Ադմինը կտեսնի գործող տարբերակը և քո առաջարկած փոփոխությունը կողք կողքի։')
+    : tr('pages.songRequest.formSubtitleNew', 'Նոր երգը նախ կանցնի ստուգում, հետո միայն կհայտնվի ընդհանուր ցանկում։');
+  requestTypePill.textContent = isEdit
+    ? tr('pages.songRequest.typeEdit', 'Տեսակ՝ խմբագրման առաջարկ')
+    : tr('pages.songRequest.typeNew', 'Տեսակ՝ նոր երգ');
   cancelRequestBtn.href = withAppSource(sourcePath);
 }
 
@@ -1003,12 +1258,12 @@ function fillSong(song){
   fields.tags.value = song.tags || '';
   fields.chords.value = song.chords || '';
   fields.lyrics.value = song.lyrics || '';
-  requestSongPill.textContent = `Երգ՝ ${variants.hy || song.title || ('#' + songId)}`;
+  requestSongPill.textContent = `${tr('pages.songRequest.songNew', 'Երգ՝ նոր առաջարկ').replace(/[:：].*$/, ':')} ${variants.hy || song.title || ('#' + songId)}`;
 }
 
 async function loadSongIfNeeded(){
   if(!(songId > 0)) {
-    requestSongPill.textContent = 'Երգ՝ նոր առաջարկ';
+    requestSongPill.textContent = tr('pages.songRequest.songNew', 'Երգ՝ նոր առաջարկ');
     return;
   }
 
@@ -1016,12 +1271,12 @@ async function loadSongIfNeeded(){
     const res = await fetch(buildSongApiUrl(songId), { credentials:'include' });
     const song = await res.json();
     if(!res.ok || !song || !song.id){
-      showStatus('Չհաջողվեց բեռնել ընտրված երգը։ Կարող ես հարցումը լրացնել նաև ձեռքով։', 'error');
+      showStatus(tr('pages.songRequest.statusLoadSongError', 'Չհաջողվեց բեռնել ընտրված երգը։ Կարող ես հարցումը լրացնել նաև ձեռքով։'), 'error');
       return;
     }
     fillSong(song);
   }catch(error){
-    showStatus('Չհաջողվեց բեռնել ընտրված երգը։ Կարող ես հարցումը լրացնել նաև ձեռքով։', 'error');
+    showStatus(tr('pages.songRequest.statusLoadSongError', 'Չհաջողվեց բեռնել ընտրված երգը։ Կարող ես հարցումը լրացնել նաև ձեռքով։'), 'error');
   }
 }
 
@@ -1045,15 +1300,16 @@ function collectPayload(){
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
+  window.WP?.releaseLoader?.(null, 0);
 
   if(!authState.loggedIn){
-    showStatus('Հարցում ուղարկելու համար նախ մուտք գործիր։', 'error');
+    showStatus(tr('pages.songRequest.statusNeedLogin', 'Հարցում ուղարկելու համար նախ մուտք գործիր։'), 'error');
     return;
   }
 
   const payload = collectPayload();
   submitRequestBtn.disabled = true;
-  showStatus('Հարցումը ուղարկվում է մոդերացիայի...', 'info');
+  showStatus(tr('pages.songRequest.statusSubmitting', 'Հարցումը ուղարկվում է մոդերացիայի...'), 'info');
 
   try{
     const res = await fetch('/song_requests_api.php?action=submit_request', {
@@ -1065,10 +1321,12 @@ form.addEventListener('submit', async (event) => {
     const data = await res.json().catch(() => ({}));
 
     if(!res.ok || !data || data.ok === false){
-      throw new Error((data && data.message) ? data.message : 'Չհաջողվեց ուղարկել հարցումը։');
+      throw new Error((data && data.message) ? data.message : tr('pages.songRequest.statusSubmitError', 'Չհաջողվեց ուղարկել հարցումը։'));
     }
 
-    showStatus(data.message || 'Հարցումը ուղարկվեց։', 'success');
+    const successMessage = data.message || tr('pages.songRequest.statusSent', 'Հարցումը ուղարկվեց։');
+    showStatus(successMessage, 'success');
+    showSuccessModal(successMessage);
     fields.submittedMessage.value = '';
     if(payload.request_type === 'new'){
       fields.titleHy.value = '';
@@ -1083,8 +1341,9 @@ form.addEventListener('submit', async (event) => {
       fields.lyrics.value = '';
     }
   }catch(error){
-    showStatus(error && error.message ? error.message : 'Չհաջողվեց ուղարկել հարցումը։', 'error');
+    showStatus(error && error.message ? error.message : tr('pages.songRequest.statusSubmitError', 'Չհաջողվեց ուղարկել հարցումը։'), 'error');
   } finally {
+    window.WP?.releaseLoader?.(null, 0);
     submitRequestBtn.disabled = !authState.loggedIn;
   }
 });

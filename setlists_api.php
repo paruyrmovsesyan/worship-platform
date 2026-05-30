@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 error_reporting(E_ALL);
-ini_set('display_errors', '1');
+ini_set('display_errors', '0');
 
 header("Content-Type: application/json; charset=UTF-8");
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
@@ -22,7 +22,7 @@ function out($arr, $code = 200){
 $action = $_GET['action'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-$publicActions = ['get_public_setlist'];
+$publicActions = ['get_public_setlist', 'get_setlist_song_nav'];
 $lang = wp_translation_requested_lang();
 
 if (empty($_SESSION['user_id']) && !in_array($action, $publicActions, true)) {
@@ -59,6 +59,82 @@ function requireSetlistOwner(PDO $pdo, int $setlistId, int $uid){
   return $row;
 }
 
+function ensureSetlistAccessTable(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS setlist_user_access (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      setlist_id INT UNSIGNED NOT NULL,
+      owner_user_id INT UNSIGNED NOT NULL,
+      grantee_user_id INT UNSIGNED NOT NULL,
+      grantee_email VARCHAR(190) NULL,
+      expires_at DATETIME NOT NULL,
+      revoked_at DATETIME NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY uniq_setlist_grantee (setlist_id, grantee_user_id),
+      KEY idx_grantee_active (grantee_user_id, revoked_at, expires_at),
+      KEY idx_owner (owner_user_id),
+      KEY idx_setlist (setlist_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+}
+
+function decorateSetlistAccess(array $row, string $role, bool $canEdit, ?array $access = null): array {
+  $row['access_role'] = $role;
+  $row['can_edit'] = $canEdit ? 1 : 0;
+  $row['access_expires_at'] = $access['expires_at'] ?? ($row['access_expires_at'] ?? null);
+  $row['access_id'] = isset($access['id']) ? (int)$access['id'] : (isset($row['access_id']) ? (int)$row['access_id'] : null);
+  return $row;
+}
+
+function requireSetlistReadable(PDO $pdo, int $setlistId, int $uid): array {
+  $st = $pdo->prepare("
+    SELECT s.*, NULL AS owner_name, NULL AS owner_email
+    FROM setlists s
+    WHERE s.id=? AND s.user_id=?
+    LIMIT 1
+  ");
+  $st->execute([$setlistId, $uid]);
+  $row = $st->fetch(PDO::FETCH_ASSOC);
+  if ($row) {
+    return decorateSetlistAccess($row, 'owner', true);
+  }
+
+  $st = $pdo->prepare("
+    SELECT s.*, a.id AS access_id, a.expires_at AS access_expires_at,
+           u.name AS owner_name, u.email AS owner_email
+    FROM setlist_user_access a
+    JOIN setlists s ON s.id = a.setlist_id
+    LEFT JOIN users u ON u.id = s.user_id
+    WHERE a.setlist_id = ?
+      AND a.grantee_user_id = ?
+      AND a.revoked_at IS NULL
+      AND a.expires_at > NOW()
+      AND s.status = 'active'
+    LIMIT 1
+  ");
+  $st->execute([$setlistId, $uid]);
+  $row = $st->fetch(PDO::FETCH_ASSOC);
+  if (!$row) {
+    out(["error" => "Setlist not found"], 404);
+  }
+
+  return decorateSetlistAccess($row, 'shared', false, [
+    'id' => $row['access_id'] ?? null,
+    'expires_at' => $row['access_expires_at'] ?? null,
+  ]);
+}
+
+function findUserByEmail(PDO $pdo, string $email): ?array {
+  $st = $pdo->prepare("SELECT id, name, email FROM users WHERE LOWER(email)=LOWER(?) LIMIT 1");
+  $st->execute([$email]);
+  $row = $st->fetch(PDO::FETCH_ASSOC);
+  return $row ?: null;
+}
+
+ensureSetlistAccessTable($pdo);
+
 /* CREATE SETLIST */
 if ($action === 'create_setlist' && $method === 'POST') {
     try {
@@ -94,29 +170,71 @@ if ($action === 'get_setlists' && $method === 'GET') {
   if ($status !== '') {
     $st = $pdo->prepare("
       SELECT s.*,
+        NULL AS access_id,
+        NULL AS access_expires_at,
+        NULL AS owner_name,
+        NULL AS owner_email,
+        'owner' AS access_role,
+        1 AS can_edit,
         (SELECT COUNT(*) FROM setlist_items i WHERE i.setlist_id = s.id) AS items_count
       FROM setlists s
       WHERE s.user_id = ? AND s.status = ?
       ORDER BY s.updated_at DESC, s.id DESC
     ");
     $st->execute([$uid, $status]);
+    $rows = $st->fetchAll(PDO::FETCH_ASSOC);
   } else {
     $st = $pdo->prepare("
       SELECT s.*,
+        NULL AS access_id,
+        NULL AS access_expires_at,
+        NULL AS owner_name,
+        NULL AS owner_email,
+        'owner' AS access_role,
+        1 AS can_edit,
         (SELECT COUNT(*) FROM setlist_items i WHERE i.setlist_id = s.id) AS items_count
       FROM setlists s
       WHERE s.user_id = ?
-      ORDER BY s.updated_at DESC, s.id DESC
     ");
     $st->execute([$uid]);
+    $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+
+    $sharedSt = $pdo->prepare("
+      SELECT s.*,
+        a.id AS access_id,
+        a.expires_at AS access_expires_at,
+        u.name AS owner_name,
+        u.email AS owner_email,
+        'shared' AS access_role,
+        0 AS can_edit,
+        (SELECT COUNT(*) FROM setlist_items i WHERE i.setlist_id = s.id) AS items_count
+      FROM setlist_user_access a
+      JOIN setlists s ON s.id = a.setlist_id
+      LEFT JOIN users u ON u.id = s.user_id
+      WHERE a.grantee_user_id = ?
+        AND a.revoked_at IS NULL
+        AND a.expires_at > NOW()
+        AND s.status = 'active'
+    ");
+    $sharedSt->execute([$uid]);
+    $rows = array_merge($rows, $sharedSt->fetchAll(PDO::FETCH_ASSOC));
   }
 
-  $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+  usort($rows, static function($a, $b) {
+    $aShared = (($a['access_role'] ?? 'owner') === 'shared') ? 1 : 0;
+    $bShared = (($b['access_role'] ?? 'owner') === 'shared') ? 1 : 0;
+    if ($aShared !== $bShared) return $aShared <=> $bShared;
+    $aTime = strtotime((string)($a['updated_at'] ?? $a['created_at'] ?? '')) ?: 0;
+    $bTime = strtotime((string)($b['updated_at'] ?? $b['created_at'] ?? '')) ?: 0;
+    return $bTime <=> $aTime;
+  });
 
   foreach ($rows as &$r) {
     $r['id'] = (int)$r['id'];
     $r['user_id'] = (int)$r['user_id'];
     $r['items_count'] = (int)$r['items_count'];
+    $r['access_id'] = $r['access_id'] !== null ? (int)$r['access_id'] : null;
+    $r['can_edit'] = (int)($r['can_edit'] ?? 0);
   }
   unset($r);
 
@@ -134,9 +252,10 @@ if ($action === 'get_setlist' && $method === 'GET') {
   $setlist_id = (int)($_GET['setlist_id'] ?? 0);
   if ($setlist_id <= 0) out(["error" => "Invalid setlist_id"], 400);
 
-  $setlist = requireSetlistOwner($pdo, $setlist_id, $uid);
+  $setlist = requireSetlistReadable($pdo, $setlist_id, $uid);
   $setlist['id'] = (int)$setlist['id'];
   $setlist['user_id'] = (int)$setlist['user_id'];
+  $setlist['can_edit'] = (int)($setlist['can_edit'] ?? 0);
   $setlist = wp_translation_translate_row($setlist, [
     'name' => 'setlists.single.name',
     'description' => 'setlists.single.description',
@@ -144,6 +263,118 @@ if ($action === 'get_setlist' && $method === 'GET') {
   ], $lang);
 
   out($setlist);
+}
+
+/* LIST USER ACCESS FOR SETLIST */
+if ($action === 'list_setlist_access' && $method === 'GET') {
+  $setlist_id = (int)($_GET['setlist_id'] ?? 0);
+  if ($setlist_id <= 0) out(["error" => "Invalid setlist_id"], 400);
+
+  requireSetlistOwner($pdo, $setlist_id, $uid);
+
+  $st = $pdo->prepare("
+    SELECT a.id, a.setlist_id, a.grantee_user_id, a.grantee_email, a.expires_at,
+           a.revoked_at, a.created_at, a.updated_at,
+           u.name AS grantee_name, u.email AS user_email
+    FROM setlist_user_access a
+    LEFT JOIN users u ON u.id = a.grantee_user_id
+    WHERE a.setlist_id = ? AND a.owner_user_id = ?
+    ORDER BY
+      CASE
+        WHEN a.revoked_at IS NULL AND a.expires_at > NOW() THEN 0
+        WHEN a.revoked_at IS NULL THEN 1
+        ELSE 2
+      END,
+      a.expires_at ASC,
+      a.created_at DESC
+  ");
+  $st->execute([$setlist_id, $uid]);
+  $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+
+  $now = time();
+  foreach ($rows as &$r) {
+    $r['id'] = (int)$r['id'];
+    $r['setlist_id'] = (int)$r['setlist_id'];
+    $r['grantee_user_id'] = (int)$r['grantee_user_id'];
+    $expiresTs = strtotime((string)$r['expires_at']) ?: 0;
+    $r['status'] = $r['revoked_at'] ? 'revoked' : ($expiresTs > $now ? 'active' : 'expired');
+    $r['email'] = $r['user_email'] ?: $r['grantee_email'];
+  }
+  unset($r);
+
+  out($rows);
+}
+
+/* GRANT USER ACCESS TO SETLIST */
+if ($action === 'grant_setlist_access' && $method === 'POST') {
+  $d = readJson();
+  $setlist_id = (int)($d['setlist_id'] ?? 0);
+  $email = trim((string)($d['email'] ?? ''));
+  $expiresRaw = trim((string)($d['expires_at'] ?? ''));
+
+  if ($setlist_id <= 0) out(["error" => "Invalid setlist_id"], 400);
+  if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) out(["error" => "Invalid email"], 400);
+  if ($expiresRaw === '') out(["error" => "Expiration required"], 400);
+
+  requireSetlistOwner($pdo, $setlist_id, $uid);
+  $user = findUserByEmail($pdo, $email);
+  if (!$user) out(["error" => "User not found"], 404);
+
+  $granteeId = (int)$user['id'];
+  if ($granteeId === $uid) out(["error" => "Cannot grant access to yourself"], 400);
+
+  try {
+    $expires = new DateTimeImmutable($expiresRaw);
+  } catch (Throwable $e) {
+    out(["error" => "Invalid expiration"], 400);
+  }
+
+  if ($expires->getTimestamp() <= time()) {
+    out(["error" => "Expiration must be in the future"], 400);
+  }
+
+  $expiresSql = $expires->format('Y-m-d H:i:s');
+  $st = $pdo->prepare("
+    INSERT INTO setlist_user_access
+      (setlist_id, owner_user_id, grantee_user_id, grantee_email, expires_at, revoked_at)
+    VALUES (?, ?, ?, ?, ?, NULL)
+    ON DUPLICATE KEY UPDATE
+      owner_user_id = VALUES(owner_user_id),
+      grantee_email = VALUES(grantee_email),
+      expires_at = VALUES(expires_at),
+      revoked_at = NULL,
+      updated_at = NOW()
+  ");
+  $st->execute([$setlist_id, $uid, $granteeId, $user['email'] ?: $email, $expiresSql]);
+
+  out([
+    "ok" => true,
+    "user" => [
+      "id" => $granteeId,
+      "name" => $user['name'] ?? '',
+      "email" => $user['email'] ?? $email,
+    ],
+    "expires_at" => $expiresSql
+  ]);
+}
+
+/* REVOKE USER ACCESS TO SETLIST */
+if ($action === 'revoke_setlist_access' && $method === 'POST') {
+  $d = readJson();
+  $setlist_id = (int)($d['setlist_id'] ?? 0);
+  $access_id = (int)($d['access_id'] ?? 0);
+
+  if ($setlist_id <= 0 || $access_id <= 0) out(["error" => "Invalid data"], 400);
+  requireSetlistOwner($pdo, $setlist_id, $uid);
+
+  $st = $pdo->prepare("
+    UPDATE setlist_user_access
+    SET revoked_at = NOW(), updated_at = NOW()
+    WHERE id = ? AND setlist_id = ? AND owner_user_id = ?
+  ");
+  $st->execute([$access_id, $setlist_id, $uid]);
+
+  out(["ok" => true]);
 }
 
 /* RENAME / UPDATE SETLIST */
@@ -286,7 +517,7 @@ if ($action === 'get_setlist_items' && $method === 'GET') {
   $setlist_id = (int)($_GET['setlist_id'] ?? 0);
   if ($setlist_id <= 0) out(["error" => "Invalid setlist_id"], 400);
 
-  $setlist = requireSetlistOwner($pdo, $setlist_id, $uid);
+  $setlist = requireSetlistReadable($pdo, $setlist_id, $uid);
 
   $st = $pdo->prepare("
     SELECT i.*,
@@ -314,11 +545,21 @@ if ($action === 'get_setlist_items' && $method === 'GET') {
 
   $setlist = wp_translation_translate_row([
     "id" => (int)$setlist['id'],
+    "user_id" => (int)$setlist['user_id'],
     "name" => $setlist['name'],
     "description" => $setlist['description'],
     "service_date" => $setlist['service_date'],
     "service_type" => $setlist['service_type'],
-    "status" => $setlist['status']
+    "status" => $setlist['status'],
+    "created_at" => $setlist['created_at'] ?? null,
+    "updated_at" => $setlist['updated_at'] ?? null,
+    "share_token" => $setlist['share_token'] ?? null,
+    "access_role" => $setlist['access_role'] ?? 'owner',
+    "can_edit" => (int)($setlist['can_edit'] ?? 0),
+    "access_id" => isset($setlist['access_id']) ? (int)$setlist['access_id'] : null,
+    "access_expires_at" => $setlist['access_expires_at'] ?? null,
+    "owner_name" => $setlist['owner_name'] ?? null,
+    "owner_email" => $setlist['owner_email'] ?? null
   ], [
     'name' => 'setlists.items.setlist_name',
     'description' => 'setlists.items.setlist_description',
@@ -527,15 +768,20 @@ if ($action === 'search_songs' && $method === 'GET') {
   $like = '%' . $q . '%';
 
   $st = $pdo->prepare("
-    SELECT id, title, artist, song_key, tags
+    SELECT id, title, artist, song_key, tags,
+           title_hy, title_lat, title_en, title_ru
     FROM songs
     WHERE title LIKE ?
+       OR COALESCE(title_hy, '') LIKE ?
+       OR COALESCE(title_lat, '') LIKE ?
+       OR COALESCE(title_en, '') LIKE ?
+       OR COALESCE(title_ru, '') LIKE ?
        OR artist LIKE ?
        OR tags LIKE ?
-    ORDER BY title ASC
+    ORDER BY COALESCE(NULLIF(title_hy, ''), NULLIF(title, ''), id) ASC
     LIMIT 30
   ");
-  $st->execute([$like, $like, $like]);
+  $st->execute([$like, $like, $like, $like, $like, $like, $like]);
 
   $rows = $st->fetchAll(PDO::FETCH_ASSOC);
 
@@ -561,12 +807,29 @@ if ($action === 'search_songs' && $method === 'GET') {
 if ($action === 'get_setlist_song_nav' && $method === 'GET') {
   $setlist_id = (int)($_GET['setlist_id'] ?? 0);
   $song_id = (int)($_GET['song_id'] ?? 0);
+  $item_id = (int)($_GET['item_id'] ?? 0);
+  $token = trim((string)($_GET['token'] ?? ''));
 
-  if ($setlist_id <= 0 || $song_id <= 0) {
+  if ($song_id <= 0 || ($setlist_id <= 0 && $token === '')) {
     out(["error" => "Invalid data"], 400);
   }
 
-  $setlist = requireSetlistOwner($pdo, $setlist_id, $uid);
+  if ($token !== '') {
+    $st = $pdo->prepare("
+      SELECT *
+      FROM setlists
+      WHERE share_token = ?
+      LIMIT 1
+    ");
+    $st->execute([$token]);
+    $setlist = $st->fetch(PDO::FETCH_ASSOC);
+    if (!$setlist) {
+      out(["error" => "Setlist not found"], 404);
+    }
+    $setlist_id = (int)$setlist['id'];
+  } else {
+    $setlist = requireSetlistReadable($pdo, $setlist_id, $uid);
+  }
 
   $st = $pdo->prepare("
   SELECT
@@ -611,10 +874,21 @@ if ($action === 'get_setlist_song_nav' && $method === 'GET') {
 
   $index = -1;
 
-  foreach ($rows as $k => $row) {
-    if ((int)$row['song_id'] === $song_id) {
-      $index = $k;
-      break;
+  if ($item_id > 0) {
+    foreach ($rows as $k => $row) {
+      if ((int)$row['id'] === $item_id) {
+        $index = $k;
+        break;
+      }
+    }
+  }
+
+  if ($index < 0) {
+    foreach ($rows as $k => $row) {
+      if ((int)$row['song_id'] === $song_id) {
+        $index = $k;
+        break;
+      }
     }
   }
 
@@ -633,6 +907,7 @@ if ($action === 'get_setlist_song_nav' && $method === 'GET') {
   if (!$row) return null;
 
   return [
+    "item_id" => (int)$row["id"],
     "id" => (int)$row["song_id"],
     "title" => (string)($row["song_title"] ?? ''),
     "target_key" => $row["target_key"] !== null ? (string)$row["target_key"] : null,
@@ -651,7 +926,8 @@ if ($action === 'get_setlist_song_nav' && $method === 'GET') {
     "total" => count($rows),
     "prev" => $normalize($prev),
     "current" => $normalize($current),
-    "next" => $normalize($next)
+    "next" => $normalize($next),
+    "token" => $token !== '' ? $token : null
   ]);
 }
 

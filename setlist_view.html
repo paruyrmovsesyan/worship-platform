@@ -20,6 +20,7 @@
   <meta name="theme-color" content="#0b1020">
   <style id="wp-prepaint-bg">html,body{background:#0b1020;color-scheme:dark}</style>
   <link rel="stylesheet" href="nav.css">
+  <script src="/i18n.js" defer></script>
   <script src="/loader.js" defer></script>
   <script src="/site_guard.js" defer></script>
   <style>
@@ -98,14 +99,16 @@
     .summary-strip{
       display:grid;
       grid-template-columns:repeat(4, minmax(0,1fr));
-      gap:10px;
-      margin:16px 0 18px;
+      gap:12px;
+      margin:18px 0 20px;
     }
 
     .summary-card{
-      padding:15px;
-      border-radius:16px;
-      background:rgba(255,255,255,.04);
+      padding:16px;
+      border-radius:20px;
+      background:
+        linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.026)),
+        radial-gradient(circle at top right,rgba(89,118,255,.14),transparent 48%);
       border:1px solid rgba(255,255,255,.07);
     }
 
@@ -147,6 +150,58 @@
       display:flex;
       gap:8px;
       flex-wrap:wrap;
+      align-items:flex-start;
+    }
+
+    .more-actions{
+      position:relative;
+    }
+
+    .more-actions summary{
+      list-style:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      min-height:44px;
+      padding:11px 14px;
+      border-radius:12px;
+      cursor:pointer;
+      color:var(--text);
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.08);
+      font-weight:700;
+      user-select:none;
+    }
+
+    .more-actions summary::-webkit-details-marker{
+      display:none;
+    }
+
+    .more-actions[open] summary{
+      background:rgba(72,98,176,.18);
+      border-color:rgba(111,134,220,.24);
+    }
+
+    .more-actions-menu{
+      position:absolute;
+      right:0;
+      top:calc(100% + 10px);
+      width:min(280px, 78vw);
+      padding:10px;
+      border-radius:16px;
+      background:rgba(14,20,36,.96);
+      border:1px solid rgba(255,255,255,.09);
+      box-shadow:0 18px 36px rgba(0,0,0,.34);
+      display:grid;
+      gap:8px;
+      z-index:40;
+    }
+
+    .more-actions-menu .secondary,
+    .more-actions-menu .danger{
+      width:100%;
+      justify-content:flex-start;
     }
 
     button, .btn, input, textarea{
@@ -231,10 +286,10 @@ select option{
 
     .song-row{
       display:grid;
-      grid-template-columns:minmax(0,1fr) auto;
+      grid-template-columns:auto minmax(0,1fr) auto;
       gap:14px;
       align-items:flex-start;
-      padding:15px;
+      padding:18px;
       transition:border-color .18s ease, background .18s ease, transform .18s ease;
     }
 
@@ -247,6 +302,21 @@ select option{
     .song-main{
       min-width:0;
       flex:1;
+    }
+
+    .song-order{
+      width:38px;
+      height:38px;
+      border-radius:14px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      font-size:14px;
+      font-weight:900;
+      color:#dce5ff;
+      flex:0 0 auto;
     }
 
     .song-title{
@@ -271,11 +341,61 @@ select option{
       flex-wrap:wrap;
     }
 
+    .song-chip-row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    .song-chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:5px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.045);
+      border:1px solid rgba(255,255,255,.06);
+      color:var(--text);
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .song-note{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.05);
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.55;
+    }
+
     .section-row{
-      padding:15px;
-      background:rgba(107,78,255,.12);
+      padding:16px 18px;
+      background:
+        linear-gradient(180deg,rgba(107,78,255,.16),rgba(107,78,255,.1)),
+        radial-gradient(circle at top right,rgba(184,150,255,.12),transparent 50%);
       border-color:rgba(107,78,255,.22);
       font-weight:800;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .section-order{
+      width:34px;
+      height:34px;
+      border-radius:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.08);
+      color:#f0f3ff;
+      font-size:13px;
+      font-weight:900;
     }
 
     .empty{
@@ -395,6 +515,20 @@ select option{
       .actions button{
         flex:1 1 calc(50% - 8px);
       }
+
+      .more-actions{
+        width:100%;
+      }
+
+      .more-actions summary{
+        width:100%;
+      }
+
+      .more-actions-menu{
+        position:static;
+        width:100%;
+        margin-top:8px;
+      }
     }
     
 
@@ -434,6 +568,12 @@ select option{
   background:rgba(255,107,107,.14);
   color:#ffb3b3;
   border-color:rgba(255,107,107,.22);
+}
+
+.shared-badge{
+  background:rgba(96,124,255,.15);
+  color:#c9d5ff;
+  border-color:rgba(137,164,255,.28);
 }
 
 .icon-only-mobile{
@@ -640,30 +780,35 @@ select option{
     <span class="btn-text">Բացել հասանելիությունը</span>
   </button>
 
-  <button id="copyShareBtn" class="secondary icon-only-mobile" type="button" style="display:none;" title="Պատճենել հղումը" aria-label="Պատճենել հղումը">
-    <span class="btn-ico">⧉</span>
-    <span class="btn-text">Պատճենել հղումը</span>
-  </button>
+  <details class="more-actions">
+    <summary>Ավելին</summary>
+    <div class="more-actions-menu">
+      <button id="copyShareBtn" class="secondary icon-only-mobile" type="button" style="display:none;" title="Պատճենել հղումը" aria-label="Պատճենել հղումը">
+        <span class="btn-ico">⧉</span>
+        <span class="btn-text">Պատճենել հղումը</span>
+      </button>
 
-  <button id="disableShareBtn" class="secondary icon-only-mobile" type="button" style="display:none;" title="Փակել հասանելիությունը" aria-label="Փակել հասանելիությունը">
-    <span class="btn-ico">🔒</span>
-    <span class="btn-text">Փակել հասանելիությունը</span>
-  </button>
+      <button id="disableShareBtn" class="secondary icon-only-mobile" type="button" style="display:none;" title="Փակել հասանելիությունը" aria-label="Փակել հասանելիությունը">
+        <span class="btn-ico">🔒</span>
+        <span class="btn-text">Փակել հասանելիությունը</span>
+      </button>
 
-  <button id="archiveBtn" class="secondary icon-only-mobile" type="button" title="Արխիվ" aria-label="Արխիվ">
-  <span class="btn-ico" id="archiveBtnIcon">🗂️</span>
-  <span class="btn-text" id="archiveBtnText">Արխիվ</span>
-</button>
+      <button id="archiveBtn" class="secondary icon-only-mobile" type="button" title="Արխիվ" aria-label="Արխիվ">
+        <span class="btn-ico" id="archiveBtnIcon">🗂️</span>
+        <span class="btn-text" id="archiveBtnText">Արխիվ</span>
+      </button>
 
-  <button id="duplicateBtn" class="secondary icon-only-mobile" type="button" title="Կրկնօրինակել" aria-label="Կրկնօրինակել">
-    <span class="btn-ico">⎘</span>
-    <span class="btn-text">Կրկնօրինակել</span>
-  </button>
+      <button id="duplicateBtn" class="secondary icon-only-mobile" type="button" title="Կրկնօրինակել" aria-label="Կրկնօրինակել">
+        <span class="btn-ico">⎘</span>
+        <span class="btn-text">Կրկնօրինակել</span>
+      </button>
 
-  <button id="deleteBtn" class="danger icon-only-mobile" type="button" title="Ջնջել" aria-label="Ջնջել">
-    <span class="btn-ico">🗑</span>
-    <span class="btn-text">Ջնջել</span>
-  </button>
+      <button id="deleteBtn" class="danger icon-only-mobile" type="button" title="Ջնջել" aria-label="Ջնջել">
+        <span class="btn-ico">🗑</span>
+        <span class="btn-text">Ջնջել</span>
+      </button>
+    </div>
+  </details>
 </div>
 </div>
 
@@ -811,9 +956,11 @@ select option{
     const summarySectionsCount = $('summarySectionsCount');
     const summaryRequiredCount = $('summaryRequiredCount');
 
+    const editBtn = $('editBtn');
     const shareBtn = $('shareBtn');
     const copyShareBtn = $('copyShareBtn');
     const disableShareBtn = $('disableShareBtn');
+    const moreActions = document.querySelector('.more-actions');
 
     const setlistAccessBadge = $('setlistAccessBadge');
 
@@ -824,14 +971,25 @@ select option{
     const capoAskCancelBtn = $('capoAskCancelBtn');
     const capoAskOpenBtn = $('capoAskOpenBtn');
 
+    function canEditCurrentSetlist(){
+      return !!currentSetlist && Number(currentSetlist.can_edit ?? 1) === 1 && (currentSetlist.access_role || 'owner') !== 'shared';
+    }
+
     let pendingSongOpenItem = null;
 
     let currentShareUrl = null;
+
+    function closeMoreActionsMenu(){
+      if(moreActions && moreActions.open){
+        moreActions.open = false;
+      }
+    }
     let currentSetlist = null;
     let currentItems = [];
     let currentItemSearch = '';
     let dragItemId = null;
     let songSearchTimer = null;
+    const SETLIST_VIEW_STATE_KEY = 'wp_setlist_view_state';
 
     function isStandaloneProgramMode(){
       try{
@@ -853,8 +1011,47 @@ select option{
       return status === 'archived' ? 'Արխիվ' : 'Ակտիվ';
     }
 
+    function readSetlistViewState(){
+      try{
+        const raw = localStorage.getItem(SETLIST_VIEW_STATE_KEY);
+        if(!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      }catch(e){
+        return {};
+      }
+    }
+
+    function writeSetlistViewState(nextState){
+      try{
+        const currentState = readSetlistViewState();
+        localStorage.setItem(SETLIST_VIEW_STATE_KEY, JSON.stringify({
+          ...currentState,
+          ...(nextState || {})
+        }));
+      }catch(e){}
+    }
+
+    function syncSetlistViewState(){
+      writeSetlistViewState({
+        selectedId: currentSetlistId || 0,
+        search: currentItemSearch || ''
+      });
+    }
+
     function formatServiceDate(value){
       if(!value) return 'Ամսաթիվ չկա';
+      const parsed = new Date(value);
+      if(Number.isNaN(parsed.getTime())) return value;
+      return parsed.toLocaleDateString('hy-AM', {
+        year:'numeric',
+        month:'short',
+        day:'numeric'
+      });
+    }
+
+    function formatSetlistTimestamp(value){
+      if(!value) return '—';
       const parsed = new Date(value);
       if(Number.isNaN(parsed.getTime())) return value;
       return parsed.toLocaleDateString('hy-AM', {
@@ -956,11 +1153,24 @@ select option{
     return;
   }
 
+  const canEdit = canEditCurrentSetlist();
+  if(editBtn) editBtn.style.display = canEdit ? '' : 'none';
+  if(shareBtn) shareBtn.style.display = canEdit ? '' : 'none';
+  if(copyShareBtn) copyShareBtn.style.display = canEdit ? copyShareBtn.style.display : 'none';
+  if(disableShareBtn) disableShareBtn.style.display = canEdit ? disableShareBtn.style.display : 'none';
+  if(moreActions) moreActions.style.display = canEdit ? '' : 'none';
+  if(setlistAccessBadge && !canEdit){
+    setlistAccessBadge.textContent = 'Տրված հասանելիություն';
+    setlistAccessBadge.className = 'share-badge shared-badge';
+  }
+
   setlistName.textContent = currentSetlist.name || 'Անանուն սեթլիստ';
   setlistDescription.textContent = currentSetlist.description || 'Նկարագրություն չկա';
-  setlistStatus.textContent = getStatusLabel(currentSetlist.status || 'active');
+  setlistStatus.textContent = canEdit ? getStatusLabel(currentSetlist.status || 'active') : 'Միայն դիտում';
   setlistType.textContent = currentSetlist.service_type || '—';
-  setlistDate.textContent = formatServiceDate(currentSetlist.service_date || '');
+  setlistDate.textContent = canEdit
+    ? `${formatServiceDate(currentSetlist.service_date || '')} • Թարմ. ${formatSetlistTimestamp(currentSetlist.updated_at || currentSetlist.created_at || '')}`
+    : `Ստեղծող՝ ${currentSetlist.owner_name || currentSetlist.owner_email || '—'} • Մինչև ${formatSetlistTimestamp(currentSetlist.access_expires_at || '')}`;
   itemsCount.textContent = `${currentItems.length} միավոր`;
 
   const songsCount = currentItems.filter(item => item.item_type !== 'section').length;
@@ -978,11 +1188,12 @@ select option{
     return;
   }
 
-  itemsList.innerHTML = visibleItems.map(item => {
+  itemsList.innerHTML = visibleItems.map((item, index) => {
     if(item.item_type === 'section'){
       return `
         <div class="section-row">
-          ${escapeHtml(item.title || 'Բաժին')}
+          <span class="section-order">${index + 1}</span>
+          <span>${escapeHtml(item.title || 'Բաժին')}</span>
         </div>
       `;
     }
@@ -993,18 +1204,19 @@ select option{
 
     return `
       <div class="song-row clickable" data-item-id="${Number(item.id)}">
+        <div class="song-order">${index + 1}</div>
         <div class="song-main">
           <div class="song-title">${escapeHtml(title)}</div>
-
-          <div class="song-sub">
-            <span>Սկզբնական: ${escapeHtml(item.original_key || '—')}</span>
-            <span>Թիրախ: ${escapeHtml(shownKey)}</span>
-            <span>Կատարող: ${escapeHtml(artist)}</span>
+          <div class="song-chip-row">
+            <span class="song-chip">Սկզբնական: ${escapeHtml(item.original_key || '—')}</span>
+            <span class="song-chip">Թիրախ: ${escapeHtml(shownKey)}</span>
+            <span class="song-chip">Կատարող: ${escapeHtml(artist)}</span>
+            ${Number(item.capo || 0) > 0 ? `<span class="song-chip">Capo ${escapeHtml(item.capo)}</span>` : ''}
             ${Number(item.is_required) ? `<span class="required-badge">★ Պարտադիր</span>` : ''}
           </div>
 
           ${item.notes ? `
-            <div style="margin-top:10px; color:var(--muted); font-size:13px;">
+            <div class="song-note">
               ${escapeHtml(item.notes)}
             </div>
           ` : ''}
@@ -1088,6 +1300,18 @@ select option{
 }
 
 async function refreshShareStatus(){
+  if(currentSetlist && !canEditCurrentSetlist()){
+    currentShareUrl = null;
+    if(shareBtn) shareBtn.style.display = 'none';
+    if(copyShareBtn) copyShareBtn.style.display = 'none';
+    if(disableShareBtn) disableShareBtn.style.display = 'none';
+    if(setlistAccessBadge){
+      setlistAccessBadge.textContent = 'Տրված հասանելիություն';
+      setlistAccessBadge.className = 'share-badge shared-badge';
+    }
+    return;
+  }
+
   try{
     const res = await api('get_share_status', 'GET', null, { setlist_id: currentSetlistId });
     currentShareUrl = res.share_url ? (window.location.origin + res.share_url) : null;
@@ -1153,6 +1377,7 @@ setlistPicker?.addEventListener('change', async () => {
   if(!nextId) return;
 
   currentSetlistId = nextId;
+  syncSetlistViewState();
 
   const url = new URL(window.location.href);
   url.searchParams.set('id', String(currentSetlistId));
@@ -1169,7 +1394,9 @@ async function loadSetlistsList(){
     const aArchived = a.status === 'archived' ? 1 : 0;
     const bArchived = b.status === 'archived' ? 1 : 0;
     if(aArchived !== bArchived) return aArchived - bArchived;
-    return 0;
+    const aTime = new Date(a.updated_at || a.created_at || 0).getTime() || 0;
+    const bTime = new Date(b.updated_at || b.created_at || 0).getTime() || 0;
+    return bTime - aTime;
   });
   renderSetlistPicker();
 }
@@ -1266,6 +1493,7 @@ function renderSetlistPicker(){
 
     itemSearchInput?.addEventListener('input', () => {
       currentItemSearch = itemSearchInput.value || '';
+      syncSetlistViewState();
       renderSetlist();
     });
 
@@ -1286,6 +1514,7 @@ document.getElementById('archiveBtn')?.addEventListener('click', async () => {
 
     await api(action, 'POST', { setlist_id: currentSetlistId });
     await loadSetlist();
+    closeMoreActionsMenu();
   }catch(err){
     alert(err.message);
   }
@@ -1294,6 +1523,7 @@ document.getElementById('archiveBtn')?.addEventListener('click', async () => {
 document.getElementById('duplicateBtn')?.addEventListener('click', async () => {
   try{
     const res = await api('duplicate_setlist', 'POST', { setlist_id: currentSetlistId });
+    closeMoreActionsMenu();
     window.location.href = withProgramSource('/setlist_view.html?id=' + encodeURIComponent(res.id)).toString();
   }catch(err){
     alert(err.message);
@@ -1305,6 +1535,7 @@ document.getElementById('deleteBtn')?.addEventListener('click', async () => {
 
   try{
     await api('delete_setlist', 'POST', { setlist_id: currentSetlistId });
+    closeMoreActionsMenu();
     window.location.href = withProgramSource('/setlists.html').toString();
   }catch(err){
     alert(err.message);
@@ -1362,6 +1593,7 @@ capoAskOpenBtn?.addEventListener('click', () => {
   }
 
   url.searchParams.set('setlist_id', String(currentSetlistId));
+  url.searchParams.set('setlist_item_id', String(Number(pendingSongOpenItem.id || 0)));
 
   capoAskModal.classList.remove('show');
   pendingSongOpenItem = null;
@@ -1371,10 +1603,20 @@ capoAskOpenBtn?.addEventListener('click', () => {
 
     (async function initPage(){
   try{
+    const savedState = readSetlistViewState();
+    if(!currentSetlistId && Number(savedState.selectedId || 0) > 0){
+      currentSetlistId = Number(savedState.selectedId || 0);
+    }
+    if(typeof savedState.search === 'string' && savedState.search){
+      currentItemSearch = savedState.search;
+      if(itemSearchInput) itemSearchInput.value = savedState.search;
+    }
+
     await loadSetlistsList();
 
     if(!currentSetlistId && currentSetlists.length){
       currentSetlistId = Number(currentSetlists[0].id);
+      syncSetlistViewState();
     }
 
     if(currentSetlistId){
@@ -1394,7 +1636,7 @@ capoAskOpenBtn?.addEventListener('click', () => {
   }
 })();
 
-    document.getElementById('shareBtn')?.addEventListener('click', async () => {
+document.getElementById('shareBtn')?.addEventListener('click', async () => {
   try{
     const res = await api('generate_share_link', 'POST', { setlist_id: currentSetlistId });
     currentShareUrl = window.location.origin + res.share_url;
@@ -1407,6 +1649,7 @@ capoAskOpenBtn?.addEventListener('click', () => {
     }
 
     await refreshShareStatus();
+    closeMoreActionsMenu();
   }catch(err){
     alert(err.message);
   }
@@ -1418,6 +1661,7 @@ document.getElementById('copyShareBtn')?.addEventListener('click', async () => {
   try{
     await navigator.clipboard.writeText(currentShareUrl);
     showMiniMessage('Հղումը պատճենվեց');
+    closeMoreActionsMenu();
   }catch(e){
     prompt('Պատճենի՛ր հղումը', currentShareUrl);
   }
@@ -1429,13 +1673,14 @@ document.getElementById('disableShareBtn')?.addEventListener('click', async () =
     currentShareUrl = null;
     await refreshShareStatus();
     showMiniMessage('Հասանելիությունը փակվեց');
+    closeMoreActionsMenu();
   }catch(err){
     alert(err.message);
   }
 });
 
     document.getElementById('editBtn')?.addEventListener('click', () => {
-  window.location.href = withProgramSource('/setlists.html?edit=' + encodeURIComponent(currentSetlistId)).toString();
+  window.location.href = withProgramSource('/setlist_edit.html?id=' + encodeURIComponent(currentSetlistId)).toString();
 });
 
 
