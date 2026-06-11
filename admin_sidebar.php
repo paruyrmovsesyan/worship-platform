@@ -20,7 +20,7 @@ $navItems = [
     <div class="brand-icon">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
     </div>
-    <div class="brand-text">Worship</div>
+    <div class="brand-text" style="font-size:13px; line-height:1.3; font-weight:800; letter-spacing:-0.2px;">Worship<br>Platform Admin</div>
   </div>
 
   <div class="nav-menu">
