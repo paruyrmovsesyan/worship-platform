@@ -173,11 +173,10 @@
         if (isJson) {
           const data = await r.json().catch(function(){ return null; });
           if (data && data.maintenance) {
-            showOverlay({
-              title: "⚠ Տեխնիկական աշխատանքներ",
-              message: data.message || "Կայքում ընթացքի մեջ են տեխնիկական աշխատանքներ։",
-              hideRetry: false
-            });
+            if (window.location.pathname !== "/maintenance.html") {
+              const msg = encodeURIComponent(data.message || "");
+              window.location.replace("/maintenance.html" + (msg ? "?message=" + msg : ""));
+            }
             return;
           }
 
@@ -219,11 +218,10 @@
         return;
       }
       if(data && data.maintenance){
-        showOverlay({
-          title: "⚠ Տեխնիկական աշխատանքներ",
-          message: data.message || "Կայքում ընթացքի մեջ են տեխնիկական աշխատանքներ։",
-          hideRetry: false
-        });
+        if (window.location.pathname !== "/maintenance.html") {
+          const msg = encodeURIComponent(data.message || "");
+          window.location.replace("/maintenance.html" + (msg ? "?message=" + msg : ""));
+        }
         return;
       }
 
