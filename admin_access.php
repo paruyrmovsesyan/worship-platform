@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/auth_bootstrap.php';
 require_once __DIR__ . '/version_config.php';
+require_once __DIR__ . '/admin_i18n.php';
 
 function wp_admin_cookie_secure(): bool {
     return !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';

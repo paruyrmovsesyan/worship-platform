@@ -99,7 +99,7 @@ $searchPlaceholder = 'Search stats...';
         <div class="stat">
           <div class="stat-row">
             <div>
-              <div class="stat-label">Total Songs</div>
+              <div class="stat-label"><?= __('Total Songs') ?></div>
               <div class="stat-value"><?= number_format($songCount) ?></div>
             </div>
             <div class="stat-icon" style="background:#e5f3ff; color:#228fff;">
@@ -115,7 +115,7 @@ $searchPlaceholder = 'Search stats...';
         <div class="stat">
           <div class="stat-row">
             <div>
-              <div class="stat-label">Total Users</div>
+              <div class="stat-label"><?= __('Total Users') ?></div>
               <div class="stat-value"><?= number_format($userCount) ?></div>
             </div>
             <div class="stat-icon" style="background:#f3ebff; color:#7d40ff;">

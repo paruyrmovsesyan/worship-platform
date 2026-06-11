@@ -286,8 +286,8 @@ $notifCount        = count($notifications);
       <!-- PAGE HEADING with working period toggle -->
       <div class="page-heading page-heading-row">
         <div>
-          <h1>Dashboard 😍</h1>
-          <p>Overview of your Worship platform · <strong><?= $periodLabel ?></strong></p>
+          <h1><?= __('Dashboard') ?> 😍</h1>
+          <p><?= __('Overview of your Worship platform') ?> · <strong><?= $periodLabel ?></strong></p>
         </div>
         <div class="period-toggle">
           <button
@@ -331,7 +331,7 @@ $notifCount        = count($notifications);
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>
             <?php endif; ?>
             <span id="trendSongsNew"><?= trendPct($songCountPeriod ?? 0, $songCountPrev) ?></span>
-            <span class="stat-trend-label">vs previous</span>
+            <span class="stat-trend-label"><?= __('vs previous') ?></span>
           </div>
         </div>
 
@@ -359,7 +359,7 @@ $notifCount        = count($notifications);
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>
             <?php endif; ?>
             <span id="trendUsersNew"><?= trendPct($userCountPeriod ?? 0, $userCountPrev) ?></span>
-            <span class="stat-trend-label">vs previous</span>
+            <span class="stat-trend-label"><?= __('vs previous') ?></span>
           </div>
         </div>
 
@@ -389,33 +389,33 @@ $notifCount        = count($notifications);
       <!-- SYSTEM STATUS + QUICK LINKS -->
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:32px;">
         <div class="card">
-          <h3 style="font-size:18px; font-weight:700; margin-bottom:20px;">System Status</h3>
+          <h3 style="font-size:18px; font-weight:700; margin-bottom:20px;"><?= __('System Status') ?></h3>
           <div style="display:flex; flex-direction:column; gap:14px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:600; color:var(--muted);">Database</span>
+              <span style="font-weight:600; color:var(--muted);"><?= __('Database') ?></span>
               <span class="badge <?= $dbOk ? 'badge-success' : 'badge-danger' ?>"><?= $dbOk ? '✓ Online' : '✗ Offline' ?><?= $dbOk ? ' ('.$dbMs.'ms)' : '' ?></span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:600; color:var(--muted);">PHP Version</span>
+              <span style="font-weight:600; color:var(--muted);"><?= __('PHP Version') ?></span>
               <span class="badge badge-neutral"><?= htmlspecialchars($phpVersion) ?></span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:600; color:var(--muted);">App Version</span>
+              <span style="font-weight:600; color:var(--muted);"><?= __('App Version') ?></span>
               <span class="badge badge-success"><?= htmlspecialchars($versionLabel) ?></span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:600; color:var(--muted);">Disk Free</span>
+              <span style="font-weight:600; color:var(--muted);"><?= __('Disk Free') ?></span>
               <span class="badge badge-neutral"><?= $diskFreeGb ?> GB</span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:600; color:var(--muted);">Memory Used</span>
+              <span style="font-weight:600; color:var(--muted);"><?= __('Memory Used') ?></span>
               <span class="badge badge-neutral"><?= $memUsedMb ?> MB</span>
             </div>
           </div>
         </div>
 
         <div class="card">
-          <h3 style="font-size:18px; font-weight:700; margin-bottom:20px;">Quick Actions</h3>
+          <h3 style="font-size:18px; font-weight:700; margin-bottom:20px;"><?= __('Quick Actions') ?></h3>
           <div style="display:flex; flex-direction:column; gap:12px;">
             <a href="/songs.php" class="btn" style="width:100%; justify-content:flex-start;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>

@@ -114,9 +114,9 @@ $searchPlaceholder = 'Search users...';
           <thead>
             <tr>
               <th>#</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
+              <th><?= __('NAME') ?></th>
+              <th><?= __('EMAIL') ?></th>
+              <th><?= __('ROLE') ?></th>
               <th>Admin</th>
               <th>Registered</th>
             </tr>
