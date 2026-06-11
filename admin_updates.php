@@ -1613,9 +1613,8 @@ $csrfToken = wp_admin_updates_csrf_token();
       </div>
 
       <?php if ($hasAnyAdminSectionAccess): ?>
-      <div class="settings-layout">
-        <aside class="settings-sidebar">
-          <div class="section-switcher vertical" role="tablist">
+      <div class="settings-dashboard" id="settingsDashboard">
+        <div class="section-switcher grid-view" role="tablist">
         <?php if (!empty($adminSectionPermissions["release"])): ?>
         <button class="section-tab active" type="button" data-section-tab="release">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
@@ -1688,10 +1687,16 @@ $csrfToken = wp_admin_updates_csrf_token();
                   </div>
         </button>
         <?php endif; ?>
-          </div>
-        </aside>
-        
-        <div class="settings-content">
+        </div>
+      </div>
+      
+      <div class="settings-content-wrapper" id="settingsContentWrapper" hidden>
+        <div class="section-back-nav">
+          <button type="button" class="btn" id="btnBackToDashboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Վերադառնալ կարգավորումներին
+          </button>
+        </div>
       <?php endif; ?>
 
       <div
@@ -5384,10 +5389,17 @@ $csrfToken = wp_admin_updates_csrf_token();
         }
       });
 
-      let initialSection = defaultSection || 'release';
+      let initialSection = defaultSection || 'all';
       try {
-        initialSection = window.localStorage.getItem(sectionStorageKey) || defaultSection || 'release';
+        initialSection = window.localStorage.getItem(sectionStorageKey) || defaultSection || 'all';
       } catch (error) {
+      }
+      // If URL has a specific section, use it. But if empty, stick to 'all'
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('section')) {
+        initialSection = urlParams.get('section');
+      } else {
+        initialSection = 'all'; // Default to dashboard grid!
       }
 
       setActiveSection(initialSection);

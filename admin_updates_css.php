@@ -27,63 +27,52 @@
 }
 
 
-/* ── SETTINGS 2-COLUMN LAYOUT ── */
-.settings-layout {
+/* ── SETTINGS DASHBOARD LAYOUT ── */
+.settings-dashboard {
+  margin-bottom: 32px;
+}
+.section-switcher.grid-view {
   display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 32px;
-  align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+@media (max-width: 600px) {
+  .section-switcher.grid-view { grid-template-columns: 1fr; }
 }
 
-@media (max-width: 1024px) {
-  .settings-layout {
-    grid-template-columns: 1fr;
-  }
-  .settings-sidebar {
-    position: sticky; top: 0; z-index: 10;
-    background: #f4f7fe; padding-bottom: 16px;
-    margin-bottom: 16px;
-  }
-  .section-switcher.vertical {
-    display: flex; flex-direction: row; overflow-x: auto;
-    padding-bottom: 8px;
-  }
-  .section-switcher.vertical .section-tab {
-    flex-direction: row; padding: 10px 16px;
-  }
-  .section-switcher.vertical .tab-text small { display: none; }
+.section-switcher.grid-view .section-tab {
+  display: flex; align-items: flex-start; justify-content: flex-start; gap: 16px;
+  padding: 24px; border-radius: 20px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--text); cursor: pointer; text-align: left;
+  transition: all .2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: var(--shadow-sm);
 }
-
-/* ── SETTINGS SIDEBAR MENU ── */
-.section-switcher.vertical {
-  display: flex; flex-direction: column; gap: 8px;
+.section-switcher.grid-view .section-tab:hover {
+  transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+  border-color: #cbd5e1;
 }
-
-.section-switcher.vertical .section-tab {
-  display: flex; align-items: flex-start; justify-content: flex-start; gap: 12px;
-  padding: 14px 16px; border-radius: 16px; border: 1px solid transparent;
-  background: transparent; color: var(--muted); cursor: pointer; text-align: left;
-  transition: all .2s; box-shadow: none; white-space: normal;
-}
-.section-switcher.vertical .section-tab:hover {
-  background: #fff; color: var(--text); border-color: #cbd5e1;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-}
-.section-switcher.vertical .section-tab.active {
-  background: #fff; color: var(--primary);
+.section-switcher.grid-view .section-tab.active {
+  /* Should not be active in grid view normally, but just in case */
   border-color: var(--primary);
-  box-shadow: 0 4px 15px rgba(67, 24, 255, 0.08);
 }
+
 .section-tab .icon {
-  width: 20px; height: 20px; flex-shrink: 0; stroke: currentColor;
-  margin-top: 2px;
+  width: 28px; height: 28px; flex-shrink: 0; stroke: var(--primary);
+  background: rgba(67, 24, 255, 0.08); padding: 8px; border-radius: 12px;
+  box-sizing: content-box;
 }
 .section-tab .tab-text {
-  display: flex; flex-direction: column; gap: 4px;
+  display: flex; flex-direction: column; gap: 6px;
 }
-.section-tab span { display: block; font-size: 14px; font-weight: 700; margin: 0; }
-.section-tab small { display: block; font-size: 12px; font-weight: 500; opacity: 0.8; line-height: 1.4; color: var(--muted); }
-.section-tab.active small { color: var(--primary); opacity: 0.8; }
+.section-tab span { display: block; font-size: 16px; font-weight: 800; margin: 0; letter-spacing: -0.2px; color: var(--text); }
+.section-tab small { display: block; font-size: 13px; font-weight: 500; opacity: 0.8; line-height: 1.5; color: var(--muted); }
+
+/* Back Button Area */
+.section-back-nav { margin-bottom: 24px; display: flex; align-items: center; }
+#btnBackToDashboard {
+  background: transparent; border: none; box-shadow: none; padding: 0;
+  color: var(--muted); font-size: 15px; font-weight: 700;
+}
+#btnBackToDashboard:hover { color: var(--primary); background: transparent; transform: translateX(-4px); }
 
 /* ── FORM ELEMENTS ── */
 .field { display: flex; flex-direction: column; gap: 8px; }
