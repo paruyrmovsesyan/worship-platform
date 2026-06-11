@@ -1957,7 +1957,7 @@ button.section-tab.nav-item.active svg {
           node.childNodes.forEach(translateNode);
         }
       }
-      document.addEventListener('DOMContentLoaded', () => {
+      document?.addEventListener('DOMContentLoaded', () => {
         translateNode(document.body);
       });
     }
@@ -1997,7 +1997,7 @@ button.section-tab.nav-item.active svg {
           node.childNodes.forEach(translateNode);
         }
       }
-      document.addEventListener('DOMContentLoaded', () => {
+      document?.addEventListener('DOMContentLoaded', () => {
         translateNode(document.body);
       });
     }
@@ -2009,27 +2009,7 @@ button.section-tab.nav-item.active svg {
     include __DIR__ . "/admin_sidebar.php";
   ?>
   <main class="app-main">
-    <header class="app-topbar">
-      <div class="date-display" style="color: var(--text); font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-        <span><?= date('F j, Y') ?></span>
-      </div>
-      <div class="topbar-right">
-        <div class="search-box">
-          <input type="search" placeholder="Search setting...">
-        </div>
-        <div style="width: 44px; height: 44px; border-radius: 50%; background: #ffffff; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 2px 10px rgba(0,0,0,0.02); cursor: pointer;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-          <span style="position: absolute; top: 12px; right: 12px; width: 8px; height: 8px; background: var(--danger); border-radius: 50%; border: 2px solid white;"></span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-          <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; box-shadow: 0 4px 10px rgba(67, 24, 255, 0.2);">
-            <?= strtoupper(substr($adminDisplayName ?? 'A', 0, 1)) ?>
-          </div>
-          <span style="font-weight: 700; font-size: 15px; color: var(--text);"><?= htmlspecialchars($adminDisplayName ?? 'Admin', ENT_QUOTES) ?></span>
-        </div>
-      </div>
-    </header>
+    <?php include __DIR__ . '/admin_topbar.php'; ?>
 
     <div class="app-content">
       <div class="page-header" style="padding-bottom: 0; border: none; align-items: flex-start; margin-bottom: 32px; display: flex; justify-content: space-between;">
@@ -5164,7 +5144,7 @@ button.section-tab.nav-item.active svg {
       const pushSettingsAutosave = createAutosaveController(pushAutosaveStatus, 'save_push_settings', buildPushSettingsFields, 700);
 
       document.querySelectorAll('[data-bump-target]').forEach((btn) => {
-        btn.addEventListener('click', () => {
+        btn?.addEventListener('click', () => {
           const target = btn.getAttribute('data-bump-target');
           const kind = btn.getAttribute('data-bump-kind') || 'patch';
 
@@ -5221,7 +5201,7 @@ button.section-tab.nav-item.active svg {
       });
 
       document.querySelectorAll('[data-maintenance-hours]').forEach((btn) => {
-        btn.addEventListener('click', () => {
+        btn?.addEventListener('click', () => {
           const hours = Number(btn.getAttribute('data-maintenance-hours') || '0');
           const start = nowLocalDate();
           const end = new Date(start.getTime() + hours * 60 * 60 * 1000);
@@ -5318,7 +5298,7 @@ button.section-tab.nav-item.active svg {
       });
 
       sectionTabs.forEach((tab) => {
-        tab.addEventListener('click', () => {
+        tab?.addEventListener('click', () => {
           setActiveSection(tab.getAttribute('data-section-tab') || 'release');
         });
       });
@@ -5353,7 +5333,7 @@ button.section-tab.nav-item.active svg {
       });
 
       document.querySelectorAll('[data-push-template]').forEach((btn) => {
-        btn.addEventListener('click', () => {
+        btn?.addEventListener('click', () => {
           applyPushTemplate(btn.getAttribute('data-push-template') || '');
         });
       });
@@ -5421,7 +5401,7 @@ button.section-tab.nav-item.active svg {
       });
 
       document.querySelectorAll('[data-translation-clear-cache]').forEach((button) => {
-        button.addEventListener('click', async () => {
+        button?.addEventListener('click', async () => {
           const lang = button.getAttribute('data-translation-clear-cache') || 'all';
           const label = lang === 'all'
             ? 'ամբողջ թարգմանությունների cache-ը'
@@ -5524,7 +5504,7 @@ button.section-tab.nav-item.active svg {
         }
       });
 
-      document.addEventListener('submit', async (event) => {
+      document?.addEventListener('submit', async (event) => {
         const target = event.target;
         if (!(target instanceof HTMLFormElement)) {
           return;
@@ -5598,7 +5578,7 @@ button.section-tab.nav-item.active svg {
         }
       });
 
-      document.addEventListener('change', (event) => {
+      document?.addEventListener('change', (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) {
           return;
@@ -5612,7 +5592,7 @@ button.section-tab.nav-item.active svg {
         }
       });
 
-      document.addEventListener('click', async (event) => {
+      document?.addEventListener('click', async (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) {
           return;
@@ -5643,7 +5623,7 @@ button.section-tab.nav-item.active svg {
       });
 
       document.querySelectorAll('input[name^="page_app_modes["]').forEach((input) => {
-        input.addEventListener('change', () => {
+        input?.addEventListener('change', () => {
           pageModesAutosave.schedule(300);
         });
       });
@@ -5745,14 +5725,14 @@ button.section-tab.nav-item.active svg {
         renderPushHistoryPage();
       });
 
-      window.addEventListener('focus', () => {
+      window?.addEventListener('focus', () => {
         const activeSection = sectionTabs.find((tab) => tab.classList.contains('active'))?.getAttribute('data-section-tab') || 'release';
         if (activeSection === 'devices') {
           window.location.reload();
         }
       });
 
-      document.addEventListener('visibilitychange', () => {
+      document?.addEventListener('visibilitychange', () => {
         const activeSection = sectionTabs.find((tab) => tab.classList.contains('active'))?.getAttribute('data-section-tab') || 'release';
         if (document.hidden) {
           stopDevicesRefresh();

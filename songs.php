@@ -835,27 +835,11 @@ button.section-tab.nav-item.active svg {
 
   <!-- MAIN -->
   <main class="app-main">
-    <header class="app-topbar">
-      <div class="date-display" style="color: var(--text); font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-        <span><?= date('F j, Y') ?></span>
-      </div>
-      <div class="topbar-right">
-        <div class="search-box">
-          <input id="search" type="search" placeholder="<?= __('Search by name, artist...') ?>">
-        </div>
-        <div style="width: 44px; height: 44px; border-radius: 50%; background: #ffffff; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 2px 10px rgba(0,0,0,0.02); cursor: pointer;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-          <span style="position: absolute; top: 12px; right: 12px; width: 8px; height: 8px; background: var(--danger); border-radius: 50%; border: 2px solid white;"></span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-          <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; box-shadow: 0 4px 10px rgba(67, 24, 255, 0.2);">
-            <?= strtoupper(substr($adminDisplayName, 0, 1)) ?>
-          </div>
-          <span style="font-weight: 700; font-size: 15px; color: var(--text);"><?= htmlspecialchars($adminDisplayName, ENT_QUOTES) ?></span>
-        </div>
-      </div>
-    </header>
+    <?php
+      $adminEmail = trim((string)($adminUser['email'] ?? ''));
+      $searchPlaceholder = 'Search by name, artist...';
+      include __DIR__ . '/admin_topbar.php';
+    ?>
 
     <div class="app-content">
       
@@ -1218,7 +1202,7 @@ const clearBtn = $('clearForm');
 const downloadTxtBtn = $('downloadTxt');
 const exportPdfBtn = $('exportPdf');
 const exportAllPdfBtn = $('exportAllPdf');
-const searchI = $('search');
+const searchI = $('topbarSearch');
 const tableBody = $('songsTable');
 const previewTitle = $('previewTitle');
 const previewMeta = $('previewMeta');
@@ -1407,14 +1391,14 @@ function updateAdminInstallBanner() {
 
   if (laterBtn && !laterBtn.dataset.bound) {
     laterBtn.dataset.bound = '1';
-    laterBtn.addEventListener('click', function() {
+    laterBtn?.addEventListener('click', function() {
       hideAdminInstallBanner(true);
     });
   }
 
   if (promptBtn && !promptBtn.dataset.bound) {
     promptBtn.dataset.bound = '1';
-    promptBtn.addEventListener('click', function() {
+    promptBtn?.addEventListener('click', function() {
       handleAdminInstallRequest();
     });
   }
@@ -1708,14 +1692,14 @@ async function handleAdminInstallRequest() {
   showNotice('Եթե browser-ը դեռ հուշում չի տալիս, բացիր էջը Chrome կամ Edge-ով և նորից փորձիր', 'info');
 }
 
-window.addEventListener('beforeinstallprompt', (event) => {
+window?.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault();
   deferredAdminInstallPrompt = event;
   updateInstallAdminButton();
   updateAdminInstallBanner();
 });
 
-window.addEventListener('appinstalled', () => {
+window?.addEventListener('appinstalled', () => {
   deferredAdminInstallPrompt = null;
   updateInstallAdminButton();
   hideAdminInstallBanner(false);
@@ -1751,14 +1735,14 @@ function hasConfirmedAdminInstall() {
   return false;
 }
 
-window.addEventListener('load', () => {
+window?.addEventListener('load', () => {
   setTimeout(() => {
     registerAdminInstall({ force: true });
     cleanupLegacyMainInstallRecord();
   }, 900);
 });
 
-window.addEventListener('online', registerAdminInstall);
+window?.addEventListener('online', registerAdminInstall);
 
 function normalizeSong(song) {
   return {
@@ -1795,13 +1779,13 @@ function activateWorkspaceTab(id) {
 }
 
 workspaceTabs.forEach((tab) => {
-  tab.addEventListener('click', () => activateWorkspaceTab(tab.dataset.workspaceTab));
+  tab?.addEventListener('click', () => activateWorkspaceTab(tab.dataset.workspaceTab));
 });
 
 function updateStats(totalCount, visibleCount) {
   const withLyrics = ALL_SONGS.filter(song => (song.lyrics || '').trim()).length;
   statTotalSongs.textContent = String(totalCount);
-  statLyricsSongs.textContent = String(withLyrics);
+  statLyricsSongs?.textContent = String(withLyrics);
   statVisibleSongs.textContent = String(visibleCount);
   statCurrentMode.textContent = currentEditId !== null ? 'Խմբագրում' : 'Նոր երգ';
 }
@@ -1855,7 +1839,7 @@ function buildKeysGrid() {
     btn.type = 'button';
     btn.textContent = k;
     btn.dataset.key = k;
-    btn.addEventListener('click', () => {
+    btn?.addEventListener('click', () => {
       document.querySelectorAll('#keysGrid button').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       selectedTargetKey = k;
@@ -2187,7 +2171,7 @@ function rerenderList() {
   updateFiltersButtonState();
 }
 
-downloadTxtBtn.addEventListener('click', () => {
+downloadTxtBtn?.addEventListener('click', () => {
   const blob = new Blob([chordsI.value || ''], { type:'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -2199,7 +2183,7 @@ downloadTxtBtn.addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
-exportPdfBtn.addEventListener('click', () => {
+exportPdfBtn?.addEventListener('click', () => {
   if (!window.jspdf || !window.jspdf.jsPDF) {
     showNotice('jsPDF չի բեռնվել', 'error');
     return;
@@ -2240,7 +2224,7 @@ exportPdfBtn.addEventListener('click', () => {
   doc.save((titleI.value || titleLatI.value || titleRuI.value || titleEnI.value || 'song') + '.pdf');
 });
 
-exportAllPdfBtn.addEventListener('click', async () => {
+exportAllPdfBtn?.addEventListener('click', async () => {
   if (!window.jspdf || !window.jspdf.jsPDF) {
     showNotice('jsPDF չի բեռնվել', 'error');
     return;
@@ -2281,21 +2265,21 @@ exportAllPdfBtn.addEventListener('click', async () => {
   doc.save('songs-export.pdf');
 });
 
-[keyI, chordsI, useFlatsI, titleI, titleLatI, titleRuI, titleEnI, artistI].forEach(el => el.addEventListener('input', renderPreview));
-tagsI.addEventListener('input', updateWorkspaceState);
-lyricsI.addEventListener('input', updateWorkspaceState);
-searchI.addEventListener('input', rerenderList);
-sortByI.addEventListener('change', rerenderList);
-lyricsFilterI.addEventListener('change', rerenderList);
-keyFilterI.addEventListener('input', rerenderList);
-tagFilterI.addEventListener('input', rerenderList);
+[keyI, chordsI, useFlatsI, titleI, titleLatI, titleRuI, titleEnI, artistI].forEach(el => el?.addEventListener('input', renderPreview));
+tagsI?.addEventListener('input', updateWorkspaceState);
+lyricsI?.addEventListener('input', updateWorkspaceState);
+searchI?.addEventListener('input', rerenderList);
+sortByI?.addEventListener('change', rerenderList);
+lyricsFilterI?.addEventListener('change', rerenderList);
+keyFilterI?.addEventListener('input', rerenderList);
+tagFilterI?.addEventListener('input', rerenderList);
 
-toggleFiltersBtn.addEventListener('click', () => {
+toggleFiltersBtn?.addEventListener('click', () => {
   filtersPanel.hidden = !filtersPanel.hidden;
   updateFiltersButtonState();
 });
 
-clearFiltersBtn.addEventListener('click', () => {
+clearFiltersBtn?.addEventListener('click', () => {
   sortByI.value = 'newest';
   lyricsFilterI.value = 'all';
   keyFilterI.value = '';
@@ -2307,7 +2291,7 @@ clearFiltersBtn.addEventListener('click', () => {
   showNotice('Ֆիլտրերը մաքրված են', 'info');
 });
 
-saveBtn.addEventListener('click', async () => {
+saveBtn?.addEventListener('click', async () => {
   try {
     await saveCurrentSong();
   } catch (err) {
@@ -2315,13 +2299,13 @@ saveBtn.addEventListener('click', async () => {
   }
 });
 
-cancelEditBtn.addEventListener('click', () => {
+cancelEditBtn?.addEventListener('click', () => {
   clearForm();
   showNotice('Խմբագրումը չեղարկված է', 'info');
   activateWorkspaceTab('libraryPane');
 });
 
-clearBtn.addEventListener('click', clearForm);
+clearBtn?.addEventListener('click', clearForm);
 installAdminAppBtn?.addEventListener('click', async () => {
   await handleAdminInstallRequest();
 });
@@ -2332,7 +2316,7 @@ sidebarSearchBtn?.addEventListener('click', () => {
   searchI.focus();
   searchI.scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
-newSongBtn.addEventListener('click', () => {
+newSongBtn?.addEventListener('click', () => {
   clearForm();
   activateWorkspaceTab('editorPane');
   scrollWorkspaceIntoView();
@@ -2340,7 +2324,7 @@ newSongBtn.addEventListener('click', () => {
   showNotice('Բացված է նոր երգի ռեժիմը', 'info');
 });
 
-refreshListBtn.addEventListener('click', async () => {
+refreshListBtn?.addEventListener('click', async () => {
   try {
     await fetchSongs();
     showNotice(window.I18N?.Loading || 'Բեռնվում է...', 'info');
@@ -2354,12 +2338,12 @@ sidebarClearBtn?.addEventListener('click', () => {
   showNotice('Ձևը մաքրված է', 'info');
 });
 
-loadMoreBtn.addEventListener('click', () => {
+loadMoreBtn?.addEventListener('click', () => {
   visibleSongsCount += SONGS_PAGE_SIZE;
   renderTable(getVisibleSongs(), getFilteredSongs().length);
 });
 
-tableBody.addEventListener('click', async (e) => {
+tableBody?.addEventListener('click', async (e) => {
   const btn = e.target.closest('button[data-action]');
   if (btn) {
     const id = btn.dataset.id;
@@ -2393,7 +2377,7 @@ markCurrentSnapshotAsSaved();
 updateInstallAdminButton();
 updateAdminInstallBanner();
 
-window.addEventListener('beforeunload', (e) => {
+window?.addEventListener('beforeunload', (e) => {
   if (!hasUnsavedChanges()) return;
   e.preventDefault();
   e.returnValue = '';
