@@ -820,30 +820,30 @@ function wp_admin_updates_prepare_release_stamps(array $currentConfig, array $ne
 
 function wp_admin_updates_collect_input(array $config): array {
     return [
-        'app_version' => $_POST['app_version'] ?? '',
-        'web_version' => $_POST['web_version'] ?? '',
-        'app_release_type' => $_POST['app_release_type'] ?? '',
-        'web_release_type' => $_POST['web_release_type'] ?? '',
-        'app_release_summary' => $_POST['app_release_summary'] ?? '',
-        'web_release_summary' => $_POST['web_release_summary'] ?? '',
-        'app_title' => $_POST['app_title'] ?? '',
-        'app_message' => $_POST['app_message'] ?? '',
-        'web_title' => $_POST['web_title'] ?? '',
-        'web_message' => $_POST['web_message'] ?? '',
-        'maintenance_enabled' => !empty($_POST['maintenance_enabled']),
-        'maintenance_message' => $_POST['maintenance_message'] ?? '',
-        'maintenance_start_at' => $_POST['maintenance_start_at'] ?? '',
-        'maintenance_end_at' => $_POST['maintenance_end_at'] ?? '',
-        'maintenance_allowed_ips' => $_POST['maintenance_allowed_ips'] ?? ($config['maintenance_allowed_ips'] ?? ''),
-        'admin_emails' => $_POST['admin_emails'] ?? '',
-        'admin_user_permissions' => $_POST['admin_permission_rows'] ?? ($config['admin_user_permissions'] ?? []),
-        'social_auth_google_client_id' => $_POST['social_auth_google_client_id'] ?? ($config['social_auth_google_client_id'] ?? ''),
-        'social_auth_google_redirect_uri' => $_POST['social_auth_google_redirect_uri'] ?? ($config['social_auth_google_redirect_uri'] ?? ''),
-        'page_app_modes' => $_POST['page_app_modes'] ?? ($config['page_app_modes'] ?? []),
-        'page_web_modes' => $_POST['page_web_modes'] ?? ($config['page_web_modes'] ?? []),
-        'meta_note' => $_POST['meta_note'] ?? '',
-        'release_apply_mode' => $_POST['release_apply_mode'] ?? 'without_file',
-        'server_package_mode' => $_POST['server_package_mode'] ?? ($config['server_package_mode'] ?? 'partial'),
+        'app_version' => array_key_exists('app_version', $_POST) ? $_POST['app_version'] : ($config['app_version'] ?? ''),
+        'web_version' => array_key_exists('web_version', $_POST) ? $_POST['web_version'] : ($config['web_version'] ?? ''),
+        'app_release_type' => array_key_exists('app_release_type', $_POST) ? $_POST['app_release_type'] : ($config['app_release_type'] ?? ''),
+        'web_release_type' => array_key_exists('web_release_type', $_POST) ? $_POST['web_release_type'] : ($config['web_release_type'] ?? ''),
+        'app_release_summary' => array_key_exists('app_release_summary', $_POST) ? $_POST['app_release_summary'] : ($config['app_release_summary'] ?? ''),
+        'web_release_summary' => array_key_exists('web_release_summary', $_POST) ? $_POST['web_release_summary'] : ($config['web_release_summary'] ?? ''),
+        'app_title' => array_key_exists('app_title', $_POST) ? $_POST['app_title'] : ($config['app_title'] ?? ''),
+        'app_message' => array_key_exists('app_message', $_POST) ? $_POST['app_message'] : ($config['app_message'] ?? ''),
+        'web_title' => array_key_exists('web_title', $_POST) ? $_POST['web_title'] : ($config['web_title'] ?? ''),
+        'web_message' => array_key_exists('web_message', $_POST) ? $_POST['web_message'] : ($config['web_message'] ?? ''),
+        'maintenance_enabled' => array_key_exists('maintenance_enabled', $_POST) ? !empty($_POST['maintenance_enabled']) : !empty($config['maintenance_enabled']),
+        'maintenance_message' => array_key_exists('maintenance_message', $_POST) ? $_POST['maintenance_message'] : ($config['maintenance_message'] ?? ''),
+        'maintenance_start_at' => array_key_exists('maintenance_start_at', $_POST) ? $_POST['maintenance_start_at'] : ($config['maintenance_start_at'] ?? ''),
+        'maintenance_end_at' => array_key_exists('maintenance_end_at', $_POST) ? $_POST['maintenance_end_at'] : ($config['maintenance_end_at'] ?? ''),
+        'maintenance_allowed_ips' => array_key_exists('maintenance_allowed_ips', $_POST) ? $_POST['maintenance_allowed_ips'] : ($config['maintenance_allowed_ips'] ?? ''),
+        'admin_emails' => array_key_exists('admin_emails', $_POST) ? $_POST['admin_emails'] : ($config['admin_emails'] ?? ''),
+        'admin_user_permissions' => array_key_exists('admin_permission_rows', $_POST) ? $_POST['admin_permission_rows'] : ($config['admin_user_permissions'] ?? []),
+        'social_auth_google_client_id' => array_key_exists('social_auth_google_client_id', $_POST) ? $_POST['social_auth_google_client_id'] : ($config['social_auth_google_client_id'] ?? ''),
+        'social_auth_google_redirect_uri' => array_key_exists('social_auth_google_redirect_uri', $_POST) ? $_POST['social_auth_google_redirect_uri'] : ($config['social_auth_google_redirect_uri'] ?? ''),
+        'page_app_modes' => array_key_exists('page_app_modes_present', $_POST) ? ($_POST['page_app_modes'] ?? []) : ($config['page_app_modes'] ?? []),
+        'page_web_modes' => array_key_exists('page_web_modes_present', $_POST) ? ($_POST['page_web_modes'] ?? []) : ($config['page_web_modes'] ?? []),
+        'meta_note' => array_key_exists('meta_note', $_POST) ? $_POST['meta_note'] : ($config['meta_note'] ?? ''),
+        'release_apply_mode' => array_key_exists('release_apply_mode', $_POST) ? $_POST['release_apply_mode'] : 'without_file',
+        'server_package_mode' => array_key_exists('server_package_mode', $_POST) ? $_POST['server_package_mode'] : ($config['server_package_mode'] ?? 'partial'),
     ];
 }
 
@@ -2109,50 +2109,54 @@ $csrfToken = wp_admin_updates_csrf_token();
           </section>
 
           <section class="settings-group" id="pageModesPanel" data-admin-section="maintenance" data-admin-permission="maintenance">
-            <div class="settings-group-header">
-              <h3>Ծրագրային էջեր (PWA/App Shell)</h3>
-              <p>Ընտրեք, թե որ էջերը պետք է աշխատեն որպես ծրագրային էջեր (առանց վերբեռնման, հավելվածի նման)։</p>
-            </div>
-
-            <div class="page-app-grid">
-              <input type="hidden" name="page_app_modes_present" value="1">
-              <?php foreach ($pageAppRegistry as $pageKey => $pageMeta): ?>
-                <?php $pageEnabled = !empty(($config['page_app_modes'] ?? [])[$pageKey]); ?>
-                <div class="toggle-switch-wrapper" style="margin-bottom: 12px; padding: 12px 16px;">
-                  <div class="toggle-switch-info">
-                    <h4 style="margin-bottom:2px;"><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></h4>
-                    <p style="font-size:12px; margin-bottom:4px;"><?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?></p>
-                    <code style="font-size:11px;"><?= htmlspecialchars((string)($pageMeta['path'] ?? ''), ENT_QUOTES) ?></code>
-                  </div>
-                  <label class="toggle-switch">
-                    <input type="checkbox" name="page_app_modes[<?= htmlspecialchars($pageKey, ENT_QUOTES) ?>]" value="1" <?= $pageEnabled ? 'checked' : '' ?>>
-                    <span class="toggle-slider"></span>
-                  </label>
+            <div class="grid" style="padding-top: 24px;">
+              <div class="stack" style="gap: 16px;">
+                <div class="settings-group-header" style="padding: 0; border: none; background: transparent;">
+                  <h3>Ծրագրային էջեր (PWA/App Shell)</h3>
+                  <p>Ընտրեք, թե որ էջերը պետք է աշխատեն որպես ծրագրային էջեր (առանց վերբեռնման, հավելվածի նման)։</p>
                 </div>
-              <?php endforeach; ?>
-            </div>
-
-            <div class="settings-group-header" style="margin-top: 32px;">
-              <h3>Կայքի էջեր (Web)</h3>
-              <p>Ընտրեք, թե որ էջերը պետք է հասանելի լինեն կայքում (անջատելու դեպքում այցելուները կստանան «էջը անհասանելի է» հաղորդագրությունը)։</p>
-            </div>
-
-            <div class="page-app-grid">
-              <input type="hidden" name="page_web_modes_present" value="1">
-              <?php foreach ($pageWebRegistry as $pageKey => $pageMeta): ?>
-                <?php $pageEnabled = !empty(($config['page_web_modes'] ?? [])[$pageKey]); ?>
-                <div class="toggle-switch-wrapper" style="margin-bottom: 12px; padding: 12px 16px;">
-                  <div class="toggle-switch-info">
-                    <h4 style="margin-bottom:2px;"><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></h4>
-                    <p style="font-size:12px; margin-bottom:4px;"><?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?></p>
-                    <code style="font-size:11px;"><?= htmlspecialchars((string)($pageMeta['path'] ?? ''), ENT_QUOTES) ?></code>
-                  </div>
-                  <label class="toggle-switch">
-                    <input type="checkbox" name="page_web_modes[<?= htmlspecialchars($pageKey, ENT_QUOTES) ?>]" value="1" <?= $pageEnabled ? 'checked' : '' ?>>
-                    <span class="toggle-slider"></span>
-                  </label>
+                <div class="page-app-grid">
+                  <input type="hidden" name="page_app_modes_present" value="1">
+                  <?php foreach ($pageAppRegistry as $pageKey => $pageMeta): ?>
+                    <?php $pageEnabled = !empty(($config['page_app_modes'] ?? [])[$pageKey]); ?>
+                    <div class="toggle-switch-wrapper" style="margin-bottom: 0; padding: 12px 16px;">
+                      <div class="toggle-switch-info">
+                        <h4 style="margin-bottom:2px;"><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></h4>
+                        <p style="font-size:12px; margin-bottom:4px;"><?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?></p>
+                        <code style="font-size:11px;"><?= htmlspecialchars((string)($pageMeta['path'] ?? ''), ENT_QUOTES) ?></code>
+                      </div>
+                      <label class="toggle-switch">
+                        <input type="checkbox" name="page_app_modes[<?= htmlspecialchars($pageKey, ENT_QUOTES) ?>]" value="1" <?= $pageEnabled ? 'checked' : '' ?>>
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                  <?php endforeach; ?>
                 </div>
-              <?php endforeach; ?>
+              </div>
+
+              <div class="stack" style="gap: 16px;">
+                <div class="settings-group-header" style="padding: 0; border: none; background: transparent;">
+                  <h3>Կայքի էջեր (Web)</h3>
+                  <p>Ընտրեք, թե որ էջերը պետք է հասանելի լինեն կայքում (անջատելու դեպքում այցելուները կստանան «էջը անհասանելի է» հաղորդագրությունը)։</p>
+                </div>
+                <div class="page-app-grid">
+                  <input type="hidden" name="page_web_modes_present" value="1">
+                  <?php foreach ($pageWebRegistry as $pageKey => $pageMeta): ?>
+                    <?php $pageEnabled = !empty(($config['page_web_modes'] ?? [])[$pageKey]); ?>
+                    <div class="toggle-switch-wrapper" style="margin-bottom: 0; padding: 12px 16px;">
+                      <div class="toggle-switch-info">
+                        <h4 style="margin-bottom:2px;"><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></h4>
+                        <p style="font-size:12px; margin-bottom:4px;"><?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?></p>
+                        <code style="font-size:11px;"><?= htmlspecialchars((string)($pageMeta['path'] ?? ''), ENT_QUOTES) ?></code>
+                      </div>
+                      <label class="toggle-switch">
+                        <input type="checkbox" name="page_web_modes[<?= htmlspecialchars($pageKey, ENT_QUOTES) ?>]" value="1" <?= $pageEnabled ? 'checked' : '' ?>>
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                  <?php endforeach; ?>
+                </div>
+              </div>
             </div>
 
             <div class="chips" style="margin-top:20px; justify-content: flex-end;">
@@ -4863,8 +4867,13 @@ $csrfToken = wp_admin_updates_csrf_token();
       }
 
       function buildPageModesFields() {
-        const payload = { page_app_modes_present: '1' };
+        const payload = { page_app_modes_present: '1', page_web_modes_present: '1' };
         document.querySelectorAll('input[name^="page_app_modes["]').forEach((input) => {
+          if (input instanceof HTMLInputElement && input.checked) {
+            payload[input.name] = '1';
+          }
+        });
+        document.querySelectorAll('input[name^="page_web_modes["]').forEach((input) => {
           if (input instanceof HTMLInputElement && input.checked) {
             payload[input.name] = '1';
           }
