@@ -187,4 +187,34 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
 .text-muted { color: var(--muted); }
 .text-success { color: var(--success); }
 .text-danger { color: var(--danger); }
+
+/* Global Minimal Loader */
+#globalAdminLoader {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(248, 250, 252, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+#globalAdminLoader.hide {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.global-pulse {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  animation: globalPulse 1.5s ease-out infinite;
+}
+@keyframes globalPulse {
+  0% { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
 </style>

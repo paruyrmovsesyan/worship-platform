@@ -79,13 +79,7 @@ endif;
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-<div id="adminPageLoader" aria-hidden="true">
-  <div id="adminPageLoaderCard" role="status" aria-live="polite" aria-busy="true">
-    <h2 id="adminPageLoaderTitle"><?= __('Loading...') ?></h2>
-    <p id="adminPageLoaderText"><?= __('Admin data is preparing.') ?></p>
-    <div id="adminPagePulse"></div>
-  </div>
-</div>
+
 
 
 
@@ -99,14 +93,7 @@ endif;
   --radius-md: 20px;
 }
 
-/* Page loader */
-#adminPageLoader { position:fixed; inset:0; z-index:2000; background:var(--bg); display:flex; align-items:center; justify-content:center; }
-#adminPageLoader.hide { display:none; }
-#adminPageLoaderCard { background:#fff; padding:40px; border-radius:20px; text-align:center; box-shadow:var(--shadow); }
-#adminPageLoaderTitle { font-size:22px; font-weight:800; color:var(--text); margin:0 0 8px; }
-#adminPageLoaderText { color:var(--muted); margin:0; }
-#adminPagePulse { width:40px; height:40px; border-radius:50%; background-color:var(--primary); animation:pulse 1.5s ease-out infinite; margin:24px auto 0; }
-@keyframes pulse { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+
 
 /* Notice toast */
 #notice {
@@ -1138,7 +1125,7 @@ function normalizeSong(song) {
 function hideAdminPageLoader(delay = 80) {
   window.clearTimeout(window.__adminPageLoaderTimer);
   window.__adminPageLoaderTimer = window.setTimeout(() => {
-    const el = document.getElementById('adminPageLoader');
+    const el = document.getElementById('globalAdminLoader');
     if (el) el.classList.add('hide');
   }, delay);
 }
