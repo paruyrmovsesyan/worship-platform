@@ -21,7 +21,7 @@
 .panel.full { grid-column: 1 / -1; }
 
 /* Hidden state for JavaScript section toggling */
-[data-section-container]:not(.active),
+[data-section-container][hidden],
 .panel[hidden] {
   display: none !important;
 }
