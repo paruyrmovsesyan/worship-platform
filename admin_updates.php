@@ -832,6 +832,7 @@ function wp_admin_updates_collect_input(array $config): array {
         'maintenance_message' => $_POST['maintenance_message'] ?? '',
         'maintenance_start_at' => $_POST['maintenance_start_at'] ?? '',
         'maintenance_end_at' => $_POST['maintenance_end_at'] ?? '',
+        'maintenance_allowed_ips' => $_POST['maintenance_allowed_ips'] ?? ($config['maintenance_allowed_ips'] ?? ''),
         'admin_emails' => $_POST['admin_emails'] ?? '',
         'admin_user_permissions' => $_POST['admin_permission_rows'] ?? ($config['admin_user_permissions'] ?? []),
         'social_auth_google_client_id' => $_POST['social_auth_google_client_id'] ?? ($config['social_auth_google_client_id'] ?? ''),
