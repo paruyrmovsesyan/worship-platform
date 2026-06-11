@@ -27,27 +27,63 @@
 }
 
 
-/* ── SECTION TABS (Sleek Horizontal Pills) ── */
-.section-switcher {
-  display: flex; gap: 8px; margin-bottom: 32px; overflow-x: auto;
-  padding: 4px; background: #e9eef5; border-radius: 100px;
-  width: max-content; max-width: 100%;
+/* ── SETTINGS 2-COLUMN LAYOUT ── */
+.settings-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 32px;
+  align-items: start;
 }
-.section-switcher::-webkit-scrollbar { display: none; }
 
-.section-tab {
-  display: flex; align-items: center; justify-content: center;
-  padding: 10px 20px; border-radius: 100px; border: none;
-  background: transparent; color: var(--muted); font-weight: 700; cursor: pointer;
-  transition: all .2s; box-shadow: none; white-space: nowrap;
+@media (max-width: 1024px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+  .settings-sidebar {
+    position: sticky; top: 0; z-index: 10;
+    background: #f4f7fe; padding-bottom: 16px;
+    margin-bottom: 16px;
+  }
+  .section-switcher.vertical {
+    display: flex; flex-direction: row; overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .section-switcher.vertical .section-tab {
+    flex-direction: row; padding: 10px 16px;
+  }
+  .section-switcher.vertical .tab-text small { display: none; }
 }
-.section-tab:hover { color: var(--text); }
-.section-tab.active {
+
+/* ── SETTINGS SIDEBAR MENU ── */
+.section-switcher.vertical {
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.section-switcher.vertical .section-tab {
+  display: flex; align-items: flex-start; justify-content: flex-start; gap: 12px;
+  padding: 14px 16px; border-radius: 16px; border: 1px solid transparent;
+  background: transparent; color: var(--muted); cursor: pointer; text-align: left;
+  transition: all .2s; box-shadow: none; white-space: normal;
+}
+.section-switcher.vertical .section-tab:hover {
+  background: #fff; color: var(--text); border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+.section-switcher.vertical .section-tab.active {
   background: #fff; color: var(--primary);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-color: var(--primary);
+  box-shadow: 0 4px 15px rgba(67, 24, 255, 0.08);
 }
-.section-tab span { display: block; font-size: 14px; letter-spacing: -0.1px; margin: 0; }
-.section-tab small { display: none; }
+.section-tab .icon {
+  width: 20px; height: 20px; flex-shrink: 0; stroke: currentColor;
+  margin-top: 2px;
+}
+.section-tab .tab-text {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.section-tab span { display: block; font-size: 14px; font-weight: 700; margin: 0; }
+.section-tab small { display: block; font-size: 12px; font-weight: 500; opacity: 0.8; line-height: 1.4; color: var(--muted); }
+.section-tab.active small { color: var(--primary); opacity: 0.8; }
 
 /* ── FORM ELEMENTS ── */
 .field { display: flex; flex-direction: column; gap: 8px; }
