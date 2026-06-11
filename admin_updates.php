@@ -1412,6 +1412,7 @@ $csrfToken = wp_admin_updates_csrf_token();
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Settings — Worship Platform Admin</title>
   <?php include __DIR__ . '/admin_shared_css.php'; ?>
+  <?php include __DIR__ . '/admin_updates_css.php'; ?>
   <style>
   /* ── Settings page extras ── */
   :root {
