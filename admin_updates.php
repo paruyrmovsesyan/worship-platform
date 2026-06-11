@@ -1706,7 +1706,7 @@ $csrfToken = wp_admin_updates_csrf_token();
     ><?= htmlspecialchars($message, ENT_QUOTES) ?></div>
 
     <?php if (!$hasAnyAdminSectionAccess): ?>
-    <section class="panel full">
+    <section class="settings-group">
       <div class="settings-group-header">
               <h3>Բաժինների հասանելիություն չկա</h3>
               <p>Այս օգտահաշվի համար ադմին բաժինների թույլտվություններ դեռ միացված չեն։ Խնդրիր լիազորված ադմինին՝ միացնել անհրաժեշտ բաժինները <code><?= __('Մուտքեր') ?></code> բաժնից։</p>
@@ -1893,7 +1893,7 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
             <div class="form-field">
               <label for="app_version">Ծրագրի տարբերակ</label>
-              <input id="app_version" name="app_version" value="<?= htmlspecialchars((string)$config['app_version'], ENT_QUOTES) ?>" class="input-field" required>
+              <input class="input-field" id="app_version" name="app_version" value="<?= htmlspecialchars((string)$config['app_version'], ENT_QUOTES) ?>" class="input-field" required>
             </div>
             <div class="form-field">
               <label for="app_release_type">Թարմացման տեսակ</label>
@@ -1907,11 +1907,11 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
             <div class="form-field">
               <label for="app_release_summary">Կարճ նկարագրություն</label>
-              <input id="app_release_summary" name="app_release_summary" maxlength="240" value="<?= htmlspecialchars((string)$config['app_release_summary'], ENT_QUOTES) ?>" class="input-field" placeholder="Օր.` Offline sync improvements և performance fix-եր">
+              <input class="input-field" id="app_release_summary" name="app_release_summary" maxlength="240" value="<?= htmlspecialchars((string)$config['app_release_summary'], ENT_QUOTES) ?>" class="input-field" placeholder="Օր.` Offline sync improvements և performance fix-եր">
             </div>
             <div class="form-field">
               <label for="app_title">Թարմացման վերնագիր</label>
-              <input id="app_title" name="app_title" value="<?= htmlspecialchars((string)$config['app_title'], ENT_QUOTES) ?>" class="input-field" required>
+              <input class="input-field" id="app_title" name="app_title" value="<?= htmlspecialchars((string)$config['app_title'], ENT_QUOTES) ?>" class="input-field" required>
             </div>
             <div class="form-field">
               <label for="app_message">Թարմացման հաղորդագրություն</label>
@@ -1926,7 +1926,7 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
             <div class="form-field">
               <label for="web_version">Կայքի տարբերակ</label>
-              <input id="web_version" name="web_version" value="<?= htmlspecialchars((string)$config['web_version'], ENT_QUOTES) ?>" class="input-field" required>
+              <input class="input-field" id="web_version" name="web_version" value="<?= htmlspecialchars((string)$config['web_version'], ENT_QUOTES) ?>" class="input-field" required>
             </div>
             <div class="form-field">
               <label for="web_release_type">Թարմացման տեսակ</label>
@@ -1940,11 +1940,11 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
             <div class="form-field">
               <label for="web_release_summary">Կարճ նկարագրություն</label>
-              <input id="web_release_summary" name="web_release_summary" maxlength="240" value="<?= htmlspecialchars((string)$config['web_release_summary'], ENT_QUOTES) ?>" class="input-field" placeholder="Օր.` UI refresh և content update">
+              <input class="input-field" id="web_release_summary" name="web_release_summary" maxlength="240" value="<?= htmlspecialchars((string)$config['web_release_summary'], ENT_QUOTES) ?>" class="input-field" placeholder="Օր.` UI refresh և content update">
             </div>
             <div class="form-field">
               <label for="web_title">Թարմացման վերնագիր</label>
-              <input id="web_title" name="web_title" value="<?= htmlspecialchars((string)$config['web_title'], ENT_QUOTES) ?>" class="input-field" required>
+              <input class="input-field" id="web_title" name="web_title" value="<?= htmlspecialchars((string)$config['web_title'], ENT_QUOTES) ?>" class="input-field" required>
             </div>
             <div class="form-field">
               <label for="web_message">Թարմացման հաղորդագրություն</label>
@@ -2033,14 +2033,14 @@ $csrfToken = wp_admin_updates_csrf_token();
             <div class="row-2">
               <div class="form-field">
                 <label for="release_apply_mode">Կիրառման տարբերակ</label>
-                <select id="release_apply_mode" name="release_apply_mode">
+                <select class="input-field" id="release_apply_mode" name="release_apply_mode">
                   <option value="without_file">Առանց ֆայլի կցման</option>
                   <option value="with_file">Ֆայլի կցումով</option>
                 </select>
               </div>
               <div class="form-field">
                 <label for="server_package_mode">Տեղադրման ռեժիմ</label>
-                <select id="server_package_mode" name="server_package_mode">
+                <select class="input-field" id="server_package_mode" name="server_package_mode">
                   <?php foreach ($packageModes as $packageModeValue => $packageModeLabel): ?>
                     <option value="<?= htmlspecialchars($packageModeValue, ENT_QUOTES) ?>" <?= $packageMode === $packageModeValue ? 'selected' : '' ?>>
                       <?= htmlspecialchars($packageModeLabel, ENT_QUOTES) ?>
@@ -2179,7 +2179,7 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
             <div class="form-field">
               <label for="admin_emails">Admin email-ներ</label>
-              <textarea id="admin_emails" name="admin_emails"><?= htmlspecialchars($adminEmailsText, ENT_QUOTES) ?></textarea>
+              <textarea class="input-field" id="admin_emails" name="admin_emails"><?= htmlspecialchars($adminEmailsText, ENT_QUOTES) ?></textarea>
             </div>
             <div class="access-helper">Խորհուրդ է տրվում այստեղ պահել միայն այն email-ները, որոնք իսկապես պետք է պահեստային կամ լրացուցիչ ադմին հասանելիություն ունենան։</div>
           </section>
@@ -2293,11 +2293,11 @@ $csrfToken = wp_admin_updates_csrf_token();
               <h3>Google մուտք</h3>
               <div class="form-field">
                 <label for="social_auth_google_client_id">Client ID</label>
-                <input id="social_auth_google_client_id" name="social_auth_google_client_id" value="<?= htmlspecialchars((string)($config['social_auth_google_client_id'] ?? ''), ENT_QUOTES) ?>" placeholder="Google client id">
+                <input class="input-field" id="social_auth_google_client_id" name="social_auth_google_client_id" value="<?= htmlspecialchars((string)($config['social_auth_google_client_id'] ?? ''), ENT_QUOTES) ?>" placeholder="Google client id">
               </div>
               <div class="form-field">
                 <label for="social_auth_google_client_secret">Client Secret</label>
-                <input id="social_auth_google_client_secret" name="social_auth_google_client_secret" type="password" value="" placeholder="Նոր Google client secret">
+                <input class="input-field" id="social_auth_google_client_secret" name="social_auth_google_client_secret" type="password" value="" placeholder="Նոր Google client secret">
               </div>
               <label class="permission-check" style="margin-top:10px">
                 <input type="checkbox" name="social_auth_google_client_secret_clear" value="1">
@@ -2308,7 +2308,7 @@ $csrfToken = wp_admin_updates_csrf_token();
               </label>
               <div class="form-field">
                 <label for="social_auth_google_redirect_uri">Redirect URI</label>
-                <input id="social_auth_google_redirect_uri" name="social_auth_google_redirect_uri" value="<?= htmlspecialchars((string)($config['social_auth_google_redirect_uri'] ?? ''), ENT_QUOTES) ?>" placeholder="Դատարկ թողնելու դեպքում կկազմվի ավտոմատ">
+                <input class="input-field" id="social_auth_google_redirect_uri" name="social_auth_google_redirect_uri" value="<?= htmlspecialchars((string)($config['social_auth_google_redirect_uri'] ?? ''), ENT_QUOTES) ?>" placeholder="Դատարկ թողնելու դեպքում կկազմվի ավտոմատ">
               </div>
               <div class="access-helper">Google Console-ում redirect հասցեն պետք է ցույց տա դեպի <code>/social_auth.php?provider=google</code>։</div>
               <div class="action-buttons" style="margin-top:14px">
@@ -2324,7 +2324,7 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
             <div class="form-field">
               <label for="meta_note">Ներքին նշում</label>
-              <textarea id="meta_note" name="meta_note"><?= htmlspecialchars((string)$config['meta_note'], ENT_QUOTES) ?></textarea>
+              <textarea class="input-field" id="meta_note" name="meta_note"><?= htmlspecialchars((string)$config['meta_note'], ENT_QUOTES) ?></textarea>
             </div>
 
             <div class="access-helper">Նշումները և admin email-ները պահպանվում են ավտոմատ։</div>
@@ -2432,7 +2432,7 @@ $csrfToken = wp_admin_updates_csrf_token();
             <div class="row-2">
               <div class="form-field">
                 <label for="moderation_status">Վիճակ</label>
-                <select id="moderation_status" name="moderation_status">
+                <select class="input-field" id="moderation_status" name="moderation_status">
                   <option value="pending" <?= $moderationFilters['status'] === 'pending' ? 'selected' : '' ?>>Միայն սպասման մեջ</option>
                   <option value="approved" <?= $moderationFilters['status'] === 'approved' ? 'selected' : '' ?>>Միայն հաստատված</option>
                   <option value="rejected" <?= $moderationFilters['status'] === 'rejected' ? 'selected' : '' ?>>Միայն մերժված</option>
@@ -2441,7 +2441,7 @@ $csrfToken = wp_admin_updates_csrf_token();
               </div>
               <div class="form-field">
                 <label for="moderation_search">Որոնում</label>
-                <input id="moderation_search" name="moderation_search" value="<?= htmlspecialchars($moderationFilters['search'], ENT_QUOTES) ?>" placeholder="Որոնել վերնագրով, կատարողով կամ email-ով">
+                <input class="input-field" id="moderation_search" name="moderation_search" value="<?= htmlspecialchars($moderationFilters['search'], ENT_QUOTES) ?>" placeholder="Որոնել վերնագրով, կատարողով կամ email-ով">
               </div>
             </div>
 
@@ -2568,13 +2568,13 @@ $csrfToken = wp_admin_updates_csrf_token();
                         <?php if (!empty($sourceSnapshot['chords'])): ?>
                           <div class="form-field" style="margin-top:12px">
                             <label>Գործող ակորդներ</label>
-                            <textarea readonly><?= htmlspecialchars((string)$sourceSnapshot['chords'], ENT_QUOTES) ?></textarea>
+                            <textarea class="input-field" readonly><?= htmlspecialchars((string)$sourceSnapshot['chords'], ENT_QUOTES) ?></textarea>
                           </div>
                         <?php endif; ?>
                         <?php if (!empty($sourceSnapshot['lyrics'])): ?>
                           <div class="form-field">
                             <label>Գործող բառեր</label>
-                            <textarea readonly><?= htmlspecialchars((string)$sourceSnapshot['lyrics'], ENT_QUOTES) ?></textarea>
+                            <textarea class="input-field" readonly><?= htmlspecialchars((string)$sourceSnapshot['lyrics'], ENT_QUOTES) ?></textarea>
                           </div>
                         <?php endif; ?>
                       </details>
@@ -2586,13 +2586,13 @@ $csrfToken = wp_admin_updates_csrf_token();
                         <?php if (!empty($request['chords'])): ?>
                           <div class="form-field" style="margin-top:12px">
                             <label>Առաջարկվող ակորդներ</label>
-                            <textarea readonly><?= htmlspecialchars((string)$request['chords'], ENT_QUOTES) ?></textarea>
+                            <textarea class="input-field" readonly><?= htmlspecialchars((string)$request['chords'], ENT_QUOTES) ?></textarea>
                           </div>
                         <?php endif; ?>
                         <?php if (!empty($request['lyrics'])): ?>
                           <div class="form-field">
                             <label>Առաջարկվող բառեր</label>
-                            <textarea readonly><?= htmlspecialchars((string)$request['lyrics'], ENT_QUOTES) ?></textarea>
+                            <textarea class="input-field" readonly><?= htmlspecialchars((string)$request['lyrics'], ENT_QUOTES) ?></textarea>
                           </div>
                         <?php endif; ?>
                       </details>
@@ -2604,7 +2604,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                         <input type="hidden" name="song_request_id" value="<?= $requestId ?>">
                         <div class="form-field" style="margin-top:0">
                           <label for="song_request_review_note_<?= $requestId ?>">Ադմինի նշում</label>
-                          <textarea id="song_request_review_note_<?= $requestId ?>" name="song_request_review_note" rows="3" placeholder="Օր. սա լավ ուղղում է, կամ՝ խնդրում եմ ուղարկել ավելի ամբողջական տարբերակ"></textarea>
+                          <textarea class="input-field" id="song_request_review_note_<?= $requestId ?>" name="song_request_review_note" rows="3" placeholder="Օր. սա լավ ուղղում է, կամ՝ խնդրում եմ ուղարկել ավելի ամբողջական տարբերակ"></textarea>
                         </div>
                         <div class="action-buttons">
                           <button class="btn btn-primary" type="submit" name="form_action" value="approve_song_request">Հաստատել և կիրառել</button>
@@ -2647,7 +2647,7 @@ $csrfToken = wp_admin_updates_csrf_token();
             <div class="row-2">
               <div class="form-field">
                 <label for="translation_lang">Լեզու</label>
-                <select id="translation_lang" name="translation_lang">
+                <select class="input-field" id="translation_lang" name="translation_lang">
                   <option value="all" <?= $translationFilters['lang'] === 'all' ? 'selected' : '' ?>>Բոլորը</option>
                   <option value="ru" <?= $translationFilters['lang'] === 'ru' ? 'selected' : '' ?>>Ռուսերեն</option>
                   <option value="en" <?= $translationFilters['lang'] === 'en' ? 'selected' : '' ?>>Անգլերեն</option>
@@ -2655,7 +2655,7 @@ $csrfToken = wp_admin_updates_csrf_token();
               </div>
               <div class="form-field">
                 <label for="translation_search">Որոնում</label>
-                <input id="translation_search" name="translation_search" value="<?= htmlspecialchars($translationFilters['search'], ENT_QUOTES) ?>" placeholder="Որոնել աղբյուրով, թարգմանությամբ կամ context-ով">
+                <input class="input-field" id="translation_search" name="translation_search" value="<?= htmlspecialchars($translationFilters['search'], ENT_QUOTES) ?>" placeholder="Որոնել աղբյուրով, թարգմանությամբ կամ context-ով">
               </div>
             </div>
             <div class="action-buttons">
@@ -2737,7 +2737,7 @@ $csrfToken = wp_admin_updates_csrf_token();
             <div class="row-2">
               <div class="form-field">
                 <label for="translation_song_id">Երգը ցանկից</label>
-                <select id="translation_song_id" name="translation_song_id">
+                <select class="input-field" id="translation_song_id" name="translation_song_id">
                   <option value="">Ընտրիր երգը</option>
                   <?php foreach ($translationSongOptions as $songOption): ?>
                     <option
@@ -2755,25 +2755,25 @@ $csrfToken = wp_admin_updates_csrf_token();
               </div>
               <div class="form-field">
                 <label for="translation_song_source_preview">Հայերեն վերնագիր</label>
-                <input id="translation_song_source_preview" type="text" value="" placeholder="Ընտրելուց հետո այստեղ կերևա վերնագիրը" readonly>
+                <input class="input-field" id="translation_song_source_preview" type="text" value="" placeholder="Ընտրելուց հետո այստեղ կերևա վերնագիրը" readonly>
               </div>
             </div>
 
             <div class="row-2">
               <div class="form-field">
                 <label for="translation_song_lat">Հայերեն լատինատառ</label>
-                <textarea id="translation_song_lat" name="translation_song_lat" rows="4" placeholder="Օր. Egiptos"></textarea>
+                <textarea class="input-field" id="translation_song_lat" name="translation_song_lat" rows="4" placeholder="Օր. Egiptos"></textarea>
               </div>
               <div class="form-field">
                 <label for="translation_song_ru">Ռուսերեն վերնագիր</label>
-                <textarea id="translation_song_ru" name="translation_song_ru" rows="4" placeholder="Ռուսերեն տարբերակ"></textarea>
+                <textarea class="input-field" id="translation_song_ru" name="translation_song_ru" rows="4" placeholder="Ռուսերեն տարբերակ"></textarea>
               </div>
             </div>
 
             <div class="row-2">
               <div class="form-field">
                 <label for="translation_song_en">Անգլերեն վերնագիր</label>
-                <textarea id="translation_song_en" name="translation_song_en" rows="4" placeholder="Անգլերեն տարբերակ"></textarea>
+                <textarea class="input-field" id="translation_song_en" name="translation_song_en" rows="4" placeholder="Անգլերեն տարբերակ"></textarea>
               </div>
             </div>
 
@@ -2817,7 +2817,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                   <article class="panel-embed" data-translation-entry>
                     <input type="hidden" data-translation-lang value="<?= htmlspecialchars((string)$entry['lang'], ENT_QUOTES) ?>">
                     <input type="hidden" data-translation-context value="<?= htmlspecialchars((string)$entry['context'], ENT_QUOTES) ?>">
-                    <textarea data-translation-source hidden><?= htmlspecialchars((string)$entry['source'], ENT_QUOTES) ?></textarea>
+                    <textarea class="input-field" data-translation-source hidden><?= htmlspecialchars((string)$entry['source'], ENT_QUOTES) ?></textarea>
 
                     <div class="history-toolbar" style="margin-bottom:12px">
                       <div class="history-toolbar-copy">
@@ -2830,12 +2830,12 @@ $csrfToken = wp_admin_updates_csrf_token();
 
                     <div class="form-field">
                       <label>Հայերեն աղբյուր</label>
-                      <textarea readonly><?= htmlspecialchars((string)$entry['source'], ENT_QUOTES) ?></textarea>
+                      <textarea class="input-field" readonly><?= htmlspecialchars((string)$entry['source'], ENT_QUOTES) ?></textarea>
                     </div>
 
                     <div class="form-field">
                       <label>Թարգմանված տարբերակ</label>
-                      <textarea data-translation-text><?= htmlspecialchars((string)$entry['text'], ENT_QUOTES) ?></textarea>
+                      <textarea class="input-field" data-translation-text><?= htmlspecialchars((string)$entry['text'], ENT_QUOTES) ?></textarea>
                     </div>
 
                     <div class="action-buttons">
@@ -2973,11 +2973,11 @@ $csrfToken = wp_admin_updates_csrf_token();
           <div class="row-2">
             <div class="form-field">
               <label for="push_subject">Կապի հասցե (VAPID subject)</label>
-              <input id="push_subject" name="push_subject" value="<?= htmlspecialchars((string)($pushConfig['vapid_subject'] ?? ''), ENT_QUOTES) ?>" placeholder="mailto:admin@example.com">
+              <input class="input-field" id="push_subject" name="push_subject" value="<?= htmlspecialchars((string)($pushConfig['vapid_subject'] ?? ''), ENT_QUOTES) ?>" placeholder="mailto:admin@example.com">
             </div>
             <div class="form-field">
               <label for="push_public_key_preview">Հանրային բանալի</label>
-              <input id="push_public_key_preview" value="<?= htmlspecialchars((string)($pushConfig['vapid_public_key'] ?? ''), ENT_QUOTES) ?>" readonly>
+              <input class="input-field" id="push_public_key_preview" value="<?= htmlspecialchars((string)($pushConfig['vapid_public_key'] ?? ''), ENT_QUOTES) ?>" readonly>
             </div>
           </div>
 
@@ -2998,11 +2998,11 @@ $csrfToken = wp_admin_updates_csrf_token();
             <div class="device-toolbar-grid">
               <div class="form-field" style="margin-top:0">
                 <label for="device_search">Որոնել սարք կամ օգտատեր</label>
-                <input id="device_search" name="device_search" value="<?= htmlspecialchars($deviceFilters['search'], ENT_QUOTES) ?>" placeholder="Անուն, email, username, IP, սարք">
+                <input class="input-field" id="device_search" name="device_search" value="<?= htmlspecialchars($deviceFilters['search'], ENT_QUOTES) ?>" placeholder="Անուն, email, username, IP, սարք">
               </div>
               <div class="form-field" style="margin-top:0">
                 <label for="device_scope">Տեսք</label>
-                <select id="device_scope" name="device_scope">
+                <select class="input-field" id="device_scope" name="device_scope">
                   <option value="all" <?= $deviceFilters['scope'] === 'all' ? 'selected' : '' ?>>Բոլորը</option>
                   <option value="main" <?= $deviceFilters['scope'] === 'main' ? 'selected' : '' ?>>Միայն հիմնական ծրագիր</option>
                   <option value="admin" <?= $deviceFilters['scope'] === 'admin' ? 'selected' : '' ?>>Միայն ադմին ծրագիր</option>
@@ -3010,7 +3010,7 @@ $csrfToken = wp_admin_updates_csrf_token();
               </div>
               <div class="form-field" style="margin-top:0">
                 <label for="device_link">Կապվածություն</label>
-                <select id="device_link" name="device_link">
+                <select class="input-field" id="device_link" name="device_link">
                   <option value="all" <?= $deviceFilters['link'] === 'all' ? 'selected' : '' ?>>Բոլորը</option>
                   <option value="linked" <?= $deviceFilters['link'] === 'linked' ? 'selected' : '' ?>>Միայն կապված օգտահաշվով</option>
                   <option value="guest" <?= $deviceFilters['link'] === 'guest' ? 'selected' : '' ?>>Միայն անանուն</option>
@@ -3018,7 +3018,7 @@ $csrfToken = wp_admin_updates_csrf_token();
               </div>
               <div class="form-field" style="margin-top:0">
                 <label for="device_platform">Հարթակ</label>
-                <select id="device_platform" name="device_platform">
+                <select class="input-field" id="device_platform" name="device_platform">
                   <option value="all">Բոլորը</option>
                   <?php foreach ($deviceFilterOptions['platforms'] as $platformOption): ?>
                     <option value="<?= htmlspecialchars($platformOption, ENT_QUOTES) ?>" <?= $deviceFilters['platform'] === $platformOption ? 'selected' : '' ?>><?= htmlspecialchars($platformOption, ENT_QUOTES) ?></option>
@@ -3027,7 +3027,7 @@ $csrfToken = wp_admin_updates_csrf_token();
               </div>
               <div class="form-field" style="margin-top:0">
                 <label for="device_browser">Դիտարկիչ</label>
-                <select id="device_browser" name="device_browser">
+                <select class="input-field" id="device_browser" name="device_browser">
                   <option value="all">Բոլորը</option>
                   <?php foreach ($deviceFilterOptions['browsers'] as $browserOption): ?>
                     <option value="<?= htmlspecialchars($browserOption, ENT_QUOTES) ?>" <?= $deviceFilters['browser'] === $browserOption ? 'selected' : '' ?>><?= htmlspecialchars($browserOption, ENT_QUOTES) ?></option>
@@ -3036,7 +3036,7 @@ $csrfToken = wp_admin_updates_csrf_token();
               </div>
               <div class="form-field" style="margin-top:0">
                 <label for="device_sort">Դասավորել ըստ</label>
-                <select id="device_sort" name="device_sort">
+                <select class="input-field" id="device_sort" name="device_sort">
                   <option value="last_seen_newest" <?= $deviceFilters['sort'] === 'last_seen_newest' ? 'selected' : '' ?>>Վերջին ակտիվություն՝ նորից հին</option>
                   <option value="last_seen_oldest" <?= $deviceFilters['sort'] === 'last_seen_oldest' ? 'selected' : '' ?>>Վերջին ակտիվություն՝ հինից նոր</option>
                   <option value="installed_newest" <?= $deviceFilters['sort'] === 'installed_newest' ? 'selected' : '' ?>>Առաջին գրանցում՝ նորից հին</option>
@@ -3325,27 +3325,27 @@ $csrfToken = wp_admin_updates_csrf_token();
               <div class="row-2">
                 <div class="form-field">
                   <label for="push_title">Վերնագիր</label>
-                  <input id="push_title" name="push_title" maxlength="160" value="Worship Platform" required>
+                  <input class="input-field" id="push_title" name="push_title" maxlength="160" value="Worship Platform" required>
                 </div>
                 <div class="form-field">
                   <label for="push_tag">Խումբ (tag)</label>
-                  <input id="push_tag" name="push_tag" maxlength="120" value="worship-update">
+                  <input class="input-field" id="push_tag" name="push_tag" maxlength="120" value="worship-update">
                 </div>
               </div>
 
               <div class="form-field">
                 <label for="push_body">Բովանդակություն</label>
-                <textarea id="push_body" name="push_body" required>Նոր թարմացում կամ հայտարարություն կա։ Բացեք Worship Platform-ը մանրամասների համար։</textarea>
+                <textarea class="input-field" id="push_body" name="push_body" required>Նոր թարմացում կամ հայտարարություն կա։ Բացեք Worship Platform-ը մանրամասների համար։</textarea>
               </div>
 
               <div class="row-2">
                 <div class="form-field">
                   <label for="push_url">Բացվող հղում</label>
-                  <input id="push_url" name="push_url" value="/main.html" placeholder="/main.html">
+                  <input class="input-field" id="push_url" name="push_url" value="/main.html" placeholder="/main.html">
                 </div>
                 <div class="form-field">
                   <label for="push_icon">Նշան (icon)</label>
-                  <input id="push_icon" name="push_icon" value="/wolarm_youth.png" placeholder="/wolarm_youth.png">
+                  <input class="input-field" id="push_icon" name="push_icon" value="/wolarm_youth.png" placeholder="/wolarm_youth.png">
                 </div>
               </div>
 
@@ -3397,7 +3397,7 @@ $csrfToken = wp_admin_updates_csrf_token();
           <div class="history-toolbar">
             <div class="field history-search">
               <label for="pushSubscriptionSearch">Որոնել push սարքերի մեջ</label>
-              <input id="pushSubscriptionSearch" type="search" placeholder="Անուն, email, IP, endpoint, browser">
+              <input class="input-field" id="pushSubscriptionSearch" type="search" placeholder="Անուն, email, IP, endpoint, browser">
             </div>
             <div class="history-toolbar-copy" id="pushSubscriptionSummary">Ցուցադրվում են բոլոր գրանցված push սարքերը։</div>
           </div>
@@ -3473,7 +3473,7 @@ $csrfToken = wp_admin_updates_csrf_token();
           <div class="history-toolbar">
             <div class="field history-search">
               <label for="pushHistorySearch">Որոնել push պատմության մեջ</label>
-              <input id="pushHistorySearch" type="search" placeholder="Վերնագիր, բովանդակություն, ուղարկող, խումբ">
+              <input class="input-field" id="pushHistorySearch" type="search" placeholder="Վերնագիր, բովանդակություն, ուղարկող, խումբ">
             </div>
             <div class="history-toolbar-copy" id="pushHistorySummary">Այստեղ երևում են բոլոր վերջին ուղարկումները։</div>
           </div>
@@ -3550,7 +3550,7 @@ $csrfToken = wp_admin_updates_csrf_token();
           <div class="history-toolbar">
             <div class="field history-search">
               <label for="historySearch">Որոնել պատմության մեջ</label>
-              <input id="historySearch" type="search" placeholder="Ադմին, գործողություն, տարբերակ, նշում">
+              <input class="input-field" id="historySearch" type="search" placeholder="Ադմին, գործողություն, տարբերակ, նշում">
             </div>
             <div class="history-toolbar-copy" id="historySummary">Այստեղ երևում են բոլոր վերջին իրական փոփոխությունները։</div>
           </div>
