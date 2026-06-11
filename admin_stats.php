@@ -75,7 +75,7 @@ $searchPlaceholder = 'Search stats...';
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Statistics — Worship Admin</title>
+  <title>Statistics — Worship Platform Admin</title>
   <link rel="icon" href="/wolarm_developers.png" type="image/png">
   <?php include __DIR__ . '/admin_shared_css.php'; ?>
 </head>

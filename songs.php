@@ -114,7 +114,7 @@ endif;
   <meta name="wp-app-scope" content="admin">
   <meta name="theme-color" content="#070910">
   <script src="/pwa-init.js" defer></script>
-  <title>Wolarm Youth — Երգերի կառավարում</title>
+  <title>Songs — Worship Platform Admin</title>
   <link rel="apple-touch-icon" href="wolarm_developers.png" type="image/png" />
   <link rel="icon" href="wolarm_developers.png" type="image/png" />
   

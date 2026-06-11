@@ -1410,7 +1410,7 @@ $csrfToken = wp_admin_updates_csrf_token();
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Թարմացումների Վահանակ</title>
+  <title>Settings — Worship Platform Admin</title>
   <?php include __DIR__ . '/admin_shared_css.php'; ?>
   <style>
   /* ── Settings page extras ── */
