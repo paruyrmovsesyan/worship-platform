@@ -2110,61 +2110,59 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
           </section>
 
-          <section class="settings-group" id="pageModesPanel" data-admin-section="maintenance" data-admin-permission="maintenance">
-            <div class="grid" style="padding-top: 24px;">
-              <div class="stack" style="gap: 16px;">
-                <div class="settings-group-header" style="padding: 0; border: none; background: transparent;">
-                  <h3>Ծրագրային էջեր (PWA/App Shell)</h3>
-                  <p>Ընտրեք, թե որ էջերը պետք է աշխատեն որպես ծրագրային էջեր (առանց վերբեռնման, հավելվածի նման)։</p>
-                </div>
-                <div class="page-app-grid">
-                  <input type="hidden" name="page_app_modes_present" value="1">
-                  <?php foreach ($pageAppRegistry as $pageKey => $pageMeta): ?>
-                    <?php $pageEnabled = !empty(($config['page_app_modes'] ?? [])[$pageKey]); ?>
-                    <div class="toggle-switch-wrapper" style="margin-bottom: 0; padding: 12px 16px;">
-                      <div class="toggle-switch-info">
-                        <h4 style="margin-bottom:2px;"><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></h4>
-                        <p style="font-size:12px; margin-bottom:4px;"><?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?></p>
-                        <code style="font-size:11px;"><?= htmlspecialchars((string)($pageMeta['path'] ?? ''), ENT_QUOTES) ?></code>
-                      </div>
-                      <label class="toggle-switch">
-                        <input type="checkbox" name="page_app_modes[<?= htmlspecialchars($pageKey, ENT_QUOTES) ?>]" value="1" <?= $pageEnabled ? 'checked' : '' ?>>
-                        <span class="toggle-slider"></span>
-                      </label>
-                    </div>
-                  <?php endforeach; ?>
-                </div>
+          <div class="grid" id="pageModesPanel" data-admin-section="maintenance" data-admin-permission="maintenance" style="align-items: flex-start;">
+            <section class="settings-group" style="margin-bottom: 0;">
+              <div class="settings-group-header">
+                <h3>Ծրագրային էջեր (PWA/App Shell)</h3>
+                <p>Ընտրեք, թե որ էջերը պետք է աշխատեն որպես ծրագրային էջեր (առանց վերբեռնման, հավելվածի նման)։</p>
               </div>
-
-              <div class="stack" style="gap: 16px;">
-                <div class="settings-group-header" style="padding: 0; border: none; background: transparent;">
-                  <h3>Կայքի էջեր (Web)</h3>
-                  <p>Ընտրեք, թե որ էջերը պետք է հասանելի լինեն կայքում (անջատելու դեպքում այցելուները կստանան «էջը անհասանելի է» հաղորդագրությունը)։</p>
-                </div>
-                <div class="page-app-grid">
-                  <input type="hidden" name="page_web_modes_present" value="1">
-                  <?php foreach ($pageWebRegistry as $pageKey => $pageMeta): ?>
-                    <?php $pageEnabled = !empty(($config['page_web_modes'] ?? [])[$pageKey]); ?>
-                    <div class="toggle-switch-wrapper" style="margin-bottom: 0; padding: 12px 16px;">
-                      <div class="toggle-switch-info">
-                        <h4 style="margin-bottom:2px;"><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></h4>
-                        <p style="font-size:12px; margin-bottom:4px;"><?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?></p>
-                        <code style="font-size:11px;"><?= htmlspecialchars((string)($pageMeta['path'] ?? ''), ENT_QUOTES) ?></code>
-                      </div>
-                      <label class="toggle-switch">
-                        <input type="checkbox" name="page_web_modes[<?= htmlspecialchars($pageKey, ENT_QUOTES) ?>]" value="1" <?= $pageEnabled ? 'checked' : '' ?>>
-                        <span class="toggle-slider"></span>
-                      </label>
+              <div class="page-app-grid">
+                <input type="hidden" name="page_app_modes_present" value="1">
+                <?php foreach ($pageAppRegistry as $pageKey => $pageMeta): ?>
+                  <?php $pageEnabled = !empty(($config['page_app_modes'] ?? [])[$pageKey]); ?>
+                  <div class="toggle-switch-wrapper" style="margin-bottom: 14px; padding: 16px 20px;">
+                    <div class="toggle-switch-info">
+                      <h4 style="margin-bottom:2px;"><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></h4>
+                      <p style="font-size:12px; margin-bottom:4px;"><?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?></p>
+                      <code style="font-size:11px;"><?= htmlspecialchars((string)($pageMeta['path'] ?? ''), ENT_QUOTES) ?></code>
                     </div>
-                  <?php endforeach; ?>
-                </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" name="page_app_modes[<?= htmlspecialchars($pageKey, ENT_QUOTES) ?>]" value="1" <?= $pageEnabled ? 'checked' : '' ?>>
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                <?php endforeach; ?>
               </div>
-            </div>
+            </section>
 
-            <div class="chips" style="margin-top:20px; justify-content: flex-end;">
+            <section class="settings-group" style="margin-bottom: 0;">
+              <div class="settings-group-header">
+                <h3>Կայքի էջեր (Web)</h3>
+                <p>Ընտրեք, թե որ էջերը պետք է հասանելի լինեն կայքում (անջատելու դեպքում այցելուները կստանան «էջը անհասանելի է» հաղորդագրությունը)։</p>
+              </div>
+              <div class="page-app-grid">
+                <input type="hidden" name="page_web_modes_present" value="1">
+                <?php foreach ($pageWebRegistry as $pageKey => $pageMeta): ?>
+                  <?php $pageEnabled = !empty(($config['page_web_modes'] ?? [])[$pageKey]); ?>
+                  <div class="toggle-switch-wrapper" style="margin-bottom: 14px; padding: 16px 20px;">
+                    <div class="toggle-switch-info">
+                      <h4 style="margin-bottom:2px;"><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></h4>
+                      <p style="font-size:12px; margin-bottom:4px;"><?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?></p>
+                      <code style="font-size:11px;"><?= htmlspecialchars((string)($pageMeta['path'] ?? ''), ENT_QUOTES) ?></code>
+                    </div>
+                    <label class="toggle-switch">
+                      <input type="checkbox" name="page_web_modes[<?= htmlspecialchars($pageKey, ENT_QUOTES) ?>]" value="1" <?= $pageEnabled ? 'checked' : '' ?>>
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            </section>
+            
+            <div class="chips" style="grid-column: 1 / -1; justify-content: flex-end;">
               <div class="autosave-status" id="pageModesAutosaveStatus" data-state="idle">Փոփոխությունները կպահպանվեն ավտոմատ</div>
             </div>
-          </section>
+          </div>
 
           <section class="settings-group" id="accessOverviewPanel" data-admin-section="access all" data-admin-permission="access">
             <div class="settings-group-header">
