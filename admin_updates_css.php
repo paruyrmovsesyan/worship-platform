@@ -27,29 +27,27 @@
 }
 
 
-/* ── SECTION TABS (Settings Menu) ── */
+/* ── SECTION TABS (Sleek Horizontal Pills) ── */
 .section-switcher {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 32px;
+  display: flex; gap: 8px; margin-bottom: 32px; overflow-x: auto;
+  padding: 4px; background: #e9eef5; border-radius: 100px;
+  width: max-content; max-width: 100%;
 }
-@media (max-width: 1200px) { .section-switcher { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 900px) { .section-switcher { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 600px) { .section-switcher { grid-template-columns: 1fr; } }
+.section-switcher::-webkit-scrollbar { display: none; }
 
 .section-tab {
-  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
-  padding: 16px 20px; border-radius: 16px; border: 1px solid var(--line);
-  background: var(--surface); color: var(--text); font-weight: 700; cursor: pointer; text-align: left;
-  transition: transform .15s, border-color .15s, box-shadow .15s, background .15s;
-  box-shadow: var(--shadow-sm);
+  display: flex; align-items: center; justify-content: center;
+  padding: 10px 20px; border-radius: 100px; border: none;
+  background: transparent; color: var(--muted); font-weight: 700; cursor: pointer;
+  transition: all .2s; box-shadow: none; white-space: nowrap;
 }
-.section-tab:hover { background: #f8faff; border-color: #cbd5e1; transform: translateY(-1px); }
+.section-tab:hover { color: var(--text); }
 .section-tab.active {
-  background: var(--primary); border-color: var(--primary); color: #fff;
-  box-shadow: 0 4px 15px rgba(67, 24, 255, 0.25);
+  background: #fff; color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
-.section-tab span { display: block; font-size: 15px; letter-spacing: -0.2px; margin-bottom: 4px; }
-.section-tab small { display: block; font-size: 12px; font-weight: 500; opacity: 0.7; line-height: 1.4; }
-.section-tab.active small { opacity: 0.9; }
+.section-tab span { display: block; font-size: 14px; letter-spacing: -0.1px; margin: 0; }
+.section-tab small { display: none; }
 
 /* ── FORM ELEMENTS ── */
 .field { display: flex; flex-direction: column; gap: 8px; }
