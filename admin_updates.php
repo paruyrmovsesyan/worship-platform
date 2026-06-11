@@ -4607,23 +4607,46 @@ $csrfToken = wp_admin_updates_csrf_token();
           section = 'release';
         }
 
-        const fallbackSection = sectionTabs[0]?.getAttribute('data-section-tab') || defaultSection || 'release';
-        const nextSection = sectionTabs.some((tab) => tab.getAttribute('data-section-tab') === section) ? section : fallbackSection;
+        const nextSection = section; // 'all' means dashboard view
+        
+        const dashboardView = document.getElementById('settingsDashboard');
+        const contentWrapper = document.getElementById('settingsContentWrapper');
+        const pageHeader = document.querySelector('.page-header');
+        const adminBanner = document.getElementById('adminBanner');
 
-        sectionTabs.forEach((tab) => {
-          const active = tab.getAttribute('data-section-tab') === nextSection;
-          tab.classList.toggle('active', active);
-          tab.setAttribute('aria-selected', active ? 'true' : 'false');
-        });
+        if (nextSection === 'all' || !nextSection) {
+          // Show Dashboard
+          if (dashboardView) dashboardView.hidden = false;
+          if (contentWrapper) contentWrapper.hidden = true;
+          if (pageHeader) pageHeader.style.display = 'flex';
+          if (adminBanner) adminBanner.style.display = 'block';
+          
+          sectionTabs.forEach((tab) => {
+            tab.classList.remove('active');
+            tab.setAttribute('aria-selected', 'false');
+          });
+        } else {
+          // Show specific section
+          if (dashboardView) dashboardView.hidden = true;
+          if (contentWrapper) contentWrapper.hidden = false;
+          if (pageHeader) pageHeader.style.display = 'none'; // hide title in detail view for cleaner look
+          if (adminBanner) adminBanner.style.display = 'none'; // optional
+          
+          sectionTabs.forEach((tab) => {
+            const active = tab.getAttribute('data-section-tab') === nextSection;
+            tab.classList.toggle('active', active);
+            tab.setAttribute('aria-selected', active ? 'true' : 'false');
+          });
 
-        sectionPanels.forEach((panel) => {
-          panel.hidden = !panelAllowed(panel) || !panelMatchesSection(panel, nextSection);
-        });
+          sectionPanels.forEach((panel) => {
+            panel.hidden = !panelAllowed(panel) || !panelMatchesSection(panel, nextSection);
+          });
 
-        sectionContainers.forEach((container) => {
-          const visiblePanels = Array.from(container.querySelectorAll('[data-admin-section]')).some((panel) => !panel.hidden);
-          container.hidden = !visiblePanels;
-        });
+          sectionContainers.forEach((container) => {
+            const visiblePanels = Array.from(container.querySelectorAll('[data-admin-section]')).some((panel) => !panel.hidden);
+            container.hidden = !visiblePanels;
+          });
+        }
 
         if (adminLayout) {
           const visibleContainers = sectionContainers.filter((container) => !container.hidden).length;
@@ -4948,6 +4971,16 @@ $csrfToken = wp_admin_updates_csrf_token();
           setActiveSection(tab.getAttribute('data-section-tab') || 'release');
         });
       });
+
+      const btnBackToDashboard = document.getElementById('btnBackToDashboard');
+      if (btnBackToDashboard) {
+        btnBackToDashboard.addEventListener('click', () => {
+          setActiveSection('all');
+          const url = new URL(window.location.href);
+          url.searchParams.delete('section');
+          window.history.pushState({}, '', url);
+        });
+      }
 
       sectionFocusActionBtn?.addEventListener('click', () => {
         const targetId = sectionFocusActionBtn.dataset.targetId || '';
