@@ -70,171 +70,6 @@ $js_i18n_keys = [
 ];
 
 
-require_once __DIR__ . '/translation_runtime.php';
-if (isset($_GET['lang']) && in_array($_GET['lang'], ['hy', 'ru', 'en'])) {
-    setcookie('admin_lang', $_GET['lang'], time() + 86400 * 30, '/');
-    $adminLang = $_GET['lang'];
-} else {
-    $adminLang = $_COOKIE['admin_lang'] ?? 'hy';
-}
-$_GET['lang'] = $adminLang; // Force for consistency
-
-if (!function_exists('__')) {
-    function __($text) {
-        global $adminLang;
-        $translated = wp_translation_translate_texts([$text], $adminLang, 'admin_panel');
-        return htmlspecialchars((string)($translated[0] ?? $text), ENT_QUOTES);
-    }
-}
-
-// Generate JSON for JS translations
-$js_i18n_keys = [
-    'Published' => __('Բառերով'),
-    'Draft' => __('Առանց բառերի'),
-    'Edit' => __('Խմբագրել'),
-    'Delete' => __('Ջնջել'),
-    'Cancel' => __('Չեղարկել'),
-    'Save' => __('Պահպանել'),
-    'Saving' => __('Պահպանվում է...'),
-    'Saved' => __('Պահպանված է'),
-    'Error' => __('Սխալ'),
-    'Loading' => __('Բեռնվում է...'),
-    'ConfirmDelete' => __('Վստա՞հ եք, որ ուզում եք ջնջել այս երգը:')
-];
-
-
-require_once __DIR__ . '/translation_runtime.php';
-if (isset($_GET['lang']) && in_array($_GET['lang'], ['hy', 'ru', 'en'])) {
-    setcookie('admin_lang', $_GET['lang'], time() + 86400 * 30, '/');
-    $adminLang = $_GET['lang'];
-} else {
-    $adminLang = $_COOKIE['admin_lang'] ?? 'hy';
-}
-$_GET['lang'] = $adminLang; // Force for consistency
-
-if (!function_exists('__')) {
-    function __($text) {
-        global $adminLang;
-        $translated = wp_translation_translate_texts([$text], $adminLang, 'admin_panel');
-        return htmlspecialchars((string)($translated[0] ?? $text), ENT_QUOTES);
-    }
-}
-
-// Generate JSON for JS translations
-$js_i18n_keys = [
-    'Published' => __('Բառերով'),
-    'Draft' => __('Առանց բառերի'),
-    'Edit' => __('Խմբագրել'),
-    'Delete' => __('Ջնջել'),
-    'Cancel' => __('Չեղարկել'),
-    'Save' => __('Պահպանել'),
-    'Saving' => __('Պահպանվում է...'),
-    'Saved' => __('Պահպանված է'),
-    'Error' => __('Սխալ'),
-    'Loading' => __('Բեռնվում է...'),
-    'ConfirmDelete' => __('Վստա՞հ եք, որ ուզում եք ջնջել այս երգը:')
-];
-
-
-require_once __DIR__ . '/translation_runtime.php';
-if (isset($_GET['lang']) && in_array($_GET['lang'], ['hy', 'ru', 'en'])) {
-    setcookie('admin_lang', $_GET['lang'], time() + 86400 * 30, '/');
-    $adminLang = $_GET['lang'];
-} else {
-    $adminLang = $_COOKIE['admin_lang'] ?? 'hy';
-}
-$_GET['lang'] = $adminLang; // Force for consistency
-
-if (!function_exists('__')) {
-    function __($text) {
-        global $adminLang;
-        $translated = wp_translation_translate_texts([$text], $adminLang, 'admin_panel');
-        return htmlspecialchars((string)($translated[0] ?? $text), ENT_QUOTES);
-    }
-}
-
-// Generate JSON for JS translations
-$js_i18n_keys = [
-    'Published' => __('Բառերով'),
-    'Draft' => __('Առանց բառերի'),
-    'Edit' => __('Խմբագրել'),
-    'Delete' => __('Ջնջել'),
-    'Cancel' => __('Չեղարկել'),
-    'Save' => __('Պահպանել'),
-    'Saving' => __('Պահպանվում է...'),
-    'Saved' => __('Պահպանված է'),
-    'Error' => __('Սխալ'),
-    'Loading' => __('Բեռնվում է...'),
-    'ConfirmDelete' => __('Վստա՞հ եք, որ ուզում եք ջնջել այս երգը:')
-];
-
-
-require_once __DIR__ . '/translation_runtime.php';
-if (isset($_GET['lang']) && in_array($_GET['lang'], ['hy', 'ru', 'en'])) {
-    setcookie('admin_lang', $_GET['lang'], time() + 86400 * 30, '/');
-    $adminLang = $_GET['lang'];
-} else {
-    $adminLang = $_COOKIE['admin_lang'] ?? 'hy';
-}
-$_GET['lang'] = $adminLang; // Force for consistency
-
-if (!function_exists('__')) {
-    function __($text) {
-        global $adminLang;
-        $translated = wp_translation_translate_texts([$text], $adminLang, 'admin_panel');
-        return htmlspecialchars((string)($translated[0] ?? $text), ENT_QUOTES);
-    }
-}
-
-// Generate JSON for JS translations
-$js_i18n_keys = [
-    'Published' => __('Բառերով'),
-    'Draft' => __('Առանց բառերի'),
-    'Edit' => __('Խմբագրել'),
-    'Delete' => __('Ջնջել'),
-    'Cancel' => __('Չեղարկել'),
-    'Save' => __('Պահպանել'),
-    'Saving' => __('Պահպանվում է...'),
-    'Saved' => __('Պահպանված է'),
-    'Error' => __('Սխալ'),
-    'Loading' => __('Բեռնվում է...'),
-    'ConfirmDelete' => __('Վստա՞հ եք, որ ուզում եք ջնջել այս երգը:')
-];
-
-
-require_once __DIR__ . '/translation_runtime.php';
-if (isset($_GET['lang']) && in_array($_GET['lang'], ['hy', 'ru', 'en'])) {
-    setcookie('admin_lang', $_GET['lang'], time() + 86400 * 30, '/');
-    $adminLang = $_GET['lang'];
-} else {
-    $adminLang = $_COOKIE['admin_lang'] ?? 'hy';
-}
-$_GET['lang'] = $adminLang; // Force for consistency
-
-if (!function_exists('__')) {
-    function __($text) {
-        global $adminLang;
-        $translated = wp_translation_translate_texts([$text], $adminLang, 'admin_panel');
-        return htmlspecialchars((string)($translated[0] ?? $text), ENT_QUOTES);
-    }
-}
-
-// Generate JSON for JS translations
-$js_i18n_keys = [
-    'Published' => __('Բառերով'),
-    'Draft' => __('Առանց բառերի'),
-    'Edit' => __('Խմբագրել'),
-    'Delete' => __('Ջնջել'),
-    'Cancel' => __('Չեղարկել'),
-    'Save' => __('Պահպանել'),
-    'Saving' => __('Պահպանվում է...'),
-    'Saved' => __('Պահպանված է'),
-    'Error' => __('Սխալ'),
-    'Loading' => __('Բեռնվում է...'),
-    'ConfirmDelete' => __('Վստա՞հ եք, որ ուզում եք ջնջել այս երգը:')
-];
-
-
 $access = wp_admin_require_access('/songs.php');
 $adminUser = $access['user'];
 $adminPermissions = $access['permissions'] ?? wp_version_default_admin_permissions();
@@ -298,533 +133,147 @@ endif;
 
 
 
+<?php include __DIR__ . '/admin_shared_css.php'; ?>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
+/* ── Songs page extras ── */
 :root {
-  --bg: #f4f7fe;
-  --surface: #ffffff;
-  --line: #e2e8f0;
   --line-soft: #f1f5f9;
-  --text: #111c44;
-  --muted: #a3aed1;
-  --primary: #4318FF;
-  --primary-hover: #3311DB;
-  --success: #05cd99;
-  --success-bg: #e6f9f3;
-  --warning: #ffce20;
-  --warning-bg: #fff8e1;
-  --danger: #ee5d50;
-  --danger-bg: #ffeeeb;
-  --shadow-sm: 0 1px 2px rgba(112, 144, 176, 0.05);
-  --shadow: 0 18px 40px rgba(112, 144, 176, 0.12);
-  --shadow-lg: 0 20px 40px rgba(112, 144, 176, 0.15);
   --radius-sm: 10px;
-  --radius: 16px;
   --radius-md: 20px;
-  --radius-lg: 24px;
 }
 
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: 'Inter', system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  overflow: hidden;
-}
-
-/* ── LAYOUT ── */
-.app-layout {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-}
-
-.app-sidebar {
-  width: 280px;
-  background: var(--surface);
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  box-shadow: 14px 17px 40px 4px rgba(112, 144, 176, 0.08); z-index: 50; border-right: none;
-}
-
-.brand {
-  height: 90px;
-  display: flex;
-  align-items: center;
-  padding: 0 24px;
-  gap: 12px;
-}
-.brand-icon {
-  width: 36px; height: 36px;
-  background: var(--text);
-  color: #fff;
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 16px;
-}
-.brand-text { font-weight: 800; font-size: 24px; color: var(--text); letter-spacing: -0.5px; }
-
-.nav-menu {
-  padding: 24px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-}
-
-.nav-item {
-  display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 16px;
-  color: #a3aed1; font-weight: 600; text-decoration: none; font-size: 15px;
-  cursor: pointer; transition: all 0.2s; border: none; background: transparent; width: 100%; text-align: left;
-}
-.nav-item:hover { background: #f4f7fe; color: #111c44; }
-.nav-item.active { background: var(--primary); color: #ffffff; box-shadow: 0 10px 20px rgba(67, 24, 255, 0.25); }
-
-.app-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.search-box {
-  position: relative;
-  width: 380px;
-}
-.search-box input {
-  width: 100%;
-  padding: 14px 16px 14px 44px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: #ffffff;
-  font-size: 15px;
-  transition: all 0.2s; font-weight: 500;
-}
-.search-box input:focus { background: #fff; border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(67, 24, 255, 0.1); }
-.search-box::before {
-  content: '🔍';
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 16px;
-  opacity: 0.5;
-}
-
-.topbar-right { display: flex; align-items: center; gap: 16px; }
-
-.app-content {
-  flex: 1;
-  padding: 40px;
-  max-width: 1400px;
-  width: 100%;
-  margin: 0 auto;
-  overflow-y: auto;
-}
-
-/* ── UI COMPONENTS ── */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 12px 24px; border-radius: 16px;
-  font-weight: 700; font-size: 15px;
-  cursor: pointer; transition: all 0.2s;
-  border: none; background: #ffffff; color: #111c44;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-}
-.btn:hover { background: #f4f7fe; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-.btn-primary { background: var(--primary); color: #fff; box-shadow: 0 10px 20px rgba(67, 24, 255, 0.25); }
-.btn-primary:hover { background: var(--primary-hover); color: #fff; box-shadow: 0 12px 24px rgba(67, 24, 255, 0.35); }
-
-.pill {
-  padding: 8px 16px; border-radius: 999px;
-  font-size: 13px; font-weight: 700;
-  background: var(--surface); border: none; color: #111c44; box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-}
-
-/* ── TABLE VIEW ── */
-.page-header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 32px; padding-bottom: 24px;
-}
-.page-header h2 { margin: 0; font-size: 32px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
-.page-header p { margin: 8px 0 0; font-size: 15px; color: var(--muted); font-weight: 500; }
-.mini-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-.mini-pill { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 8px; background: #f4f7fe; color: #a3aed1; }
-.status-pill.has-lyrics { background: var(--success-bg); color: var(--success); }
-.status-pill.no-lyrics { background: var(--warning-bg); color: var(--warning); }
-.mobile-key-pill { background: rgba(67, 24, 255, 0.1); color: var(--primary); }
-.song-title strong { font-size: 16px; font-weight: 700; color: var(--text); cursor: pointer; transition: 0.2s;}
-.song-title strong:hover { color: var(--primary); }
-.song-meta { font-size: 13px; color: var(--muted); margin-top: 6px; font-weight: 500; }
-.song-title { padding: 4px 0; }
-.tabs { display: flex; gap: 32px; }
-.tab {
-  padding: 0 4px 12px; border: none; background: transparent;
-  color: var(--muted); font-weight: 600; font-size: 15px;
-  border-bottom: 3px solid transparent; cursor: pointer; margin-bottom: -17px; transition: 0.2s;
-}
-.tab.active { color: var(--primary); border-bottom-color: var(--primary); }
-
-.toolbar {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 24px;
-}
-.toolbar-left { display: flex; gap: 16px; }
-
-.table-card {
-  background: var(--surface); border: none;
-  border-radius: var(--radius-md); box-shadow: var(--shadow);
-  overflow: hidden; padding: 20px 0;
-}
-table { width: 100%; border-collapse: collapse; }
-th { background: #ffffff; color: #a3aed1; font-weight: 700; font-size: 14px; text-transform: none; text-align: left; padding: 20px 24px; border-bottom: 1px solid #f4f7fe; white-space: nowrap;}
-td { padding: 20px 24px; border-bottom: 1px solid #f4f7fe; font-size: 15px; vertical-align: middle; font-weight: 600; color: #111c44;}
-tbody tr:hover { background: #fafbfc; }
-tbody tr:last-child td { border-bottom: none; }
-
-.song-title-cell strong { color: var(--text); font-weight: 700; display: block; margin-bottom: 6px;}
-.song-title-cell span { color: var(--muted); font-size: 13px; }
-
-/* ── EDITOR MODAL ── */
-.editor-modal {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(11, 20, 55, 0.5); backdrop-filter: blur(8px);
-  z-index: 1000;
-  display: flex; justify-content: flex-end;
-  opacity: 0; pointer-events: none; transition: opacity 0.3s;
-}
-.editor-modal.is-active { opacity: 1; pointer-events: auto; }
-
-.editor-drawer {
-  width: 800px; max-width: 100%;
-  background: var(--surface);
-  height: 100%;
-  box-shadow: -20px 0 50px rgba(11, 20, 55, 0.1);
-  display: flex; flex-direction: column;
-  transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.editor-modal.is-active .editor-drawer { transform: translateX(0); }
-
-.editor-header {
-  padding: 32px 40px; border-bottom: 1px solid var(--line);
-  display: flex; justify-content: space-between; align-items: center;
-}
-.editor-header h3 { font-size: 24px; font-weight: 800; color: #111c44; margin: 0; }
-.editor-body {
-  padding: 40px; flex: 1; overflow-y: auto;
-  display: flex; flex-direction: column; gap: 32px;
-}
-.editor-footer {
-  padding: 32px 40px; border-top: 1px solid var(--line); background: #ffffff;
-  display: flex; justify-content: flex-end; gap: 16px;
-}
-
-/* Forms inside editor */
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-.form-field { display: flex; flex-direction: column; gap: 10px; }
-.form-field label { font-size: 14px; font-weight: 700; color: var(--text); }
-.form-field input, .form-field textarea {
-  padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm);
-  font-family: inherit; font-size: 15px; font-weight: 500;
-}
-.form-field textarea { min-height: 140px; resize: vertical; font-family: monospace; }
-.form-field input:focus, .form-field textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(67, 24, 255, 0.1); }
-
-/* Dashboard Loader Override */
+/* Page loader */
 #adminPageLoader { position:fixed; inset:0; z-index:2000; background:var(--bg); display:flex; align-items:center; justify-content:center; }
-#adminPageLoader.hide { display: none; }
-#adminPageLoaderCard { background:#fff; padding:40px; border-radius:20px; border:none; text-align:center; box-shadow: var(--shadow);}
-#adminPageLoaderTitle { font-size: 24px; font-weight: 800; color: #111c44; }
+#adminPageLoader.hide { display:none; }
+#adminPageLoaderCard { background:#fff; padding:40px; border-radius:20px; text-align:center; box-shadow:var(--shadow); }
+#adminPageLoaderTitle { font-size:22px; font-weight:800; color:var(--text); margin:0 0 8px; }
+#adminPageLoaderText { color:var(--muted); margin:0; }
+#adminPageLoaderRail { width:200px; height:4px; background:#f1f5f9; border-radius:4px; margin:16px auto 0; overflow:hidden; }
+#adminPageLoaderRail::after { content:''; display:block; height:100%; width:40%; background:var(--primary); border-radius:4px; animation:rail 1.2s ease-in-out infinite; }
+@keyframes rail { 0%{transform:translateX(-100%)} 100%{transform:translateX(350%)} }
 
-.lang-switcher { display: flex; gap: 8px; padding: 4px; background: #f4f7fe; border-radius: 12px; border: none; }
-.lang-btn { text-decoration: none; color: #a3aed1; font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 8px; transition: 0.2s; }
-.lang-btn:hover { color: #111c44; }
-.lang-btn.active { background: #111c44; color: #ffffff; box-shadow: var(--shadow-sm); }
+/* Notice toast */
+#notice {
+  position:fixed; top:24px; right:24px; z-index:3000;
+  padding:14px 24px; border-radius:14px;
+  background:#111c44; color:white;
+  font-size:15px; font-weight:600;
+  box-shadow:0 10px 30px rgba(0,0,0,0.15);
+  opacity:0; pointer-events:none; transition:opacity .3s;
+}
+#notice.show { opacity:1; pointer-events:auto; }
+#notice.success { background:var(--success); }
+#notice.error   { background:var(--danger); }
+#notice.info    { background:var(--primary); }
 
-/* --- NEW STRUCTURAL CSS FIXES --- */
-.app-topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px 40px;
-  background: var(--bg);
-}
-.app-content {
-  padding: 0 40px 40px 40px;
-}
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-.search-box input {
-  padding: 12px 20px;
-  padding-left: 44px;
-  border-radius: 30px;
-  border: none;
-  background: #ffffff;
-  width: 280px;
-  font-family: inherit;
-  font-size: 14px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-  outline: none;
-}
-.search-box {
-  position: relative;
-}
-.search-box::before {
-  content: '🔍';
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--muted);
-  font-size: 14px;
-}
-.tabs-row {
-  display: flex;
-  gap: 32px;
-  border-bottom: 1px solid var(--line);
-  margin-bottom: 32px;
-}
-.tab {
-  padding: 0 4px 16px;
-  color: var(--muted);
-  font-weight: 600;
-  cursor: pointer;
-  position: relative;
-}
-.tab.active {
-  color: var(--primary);
-}
-.tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: var(--primary);
-  border-radius: 3px 3px 0 0;
-}
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 24px;
-  color: var(--muted);
-  font-weight: 600;
-  text-decoration: none;
-  border-radius: 12px;
-  margin: 4px 16px;
-  transition: 0.2s;
-  border: none;
-  background: transparent;
-  font-size: 15px;
-  cursor: pointer;
-  text-align: left;
-}
-.nav-item:hover {
-  background: rgba(67, 24, 255, 0.05);
-}
-.nav-item.active {
-  background: var(--primary);
-  color: #fff;
-  box-shadow: 0 4px 15px rgba(67, 24, 255, 0.3);
-}
-.section-switcher .section-tab {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 24px;
-  color: var(--muted);
-  font-weight: 600;
-  text-decoration: none;
-  border-radius: 12px;
-  margin: 4px 16px;
-  transition: 0.2s;
-  border: none;
-  background: transparent;
-  font-size: 15px;
-  cursor: pointer;
-  text-align: left;
-  width: calc(100% - 32px);
-}
-.section-switcher .section-tab.active {
-  background: var(--primary);
-  color: #fff;
-  box-shadow: 0 4px 15px rgba(67, 24, 255, 0.3);
-}
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-bottom: 40px;
-}
-.stat {
-  padding: 28px;
-  border-radius: var(--radius-lg);
-  background: #ffffff;
-  border: none;
-  box-shadow: var(--shadow-sm);
-  position: relative;
-  overflow: hidden;
-}
-/* Override any legacy stats colors from nth-child */
-.stat:nth-child(n) { background: #ffffff !important; }
+/* Lang switcher */
+.lang-switcher { display:flex; gap:6px; background:#f1f5f9; padding:4px; border-radius:20px; }
+.lang-btn { padding:6px 14px; border-radius:16px; color:var(--muted); font-weight:700; font-size:13px; text-decoration:none; transition:.15s; }
+.lang-btn.active { background:var(--text); color:#fff; }
 
+/* Period badge */
+.period-badge { display:inline-flex; align-items:center; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:700; margin-bottom:4px; }
 
-/* --- ADDITIONAL STRUCTURAL CSS FIXES --- */
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: transparent;
-  padding: 0;
-  border: none;
-}
-.toolbar-left {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-.lang-switcher {
-  display: flex;
-  gap: 8px;
-  background: #f1f5f9;
-  padding: 4px;
-  border-radius: 20px;
-}
-.lang-btn {
-  padding: 6px 16px;
-  border-radius: 16px;
-  color: var(--muted);
-  font-weight: 700;
-  font-size: 13px;
-  text-decoration: none;
-}
-.lang-btn.active {
-  background: var(--text);
-  color: #fff;
-}
-.section-focus {
-  background: #ffffff;
-  border-radius: var(--radius-lg);
-  padding: 32px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-  box-shadow: var(--shadow-sm);
-}
-.section-focus-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.section-focus-copy h2 { margin: 0; font-size: 24px; color: var(--text); }
-.section-focus-copy p { margin: 0; color: var(--muted); }
-.section-focus-side {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  align-items: flex-end;
-}
-.chips {
-  display: flex;
-  gap: 8px;
-}
-.chip {
-  background: #f1f5f9;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
-.table-card {
-  background: #ffffff;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-th {
-  text-align: left;
-  padding: 16px 24px;
-  color: var(--muted);
-  font-weight: 600;
-  font-size: 13px;
-  border-bottom: 1px solid var(--line);
-}
-td {
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--line);
-  color: var(--text);
-  font-weight: 600;
-}
-tbody tr:last-child td {
-  border-bottom: none;
-}
+/* Table */
+table { width:100%; border-collapse:collapse; }
+th { text-align:left; padding:16px 24px; color:var(--muted); font-weight:600; font-size:12px; border-bottom:1px solid var(--line); text-transform:uppercase; letter-spacing:.5px; }
+td { padding:18px 24px; border-bottom:1px solid var(--line); font-weight:500; font-size:14px; color:var(--text); }
+tbody tr:last-child td { border-bottom:none; }
+tbody tr:hover { background:#f8faff; }
 
+/* Song cells */
+.song-title strong { font-size:15px; font-weight:700; color:var(--text); cursor:pointer; transition:.2s; }
+.song-title strong:hover { color:var(--primary); }
+.song-meta { font-size:13px; color:var(--muted); margin-top:5px; font-weight:500; }
+.song-title { padding:2px 0; }
+.status-pill { display:inline-block; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+.status-pill.has-lyrics { background:var(--success-bg); color:var(--success); }
+.status-pill.no-lyrics  { background:var(--warning-bg); color:#b58b00; }
+.mobile-key-pill { background:rgba(67,24,255,0.1); color:var(--primary); }
+.mini-pill { font-size:12px; font-weight:700; padding:4px 10px; border-radius:8px; background:#f4f7fe; color:var(--muted); }
+.mini-pills { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
 
-/* Fix hidden attribute override issue */
-[hidden] { display: none !important; }
+/* Toolbar */
+.toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+.toolbar-left { display:flex; gap:12px; align-items:center; }
 
+/* Page header */
+.page-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px; }
 
-/* ─── Section tabs styled as nav-items ─────────────────── */
+/* Workspace panes */
+.workspace-tab { display:none !important; }
+.workspace-pane { display:none; }
+.workspace-pane.is-active { display:block; }
+
+/* Preview pane */
+#previewPane { position:fixed; inset:0; z-index:900; background:var(--surface); overflow:auto; }
+#previewPane:not(.is-active) { display:none; }
+
+/* Keys grid */
+#keysGrid { display:flex; flex-wrap:wrap; gap:8px; }
+#keysGrid button { padding:8px 16px; border-radius:10px; border:1px solid var(--line); background:white; color:var(--text); font-weight:700; font-size:14px; cursor:pointer; transition:.15s; }
+#keysGrid button:hover { border-color:var(--primary); color:var(--primary); }
+#keysGrid button.active { background:var(--primary); color:white; border-color:var(--primary); }
+
+.hidden { display:none !important; }
+[hidden] { display:none !important; }
+#editingBadge { font-size:12px; font-weight:700; color:var(--muted); }
+
+/* ── Editor drawer ── */
+.editor-modal {
+  position:fixed; top:0; left:0; right:0; bottom:0;
+  background:rgba(11,20,55,0.5); backdrop-filter:blur(8px);
+  z-index:1000; display:flex; justify-content:flex-end;
+  opacity:0; pointer-events:none; transition:opacity .3s;
+}
+.editor-modal.is-active { opacity:1; pointer-events:auto; }
+.editor-drawer {
+  width:800px; max-width:100%; background:var(--surface); height:100%;
+  box-shadow:-20px 0 50px rgba(11,20,55,0.1);
+  display:flex; flex-direction:column;
+  transform:translateX(100%); transition:transform .3s cubic-bezier(0.16,1,0.3,1);
+}
+.editor-modal.is-active .editor-drawer { transform:translateX(0); }
+.editor-header { padding:28px 36px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
+.editor-header h3 { font-size:22px; font-weight:800; color:var(--text); margin:0; }
+.editor-body { padding:36px; flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:24px; }
+.editor-footer { padding:20px 36px; border-top:1px solid var(--line); display:flex; justify-content:flex-end; gap:12px; }
+
+/* Form fields */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.form-field { display:flex; flex-direction:column; gap:8px; }
+.form-field label { font-size:13px; font-weight:700; color:var(--text); }
+.form-field input, .form-field textarea, .form-field select {
+  padding:12px 14px; border:1px solid var(--line); border-radius:10px;
+  font-family:inherit; font-size:14px; font-weight:500; color:var(--text);
+  background:var(--surface); outline:none; transition:.15s;
+}
+.form-field input:focus, .form-field textarea:focus, .form-field select:focus {
+  border-color:var(--primary); box-shadow:0 0 0 3px rgba(67,24,255,0.1);
+}
+.form-field textarea { min-height:140px; resize:vertical; font-family:monospace; }
+
+/* Section-tab hidden buttons kept for JS */
 button.section-tab.nav-item {
-  width: calc(100% - 32px);
-  font-family: inherit;
-  font-size: 15px;
-  font-weight: 600;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 24px;
-  border-radius: 12px;
-  margin: 4px 16px;
-  transition: background 0.2s, color 0.2s;
-  text-align: left;
+  width:calc(100% - 32px); font-family:inherit; font-size:15px; font-weight:600;
+  background:transparent; border:none; cursor:pointer; color:var(--muted);
+  display:flex; align-items:center; gap:14px;
+  padding:13px 24px; border-radius:12px; margin:2px 16px;
+  transition:background .15s, color .15s; text-align:left;
 }
-button.section-tab.nav-item:hover {
-  background: rgba(67, 24, 255, 0.05);
-  color: var(--text);
-}
-button.section-tab.nav-item.active {
-  background: var(--primary);
-  color: #ffffff;
-  box-shadow: 0 4px 15px rgba(67, 24, 255, 0.3);
-}
-button.section-tab.nav-item.active svg {
-  stroke: #ffffff;
-}
+button.section-tab.nav-item:hover { background:rgba(67,24,255,0.05); color:var(--text); }
+button.section-tab.nav-item.active { background:var(--primary); color:#fff; box-shadow:0 4px 15px rgba(67,24,255,0.3); }
+button.section-tab.nav-item.active svg { stroke:#fff; }
 
-/* Sidebar must flex column with scroll */
-.app-sidebar {
-  overflow-y: auto;
-  overflow-x: hidden;
+/* PWA install banner */
+#adminInstallBanner {
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  background:var(--surface); border-radius:20px; padding:20px 28px;
+  box-shadow:var(--shadow); z-index:800; display:flex; align-items:center; gap:16px;
+  max-width:500px; width:calc(100% - 48px);
 }
-.nav-menu {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  overflow-y: auto;
-  padding-bottom: 8px;
-}
-
 </style>
+
 
 <div class="app-layout">
   <!-- SIDEBAR -->
@@ -847,12 +296,8 @@ button.section-tab.nav-item.active svg {
       <div id="libraryPane" class="workspace-pane is-active">
         <div class="page-header" style="padding-bottom: 0; border: none; align-items: flex-start;">
           <div>
-            <h2 style="font-size: 34px; margin-bottom: 8px;"><?= __('Songs') ?> 😍</h2>
-            <p id="songsCount" style="margin: 0;"><?= __('0 songs in database') ?></p>
-          </div>
-          <div style="display: flex; gap: 12px; background: #ffffff; padding: 6px; border-radius: 12px; box-shadow: var(--shadow-sm);">
-            <button class="btn" style="background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; box-shadow: 0 4px 10px rgba(67,24,255,0.2);">Daily</button>
-            <button class="btn" style="background: transparent; color: var(--muted); border: none; padding: 8px 16px; box-shadow: none;">Monthly</button>
+            <h2 style="font-size: 34px; margin-bottom: 8px; font-weight:800; color:var(--text); letter-spacing:-0.5px;"><?= __('Songs') ?> 😍</h2>
+            <p id="songsCount" style="margin: 0; font-size:15px; color:var(--muted); font-weight: 500;"><?= __('0 songs in database') ?></p>
           </div>
         </div>
 
@@ -863,82 +308,65 @@ button.section-tab.nav-item.active svg {
           <button class="workspace-tab" data-workspace-tab="previewPane">P</button>
         </div>
 
-        <!-- STAT CARDS -->
-        <div class="stats">
+        <!-- REAL STAT CARDS (New Design) -->
+        <div class="stats" style="margin-bottom: 32px;">
+          <!-- Total Songs -->
           <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div class="stat-row">
               <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Total Songs</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;">3,245</strong>
+                <div class="stat-label">
+                  <span class="period-badge" style="background:#e5f3ff; color:#228fff;">Database</span><br>
+                  Total Songs
+                </div>
+                <div class="stat-value" id="statTotalSongs">0</div>
               </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: #e5f3ff; color: #228fff; display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              <div class="stat-icon" style="background:#e5f3ff; color:#228fff;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
               </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +20%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
             </div>
           </div>
+
+          <!-- With Lyrics -->
           <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div class="stat-row">
               <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Pending Songs</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;">123</strong>
+                <div class="stat-label">
+                  <span class="period-badge" style="background:#f3ebff; color:#7d40ff;">Content</span><br>
+                  With Lyrics
+                </div>
+                <div class="stat-value" id="statLyricsSongs">0</div>
               </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: #fff8e1; color: #ffce20; display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <div class="stat-icon" style="background:#f3ebff; color:#7d40ff;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
               </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--danger); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>
-                -11%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
             </div>
           </div>
+
+          <!-- Filtered / Visible -->
           <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div class="stat-row">
               <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Published Songs</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;">3,100</strong>
+                <div class="stat-label">
+                  <span class="period-badge" style="background:#e6f9f3; color:#05cd99;">Current View</span><br>
+                  Filtered Results
+                </div>
+                <div class="stat-value" id="statVisibleSongs">0</div>
               </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: #e6f9f3; color: #05cd99; display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              <div class="stat-icon" style="background:#e6f9f3; color:#05cd99;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
               </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +18%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
+            <div class="stat-trend up" style="display:none;" id="statCurrentModeWrap">
+              <span id="statCurrentMode" style="color:var(--muted);font-weight:600;">—</span>
             </div>
           </div>
         </div>
 
-        <div style="display: flex; gap: 32px; border-bottom: 1px solid var(--line); margin-bottom: 32px; margin-top: -10px;">
-          <div class="tab active" style="padding: 0 4px 16px;">All Songs</div>
-          <div class="tab" style="padding: 0 4px 16px;">Pending Songs</div>
-          <div class="tab" style="padding: 0 4px 16px;">Published Songs</div>
-          <div class="tab" style="padding: 0 4px 16px;">Draft Songs</div>
-          <div class="tab" style="padding: 0 4px 16px;">Deleted Songs</div>
-        </div>
-
-        <div class="toolbar" style="margin-bottom: 24px;">
-          <div class="toolbar-left">
-            <button id="refreshList" class="btn"><?= __('Refresh') ?></button>
-            <button id="exportAllPdf" class="btn"><?= __('Export PDF') ?></button>
+        <div class="toolbar" style="margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center;">
+          <div class="toolbar-left" style="display:flex; gap:12px;">
+            <button id="refreshList" class="btn" style="background:white; border:1px solid var(--line);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg> <?= __('Refresh') ?></button>
+            <button id="exportAllPdf" class="btn" style="background:white; border:1px solid var(--line);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 18 15 15"></polyline></svg> <?= __('Export PDF') ?></button>
             <button id="toggleFiltersBtn" class="btn" style="display:none;">Filters</button>
-            <div class="lang-switcher">
-              <a href="?lang=hy" class="lang-btn <?= $adminLang === 'hy' ? 'active' : '' ?>">AM</a>
-              <a href="?lang=ru" class="lang-btn <?= $adminLang === 'ru' ? 'active' : '' ?>">RU</a>
-              <a href="?lang=en" class="lang-btn <?= $adminLang === 'en' ? 'active' : '' ?>">EN</a>
-            </div>
           </div>
           <button id="newSongBtn" class="btn btn-primary" style="padding: 14px 28px;">+ <?= __('Add Song') ?></button>
         </div>
@@ -1785,7 +1213,7 @@ workspaceTabs.forEach((tab) => {
 function updateStats(totalCount, visibleCount) {
   const withLyrics = ALL_SONGS.filter(song => (song.lyrics || '').trim()).length;
   statTotalSongs.textContent = String(totalCount);
-  statLyricsSongs?.textContent = String(withLyrics);
+  if (statLyricsSongs) statLyricsSongs.textContent = String(withLyrics);
   statVisibleSongs.textContent = String(visibleCount);
   statCurrentMode.textContent = currentEditId !== null ? 'Խմբագրում' : 'Նոր երգ';
 }
