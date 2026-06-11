@@ -468,40 +468,6 @@ $notifCount        = count($notifications);
   </main>
 </div>
 
-<!-- ── Notification panel (fixed overlay) ───────────────── -->
-<div id="notifWrapper" style="position:fixed; top:72px; right:40px; z-index:9999;">
-  <div class="notif-panel" id="notifPanel" style="position:relative; top:0; right:0;">
-    <div class="notif-header">
-      <h4>Notifications <span style="background:var(--primary);color:white;border-radius:20px;padding:2px 8px;font-size:11px;"><?= $notifCount ?></span></h4>
-      <span onclick="markAllRead()" style="cursor:pointer;color:var(--muted);font-size:13px;font-weight:600;">Mark all read</span>
-    </div>
-    <div class="notif-list" id="notifList">
-      <?php if (empty($notifications)): ?>
-        <div class="notif-empty">No notifications yet</div>
-      <?php else: ?>
-        <?php foreach ($notifications as $n): ?>
-        <div class="notif-item">
-          <div class="notif-icon <?= $n['type'] ?>">
-            <?php if ($n['type'] === 'song'): ?>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
-            <?php else: ?>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            <?php endif; ?>
-          </div>
-          <div class="notif-text">
-            <div class="notif-msg"><?= htmlspecialchars($n['message']) ?></div>
-            <?php if ($n['sub']): ?><div class="notif-sub"><?= htmlspecialchars($n['sub']) ?></div><?php endif; ?>
-            <div class="notif-time"><?= htmlspecialchars($n['time']) ?></div>
-          </div>
-        </div>
-        <?php endforeach; ?>
-      <?php endif; ?>
-    </div>
-    <div class="notif-footer">
-      <a href="/admin_stats.php">View all activity →</a>
-    </div>
-  </div>
-</div>
 
 <script>
 // ── Period toggle ──────────────────────────────────────────
@@ -519,15 +485,6 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('btn' + period.charAt(0).toUpperCase() + period.slice(1))?.classList.add('active');
 
-  // Hook shared topbar bell to our notification panel
-  const bell = document.getElementById('topbarBellBtn');
-  if (bell) {
-    bell.addEventListener('click', function(e) {
-      e.stopPropagation();
-      document.getElementById('notifPanel')?.classList.toggle('open');
-    });
-  }
-
   // Hook topbar search to table filter
   const searchInput = document.getElementById('topbarSearch');
   if (searchInput) {
@@ -535,24 +492,6 @@ document.addEventListener('DOMContentLoaded', function() {
       handleSearch(this.value);
     });
   }
-});
-
-// ── Notifications ──────────────────────────────────────────
-function markAllRead() {
-  document.querySelector('.notif-dot')?.remove();
-  document.getElementById('notifList').innerHTML = '<div class="notif-empty">All caught up! 🎉</div>';
-}
-
-document.addEventListener('click', function(e) {
-  const wrapper = document.getElementById('notifWrapper');
-  const panel   = document.getElementById('notifPanel');
-  if (panel && panel.classList.contains('open') && wrapper && !wrapper.contains(e.target)) {
-    panel.classList.remove('open');
-  }
-});
-
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') document.getElementById('notifPanel')?.classList.remove('open');
 });
 
 // ── Table search ──────────────────────────────────────────
