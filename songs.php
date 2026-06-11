@@ -81,9 +81,9 @@ endif;
 <body>
 <div id="adminPageLoader" aria-hidden="true">
   <div id="adminPageLoaderCard" role="status" aria-live="polite" aria-busy="true">
-    <h2 id="adminPageLoaderTitle">Բեռնվում է…</h2>
-    <p id="adminPageLoaderText">Ադմինի երգերի տվյալները պատրաստվում են։</p>
-    <div id="adminPageLoaderRail"></div>
+    <h2 id="adminPageLoaderTitle"><?= __('Loading...') ?></h2>
+    <p id="adminPageLoaderText"><?= __('Admin data is preparing.') ?></p>
+    <div id="adminPagePulse"></div>
   </div>
 </div>
 
@@ -105,9 +105,8 @@ endif;
 #adminPageLoaderCard { background:#fff; padding:40px; border-radius:20px; text-align:center; box-shadow:var(--shadow); }
 #adminPageLoaderTitle { font-size:22px; font-weight:800; color:var(--text); margin:0 0 8px; }
 #adminPageLoaderText { color:var(--muted); margin:0; }
-#adminPageLoaderRail { width:200px; height:4px; background:#f1f5f9; border-radius:4px; margin:16px auto 0; overflow:hidden; }
-#adminPageLoaderRail::after { content:''; display:block; height:100%; width:40%; background:var(--primary); border-radius:4px; animation:rail 1.2s ease-in-out infinite; }
-@keyframes rail { 0%{transform:translateX(-100%)} 100%{transform:translateX(350%)} }
+#adminPagePulse { width:40px; height:40px; border-radius:50%; background-color:var(--primary); animation:pulse 1.5s ease-out infinite; margin:24px auto 0; }
+@keyframes pulse { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
 
 /* Notice toast */
 #notice {
