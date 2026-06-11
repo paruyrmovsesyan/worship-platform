@@ -26,6 +26,31 @@
   display: none !important;
 }
 
+
+/* ── SECTION TABS (Settings Menu) ── */
+.section-switcher {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 32px;
+}
+@media (max-width: 1200px) { .section-switcher { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 900px) { .section-switcher { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .section-switcher { grid-template-columns: 1fr; } }
+
+.section-tab {
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  padding: 16px 20px; border-radius: 16px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--text); font-weight: 700; cursor: pointer; text-align: left;
+  transition: transform .15s, border-color .15s, box-shadow .15s, background .15s;
+  box-shadow: var(--shadow-sm);
+}
+.section-tab:hover { background: #f8faff; border-color: #cbd5e1; transform: translateY(-1px); }
+.section-tab.active {
+  background: var(--primary); border-color: var(--primary); color: #fff;
+  box-shadow: 0 4px 15px rgba(67, 24, 255, 0.25);
+}
+.section-tab span { display: block; font-size: 15px; letter-spacing: -0.2px; margin-bottom: 4px; }
+.section-tab small { display: block; font-size: 12px; font-weight: 500; opacity: 0.7; line-height: 1.4; }
+.section-tab.active small { opacity: 0.9; }
+
 /* ── FORM ELEMENTS ── */
 .field { display: flex; flex-direction: column; gap: 8px; }
 .field label, label { font-size: 13px; font-weight: 700; color: var(--text); }

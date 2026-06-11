@@ -1613,32 +1613,55 @@ $csrfToken = wp_admin_updates_csrf_token();
         
       </div>
 
-      <!-- HIDDEN section switcher — required for JS section switching functionality -->
       <?php if ($hasAnyAdminSectionAccess): ?>
-      <div role="tablist" style="display:none; visibility:hidden; position:absolute; pointer-events:none; height:0; overflow:hidden;">
+      <div class="section-switcher" role="tablist">
         <?php if (!empty($adminSectionPermissions["release"])): ?>
-        <button class="section-tab active" type="button" data-section-tab="release"></button>
+        <button class="section-tab active" type="button" data-section-tab="release">
+          <span><?= __('1. Թարմացում և տեղադրում') ?></span>
+          <small><?= __('Տարբերակներ, հաղորդագրություններ, ZIP փաթեթ և հրապարակում') ?></small>
+        </button>
         <?php endif; ?>
         <?php if (!empty($adminSectionPermissions["maintenance"])): ?>
-        <button class="section-tab" type="button" data-section-tab="maintenance"></button>
+        <button class="section-tab" type="button" data-section-tab="maintenance">
+          <span><?= __('2. Տեխնիկական աշխատանքներ') ?></span>
+          <small><?= __('Կայքի և ծրագրի անհասանելիության պլանավորում') ?></small>
+        </button>
         <?php endif; ?>
         <?php if (!empty($adminSectionPermissions["push"])): ?>
-        <button class="section-tab" type="button" data-section-tab="push"></button>
+        <button class="section-tab" type="button" data-section-tab="push">
+          <span><?= __('3. Push ծանուցումներ') ?></span>
+          <small><?= __('Ուղարկել ծանուցումներ բոլորին կամ կոնկրետ սարքերին') ?></small>
+        </button>
         <?php endif; ?>
         <?php if (!empty($adminSectionPermissions["devices"])): ?>
-        <button class="section-tab" type="button" data-section-tab="devices"></button>
+        <button class="section-tab" type="button" data-section-tab="devices">
+          <span><?= __('4. Սարքեր') ?></span>
+          <small><?= __('Գրանցված սարքերի, տեսակների և ակտիվության կառավարում') ?></small>
+        </button>
         <?php endif; ?>
         <?php if (!empty($adminSectionPermissions["history"])): ?>
-        <button class="section-tab" type="button" data-section-tab="history"></button>
+        <button class="section-tab" type="button" data-section-tab="history">
+          <span><?= __('5. Պատմություն') ?></span>
+          <small><?= __('Նախկին թողարկումների և թարմացումների արխիվ') ?></small>
+        </button>
         <?php endif; ?>
         <?php if (!empty($adminSectionPermissions["access"])): ?>
-        <button class="section-tab" type="button" data-section-tab="access"></button>
+        <button class="section-tab" type="button" data-section-tab="access">
+          <span><?= __('6. Մուտքեր') ?></span>
+          <small><?= __('Ադմինների և համակարգի թույլտվությունների կառավարում') ?></small>
+        </button>
         <?php endif; ?>
         <?php if (!empty($adminSectionPermissions["moderation"])): ?>
-        <button class="section-tab" type="button" data-section-tab="moderation"></button>
+        <button class="section-tab" type="button" data-section-tab="moderation">
+          <span><?= __('7. Մոդերացիա') ?></span>
+          <small><?= __('Օգտատերերի գործողությունների վերահսկում') ?></small>
+        </button>
         <?php endif; ?>
         <?php if (!empty($adminSectionPermissions["translations"])): ?>
-        <button class="section-tab" type="button" data-section-tab="translations"></button>
+        <button class="section-tab" type="button" data-section-tab="translations">
+          <span><?= __('8. Թարգմանություններ') ?></span>
+          <small><?= __('Համակարգի բառարանների և տեքստերի կառավարում') ?></small>
+        </button>
         <?php endif; ?>
       </div>
       <?php endif; ?>
