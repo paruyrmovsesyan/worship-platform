@@ -867,6 +867,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'ok' => false,
                 'message' => 'Անվտանգության ստուգումը չանցավ։ Խնդրում ենք էջը թարմացնել և կրկնել գործողությունը։',
                 'type' => 'error',
+                'csrf_failed' => true,
+                'new_csrf_token' => wp_admin_updates_csrf_token(),
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         }
@@ -4426,6 +4428,16 @@ $csrfToken = wp_admin_updates_csrf_token();
         } catch (error) {}
 
         if (!response.ok || !result || result.ok === false) {
+          if (result && result.csrf_failed && result.new_csrf_token) {
+            if (csrfTokenInput) {
+              csrfTokenInput.value = result.new_csrf_token;
+            }
+            if (!data || !data.toString().includes('_retry=1')) {
+              const retryData = new URLSearchParams(data || {});
+              retryData.append('_retry', '1');
+              return postAdminAction(action, retryData);
+            }
+          }
           throw new Error((result && result.message) ? result.message : 'Չհաջողվեց պահպանել տվյալները։');
         }
 
