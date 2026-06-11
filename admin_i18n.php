@@ -9,6 +9,84 @@ if (!isset($adminLang)) {
 }
 
 $admin_hardcoded_i18n = [
+        'hy' => [
+        // Sidebar & Common
+        'Dashboard' => 'Գլխավոր վահանակ',
+        'Songs' => 'Երգեր',
+        'Clients' => 'Հաճախորդներ',
+        'Statistics' => 'Վիճակագրություն',
+        'Settings' => 'Կարգավորումներ',
+        'FAQ' => 'ՀՏՀ',
+        'Log Out' => 'Դուրս գալ',
+        'Menu' => 'Մենյու',
+        'Upgrade your plan' => 'Բարելավեք պլանը',
+        'Go to pro to access all features' => 'Անցեք PRO բոլոր հնարավորությունների համար',
+        'Upgrade' => 'Բարելավել',
+        'Worship<br>Platform Admin' => 'Worship<br>Platform Admin',
+        
+        // Topbar
+        'Search...' => 'Որոնում...',
+        'Notifications' => 'Ծանուցումներ',
+        'Mark all read' => 'Նշել բոլորը կարդացված',
+        'No notifications yet' => 'Ծանուցումներ չկան',
+        'View all activity →' => 'Դիտել ողջ պատմությունը →',
+        'Account menu' => 'Հաշվի մենյու',
+        
+        // Dashboard
+        'Overview of your Worship platform' => 'Ձեր Worship հարթակի ընդհանուր նկարագիրը',
+        'Today' => 'Այսօր',
+        'New Songs' => 'Նոր Երգեր',
+        'New Users' => 'Նոր Օգտատերեր',
+        'vs previous' => 'նախորդի համեմատ',
+        'System Status' => 'Համակարգի Վիճակը',
+        'Database' => 'Տվյալների Բազա',
+        'PHP Version' => 'PHP Տարբերակ',
+        'App Version' => 'Հավելվածի Տարբերակ',
+        'Disk Free' => 'Ազատ Հիշողություն',
+        'Memory Used' => 'Օգտագործված Հիշողություն',
+        'Quick Actions' => 'Արագ Գործողություններ',
+        'Manage Songs' => 'Կառավարել Երգերը',
+        'View Clients' => 'Դիտել Հաճախորդներին',
+        'System Settings' => 'Համակարգի Կարգավորումներ',
+        'View Statistics' => 'Դիտել Վիճակագրությունը',
+        'Online' => 'Առցանց',
+        'Offline' => 'Անցանց',
+        'Daily' => 'Օրական',
+        'Monthly' => 'Ամսական',
+        
+        // Clients
+        'Manage your platform users and their access levels' => 'Կառավարեք ձեր հարթակի օգտատերերին և նրանց հասանելիությունները',
+        'Refresh' => 'Թարմացնել',
+        'ID' => 'ID',
+        'NAME' => 'ԱՆՈՒՆ',
+        'EMAIL' => 'ԷԼ․ ՓՈՍՏ',
+        'ROLE' => 'ԴԵՐ',
+        'STATUS' => 'ԿԱՐԳԱՎԻՃԱԿ',
+        'CREATED' => 'ՍՏԵՂԾՎԵԼ Է',
+        'ACTIONS' => 'ԳՈՐԾՈՂՈՒԹՅՈՒՆՆԵՐ',
+        'No users found.' => 'Օգտատերեր չեն գտնվել:',
+        'View' => 'Դիտել',
+        'Edit' => 'Խմբագրել',
+        
+        // Stats
+        'Platform metrics and usage activity' => 'Հարթակի չափանիշները և օգտագործման ակտիվությունը',
+        'All Time' => 'Ամբողջ Ժամանակ',
+        'Total Songs' => 'Ընդհանուր Երգեր',
+        'Total Users' => 'Ընդհանուր Օգտատերեր',
+        'Total Views' => 'Ընդհանուր Դիտումներ',
+        'Growth Chart' => 'Աճի Գրաֆիկ',
+        
+        // FAQ
+        'Frequently Asked Questions and Guide' => 'Հաճախ տրվող հարցեր և ուղեցույց',
+        'Search FAQ...' => 'Որոնել ՀՏՀ-ում...',
+        'Expand All' => 'Բացել բոլորը',
+        'Collapse All' => 'Փակել բոլորը',
+        
+        // Dynamic matches
+        'Admin' => 'Ադմին',
+        'Superadmin' => 'Սուպերադմին',
+        'User' => 'Օգտատեր',
+    ],
     'ru' => [
         // Sidebar & Common
         'Dashboard' => 'Панель',
@@ -198,7 +276,7 @@ $admin_hardcoded_i18n = [
 if (!function_exists('__')) {
     function __($text, $context = 'ui') {
         global $adminLang, $admin_hardcoded_i18n;
-        if ($adminLang === 'hy' || trim($text) === '') return $text;
+        if (trim($text) === '') return $text;
         
         if (function_exists('wp_translation_cache_get')) {
             $cached = wp_translation_cache_get($adminLang, $context, $text);
