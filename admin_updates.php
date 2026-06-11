@@ -1480,7 +1480,6 @@ $csrfToken = wp_admin_updates_csrf_token();
   .push-stat-lbl { font-size:12px; font-weight:600; color:var(--muted); margin-top:4px; display:block; }
 
   /* Tab bar for settings sub-sections */
-  .section-switcher { display:flex; flex-direction:column; gap:0; }
 
   /* Page heading */
   .page-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px; }
