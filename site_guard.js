@@ -7,12 +7,17 @@
     try{
       const path = ((window.location && window.location.pathname) || "/").toLowerCase();
       if(path === "/" || path === "/index.html") return "landing";
-      if(path === "/main.html") return "main";
-      if(path === "/song_view.html") return "song";
-      if(path === "/favorites.html") return "favorites";
-      if(path === "/setlists.html" || path === "/setlist_edit.html" || path === "/setlist_view.html" || path === "/setlist_public.html") return "setlists";
-      if(path === "/account.html") return "account";
-      if(path === "/news.html") return "news";
+      if(path === "/songs" || path.startsWith("/songs")) return "main";
+      if(path.startsWith("/song/")) return "song";
+      if(path === "/favorites") return "favorites";
+      if(path === "/setlists" || path.startsWith("/setlists/")) return "setlists";
+      if(path === "/news") return "news";
+      if(path === "/teams" || path.startsWith("/teams/")) return "teams";
+      if(path === "/community") return "community";
+      if(path === "/pricing") return "pricing";
+      if(path === "/resources") return "resources";
+      if(path === "/song-request") return "song_request";
+      if(path === "/profile" || path === "/settings") return "account";
       if(
         path === "/loginuser.php" ||
         path === "/registeruser.php" ||
@@ -26,13 +31,15 @@
   }
 
   function isPageDisabledByAdmin(data){
-    if(!data || !data.page_app_modes || typeof data.page_app_modes !== "object") return false;
+    if(!data) return false;
+    const isApp = isStandaloneAppContext();
+    const modesObj = isApp ? data.page_app_modes : data.page_web_modes;
+    
+    if(!modesObj || typeof modesObj !== "object") return false;
     const key = getCurrentPageKey();
-    if(!key || !Object.prototype.hasOwnProperty.call(data.page_app_modes, key)) return false;
-    return data.page_app_modes[key] === false;
+    if(!key || !Object.prototype.hasOwnProperty.call(modesObj, key)) return false;
+    return modesObj[key] === false;
   }
-
-  function isStandaloneAppContext(){
     try{
       const source = (new URL(window.location.href).searchParams.get("source") || "").toLowerCase();
       if(source === "pwa" || source === "admin-app") return true;

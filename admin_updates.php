@@ -28,6 +28,8 @@ if (!function_exists('__')) {
 $adminUser = $access['user'];
 $config = $access['config'];
 $adminSectionRegistry = wp_version_admin_section_registry();
+$pageAppRegistry = wp_version_page_app_registry();
+$pageWebRegistry = wp_version_page_web_registry();
 $adminSectionPermissions = $access['permissions'] ?? wp_version_default_admin_permissions();
 $releaseTypes = wp_version_release_types();
 $packageModes = wp_version_package_modes();
@@ -838,6 +840,7 @@ function wp_admin_updates_collect_input(array $config): array {
         'social_auth_google_client_id' => $_POST['social_auth_google_client_id'] ?? ($config['social_auth_google_client_id'] ?? ''),
         'social_auth_google_redirect_uri' => $_POST['social_auth_google_redirect_uri'] ?? ($config['social_auth_google_redirect_uri'] ?? ''),
         'page_app_modes' => $_POST['page_app_modes'] ?? ($config['page_app_modes'] ?? []),
+        'page_web_modes' => $_POST['page_web_modes'] ?? ($config['page_web_modes'] ?? []),
         'meta_note' => $_POST['meta_note'] ?? '',
         'release_apply_mode' => $_POST['release_apply_mode'] ?? 'without_file',
         'server_package_mode' => $_POST['server_package_mode'] ?? ($config['server_package_mode'] ?? 'partial'),
@@ -2123,6 +2126,29 @@ $csrfToken = wp_admin_updates_csrf_token();
                   </div>
                   <label class="toggle-switch">
                     <input type="checkbox" name="page_app_modes[<?= htmlspecialchars($pageKey, ENT_QUOTES) ?>]" value="1" <?= $pageEnabled ? 'checked' : '' ?>>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              <?php endforeach; ?>
+            </div>
+
+            <div class="settings-group-header" style="margin-top: 32px;">
+              <h3>Կայքի էջեր (Web)</h3>
+              <p>Ընտրեք, թե որ էջերը պետք է հասանելի լինեն կայքում (անջատելու դեպքում այցելուները կստանան «էջը անհասանելի է» հաղորդագրությունը)։</p>
+            </div>
+
+            <div class="page-app-grid">
+              <input type="hidden" name="page_web_modes_present" value="1">
+              <?php foreach ($pageWebRegistry as $pageKey => $pageMeta): ?>
+                <?php $pageEnabled = !empty(($config['page_web_modes'] ?? [])[$pageKey]); ?>
+                <div class="toggle-switch-wrapper" style="margin-bottom: 12px; padding: 12px 16px;">
+                  <div class="toggle-switch-info">
+                    <h4 style="margin-bottom:2px;"><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></h4>
+                    <p style="font-size:12px; margin-bottom:4px;"><?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?></p>
+                    <code style="font-size:11px;"><?= htmlspecialchars((string)($pageMeta['path'] ?? ''), ENT_QUOTES) ?></code>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" name="page_web_modes[<?= htmlspecialchars($pageKey, ENT_QUOTES) ?>]" value="1" <?= $pageEnabled ? 'checked' : '' ?>>
                     <span class="toggle-slider"></span>
                   </label>
                 </div>

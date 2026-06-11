@@ -62,39 +62,64 @@ function wp_version_package_mode_label(?string $value): string {
 function wp_version_page_app_registry(): array {
     return [
         'landing' => [
-            'label' => 'Գլխավոր / Landing',
-            'path' => '/index.html',
+            'label'       => 'Գլխավոր / Landing',
+            'path'        => '/',
             'description' => 'Կայքի մեկնարկային էջը և ծրագրի առաջին բացումը։',
         ],
         'main' => [
-            'label' => 'Երգերի գրադարան',
-            'path' => '/main.html',
+            'label'       => 'Երգերի գրադարան',
+            'path'        => '/songs',
             'description' => 'Հիմնական երգերի ցանկը, որոնումը և օֆֆլայն գրադարանը։',
         ],
         'song' => [
-            'label' => 'Երգի դիտում',
-            'path' => '/song_view.html',
+            'label'       => 'Երգի դիտում',
+            'path'        => '/song/:id',
             'description' => 'Երգի բառերը, ակորդները և transpose գործիքները։',
         ],
         'favorites' => [
-            'label' => 'Պահպանված երգեր',
-            'path' => '/favorites.html',
+            'label'       => 'Պահպանված երգեր',
+            'path'        => '/favorites',
             'description' => 'User-ի սիրելի և պահպանված երգերի բաժինը։',
         ],
         'setlists' => [
-            'label' => 'Սեթլիստներ',
-            'path' => '/setlists.html',
+            'label'       => 'Սեթլիստներ',
+            'path'        => '/setlists',
             'description' => 'Սեթլիստների workspace-ը և սեթլիստի ներքին էջերը։',
         ],
         'account' => [
-            'label' => 'Հաշիվ',
-            'path' => '/account.html',
-            'description' => 'Հաշվի կարգավորումներ, push և user data։',
+            'label'       => 'Հաշիվ / Կարգավորումներ',
+            'path'        => '/profile',
+            'description' => 'Հաշվի կարգավորումներ, push ծանուցումներ և user data։',
         ],
         'news' => [
-            'label' => 'Նորություններ',
-            'path' => '/news.html',
+            'label'       => 'Նորություններ',
+            'path'        => '/news',
             'description' => 'Նորությունների և հայտարարությունների բաժինը։',
+        ],
+        'teams' => [
+            'label'       => 'Թիմեր',
+            'path'        => '/teams',
+            'description' => 'Թիմերի ցանկ, ստեղծում և թիմի ներքին էջ։',
+        ],
+        'community' => [
+            'label'       => 'Համայնք',
+            'path'        => '/community',
+            'description' => 'Օգտատերերի համայնքի և քննարկումների բաժինը։',
+        ],
+        'pricing' => [
+            'label'       => 'Բաժանորդագրություն',
+            'path'        => '/pricing',
+            'description' => 'Վճարովի պլաններ, բաժանորդագրության ընտրություն։',
+        ],
+        'resources' => [
+            'label'       => 'Ռեսուրսներ',
+            'path'        => '/resources',
+            'description' => 'Ուսուցողական նյութեր, ձեռնարկներ և ռեսուրսներ։',
+        ],
+        'song_request' => [
+            'label'       => 'Երգ խնդրել',
+            'path'        => '/song-request',
+            'description' => 'Օգտատիրոջ կողմից երգ ավելացնելու կամ խմբագրելու հարցում։',
         ],
         'auth' => [
             'label' => 'Մուտք և գրանցում',
@@ -224,12 +249,95 @@ function wp_version_sanitize_page_app_modes($value): array {
     if (!is_array($value)) {
         return $defaults;
     }
-
     $normalized = [];
     foreach ($defaults as $key => $defaultValue) {
         $normalized[$key] = !empty($value[$key]);
     }
+    return $normalized;
+}
 
+function wp_version_page_web_registry(): array {
+    return [
+        'landing' => [
+            'label'       => 'Գլխավոր / Landing',
+            'path'        => '/',
+            'description' => 'Կայքի մեկնարկային էջը և ծրագրի առաջին բացումը։',
+        ],
+        'main' => [
+            'label'       => 'Երգերի գրադարան',
+            'path'        => '/songs',
+            'description' => 'Հիմնական երգերի ցանկը, որոնումը և օֆֆլայն գրադարանը։',
+        ],
+        'song' => [
+            'label'       => 'Երգի դիտում',
+            'path'        => '/song/:id',
+            'description' => 'Երգի բառերը, ակորդները և transpose գործիքները։',
+        ],
+        'favorites' => [
+            'label'       => 'Պահպանված երգեր',
+            'path'        => '/favorites',
+            'description' => 'Օգտատիրոջ սիրելի և պահպանված երգերի բաժինը։',
+        ],
+        'setlists' => [
+            'label'       => 'Սեթլիստներ',
+            'path'        => '/setlists',
+            'description' => 'Սեթլիստների workspace-ը և սեթլիստի ներքին էջերը։',
+        ],
+        'news' => [
+            'label'       => 'Նորություններ',
+            'path'        => '/news',
+            'description' => 'Նորությունների և հայտարարությունների բաժինը։',
+        ],
+        'teams' => [
+            'label'       => 'Թիմեր',
+            'path'        => '/teams',
+            'description' => 'Թիմերի ցանկ, ստեղծում և թիմի ներքին էջ։',
+        ],
+        'community' => [
+            'label'       => 'Համայնք',
+            'path'        => '/community',
+            'description' => 'Օգտատերերի համայնքի և քննարկումների բաժինը։',
+        ],
+        'pricing' => [
+            'label'       => 'Բաժանորդագրություն',
+            'path'        => '/pricing',
+            'description' => 'Վճարովի պլաններ, բաժանորդագրության ընտրություն։',
+        ],
+        'resources' => [
+            'label'       => 'Ռեսուրսներ',
+            'path'        => '/resources',
+            'description' => 'Ուսուցողական նյութեր, ձեռնարկներ և ռեսուրսներ։',
+        ],
+        'song_request' => [
+            'label'       => 'Երգ խնդրել',
+            'path'        => '/song-request',
+            'description' => 'Օգտատիրոջ կողմից երգ ավելացնելու կամ խմբագրելու հարցում։',
+        ],
+        'auth' => [
+            'label'       => 'Մուտք և գրանցում',
+            'path'        => '/loginuser.php',
+            'description' => 'Մուտք, գրանցում, password reset և email verify flow-երը։',
+        ],
+    ];
+}
+
+function wp_version_default_page_web_modes(): array {
+    $modes = [];
+    foreach (wp_version_page_web_registry() as $key => $page) {
+        $modes[$key] = true; // All web pages enabled by default
+    }
+    return $modes;
+}
+
+function wp_version_sanitize_page_web_modes($value): array {
+    $defaults = wp_version_default_page_web_modes();
+    if (!is_array($value)) {
+        return $defaults;
+    }
+    $normalized = [];
+    foreach ($defaults as $key => $defaultValue) {
+        $normalized[$key] = !empty($value[$key]);
+    }
     return $normalized;
 }
 
@@ -267,6 +375,7 @@ function wp_version_defaults(): array {
         'social_auth_google_client_id' => '',
         'social_auth_google_redirect_uri' => '',
         'page_app_modes' => wp_version_default_page_app_modes(),
+        'page_web_modes' => wp_version_default_page_web_modes(),
         'meta_note' => '',
         'updated_at' => wp_version_now_iso(),
     ];
@@ -367,6 +476,7 @@ function wp_version_sanitize(array $raw): array {
     $config['admin_emails'] = wp_version_sanitize_email_list($config['admin_emails'] ?? []);
     $config['admin_user_permissions'] = wp_version_sanitize_admin_user_permissions($config['admin_user_permissions'] ?? []);
     $config['page_app_modes'] = wp_version_sanitize_page_app_modes($config['page_app_modes'] ?? []);
+    $config['page_web_modes'] = wp_version_sanitize_page_web_modes($config['page_web_modes'] ?? []);
     $config['social_auth_google_client_id'] = mb_substr(trim((string)($config['social_auth_google_client_id'] ?? '')), 0, 255);
     $config['social_auth_google_redirect_uri'] = mb_substr(trim((string)($config['social_auth_google_redirect_uri'] ?? '')), 0, 255);
     $config['meta_note'] = mb_substr(trim((string)($config['meta_note'] ?? '')), 0, 1200);
