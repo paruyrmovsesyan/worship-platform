@@ -251,6 +251,7 @@ function wp_version_defaults(): array {
         'maintenance_message' => 'Կայքում ընթացքի մեջ են տեխնիկական աշխատանքներ։ Խնդրում ենք փորձել մի փոքր հետո։',
         'maintenance_start_at' => '',
         'maintenance_end_at' => '',
+        'maintenance_allowed_ips' => '',
         'server_package_file' => '',
         'server_package_mode' => 'partial',
         'server_package_uploaded_at' => '',
@@ -352,6 +353,7 @@ function wp_version_sanitize(array $raw): array {
     $config['maintenance_message'] = mb_substr(trim((string)($config['maintenance_message'] ?? $defaults['maintenance_message'])) ?: $defaults['maintenance_message'], 0, 600);
     $config['maintenance_start_at'] = wp_version_normalize_datetime($config['maintenance_start_at'] ?? '');
     $config['maintenance_end_at'] = wp_version_normalize_datetime($config['maintenance_end_at'] ?? '');
+    $config['maintenance_allowed_ips'] = trim((string)($config['maintenance_allowed_ips'] ?? ''));
     $config['server_package_file'] = mb_substr(trim((string)($config['server_package_file'] ?? '')), 0, 220);
     $config['server_package_mode'] = wp_version_sanitize_package_mode($config['server_package_mode'] ?? 'partial');
     $config['server_package_uploaded_at'] = wp_version_normalize_datetime($config['server_package_uploaded_at'] ?? '');
@@ -415,11 +417,27 @@ function wp_version_is_scheduled_maintenance_active(array $config, ?DateTimeImmu
 }
 
 function wp_version_is_maintenance_active(array $config): bool {
+    $is_active = false;
+    
     if (!empty($config['maintenance_enabled'])) {
-        return true;
+        $is_active = true;
+    } elseif (wp_version_is_scheduled_maintenance_active($config)) {
+        $is_active = true;
     }
 
-    return wp_version_is_scheduled_maintenance_active($config);
+    if ($is_active && !empty($config['maintenance_allowed_ips'])) {
+        $client_ip = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '';
+        if ($client_ip) {
+            $allowed_ips = array_map('trim', explode(',', $config['maintenance_allowed_ips']));
+            foreach ($allowed_ips as $ip) {
+                if ($ip !== '' && strpos($client_ip, $ip) !== false) {
+                    return false; // Bypass maintenance for this IP
+                }
+            }
+        }
+    }
+
+    return $is_active;
 }
 
 function wp_version_diff(array $before, array $after): array {

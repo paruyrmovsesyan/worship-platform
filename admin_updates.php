@@ -1707,8 +1707,10 @@ $csrfToken = wp_admin_updates_csrf_token();
 
     <?php if (!$hasAnyAdminSectionAccess): ?>
     <section class="panel full">
-      <h2>Բաժինների հասանելիություն չկա</h2>
-      <p>Այս օգտահաշվի համար ադմին բաժինների թույլտվություններ դեռ միացված չեն։ Խնդրիր լիազորված ադմինին՝ միացնել անհրաժեշտ բաժինները <code><?= __('Մուտքեր') ?></code> բաժնից։</p>
+      <div class="settings-group-header">
+              <h3>Բաժինների հասանելիություն չկա</h3>
+              <p>Այս օգտահաշվի համար ադմին բաժինների թույլտվություններ դեռ միացված չեն։ Խնդրիր լիազորված ադմինին՝ միացնել անհրաժեշտ բաժինները <code><?= __('Մուտքեր') ?></code> բաժնից։</p>
+            </div>
     </section>
     <?php endif; ?>
 
@@ -1809,9 +1811,11 @@ $csrfToken = wp_admin_updates_csrf_token();
           </div>
         </div>
 
-        <section class="panel full" id="releaseWorkspacePanel" data-admin-section="release all" data-admin-permission="release">
-          <h2>Թողարկման կենդանի ամփոփում</h2>
-          <p>Մինչև սեղմես `Կիրառել թարմացումը`, այստեղ միանգամից երևում է ինչ տարբերակ է գնալու, ինչ ձևով է կիրառվելու և արդյոք հիմնական դաշտերը լրացված են։</p>
+        <section class="settings-group" id="releaseWorkspacePanel" data-admin-section="release all" data-admin-permission="release">
+          <div class="settings-group-header">
+              <h3>Թողարկման կենդանի ամփոփում</h3>
+              <p>Մինչև սեղմես `Կիրառել թարմացումը`, այստեղ միանգամից երևում է ինչ տարբերակ է գնալու, ինչ ձևով է կիրառվելու և արդյոք հիմնական դաշտերը լրացված են։</p>
+            </div>
           <div class="chips" style="margin-top:12px">
             <div class="autosave-status" id="releaseAutosaveStatus" data-state="idle">Փոփոխությունները կպահպանվեն ավտոմատ</div>
           </div>
@@ -1882,16 +1886,18 @@ $csrfToken = wp_admin_updates_csrf_token();
         </section>
 
         <div class="grid">
-          <section class="panel" data-admin-section="release all" data-admin-permission="release">
-            <h2>Ծրագիր / PWA</h2>
-            <p>Այս տարբերակը standalone ծրագրի համար է։ Փոխելիս ծրագիրը կառաջարկի ամբողջական թարմացում և նոր offline sync։ Թարմացման տեսակը բացատրում է փոփոխության բնույթը, իսկ կարճ նկարագրությունը ցույց է տալիս ինչ է փոխվել։</p>
-            <div class="field">
-              <label for="app_version">Ծրագրի տարբերակ</label>
-              <input id="app_version" name="app_version" value="<?= htmlspecialchars((string)$config['app_version'], ENT_QUOTES) ?>" required>
+          <section class="settings-group" data-admin-section="release all" data-admin-permission="release">
+            <div class="settings-group-header">
+              <h3>Ծրագիր / PWA</h3>
+              <p>Այս տարբերակը standalone ծրագրի համար է։ Փոխելիս ծրագիրը կառաջարկի ամբողջական թարմացում և նոր offline sync։ Թարմացման տեսակը բացատրում է փոփոխության բնույթը, իսկ կարճ նկարագրությունը ցույց է տալիս ինչ է փոխվել։</p>
             </div>
-            <div class="field">
+            <div class="form-field">
+              <label for="app_version">Ծրագրի տարբերակ</label>
+              <input id="app_version" name="app_version" value="<?= htmlspecialchars((string)$config['app_version'], ENT_QUOTES) ?>" class="input-field" required>
+            </div>
+            <div class="form-field">
               <label for="app_release_type">Թարմացման տեսակ</label>
-              <select id="app_release_type" name="app_release_type">
+              <select id="app_release_type" name="app_release_type" class="input-field">
                 <?php foreach ($releaseTypes as $releaseTypeValue => $releaseTypeLabel): ?>
                   <option value="<?= htmlspecialchars($releaseTypeValue, ENT_QUOTES) ?>" <?= (string)$config['app_release_type'] === $releaseTypeValue ? 'selected' : '' ?>>
                     <?= htmlspecialchars($releaseTypeLabel, ENT_QUOTES) ?>
@@ -1899,30 +1905,32 @@ $csrfToken = wp_admin_updates_csrf_token();
                 <?php endforeach; ?>
               </select>
             </div>
-            <div class="field">
+            <div class="form-field">
               <label for="app_release_summary">Կարճ նկարագրություն</label>
-              <input id="app_release_summary" name="app_release_summary" maxlength="240" value="<?= htmlspecialchars((string)$config['app_release_summary'], ENT_QUOTES) ?>" placeholder="Օր.` Offline sync improvements և performance fix-եր">
+              <input id="app_release_summary" name="app_release_summary" maxlength="240" value="<?= htmlspecialchars((string)$config['app_release_summary'], ENT_QUOTES) ?>" class="input-field" placeholder="Օր.` Offline sync improvements և performance fix-եր">
             </div>
-            <div class="field">
+            <div class="form-field">
               <label for="app_title">Թարմացման վերնագիր</label>
-              <input id="app_title" name="app_title" value="<?= htmlspecialchars((string)$config['app_title'], ENT_QUOTES) ?>" required>
+              <input id="app_title" name="app_title" value="<?= htmlspecialchars((string)$config['app_title'], ENT_QUOTES) ?>" class="input-field" required>
             </div>
-            <div class="field">
+            <div class="form-field">
               <label for="app_message">Թարմացման հաղորդագրություն</label>
-              <textarea id="app_message" name="app_message" required><?= htmlspecialchars((string)$config['app_message'], ENT_QUOTES) ?></textarea>
+              <textarea id="app_message" name="app_message" required class="input-field"><?= htmlspecialchars((string)$config['app_message'], ENT_QUOTES) ?></textarea>
             </div>
           </section>
 
-          <section class="panel" data-admin-section="release all" data-admin-permission="release">
-            <h2>Կայք / Web</h2>
-            <p>Այս տարբերակը browser տարբերակի համար է։ Փոխելիս կայքը կբերի refresh պատուհան և կվերբեռնի օնլայն տարբերակը։ Թարմացման տեսակը օգնում է տարբերակել բովանդակության թարմացումը, արագ շտկումը կամ մեծ փոփոխությունը։</p>
-            <div class="field">
-              <label for="web_version">Կայքի տարբերակ</label>
-              <input id="web_version" name="web_version" value="<?= htmlspecialchars((string)$config['web_version'], ENT_QUOTES) ?>" required>
+          <section class="settings-group" data-admin-section="release all" data-admin-permission="release">
+            <div class="settings-group-header">
+              <h3>Կայք / Web</h3>
+              <p>Այս տարբերակը browser տարբերակի համար է։ Փոխելիս կայքը կբերի refresh պատուհան և կվերբեռնի օնլայն տարբերակը։ Թարմացման տեսակը օգնում է տարբերակել բովանդակության թարմացումը, արագ շտկումը կամ մեծ փոփոխությունը։</p>
             </div>
-            <div class="field">
+            <div class="form-field">
+              <label for="web_version">Կայքի տարբերակ</label>
+              <input id="web_version" name="web_version" value="<?= htmlspecialchars((string)$config['web_version'], ENT_QUOTES) ?>" class="input-field" required>
+            </div>
+            <div class="form-field">
               <label for="web_release_type">Թարմացման տեսակ</label>
-              <select id="web_release_type" name="web_release_type">
+              <select id="web_release_type" name="web_release_type" class="input-field">
                 <?php foreach ($releaseTypes as $releaseTypeValue => $releaseTypeLabel): ?>
                   <option value="<?= htmlspecialchars($releaseTypeValue, ENT_QUOTES) ?>" <?= (string)$config['web_release_type'] === $releaseTypeValue ? 'selected' : '' ?>>
                     <?= htmlspecialchars($releaseTypeLabel, ENT_QUOTES) ?>
@@ -1930,23 +1938,25 @@ $csrfToken = wp_admin_updates_csrf_token();
                 <?php endforeach; ?>
               </select>
             </div>
-            <div class="field">
+            <div class="form-field">
               <label for="web_release_summary">Կարճ նկարագրություն</label>
-              <input id="web_release_summary" name="web_release_summary" maxlength="240" value="<?= htmlspecialchars((string)$config['web_release_summary'], ENT_QUOTES) ?>" placeholder="Օր.` UI refresh և content update">
+              <input id="web_release_summary" name="web_release_summary" maxlength="240" value="<?= htmlspecialchars((string)$config['web_release_summary'], ENT_QUOTES) ?>" class="input-field" placeholder="Օր.` UI refresh և content update">
             </div>
-            <div class="field">
+            <div class="form-field">
               <label for="web_title">Թարմացման վերնագիր</label>
-              <input id="web_title" name="web_title" value="<?= htmlspecialchars((string)$config['web_title'], ENT_QUOTES) ?>" required>
+              <input id="web_title" name="web_title" value="<?= htmlspecialchars((string)$config['web_title'], ENT_QUOTES) ?>" class="input-field" required>
             </div>
-            <div class="field">
+            <div class="form-field">
               <label for="web_message">Թարմացման հաղորդագրություն</label>
-              <textarea id="web_message" name="web_message" required><?= htmlspecialchars((string)$config['web_message'], ENT_QUOTES) ?></textarea>
+              <textarea id="web_message" name="web_message" required class="input-field"><?= htmlspecialchars((string)$config['web_message'], ENT_QUOTES) ?></textarea>
             </div>
           </section>
 
-          <section class="panel full" data-admin-section="release maintenance all" data-admin-permission="release,maintenance">
-            <h2>Արագ գործողություններ</h2>
-            <p>Սրանք արագ լրացման և միացման կոճակներ են։ Վերջնական կիրառումը մնում է մեկ հիմնական <code>Կիրառել թարմացումը</code> կոճակով` ըստ ընտրված կիրառման ձևի։</p>
+          <section class="settings-group" data-admin-section="release maintenance all" data-admin-permission="release,maintenance">
+            <div class="settings-group-header">
+              <h3>Արագ գործողություններ</h3>
+              <p>Սրանք արագ լրացման և միացման կոճակներ են։ Վերջնական կիրառումը մնում է մեկ հիմնական <code>Կիրառել թարմացումը</code> կոճակով` ըստ ընտրված կիրառման ձևի։</p>
+            </div>
 
             <div class="quick-stack">
               <div class="quick-strip">
@@ -1984,14 +1994,18 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
           </section>
 
-          <section class="panel full" data-admin-section="release all" data-admin-permission="release">
-            <h2>Թարմացման տրամաբանություն</h2>
-            <p><code>major.minor.patch</code> մոտեցումը պահպանում է թարմացման իմաստը։ Major-ը մեծ փոփոխություն է, Minor-ը նոր հնարավորություն կամ նկատելի թարմացում, Patch-ը փոքր ուղղում։ Թարմացման տեսակը տալիս է հասկանալի բացատրություն, իսկ կարճ նկարագրությունը երևում է update modal-ում։</p>
+          <section class="settings-group" data-admin-section="release all" data-admin-permission="release">
+            <div class="settings-group-header">
+              <h3>Թարմացման տրամաբանություն</h3>
+              <p><code>major.minor.patch</code> մոտեցումը պահպանում է թարմացման իմաստը։ Major-ը մեծ փոփոխություն է, Minor-ը նոր հնարավորություն կամ նկատելի թարմացում, Patch-ը փոքր ուղղում։ Թարմացման տեսակը տալիս է հասկանալի բացատրություն, իսկ կարճ նկարագրությունը երևում է update modal-ում։</p>
+            </div>
           </section>
 
-          <section class="panel full" data-admin-section="release all" data-admin-permission="release">
-            <h2>Փաթեթ և տեղադրում</h2>
-            <p>Այստեղ ընտրում եք ինչպես կիրառել տարբերակը. միայն version/message թարմացմամբ կամ ZIP ֆայլի կցումով։ Եթե ընտրեք ֆայլով տարբերակը, նույն հոսքի մեջ կկատարվի նաև սերվերի ֆայլերի թարմացումը։</p>
+          <section class="settings-group" data-admin-section="release all" data-admin-permission="release">
+            <div class="settings-group-header">
+              <h3>Փաթեթ և տեղադրում</h3>
+              <p>Այստեղ ընտրում եք ինչպես կիրառել տարբերակը. միայն version/message թարմացմամբ կամ ZIP ֆայլի կցումով։ Եթե ընտրեք ֆայլով տարբերակը, նույն հոսքի մեջ կկատարվի նաև սերվերի ֆայլերի թարմացումը։</p>
+            </div>
 
             <div class="package-meta">
               <div class="chip">Ընթացիկ փաթեթ <?= htmlspecialchars((string)($config['server_package_file'] ?: '—'), ENT_QUOTES) ?></div>
@@ -2017,14 +2031,14 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
 
             <div class="row-2">
-              <div class="field">
+              <div class="form-field">
                 <label for="release_apply_mode">Կիրառման տարբերակ</label>
                 <select id="release_apply_mode" name="release_apply_mode">
                   <option value="without_file">Առանց ֆայլի կցման</option>
                   <option value="with_file">Ֆայլի կցումով</option>
                 </select>
               </div>
-              <div class="field">
+              <div class="form-field">
                 <label for="server_package_mode">Տեղադրման ռեժիմ</label>
                 <select id="server_package_mode" name="server_package_mode">
                   <?php foreach ($packageModes as $packageModeValue => $packageModeLabel): ?>
@@ -2034,7 +2048,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                   <?php endforeach; ?>
                 </select>
               </div>
-              <div class="field">
+              <div class="form-field">
                 <label for="server_package_file">ZIP թարմացման փաթեթ</label>
                 <input id="server_package_file" name="server_package_file" type="file" accept=".zip,application/zip">
               </div>
@@ -2045,73 +2059,85 @@ $csrfToken = wp_admin_updates_csrf_token();
             <div class="danger-note">Եթե ընտրեք `ֆայլի կցումով` տարբերակը և նոր ZIP չընտրեք, համակարգը կօգտագործի արդեն ներբեռնված ընթացիկ փաթեթը։ `Առանց ֆայլի կցման` տարբերակում ZIP դաշտը պարզապես անտեսվում է։</div>
           </section>
 
-          <section class="panel full" id="maintenancePanel" data-admin-section="maintenance all" data-admin-permission="maintenance">
-            <h2>Տեխնիկական աշխատանքներ</h2>
-            <p>Կարող եք միացնել maintenance-ը ձեռքով կամ schedule-ով։ Երբ scheduled interval-ը հասնի, <code>status.php</code>-ը ինքն է maintenance տալու նույնիսկ եթե toggle-ը off է։</p>
-            <div class="chips" style="margin-top:12px">
-              <div class="autosave-status" id="maintenanceAutosaveStatus" data-state="idle">Փոփոխությունները կպահպանվեն ավտոմատ</div>
+          <section class="settings-group" id="maintenancePanel" data-admin-section="maintenance" data-admin-permission="maintenance">
+            <div class="settings-group-header">
+              <h3>Տեխնիկական աշխատանքներ</h3>
+              <p>Միացրեք այս ռեժիմը, երբ կայքում կամ հավելվածում կատարվում են կարևոր թարմացումներ։</p>
             </div>
-            <div class="switch-row">
-              <div class="switch-copy">
-                <strong>Ձեռքով միացնել տեխնիկական աշխատանքները</strong>
-                <span>Միացրու անմիջապես maintenance ռեժիմը՝ անկախ schedule-ից։</span>
+            
+            <div class="toggle-switch-wrapper">
+              <div class="toggle-switch-info">
+                <h4>Ձեռքով միացնել (Maintenance)</h4>
+                <p>Միացրու անմիջապես սպասարկման ռեժիմը՝ անկախ պլանավորված ժամերից։</p>
               </div>
-              <label class="switch" for="maintenance_enabled">
+              <label class="toggle-switch" for="maintenance_enabled">
                 <input id="maintenance_enabled" name="maintenance_enabled" type="checkbox" <?= !empty($config['maintenance_enabled']) ? 'checked' : '' ?>>
-                <span class="slider"></span>
+                <span class="toggle-slider"></span>
               </label>
             </div>
 
-            <div class="row-2">
-              <div class="field">
-                <label for="maintenance_start_at">Պլանավորված սկիզբ</label>
-                <input id="maintenance_start_at" name="maintenance_start_at" type="datetime-local" value="<?= htmlspecialchars(wp_version_format_datetime_local((string)$config['maintenance_start_at']), ENT_QUOTES) ?>">
-              </div>
-              <div class="field">
-                <label for="maintenance_end_at">Պլանավորված ավարտ</label>
-                <input id="maintenance_end_at" name="maintenance_end_at" type="datetime-local" value="<?= htmlspecialchars(wp_version_format_datetime_local((string)$config['maintenance_end_at']), ENT_QUOTES) ?>">
-              </div>
-            </div>
-
-            <div class="field">
+            <div class="form-field">
               <label for="maintenance_message">Ցուցադրվող հաղորդագրություն</label>
-              <textarea id="maintenance_message" name="maintenance_message"><?= htmlspecialchars((string)$config['maintenance_message'], ENT_QUOTES) ?></textarea>
+              <p class="help-text">Այս տեքստը կտեսնեն օգտատերերը, երբ փորձեն մուտք գործել կայք:</p>
+              <textarea id="maintenance_message" name="maintenance_message" class="input-field" placeholder="Կայքում ընթանում են տեխնիկական աշխատանքներ..."><?= htmlspecialchars((string)$config['maintenance_message'], ENT_QUOTES) ?></textarea>
             </div>
 
-            <div class="access-helper">Այս բաժնի փոփոխությունները պահպանվում են ավտոմատ։</div>
+            <div class="form-field" style="flex-direction: row; gap: 20px; align-items: center;">
+              <div style="flex:1;">
+                <label for="maintenance_start_at">Պլանավորված սկիզբ</label>
+                <input id="maintenance_start_at" name="maintenance_start_at" type="datetime-local" class="input-field" style="margin-top:8px;" value="<?= htmlspecialchars(wp_version_format_datetime_local((string)$config['maintenance_start_at']), ENT_QUOTES) ?>">
+              </div>
+              <div style="flex:1;">
+                <label for="maintenance_end_at">Պլանավորված ավարտ</label>
+                <input id="maintenance_end_at" name="maintenance_end_at" type="datetime-local" class="input-field" style="margin-top:8px;" value="<?= htmlspecialchars(wp_version_format_datetime_local((string)$config['maintenance_end_at']), ENT_QUOTES) ?>">
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="maintenance_allowed_ips">Թույլատրված IP հասցեներ (Whitelist)</label>
+              <p class="help-text">Այս IP հասցեներից մուտք գործողների համար կայքը և ծրագիրը կաշխատեն սովորականի պես (նույնիսկ երբ միացված է): Տարանջատեք ստորակետով (օր.` 192.168.1.1, 10.0.0.1)։</p>
+              <input id="maintenance_allowed_ips" name="maintenance_allowed_ips" type="text" class="input-field" placeholder="IP հասցեներ..." value="<?= htmlspecialchars((string)($config['maintenance_allowed_ips'] ?? ''), ENT_QUOTES) ?>">
+            </div>
+
+            <div class="chips" style="margin-top:24px; justify-content: flex-end;">
+              <div class="autosave-status" id="maintenanceAutosaveStatus" data-state="idle">Փոփոխությունները կպահպանվեն ավտոմատ</div>
+            </div>
           </section>
 
-          <section class="panel full" id="pageModesPanel" data-admin-section="maintenance all" data-admin-permission="maintenance">
-            <h2>Ծրագրային էջեր</h2>
-            <p>Այստեղ admin-ից ընտրում ես որ էջերը աշխատեն որպես ծրագրային էջեր։ Անջատելու դեպքում տվյալ էջի վրա manifest/app shell/PWA behavior-ը չի միանա, նույնիսկ եթե էջը բացվում է ծրագրից։</p>
-            <div class="chips" style="margin-top:12px">
-              <div class="autosave-status" id="pageModesAutosaveStatus" data-state="idle">Փոփոխությունները կպահպանվեն ավտոմատ</div>
+          <section class="settings-group" id="pageModesPanel" data-admin-section="maintenance" data-admin-permission="maintenance">
+            <div class="settings-group-header">
+              <h3>Ծրագրային էջեր (PWA/App Shell)</h3>
+              <p>Ընտրեք, թե որ էջերը պետք է աշխատեն որպես ծրագրային էջեր (առանց վերբեռնման, հավելվածի նման)։</p>
             </div>
 
             <div class="page-app-grid">
               <input type="hidden" name="page_app_modes_present" value="1">
               <?php foreach ($pageAppRegistry as $pageKey => $pageMeta): ?>
                 <?php $pageEnabled = !empty(($config['page_app_modes'] ?? [])[$pageKey]); ?>
-                <label class="page-app-card">
-                  <div class="page-app-copy">
-                    <strong><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></strong>
-                    <span><?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?></span>
-                    <code><?= htmlspecialchars((string)($pageMeta['path'] ?? ''), ENT_QUOTES) ?></code>
+                <div class="toggle-switch-wrapper" style="margin-bottom: 12px; padding: 12px 16px;">
+                  <div class="toggle-switch-info">
+                    <h4 style="margin-bottom:2px;"><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></h4>
+                    <p style="font-size:12px; margin-bottom:4px;"><?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?></p>
+                    <code style="font-size:11px;"><?= htmlspecialchars((string)($pageMeta['path'] ?? ''), ENT_QUOTES) ?></code>
                   </div>
-                  <span class="switch">
+                  <label class="toggle-switch">
                     <input type="checkbox" name="page_app_modes[<?= htmlspecialchars($pageKey, ENT_QUOTES) ?>]" value="1" <?= $pageEnabled ? 'checked' : '' ?>>
-                    <span class="slider"></span>
-                  </span>
-                </label>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
               <?php endforeach; ?>
             </div>
 
-            <div class="access-helper">Ծրագրային էջերի միացումներն ու անջատումները պահպանվում են ավտոմատ։</div>
+            <div class="chips" style="margin-top:20px; justify-content: flex-end;">
+              <div class="autosave-status" id="pageModesAutosaveStatus" data-state="idle">Փոփոխությունները կպահպանվեն ավտոմատ</div>
+            </div>
           </section>
 
-          <section class="panel full" id="accessOverviewPanel" data-admin-section="access all" data-admin-permission="access">
-            <h2>Մուտքերի արագ ամփոփում</h2>
-            <p>Այս բաժինը միանգամից ցույց է տալիս ինչ սկզբունքով է աշխատում ադմինի հասանելիությունը, ով է ներսում և քանի whitelist email կա պահված։</p>
+          <section class="settings-group" id="accessOverviewPanel" data-admin-section="access all" data-admin-permission="access">
+            <div class="settings-group-header">
+              <h3>Մուտքերի արագ ամփոփում</h3>
+              <p>Այս բաժինը միանգամից ցույց է տալիս ինչ սկզբունքով է աշխատում ադմինի հասանելիությունը, ով է ներսում և քանի whitelist email կա պահված։</p>
+            </div>
 
             <div class="access-overview">
               <article class="access-card">
@@ -2143,24 +2169,28 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
           </section>
 
-          <section class="panel full" id="accessPanel" data-admin-section="access all" data-admin-permission="access">
-            <h2>Admin մուտքեր</h2>
-            <p>Եթե տվյալ օգտատիրոջ հաշվին դեր կամ ադմին նշան չկա, այստեղի email whitelist-ը կորոշի ով ունի admin access։ Մեկ email ամեն տողում։</p>
+          <section class="settings-group" id="accessPanel" data-admin-section="access all" data-admin-permission="access">
+            <div class="settings-group-header">
+              <h3>Admin մուտքեր</h3>
+              <p>Եթե տվյալ օգտատիրոջ հաշվին դեր կամ ադմին նշան չկա, այստեղի email whitelist-ը կորոշի ով ունի admin access։ Մեկ email ամեն տողում։</p>
+            </div>
             <div class="chips" style="margin-top:12px">
               <div class="autosave-status" id="accessDraftAutosaveStatus" data-state="idle">Փոփոխությունները կպահպանվեն ավտոմատ</div>
             </div>
-            <div class="field">
+            <div class="form-field">
               <label for="admin_emails">Admin email-ներ</label>
               <textarea id="admin_emails" name="admin_emails"><?= htmlspecialchars($adminEmailsText, ENT_QUOTES) ?></textarea>
             </div>
             <div class="access-helper">Խորհուրդ է տրվում այստեղ պահել միայն այն email-ները, որոնք իսկապես պետք է պահեստային կամ լրացուցիչ ադմին հասանելիություն ունենան։</div>
           </section>
 
-          <section class="panel full" id="accessPermissionsPanel" data-admin-section="access all" data-admin-permission="access">
+          <section class="settings-group" id="accessPermissionsPanel" data-admin-section="access all" data-admin-permission="access">
             <div class="history-head">
               <div>
-                <h2>Բաժինների թույլտվություններ ըստ օգտատիրոջ</h2>
-                <p>Այս բլոկով կարող ես սահմանել, թե որ email-ը ադմինի որ բաժիններն է տեսնելու։ Եթե email-ը այստեղ չկա, կաշխատի հին տրամաբանությամբ և տվյալ ադմինը կունենա լիարժեք հասանելիություն։</p>
+                <div class="settings-group-header">
+              <h3>Բաժինների թույլտվություններ ըստ օգտատիրոջ</h3>
+              <p>Այս բլոկով կարող ես սահմանել, թե որ email-ը ադմինի որ բաժիններն է տեսնելու։ Եթե email-ը այստեղ չկա, կաշխատի հին տրամաբանությամբ և տվյալ ադմինը կունենա լիարժեք հասանելիություն։</p>
+            </div>
               </div>
               <button class="history-btn" id="addPermissionRowBtn" type="button">Ավելացնել օգտատեր</button>
             </div>
@@ -2175,7 +2205,7 @@ $csrfToken = wp_admin_updates_csrf_token();
               <?php foreach ($adminPermissionRows as $index => $row): ?>
                 <div class="permission-card" data-permission-row>
                   <div class="permission-row-head">
-                    <div class="field" style="margin-top:0;flex:1 1 280px">
+                    <div class="form-field" style="margin-top:0;flex:1 1 280px">
                       <label>Email</label>
                       <input
                         type="email"
@@ -2207,11 +2237,13 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
           </section>
 
-          <section class="panel full" id="socialAuthPanel" data-admin-section="access all" data-admin-permission="access">
+          <section class="settings-group" id="socialAuthPanel" data-admin-section="access all" data-admin-permission="access">
             <div class="history-head">
               <div>
-                <h2>Google մուտք</h2>
-                <p>Այստեղ կարող ես լրացնել Google մուտքի տվյալները։ Բաց դաշտերը պահվում են ընդհանուր կարգավորումներում, իսկ գաղտնի բանալին պահվում է առանձին փակ պահոցում։ Եթե գաղտնի դաշտը դատարկ թողնես, գործող արժեքը կմնա նույնը։</p>
+                <div class="settings-group-header">
+              <h3>Google մուտք</h3>
+              <p>Այստեղ կարող ես լրացնել Google մուտքի տվյալները։ Բաց դաշտերը պահվում են ընդհանուր կարգավորումներում, իսկ գաղտնի բանալին պահվում է առանձին փակ պահոցում։ Եթե գաղտնի դաշտը դատարկ թողնես, գործող արժեքը կմնա նույնը։</p>
+            </div>
               </div>
             </div>
             <div class="access-helper" style="margin-top:0">Client ID-ն, Redirect URI-ն և նշումները կպահպանվեն ավտոմատ։ Google-ի գաղտնի բանալին մնում է ձեռքով պահպանմամբ՝ անվտանգության համար։</div>
@@ -2259,11 +2291,11 @@ $csrfToken = wp_admin_updates_csrf_token();
 
             <div class="panel-embed">
               <h3>Google մուտք</h3>
-              <div class="field">
+              <div class="form-field">
                 <label for="social_auth_google_client_id">Client ID</label>
                 <input id="social_auth_google_client_id" name="social_auth_google_client_id" value="<?= htmlspecialchars((string)($config['social_auth_google_client_id'] ?? ''), ENT_QUOTES) ?>" placeholder="Google client id">
               </div>
-              <div class="field">
+              <div class="form-field">
                 <label for="social_auth_google_client_secret">Client Secret</label>
                 <input id="social_auth_google_client_secret" name="social_auth_google_client_secret" type="password" value="" placeholder="Նոր Google client secret">
               </div>
@@ -2274,7 +2306,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                   <small>Նշիր միայն այն դեպքում, եթե ուզում ես ամբողջությամբ անջատել Google մուտքը։</small>
                 </span>
               </label>
-              <div class="field">
+              <div class="form-field">
                 <label for="social_auth_google_redirect_uri">Redirect URI</label>
                 <input id="social_auth_google_redirect_uri" name="social_auth_google_redirect_uri" value="<?= htmlspecialchars((string)($config['social_auth_google_redirect_uri'] ?? ''), ENT_QUOTES) ?>" placeholder="Դատարկ թողնելու դեպքում կկազմվի ավտոմատ">
               </div>
@@ -2285,10 +2317,12 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
           </section>
 
-          <section class="panel full" data-admin-section="access all" data-admin-permission="access">
-            <h2>Նշումներ</h2>
-            <p>Ներքին նշում է։ Պատմության մեջ նույնպես կերևա։</p>
-            <div class="field">
+          <section class="settings-group" data-admin-section="access all" data-admin-permission="access">
+            <div class="settings-group-header">
+              <h3>Նշումներ</h3>
+              <p>Ներքին նշում է։ Պատմության մեջ նույնպես կերևա։</p>
+            </div>
+            <div class="form-field">
               <label for="meta_note">Ներքին նշում</label>
               <textarea id="meta_note" name="meta_note"><?= htmlspecialchars((string)$config['meta_note'], ENT_QUOTES) ?></textarea>
             </div>
@@ -2296,27 +2330,22 @@ $csrfToken = wp_admin_updates_csrf_token();
             <div class="access-helper">Նշումները և admin email-ները պահպանվում են ավտոմատ։</div>
           </section>
 
-          <section class="panel full" id="releaseActionPanel" data-admin-section="release" data-admin-permission="release">
-            <div class="action-panel">
-              <div class="action-copy">
-                <strong>Թարմացման գործողություններ</strong>
-                <span>Ընտրիր կիրառման տարբերակը և սեղմիր մեկ հիմնական կոճակը։ Առանց ֆայլի կցման կփոխվեն միայն version/settings տվյալները, իսկ ֆայլի կցումով նաև սերվերի ֆայլերը։</span>
-              </div>
-              <div class="action-buttons">
-                <button class="btn btn-primary" type="submit" name="form_action" value="apply_release">Կիրառել թարմացումը</button>
-              </div>
-            </div>
-          </section>
+          <div class="sticky-actions" id="releaseActionPanel" data-admin-section="release" data-admin-permission="release">
+            <span style="font-size: 13px; color: var(--muted); margin-right: auto; padding-left: 8px;">Ընտրիր կիրառման տարբերակը և սեղմիր հիմնական կոճակը։</span>
+            <button class="btn btn-primary" type="submit" name="form_action" value="apply_release" style="padding: 14px 24px; font-size: 15px; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 15px rgba(67, 24, 255, 0.25);">Կիրառել թարմացումը</button>
+          </div>
         </div>
       </form>
 
       <div class="stack" data-section-container>
         <div class="stack">
-          <section class="panel full" id="moderationPanel" data-admin-section="moderation all" data-admin-permission="moderation">
+          <section class="settings-group" id="moderationPanel" data-admin-section="moderation all" data-admin-permission="moderation">
             <div class="history-head">
               <div>
-                <h2>Երգերի մոդերացիայի հերթ</h2>
-                <p>Այս բաժնում երևում են օգտատերերի ուղարկած նոր երգերի և խմբագրման բոլոր հարցումները։ Հաստատելուց հետո տվյալները անմիջապես կկիրառվեն երգերի բազայում, իսկ մերժելու դեպքում հարցումը կմնա պատմության մեջ որպես մերժված։</p>
+                <div class="settings-group-header">
+              <h3>Երգերի մոդերացիայի հերթ</h3>
+              <p>Այս բաժնում երևում են օգտատերերի ուղարկած նոր երգերի և խմբագրման բոլոր հարցումները։ Հաստատելուց հետո տվյալները անմիջապես կկիրառվեն երգերի բազայում, իսկ մերժելու դեպքում հարցումը կմնա պատմության մեջ որպես մերժված։</p>
+            </div>
               </div>
             </div>
 
@@ -2401,7 +2430,7 @@ $csrfToken = wp_admin_updates_csrf_token();
 
             <form method="get" class="stack" style="margin-top:16px" data-moderation-filter-form="1">
             <div class="row-2">
-              <div class="field">
+              <div class="form-field">
                 <label for="moderation_status">Վիճակ</label>
                 <select id="moderation_status" name="moderation_status">
                   <option value="pending" <?= $moderationFilters['status'] === 'pending' ? 'selected' : '' ?>>Միայն սպասման մեջ</option>
@@ -2410,7 +2439,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                   <option value="all" <?= $moderationFilters['status'] === 'all' ? 'selected' : '' ?>>Բոլորը</option>
                 </select>
               </div>
-              <div class="field">
+              <div class="form-field">
                 <label for="moderation_search">Որոնում</label>
                 <input id="moderation_search" name="moderation_search" value="<?= htmlspecialchars($moderationFilters['search'], ENT_QUOTES) ?>" placeholder="Որոնել վերնագրով, կատարողով կամ email-ով">
               </div>
@@ -2537,13 +2566,13 @@ $csrfToken = wp_admin_updates_csrf_token();
                           <div class="device-meta"><strong>Տեգեր</strong><span><?= htmlspecialchars($sourceTagsValue !== '' ? $sourceTagsValue : '—', ENT_QUOTES) ?></span></div>
                         </div>
                         <?php if (!empty($sourceSnapshot['chords'])): ?>
-                          <div class="field" style="margin-top:12px">
+                          <div class="form-field" style="margin-top:12px">
                             <label>Գործող ակորդներ</label>
                             <textarea readonly><?= htmlspecialchars((string)$sourceSnapshot['chords'], ENT_QUOTES) ?></textarea>
                           </div>
                         <?php endif; ?>
                         <?php if (!empty($sourceSnapshot['lyrics'])): ?>
-                          <div class="field">
+                          <div class="form-field">
                             <label>Գործող բառեր</label>
                             <textarea readonly><?= htmlspecialchars((string)$sourceSnapshot['lyrics'], ENT_QUOTES) ?></textarea>
                           </div>
@@ -2555,13 +2584,13 @@ $csrfToken = wp_admin_updates_csrf_token();
                       <details class="panel-embed" style="margin-top:12px">
                         <summary style="cursor:pointer;font-weight:800;">Բացել առաջարկված ակորդներն ու բառերը</summary>
                         <?php if (!empty($request['chords'])): ?>
-                          <div class="field" style="margin-top:12px">
+                          <div class="form-field" style="margin-top:12px">
                             <label>Առաջարկվող ակորդներ</label>
                             <textarea readonly><?= htmlspecialchars((string)$request['chords'], ENT_QUOTES) ?></textarea>
                           </div>
                         <?php endif; ?>
                         <?php if (!empty($request['lyrics'])): ?>
-                          <div class="field">
+                          <div class="form-field">
                             <label>Առաջարկվող բառեր</label>
                             <textarea readonly><?= htmlspecialchars((string)$request['lyrics'], ENT_QUOTES) ?></textarea>
                           </div>
@@ -2573,7 +2602,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                       <form method="post" class="stack" style="margin-top:14px" data-moderation-decision-form="1">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
                         <input type="hidden" name="song_request_id" value="<?= $requestId ?>">
-                        <div class="field" style="margin-top:0">
+                        <div class="form-field" style="margin-top:0">
                           <label for="song_request_review_note_<?= $requestId ?>">Ադմինի նշում</label>
                           <textarea id="song_request_review_note_<?= $requestId ?>" name="song_request_review_note" rows="3" placeholder="Օր. սա լավ ուղղում է, կամ՝ խնդրում եմ ուղարկել ավելի ամբողջական տարբերակ"></textarea>
                         </div>
@@ -2606,15 +2635,17 @@ $csrfToken = wp_admin_updates_csrf_token();
 
       <div class="stack" data-section-container>
         <form method="get" class="stack">
-          <section class="panel full" id="translationFilterPanel" data-admin-section="translations all" data-admin-permission="translations">
+          <section class="settings-group" id="translationFilterPanel" data-admin-section="translations all" data-admin-permission="translations">
             <div class="history-head">
               <div>
-                <h2>Թարգմանությունների դիտում և զտում</h2>
-                <p>Այստեղ կարող ես տեսնել cache եղած թարգմանությունները, զտել ըստ լեզվի և գտնել կոնկրետ աղբյուր տեքստը կամ արդեն թարգմանված տարբերակը։</p>
+                <div class="settings-group-header">
+              <h3>Թարգմանությունների դիտում և զտում</h3>
+              <p>Այստեղ կարող ես տեսնել cache եղած թարգմանությունները, զտել ըստ լեզվի և գտնել կոնկրետ աղբյուր տեքստը կամ արդեն թարգմանված տարբերակը։</p>
+            </div>
               </div>
             </div>
             <div class="row-2">
-              <div class="field">
+              <div class="form-field">
                 <label for="translation_lang">Լեզու</label>
                 <select id="translation_lang" name="translation_lang">
                   <option value="all" <?= $translationFilters['lang'] === 'all' ? 'selected' : '' ?>>Բոլորը</option>
@@ -2622,7 +2653,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                   <option value="en" <?= $translationFilters['lang'] === 'en' ? 'selected' : '' ?>>Անգլերեն</option>
                 </select>
               </div>
-              <div class="field">
+              <div class="form-field">
                 <label for="translation_search">Որոնում</label>
                 <input id="translation_search" name="translation_search" value="<?= htmlspecialchars($translationFilters['search'], ENT_QUOTES) ?>" placeholder="Որոնել աղբյուրով, թարգմանությամբ կամ context-ով">
               </div>
@@ -2697,12 +2728,14 @@ $csrfToken = wp_admin_updates_csrf_token();
           </div>
           </div>
 
-          <section class="panel full" id="translationSettingsPanel" data-admin-section="translations all" data-admin-permission="translations">
-            <h2>Երգ ընտրել և վերնագիրը թարգմանել</h2>
-            <p>Ընտրիր երգը ցանկից, և նույն տեղում լրացրու ռուսերեն ու անգլերեն վերնագրերը։ Եթե տվյալ լեզվի թարգմանությունը արդեն կա, դաշտը կլրացվի ավտոմատ։</p>
+          <section class="settings-group" id="translationSettingsPanel" data-admin-section="translations all" data-admin-permission="translations">
+            <div class="settings-group-header">
+              <h3>Երգ ընտրել և վերնագիրը թարգմանել</h3>
+              <p>Ընտրիր երգը ցանկից, և նույն տեղում լրացրու ռուսերեն ու անգլերեն վերնագրերը։ Եթե տվյալ լեզվի թարգմանությունը արդեն կա, դաշտը կլրացվի ավտոմատ։</p>
+            </div>
 
             <div class="row-2">
-              <div class="field">
+              <div class="form-field">
                 <label for="translation_song_id">Երգը ցանկից</label>
                 <select id="translation_song_id" name="translation_song_id">
                   <option value="">Ընտրիր երգը</option>
@@ -2720,25 +2753,25 @@ $csrfToken = wp_admin_updates_csrf_token();
                   <?php endforeach; ?>
                 </select>
               </div>
-              <div class="field">
+              <div class="form-field">
                 <label for="translation_song_source_preview">Հայերեն վերնագիր</label>
                 <input id="translation_song_source_preview" type="text" value="" placeholder="Ընտրելուց հետո այստեղ կերևա վերնագիրը" readonly>
               </div>
             </div>
 
             <div class="row-2">
-              <div class="field">
+              <div class="form-field">
                 <label for="translation_song_lat">Հայերեն լատինատառ</label>
                 <textarea id="translation_song_lat" name="translation_song_lat" rows="4" placeholder="Օր. Egiptos"></textarea>
               </div>
-              <div class="field">
+              <div class="form-field">
                 <label for="translation_song_ru">Ռուսերեն վերնագիր</label>
                 <textarea id="translation_song_ru" name="translation_song_ru" rows="4" placeholder="Ռուսերեն տարբերակ"></textarea>
               </div>
             </div>
 
             <div class="row-2">
-              <div class="field">
+              <div class="form-field">
                 <label for="translation_song_en">Անգլերեն վերնագիր</label>
                 <textarea id="translation_song_en" name="translation_song_en" rows="4" placeholder="Անգլերեն տարբերակ"></textarea>
               </div>
@@ -2751,11 +2784,13 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
           </section>
 
-          <section class="panel full" id="translationCachePanel" data-admin-section="translations all" data-admin-permission="translations">
+          <section class="settings-group" id="translationCachePanel" data-admin-section="translations all" data-admin-permission="translations">
             <div class="history-head">
               <div>
-                <h2>Թարգմանված գրառումների կառավարում</h2>
-                <p>Սա պահված թարգմանությունների ցանկն է։ Կարող ես ձեռքով ուղղել թարգմանված տարբերակը, ջնջել մեկ գրառում, կամ մաքրել ամբողջ պահոցը։</p>
+                <div class="settings-group-header">
+              <h3>Թարգմանված գրառումների կառավարում</h3>
+              <p>Սա պահված թարգմանությունների ցանկն է։ Կարող ես ձեռքով ուղղել թարգմանված տարբերակը, ջնջել մեկ գրառում, կամ մաքրել ամբողջ պահոցը։</p>
+            </div>
               </div>
             </div>
 
@@ -2793,12 +2828,12 @@ $csrfToken = wp_admin_updates_csrf_token();
                       <div class="autosave-status" data-translation-entry-status data-state="idle">Պատրաստ է խմբագրման</div>
                     </div>
 
-                    <div class="field">
+                    <div class="form-field">
                       <label>Հայերեն աղբյուր</label>
                       <textarea readonly><?= htmlspecialchars((string)$entry['source'], ENT_QUOTES) ?></textarea>
                     </div>
 
-                    <div class="field">
+                    <div class="form-field">
                       <label>Թարգմանված տարբերակ</label>
                       <textarea data-translation-text><?= htmlspecialchars((string)$entry['text'], ENT_QUOTES) ?></textarea>
                     </div>
@@ -2915,9 +2950,11 @@ $csrfToken = wp_admin_updates_csrf_token();
           </div>
         </div>
 
-        <section class="panel full" data-admin-section="push all" data-admin-permission="push">
-          <h2>Push ծանուցումներ</h2>
-          <p>Այս բաժնից կարող եք միացնել browser/app push ծանուցումները, տեսնել քանի սարք է բաժանորդագրված, և ուղարկել ձեռքով նորություն, թարմացում կամ հայտարարություն։ Push-ը հասնում է բոլոր այն տեղադրված ծրագրերին, որոնք թույլ են տվել ծանուցումները։ <code>Ծրագրի ընդհանուր ճանաչված տեղադրումներ</code> թիվը կայուն ընդհանուր հաշվիչն է, իսկ <code>վերջին <?= (int)($installStats['window_days'] ?? 60) ?> օրում ակտիվ երևացած սարքեր</code>-ը ժամանակավոր activity հաշվիչն է և կարող է պակասել, եթե ծրագիրը երկար ժամանակ չի բացվել օնլայն։</p>
+        <section class="settings-group" data-admin-section="push all" data-admin-permission="push">
+          <div class="settings-group-header">
+              <h3>Push ծանուցումներ</h3>
+              <p>Այս բաժնից կարող եք միացնել browser/app push ծանուցումները, տեսնել քանի սարք է բաժանորդագրված, և ուղարկել ձեռքով նորություն, թարմացում կամ հայտարարություն։ Push-ը հասնում է բոլոր այն տեղադրված ծրագրերին, որոնք թույլ են տվել ծանուցումները։ <code>Ծրագրի ընդհանուր ճանաչված տեղադրումներ</code> թիվը կայուն ընդհանուր հաշվիչն է, իսկ <code>վերջին <?= (int)($installStats['window_days'] ?? 60) ?> օրում ակտիվ երևացած սարքեր</code>-ը ժամանակավոր activity հաշվիչն է և կարող է պակասել, եթե ծրագիրը երկար ժամանակ չի բացվել օնլայն։</p>
+            </div>
           <div class="chips" style="margin-top:12px">
             <div class="autosave-status" id="pushAutosaveStatus" data-state="idle">Փոփոխությունները կպահպանվեն ավտոմատ</div>
           </div>
@@ -2934,11 +2971,11 @@ $csrfToken = wp_admin_updates_csrf_token();
           </div>
 
           <div class="row-2">
-            <div class="field">
+            <div class="form-field">
               <label for="push_subject">Կապի հասցե (VAPID subject)</label>
               <input id="push_subject" name="push_subject" value="<?= htmlspecialchars((string)($pushConfig['vapid_subject'] ?? ''), ENT_QUOTES) ?>" placeholder="mailto:admin@example.com">
             </div>
-            <div class="field">
+            <div class="form-field">
               <label for="push_public_key_preview">Հանրային բանալի</label>
               <input id="push_public_key_preview" value="<?= htmlspecialchars((string)($pushConfig['vapid_public_key'] ?? ''), ENT_QUOTES) ?>" readonly>
             </div>
@@ -2947,21 +2984,23 @@ $csrfToken = wp_admin_updates_csrf_token();
           <div class="access-helper">Push կարգավորումների այս դաշտերը պահպանվում են ավտոմատ։</div>
         </section>
 
-        <section class="panel full" id="devicesPanel" data-admin-section="devices all" data-admin-permission="devices">
+        <section class="settings-group" id="devicesPanel" data-admin-section="devices all" data-admin-permission="devices">
           <div class="history-head">
             <div>
-              <h2>Ծրագրի ակտիվ սարքեր</h2>
+              <div class="settings-group-header">
+              <h3>Ծրագրի ակտիվ սարքեր</h3>
               <p>Այս բաժնում երևում են ինչպես հիմնական ծրագրի, այնպես էլ admin ծրագրի ակտիվ սարքերը։ Տվյալները թարմացվում են, երբ տեղադրված ծրագիրը օնլայն բացվում է և install հաշվիչին activity է ուղարկում։</p>
+            </div>
             </div>
           </div>
 
           <div class="device-toolbar">
             <div class="device-toolbar-grid">
-              <div class="field" style="margin-top:0">
+              <div class="form-field" style="margin-top:0">
                 <label for="device_search">Որոնել սարք կամ օգտատեր</label>
                 <input id="device_search" name="device_search" value="<?= htmlspecialchars($deviceFilters['search'], ENT_QUOTES) ?>" placeholder="Անուն, email, username, IP, սարք">
               </div>
-              <div class="field" style="margin-top:0">
+              <div class="form-field" style="margin-top:0">
                 <label for="device_scope">Տեսք</label>
                 <select id="device_scope" name="device_scope">
                   <option value="all" <?= $deviceFilters['scope'] === 'all' ? 'selected' : '' ?>>Բոլորը</option>
@@ -2969,7 +3008,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                   <option value="admin" <?= $deviceFilters['scope'] === 'admin' ? 'selected' : '' ?>>Միայն ադմին ծրագիր</option>
                 </select>
               </div>
-              <div class="field" style="margin-top:0">
+              <div class="form-field" style="margin-top:0">
                 <label for="device_link">Կապվածություն</label>
                 <select id="device_link" name="device_link">
                   <option value="all" <?= $deviceFilters['link'] === 'all' ? 'selected' : '' ?>>Բոլորը</option>
@@ -2977,7 +3016,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                   <option value="guest" <?= $deviceFilters['link'] === 'guest' ? 'selected' : '' ?>>Միայն անանուն</option>
                 </select>
               </div>
-              <div class="field" style="margin-top:0">
+              <div class="form-field" style="margin-top:0">
                 <label for="device_platform">Հարթակ</label>
                 <select id="device_platform" name="device_platform">
                   <option value="all">Բոլորը</option>
@@ -2986,7 +3025,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                   <?php endforeach; ?>
                 </select>
               </div>
-              <div class="field" style="margin-top:0">
+              <div class="form-field" style="margin-top:0">
                 <label for="device_browser">Դիտարկիչ</label>
                 <select id="device_browser" name="device_browser">
                   <option value="all">Բոլորը</option>
@@ -2995,7 +3034,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                   <?php endforeach; ?>
                 </select>
               </div>
-              <div class="field" style="margin-top:0">
+              <div class="form-field" style="margin-top:0">
                 <label for="device_sort">Դասավորել ըստ</label>
                 <select id="device_sort" name="device_sort">
                   <option value="last_seen_newest" <?= $deviceFilters['sort'] === 'last_seen_newest' ? 'selected' : '' ?>>Վերջին ակտիվություն՝ նորից հին</option>
@@ -3139,8 +3178,10 @@ $csrfToken = wp_admin_updates_csrf_token();
           <?php if ($showMainDeviceSection): ?>
           <div class="history-head" style="margin-top:18px">
             <div>
-              <h2>Հիմնական ծրագրի սարքեր</h2>
+              <div class="settings-group-header">
+              <h3>Հիմնական ծրագրի սարքեր</h3>
               <p>Վերջին <?= (int)($installStats['window_days'] ?? 60) ?> օրում օնլայն երևացած հիմնական ծրագրի սարքերը։</p>
+            </div>
             </div>
           </div>
 
@@ -3206,8 +3247,10 @@ $csrfToken = wp_admin_updates_csrf_token();
           <?php if ($showAdminDeviceSection): ?>
           <div class="history-head" style="margin-top:18px">
             <div>
-              <h2>Ադմին ծրագրի սարքեր</h2>
+              <div class="settings-group-header">
+              <h3>Ադմին ծրագրի սարքեր</h3>
               <p>Այստեղ երևում են admin panel-ը որպես առանձին ծրագիր բացող ակտիվ սարքերը։</p>
+            </div>
             </div>
           </div>
 
@@ -3271,34 +3314,36 @@ $csrfToken = wp_admin_updates_csrf_token();
           <?php endif; ?>
         </section>
 
-        <section class="panel full" id="pushComposerPanel" data-admin-section="push all" data-admin-permission="push">
-          <h2>Ուղարկել Push ծանուցում</h2>
-          <p>Այս գործողությունը հերթագրում է ծանուցումը բոլոր բաժանորդագրված սարքերի համար և անմիջապես ուղարկում է push signal-ը, որպեսզի notification-ը երևա user-ի սարքում։</p>
+        <section class="settings-group" id="pushComposerPanel" data-admin-section="push all" data-admin-permission="push">
+          <div class="settings-group-header">
+              <h3>Ուղարկել Push ծանուցում</h3>
+              <p>Այս գործողությունը հերթագրում է ծանուցումը բոլոր բաժանորդագրված սարքերի համար և անմիջապես ուղարկում է push signal-ը, որպեսզի notification-ը երևա user-ի սարքում։</p>
+            </div>
 
           <div class="push-workspace">
             <div>
               <div class="row-2">
-                <div class="field">
+                <div class="form-field">
                   <label for="push_title">Վերնագիր</label>
                   <input id="push_title" name="push_title" maxlength="160" value="Worship Platform" required>
                 </div>
-                <div class="field">
+                <div class="form-field">
                   <label for="push_tag">Խումբ (tag)</label>
                   <input id="push_tag" name="push_tag" maxlength="120" value="worship-update">
                 </div>
               </div>
 
-              <div class="field">
+              <div class="form-field">
                 <label for="push_body">Բովանդակություն</label>
                 <textarea id="push_body" name="push_body" required>Նոր թարմացում կամ հայտարարություն կա։ Բացեք Worship Platform-ը մանրամասների համար։</textarea>
               </div>
 
               <div class="row-2">
-                <div class="field">
+                <div class="form-field">
                   <label for="push_url">Բացվող հղում</label>
                   <input id="push_url" name="push_url" value="/main.html" placeholder="/main.html">
                 </div>
-                <div class="field">
+                <div class="form-field">
                   <label for="push_icon">Նշան (icon)</label>
                   <input id="push_icon" name="push_icon" value="/wolarm_youth.png" placeholder="/wolarm_youth.png">
                 </div>
@@ -3339,11 +3384,13 @@ $csrfToken = wp_admin_updates_csrf_token();
           </div>
         </section>
 
-        <section class="panel full" id="pushSubscriptionsPanel" data-admin-section="push all" data-admin-permission="push">
+        <section class="settings-group" id="pushSubscriptionsPanel" data-admin-section="push all" data-admin-permission="push">
             <div class="history-head">
             <div>
-              <h2>Push միացրած սարքերի տվյալներ</h2>
+              <div class="settings-group-header">
+              <h3>Push միացրած սարքերի տվյալներ</h3>
               <p>Այստեղ երևում են բաժանորդագրված սարքերի տվյալները` օգտահաշիվը, IP-ն, browser/device signature-ը, endpoint host-ը և վերջին ակտիվությունը։</p>
+            </div>
             </div>
           </div>
 
@@ -3404,11 +3451,13 @@ $csrfToken = wp_admin_updates_csrf_token();
           <?php endif; ?>
         </section>
 
-        <section class="panel full" id="pushHistoryPanel" data-admin-section="push all" data-admin-permission="push">
+        <section class="settings-group" id="pushHistoryPanel" data-admin-section="push all" data-admin-permission="push">
           <div class="history-head">
             <div>
-              <h2>Push հաղորդագրությունների պատմություն</h2>
+              <div class="settings-group-header">
+              <h3>Push հաղորդագրությունների պատմություն</h3>
               <p>Այստեղ պահվում են վերջին ուղարկված push հաղորդագրությունները, ուղարկող ադմինը և ուղարկման արդյունքը ըստ սարքերի։</p>
+            </div>
             </div>
             <?php if ($pushHistory): ?>
               <button
@@ -3481,11 +3530,13 @@ $csrfToken = wp_admin_updates_csrf_token();
       </form>
 
       <aside class="stack" data-section-container>
-        <section class="panel" id="historyPanel" data-admin-section="history all" data-admin-permission="history">
+        <section class="settings-group" id="historyPanel" data-admin-section="history all" data-admin-permission="history">
           <div class="history-head">
             <div>
-              <h2>Թարմացումների պատմություն</h2>
-          <p>Այստեղ պահվում են միայն իրական փոփոխությունները` ամբողջ snapshot-ով, որպեսզի հետո հնարավոր լինի վերականգնել ցանկացած տարբերակ մեկ սեղմումով։</p>
+              <div class="settings-group-header">
+              <h3>Թարմացումների պատմություն</h3>
+              <p>Այստեղ պահվում են միայն իրական փոփոխությունները` ամբողջ snapshot-ով, որպեսզի հետո հնարավոր լինի վերականգնել ցանկացած տարբերակ մեկ սեղմումով։</p>
+            </div>
             </div>
             <?php if ($history): ?>
               <form method="post" onsubmit="return confirm('Վստա՞հ եք, որ ուզում եք ամբողջությամբ ջնջել update history-ը։');">
@@ -3589,9 +3640,11 @@ $csrfToken = wp_admin_updates_csrf_token();
           <?php endif; ?>
         </section>
 
-        <section class="panel" data-admin-section="access all" data-admin-permission="access">
-          <h2>Ադմին session</h2>
-          <p>Այս էջը բացվել է նոր admin login հարթակով։ Access-ը ստուգվում է user login + <code>role/is_admin</code> կամ admin email whitelist-ով, և նույն login/logout հոսքն է կիսում <code>/songs.php</code>-ի հետ։</p>
+        <section class="settings-group" data-admin-section="access all" data-admin-permission="access">
+          <div class="settings-group-header">
+              <h3>Ադմին session</h3>
+              <p>Այս էջը բացվել է նոր admin login հարթակով։ Access-ը ստուգվում է user login + <code>role/is_admin</code> կամ admin email whitelist-ով, և նույն login/logout հոսքն է կիսում <code>/songs.php</code>-ի հետ։</p>
+            </div>
           <div class="access-mini-grid">
             <div class="access-mini">
               <strong>Մուտքի ձև</strong>
@@ -3644,6 +3697,7 @@ $csrfToken = wp_admin_updates_csrf_token();
       const maintenanceStartInput = document.getElementById('maintenance_start_at');
       const maintenanceEndInput = document.getElementById('maintenance_end_at');
       const maintenanceMessageInput = document.getElementById('maintenance_message');
+      const maintenanceAllowedIpsInput = document.getElementById('maintenance_allowed_ips');
       const releaseAppSummaryText = document.getElementById('releaseAppSummaryText');
       const releaseWebSummaryText = document.getElementById('releaseWebSummaryText');
       const releaseApplySummaryText = document.getElementById('releaseApplySummaryText');
@@ -4776,7 +4830,8 @@ $csrfToken = wp_admin_updates_csrf_token();
           maintenance_enabled: maintenanceEnabledInput && maintenanceEnabledInput.checked ? '1' : '',
           maintenance_start_at: maintenanceStartInput ? maintenanceStartInput.value : '',
           maintenance_end_at: maintenanceEndInput ? maintenanceEndInput.value : '',
-          maintenance_message: maintenanceMessageInput ? maintenanceMessageInput.value : ''
+          maintenance_message: maintenanceMessageInput ? maintenanceMessageInput.value : '',
+          maintenance_allowed_ips: maintenanceAllowedIpsInput ? maintenanceAllowedIpsInput.value : ''
         };
       }
 
@@ -4960,7 +5015,8 @@ $csrfToken = wp_admin_updates_csrf_token();
         maintenanceEnabledInput,
         maintenanceStartInput,
         maintenanceEndInput,
-        maintenanceMessageInput
+        maintenanceMessageInput,
+        maintenanceAllowedIpsInput
       ].forEach((input) => {
         input?.addEventListener('input', () => maintenanceAutosave.schedule(750));
         input?.addEventListener('change', () => maintenanceAutosave.schedule(450));
