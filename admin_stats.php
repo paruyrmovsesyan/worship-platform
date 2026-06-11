@@ -90,7 +90,7 @@ $searchPlaceholder = 'Search stats...';
       <div class="page-heading page-heading-row">
         <div>
           <h1>Statistics 📊</h1>
-          <p>Platform analytics and insights</p>
+          <p><?= __('Platform analytics and insights') ?></p>
         </div>
       </div>
 
@@ -152,7 +152,7 @@ $searchPlaceholder = 'Search stats...';
             <h3 style="font-size:16px; font-weight:700;">Top Artists</h3>
           </div>
           <table>
-            <thead><tr><th>Artist</th><th>Songs</th></tr></thead>
+            <thead><tr><th><?= __('Artist') ?></th><th>Songs</th></tr></thead>
             <tbody>
               <?php foreach ($topArtists as $a): ?>
               <tr>
@@ -161,7 +161,7 @@ $searchPlaceholder = 'Search stats...';
               </tr>
               <?php endforeach; ?>
               <?php if (empty($topArtists)): ?>
-              <tr><td colspan="2" style="text-align:center; padding:30px; color:var(--muted);">No data</td></tr>
+              <tr><td colspan="2" style="text-align:center; padding:30px; color:var(--muted);"><?= __('No data') ?></td></tr>
               <?php endif; ?>
             </tbody>
           </table>
@@ -173,7 +173,7 @@ $searchPlaceholder = 'Search stats...';
             <h3 style="font-size:16px; font-weight:700;">Recent Registrations</h3>
           </div>
           <table>
-            <thead><tr><th>User</th><th>Email</th><th>Joined</th></tr></thead>
+            <thead><tr><th><?= __('User') ?></th><th><?= __('Email') ?></th><th><?= __('Joined') ?></th></tr></thead>
             <tbody>
               <?php foreach ($recentUsers as $u): ?>
               <tr>
@@ -183,7 +183,7 @@ $searchPlaceholder = 'Search stats...';
               </tr>
               <?php endforeach; ?>
               <?php if (empty($recentUsers)): ?>
-              <tr><td colspan="3" style="text-align:center; padding:30px; color:var(--muted);">No data</td></tr>
+              <tr><td colspan="3" style="text-align:center; padding:30px; color:var(--muted);"><?= __('No data') ?></td></tr>
               <?php endif; ?>
             </tbody>
           </table>
@@ -197,7 +197,7 @@ $searchPlaceholder = 'Search stats...';
           <a href="/songs.php" class="btn btn-primary" style="padding:8px 16px; font-size:13px;">Manage Songs →</a>
         </div>
         <table>
-          <thead><tr><th>#</th><th>Title</th><th>Artist</th><th>Added</th></tr></thead>
+          <thead><tr><th>#</th><th><?= __('Title') ?></th><th><?= __('Artist') ?></th><th><?= __('Added') ?></th></tr></thead>
           <tbody>
             <?php foreach ($recentSongs as $s): ?>
             <tr>
@@ -208,7 +208,7 @@ $searchPlaceholder = 'Search stats...';
             </tr>
             <?php endforeach; ?>
             <?php if (empty($recentSongs)): ?>
-            <tr><td colspan="4" style="text-align:center; padding:40px; color:var(--muted);">No songs yet</td></tr>
+            <tr><td colspan="4" style="text-align:center; padding:40px; color:var(--muted);"><?= __('No songs yet') ?></td></tr>
             <?php endif; ?>
           </tbody>
         </table>

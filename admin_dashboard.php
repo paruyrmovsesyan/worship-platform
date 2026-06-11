@@ -445,11 +445,11 @@ $notifCount        = count($notifications);
         </div>
         <table>
           <thead>
-            <tr><th>#</th><th>Title</th><th>Artist</th><th>Added</th></tr>
+            <tr><th>#</th><th><?= __('Title') ?></th><th><?= __('Artist') ?></th><th><?= __('Added') ?></th></tr>
           </thead>
           <tbody id="periodSongsBody">
             <?php if (empty($recentSongs)): ?>
-            <tr><td colspan="4" style="text-align:center; padding:40px; color:var(--muted);">No songs added during this period</td></tr>
+            <tr><td colspan="4" style="text-align:center; padding:40px; color:var(--muted);"><?= __('No songs added during this period') ?></td></tr>
             <?php else: ?>
             <?php foreach ($recentSongs as $s): ?>
             <tr>

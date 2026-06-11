@@ -272,7 +272,7 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
             <div class="stat-row">
               <div>
                 <div class="stat-label">
-                  <span class="period-badge" style="background:#e5f3ff; color:#228fff;">Database</span><br>
+                  <span class="period-badge" style="background:#e5f3ff; color:#228fff;"><?= __('Database') ?></span><br>
                   Total Songs
                 </div>
                 <div class="stat-value" id="statTotalSongs">0</div>
@@ -288,7 +288,7 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
             <div class="stat-row">
               <div>
                 <div class="stat-label">
-                  <span class="period-badge" style="background:#f3ebff; color:#7d40ff;">Content</span><br>
+                  <span class="period-badge" style="background:#f3ebff; color:#7d40ff;"><?= __('Content') ?></span><br>
                   With Lyrics
                 </div>
                 <div class="stat-value" id="statLyricsSongs">0</div>
@@ -323,7 +323,7 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
           <div class="toolbar-left" style="display:flex; gap:12px;">
             <button id="refreshList" class="btn" style="background:white; border:1px solid var(--line);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg> <?= __('Refresh') ?></button>
             <button id="exportAllPdf" class="btn" style="background:white; border:1px solid var(--line);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 18 15 15"></polyline></svg> <?= __('Export PDF') ?></button>
-            <button id="toggleFiltersBtn" class="btn" style="display:none;">Filters</button>
+            <button id="toggleFiltersBtn" class="btn" style="display:none;"><?= __('Filters') ?></button>
           </div>
           <button id="newSongBtn" class="btn btn-primary" style="padding: 14px 28px;">+ <?= __('Add Song') ?></button>
         </div>

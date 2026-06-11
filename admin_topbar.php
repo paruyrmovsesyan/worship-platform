@@ -3,7 +3,7 @@
  * admin_topbar.php — Shared top navigation bar
  * Expected vars: $adminDisplayName, $adminEmail, $searchPlaceholder
  */
-$searchPlaceholder = $searchPlaceholder ?? 'Search...';
+$searchPlaceholder = $searchPlaceholder ?? __('Search...');
 $adminEmail        = $adminEmail ?? '';
 ?>
 <style>
@@ -93,28 +93,28 @@ $adminEmail        = $adminEmail ?? '';
 
     <!-- Notification Bell -->
     <div class="notif-wrapper" id="topbarNotifWrapper">
-      <button class="bell-btn" id="topbarBellBtn" title="Notifications" onclick="topbarToggleNotif(event)">
+      <button class="bell-btn" id="topbarBellBtn" title="<?= __('Notifications') ?>" onclick="topbarToggleNotif(event)">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
         <span class="bell-dot" id="topbarBellDot"></span>
       </button>
 
       <div class="notif-panel" id="topbarNotifPanel">
         <div class="notif-head">
-          <h4>Notifications <span class="notif-count-badge" id="topbarNotifBadge">0</span></h4>
-          <span class="notif-mark" onclick="topbarMarkAllRead()">Mark all read</span>
+          <h4><?= __('Notifications') ?> <span class="notif-count-badge" id="topbarNotifBadge">0</span></h4>
+          <span class="notif-mark" onclick="topbarMarkAllRead()"><?= __('Mark all read') ?></span>
         </div>
         <div class="notif-list" id="topbarNotifList">
           <div class="notif-loading">Loading…</div>
         </div>
         <div class="notif-footer">
-          <a href="/admin_stats.php">View all activity →</a>
+          <a href="/admin_stats.php"><?= __('View all activity →') ?></a>
         </div>
       </div>
     </div>
 
     <!-- User menu -->
     <div class="user-menu-wrapper" id="userMenuWrapper">
-      <div class="user-menu-trigger" onclick="toggleUserMenu(event)" title="Account menu">
+      <div class="user-menu-trigger" onclick="toggleUserMenu(event)" title="<?= __('Account menu') ?>">
         <div class="topbar-avatar"><?= strtoupper(substr($adminDisplayName, 0, 1)) ?></div>
         <span style="font-weight:700; font-size:15px; color:var(--text);"><?= htmlspecialchars($adminDisplayName) ?></span>
         <svg class="user-menu-caret" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -137,16 +137,16 @@ $adminEmail        = $adminEmail ?? '';
           </a>
           <a class="ud-item" href="/songs.php">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
-            Songs
+            <?= __('Songs') ?>
           </a>
           <a class="ud-item" href="/admin_updates.php">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            Settings
+            <?= __('Settings') ?>
           </a>
           <div class="ud-divider"></div>
           <a class="ud-item danger" href="/admin_logout.php">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-            Log Out
+            <?= __('Log Out') ?>
           </a>
         </div>
       </div>
@@ -206,7 +206,7 @@ $adminEmail        = $adminEmail ?? '';
       })
       .catch(function() {
         document.getElementById('topbarNotifList').innerHTML =
-          '<div class="notif-empty">Could not load notifications</div>';
+          '<div class="notif-empty"><?= __('Could not load notifications') ?></div>';
       });
   }
 
@@ -219,7 +219,7 @@ $adminEmail        = $adminEmail ?? '';
     if (dot)   dot.style.display = items.length > 0 ? '' : 'none';
 
     if (!items.length) {
-      list.innerHTML = '<div class="notif-empty">No notifications yet 🎉</div>';
+      list.innerHTML = '<div class="notif-empty">' + '<?= __('No notifications yet') ?>' + ' 🎉</div>';
       return;
     }
 
@@ -253,7 +253,7 @@ $adminEmail        = $adminEmail ?? '';
     var list  = document.getElementById('topbarNotifList');
     if (badge) badge.textContent = '0';
     if (dot)   dot.style.display = 'none';
-    if (list)  list.innerHTML = '<div class="notif-empty">All caught up! 🎉</div>';
+    if (list)  list.innerHTML = '<div class="notif-empty">' + '<?= __('All caught up! 🎉') ?>' + '</div>';
   };
 
   // Pre-load count on page ready (just to show dot)

@@ -165,7 +165,7 @@ $searchPlaceholder = 'Search FAQ...';
           </div>
           <div style="display:flex; gap:12px;">
             <button type="submit" class="btn btn-primary"><?= $editItem ? 'Update FAQ' : 'Add FAQ' ?></button>
-            <?php if ($editItem): ?><a href="/admin_faq.php" class="btn">Cancel</a><?php endif; ?>
+            <?php if ($editItem): ?><a href="/admin_faq.php" class="btn"><?= __('Cancel') ?></a><?php endif; ?>
           </div>
         </form>
       </div>
@@ -185,11 +185,11 @@ $searchPlaceholder = 'Search FAQ...';
             <div style="margin-top:8px; font-size:12px; color:var(--muted);"><?= htmlspecialchars((string)($faq['created_at'] ?? '')) ?></div>
           </div>
           <div style="display:flex; gap:8px; flex-shrink:0;">
-            <a href="?edit=<?= urlencode((string)($faq['id'] ?? '')) ?>" class="btn" style="padding:8px 14px; font-size:13px;">Edit</a>
+            <a href="?edit=<?= urlencode((string)($faq['id'] ?? '')) ?>" class="btn" style="padding:8px 14px; font-size:13px;"><?= __('Edit') ?></a>
             <form method="post" onsubmit="return confirm('Delete this FAQ item?')">
               <input type="hidden" name="action" value="delete">
               <input type="hidden" name="id" value="<?= htmlspecialchars((string)($faq['id'] ?? '')) ?>">
-              <button type="submit" class="btn btn-danger" style="padding:8px 14px; font-size:13px;">Delete</button>
+              <button type="submit" class="btn btn-danger" style="padding:8px 14px; font-size:13px;"><?= __('Delete') ?></button>
             </form>
           </div>
         </div>

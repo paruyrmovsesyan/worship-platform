@@ -98,8 +98,8 @@ $searchPlaceholder = 'Search users...';
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             <input type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Search name or email..." style="width:240px;">
           </div>
-          <button type="submit" class="btn btn-primary" style="padding:10px 18px;">Search</button>
-          <?php if ($search): ?><a href="/admin_clients.php" class="btn">Clear</a><?php endif; ?>
+          <button type="submit" class="btn btn-primary" style="padding:10px 18px;"><?= __('Search') ?></button>
+          <?php if ($search): ?><a href="/admin_clients.php" class="btn"><?= __('Clear') ?></a><?php endif; ?>
         </form>
       </div>
 
@@ -118,7 +118,7 @@ $searchPlaceholder = 'Search users...';
               <th><?= __('EMAIL') ?></th>
               <th><?= __('ROLE') ?></th>
               <th>Admin</th>
-              <th>Registered</th>
+              <th><?= __('Registered') ?></th>
             </tr>
           </thead>
           <tbody>
@@ -156,7 +156,7 @@ $searchPlaceholder = 'Search users...';
 
         <?php if ($totalPages > 1): ?>
         <div style="display:flex; justify-content:space-between; align-items:center; padding:20px 24px; border-top:1px solid var(--line);">
-          <span style="color:var(--muted); font-size:14px;">Page <?= $page ?> of <?= $totalPages ?></span>
+          <span style="color:var(--muted); font-size:14px;"><?= __('Page') ?> <?= $page ?> of <?= $totalPages ?></span>
           <div style="display:flex; gap:8px;">
             <?php if ($page > 1): ?>
               <a href="?page=<?= $page-1 ?>&q=<?= urlencode($search) ?>" class="btn" style="padding:8px 16px;">← Prev</a>
