@@ -1,8 +1,7 @@
 <?php
 declare(strict_types=1);
 
-const WP_VERSION_CONFIG_PATH = __DIR__ . '/version_config_store.php';
-const WP_VERSION_HISTORY_PATH = __DIR__ . '/version_history_store.jsonl';
+require_once __DIR__ . '/runtime_config.php';
 
 function wp_version_admin_timezone(): DateTimeZone {
     static $timezone = null;
@@ -376,17 +375,20 @@ function wp_version_sanitize(array $raw): array {
 
 function wp_version_load(): array {
     $defaults = wp_version_defaults();
+    try {
+        $conn = wp_runtime_open_mysqli();
+        $stmt = $conn->prepare("SELECT setting_value FROM sys_settings WHERE setting_key = 'version_config'");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            $decoded = json_decode($row['setting_value'] ?? '', true);
+            if (is_array($decoded)) {
+                return wp_version_sanitize($decoded);
+            }
+        }
+    } catch (Throwable $e) {}
 
-    if (!is_file(WP_VERSION_CONFIG_PATH)) {
-        return $defaults;
-    }
-
-    $loaded = include WP_VERSION_CONFIG_PATH;
-    if (!is_array($loaded)) {
-        return $defaults;
-    }
-
-    return wp_version_sanitize($loaded);
+    return $defaults;
 }
 
 function wp_version_is_scheduled_maintenance_active(array $config, ?DateTimeImmutable $now = null): bool {
@@ -438,65 +440,64 @@ function wp_version_diff(array $before, array $after): array {
 }
 
 function wp_version_history_append(array $entry): void {
-    $json = json_encode($entry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    if ($json === false) {
-        return;
-    }
-
-    @file_put_contents(WP_VERSION_HISTORY_PATH, $json . PHP_EOL, FILE_APPEND | LOCK_EX);
+    try {
+        $conn = wp_runtime_open_mysqli();
+        $stmt = $conn->prepare("INSERT INTO version_history (id, at, actor, ip, action, changed_fields, snapshot, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $id = $entry['id'] ?? bin2hex(random_bytes(8));
+        $at = wp_version_normalize_datetime($entry['at'] ?? '') ?: wp_version_now_iso();
+        $actor = mb_substr(trim((string)($entry['actor'] ?? '')), 0, 190);
+        $ip = mb_substr(trim((string)($entry['ip'] ?? '')), 0, 80);
+        $action = mb_substr(trim((string)($entry['action'] ?? '')), 0, 100);
+        $changed_fields = json_encode($entry['changed_fields'] ?? [], JSON_UNESCAPED_UNICODE);
+        $snapshot = json_encode($entry['snapshot'] ?? [], JSON_UNESCAPED_UNICODE);
+        $note = (string)($entry['note'] ?? '');
+        
+        $stmt->bind_param('ssssssss', $id, $at, $actor, $ip, $action, $changed_fields, $snapshot, $note);
+        $stmt->execute();
+    } catch (Throwable $e) {}
 }
 
 function wp_version_history_load(int $limit = 20): array {
-    if (!is_file(WP_VERSION_HISTORY_PATH)) {
-        return [];
-    }
-
-    $lines = @file(WP_VERSION_HISTORY_PATH, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    if (!is_array($lines) || !$lines) {
-        return [];
-    }
-
-    $slice = array_slice($lines, -1 * max(1, $limit));
-    $slice = array_reverse($slice);
-
     $items = [];
-    foreach ($slice as $line) {
-        $decoded = json_decode($line, true);
-        if (is_array($decoded)) {
-            $items[] = $decoded;
+    try {
+        $conn = wp_runtime_open_mysqli();
+        $stmt = $conn->prepare("SELECT * FROM version_history ORDER BY at DESC LIMIT ?");
+        $stmt->bind_param('i', $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        while ($row = $result->fetch_assoc()) {
+            $row['changed_fields'] = json_decode($row['changed_fields'] ?? '[]', true) ?: [];
+            $row['snapshot'] = json_decode($row['snapshot'] ?? '{}', true) ?: [];
+            $items[] = $row;
         }
-    }
-
+    } catch (Throwable $e) {}
+    
     return $items;
 }
 
 function wp_version_history_find(string $id): ?array {
-    if ($id === '' || !is_file(WP_VERSION_HISTORY_PATH)) {
-        return null;
-    }
-
-    $lines = @file(WP_VERSION_HISTORY_PATH, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    if (!is_array($lines) || !$lines) {
-        return null;
-    }
-
-    for ($i = count($lines) - 1; $i >= 0; $i--) {
-        $decoded = json_decode($lines[$i], true);
-        if (!is_array($decoded)) continue;
-        if ((string)($decoded['id'] ?? '') === $id) {
-            return $decoded;
+    try {
+        $conn = wp_runtime_open_mysqli();
+        $stmt = $conn->prepare("SELECT * FROM version_history WHERE id = ?");
+        $stmt->bind_param('s', $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            $row['changed_fields'] = json_decode($row['changed_fields'] ?? '[]', true) ?: [];
+            $row['snapshot'] = json_decode($row['snapshot'] ?? '{}', true) ?: [];
+            return $row;
         }
-    }
-
+    } catch (Throwable $e) {}
     return null;
 }
 
 function wp_version_history_clear(): bool {
-    if (!is_file(WP_VERSION_HISTORY_PATH)) {
-        return true;
+    try {
+        $conn = wp_runtime_open_mysqli();
+        return $conn->query("TRUNCATE TABLE version_history");
+    } catch (Throwable $e) {
+        return false;
     }
-
-    return file_put_contents(WP_VERSION_HISTORY_PATH, '', LOCK_EX) !== false;
 }
 
 function wp_version_store_last_save_result(array $result): void {
@@ -531,8 +532,15 @@ function wp_version_save(array $input, array $meta = []): bool {
 
     $candidate['updated_at'] = wp_version_now_iso();
     $config = wp_version_sanitize($candidate);
-    $export = "<?php\nreturn " . var_export($config, true) . ";\n";
-    $saved = file_put_contents(WP_VERSION_CONFIG_PATH, $export, LOCK_EX) !== false;
+    
+    $saved = false;
+    try {
+        $conn = wp_runtime_open_mysqli();
+        $stmt = $conn->prepare("INSERT INTO sys_settings (setting_key, setting_value) VALUES ('version_config', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+        $json = json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $stmt->bind_param('s', $json);
+        $saved = $stmt->execute();
+    } catch (Throwable $e) {}
 
     if (!$saved) {
         wp_version_store_last_save_result([

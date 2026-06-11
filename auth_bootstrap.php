@@ -32,15 +32,36 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 
 if (!function_exists('wp_auth_clear_remember_cookie')) {
     function wp_auth_clear_remember_cookie(): void {
-        $https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
-        setcookie('remember_me', '', [
-            'expires'  => time() - 3600,
+        $cookieOpts = [
+            'expires'  => time() - 86400 * 30,
             'path'     => '/',
-            'domain'   => '',
-            'secure'   => $https,
             'httponly' => true,
             'samesite' => 'Lax',
-        ]);
+        ];
+
+        $domains = [null, '', $_SERVER['HTTP_HOST'] ?? ''];
+        if (!empty($_SERVER['HTTP_HOST'])) {
+            $host = $_SERVER['HTTP_HOST'];
+            $domains[] = '.' . $host;
+            $parts = explode('.', $host);
+            if (count($parts) >= 3) {
+                $mainDomain = implode('.', array_slice($parts, -2));
+                $domains[] = $mainDomain;
+                $domains[] = '.' . $mainDomain;
+            }
+        }
+        $domains = array_unique(array_filter($domains, function($d) { return $d !== ''; }));
+
+        foreach ($domains as $domain) {
+            foreach ([true, false] as $sec) {
+                $opts = $cookieOpts;
+                $opts['secure'] = $sec;
+                if ($domain !== null && $domain !== '') {
+                    $opts['domain'] = $domain;
+                }
+                setcookie('remember_me', '', $opts);
+            }
+        }
         unset($_COOKIE['remember_me']);
     }
 }
@@ -159,6 +180,23 @@ if (!function_exists('wp_auth_remember_context_matches')) {
     }
 }
 
+if (!function_exists('wp_auth_current_remember_selector')) {
+    function wp_auth_current_remember_selector(): ?string {
+        $raw = trim((string)($_COOKIE['remember_me'] ?? ''));
+        if ($raw === '') {
+            return null;
+        }
+
+        $parts = explode(':', $raw, 2);
+        if (count($parts) !== 2) {
+            return null;
+        }
+
+        $selector = trim((string)$parts[0]);
+        return $selector !== '' ? $selector : null;
+    }
+}
+
 if (!function_exists('wp_auth_extract_session_origin_from_device_name')) {
     function wp_auth_extract_session_origin_from_device_name(string $deviceName): string {
         $deviceName = trim($deviceName);
@@ -204,6 +242,91 @@ if (!function_exists('wp_auth_merge_device_name_with_origin')) {
         }
 
         return $base . ' | origin:' . $origin;
+    }
+}
+
+if (!function_exists('wp_auth_find_existing_device_session_id')) {
+    function wp_auth_find_existing_device_session_id(PDO $pdo, int $userId, array $meta, string $deviceName): int {
+        if ($userId <= 0) {
+            return 0;
+        }
+
+        $deviceName = trim($deviceName);
+        $browser = trim((string)($meta['browser'] ?? ''));
+        $platform = trim((string)($meta['platform'] ?? ''));
+        $userAgent = mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
+
+        if ($deviceName === '' || $browser === '' || $platform === '' || $userAgent === '') {
+            return 0;
+        }
+
+        try {
+            $stmt = $pdo->prepare("
+                SELECT id
+                FROM user_sessions
+                WHERE user_id = ?
+                  AND device_name = ?
+                  AND browser = ?
+                  AND platform = ?
+                  AND user_agent = ?
+                ORDER BY
+                  CASE WHEN session_key = ? THEN 0 ELSE 1 END,
+                  COALESCE(last_used_at, created_at) DESC,
+                  id DESC
+                LIMIT 1
+            ");
+            $stmt->execute([
+                $userId,
+                $deviceName,
+                $browser,
+                $platform,
+                $userAgent,
+                session_id(),
+            ]);
+
+            return (int)$stmt->fetchColumn();
+        } catch (Throwable $e) {
+            return 0;
+        }
+    }
+}
+
+if (!function_exists('wp_auth_prune_duplicate_device_sessions')) {
+    function wp_auth_prune_duplicate_device_sessions(PDO $pdo, int $userId, array $meta, string $deviceName, int $keepSessionId = 0): void {
+        if ($userId <= 0) {
+            return;
+        }
+
+        $deviceName = trim($deviceName);
+        $browser = trim((string)($meta['browser'] ?? ''));
+        $platform = trim((string)($meta['platform'] ?? ''));
+        $userAgent = mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
+
+        if ($deviceName === '' || $browser === '' || $platform === '' || $userAgent === '') {
+            return;
+        }
+
+        $sql = "
+            DELETE FROM user_sessions
+            WHERE user_id = ?
+              AND device_name = ?
+              AND browser = ?
+              AND platform = ?
+              AND user_agent = ?
+        ";
+        $params = [$userId, $deviceName, $browser, $platform, $userAgent];
+
+        if ($keepSessionId > 0) {
+            $sql .= " AND id <> ?";
+            $params[] = $keepSessionId;
+        }
+
+        try {
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+        } catch (Throwable $e) {
+            // Duplicate cleanup should never block login.
+        }
     }
 }
 

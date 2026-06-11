@@ -75,6 +75,95 @@ function sessionOriginFromDeviceName(string $deviceName): string {
   return 'Կայք';
 }
 
+function normalizeSessionDeviceBase(string $deviceName): string {
+  $deviceName = trim($deviceName);
+  $deviceName = preg_replace('/\s*\|\s*origin:(app|admin-app|web)\s*$/i', '', $deviceName);
+  $deviceName = preg_replace('/\s*•\s*(Ծրագիր|Ադմին ծրագիր|Կայք|app|admin-app|web)\s*$/u', '', (string)$deviceName);
+  $deviceName = preg_replace('/\s+/u', ' ', (string)$deviceName);
+  return mb_strtolower(trim((string)$deviceName), 'UTF-8');
+}
+
+function activeSessionGroupKey(array $row): string {
+  $origin = sessionOriginFromDeviceName((string)($row['device_name'] ?? ''));
+  $base = normalizeSessionDeviceBase((string)($row['device_name'] ?? ''));
+  $browser = mb_strtolower(trim((string)($row['browser'] ?? '')), 'UTF-8');
+  $platform = mb_strtolower(trim((string)($row['platform'] ?? '')), 'UTF-8');
+  $agent = mb_strtolower(trim((string)($row['user_agent'] ?? '')), 'UTF-8');
+
+  if($base === '' && $browser === '' && $platform === '' && $agent === ''){
+    $sessionKey = trim((string)($row['session_key'] ?? ''));
+    if($sessionKey !== '') return 'session:' . $sessionKey;
+    $selector = trim((string)($row['selector'] ?? ''));
+    if($selector !== '') return 'selector:' . $selector;
+    return 'row:' . (string)($row['id'] ?? '');
+  }
+
+  return implode('|', [$origin, $base, $browser, $platform, $agent]);
+}
+
+function activeSessionTimestamp(array $row): int {
+  $value = (string)($row['last_used_at'] ?? '');
+  if($value === '') $value = (string)($row['created_at'] ?? '');
+  $ts = strtotime($value);
+  return $ts !== false ? $ts : 0;
+}
+
+function chooseActiveSessionRow(array $current, array $candidate, string $currentSessionKey): array {
+  $currentIsNow = ((string)($current['session_key'] ?? '') === $currentSessionKey);
+  $candidateIsNow = ((string)($candidate['session_key'] ?? '') === $currentSessionKey);
+
+  if($candidateIsNow && !$currentIsNow) return $candidate;
+  if($currentIsNow && !$candidateIsNow) return $current;
+
+  $currentTs = activeSessionTimestamp($current);
+  $candidateTs = activeSessionTimestamp($candidate);
+  if($candidateTs > $currentTs) return $candidate;
+  if($candidateTs < $currentTs) return $current;
+
+  return ((int)($candidate['id'] ?? 0) > (int)($current['id'] ?? 0)) ? $candidate : $current;
+}
+
+function dedupeActiveSessionRows(PDO $pdo, int $uid, array $rows, string $currentSessionKey): array {
+  $groups = [];
+  $deleteIds = [];
+
+  foreach($rows as $row){
+    $key = activeSessionGroupKey($row);
+    if(!isset($groups[$key])){
+      $groups[$key] = $row;
+      continue;
+    }
+
+    $keep = chooseActiveSessionRow($groups[$key], $row, $currentSessionKey);
+    $drop = ((int)($keep['id'] ?? 0) === (int)($groups[$key]['id'] ?? 0)) ? $row : $groups[$key];
+    $groups[$key] = $keep;
+
+    $dropId = (int)($drop['id'] ?? 0);
+    if($dropId > 0) $deleteIds[] = $dropId;
+  }
+
+  $deleteIds = array_values(array_unique($deleteIds));
+  if($deleteIds){
+    try{
+      $placeholders = implode(',', array_fill(0, count($deleteIds), '?'));
+      $params = array_merge([$uid], $deleteIds);
+      $pdo->prepare("DELETE FROM user_sessions WHERE user_id = ? AND id IN ($placeholders)")->execute($params);
+    }catch(Throwable $e){
+      // The response can still be clean even if background cleanup fails.
+    }
+  }
+
+  $out = array_values($groups);
+  usort($out, function($a, $b) use ($currentSessionKey){
+    $aCurrent = ((string)($a['session_key'] ?? '') === $currentSessionKey) ? 1 : 0;
+    $bCurrent = ((string)($b['session_key'] ?? '') === $currentSessionKey) ? 1 : 0;
+    if($aCurrent !== $bCurrent) return $bCurrent <=> $aCurrent;
+    return activeSessionTimestamp($b) <=> activeSessionTimestamp($a);
+  });
+
+  return $out;
+}
+
 // ✅ GET profile
 if($action === 'me' && $method === 'GET'){
   $st = $pdo->prepare("SELECT id, name, email, created_at FROM users WHERE id=? LIMIT 1");
@@ -169,6 +258,7 @@ if($action === 'get_active_sessions' && $method === 'GET'){
   ");
   $st->execute([$uid, $currentSessionKey]);
   $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+  $rows = dedupeActiveSessionRows($pdo, $uid, $rows, $currentSessionKey);
 
   $outRows = array_map(function($row) use ($currentSelector, $currentSessionKey){
     return [
@@ -199,7 +289,7 @@ if($action === 'delete_session' && $method === 'POST'){
   $currentSessionKey = session_id();
 
   $st = $pdo->prepare("
-    SELECT id, selector, session_key, user_agent
+    SELECT id, selector, session_key
     FROM user_sessions
     WHERE id = ? AND user_id = ?
     LIMIT 1
@@ -222,11 +312,6 @@ if($action === 'delete_session' && $method === 'POST'){
     $deleteParams[] = (string)$row["selector"];
   }
 
-  if(!empty($row["user_agent"])){
-    $deleteClauses[] = "user_agent = ?";
-    $deleteParams[] = (string)$row["user_agent"];
-  }
-
   $deleteSql = "DELETE FROM user_sessions WHERE user_id = ? AND (" . implode(" OR ", $deleteClauses) . ")";
   array_unshift($deleteParams, $uid);
   $pdo->prepare($deleteSql)->execute($deleteParams);
@@ -237,25 +322,21 @@ if($action === 'delete_session' && $method === 'POST'){
     $_SESSION = [];
     if (ini_get("session.use_cookies")) {
       $params = session_get_cookie_params();
-      setcookie(
-        session_name(),
-        '',
-        time() - 42000,
-        $params["path"],
-        $params["domain"],
-        $params["secure"],
-        $params["httponly"]
-      );
+      $sessionName = session_name();
+      foreach ([true, false] as $sec) {
+        setcookie($sessionName, '', [
+            'expires'  => time() - 42000,
+            'path'     => $params['path'] ?? '/',
+            'domain'   => $params['domain'] ?? '',
+            'secure'   => $sec,
+            'httponly' => !empty($params['httponly']),
+            'samesite' => 'Lax',
+        ]);
+      }
     }
     session_destroy();
 
-    setcookie("remember_me", "", [
-      "expires"  => time() - 3600,
-      "path"     => "/",
-      "secure"   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
-      "httponly" => true,
-      "samesite" => "Lax",
-    ]);
+    wp_auth_clear_remember_cookie();
 
     out(["ok"=>true, "logged_out"=>true]);
   }
@@ -266,13 +347,17 @@ if($action === 'delete_session' && $method === 'POST'){
 
 if($action === 'delete_other_sessions' && $method === 'POST'){
   $currentSessionKey = session_id();
+  $currentSessionRowId = !empty($_SESSION['user_session_row_id']) ? (int)$_SESSION['user_session_row_id'] : 0;
 
   $st = $pdo->prepare("
     DELETE FROM user_sessions
     WHERE user_id = ?
-      AND session_key <> ?
+      AND NOT (
+        (session_key IS NOT NULL AND session_key = ?)
+        OR id = ?
+      )
   ");
-  $st->execute([$uid, $currentSessionKey]);
+  $st->execute([$uid, $currentSessionKey, $currentSessionRowId]);
 
   out(["ok"=>true]);
 }
@@ -505,15 +590,7 @@ if(!empty($row["pending_email"])){
   $_SESSION = [];
   if(session_id()) session_destroy();
 
-  if(!empty($_COOKIE['remember_me'])){
-    setcookie("remember_me","",[
-      "expires"  => time() - 3600,
-      "path"     => "/",
-      "secure"   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
-      "httponly" => true,
-      "samesite" => "Lax",
-    ]);
-  }
+  wp_auth_clear_remember_cookie();
 
   out(["ok"=>true]);
 }

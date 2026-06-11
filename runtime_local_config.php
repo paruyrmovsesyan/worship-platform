@@ -1,7 +1,7 @@
 <?php
 return [
     'db' => [
-        'host' => 'localhost',
+        'host' => '127.0.0.1',
         'name' => 'pmstudio_wolarm',
         'user' => 'pmstudio_wolarm',
         'pass' => 'wolarm2026',

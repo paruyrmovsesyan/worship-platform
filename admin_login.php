@@ -108,17 +108,19 @@ $hasAdminWhitelist = !empty($config['admin_emails']);
   <title>Admin Login</title>
   <style>
     :root{
-      --bg:#07101b;
-      --panel:rgba(13,22,36,.9);
-      --line:rgba(255,255,255,.08);
-      --text:#eef3ff;
-      --muted:#9da9c9;
-      --primary:#4f7cff;
-      --primary-2:#7aa2ff;
-      --danger:#ff7a8d;
-      --success:#69d59b;
-      --radius:22px;
-      --shadow:0 24px 70px rgba(0,0,0,.34);
+      --bg: #0f1423;
+      --panel: rgba(16, 23, 41, 0.7);
+      --line: rgba(255,255,255,0.08);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --primary: #2fd1c5;
+      --primary-2: #00f2fe;
+      --accent: #a78bfa;
+      --danger: #fb7185;
+      --success: #34d399;
+      --radius: 20px;
+      --shadow: 0 10px 40px rgba(0,0,0,0.3);
+      --primary-glow: rgba(47, 209, 197, 0.4);
     }
     *{box-sizing:border-box}
     body{
@@ -129,10 +131,10 @@ $hasAdminWhitelist = !empty($config['admin_emails']);
       padding:20px;
       font-family:Inter,system-ui,sans-serif;
       color:var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(79,124,255,.20), transparent 26%),
-        radial-gradient(circle at bottom right, rgba(105,213,155,.14), transparent 24%),
-        linear-gradient(180deg,#0b1425 0%, #05070d 100%);
+      background: var(--bg);
+      background-image: 
+        radial-gradient(circle at 15% 50%, rgba(47, 209, 197, 0.08), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(167, 139, 250, 0.08), transparent 25%);
     }
     .shell{
       width:min(100%,1020px);
@@ -146,7 +148,8 @@ $hasAdminWhitelist = !empty($config['admin_emails']);
       border:1px solid var(--line);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
-      backdrop-filter:blur(14px);
+      backdrop-filter:blur(24px);
+      -webkit-backdrop-filter:blur(24px);
     }
     .hero{
       padding:28px;
@@ -220,9 +223,9 @@ $hasAdminWhitelist = !empty($config['admin_emails']);
     }
     .btn-primary{
       background:linear-gradient(135deg,var(--primary),var(--primary-2));
-      color:#fff;
+      color:#0f1423;
       border-color:transparent;
-      box-shadow:0 14px 28px rgba(79,124,255,.24);
+      box-shadow:0 4px 15px var(--primary-glow);
       width:100%;
     }
     .btn-ghost{

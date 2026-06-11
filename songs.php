@@ -3,6 +3,238 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/admin_access.php';
 
+require_once __DIR__ . '/translation_runtime.php';
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['hy', 'ru', 'en'])) {
+    setcookie('admin_lang', $_GET['lang'], time() + 86400 * 30, '/');
+    header('Location: ?');
+    exit;
+}
+$adminLang = $_COOKIE['admin_lang'] ?? 'hy';
+$hardcoded_i18n = [
+    'ru' => [
+        'Երգերի ցանկ' => 'Список песен', 'Կարգավորումներ' => 'Настройки', 'Դուրս գալ' => 'Выйти',
+        'Ադմին' => 'Админ', 'Կարգավորումներ և համակարգ' => 'Настройки и система',
+        'Կառավարեք ծրագրի տարբերակները, սարքերը, մուտքերը և այլն։' => 'Управляйте версиями, устройствами, доступами и т.д.',
+        'Թարմացումներ' => 'Обновления', 'Սպասարկում' => 'Обслуживание', 'Սարքեր' => 'Устройства',
+        'Պատմություն' => 'История', 'Մուտքեր' => 'Доступы', 'Մոդերացիա' => 'Модерация', 'Թարգմանություն' => 'Переводы',
+        'Թարմացնել' => 'Обновить', 'Բոլորը PDF' => 'Все в PDF', 'Ավելացնել երգ' => 'Добавить песню',
+        'ԱՆՎԱՆՈՒՄ' => 'НАЗВАНИЕ', 'ԿԱՏԱՐՈՂ' => 'ИСПОЛНИТЕЛЬ', 'ՏՈՆԱՅՆՈՒԹՅՈՒՆ' => 'ТОНАЛЬНОСТЬ',
+        'ՏԵՄՊ (BPM)' => 'ТЕМП (BPM)', 'ԿԱՐԳԱՎԻՃԱԿ' => 'СТАТУС', 'ԳՈՐԾՈՂՈՒԹՅՈՒՆՆԵՐ' => 'ДЕЙСТВИЯ',
+        'Բեռնել մնացածը' => 'Загрузить еще', 'Ավելացնել / Խմբագրել երգ' => 'Добавить / Изменить',
+        'Մաքրել' => 'Очистить', 'Չեղարկել' => 'Отменить', 'Անվանում' => 'Название', 'Կատարող' => 'Исполнитель',
+        'Տոնայնություն' => 'Тональность', 'Տեգեր' => 'Теги', 'Ակորդներ' => 'Аккорды', 'Բառեր' => 'Текст',
+        'Նախադիտում և Տրանսպոզիցիա' => 'Предпросмотр и Транспозиция', 'Օգտագործել բեմոլներ (b)' => 'Использовать бемоли (b)',
+        'Խմբագրումը չեղարկված է' => 'Редактирование отменено', 'ընդհանուր' => 'всего', 'բառերով' => 'с текстом',
+        'երգ' => 'пес.', 'Անանուն' => 'Без названия', 'Կատարող նշված չէ' => 'Неизвестный', 'Երգը պահպանված է ✅' => 'Сохранено ✅'
+    ],
+    'en' => [
+        'Երգերի ցանկ' => 'Music Library', 'Կարգավորումներ' => 'Settings', 'Դուրս գալ' => 'Log Out',
+        'Ադմին' => 'Admin', 'Կարգավորումներ և համակարգ' => 'Settings & System',
+        'Կառավարեք ծրագրի տարբերակները, սարքերը, մուտքերը և այլն։' => 'Manage app versions, devices, accesses, etc.',
+        'Թարմացումներ' => 'Updates', 'Սպասարկում' => 'Maintenance', 'Սարքեր' => 'Devices',
+        'Պատմություն' => 'History', 'Մուտքեր' => 'Access', 'Մոդերացիա' => 'Moderation', 'Թարգմանություն' => 'Translations',
+        'Թարմացնել' => 'Refresh', 'Բոլորը PDF' => 'Export All PDF', 'Ավելացնել երգ' => 'Add Song',
+        'ԱՆՎԱՆՈՒՄ' => 'TITLE', 'ԿԱՏԱՐՈՂ' => 'ARTIST', 'ՏՈՆԱՅՆՈՒԹՅՈՒՆ' => 'KEY',
+        'ՏԵՄՊ (BPM)' => 'TEMPO (BPM)', 'ԿԱՐԳԱՎԻՃԱԿ' => 'STATUS', 'ԳՈՐԾՈՂՈՒԹՅՈՒՆՆԵՐ' => 'ACTIONS',
+        'Բեռնել մնացածը' => 'Load More', 'Ավելացնել / Խմբագրել երգ' => 'Add / Edit Song',
+        'Մաքրել' => 'Clear', 'Չեղարկել' => 'Cancel', 'Անվանում' => 'Title', 'Կատարող' => 'Artist',
+        'Տոնայնություն' => 'Key', 'Տեգեր' => 'Tags', 'Ակորդներ' => 'Chords', 'Բառեր' => 'Lyrics',
+        'Նախադիտում և Տրանսպոզիցիա' => 'Preview & Transpose', 'Օգտագործել բեմոլներ (b)' => 'Use flats (b)',
+        'Խմբագրումը չեղարկված է' => 'Edit Canceled', 'ընդհանուր' => 'total', 'բառերով' => 'with lyrics',
+        'երգ' => 'songs', 'Անանուն' => 'Untitled', 'Կատարող նշված չէ' => 'Unknown Artist', 'Երգը պահպանված է ✅' => 'Saved ✅'
+    ]
+];
+if (!function_exists('__')) {
+    function __($text, $context = 'ui') {
+        global $adminLang, $hardcoded_i18n;
+        if ($adminLang === 'hy' || trim($text) === '') return $text;
+        $cached = wp_translation_cache_get($adminLang, $context, $text);
+        if ($cached) return $cached;
+        return $hardcoded_i18n[$adminLang][$text] ?? $text;
+    }
+}
+
+// Generate JSON for JS translations
+$js_i18n_keys = [
+    'Published' => __('Բառերով'),
+    'Draft' => __('Առանց բառերի'),
+    'Edit' => __('Խմբագրել'),
+    'Delete' => __('Ջնջել'),
+    'Cancel' => __('Չեղարկել'),
+    'Save' => __('Պահպանել'),
+    'Saving' => __('Պահպանվում է...'),
+    'Saved' => __('Պահպանված է'),
+    'Error' => __('Սխալ'),
+    'Loading' => __('Բեռնվում է...'),
+    'ConfirmDelete' => __('Վստա՞հ եք, որ ուզում եք ջնջել այս երգը:')
+];
+
+
+require_once __DIR__ . '/translation_runtime.php';
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['hy', 'ru', 'en'])) {
+    setcookie('admin_lang', $_GET['lang'], time() + 86400 * 30, '/');
+    $adminLang = $_GET['lang'];
+} else {
+    $adminLang = $_COOKIE['admin_lang'] ?? 'hy';
+}
+$_GET['lang'] = $adminLang; // Force for consistency
+
+if (!function_exists('__')) {
+    function __($text) {
+        global $adminLang;
+        $translated = wp_translation_translate_texts([$text], $adminLang, 'admin_panel');
+        return htmlspecialchars((string)($translated[0] ?? $text), ENT_QUOTES);
+    }
+}
+
+// Generate JSON for JS translations
+$js_i18n_keys = [
+    'Published' => __('Բառերով'),
+    'Draft' => __('Առանց բառերի'),
+    'Edit' => __('Խմբագրել'),
+    'Delete' => __('Ջնջել'),
+    'Cancel' => __('Չեղարկել'),
+    'Save' => __('Պահպանել'),
+    'Saving' => __('Պահպանվում է...'),
+    'Saved' => __('Պահպանված է'),
+    'Error' => __('Սխալ'),
+    'Loading' => __('Բեռնվում է...'),
+    'ConfirmDelete' => __('Վստա՞հ եք, որ ուզում եք ջնջել այս երգը:')
+];
+
+
+require_once __DIR__ . '/translation_runtime.php';
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['hy', 'ru', 'en'])) {
+    setcookie('admin_lang', $_GET['lang'], time() + 86400 * 30, '/');
+    $adminLang = $_GET['lang'];
+} else {
+    $adminLang = $_COOKIE['admin_lang'] ?? 'hy';
+}
+$_GET['lang'] = $adminLang; // Force for consistency
+
+if (!function_exists('__')) {
+    function __($text) {
+        global $adminLang;
+        $translated = wp_translation_translate_texts([$text], $adminLang, 'admin_panel');
+        return htmlspecialchars((string)($translated[0] ?? $text), ENT_QUOTES);
+    }
+}
+
+// Generate JSON for JS translations
+$js_i18n_keys = [
+    'Published' => __('Բառերով'),
+    'Draft' => __('Առանց բառերի'),
+    'Edit' => __('Խմբագրել'),
+    'Delete' => __('Ջնջել'),
+    'Cancel' => __('Չեղարկել'),
+    'Save' => __('Պահպանել'),
+    'Saving' => __('Պահպանվում է...'),
+    'Saved' => __('Պահպանված է'),
+    'Error' => __('Սխալ'),
+    'Loading' => __('Բեռնվում է...'),
+    'ConfirmDelete' => __('Վստա՞հ եք, որ ուզում եք ջնջել այս երգը:')
+];
+
+
+require_once __DIR__ . '/translation_runtime.php';
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['hy', 'ru', 'en'])) {
+    setcookie('admin_lang', $_GET['lang'], time() + 86400 * 30, '/');
+    $adminLang = $_GET['lang'];
+} else {
+    $adminLang = $_COOKIE['admin_lang'] ?? 'hy';
+}
+$_GET['lang'] = $adminLang; // Force for consistency
+
+if (!function_exists('__')) {
+    function __($text) {
+        global $adminLang;
+        $translated = wp_translation_translate_texts([$text], $adminLang, 'admin_panel');
+        return htmlspecialchars((string)($translated[0] ?? $text), ENT_QUOTES);
+    }
+}
+
+// Generate JSON for JS translations
+$js_i18n_keys = [
+    'Published' => __('Բառերով'),
+    'Draft' => __('Առանց բառերի'),
+    'Edit' => __('Խմբագրել'),
+    'Delete' => __('Ջնջել'),
+    'Cancel' => __('Չեղարկել'),
+    'Save' => __('Պահպանել'),
+    'Saving' => __('Պահպանվում է...'),
+    'Saved' => __('Պահպանված է'),
+    'Error' => __('Սխալ'),
+    'Loading' => __('Բեռնվում է...'),
+    'ConfirmDelete' => __('Վստա՞հ եք, որ ուզում եք ջնջել այս երգը:')
+];
+
+
+require_once __DIR__ . '/translation_runtime.php';
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['hy', 'ru', 'en'])) {
+    setcookie('admin_lang', $_GET['lang'], time() + 86400 * 30, '/');
+    $adminLang = $_GET['lang'];
+} else {
+    $adminLang = $_COOKIE['admin_lang'] ?? 'hy';
+}
+$_GET['lang'] = $adminLang; // Force for consistency
+
+if (!function_exists('__')) {
+    function __($text) {
+        global $adminLang;
+        $translated = wp_translation_translate_texts([$text], $adminLang, 'admin_panel');
+        return htmlspecialchars((string)($translated[0] ?? $text), ENT_QUOTES);
+    }
+}
+
+// Generate JSON for JS translations
+$js_i18n_keys = [
+    'Published' => __('Բառերով'),
+    'Draft' => __('Առանց բառերի'),
+    'Edit' => __('Խմբագրել'),
+    'Delete' => __('Ջնջել'),
+    'Cancel' => __('Չեղարկել'),
+    'Save' => __('Պահպանել'),
+    'Saving' => __('Պահպանվում է...'),
+    'Saved' => __('Պահպանված է'),
+    'Error' => __('Սխալ'),
+    'Loading' => __('Բեռնվում է...'),
+    'ConfirmDelete' => __('Վստա՞հ եք, որ ուզում եք ջնջել այս երգը:')
+];
+
+
+require_once __DIR__ . '/translation_runtime.php';
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['hy', 'ru', 'en'])) {
+    setcookie('admin_lang', $_GET['lang'], time() + 86400 * 30, '/');
+    $adminLang = $_GET['lang'];
+} else {
+    $adminLang = $_COOKIE['admin_lang'] ?? 'hy';
+}
+$_GET['lang'] = $adminLang; // Force for consistency
+
+if (!function_exists('__')) {
+    function __($text) {
+        global $adminLang;
+        $translated = wp_translation_translate_texts([$text], $adminLang, 'admin_panel');
+        return htmlspecialchars((string)($translated[0] ?? $text), ENT_QUOTES);
+    }
+}
+
+// Generate JSON for JS translations
+$js_i18n_keys = [
+    'Published' => __('Բառերով'),
+    'Draft' => __('Առանց բառերի'),
+    'Edit' => __('Խմբագրել'),
+    'Delete' => __('Ջնջել'),
+    'Cancel' => __('Չեղարկել'),
+    'Save' => __('Պահպանել'),
+    'Saving' => __('Պահպանվում է...'),
+    'Saved' => __('Պահպանված է'),
+    'Error' => __('Սխալ'),
+    'Loading' => __('Բեռնվում է...'),
+    'ConfirmDelete' => __('Վստա՞հ եք, որ ուզում եք ջնջել այս երգը:')
+];
+
+
 $access = wp_admin_require_access('/songs.php');
 $adminUser = $access['user'];
 $adminPermissions = $access['permissions'] ?? wp_version_default_admin_permissions();
@@ -17,91 +249,7 @@ if (empty($adminPermissions['songs_editor'])):
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Երգերի խմբագրումը հասանելի չէ</title>
-  <style>
-    :root{
-      --bg:#0b1020;
-      --panel:rgba(18,24,45,.88);
-      --line:rgba(255,255,255,.1);
-      --text:#eef3ff;
-      --muted:#9aa8c9;
-      --primary:#6b7cff;
-      --danger:#ff6b7a;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      min-height:100vh;
-      display:grid;
-      place-items:center;
-      padding:24px;
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      color:var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(107,124,255,.18), transparent 28%),
-        radial-gradient(circle at top right, rgba(87,214,195,.12), transparent 22%),
-        linear-gradient(180deg, #09101d 0%, #0b1020 100%);
-    }
-    .gate{
-      width:min(680px,100%);
-      padding:28px;
-      border-radius:24px;
-      border:1px solid var(--line);
-      background:var(--panel);
-      box-shadow:0 24px 70px rgba(0,0,0,.34);
-    }
-    .eyebrow{
-      display:inline-flex;
-      padding:8px 12px;
-      border-radius:999px;
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.08);
-      color:#c9d4ff;
-      font-size:12px;
-      font-weight:700;
-      letter-spacing:.04em;
-      text-transform:uppercase;
-    }
-    h1{
-      margin:16px 0 10px;
-      font-size:clamp(28px,4vw,38px);
-      line-height:1.05;
-    }
-    p{
-      margin:0;
-      color:var(--muted);
-      line-height:1.65;
-      font-size:15px;
-    }
-    .actions{
-      display:flex;
-      flex-wrap:wrap;
-      gap:12px;
-      margin-top:22px;
-    }
-    .btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-height:46px;
-      padding:12px 16px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.1);
-      color:var(--text);
-      text-decoration:none;
-      font-weight:700;
-      background:rgba(255,255,255,.05);
-    }
-    .btn-primary{
-      background:linear-gradient(135deg,var(--primary),#8ea1ff);
-      border-color:transparent;
-      color:#fff;
-    }
-    .btn-danger{
-      background:rgba(255,107,122,.12);
-      border-color:rgba(255,107,122,.2);
-      color:#ffb5bd;
-    }
-  </style>
+  
 </head>
 <body>
   <main class="gate">
@@ -134,1297 +282,7 @@ endif;
   <title>Wolarm Youth — Երգերի կառավարում</title>
   <link rel="apple-touch-icon" href="wolarm_developers.png" type="image/png" />
   <link rel="icon" href="wolarm_developers.png" type="image/png" />
-  <style>
-    :root {
-      --bg: #0a1020;
-      --bg-soft: #121933;
-      --panel: rgba(17, 24, 45, 0.88);
-      --panel-soft: rgba(255, 255, 255, 0.05);
-      --line: rgba(255,255,255,0.10);
-      --line-soft: rgba(255,255,255,0.06);
-      --text: #eef3ff;
-      --muted: #96a4c5;
-      --primary: #6b7cff;
-      --primary-2: #8ea1ff;
-      --accent: #57d6c3;
-      --danger: #ff6b7a;
-      --warning: #f7c66b;
-      --success: #60d394;
-      --shadow: 0 24px 60px rgba(0,0,0,.35);
-      --radius-xl: 26px;
-      --radius-lg: 22px;
-      --radius-md: 18px;
-      --radius-sm: 14px;
-      --table-max-h: 720px;
-      --mobile-table-max-h: 58vh;
-    }
-
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(107,124,255,.18), transparent 28%),
-        radial-gradient(circle at top right, rgba(87,214,195,.12), transparent 22%),
-        linear-gradient(180deg, #09101d 0%, #0b1020 100%);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    .shell {
-      max-width: 1520px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-
-    .topbar {
-      position: static;
-      top: 14px;
-      z-index: 40;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 16px 18px;
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      background: rgba(10, 14, 28, .76);
-      backdrop-filter: blur(16px);
-      box-shadow: var(--shadow);
-      margin-bottom: 18px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      min-width: 0;
-    }
-
-    .brand-badge {
-      width: 52px;
-      height: 52px;
-      border-radius: 16px;
-      display: grid;
-      place-items: center;
-      background: linear-gradient(135deg, rgba(107,124,255,.24), rgba(87,214,195,.18));
-      border: 1px solid rgba(255,255,255,.1);
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: .04em;
-      flex: 0 0 auto;
-    }
-
-    .brand-copy h1 {
-      margin: 0;
-      font-size: clamp(20px, 2.2vw, 30px);
-      line-height: 1.04;
-    }
-
-    .brand-copy p {
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    #adminPageLoader {
-      position: fixed;
-      inset: 0;
-      z-index: 2147482200;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background:
-        radial-gradient(circle at top left, rgba(107,124,255,.18), transparent 28%),
-        radial-gradient(circle at top right, rgba(87,214,195,.14), transparent 22%),
-        rgba(8, 12, 24, 0.92);
-      backdrop-filter: blur(14px) saturate(120%);
-      -webkit-backdrop-filter: blur(14px) saturate(120%);
-      transition: opacity .22s ease, visibility .22s ease;
-    }
-
-    #adminPageLoader.hide {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
-
-    #adminPageLoaderCard {
-      width: min(420px, calc(100vw - 28px));
-      padding: 22px 18px 18px;
-      border-radius: 26px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: linear-gradient(180deg, rgba(12,18,34,.92), rgba(10,14,27,.84));
-      box-shadow: 0 24px 70px rgba(0,0,0,.44);
-    }
-
-    #adminPageLoaderTitle {
-      margin: 0 0 8px;
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -.03em;
-    }
-
-    #adminPageLoaderText {
-      margin: 0 0 14px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    #adminPageLoaderRail {
-      height: 8px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.08);
-      overflow: hidden;
-      position: relative;
-    }
-
-    #adminPageLoaderRail::after {
-      content: "";
-      position: absolute;
-      left: -35%;
-      top: 0;
-      width: 38%;
-      height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, rgba(107,124,255,0), rgba(107,124,255,.95), rgba(87,214,195,.78));
-      animation: adminLoaderRail 1.3s cubic-bezier(.4, 0, .2, 1) infinite;
-    }
-
-    @keyframes adminLoaderRail {
-      0% { left: -35%; }
-      100% { left: 100%; }
-    }
-
-    .topbar-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .label-desktop { display: inline; }
-    .label-mobile { display: none; }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: .02em;
-      border: 1px solid rgba(255,255,255,.08);
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-      white-space: nowrap;
-    }
-    .pill.success { background: rgba(96,211,148,.12); color: #9df0bf; }
-    .pill.warning { background: rgba(247,198,107,.12); color: #ffd995; }
-    .pill.info { background: rgba(107,124,255,.14); color: #cbd4ff; }
-
-    .btn,
-    .key-buttons button,
-    .workspace-tab {
-      appearance: none;
-      border: 1px solid transparent;
-      border-radius: 14px;
-      padding: 12px 14px;
-      min-height: 44px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: .22s ease;
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .btn {
-      background: rgba(255,255,255,.05);
-      color: var(--text);
-      border-color: rgba(255,255,255,.09);
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .btn:hover,
-    .workspace-tab:hover,
-    .key-buttons button:hover {
-      transform: translateY(-1px);
-      background: rgba(255,255,255,.08);
-    }
-
-    .btn:active,
-    .key-buttons button:active,
-    .workspace-tab:active {
-      transform: scale(.985);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--primary), var(--primary-2));
-      color: white;
-      border-color: transparent;
-      box-shadow: 0 14px 26px rgba(107,124,255,.28);
-    }
-    .btn-secondary { background: rgba(255,255,255,.06); color: #e6ebff; }
-    .btn-danger { background: rgba(255,107,122,.14); color: #ffc2c9; border-color: rgba(255,107,122,.18); }
-    .btn-success { background: rgba(96,211,148,.16); color: #bff3d3; border-color: rgba(96,211,148,.20); }
-
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-      overflow: hidden;
-    }
-
-    .panel-head {
-      padding: 18px 20px 0;
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-
-    .panel-head h2,
-    .panel-head h3 {
-      margin: 0;
-      font-size: 21px;
-    }
-
-    .panel-head p {
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    .panel-body { padding: 18px 20px 20px; }
-
-    .dashboard {
-      display: grid;
-      grid-template-columns: minmax(360px, 430px) minmax(0, 1fr);
-      gap: 18px;
-      align-items: start;
-    }
-
-    .sidebar {
-      position: sticky;
-      top: 18px;
-      display: grid;
-      gap: 18px;
-      align-self: start;
-    }
-
-    .content-shell {
-      min-width: 0;
-    }
-
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .stat-card {
-      background: var(--panel-soft);
-      border: 1px solid var(--line-soft);
-      border-radius: 18px;
-      padding: 14px;
-    }
-
-    .stat-card strong {
-      display: block;
-      font-size: 24px;
-      margin-bottom: 4px;
-    }
-
-    .stat-card span {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .main {
-      display: grid;
-      gap: 18px;
-      min-width: 0;
-    }
-
-    .sidebar-actions {
-      display: grid;
-      gap: 10px;
-    }
-
-    .sidebar-actions .btn {
-      width: 100%;
-      justify-content: flex-start;
-      border-radius: 16px;
-      padding: 12px 14px;
-    }
-
-    .sidebar-note {
-      margin-top: 4px;
-      padding: 12px 14px;
-      border: 1px dashed rgba(255,255,255,.10);
-      border-radius: 16px;
-      background: rgba(255,255,255,.03);
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.5;
-    }
-
-    .status-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .install-admin-btn {
-      white-space: nowrap;
-    }
-
-    .workspace-tabs {
-      display: inline-grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-      padding: 6px;
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.08);
-      background: rgba(255,255,255,.04);
-      margin-bottom: 16px;
-    }
-
-    .workspace-tab {
-      flex: 1 1 0;
-      background: rgba(255,255,255,.05);
-      color: var(--text);
-      border-color: rgba(255,255,255,.09);
-      min-width: 0;
-      line-height: 1.2;
-      text-align: center;
-      white-space: normal;
-      overflow-wrap: anywhere;
-    }
-
-    .workspace-tab.is-active {
-      background: linear-gradient(135deg, var(--primary), var(--primary-2));
-      color: white;
-      border-color: transparent;
-      box-shadow: 0 12px 24px rgba(107,124,255,.22);
-    }
-
-    .workspace-pane[hidden] { display: none !important; }
-    .workspace-pane {
-      display: block;
-      min-width: 0;
-    }
-
-    .workspace-panel .panel-body {
-      display: grid;
-      gap: 16px;
-    }
-
-    .library-panel .panel-head {
-      align-items: center;
-    }
-
-    .library-panel .table-shell th:nth-child(2),
-    .library-panel .table-shell td:nth-child(2) {
-      display: none;
-    }
-
-    .library-panel .table-shell th:nth-child(1),
-    .library-panel .table-shell td:nth-child(1) {
-      width: 72%;
-    }
-
-    .library-panel .table-shell th:nth-child(3),
-    .library-panel .table-shell td:nth-child(3) {
-      width: 28%;
-      text-align: right;
-    }
-
-    .library-panel .mobile-key-pill { display: inline-flex; }
-
-    .editor-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(300px, .95fr);
-      gap: 18px;
-      align-items: start;
-    }
-
-    .editor-stack,
-    .preview-stack {
-      display: grid;
-      gap: 18px;
-      min-width: 0;
-    }
-
-    .editor-card {
-      border: 1px solid var(--line-soft);
-      border-radius: 18px;
-      background: var(--panel-soft);
-      padding: 14px;
-    }
-
-    .card-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-    }
-
-    .card-head strong { font-size: 15px; }
-    .card-head span { font-size: 12px; color: var(--muted); }
-
-    .editor-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .field,
-    .field-wide,
-    .filter-field {
-      display: grid;
-      gap: 8px;
-    }
-
-    .field label,
-    .field-wide label,
-    .filter-field label {
-      color: #d7dff7;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: .01em;
-    }
-
-    .field-wide { margin-bottom: 12px; }
-
-    .hint {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-      margin-top: 4px;
-    }
-
-    input[type="text"],
-    textarea,
-    input[type="search"],
-    select {
-      width: 100%;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.05);
-      color: var(--text);
-      border-radius: 16px;
-      padding: 13px 14px;
-      outline: none;
-      transition: .22s ease;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
-      font-size: 16px;
-    }
-
-    select { appearance: none; }
-
-    textarea {
-      min-height: 180px;
-      resize: vertical;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      line-height: 1.55;
-    }
-
-    input::placeholder,
-    textarea::placeholder { color: #7f8baa; }
-
-    input:focus,
-    textarea:focus,
-    input[type="search"]:focus,
-    select:focus {
-      border-color: rgba(142,161,255,.85);
-      background: rgba(255,255,255,.08);
-      box-shadow: 0 0 0 4px rgba(107,124,255,.14);
-    }
-
-    .toolbar-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-    }
-
-    .toolbar-title {
-      display: grid;
-      gap: 4px;
-    }
-
-    .toolbar-title strong { font-size: 15px; }
-    .toolbar-title span { font-size: 12px; color: var(--muted); }
-
-    .toggle-wrap {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(255,255,255,.08);
-      color: #dce5ff;
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .key-buttons {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .preview-card {
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 20px;
-      overflow: hidden;
-      background: rgba(255,255,255,.04);
-    }
-
-    .preview-top {
-      padding: 14px 16px;
-      border-bottom: 1px solid rgba(255,255,255,.07);
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .preview-top strong { font-size: 15px; }
-    .preview-top span { font-size: 12px; color: var(--muted); }
-
-    .preview {
-      white-space: pre-wrap;
-      padding: 18px 16px 20px;
-      min-height: 240px;
-      font-size: 15px;
-      line-height: 1.72;
-      color: #eef3ff;
-      max-height: 520px;
-      overflow: auto;
-    }
-
-    .empty-preview { color: #7f8baa; font-style: italic; }
-    .chord { font-weight: 800; color: #9bd7ff; }
-
-    .form-actions .btn,
-    .export-actions .btn {
-      width: 100%;
-      justify-content: center;
-    }
-
-    .form-actions,
-    .export-actions {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .songs-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-    }
-
-    .songs-toolbar-left,
-    .songs-toolbar-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .compact-btn {
-      min-height: 38px;
-      padding: 8px 12px;
-      border-radius: 12px;
-      font-size: 13px;
-    }
-
-    .songs-count-pill { white-space: nowrap; }
-
-    .search-wrap {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .filters-panel[hidden] { display: none !important; }
-
-    .filters-panel {
-      margin-bottom: 14px;
-      transform-origin: top;
-      animation: filtersDrop .18s ease;
-    }
-
-    @keyframes filtersDrop {
-      from { opacity: 0; transform: translateY(-6px) scaleY(.98); }
-      to { opacity: 1; transform: translateY(0) scaleY(1); }
-    }
-
-    .filters-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-      padding: 12px;
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 18px;
-      background: rgba(255,255,255,.03);
-    }
-
-    .filter-actions {
-      grid-column: 1 / -1;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .active-filters {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-
-    .active-filters:empty { display: none; }
-
-    .active-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
-      background: rgba(107,124,255,.14);
-      border: 1px solid rgba(142,161,255,.20);
-      color: #d7e0ff;
-    }
-
-    .table-shell {
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 20px;
-      overflow: hidden;
-      background: rgba(255,255,255,.03);
-      display: grid;
-      grid-template-rows: auto auto auto;
-      min-height: 0;
-    }
-
-    .table-scroll {
-      overflow-y: auto;
-      overflow-x: hidden;
-      max-height: var(--table-max-h);
-      position: relative;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th, td {
-      text-align: left;
-      padding: 14px 16px;
-      border-bottom: 1px solid rgba(255,255,255,.06);
-      vertical-align: top;
-      font-size: 14px;
-    }
-
-    th {
-      background: rgba(17, 24, 45, .96);
-      color: #c9d3ef;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      backdrop-filter: blur(10px);
-      box-shadow: inset 0 -1px 0 rgba(255,255,255,.06);
-    }
-
-    tbody tr:hover { background: rgba(255,255,255,.04); }
-    tbody tr.clickable-row { cursor: pointer; }
-
-    .song-title {
-      display: grid;
-      gap: 5px;
-      cursor: pointer;
-    }
-
-    .song-title strong {
-      font-size: 15px;
-      color: #f2f5ff;
-      line-height: 1.35;
-      word-break: break-word;
-    }
-
-    .song-meta {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .mini-pills {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-top: 6px;
-    }
-
-    .mini-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 9px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.06);
-      color: #d7e0ff;
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .mini-pill.status-pill.has-lyrics {
-      color: #9df0bf;
-      border-color: rgba(96,211,148,.20);
-      background: rgba(96,211,148,.10);
-    }
-
-    .mini-pill.status-pill.no-lyrics {
-      color: #ffd995;
-      border-color: rgba(247,198,107,.18);
-      background: rgba(247,198,107,.10);
-    }
-
-    .mobile-key-pill { display: none; }
-
-    .row-actions {
-      display: inline-flex;
-      flex-wrap: nowrap;
-      gap: 6px;
-      align-items: center;
-      justify-content: flex-end;
-    }
-
-    .row-actions .btn {
-      min-width: 76px;
-      min-height: 34px;
-      padding: 6px 10px;
-      border-radius: 10px;
-      font-size: 12px;
-      line-height: 1;
-      white-space: nowrap;
-      box-shadow: none;
-    }
-
-    .table-footer {
-      padding: 14px 16px;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      color: var(--muted);
-      font-size: 13px;
-      flex-wrap: wrap;
-    }
-
-    .load-more-wrap {
-      display: flex;
-      justify-content: center;
-      padding: 16px;
-      border-top: 1px solid rgba(255,255,255,.06);
-    }
-
-    .notice {
-      margin-top: 14px;
-      padding: 12px 14px;
-      border-radius: 16px;
-      background: rgba(255,255,255,.05);
-      border: 1px solid rgba(255,255,255,.06);
-      color: #dce5ff;
-      display: none;
-    }
-
-    .notice.show { display: block; }
-    .notice.success { border-color: rgba(96,211,148,.18); color: #bff3d3; }
-    .notice.error { border-color: rgba(255,107,122,.18); color: #ffc2c9; }
-    .notice.info { border-color: rgba(107,124,255,.18); color: #d2d9ff; }
-
-    .admin-install-banner {
-      position: fixed;
-      left: 16px;
-      right: 16px;
-      bottom: 16px;
-      z-index: 100004;
-      display: none;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 12px 14px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(12, 18, 34, .96);
-      box-shadow: 0 18px 40px rgba(0,0,0,.34);
-      backdrop-filter: blur(16px);
-    }
-
-    .admin-install-banner.show {
-      display: flex;
-    }
-
-    .admin-install-copy {
-      min-width: 0;
-      display: grid;
-      gap: 4px;
-    }
-
-    .admin-install-copy strong {
-      font-size: 13px;
-    }
-
-    .admin-install-copy span {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .admin-install-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 0 0 auto;
-    }
-
-    .admin-install-actions .btn {
-      min-height: 38px;
-      padding: 8px 12px;
-      border-radius: 12px;
-      font-size: 12px;
-      white-space: nowrap;
-    }
-
-    footer {
-      color: #7582a5;
-      text-align: center;
-      font-size: 12px;
-      padding: 22px 12px 8px;
-    }
-
-    @media (max-width: 1380px) {
-      .editor-layout { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 1120px) {
-      .dashboard { grid-template-columns: 1fr; }
-      .sidebar {
-        position: static;
-      }
-      .content-shell { order: 1; }
-      .sidebar { order: 2; }
-      .summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-      .sidebar-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .filters-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-
-    @media (max-width: 860px) {
-      .dashboard {
-        gap: 14px;
-      }
-
-      .editor-grid,
-      .filters-grid,
-      .sidebar-actions {
-        grid-template-columns: 1fr;
-      }
-
-      .summary-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .topbar {
-        position: static;
-        border-radius: 18px;
-        padding: 10px 12px;
-        gap: 10px;
-        align-items: center;
-      }
-
-      .shell { padding: 14px; }
-      .panel-head, .panel-body { padding-left: 16px; padding-right: 16px; }
-      .panel-body { padding-top: 14px; padding-bottom: 16px; }
-
-      .brand {
-        gap: 10px;
-      }
-
-      .brand-badge {
-        width: 42px;
-        height: 42px;
-        border-radius: 13px;
-        font-size: 16px;
-      }
-
-      .brand-copy h1 {
-        font-size: 21px;
-      }
-
-      .brand-copy p {
-        font-size: 12px;
-        margin-top: 4px;
-      }
-
-      .topbar-actions {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-      }
-
-      .topbar-actions .pill {
-        display: inline-flex;
-        justify-content: center;
-        padding: 7px 10px;
-        font-size: 11px;
-        min-height: 34px;
-      }
-
-      .sidebar .panel:nth-of-type(2) {
-        display: none;
-      }
-
-      .sidebar .panel:first-of-type .panel-head p {
-        display: none;
-      }
-
-      .status-row {
-        width: 100%;
-        justify-content: flex-start;
-      }
-
-      .install-admin-btn {
-        width: auto;
-      }
-
-      .workspace-panel .panel-head {
-        gap: 10px;
-      }
-
-      .workspace-panel .panel-head p {
-        font-size: 12px;
-        max-width: 42ch;
-      }
-
-      .workspace-tabs {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 6px;
-        padding: 5px;
-      }
-
-      .workspace-tab {
-        min-width: 0;
-        padding: 11px 9px;
-        font-size: 13px;
-      }
-
-      .editor-layout,
-      .preview-stack,
-      .editor-stack {
-        gap: 14px;
-      }
-
-      .editor-card {
-        padding: 12px;
-        border-radius: 16px;
-      }
-
-      .summary-grid {
-        gap: 8px;
-      }
-
-      .stat-card {
-        padding: 12px;
-        border-radius: 16px;
-      }
-
-      .stat-card strong {
-        font-size: 20px;
-      }
-
-      .stat-card span {
-        font-size: 11px;
-      }
-
-      .preview { min-height: 180px; max-height: 320px; font-size: 14px; }
-      th, td { padding: 12px; }
-    }
-
-    @media (max-width: 560px) {
-      .shell { padding: 10px; }
-      .topbar {
-        padding: 9px 10px;
-        gap: 8px;
-      }
-
-      .brand {
-        align-items: center;
-        gap: 9px;
-      }
-
-      .brand-badge {
-        width: 38px;
-        height: 38px;
-        border-radius: 11px;
-        font-size: 14px;
-      }
-
-      .brand-copy h1 {
-        font-size: 17px;
-        line-height: 1.06;
-      }
-
-      .brand-copy p { display: none; }
-      .panel { border-radius: 18px; }
-      .panel-head h2, .panel-head h3 { font-size: 18px; }
-      .main { gap: 12px; }
-
-      .topbar-actions {
-        display: flex;
-        align-items: center;
-        grid-template-columns: none;
-        flex-wrap: nowrap;
-        justify-content: flex-end;
-        width: auto;
-        gap: 6px;
-        margin-left: auto;
-      }
-
-      .topbar-actions .pill {
-        display: none;
-      }
-
-      .topbar-actions a,
-      .topbar-actions button {
-        width: auto;
-        min-width: 0;
-        flex: 0 0 auto;
-      }
-
-      .topbar-actions .btn {
-        min-height: 38px;
-        padding: 9px 10px;
-        border-radius: 12px;
-        font-size: 12px;
-      }
-
-      .label-desktop {
-        display: none;
-      }
-
-      .label-mobile {
-        display: inline;
-      }
-
-      .workspace-panel .panel-head p {
-        display: none;
-      }
-
-      .workspace-tabs {
-        gap: 5px;
-        padding: 4px;
-      }
-
-      .workspace-tab {
-        padding: 10px 6px;
-        font-size: 12px;
-        border-radius: 12px;
-      }
-
-      .key-buttons {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 10px;
-      }
-
-      .form-actions,
-      .export-actions { grid-template-columns: 1fr; }
-
-      .btn,
-      .workspace-tab,
-      .key-buttons button { min-height: 46px; font-size: 14px; }
-
-      .songs-toolbar {
-        align-items: stretch;
-        justify-content: flex-start;
-        gap: 8px;
-        margin-bottom: 10px;
-        flex-wrap: wrap;
-      }
-
-      .songs-toolbar-left {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        flex: 1 1 100%;
-        min-width: 100%;
-      }
-
-      .songs-toolbar-right {
-        display: flex;
-        align-items: center;
-        flex: 1 1 100%;
-        justify-content: flex-start;
-      }
-
-      .sidebar-note {
-        font-size: 11px;
-      }
-
-      .songs-toolbar-left .compact-btn {
-        flex: 1 1 0;
-        min-height: 40px;
-        padding: 9px 10px;
-        font-size: 12px;
-        border-radius: 12px;
-      }
-
-      .songs-count-pill {
-        padding: 6px 10px;
-        font-size: 11px;
-      }
-
-      .search-wrap { grid-template-columns: 1fr; gap: 8px; margin-bottom: 10px; }
-      .search-wrap input[type="search"] { min-height: 42px; padding: 10px 12px; font-size: 14px; }
-      .filters-panel { padding: 10px; border-radius: 16px; }
-
-      .table-shell {
-        min-height: auto;
-        width: 100%;
-        overflow: hidden;
-      }
-
-      .table-scroll {
-        width: 100%;
-        overflow-x: hidden;
-        overflow-y: auto;
-        max-height: var(--mobile-table-max-h);
-      }
-
-      table {
-        width: 100%;
-        min-width: 0;
-        table-layout: fixed;
-      }
-
-      .library-panel table,
-      .library-panel thead,
-      .library-panel tbody,
-      .library-panel tr,
-      .library-panel td {
-        display: block;
-        width: 100%;
-      }
-
-      .library-panel thead {
-        display: none;
-      }
-
-      .library-panel tbody {
-        display: grid;
-        gap: 10px;
-        padding: 10px;
-      }
-
-      .library-panel tr.clickable-row {
-        border: 1px solid rgba(255,255,255,.08);
-        border-radius: 16px;
-        background: rgba(255,255,255,.03);
-        padding: 12px;
-      }
-
-      .library-panel td {
-        padding: 0;
-        border: 0;
-      }
-
-      .library-panel td:nth-child(2) {
-        display: none;
-      }
-
-      .row-actions {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 8px;
-        margin-top: 10px;
-      }
-
-      .row-actions .btn {
-        min-width: 86px;
-        min-height: 36px;
-        padding: 7px 10px;
-        font-size: 11px;
-      }
-
-      .song-title {
-        gap: 6px;
-      }
-
-      .song-title strong { font-size: 14px; line-height: 1.32; }
-      .song-meta { font-size: 11px; line-height: 1.4; }
-      .mini-pill { font-size: 10px; padding: 5px 8px; }
-      .preview-top { padding: 12px 14px; }
-      .preview { padding: 14px; line-height: 1.6; }
-
-      .admin-install-banner {
-        left: 10px;
-        right: 10px;
-        bottom: 10px;
-        padding: 10px 12px;
-        border-radius: 14px;
-        align-items: stretch;
-        flex-direction: column;
-      }
-
-      .admin-install-actions {
-        width: 100%;
-      }
-
-      .admin-install-actions .btn {
-        flex: 1 1 0;
-        justify-content: center;
-      }
-    }
-  </style>
+  
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -1436,363 +294,835 @@ endif;
     <div id="adminPageLoaderRail"></div>
   </div>
 </div>
-<div class="shell">
-    <div class="topbar">
-      <div class="brand">
-        <div class="brand-badge">WY</div>
-        <div class="brand-copy">
-          <h1>Երգերի բազայի ադմին</h1>
-          <p>Ավելացրու, խմբագրիր, փնտրիր, տրանսպոզ արա և արտահանիր երգերը՝ ավելի հստակ աշխատանքային հոսքով</p>
+
+
+
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg: #f4f7fe;
+  --surface: #ffffff;
+  --line: #e2e8f0;
+  --line-soft: #f1f5f9;
+  --text: #111c44;
+  --muted: #a3aed1;
+  --primary: #4318FF;
+  --primary-hover: #3311DB;
+  --success: #05cd99;
+  --success-bg: #e6f9f3;
+  --warning: #ffce20;
+  --warning-bg: #fff8e1;
+  --danger: #ee5d50;
+  --danger-bg: #ffeeeb;
+  --shadow-sm: 0 1px 2px rgba(112, 144, 176, 0.05);
+  --shadow: 0 18px 40px rgba(112, 144, 176, 0.12);
+  --shadow-lg: 0 20px 40px rgba(112, 144, 176, 0.15);
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-md: 20px;
+  --radius-lg: 24px;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* ── LAYOUT ── */
+.app-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+.app-sidebar {
+  width: 280px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  box-shadow: 14px 17px 40px 4px rgba(112, 144, 176, 0.08); z-index: 50; border-right: none;
+}
+
+.brand {
+  height: 90px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 12px;
+}
+.brand-icon {
+  width: 36px; height: 36px;
+  background: var(--text);
+  color: #fff;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 16px;
+}
+.brand-text { font-weight: 800; font-size: 24px; color: var(--text); letter-spacing: -0.5px; }
+
+.nav-menu {
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 16px;
+  color: #a3aed1; font-weight: 600; text-decoration: none; font-size: 15px;
+  cursor: pointer; transition: all 0.2s; border: none; background: transparent; width: 100%; text-align: left;
+}
+.nav-item:hover { background: #f4f7fe; color: #111c44; }
+.nav-item.active { background: var(--primary); color: #ffffff; box-shadow: 0 10px 20px rgba(67, 24, 255, 0.25); }
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.search-box {
+  position: relative;
+  width: 380px;
+}
+.search-box input {
+  width: 100%;
+  padding: 14px 16px 14px 44px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #ffffff;
+  font-size: 15px;
+  transition: all 0.2s; font-weight: 500;
+}
+.search-box input:focus { background: #fff; border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(67, 24, 255, 0.1); }
+.search-box::before {
+  content: '🔍';
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  opacity: 0.5;
+}
+
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+
+.app-content {
+  flex: 1;
+  padding: 40px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  overflow-y: auto;
+}
+
+/* ── UI COMPONENTS ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 12px 24px; border-radius: 16px;
+  font-weight: 700; font-size: 15px;
+  cursor: pointer; transition: all 0.2s;
+  border: none; background: #ffffff; color: #111c44;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+.btn:hover { background: #f4f7fe; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.btn-primary { background: var(--primary); color: #fff; box-shadow: 0 10px 20px rgba(67, 24, 255, 0.25); }
+.btn-primary:hover { background: var(--primary-hover); color: #fff; box-shadow: 0 12px 24px rgba(67, 24, 255, 0.35); }
+
+.pill {
+  padding: 8px 16px; border-radius: 999px;
+  font-size: 13px; font-weight: 700;
+  background: var(--surface); border: none; color: #111c44; box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+}
+
+/* ── TABLE VIEW ── */
+.page-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 32px; padding-bottom: 24px;
+}
+.page-header h2 { margin: 0; font-size: 32px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+.page-header p { margin: 8px 0 0; font-size: 15px; color: var(--muted); font-weight: 500; }
+.mini-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.mini-pill { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 8px; background: #f4f7fe; color: #a3aed1; }
+.status-pill.has-lyrics { background: var(--success-bg); color: var(--success); }
+.status-pill.no-lyrics { background: var(--warning-bg); color: var(--warning); }
+.mobile-key-pill { background: rgba(67, 24, 255, 0.1); color: var(--primary); }
+.song-title strong { font-size: 16px; font-weight: 700; color: var(--text); cursor: pointer; transition: 0.2s;}
+.song-title strong:hover { color: var(--primary); }
+.song-meta { font-size: 13px; color: var(--muted); margin-top: 6px; font-weight: 500; }
+.song-title { padding: 4px 0; }
+.tabs { display: flex; gap: 32px; }
+.tab {
+  padding: 0 4px 12px; border: none; background: transparent;
+  color: var(--muted); font-weight: 600; font-size: 15px;
+  border-bottom: 3px solid transparent; cursor: pointer; margin-bottom: -17px; transition: 0.2s;
+}
+.tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+.toolbar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 24px;
+}
+.toolbar-left { display: flex; gap: 16px; }
+
+.table-card {
+  background: var(--surface); border: none;
+  border-radius: var(--radius-md); box-shadow: var(--shadow);
+  overflow: hidden; padding: 20px 0;
+}
+table { width: 100%; border-collapse: collapse; }
+th { background: #ffffff; color: #a3aed1; font-weight: 700; font-size: 14px; text-transform: none; text-align: left; padding: 20px 24px; border-bottom: 1px solid #f4f7fe; white-space: nowrap;}
+td { padding: 20px 24px; border-bottom: 1px solid #f4f7fe; font-size: 15px; vertical-align: middle; font-weight: 600; color: #111c44;}
+tbody tr:hover { background: #fafbfc; }
+tbody tr:last-child td { border-bottom: none; }
+
+.song-title-cell strong { color: var(--text); font-weight: 700; display: block; margin-bottom: 6px;}
+.song-title-cell span { color: var(--muted); font-size: 13px; }
+
+/* ── EDITOR MODAL ── */
+.editor-modal {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(11, 20, 55, 0.5); backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex; justify-content: flex-end;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.editor-modal.is-active { opacity: 1; pointer-events: auto; }
+
+.editor-drawer {
+  width: 800px; max-width: 100%;
+  background: var(--surface);
+  height: 100%;
+  box-shadow: -20px 0 50px rgba(11, 20, 55, 0.1);
+  display: flex; flex-direction: column;
+  transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.editor-modal.is-active .editor-drawer { transform: translateX(0); }
+
+.editor-header {
+  padding: 32px 40px; border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.editor-header h3 { font-size: 24px; font-weight: 800; color: #111c44; margin: 0; }
+.editor-body {
+  padding: 40px; flex: 1; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 32px;
+}
+.editor-footer {
+  padding: 32px 40px; border-top: 1px solid var(--line); background: #ffffff;
+  display: flex; justify-content: flex-end; gap: 16px;
+}
+
+/* Forms inside editor */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.form-field { display: flex; flex-direction: column; gap: 10px; }
+.form-field label { font-size: 14px; font-weight: 700; color: var(--text); }
+.form-field input, .form-field textarea {
+  padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  font-family: inherit; font-size: 15px; font-weight: 500;
+}
+.form-field textarea { min-height: 140px; resize: vertical; font-family: monospace; }
+.form-field input:focus, .form-field textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(67, 24, 255, 0.1); }
+
+/* Dashboard Loader Override */
+#adminPageLoader { position:fixed; inset:0; z-index:2000; background:var(--bg); display:flex; align-items:center; justify-content:center; }
+#adminPageLoader.hide { display: none; }
+#adminPageLoaderCard { background:#fff; padding:40px; border-radius:20px; border:none; text-align:center; box-shadow: var(--shadow);}
+#adminPageLoaderTitle { font-size: 24px; font-weight: 800; color: #111c44; }
+
+.lang-switcher { display: flex; gap: 8px; padding: 4px; background: #f4f7fe; border-radius: 12px; border: none; }
+.lang-btn { text-decoration: none; color: #a3aed1; font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 8px; transition: 0.2s; }
+.lang-btn:hover { color: #111c44; }
+.lang-btn.active { background: #111c44; color: #ffffff; box-shadow: var(--shadow-sm); }
+
+/* --- NEW STRUCTURAL CSS FIXES --- */
+.app-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 40px;
+  background: var(--bg);
+}
+.app-content {
+  padding: 0 40px 40px 40px;
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.search-box input {
+  padding: 12px 20px;
+  padding-left: 44px;
+  border-radius: 30px;
+  border: none;
+  background: #ffffff;
+  width: 280px;
+  font-family: inherit;
+  font-size: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  outline: none;
+}
+.search-box {
+  position: relative;
+}
+.search-box::before {
+  content: '🔍';
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 14px;
+}
+.tabs-row {
+  display: flex;
+  gap: 32px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 32px;
+}
+.tab {
+  padding: 0 4px 16px;
+  color: var(--muted);
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+}
+.tab.active {
+  color: var(--primary);
+}
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 3px 3px 0 0;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  color: var(--muted);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 12px;
+  margin: 4px 16px;
+  transition: 0.2s;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  cursor: pointer;
+  text-align: left;
+}
+.nav-item:hover {
+  background: rgba(67, 24, 255, 0.05);
+}
+.nav-item.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(67, 24, 255, 0.3);
+}
+.section-switcher .section-tab {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  color: var(--muted);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 12px;
+  margin: 4px 16px;
+  transition: 0.2s;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  cursor: pointer;
+  text-align: left;
+  width: calc(100% - 32px);
+}
+.section-switcher .section-tab.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(67, 24, 255, 0.3);
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 40px;
+}
+.stat {
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  background: #ffffff;
+  border: none;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+/* Override any legacy stats colors from nth-child */
+.stat:nth-child(n) { background: #ffffff !important; }
+
+
+/* --- ADDITIONAL STRUCTURAL CSS FIXES --- */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  padding: 0;
+  border: none;
+}
+.toolbar-left {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.lang-switcher {
+  display: flex;
+  gap: 8px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 20px;
+}
+.lang-btn {
+  padding: 6px 16px;
+  border-radius: 16px;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: none;
+}
+.lang-btn.active {
+  background: var(--text);
+  color: #fff;
+}
+.section-focus {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  box-shadow: var(--shadow-sm);
+}
+.section-focus-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.section-focus-copy h2 { margin: 0; font-size: 24px; color: var(--text); }
+.section-focus-copy p { margin: 0; color: var(--muted); }
+.section-focus-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-end;
+}
+.chips {
+  display: flex;
+  gap: 8px;
+}
+.chip {
+  background: #f1f5f9;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.table-card {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th {
+  text-align: left;
+  padding: 16px 24px;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 13px;
+  border-bottom: 1px solid var(--line);
+}
+td {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  font-weight: 600;
+}
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+
+/* Fix hidden attribute override issue */
+[hidden] { display: none !important; }
+
+
+/* ─── Section tabs styled as nav-items ─────────────────── */
+button.section-tab.nav-item {
+  width: calc(100% - 32px);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  border-radius: 12px;
+  margin: 4px 16px;
+  transition: background 0.2s, color 0.2s;
+  text-align: left;
+}
+button.section-tab.nav-item:hover {
+  background: rgba(67, 24, 255, 0.05);
+  color: var(--text);
+}
+button.section-tab.nav-item.active {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(67, 24, 255, 0.3);
+}
+button.section-tab.nav-item.active svg {
+  stroke: #ffffff;
+}
+
+/* Sidebar must flex column with scroll */
+.app-sidebar {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.nav-menu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  padding-bottom: 8px;
+}
+
+</style>
+
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <?php
+    $activePage = "songs";
+    include __DIR__ . "/admin_sidebar.php";
+  ?>
+
+  <!-- MAIN -->
+  <main class="app-main">
+    <header class="app-topbar">
+      <div class="date-display" style="color: var(--text); font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <span><?= date('F j, Y') ?></span>
+      </div>
+      <div class="topbar-right">
+        <div class="search-box">
+          <input id="search" type="search" placeholder="<?= __('Search by name, artist...') ?>">
+        </div>
+        <div style="width: 44px; height: 44px; border-radius: 50%; background: #ffffff; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 2px 10px rgba(0,0,0,0.02); cursor: pointer;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span style="position: absolute; top: 12px; right: 12px; width: 8px; height: 8px; background: var(--danger); border-radius: 50%; border: 2px solid white;"></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; box-shadow: 0 4px 10px rgba(67, 24, 255, 0.2);">
+            <?= strtoupper(substr($adminDisplayName, 0, 1)) ?>
+          </div>
+          <span style="font-weight: 700; font-size: 15px; color: var(--text);"><?= htmlspecialchars($adminDisplayName, ENT_QUOTES) ?></span>
+        </div>
+      </div>
+    </header>
+
+    <div class="app-content">
+      
+      <!-- LIBRARY VIEW (Default) -->
+      <div id="libraryPane" class="workspace-pane is-active">
+        <div class="page-header" style="padding-bottom: 0; border: none; align-items: flex-start;">
+          <div>
+            <h2 style="font-size: 34px; margin-bottom: 8px;"><?= __('Songs') ?> 😍</h2>
+            <p id="songsCount" style="margin: 0;"><?= __('0 songs in database') ?></p>
+          </div>
+          <div style="display: flex; gap: 12px; background: #ffffff; padding: 6px; border-radius: 12px; box-shadow: var(--shadow-sm);">
+            <button class="btn" style="background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; box-shadow: 0 4px 10px rgba(67,24,255,0.2);">Daily</button>
+            <button class="btn" style="background: transparent; color: var(--muted); border: none; padding: 8px 16px; box-shadow: none;">Monthly</button>
+          </div>
+        </div>
+
+        <!-- Hidden tabs to keep JS happy -->
+        <div class="tabs" style="display:none;">
+          <button class="workspace-tab is-active" data-workspace-tab="libraryPane">L</button>
+          <button class="workspace-tab" data-workspace-tab="editorPane">E</button>
+          <button class="workspace-tab" data-workspace-tab="previewPane">P</button>
+        </div>
+
+        <!-- STAT CARDS -->
+        <div class="stats">
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Total Songs</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;">3,245</strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: #e5f3ff; color: #228fff; display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +20%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
+          </div>
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Pending Songs</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;">123</strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: #fff8e1; color: #ffce20; display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--danger); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>
+                -11%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
+          </div>
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Published Songs</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;">3,100</strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: #e6f9f3; color: #05cd99; display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +18%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 32px; border-bottom: 1px solid var(--line); margin-bottom: 32px; margin-top: -10px;">
+          <div class="tab active" style="padding: 0 4px 16px;">All Songs</div>
+          <div class="tab" style="padding: 0 4px 16px;">Pending Songs</div>
+          <div class="tab" style="padding: 0 4px 16px;">Published Songs</div>
+          <div class="tab" style="padding: 0 4px 16px;">Draft Songs</div>
+          <div class="tab" style="padding: 0 4px 16px;">Deleted Songs</div>
+        </div>
+
+        <div class="toolbar" style="margin-bottom: 24px;">
+          <div class="toolbar-left">
+            <button id="refreshList" class="btn"><?= __('Refresh') ?></button>
+            <button id="exportAllPdf" class="btn"><?= __('Export PDF') ?></button>
+            <button id="toggleFiltersBtn" class="btn" style="display:none;">Filters</button>
+            <div class="lang-switcher">
+              <a href="?lang=hy" class="lang-btn <?= $adminLang === 'hy' ? 'active' : '' ?>">AM</a>
+              <a href="?lang=ru" class="lang-btn <?= $adminLang === 'ru' ? 'active' : '' ?>">RU</a>
+              <a href="?lang=en" class="lang-btn <?= $adminLang === 'en' ? 'active' : '' ?>">EN</a>
+            </div>
+          </div>
+          <button id="newSongBtn" class="btn btn-primary" style="padding: 14px 28px;">+ <?= __('Add Song') ?></button>
+        </div>
+        
+        <!-- Filters (Hidden by default in new design, but kept for JS compatibility) -->
+        <div id="filtersPanel" class="hidden">
+           <select id="sortBy"><option value="newest">Նորից հին</option></select>
+           <select id="lyricsFilter"><option value="all">Բոլորը</option></select>
+           <input id="keyFilter" type="text">
+           <input id="tagFilter" type="text">
+           <button id="clearFilters">Մաքրել</button>
+           <div id="activeFilters"></div>
+        </div>
+
+        <div class="table-card">
+          <table>
+            <thead>
+              <tr>
+                <th style="padding-left: 32px;"><?= __('TITLE') ?></th>
+                <th><?= __('ARTIST') ?></th>
+                <th><?= __('KEY') ?></th>
+                <th><?= __('TEMPO (BPM)') ?></th>
+                <th><?= __('STATUS') ?></th>
+                <th style="padding-right: 32px;"><?= __('ACTIONS') ?></th>
+              </tr>
+            </thead>
+            <tbody id="songsTable"></tbody>
+          </table>
+          <div style="padding:24px; text-align:center; border-top: 1px solid var(--line);">
+             <button id="loadMoreBtn" class="btn hidden"><?= __('Load More') ?></button>
+          </div>
+        </div>
+        
+        <div style="display:none;">
+          <span id="tableInfo"></span>
+          <span id="tableMetaInfo"></span>
         </div>
       </div>
 
-      <div class="topbar-actions">
-        <span class="pill info">Երգերի կառավարում</span>
-        <span class="pill"><?= htmlspecialchars($adminDisplayName, ENT_QUOTES) ?></span>
-        <?php if ($adminEmail !== ''): ?>
-          <span class="pill"><?= htmlspecialchars($adminEmail, ENT_QUOTES) ?></span>
-        <?php endif; ?>
-        <a class="btn btn-secondary" href="admin_updates.php">
-          <span class="label-desktop">Թարմացումներ և տեղադրում</span>
-          <span class="label-mobile">Թարմացումներ</span>
-        </a>
-        <a class="btn btn-danger" href="admin_logout.php">
-          <span class="label-desktop">Դուրս գալ admin-ից</span>
-          <span class="label-mobile">Դուրս գալ</span>
-        </a>
+    </div>
+  </main>
+  
+  <!-- EDITOR OVERLAY (Modal Drawer) -->
+  <div id="editorPane" class="editor-modal workspace-pane">
+    <div class="editor-drawer">
+      <div class="editor-header">
+        <h3 style="margin:0;"><?= __('Ավելացնել / Խմբագրել երգ') ?></h3>
+        <div style="display: flex; gap: 8px;">
+          <button id="clearForm" class="btn compact-btn" title="Մաքրել">🔄</button>
+          <button id="downloadTxt" class="btn compact-btn">TXT</button>
+          <button id="exportPdf" class="btn compact-btn">PDF</button>
+          <button id="cancelEdit" class="btn compact-btn" style="background:#fee2e2; color:#ef4444; border:none;"><?= __('Չեղարկել') ?></button>
+        </div>
+      </div>
+      <div class="editor-body">
+        
+        <div class="form-grid">
+          <div class="form-field">
+            <label><?= __('Անվանում') ?></label>
+            <input id="title" type="text" placeholder="Օր. Մեր սուրբ Աստված">
+          </div>
+          <div class="form-field">
+            <label><?= __('Անվանում') ?> (RU)</label>
+            <input id="title_ru" type="text">
+          </div>
+          <div class="form-field">
+            <label><?= __('Անվանում') ?> (LAT)</label>
+            <input id="title_lat" type="text">
+          </div>
+          <div class="form-field">
+            <label><?= __('Անվանում') ?> (EN)</label>
+            <input id="title_en" type="text">
+          </div>
+        </div>
+        
+        <div class="form-grid">
+          <div class="form-field">
+            <label><?= __('Կատարող') ?></label>
+            <input id="artist" type="text">
+          </div>
+          <div class="form-field">
+            <label><?= __('Տոնայնություն') ?></label>
+            <input id="key" type="text">
+          </div>
+          <div class="form-field">
+            <label><?= __('BPM') ?></label>
+            <input id="bpm" type="number">
+          </div>
+          <div class="form-field">
+            <label><?= __('Տեգեր') ?></label>
+            <input id="tags" type="text">
+          </div>
+        </div>
+        
+        <div class="form-field">
+          <label><?= __('Ակորդներ') ?></label>
+          <textarea id="chords"></textarea>
+        </div>
+        <div class="form-field">
+          <label><?= __('Բառեր') ?></label>
+          <textarea id="lyrics"></textarea>
+        </div>
+        
+        <div class="preview-section" style="margin-top: 24px; padding: 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+             <h4 style="margin:0; color: var(--text);"><?= __('Նախադիտում և Տրանսպոզիցիա') ?></h4>
+             <label style="font-size:12px; display:flex; align-items:center; gap:4px; color: var(--text);">
+               <input id="useFlats" type="checkbox"> <?= __('Օգտագործել բեմոլներ (b)') ?>
+             </label>
+           </div>
+           <div id="keysGrid" style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:16px;"></div>
+           <div class="preview-meta">
+             <p id="previewMeta" style="margin: 0 0 12px; font-size: 12px; color: var(--muted);"></p>
+             <div class="mini-pills" style="margin-bottom:12px;">
+               <span class="mini-pill" id="selectedKeyPill"></span>
+               <span class="mini-pill" id="transposeInfo"></span>
+             </div>
+           </div>
+           <pre id="preview" style="background:#fff; padding:16px; border-radius:8px; border:1px solid #e2e8f0; font-family:monospace; white-space:pre-wrap; overflow-x:auto; min-height:100px; color: var(--text);"></pre>
+        </div>
+        <span id="previewTitle" style="display:none;"></span>
+
+
+      </div>
+      <div class="editor-footer">
+        <button id="previewTrigger" class="btn" onclick="document.getElementById('previewPane').classList.add('is-active')"><?= __('Preview') ?></button>
+        <button id="saveSong" class="btn btn-primary"><?= __('Save Song') ?></button>
       </div>
     </div>
-
-    <section class="dashboard">
-      <aside class="sidebar">
-        <section class="panel">
-          <div class="panel-head">
-            <div>
-              <h3>Աշխատանքային ամփոփում</h3>
-              <p>Ընդհանուր վիճակ, տեսանելի արդյունքներ և ընթացիկ խմբագրում</p>
-            </div>
-          </div>
-          <div class="panel-body">
-            <div class="summary-grid">
-              <div class="stat-card">
-                <strong id="statTotalSongs">0</strong>
-                <span>Ընդհանուր երգեր</span>
-              </div>
-              <div class="stat-card">
-                <strong id="statLyricsSongs">0</strong>
-                <span>Բառերով երգեր</span>
-              </div>
-              <div class="stat-card">
-                <strong id="statVisibleSongs">0</strong>
-                <span>Տեսանելի արդյունքներ</span>
-              </div>
-              <div class="stat-card">
-                <strong id="statCurrentMode">Նոր երգ</strong>
-                <span>Ընթացիկ ռեժիմ</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head">
-            <div>
-              <h3>Արագ գործողություններ</h3>
-              <p>Ամենակարևոր քայլերը մեկ տեղում, առանց ավելորդ կրկնության</p>
-            </div>
-          </div>
-          <div class="panel-body">
-            <div class="sidebar-actions">
-              <button class="btn btn-success" id="newSongBtn" type="button">Նոր երգ սկսել</button>
-              <button class="btn btn-secondary" id="sidebarSearchBtn" type="button">Բացել որոնումը</button>
-              <button class="btn btn-secondary" id="sidebarRefreshBtn" type="button">Թարմացնել ցանկը</button>
-              <button class="btn btn-secondary" id="sidebarClearBtn" type="button">Մաքրել ձևը</button>
-            </div>
-            <div class="sidebar-note">
-              Համակարգչում գրադարանը ձախում է, իսկ աշխատանքային տարածքը` աջում։ Հեռախոսով նույն հոսքը բացվում է շարքով, առանց խառնաշփոթի։
-            </div>
-          </div>
-        </section>
-      </aside>
-
-      <div class="content-shell">
-        <section class="panel workspace-panel" id="workspacePanel">
-          <div class="panel-head">
-            <div>
-              <h2>Աշխատանքային տարածք</h2>
-              <p>Աշխատի՛ր երեք պարզ բաժիններով` երգերի ցանկ, խմբագրիչ և նախադիտում</p>
-            </div>
-            <div class="status-row">
-              <button class="btn btn-secondary compact-btn install-admin-btn" id="installAdminAppBtn" type="button">
-                <span class="label-desktop">Ներբեռնել որպես ծրագիր</span>
-                <span class="label-mobile">Ներբեռնել</span>
-              </button>
-              <span class="pill warning" id="editingBadge">Խմբագրվում է․ ոչինչ</span>
-            </div>
-          </div>
-
-          <div class="panel-body">
-            <div class="workspace-tabs" aria-label="Աշխատանքային ներդիրներ">
-              <button class="workspace-tab is-active" type="button" data-workspace-tab="libraryPane">Երգերի ցանկ</button>
-              <button class="workspace-tab" type="button" data-workspace-tab="editorPane">Խմբագրիչ</button>
-              <button class="workspace-tab" type="button" data-workspace-tab="previewPane">Նախադիտում</button>
-            </div>
-
-            <section class="workspace-pane is-active library-panel" id="libraryPane">
-              <div class="card-head">
-                <div>
-                  <strong>Երգերի գրադարան</strong><br>
-                  <span>Փնտրիր, ֆիլտրիր և ընտրիր երգը` անմիջապես խմբագրելու համար</span>
-                </div>
-                <div class="status-row">
-                  <span class="pill songs-count-pill" id="songsCount">0 երգ</span>
-                </div>
-              </div>
-
-              <div class="songs-toolbar">
-                <div class="songs-toolbar-left">
-                  <button id="toggleFiltersBtn" class="btn btn-secondary compact-btn" type="button" aria-expanded="false" aria-controls="filtersPanel">Ֆիլտրեր</button>
-                  <button id="refreshList" class="btn btn-secondary compact-btn" type="button">Թարմացնել</button>
-                </div>
-                <div class="songs-toolbar-right">
-                  <span class="pill info" id="tableMetaPill">Սկզբում 10 երգ</span>
-                </div>
-              </div>
-
-              <div class="search-wrap">
-                <input id="search" type="search" placeholder="Որոնել անունով, կատարողով, տեգերով, բառերով կամ տոնայնությամբ…">
-              </div>
-
-              <div id="filtersPanel" class="filters-panel" hidden>
-                <div class="filters-grid">
-                  <div class="filter-field">
-                    <label for="sortBy">Դասավորել ըստ</label>
-                    <select id="sortBy">
-                      <option value="newest">Նորից հին</option>
-                      <option value="title_asc">Անուն A-Z</option>
-                      <option value="title_desc">Անուն Z-A</option>
-                      <option value="artist_asc">Կատարող A-Z</option>
-                      <option value="artist_desc">Կատարող Z-A</option>
-                      <option value="key_asc">Տոնայնություն A-Z</option>
-                      <option value="key_desc">Տոնայնություն Z-A</option>
-                    </select>
-                  </div>
-
-                  <div class="filter-field">
-                    <label for="lyricsFilter">Բառերի ֆիլտր</label>
-                    <select id="lyricsFilter">
-                      <option value="all">Բոլորը</option>
-                      <option value="with">Միայն բառերով</option>
-                      <option value="without">Միայն առանց բառերի</option>
-                    </select>
-                  </div>
-
-                  <div class="filter-field">
-                    <label for="keyFilter">Տոնայնություն</label>
-                    <input id="keyFilter" type="text" placeholder="օր. C, Dm, Eb">
-                  </div>
-
-                  <div class="filter-field">
-                    <label for="tagFilter">Տեգ</label>
-                    <input id="tagFilter" type="text" placeholder="օր. easter">
-                  </div>
-
-                  <div class="filter-actions">
-                    <button id="clearFilters" class="btn btn-secondary" type="button">Մաքրել ֆիլտրերը</button>
-                  </div>
-                </div>
-                <div id="activeFilters" class="active-filters"></div>
-              </div>
-
-              <div class="table-shell">
-                <div class="table-scroll">
-                  <table aria-label="songs table">
-                    <thead>
-                      <tr>
-                        <th>Երգ</th>
-                        <th>Տոնայնություն</th>
-                        <th>Գործողություններ</th>
-                      </tr>
-                    </thead>
-                    <tbody id="songsTable"></tbody>
-                  </table>
-                </div>
-
-                <div class="load-more-wrap">
-                  <button id="loadMoreBtn" class="btn btn-secondary" type="button" hidden>Բեռնել մնացածը</button>
-                </div>
-                <div class="table-footer">
-                  <span id="tableInfo">Ցուցադրվում է 0 երգ</span>
-                  <span id="tableMetaInfo">Սկզբում ցուցադրվում է 10 երգ</span>
-                </div>
-              </div>
-            </section>
-
-            <section class="workspace-pane" id="editorPane" hidden>
-              <div class="editor-layout">
-                <div class="editor-stack">
-                  <div class="editor-card">
-                    <div class="card-head">
-                      <div>
-                        <strong>Հիմնական տվյալներ</strong><br>
-                        <span>Վերնագիր, կատարող, տոնայնություն և տեգեր</span>
-                      </div>
-                    </div>
-
-                    <div class="editor-grid">
-                      <div class="field">
-                        <label for="title">Երգի անունը հայերեն</label>
-                        <input id="title" type="text" placeholder="Օր. Մեր սուրբ Աստված">
-                      </div>
-
-                      <div class="field">
-                        <label for="title_ru">Երգի անունը ռուսերեն</label>
-                        <input id="title_ru" type="text" placeholder="Օր. Наш святой Бог">
-                      </div>
-
-                      <div class="field">
-                        <label for="title_lat">Երգի անունը լատինատառ հայերեն</label>
-                        <input id="title_lat" type="text" placeholder="Օր. Mer Surb Astvats">
-                      </div>
-
-                      <div class="field">
-                        <label for="title_en">Երգի անունը անգլերեն</label>
-                        <input id="title_en" type="text" placeholder="Օր. Our Holy God">
-                      </div>
-
-                      <div class="field">
-                        <label for="artist">Կատարողը</label>
-                        <input id="artist" type="text" placeholder="Օր. Խմբի անուն">
-                      </div>
-
-                      <div class="field">
-                        <label for="key">Սկզբնական տոնայնություն</label>
-                        <input id="key" type="text" placeholder="Օր. C, Eb, Am կամ Dm">
-                      </div>
-
-                      <div class="field">
-                        <label for="bpm">BPM տեմպ</label>
-                        <input id="bpm" type="number" min="20" max="400" step="1" inputmode="numeric" placeholder="Օր. 72 կամ 128">
-                      </div>
-
-                      <div class="field">
-                        <label for="tags">Տեգեր</label>
-                        <input id="tags" type="text" placeholder="օր. worship, easter, youth">
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="editor-card">
-                    <div class="card-head">
-                      <div>
-                        <strong>Բովանդակություն</strong><br>
-                        <span>Ակորդներ և բառեր</span>
-                      </div>
-                    </div>
-
-                    <div class="field-wide">
-                      <label for="chords">Ակորդներ</label>
-                      <textarea id="chords" placeholder="C | G/B | Am | F&#10;Քո տեքստն ու ակորդները այստեղ"></textarea>
-                      <div class="hint">Ակորդները կարող ես գրել նույն կառուցվածքով, ինչ հիմա ես օգտագործում։</div>
-                    </div>
-
-                    <div class="field-wide">
-                      <label for="lyrics">Բառեր</label>
-                      <textarea id="lyrics" placeholder="Երգի բառերը՝ առանց ակորդների"></textarea>
-                    </div>
-                  </div>
-
-                </div>
-
-                <div class="preview-stack">
-                  <div class="editor-card">
-                    <div class="card-head">
-                      <div>
-                        <strong>Տրանսպոզ</strong><br>
-                        <span>Ընտրիր նպատակային տոնայնությունը նախադիտման համար</span>
-                      </div>
-                    </div>
-
-                    <div class="toolbar-row">
-                      <div class="toolbar-title">
-                        <strong>Նպատակային տոնայնություն</strong>
-                        <span>Ընտրիր նոր տոնայնությունը</span>
-                      </div>
-
-                      <label class="toggle-wrap" title="Օգտագործել bemol-ներ (Db, Eb...)">
-                        <input id="useFlats" type="checkbox">
-                        <span>Օգտագործել bemol-ներ</span>
-                      </label>
-                    </div>
-
-                    <div id="keysGrid" class="key-buttons" role="tablist" aria-label="Տոնայնություններ"></div>
-                  </div>
-
-                  <div class="editor-card">
-                    <div class="card-head">
-                      <div>
-                        <strong>Գլխավոր գործողություններ</strong><br>
-                        <span>Պահպանում և մաքրում</span>
-                      </div>
-                    </div>
-
-                    <div class="form-actions">
-                      <button id="saveSong" class="btn btn-primary" type="button">Պահպանել</button>
-                      <button id="cancelEdit" class="btn btn-secondary" type="button" hidden>Չեղարկել խմբագրումը</button>
-                      <button id="clearForm" class="btn btn-secondary" type="button">Մաքրել</button>
-                    </div>
-                  </div>
-
-                  <div class="editor-card">
-                    <div class="card-head">
-                      <div>
-                        <strong>Արտահանում</strong><br>
-                        <span>TXT և PDF տարբերակներ</span>
-                      </div>
-                    </div>
-
-                    <div class="export-actions">
-                      <button id="downloadTxt" class="btn btn-secondary" type="button">TXT</button>
-                      <button id="exportPdf" class="btn btn-secondary" type="button">PDF</button>
-                      <button id="exportAllPdf" class="btn btn-secondary" type="button">Բոլորը PDF</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div id="notice" class="notice"></div>
-            </section>
-
-            <section class="workspace-pane" id="previewPane" hidden>
-              <div class="card-head">
-                <div>
-                  <strong>Նախադիտում</strong><br>
-                  <span>Ակորդները անմիջապես թարմացվում են ընտրված տոնայնությամբ</span>
-                </div>
-                <div class="status-row">
-                  <span class="pill" id="transposeInfo">Տրանսպոզ: 0</span>
-                  <span class="pill" id="selectedKeyPill">Թիրախային տոնայնություն: —</span>
-                </div>
-              </div>
-
-              <div class="preview-card">
-                <div class="preview-top">
-                  <div>
-                    <strong id="previewTitle">Չկա վերնագիր</strong><br>
-                    <span id="previewMeta">Ակորդների նախադիտում</span>
-                  </div>
-                </div>
-                <div id="preview" class="preview"><span class="empty-preview">Այստեղ կերևա ակորդների նախադիտումը</span></div>
-              </div>
-            </section>
-          </div>
-        </section>
+  </div>
+  
+  <!-- PREVIEW OVERLAY -->
+  <div id="previewPane" class="editor-modal workspace-pane">
+    <div class="editor-drawer" style="width:600px;">
+      <div class="editor-header">
+        <h3 id="preview<?= __('Title') ?>" style="margin:0;"><?= __('Preview') ?></h3>
+        <button class="btn" onclick="document.getElementById('previewPane').classList.remove('is-active')">Close <?= __('Preview') ?></button>
       </div>
-    </section>
-
-    <footer><b>Wolarm Youth 2026 | PM Studio 2026</b></footer>
+      <div class="editor-body">
+         <div id="preview" style="white-space:pre-wrap; font-family:monospace;"></div>
+         
+         <div style="display:none;">
+           <span id="previewMeta"></span>
+           <span id="transposeInfo"></span>
+           <span id="selected<?= __('Key') ?>Pill"></span>
+         </div>
+      </div>
+    </div>
   </div>
 
+  <script>window.I18N = <?= json_encode($js_i18n_keys) ?>;</script>
+  <!-- LEGACY HIDDEN ELEMENTS FOR JS COMPATIBILITY -->
+  <div style="display:none;" id="legacy-hidden-elements">
+    <span id="editingBadge"></span>
+    <span id="notice"></span>
+    <button id="sidebarSearchBtn"></button>
+    <button id="sidebarRefreshBtn"></button>
+    <button id="sidebarClearBtn"></button>
+    <span id="tableMetaPill"></span>
+    <span id="statTotalSongs"></span>
+    <span id="stat<?= __('Lyrics') ?>Songs"></span>
+    <span id="statVisibleSongs"></span>
+    <span id="statCurrentMode"></span>
+    <div id="workspacePanel"></div>
+    <button id="installAdminAppBtn"></button>
+  </div>
+
+</div>
 <script>
 const SHARPS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const FLATS  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
@@ -2479,7 +1809,7 @@ function updateStats(totalCount, visibleCount) {
 function setEditMode(song = null) {
   currentEditId = song ? Number(song.id) : null;
   const editing = currentEditId !== null;
-  saveBtn.textContent = editing ? 'Թարմացնել' : 'Պահպանել';
+  saveBtn.textContent = editing ? (window.I18N?.Update || 'Թարմացնել') : (window.I18N?.Save || 'Պահպանել');
   cancelEditBtn.hidden = !editing;
   editingBadge.textContent = editing ? `Խմբագրվում է․ ${displayEditorSongTitle(song.title || '') || 'Անանուն'}` : 'Խմբագրվում է․ ոչինչ';
   statCurrentMode.textContent = editing ? 'Խմբագրում' : 'Նոր երգ';
@@ -2706,7 +2036,12 @@ function updateLoadMoreState(totalCount, shownCount) {
 
 function renderTable(songs = [], totalCount = songs.length) {
   tableBody.innerHTML = '';
-  songsCount.textContent = `${totalCount} երգ`;
+  const withLyrics = ALL_SONGS.filter(song => (song.lyrics || '').trim()).length;
+  songsCount.innerHTML = `
+    <span style="font-weight:600; color:var(--text);">${ALL_SONGS.length}</span> ${window.I18N?.TotalSongs || 'ընդհանուր'} 
+    <span style="margin:0 8px; color:var(--line);">|</span> 
+    <span style="font-weight:600; color:var(--success);">${withLyrics}</span> ${window.I18N?.WithLyricsCount || 'բառերով'}
+  `;
   tableInfo.textContent = `Ցուցադրվում է ${songs.length} երգ`;
   updateLoadMoreState(totalCount, songs.length);
   updateStats(ALL_SONGS.length, totalCount);
@@ -2730,26 +2065,32 @@ function renderTable(songs = [], totalCount = songs.length) {
     tr.innerHTML = `
       <td>
         <div class="song-title" data-open-song="${s.id}">
-          <strong>${escapeHtml(displayEditorSongTitle(s.title || '') || 'Անանուն')}</strong>
-          <div class="song-meta">${escapeHtml(s.artist || 'Կատարող նշված չէ')}</div>
-          <div class="mini-pills">
-            <span class="mini-pill mobile-key-pill">${escapeHtml(s.song_key || '—')}</span>
-            ${s.bpm ? `<span class="mini-pill">BPM ${escapeHtml(String(s.bpm))}</span>` : ''}
-            <span class="mini-pill status-pill ${hasLyrics ? 'has-lyrics' : 'no-lyrics'}">${hasLyrics ? 'Բառերը առկա են' : 'Բառերը չկան'}</span>
-            ${s.tags ? s.tags.split(',').filter(Boolean).slice(0, 3).map(tag => `<span class="mini-pill">${escapeHtml(tag.trim())}</span>`).join('') : '<span class="mini-pill">առանց տեգերի</span>'}
-          </div>
+          <strong>${escapeHtml(displayEditorSongTitle(s.title || '') || (window.I18N?.Untitled || 'Անանուն'))}</strong>
+          ${s.tags ? `<div class="mini-pills" style="margin-top:4px;">${s.tags.split(',').filter(Boolean).slice(0, 3).map(tag => `<span class="mini-pill">${escapeHtml(tag.trim())}</span>`).join('')}</div>` : ''}
         </div>
       </td>
       <td>
-        <div class="mini-pills">
-          <span class="mini-pill">${escapeHtml(s.song_key || '—')}</span>
-          ${s.bpm ? `<span class="mini-pill">BPM ${escapeHtml(String(s.bpm))}</span>` : ''}
+        <div class="song-meta" style="margin-top:0;">${escapeHtml(s.artist || (window.I18N?.UnknownArtist || 'Կատարող նշված չէ'))}</div>
+      </td>
+      <td>
+        <div class="mini-pills" style="margin-top:0;">
+          <span class="mini-pill mobile-key-pill">${escapeHtml(s.song_key || '—')}</span>
+        </div>
+      </td>
+      <td>
+        <div class="mini-pills" style="margin-top:0;">
+          ${s.bpm ? `<span class="mini-pill">BPM ${escapeHtml(String(s.bpm))}</span>` : '<span class="song-meta" style="margin:0;">—</span>'}
+        </div>
+      </td>
+      <td>
+        <div class="mini-pills" style="margin-top:0;">
+          <span class="mini-pill status-pill ${hasLyrics ? 'has-lyrics' : 'no-lyrics'}">${hasLyrics ? (window.I18N?.Published || 'Բառերով') : (window.I18N?.Draft || 'Առանց բառերի')}</span>
         </div>
       </td>
       <td>
         <div class="row-actions">
-          <button class="btn btn-primary" type="button" data-action="edit" data-id="${s.id}">Խմբագրել</button>
-          <button class="btn btn-danger" type="button" data-action="delete" data-id="${s.id}">Ջնջել</button>
+          <button class="btn" type="button" data-action="edit" data-id="${s.id}">${window.I18N?.Edit || 'Խմբագրել'}</button>
+          <button class="btn" style="color:var(--danger); border-color:#fca5a5;" type="button" data-action="delete" data-id="${s.id}">${window.I18N?.Delete || 'Ջնջել'}</button>
         </div>
       </td>
     `;
@@ -2806,7 +2147,7 @@ async function saveCurrentSong() {
       const detail = result?.details?.message || result?.error || raw || 'Չհաջողվեց թարմացնել երգը';
       throw new Error(detail);
     }
-    showNotice('Փոփոխությունները պահպանված են ✅', 'success');
+    showNotice(window.I18N?.Saved || 'Երգը պահպանված է ✅', 'success');
   } else {
     const res = await fetch('api.php', {
       method: 'POST',
@@ -2818,16 +2159,17 @@ async function saveCurrentSong() {
       const detail = result?.details?.message || result?.error || raw || 'Չհաջողվեց պահպանել երգը';
       throw new Error(detail);
     }
-    showNotice('Երգը պահպանված է ✅', 'success');
+    showNotice(window.I18N?.Saved || 'Երգը պահպանված է ✅', 'success');
   }
 
   clearForm();
   await fetchSongs();
+  activateWorkspaceTab('libraryPane');
   markCurrentSnapshotAsSaved();
 }
 
 async function deleteSong(id) {
-  if (!confirm('Իսկապե՞ս ջնջել այս երգը։')) return;
+  if (!confirm(window.I18N?.ConfirmDelete || 'Իսկապե՞ս ջնջել այս երգը։')) return;
   const res = await fetch('api.php?id=' + encodeURIComponent(id), { method: 'DELETE' });
   if (!res.ok) throw new Error('Չհաջողվեց ջնջել երգը');
   showNotice('Երգը ջնջված է', 'success');
@@ -2976,6 +2318,7 @@ saveBtn.addEventListener('click', async () => {
 cancelEditBtn.addEventListener('click', () => {
   clearForm();
   showNotice('Խմբագրումը չեղարկված է', 'info');
+  activateWorkspaceTab('libraryPane');
 });
 
 clearBtn.addEventListener('click', clearForm);
@@ -3000,7 +2343,7 @@ newSongBtn.addEventListener('click', () => {
 refreshListBtn.addEventListener('click', async () => {
   try {
     await fetchSongs();
-    showNotice('Ցանկը թարմացվեց', 'info');
+    showNotice(window.I18N?.Loading || 'Բեռնվում է...', 'info');
   } catch (err) {
     showNotice(err.message || 'Չհաջողվեց թարմացնել ցանկը', 'error');
   }

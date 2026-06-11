@@ -88,14 +88,14 @@ function send_reset_email(string $toEmail, string $toName, string $resetLink): a
     $htmlBody = '
 <!doctype html>
 <html>
-  <body style="margin:0;background:#0f172a;padding:24px;font-family:Inter,Arial,sans-serif;">
-    <div style="max-width:560px;margin:0 auto;background:#111827;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;">
-      <div style="padding:18px 20px;background:linear-gradient(135deg,#3367ff,#2247d6);color:#fff;">
+  <body style="margin:0;background:#05050A;padding:24px;font-family:Inter,Arial,sans-serif;">
+    <div style="max-width:560px;margin:0 auto;background:#12121A;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;">
+      <div style="padding:18px 20px;background:linear-gradient(135deg,#9D72FF,#00F0FF);color:#fff;">
         <div style="font-weight:800;letter-spacing:.5px;font-size:16px;">WORSHIP PLATFORM</div>
         <div style="opacity:.9;font-size:13px;margin-top:6px;">Գաղտնաբառի վերականգնում</div>
       </div>
 
-      <div style="padding:20px;color:#e5e7eb;line-height:1.55;">
+      <div style="padding:20px;color:#ffffff;line-height:1.55;">
         <p style="margin:0 0 12px;">Ողջույն, <b>'.htmlspecialchars($displayName, ENT_QUOTES, "UTF-8").'</b></p>
         <p style="margin:0 0 14px;">
           Գաղտնաբառը փոխելու համար սեղմեք ներքևի կոճակը։ Հղումը գործում է <b>30 րոպե</b>։
@@ -103,25 +103,25 @@ function send_reset_email(string $toEmail, string $toName, string $resetLink): a
 
         <p style="margin:18px 0;">
           <a href="'.$safeLink.'"
-             style="display:inline-block;background:linear-gradient(135deg,#3367ff,#2247d6);color:#fff;
+             style="display:inline-block;background:linear-gradient(135deg,#9D72FF,#00F0FF);color:#05050A;
                     text-decoration:none;font-weight:800;padding:12px 16px;border-radius:12px;">
             Փոխել գաղտնաբառը
           </a>
         </p>
 
-        <p style="margin:0 0 10px;color:#9ca3af;font-size:13px;">
+        <p style="margin:0 0 10px;color:#A0A0B0;font-size:13px;">
           Եթե կոճակը չի աշխատում, բացեք այս հղումը՝
         </p>
         <p style="margin:0 0 14px;word-break:break-all;">
-          <a href="'.$safeLink.'" style="color:#93c5fd;">'.$safeLink.'</a>
+          <a href="'.$safeLink.'" style="color:#00F0FF;">'.$safeLink.'</a>
         </p>
 
-        <p style="margin:0;color:#9ca3af;font-size:13px;">
+        <p style="margin:0;color:#A0A0B0;font-size:13px;">
           Եթե դուք չեք պահանջել վերականգնում, պարզապես անտեսեք այս նամակը։
         </p>
       </div>
 
-      <div style="padding:14px 20px;background:rgba(255,255,255,.03);color:#9ca3af;font-size:12px;">
+      <div style="padding:14px 20px;background:rgba(255,255,255,.03);color:#A0A0B0;font-size:12px;">
         © '.date('Y').' Worship Platform
       </div>
     </div>
@@ -147,14 +147,14 @@ function send_verify_email(string $toEmail, string $toName, string $verifyLink):
     $htmlBody = '
 <!doctype html>
 <html>
-  <body style="margin:0;background:#0f172a;padding:24px;font-family:Inter,Arial,sans-serif;">
-    <div style="max-width:560px;margin:0 auto;background:#111827;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;">
-      <div style="padding:18px 20px;background:linear-gradient(135deg,#3367ff,#2247d6);color:#fff;">
+  <body style="margin:0;background:#05050A;padding:24px;font-family:Inter,Arial,sans-serif;">
+    <div style="max-width:560px;margin:0 auto;background:#12121A;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;">
+      <div style="padding:18px 20px;background:linear-gradient(135deg,#9D72FF,#00F0FF);color:#fff;">
         <div style="font-weight:800;letter-spacing:.5px;font-size:16px;">WORSHIP PLATFORM</div>
         <div style="opacity:.9;font-size:13px;margin-top:6px;">Email հաստատում</div>
       </div>
 
-      <div style="padding:20px;color:#e5e7eb;line-height:1.55;">
+      <div style="padding:20px;color:#ffffff;line-height:1.55;">
         <p style="margin:0 0 12px;">Ողջույն, <b>'.htmlspecialchars($displayName, ENT_QUOTES, "UTF-8").'</b></p>
         <p style="margin:0 0 14px;">
           Email-ը հաստատելու համար սեղմեք ներքևի կոճակը։ Հղումը գործում է <b>30 րոպե</b>։
@@ -162,25 +162,25 @@ function send_verify_email(string $toEmail, string $toName, string $verifyLink):
 
         <p style="margin:18px 0;">
           <a href="'.$safeLink.'"
-             style="display:inline-block;background:linear-gradient(135deg,#3367ff,#2247d6);color:#fff;
+             style="display:inline-block;background:linear-gradient(135deg,#9D72FF,#00F0FF);color:#05050A;
                     text-decoration:none;font-weight:800;padding:12px 16px;border-radius:12px;">
             Հաստատել Email-ը
           </a>
         </p>
 
-        <p style="margin:0 0 10px;color:#9ca3af;font-size:13px;">
+        <p style="margin:0 0 10px;color:#A0A0B0;font-size:13px;">
           Եթե կոճակը չի աշխատում, բացեք այս հղումը՝
         </p>
         <p style="margin:0 0 14px;word-break:break-all;">
-          <a href="'.$safeLink.'" style="color:#93c5fd;">'.$safeLink.'</a>
+          <a href="'.$safeLink.'" style="color:#00F0FF;">'.$safeLink.'</a>
         </p>
 
-        <p style="margin:0;color:#9ca3af;font-size:13px;">
+        <p style="margin:0;color:#A0A0B0;font-size:13px;">
           Եթե դուք չեք կատարել այս գործողությունը, պարզապես անտեսեք այս նամակը։
         </p>
       </div>
 
-      <div style="padding:14px 20px;background:rgba(255,255,255,.03);color:#9ca3af;font-size:12px;">
+      <div style="padding:14px 20px;background:rgba(255,255,255,.03);color:#A0A0B0;font-size:12px;">
         © '.date('Y').' Worship Platform
       </div>
     </div>
@@ -209,14 +209,14 @@ function send_registration_email(string $toEmail, string $toName, bool $showPass
     $htmlBody = '
 <!doctype html>
 <html>
-  <body style="margin:0;background:#0f172a;padding:24px;font-family:Inter,Arial,sans-serif;">
-    <div style="max-width:560px;margin:0 auto;background:#111827;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;">
-      <div style="padding:18px 20px;background:linear-gradient(135deg,#3367ff,#2247d6);color:#fff;">
+  <body style="margin:0;background:#05050A;padding:24px;font-family:Inter,Arial,sans-serif;">
+    <div style="max-width:560px;margin:0 auto;background:#12121A;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;">
+      <div style="padding:18px 20px;background:linear-gradient(135deg,#9D72FF,#00F0FF);color:#fff;">
         <div style="font-weight:800;letter-spacing:.5px;font-size:16px;">WORSHIP PLATFORM</div>
         <div style="opacity:.9;font-size:13px;margin-top:6px;">Հաջող գրանցում</div>
       </div>
 
-      <div style="padding:20px;color:#e5e7eb;line-height:1.55;">
+      <div style="padding:20px;color:#ffffff;line-height:1.55;">
         <p style="margin:0 0 12px;">Ողջույն, <b>'.htmlspecialchars($displayName, ENT_QUOTES, "UTF-8").'</b></p>
         <p style="margin:0 0 14px;">
           Դուք հաջողությամբ գրանցվել եք <b>Worship Platform</b> հարթակում։
@@ -229,12 +229,12 @@ function send_registration_email(string $toEmail, string $toName, bool $showPass
           Եթե գրանցվել եք <b>Google</b>-ով և հետո ուզենաք մուտք գործել նաև գաղտնաբառով, օգտվեք <b>«Մոռացել եմ գաղտնաբառը»</b> տարբերակից և սահմանեք նոր գաղտնաբառ։
         </p>
         ' : '').'
-        <p style="margin:0;color:#9ca3af;font-size:13px;">
+        <p style="margin:0;color:#A0A0B0;font-size:13px;">
           Եթե այս գրանցումը դուք չեք կատարել, խորհուրդ ենք տալիս անմիջապես փոխել գաղտնաբառը։
         </p>
       </div>
 
-      <div style="padding:14px 20px;background:rgba(255,255,255,.03);color:#9ca3af;font-size:12px;">
+      <div style="padding:14px 20px;background:rgba(255,255,255,.03);color:#A0A0B0;font-size:12px;">
         © '.date('Y').' Worship Platform
       </div>
     </div>
@@ -243,3 +243,46 @@ function send_registration_email(string $toEmail, string $toName, bool $showPass
 
     return _wp_mailer_send($toEmail, $displayName, $subject, $htmlBody, $textBody);
 }
+
+function send_team_invite_email(string $toEmail, string $toName, string $teamName, string $inviterName): array
+{
+    $displayName = trim($toName) !== '' ? $toName : 'ընկեր';
+    $subject = 'Worship Platform — Հրավեր Թիմ';
+    
+    $textBody = "Ողջույն, {$displayName}\n\n"
+    ."{$inviterName}-ը հրավիրել է ձեզ միանալու «{$teamName}» թիմին Worship Platform-ում:\n"
+    ."Մուտք գործեք համակարգ՝ թիմի երգացանկերն ու նյութերը տեսնելու համար։\n\n"
+    ."https://worship.pmstudio.am/login\n";
+
+    $htmlBody = '
+<!doctype html>
+<html>
+  <body style="margin:0;background:#05050A;padding:24px;font-family:Inter,Arial,sans-serif;">
+    <div style="max-width:560px;margin:0 auto;background:#12121A;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;">
+      <div style="padding:18px 20px;background:linear-gradient(135deg,#9D72FF,#00F0FF);color:#fff;">
+        <div style="font-weight:800;letter-spacing:.5px;font-size:16px;">WORSHIP PLATFORM</div>
+        <div style="opacity:.9;font-size:13px;margin-top:6px;">Նոր թիմի հրավեր</div>
+      </div>
+      <div style="padding:20px;color:#ffffff;line-height:1.55;">
+        <p style="margin:0 0 12px;">Ողջույն, <b>'.htmlspecialchars($displayName, ENT_QUOTES, "UTF-8").'</b></p>
+        <p style="margin:0 0 14px;">
+          <b>'.htmlspecialchars($inviterName, ENT_QUOTES, "UTF-8").'</b>-ը հրավիրել է ձեզ միանալու <b>«'.htmlspecialchars($teamName, ENT_QUOTES, "UTF-8").'»</b> թիմին։
+        </p>
+        <p style="margin:18px 0;">
+          <a href="https://worship.pmstudio.am/login"
+             style="display:inline-block;background:linear-gradient(135deg,#9D72FF,#00F0FF);color:#05050A;
+                    text-decoration:none;font-weight:800;padding:12px 16px;border-radius:12px;">
+            Մուտք գործել
+          </a>
+        </p>
+      </div>
+      <div style="padding:14px 20px;background:rgba(255,255,255,.03);color:#A0A0B0;font-size:12px;">
+        © '.date('Y').' Worship Platform
+      </div>
+    </div>
+  </body>
+</html>';
+
+    return _wp_mailer_send($toEmail, $displayName, $subject, $htmlBody, $textBody);
+}
+

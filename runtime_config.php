@@ -74,6 +74,20 @@ if (!function_exists('wp_runtime_db_config')) {
 if (!function_exists('wp_runtime_open_pdo')) {
     function wp_runtime_open_pdo(): PDO {
         $db = wp_runtime_db_config();
+        
+        // Ensure migrations run even if using PDO
+        $tmpConn = new mysqli($db['host'], $db['user'], $db['pass'], $db['name']);
+        if (!$tmpConn->connect_error) {
+            $tmpConn->set_charset($db['charset']);
+            if (function_exists('wp_runtime_ensure_pricing_tables_mysqli')) {
+                wp_runtime_ensure_pricing_tables_mysqli($tmpConn);
+            }
+            if (function_exists('wp_runtime_ensure_admin_tables_mysqli')) {
+                wp_runtime_ensure_admin_tables_mysqli($tmpConn);
+            }
+            $tmpConn->close();
+        }
+
         return new PDO(
             sprintf('mysql:host=%s;dbname=%s;charset=%s', $db['host'], $db['name'], $db['charset']),
             $db['user'],
@@ -88,9 +102,17 @@ if (!function_exists('wp_runtime_open_mysqli')) {
         $db = wp_runtime_db_config();
         $conn = new mysqli($db['host'], $db['user'], $db['pass'], $db['name']);
         if ($conn->connect_error) {
-            throw new RuntimeException('DB connection failed');
+            throw new RuntimeException('DB connection failed: ' . $conn->connect_error);
         }
         $conn->set_charset($db['charset']);
+        
+        if (function_exists('wp_runtime_ensure_pricing_tables_mysqli')) {
+            wp_runtime_ensure_pricing_tables_mysqli($conn);
+        }
+        if (function_exists('wp_runtime_ensure_admin_tables_mysqli')) {
+            wp_runtime_ensure_admin_tables_mysqli($conn);
+        }
+        
         return $conn;
     }
 }
@@ -171,6 +193,224 @@ if (!function_exists('wp_runtime_ensure_song_title_columns_mysqli')) {
                 }
             }
         }
+
+        $done = true;
+        return true;
+    }
+}
+
+if (!function_exists('wp_runtime_ensure_pricing_tables_mysqli')) {
+    function wp_runtime_ensure_pricing_tables_mysqli(mysqli $conn): bool {
+        static $done = false;
+        if ($done) {
+            return true;
+        }
+
+        // 1. Add plan_type to users
+        $check = $conn->query("SHOW COLUMNS FROM users LIKE 'plan_type'");
+        if ($check instanceof mysqli_result && $check->num_rows === 0) {
+            $conn->query("ALTER TABLE users ADD COLUMN plan_type ENUM('free', 'pro', 'church') NOT NULL DEFAULT 'free'");
+        }
+        if ($check instanceof mysqli_result) {
+            $check->free();
+        }
+
+        // Add email verification columns
+        $check = $conn->query("SHOW COLUMNS FROM users LIKE 'pending_email'");
+        if ($check instanceof mysqli_result && $check->num_rows === 0) {
+            $conn->query("ALTER TABLE users 
+                ADD COLUMN pending_email VARCHAR(190) NULL,
+                ADD COLUMN email_verified_at DATETIME NULL,
+                ADD COLUMN email_verify_token_hash VARCHAR(255) NULL,
+                ADD COLUMN email_verify_expires_at DATETIME NULL,
+                ADD COLUMN email_last_verification_sent_at DATETIME NULL");
+        }
+        if ($check instanceof mysqli_result) {
+            $check->free();
+        }
+
+        // 2. Create teams table
+        $conn->query("
+            CREATE TABLE IF NOT EXISTS teams (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                owner_user_id INT UNSIGNED NOT NULL,
+                name VARCHAR(150) NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY idx_owner (owner_user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        // 3. Create team_members table
+        $conn->query("
+            CREATE TABLE IF NOT EXISTS team_members (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                team_id INT UNSIGNED NOT NULL,
+                user_id INT UNSIGNED NOT NULL,
+                role ENUM('member', 'admin') NOT NULL DEFAULT 'member',
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                UNIQUE KEY uniq_team_user (team_id, user_id),
+                KEY idx_user (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        // 4. Create user_sessions table
+        $conn->query("
+            CREATE TABLE IF NOT EXISTS user_sessions (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                user_id INT UNSIGNED NOT NULL,
+                selector VARCHAR(255) NULL,
+                session_key VARCHAR(255) NULL,
+                remembered TINYINT(1) NOT NULL DEFAULT 0,
+                device_name VARCHAR(150) NULL,
+                browser VARCHAR(100) NULL,
+                platform VARCHAR(100) NULL,
+                ip_address VARCHAR(45) NULL,
+                user_agent VARCHAR(255) NULL,
+                last_used_at DATETIME NULL,
+                expires_at DATETIME NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY idx_user (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        // 5. Create password_resets table
+        $conn->query("
+            CREATE TABLE IF NOT EXISTS password_resets (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                user_id INT UNSIGNED NOT NULL,
+                token_hash VARCHAR(255) NOT NULL,
+                expires_at DATETIME NOT NULL,
+                used_at DATETIME NULL,
+                ip VARCHAR(45) NULL,
+                user_agent VARCHAR(255) NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY idx_user (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        // 6. Create recent_views table
+        $conn->query("
+            CREATE TABLE IF NOT EXISTS recent_views (
+                user_id INT UNSIGNED NOT NULL,
+                song_id INT UNSIGNED NOT NULL,
+                viewed_at DATETIME NOT NULL,
+                PRIMARY KEY (user_id, song_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        // 7. Create favorites table
+        $conn->query("
+            CREATE TABLE IF NOT EXISTS favorites (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                user_id INT UNSIGNED NOT NULL,
+                song_id INT UNSIGNED NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                UNIQUE KEY uniq_user_song (user_id, song_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        $done = true;
+        return true;
+    }
+}
+
+if (!function_exists('wp_runtime_ensure_admin_tables_mysqli')) {
+    function wp_runtime_ensure_admin_tables_mysqli(mysqli $conn): bool {
+        static $done = false;
+        if ($done) {
+            return true;
+        }
+
+        // 1. sys_settings table for key-value JSON configurations
+        $conn->query("
+            CREATE TABLE IF NOT EXISTS sys_settings (
+                setting_key VARCHAR(100) NOT NULL,
+                setting_value LONGTEXT NULL,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (setting_key)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        // 2. version_history table
+        $conn->query("
+            CREATE TABLE IF NOT EXISTS version_history (
+                id VARCHAR(64) NOT NULL,
+                at VARCHAR(60) NOT NULL,
+                actor VARCHAR(190) NOT NULL,
+                ip VARCHAR(80) NOT NULL,
+                action VARCHAR(100) NOT NULL,
+                changed_fields JSON NULL,
+                snapshot JSON NULL,
+                note TEXT NULL,
+                PRIMARY KEY (id),
+                KEY idx_at (at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        $conn->query("ALTER TABLE version_history MODIFY COLUMN at VARCHAR(60) NOT NULL");
+
+        // 3. install_stats table
+        $conn->query("
+            CREATE TABLE IF NOT EXISTS install_stats (
+                device_id VARCHAR(120) NOT NULL,
+                device_signature VARCHAR(64) NOT NULL,
+                scope VARCHAR(50) NOT NULL,
+                source VARCHAR(80) NOT NULL,
+                user_id INT UNSIGNED NOT NULL DEFAULT 0,
+                user_name VARCHAR(160) NOT NULL DEFAULT '',
+                user_username VARCHAR(160) NOT NULL DEFAULT '',
+                user_email VARCHAR(190) NOT NULL DEFAULT '',
+                ip_address VARCHAR(80) NOT NULL DEFAULT '',
+                user_agent VARCHAR(255) NOT NULL DEFAULT '',
+                installed_at VARCHAR(60) NOT NULL,
+                last_seen_at VARCHAR(60) NOT NULL,
+                PRIMARY KEY (device_id),
+                KEY idx_last_seen (last_seen_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        $conn->query("ALTER TABLE install_stats MODIFY COLUMN installed_at VARCHAR(60) NOT NULL, MODIFY COLUMN last_seen_at VARCHAR(60) NOT NULL");
+
+        // 4. push_subscriptions table
+        $conn->query("
+            CREATE TABLE IF NOT EXISTS push_subscriptions (
+                id VARCHAR(120) NOT NULL,
+                endpoint TEXT NOT NULL,
+                public_key VARCHAR(255) NOT NULL DEFAULT '',
+                auth_key VARCHAR(255) NOT NULL DEFAULT '',
+                user_agent VARCHAR(255) NOT NULL DEFAULT '',
+                user_id INT UNSIGNED NOT NULL DEFAULT 0,
+                user_name VARCHAR(190) NOT NULL DEFAULT '',
+                user_email VARCHAR(190) NOT NULL DEFAULT '',
+                ip_address VARCHAR(80) NOT NULL DEFAULT '',
+                created_at VARCHAR(60) NOT NULL,
+                updated_at VARCHAR(60) NOT NULL,
+                last_seen_at VARCHAR(60) NULL,
+                PRIMARY KEY (id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        $conn->query("ALTER TABLE push_subscriptions MODIFY COLUMN created_at VARCHAR(60) NOT NULL, MODIFY COLUMN updated_at VARCHAR(60) NOT NULL, MODIFY COLUMN last_seen_at VARCHAR(60) NULL");
+
+        // 5. push_history table
+        $conn->query("
+            CREATE TABLE IF NOT EXISTS push_history (
+                id VARCHAR(64) NOT NULL,
+                at VARCHAR(60) NOT NULL,
+                actor VARCHAR(190) NOT NULL,
+                title VARCHAR(160) NOT NULL DEFAULT '',
+                body TEXT NULL,
+                url VARCHAR(260) NOT NULL DEFAULT '',
+                icon VARCHAR(260) NOT NULL DEFAULT '',
+                tag VARCHAR(100) NOT NULL DEFAULT '',
+                devices_count INT UNSIGNED NOT NULL DEFAULT 0,
+                PRIMARY KEY (id),
+                KEY idx_at (at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        $conn->query("ALTER TABLE push_history MODIFY COLUMN at VARCHAR(60) NOT NULL");
 
         $done = true;
         return true;

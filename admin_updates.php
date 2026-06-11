@@ -9,6 +9,22 @@ require_once __DIR__ . '/song_request_service.php';
 require_once __DIR__ . '/translation_runtime.php';
 
 $access = wp_admin_require_access('/admin_updates.php');
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['hy', 'ru', 'en'])) {
+    setcookie('admin_lang', $_GET['lang'], time() + 86400 * 30, '/');
+    header('Location: ?');
+    exit;
+}
+$adminLang = $_COOKIE['admin_lang'] ?? 'hy';
+$_GET['lang'] = $adminLang;
+
+if (!function_exists('__')) {
+    function __($text) {
+        global $adminLang;
+        $translated = wp_translation_translate_texts([$text], $adminLang, 'admin_panel');
+        return htmlspecialchars((string)($translated[0] ?? $text), ENT_QUOTES);
+    }
+}
+
 $adminUser = $access['user'];
 $config = $access['config'];
 $adminSectionRegistry = wp_version_admin_section_registry();
@@ -1396,647 +1412,674 @@ $csrfToken = wp_admin_updates_csrf_token();
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Թարմացումների Վահանակ</title>
   <style>
-    :root{
-      --bg:#06101c;
-      --panel:rgba(13,20,35,.82);
-      --panel-2:rgba(255,255,255,.04);
-      --line:rgba(255,255,255,.08);
-      --text:#eef2ff;
-      --muted:#9ca9c8;
-      --primary:#4f7cff;
-      --primary-2:#7aa2ff;
-      --success:#18a957;
-      --warning:#ffb84d;
-      --danger:#d24b5f;
-      --radius:20px;
-      --shadow:0 22px 60px rgba(0,0,0,.36);
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter,system-ui,sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(79,124,255,.16), transparent 24%),
-        radial-gradient(circle at top right, rgba(24,169,87,.10), transparent 20%),
-        linear-gradient(180deg,#0a1426 0%, #05070d 100%);
-      color:var(--text);
-    }
-    .wrap{max-width:1380px;margin:0 auto;padding:28px 18px 60px}
-    .topbar{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:18px;align-items:stretch;margin-bottom:18px}
-    .hero{
-      position:relative;overflow:hidden;padding:28px;border-radius:26px;
-      border:1px solid rgba(255,255,255,.08);
-      background:
-        radial-gradient(circle at top right, rgba(122,162,255,.22), transparent 28%),
-        radial-gradient(circle at bottom left, rgba(24,169,87,.12), transparent 24%),
-        linear-gradient(145deg, rgba(13,20,35,.96), rgba(7,12,24,.9));
-      box-shadow:var(--shadow)
-    }
-    .hero::after{
-      content:"";position:absolute;inset:auto -40px -40px auto;width:220px;height:220px;
-      background:radial-gradient(circle, rgba(79,124,255,.22), transparent 70%);
-      pointer-events:none
-    }
-    .eyebrow{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:7px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.1);
-      background:rgba(255,255,255,.05);color:#dbe6ff;font-size:12px;font-weight:800;
-      letter-spacing:.06em;text-transform:uppercase
-    }
-    .hero h1{margin:14px 0 0;font-size:40px;line-height:1.02;letter-spacing:-.03em}
-    .hero p{margin:12px 0 0;color:var(--muted);max-width:760px;line-height:1.62;font-size:15px}
-    .hero-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:22px}
-    .hero-stat{
-      padding:14px 16px;border-radius:18px;border:1px solid rgba(255,255,255,.08);
-      background:rgba(255,255,255,.04);backdrop-filter:blur(8px)
-    }
-    .hero-stat strong{display:block;font-size:22px;letter-spacing:-.02em}
-    .hero-stat span{display:block;margin-top:4px;color:var(--muted);font-size:12px}
-    .topbar-side{display:flex;flex-direction:column;gap:12px}
-    .actions{
-      display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:18px;border-radius:22px;
-      border:1px solid var(--line);background:rgba(255,255,255,.04);box-shadow:var(--shadow)
-    }
-    .actions .btn{flex:1 1 180px}
-    .workspace-note{
-      padding:18px;border-radius:22px;border:1px solid var(--line);
-      background:linear-gradient(160deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      color:var(--muted);line-height:1.6;font-size:14px
-    }
-    .workspace-note strong{display:block;margin-bottom:8px;color:var(--text);font-size:15px}
-    .workspace-note ol{margin:0;padding-left:18px}
-    .workspace-note li + li{margin-top:6px}
-    .btn,.history-btn{
-      display:inline-flex;align-items:center;justify-content:center;min-height:44px;
-      padding:12px 16px;border-radius:14px;border:1px solid var(--line);color:var(--text);
-      text-decoration:none;background:rgba(255,255,255,.05);font-weight:700;cursor:pointer;
-      transition:transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
-    }
-    .btn:hover,.history-btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)}
-    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-2));border-color:transparent;color:#fff;box-shadow:0 12px 28px rgba(79,124,255,.28)}
-    .layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(360px,.8fr);gap:18px;align-items:start}
-    .layout.layout-single,
-    .layout.layout-focused{grid-template-columns:minmax(0,1fr)}
-    .layout.layout-single > [data-section-container],
-    .layout.layout-focused > [data-section-container]{grid-column:1 / -1}
-    .stack{display:grid;gap:18px}
-    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-    .panel{
-      position:relative;overflow:hidden;background:var(--panel);border:1px solid var(--line);
-      border-radius:var(--radius);box-shadow:var(--shadow);backdrop-filter:blur(12px);padding:18px
-    }
-    .panel::before{
-      content:"";position:absolute;left:18px;right:18px;top:0;height:1px;
-      background:linear-gradient(90deg, rgba(122,162,255,.55), rgba(255,255,255,0));opacity:.75
-    }
-    .panel h2{margin:0 0 6px;font-size:20px;letter-spacing:-.02em}
-    .panel p{margin:0 0 16px;color:var(--muted);line-height:1.55}
-    .field{display:flex;flex-direction:column;gap:8px;margin-top:14px}
-    label{font-size:13px;color:#d9e1ff;font-weight:700}
-    input,textarea,select{
-      width:100%;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.04);
-      color:var(--text);padding:12px 14px;outline:none;font:inherit;
-    }
-    input:focus,textarea:focus,select:focus{
-      border-color:rgba(122,162,255,.55);
-      box-shadow:0 0 0 4px rgba(79,124,255,.12);
-      background:rgba(255,255,255,.055)
-    }
-    textarea{min-height:120px;resize:vertical}
-    .full{grid-column:1 / -1}
-    .banner{margin-bottom:16px;padding:14px 16px;border-radius:14px;font-weight:700;border:1px solid var(--line)}
-    .banner.success{background:rgba(24,169,87,.14);color:#bdf3cf}
-    .banner.error{background:rgba(210,75,95,.14);color:#ffc8d0}
-    .section-switcher{
-      display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:0 0 18px;
-      padding:14px;border-radius:18px;border:1px solid var(--line);
-      background:rgba(255,255,255,.04)
-    }
-    .section-tab{
-      display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:72px;
-      padding:14px 16px;border-radius:18px;border:1px solid var(--line);
-      background:rgba(255,255,255,.04);color:var(--text);font-weight:700;cursor:pointer;text-align:left
-    }
-    .section-tab:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.16)}
-    .section-tab.active{
-      background:linear-gradient(135deg,var(--primary),var(--primary-2));
-      border-color:transparent;color:#fff;box-shadow:0 12px 28px rgba(79,124,255,.22)
-    }
-    .section-tab span{display:block;font-size:15px;letter-spacing:-.01em}
-    .section-tab small{display:block;margin-top:4px;font-size:12px;font-weight:600;opacity:.82;line-height:1.35}
-    .section-focus{
-      display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;
-      margin:0 0 18px;padding:18px 20px;border-radius:22px;border:1px solid var(--line);
-      background:linear-gradient(160deg, rgba(255,255,255,.05), rgba(255,255,255,.025));
-      box-shadow:0 18px 40px rgba(0,0,0,.2)
-    }
-    .section-focus-copy{max-width:760px}
-    .section-focus-copy h2{margin:12px 0 6px;font-size:24px;letter-spacing:-.02em}
-    .section-focus-copy p{margin:0;color:var(--muted);line-height:1.6;font-size:14px}
-    .section-focus-side{display:grid;gap:10px;justify-items:end}
-    .section-focus-meta{justify-content:flex-end}
-    .section-focus .btn{min-width:200px}
-    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
-    .stat{background:var(--panel-2);border:1px solid var(--line);border-radius:16px;padding:14px}
-    .stat strong{display:block;font-size:22px;margin-bottom:6px}
-    .stat span{color:var(--muted);font-size:13px}
-    .action-panel{
-      display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
-      padding:18px 20px;border-radius:22px;
-      background:
-        linear-gradient(135deg, rgba(79,124,255,.14), rgba(122,162,255,.06)),
-        rgba(255,255,255,.04);
-      border:1px solid rgba(122,162,255,.18);
-      position:sticky;bottom:14px;z-index:20;backdrop-filter:blur(14px)
-    }
-    .action-copy strong{display:block;font-size:18px;letter-spacing:-.02em}
-    .action-copy span{display:block;margin-top:6px;color:var(--muted);line-height:1.5;font-size:14px}
-    .action-buttons{display:flex;gap:10px;flex-wrap:wrap}
-    .switch-row{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid var(--line);background:var(--panel-2);border-radius:16px;padding:14px;margin-top:10px}
-    .switch-copy strong{display:block;font-size:15px;margin-bottom:4px}
-    .switch-copy span{color:var(--muted);font-size:13px;line-height:1.4}
-    .page-app-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
-    .page-app-card{
-      display:flex;align-items:center;justify-content:space-between;gap:14px;
-      padding:16px;border-radius:18px;border:1px solid var(--line);background:var(--panel-2)
-    }
-    .page-app-copy strong{display:block;font-size:15px;margin-bottom:6px}
-    .page-app-copy span{display:block;color:var(--muted);font-size:13px;line-height:1.45}
-    .page-app-copy code{margin-top:8px;display:inline-flex}
-    .switch{position:relative;width:62px;height:34px;flex:0 0 auto}
-    .switch input{position:absolute;inset:0;opacity:0;cursor:pointer}
-    .slider{position:absolute;inset:0;background:rgba(255,255,255,.12);border:1px solid var(--line);border-radius:999px;transition:.2s ease}
-    .slider::after{content:"";position:absolute;width:26px;height:26px;left:3px;top:3px;border-radius:50%;background:#fff;transition:.2s ease}
-    .switch input:checked + .slider{background:linear-gradient(135deg,var(--warning),#ff8a4d);border-color:transparent}
-    .switch input:checked + .slider::after{transform:translateX(28px)}
-    .row-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-    .quick-stack{display:grid;gap:10px}
-    .quick-strip{
-      display:grid;gap:10px;padding:12px 14px;border:1px solid var(--line);
-      background:var(--panel-2);border-radius:16px
-    }
-    .quick-strip-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
-    .quick-strip-head strong{display:block;font-size:14px}
-    .quick-strip-head span{display:block;color:var(--muted);font-size:12px;line-height:1.38;max-width:520px}
-    .quick-actions-grid{display:flex;flex-wrap:wrap;gap:7px}
-    .quick-actions-grid .btn{
-      min-height:32px;padding:7px 10px;font-size:12px;border-radius:999px;
-      background:rgba(255,255,255,.06)
-    }
-    .quick-actions-grid .btn-wide{flex-basis:auto}
-    .panel-subgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-    .release-workspace{
-      display:grid;grid-template-columns:1.2fr .8fr;gap:14px
-    }
-    .release-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-    .release-summary-card{
-      padding:15px 16px;border-radius:18px;border:1px solid var(--line);
-      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03))
-    }
-    .release-summary-card strong{display:block;font-size:15px;letter-spacing:-.01em}
-    .release-summary-card span{display:block;margin-top:6px;color:var(--muted);font-size:13px;line-height:1.5}
-    .release-summary-card .chips{margin-top:10px}
-    .release-checklist{
-      padding:16px;border-radius:18px;border:1px solid rgba(122,162,255,.16);
-      background:linear-gradient(180deg, rgba(79,124,255,.09), rgba(255,255,255,.025))
-    }
-    .release-checklist h3{margin:0 0 6px;font-size:16px;letter-spacing:-.01em}
-    .release-checklist p{margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.5}
-    .release-checklist-list{display:grid;gap:10px}
-    .release-check{
-      display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:14px;
-      border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.035)
-    }
-    .release-check-badge{
-      display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;
-      background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);font-size:12px;font-weight:800;flex:0 0 auto
-    }
-    .release-check strong{display:block;font-size:13px}
-    .release-check span{display:block;margin-top:3px;color:var(--muted);font-size:12px;line-height:1.45}
-    .release-check[data-state="done"] .release-check-badge{
-      background:rgba(24,169,87,.18);border-color:rgba(24,169,87,.28);color:#c5f5d5
-    }
-    .release-check[data-state="warn"] .release-check-badge{
-      background:rgba(255,184,77,.16);border-color:rgba(255,184,77,.28);color:#ffe0ab
-    }
-    .push-workspace{
-      display:grid;grid-template-columns:1.05fr .95fr;gap:14px;align-items:start
-    }
-    .push-template-strip{
-      display:flex;flex-wrap:wrap;gap:8px;margin-top:12px
-    }
-    .push-template-strip .btn{
-      min-height:34px;padding:8px 12px;font-size:12px;border-radius:999px
-    }
-    .push-preview{
-      padding:16px;border-radius:18px;border:1px solid rgba(122,162,255,.16);
-      background:linear-gradient(180deg, rgba(79,124,255,.08), rgba(255,255,255,.025))
-    }
-    .push-preview h3{margin:0 0 6px;font-size:16px;letter-spacing:-.01em}
-    .push-preview p{margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.5}
-    .push-preview-phone{
-      max-width:360px;padding:14px;border-radius:24px;border:1px solid rgba(255,255,255,.08);
-      background:linear-gradient(180deg, rgba(7,12,24,.96), rgba(13,20,35,.9));
-      box-shadow:0 18px 34px rgba(0,0,0,.24)
-    }
-    .push-preview-screen{
-      padding:14px;border-radius:20px;background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.02));
-      border:1px solid rgba(255,255,255,.06)
-    }
-    .push-preview-banner{
-      display:grid;gap:8px;padding:14px;border-radius:18px;border:1px solid rgba(255,255,255,.08);
-      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04))
-    }
-    .push-preview-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-    .push-preview-app{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#dbe6ff}
-    .push-preview-tag{font-size:11px;color:var(--muted)}
-    .push-preview-title{font-size:16px;font-weight:800;letter-spacing:-.02em}
-    .push-preview-body{font-size:13px;line-height:1.5;color:#dce5ff}
-    .push-preview-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-    .push-preview-meta .chip{background:rgba(255,255,255,.06)}
-    .access-overview{
-      display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px
-    }
-    .access-card{
-      padding:15px 16px;border-radius:18px;border:1px solid var(--line);
-      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03))
-    }
-    .access-card strong{display:block;font-size:15px;letter-spacing:-.01em}
-    .access-card span{display:block;margin-top:6px;color:var(--muted);font-size:13px;line-height:1.5}
-    .access-mini-grid{
-      display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px
-    }
-    .access-mini{
-      padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03)
-    }
-    .access-mini strong{display:block;font-size:11px;color:#a8b7dc;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-    .access-mini span{display:block;font-size:13px;line-height:1.45}
-    .access-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-    .access-helper{
-      margin-top:12px;padding:12px 14px;border-radius:14px;border:1px solid rgba(122,162,255,.14);
-      background:rgba(79,124,255,.08);color:#dce5ff;line-height:1.55;font-size:13px
-    }
-    .panel-embed{
-      padding:16px;border-radius:18px;border:1px solid rgba(255,255,255,.08);
-      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.025));
-      box-shadow:0 16px 30px rgba(0,0,0,.14)
-    }
-    .panel-embed h3{
-      margin:0 0 6px;font-size:16px;letter-spacing:-.01em
-    }
-    .permission-list{display:grid;gap:16px;margin-top:8px}
-    .permission-card{
-      position:relative;display:grid;gap:16px;padding:18px;border-radius:20px;
-      border:1px solid rgba(122,162,255,.16);
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.025)),
-        radial-gradient(circle at top right, rgba(79,124,255,.12), transparent 42%);
-      box-shadow:0 18px 36px rgba(0,0,0,.18)
-    }
-    .permission-card::before{
-      content:"";position:absolute;left:0;right:0;top:0;height:1px;
-      background:linear-gradient(90deg, rgba(122,162,255,.55), rgba(255,255,255,0))
-    }
-    .permission-row-head{
-      display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap
-    }
-    .permission-row-head .field label{font-size:12px;color:#a8b7dc;letter-spacing:.04em}
-    .permission-row-head .history-btn{min-width:110px}
-    .permission-grid{
-      display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px
-    }
-    .permission-status,
-    .autosave-status{
-      display:inline-flex;align-items:center;gap:8px;
-      min-height:34px;padding:8px 12px;border-radius:999px;
-      border:1px solid rgba(255,255,255,.08);
-      background:rgba(255,255,255,.04);
-      color:#dce5ff;font-size:12px;font-weight:700
-    }
-    .permission-status::before,
-    .autosave-status::before{
-      content:"";width:8px;height:8px;border-radius:50%;
-      background:rgba(255,255,255,.35);
-      box-shadow:0 0 0 3px rgba(255,255,255,.04)
-    }
-    .permission-status[data-state="saving"],
-    .autosave-status[data-state="saving"]{
-      border-color:rgba(122,162,255,.28);
-      background:rgba(79,124,255,.12);
-      color:#dbe6ff
-    }
-    .permission-status[data-state="saving"]::before,
-    .autosave-status[data-state="saving"]::before{
-      background:#7a9dff;
-      animation:permissionPulse 1s ease-in-out infinite
-    }
-    .permission-status[data-state="saved"],
-    .autosave-status[data-state="saved"]{
-      border-color:rgba(24,169,87,.26);
-      background:rgba(24,169,87,.12);
-      color:#cbf3d8
-    }
-    .permission-status[data-state="saved"]::before,
-    .autosave-status[data-state="saved"]::before{
-      background:#4bd183
-    }
-    .permission-status[data-state="error"],
-    .autosave-status[data-state="error"]{
-      border-color:rgba(255,107,122,.26);
-      background:rgba(255,107,122,.12);
-      color:#ffd2d8
-    }
-    .permission-status[data-state="error"]::before,
-    .autosave-status[data-state="error"]::before{
-      background:#ff7b8b
-    }
-    @keyframes permissionPulse{
-      0%,100%{transform:scale(1);opacity:.8}
-      50%{transform:scale(1.18);opacity:1}
-    }
-    .permission-check{
-      display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:start;
-      padding:14px 16px;border-radius:16px;
-      border:1px solid rgba(255,255,255,.07);
-      background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.02));
-      cursor:pointer;
-      transition:border-color .18s ease, background .18s ease, transform .18s ease
-    }
-    .permission-check:hover{
-      border-color:rgba(122,162,255,.28);
-      background:linear-gradient(180deg, rgba(79,124,255,.10), rgba(255,255,255,.03));
-      transform:translateY(-1px)
-    }
-    .permission-check input{
-      grid-column:2;margin:2px 0 0;width:16px;height:16px;accent-color:#7a9dff
-    }
-    .permission-check span{grid-column:1;display:grid;gap:5px;min-width:0}
-    .permission-check strong{font-size:14px;line-height:1.35}
-    .permission-check small{color:var(--muted);line-height:1.5;font-size:12px}
-    .package-meta{display:grid;gap:10px}
-    .package-mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
-    .package-mode-card{padding:14px;border-radius:16px;border:1px solid var(--line);background:var(--panel-2)}
-    .package-mode-card strong{display:block;font-size:14px;margin-bottom:6px}
-    .package-mode-card span{display:block;color:var(--muted);font-size:13px;line-height:1.5}
-    .package-helper{margin-top:10px;color:#cfe0ff;line-height:1.55;font-size:13px}
-    .package-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-    .danger-note{margin-top:12px;padding:12px 14px;border-radius:14px;border:1px solid rgba(210,75,95,.28);background:rgba(210,75,95,.10);color:#ffd8de;line-height:1.55;font-size:13px}
-    .history-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
-    .history-list{position:relative;display:grid;gap:14px;margin-top:12px;padding-left:18px}
-    .history-list::before{
-      content:"";position:absolute;left:6px;top:8px;bottom:8px;width:2px;border-radius:999px;
-      background:linear-gradient(180deg, rgba(122,162,255,.42), rgba(122,162,255,.08))
-    }
-    .history-item{
-      position:relative;overflow:hidden;border:1px solid var(--line);
-      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
-      border-radius:18px;padding:15px 16px;box-shadow:0 14px 28px rgba(0,0,0,.16)
-    }
-    .history-item::before{
-      content:"";position:absolute;left:-18px;top:24px;width:12px;height:12px;border-radius:50%;
-      background:linear-gradient(135deg, var(--primary-2), var(--primary));
-      box-shadow:0 0 0 4px rgba(79,124,255,.14)
-    }
-    .history-item::after{
-      content:"";position:absolute;left:0;right:0;top:0;height:1px;
-      background:linear-gradient(90deg, rgba(122,162,255,.55), rgba(255,255,255,0))
-    }
-    .device-list{display:grid;gap:14px;margin-top:12px}
-    .device-card{
-      position:relative;overflow:hidden;
-      border:1px solid rgba(255,255,255,.08);
-      background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.025));
-      border-radius:20px;
-      padding:16px;
-      box-shadow:0 16px 34px rgba(0,0,0,.18)
-    }
-    .device-card::before{
-      content:"";position:absolute;left:0;right:0;top:0;height:1px;
-      background:linear-gradient(90deg, rgba(122,162,255,.5), rgba(255,255,255,0))
-    }
-    .device-header{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap}
-    .device-identity{display:grid;gap:8px}
-    .device-title{font-weight:800;font-size:16px;letter-spacing:-.015em}
-    .device-subtitle{color:var(--muted);font-size:12px;line-height:1.5;max-width:640px}
-    .device-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-    .device-meta-grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-      gap:10px;
-      margin-top:12px
-    }
-    .device-meta{
-      padding:12px;
-      border-radius:15px;
-      border:1px solid rgba(255,255,255,.07);
-      background:rgba(255,255,255,.03)
-    }
-    .device-meta strong{display:block;font-size:11px;color:#a8b7dc;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-    .device-meta span{display:block;font-size:13px;color:var(--text);line-height:1.45;word-break:break-word}
-    .moderation-diff-grid{display:grid;gap:10px;margin-top:12px}
-    .moderation-diff-item{
-      padding:14px;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.08);
-      background:rgba(255,255,255,.03)
-    }
-    .moderation-diff-item[data-kind="added"]{border-color:rgba(24,169,87,.28);background:rgba(24,169,87,.08)}
-    .moderation-diff-item[data-kind="removed"]{border-color:rgba(210,75,95,.28);background:rgba(210,75,95,.08)}
-    .moderation-diff-item[data-kind="changed"]{border-color:rgba(122,162,255,.24);background:rgba(79,124,255,.08)}
-    .moderation-diff-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-    .moderation-diff-title{font-weight:800;font-size:14px}
-    .moderation-diff-badge{
-      display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
-      border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);font-size:11px;font-weight:800;color:#dce5ff
-    }
-    .moderation-diff-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-    .moderation-diff-box{
-      padding:12px;border-radius:14px;background:rgba(9,14,28,.42);border:1px solid rgba(255,255,255,.06)
-    }
-    .moderation-diff-box strong{display:block;font-size:11px;color:#a8b7dc;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-    .moderation-diff-box span{display:block;white-space:pre-wrap;word-break:break-word;line-height:1.5}
-    .moderation-diff-box pre{
-      margin:0;white-space:pre-wrap;word-break:break-word;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text)
-    }
-    .moderation-history{
-      margin-top:12px;padding:12px 14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)
-    }
-    .moderation-history strong{display:block;margin-bottom:6px;font-size:13px}
-    .moderation-history span{display:block;color:var(--muted);font-size:12px;line-height:1.55}
-    .device-toolbar{
-      margin-top:16px;padding:14px;border-radius:18px;border:1px solid var(--line);
-      background:var(--panel-2);display:grid;gap:12px
-    }
-    .device-toolbar-grid{display:grid;grid-template-columns:1.2fr repeat(5,minmax(0,1fr));gap:10px}
-    .device-toolbar-actions{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
-    .device-toolbar-summary{color:var(--muted);font-size:13px;line-height:1.45}
-    .history-toolbar{
-      display:flex;justify-content:space-between;gap:12px;align-items:flex-end;flex-wrap:wrap;
-      margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--panel-2)
-    }
-    .history-search{margin-top:0;min-width:min(100%,360px);flex:1 1 280px}
-    .history-toolbar-copy{color:var(--muted);font-size:13px;line-height:1.45}
-    .chip.success{background:rgba(24,169,87,.12);border-color:rgba(24,169,87,.28);color:#c5f5d5}
-    .chip.warning{background:rgba(255,184,77,.12);border-color:rgba(255,184,77,.28);color:#ffe0ab}
-    .history-more{margin-top:14px;display:flex;justify-content:center}
-    .history-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}
-    .history-title{font-weight:800;font-size:15px;letter-spacing:-.01em}
-    .history-time{color:var(--muted);font-size:12px}
-    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);font-size:12px;color:#dce5ff}
-    .note{margin-top:10px;color:var(--muted);line-height:1.55;white-space:pre-wrap;font-size:13px}
-    .history-actions{margin-top:12px;display:flex;justify-content:flex-end}
-    .history-btn{min-height:36px;padding:9px 12px;font-size:13px}
-    .history-btn.danger{background:rgba(210,75,95,.16);border-color:rgba(210,75,95,.28);color:#ffd8de}
-    .history-btn.danger:hover{background:rgba(210,75,95,.22);border-color:rgba(210,75,95,.38)}
-    code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:rgba(255,255,255,.06);padding:2px 6px;border-radius:8px}
-    @media(max-width:1050px){
-      .layout,.topbar{grid-template-columns:1fr}
-      .hero-meta{grid-template-columns:repeat(2,minmax(0,1fr))}
-      .section-switcher{grid-template-columns:repeat(3,minmax(0,1fr))}
-      .section-focus{padding:16px 18px}
-      .section-focus-copy h2{font-size:22px}
-      .release-workspace,.release-summary-grid,.access-overview{grid-template-columns:1fr}
-      .push-workspace{grid-template-columns:1fr}
-      .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
-    }
-    @media(max-width:860px){
-      .wrap{padding:16px 12px 40px}
-      .grid,.row-2,.panel-subgrid,.package-mode-grid,.package-actions,.hero-meta{grid-template-columns:1fr}
-      .page-app-grid{grid-template-columns:1fr}
-      .full{grid-column:auto}
-      .topbar{gap:12px}
-      .hero{padding:18px;border-radius:20px}
-      .hero h1{font-size:30px}
-      .hero p{font-size:14px;line-height:1.5}
-      .hero-stat{padding:12px 14px}
-      .hero-stat strong{font-size:18px}
-      .actions{padding:12px;border-radius:18px}
-      .actions .btn{flex:1 1 100%}
-      .workspace-note{padding:14px;border-radius:18px;font-size:13px}
-      .panel{padding:14px;border-radius:18px}
-      .panel::before{left:14px;right:14px}
-      .panel h2{font-size:18px}
-      .panel p{font-size:13px;line-height:1.45}
-      .moderation-diff-values{grid-template-columns:1fr}
-      .section-switcher{grid-template-columns:repeat(2,minmax(0,1fr));padding:10px}
-      .section-tab{min-height:64px;padding:12px;border-radius:16px}
-      .section-tab span{font-size:13px}
-      .section-tab small{font-size:11px}
-      .section-focus{padding:14px 16px;border-radius:18px}
-      .section-focus-copy h2{font-size:20px}
-      .section-focus-side{justify-items:stretch;width:100%}
-      .section-focus-meta{justify-content:flex-start}
-      .section-focus .btn{width:100%;min-width:0}
-      .stats{grid-template-columns:1fr}
-      .stat{padding:12px}
-      .stat strong{font-size:18px}
-      .field{margin-top:12px}
-      input,textarea,select{padding:11px 12px}
-      textarea{min-height:100px}
-      .quick-strip{padding:10px 12px}
-      .quick-strip-head{gap:6px}
-      .quick-strip-head span{font-size:11px}
-      .quick-actions-grid{overflow:auto;flex-wrap:nowrap;padding-bottom:2px}
-      .quick-actions-grid .btn{flex:0 0 auto;white-space:nowrap}
-      .action-buttons{width:100%}
-      .action-buttons .btn{flex:1 1 100%}
-      .action-panel{position:static;bottom:auto;padding:14px 16px}
-      .history-list{padding-left:14px}
-      .history-item{padding:12px 13px;border-radius:16px}
-      .history-item::before{left:-14px;top:22px;width:10px;height:10px}
-      .device-card{padding:13px;border-radius:18px}
-      .device-toolbar-grid{grid-template-columns:1fr}
-      .device-toolbar-actions{align-items:stretch}
-      .device-toolbar-actions .btn{flex:1 1 100%}
-      .history-toolbar{align-items:stretch}
-      .history-search{min-width:0;flex-basis:100%}
-      .access-mini-grid{grid-template-columns:1fr}
-      .permission-grid{grid-template-columns:1fr}
-      .permission-card{padding:15px}
-      .permission-check{padding:13px 14px}
-      .device-meta-grid{grid-template-columns:1fr}
-      .chip{font-size:11px;padding:5px 8px}
-    }
-  </style>
+/* ── UNTLIP LIGHT PASTEL THEME ── */
+:root {
+  --bg: #f4f7fe;
+  --panel: #ffffff;
+  --line: #e2e8f0;
+  --text: #1f2438;
+  --muted: #7a7f9a;
+  --primary: #4318FF; /* Bright untlip purple */
+  --primary-2: #3311DB;
+  --success: #05cd99;
+  --warning: #ffce20;
+  --danger: #ee5d50;
+  --radius: 20px;
+  --shadow: 0 18px 40px rgba(112, 144, 176, 0.12);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.wrap { max-width: 1400px; margin: 0 auto; padding: 28px 18px 60px; }
+.topbar { display: grid; grid-template-columns: minmax(0,1.15fr) minmax(300px,.85fr); gap: 18px; align-items: stretch; margin-bottom: 18px; }
+
+/* ── LAYOUT ── */
+.app-layout { display: flex; height: 100vh; overflow: hidden; background: var(--bg); }
+.app-sidebar { 
+  width: 280px; background: #ffffff; border-right: none; 
+  display: flex; flex-direction: column; padding: 32px 24px; flex-shrink: 0; 
+  box-shadow: 14px 17px 40px 4px rgba(112, 144, 176, 0.08); z-index: 10;
+}
+.app-main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; position: relative; }
+.app-content { padding: 40px; max-width: 1300px; width: 100%; margin: 0 auto; }
+
+/* ── SIDEBAR ── */
+.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; padding: 0 8px; }
+.brand-icon { 
+  width: 36px; height: 36px; background: #111c44; color: #fff; 
+  border-radius: 10px; display: flex; align-items: center; justify-content: center; 
+  font-weight: 800; font-size: 16px; 
+}
+.brand-text { font-size: 24px; font-weight: 800; color: #111c44; letter-spacing: -0.5px; }
+
+.nav-menu { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.nav-item {
+  display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 16px;
+  color: #a3aed1; text-decoration: none; font-size: 15px; font-weight: 600; transition: all 0.2s;
+}
+.nav-item:hover { background: #f4f7fe; color: #111c44; }
+.nav-item.active { background: var(--primary); color: #ffffff; box-shadow: 0 10px 20px rgba(67, 24, 255, 0.25); }
+
+.sidebar-heading { font-size: 12px; font-weight: 700; color: #a3aed1; text-transform: uppercase; letter-spacing: 0.5px; margin: 32px 0 12px 12px; }
+
+/* ── TABS (Section Switcher) ── */
+.section-switcher { 
+  display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; 
+}
+.section-tab { 
+  background: transparent; border: none; color: var(--muted); 
+  padding: 14px 24px; border-radius: 12px; cursor: pointer; text-align: left; 
+  transition: all .2s; display: flex; flex-direction: row; align-items: center; gap: 16px; text-decoration: none;
+  margin: 4px 16px;
+  width: calc(100% - 32px);
+}
+.section-tab span { font-size: 15px; font-weight: 600; }
+.section-tab:hover { background: #f4f7fe; color: #111c44; }
+.section-tab.active { 
+  background: var(--primary); color: #ffffff; box-shadow: 0 10px 20px rgba(67, 24, 255, 0.25); 
+}
+
+.lang-switcher { display: flex; gap: 10px; padding: 0 8px; }
+.lang-btn { 
+  flex: 1; padding: 8px 12px; border-radius: 12px; background: #f4f7fe; color: #a3aed1; 
+  font-size: 13px; font-weight: 700; text-decoration: none; transition: 0.2s; text-align: center;
+}
+.lang-btn.active { background: #111c44; color: #fff; }
+
+/* ── CARDS & PANELS ── */
+.panel { 
+  background: var(--panel); border: none; border-radius: var(--radius); 
+  padding: 32px; margin-bottom: 32px; box-shadow: var(--shadow); 
+}
+.panel.full { padding: 40px; }
+.panel h2, .section-focus-copy h2 { font-size: 24px; font-weight: 700; margin: 0 0 8px; letter-spacing: -0.5px; color: #111c44; }
+.panel p, .section-focus-copy p { margin: 0 0 24px; color: #a3aed1; line-height: 1.6; font-size: 15px; }
+
+/* ── STATS (Untlip Style) ── */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 40px; }
+.stat {
+  padding: 32px; border-radius: var(--radius); display: flex; flex-direction: column; gap: 16px;
+  background: #ffffff; border: none; box-shadow: var(--shadow); position: relative; overflow: hidden;
+}
+
+/* First stat card: Light Blue */
+.stat:nth-child(1) { background: #e5f3ff; }
+.stat:nth-child(1) strong { color: #228fff; }
+.stat:nth-child(1) span { color: #5c8fc2; font-weight: 600; }
+
+/* Second stat card: Light Purple */
+.stat:nth-child(2) { background: #f3ebff; }
+.stat:nth-child(2) strong { color: #7d40ff; }
+.stat:nth-child(2) span { color: #8e73b2; font-weight: 600; }
+
+/* Third stat card: Light Orange */
+.stat:nth-child(3) { background: #ffefe5; }
+.stat:nth-child(3) strong { color: #ff6b1c; }
+.stat:nth-child(3) span { color: #b28269; font-weight: 600; }
+
+.stat strong { font-size: 42px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; }
+.stat span { font-size: 16px; }
+
+/* ── FORMS & INPUTS ── */
+.stack { display: flex; flex-direction: column; gap: 24px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+.field, .form-group { display: flex; flex-direction: column; gap: 10px; }
+label { font-size: 14px; font-weight: 700; color: #111c44; }
+.desc, .field-hint { font-size: 13px; color: #a3aed1; line-height: 1.5; }
+
+input, textarea, select {
+  width: 100%; border-radius: 16px; border: 1px solid #e2e8f0; background: #ffffff;
+  color: #111c44; padding: 16px 20px; outline: none; font-size: 15px; font-family: inherit;
+  transition: all 0.2s; font-weight: 500;
+}
+input::placeholder, textarea::placeholder { color: #a3aed1; }
+input:focus, textarea:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(67, 24, 255, 0.1); }
+textarea { min-height: 140px; resize: vertical; }
+
+.checkbox-label { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 15px; font-weight: 600; color: #111c44; }
+input[type="checkbox"] { width: 22px; height: 22px; border-radius: 6px; accent-color: var(--primary); cursor: pointer; }
+
+/* ── BUTTONS ── */
+.actions { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
+.btn, .history-btn {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 50px;
+  padding: 12px 24px; border-radius: 16px; border: none; color: #111c44;
+  background: #f4f7fe; font-weight: 700; font-size: 15px; cursor: pointer; text-decoration: none;
+  transition: all 0.2s; letter-spacing: 0.3px;
+}
+.btn:hover, .history-btn:hover { background: #e2e8f0; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+.btn-primary { 
+  background: var(--primary); color: #ffffff; 
+  box-shadow: 0 10px 20px rgba(67, 24, 255, 0.25); 
+}
+.btn-primary:hover { background: var(--primary-2); color: #ffffff; box-shadow: 0 12px 24px rgba(67, 24, 255, 0.35); }
+
+.btn-danger { color: #ee5d50; background: #ffeeeb; }
+.btn-danger:hover { background: #ffdbd6; }
+
+/* ── TABLES (Untlip Style) ── */
+.table-wrap { overflow-x: auto; background: #ffffff; border-radius: 20px; box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; text-align: left; }
+th { 
+  background: #ffffff; padding: 24px 24px 16px; font-size: 14px; font-weight: 700; 
+  color: #a3aed1; border-bottom: 1px solid #f4f7fe; white-space: nowrap;
+}
+td { padding: 20px 24px; border-bottom: 1px solid #f4f7fe; font-size: 15px; color: #111c44; vertical-align: middle; font-weight: 600; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafbfc; }
+
+/* Status Badges */
+.badge { 
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; 
+  border-radius: 999px; font-size: 13px; font-weight: 700; 
+}
+.badge.success, .badge.approved, .status-badge.active { background: #e6f9f3; color: #05cd99; }
+.badge.warning, .badge.pending, .status-badge.pending { background: #fff8e1; color: #ffce20; }
+.badge.danger, .badge.rejected, .status-badge.inactive { background: #ffeeeb; color: #ee5d50; }
+
+/* ── UTILS ── */
+.banner { padding: 18px 24px; border-radius: 16px; margin-bottom: 32px; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 12px; }
+.banner.success { background: #e6f9f3; color: #05cd99; }
+.banner.error { background: #ffeeeb; color: #ee5d50; }
+
+code, pre { background: #f4f7fe; border-radius: 8px; padding: 4px 8px; color: var(--primary); font-family: monospace; font-size: 14px; }
+
+/* Section Focus (Quick actions banner) */
+.section-focus { 
+  background: #ffffff; border-radius: var(--radius); 
+  padding: 40px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center; gap: 32px;
+  box-shadow: var(--shadow);
+}
+.section-focus-copy { flex: 1; }
+.section-focus-side { display: flex; flex-direction: column; gap: 20px; align-items: flex-end; }
+.eyebrow { 
+  display: inline-block; padding: 8px 16px; border-radius: 10px; 
+  background: rgba(67, 24, 255, 0.1); color: var(--primary); 
+  font-size: 13px; font-weight: 800; text-transform: uppercase; margin-bottom: 16px; letter-spacing: 0.5px;
+}
+.chips { display: flex; gap: 12px; }
+.chip { padding: 8px 16px; background: #f4f7fe; border-radius: 10px; font-size: 14px; font-weight: 700; color: #111c44; }
+
+/* Push Stats */
+.push-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 32px; }
+.push-stat-card { background: #ffffff; border-radius: 16px; padding: 24px; text-align: center; box-shadow: var(--shadow); }
+.push-stat-val { font-size: 36px; font-weight: 800; color: #111c44; margin-bottom: 8px; letter-spacing: -1px; }
+.push-stat-lbl { font-size: 14px; color: #a3aed1; font-weight: 600; }
+
+/* --- NEW STRUCTURAL CSS FIXES --- */
+.app-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 40px;
+  background: var(--bg);
+}
+.app-content {
+  padding: 0 40px 40px 40px;
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.search-box input {
+  padding: 12px 20px;
+  padding-left: 44px;
+  border-radius: 30px;
+  border: none;
+  background: #ffffff;
+  width: 280px;
+  font-family: inherit;
+  font-size: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  outline: none;
+}
+.search-box {
+  position: relative;
+}
+.search-box::before {
+  content: '🔍';
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 14px;
+}
+.tabs-row {
+  display: flex;
+  gap: 32px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 32px;
+}
+.tab {
+  padding: 0 4px 16px;
+  color: var(--muted);
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+}
+.tab.active {
+  color: var(--primary);
+}
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 3px 3px 0 0;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  color: var(--muted);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 12px;
+  margin: 4px 16px;
+  transition: 0.2s;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  cursor: pointer;
+  text-align: left;
+}
+.nav-item:hover {
+  background: rgba(67, 24, 255, 0.05);
+}
+.nav-item.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(67, 24, 255, 0.3);
+}
+.section-switcher .section-tab {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  color: var(--muted);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 12px;
+  margin: 4px 16px;
+  transition: 0.2s;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  cursor: pointer;
+  text-align: left;
+  width: calc(100% - 32px);
+}
+.section-switcher .section-tab.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(67, 24, 255, 0.3);
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 40px;
+}
+.stat {
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  background: #ffffff;
+  border: none;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+/* Override any legacy stats colors from nth-child */
+.stat:nth-child(n) { background: #ffffff !important; }
+
+
+/* --- ADDITIONAL STRUCTURAL CSS FIXES --- */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  padding: 0;
+  border: none;
+}
+.toolbar-left {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.lang-switcher {
+  display: flex;
+  gap: 8px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 20px;
+}
+.lang-btn {
+  padding: 6px 16px;
+  border-radius: 16px;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: none;
+}
+.lang-btn.active {
+  background: var(--text);
+  color: #fff;
+}
+.section-focus {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  box-shadow: var(--shadow-sm);
+}
+.section-focus-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.section-focus-copy h2 { margin: 0; font-size: 24px; color: var(--text); }
+.section-focus-copy p { margin: 0; color: var(--muted); }
+.section-focus-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-end;
+}
+.chips {
+  display: flex;
+  gap: 8px;
+}
+.chip {
+  background: #f1f5f9;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.table-card {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th {
+  text-align: left;
+  padding: 16px 24px;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 13px;
+  border-bottom: 1px solid var(--line);
+}
+td {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  font-weight: 600;
+}
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+
+/* Fix hidden attribute override issue */
+[hidden] { display: none !important; }
+
+
+/* ─── Section tabs styled as nav-items ─────────────────── */
+button.section-tab.nav-item {
+  width: calc(100% - 32px);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  border-radius: 12px;
+  margin: 4px 16px;
+  transition: background 0.2s, color 0.2s;
+  text-align: left;
+}
+button.section-tab.nav-item:hover {
+  background: rgba(67, 24, 255, 0.05);
+  color: var(--text);
+}
+button.section-tab.nav-item.active {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(67, 24, 255, 0.3);
+}
+button.section-tab.nav-item.active svg {
+  stroke: #ffffff;
+}
+
+/* Sidebar must flex column with scroll */
+.app-sidebar {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.nav-menu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  padding-bottom: 8px;
+}
+
+</style>
+
 </head>
 <body>
-  <main class="wrap">
-    <div class="topbar">
-      <div class="hero">
-        <div class="eyebrow">Թարմացում և տեղադրում</div>
-        <h1>Թարմացումների Վահանակ</h1>
-        <p>Սա update-ների, deploy-ի և maintenance-ի կառավարման հիմնական վահանակն է։ Աշխատանքը բաժանված է պարզ փուլերի, որպեսզի phone-ից ու computer-ից արագ գտնես ուզած գործողությունը և սխալ publish չանես։</p>
-        <div class="hero-meta">
-          <div class="hero-stat">
-            <strong><?= htmlspecialchars((string)$config['app_version'], ENT_QUOTES) ?></strong>
-            <span>Ծրագրի ընթացիկ տարբերակ</span>
-          </div>
-          <div class="hero-stat">
-            <strong><?= htmlspecialchars((string)$config['web_version'], ENT_QUOTES) ?></strong>
-            <span>Կայքի ընթացիկ տարբերակ</span>
-          </div>
-          <div class="hero-stat">
-            <strong><?= $isPackageSyncedToCurrentRelease ? 'ՊԱՏՐԱՍՏ' : 'ՍՊԱՍՄԱՆ ՄԵՋ' ?></strong>
-            <span>Փաթեթի կապի վիճակ</span>
-          </div>
-          <div class="hero-stat">
-            <strong><?= (int)($installStats['main']['known_count'] ?? 0) ?></strong>
-            <span>Ծրագրի ընդհանուր ճանաչված տեղադրումներ</span>
-          </div>
-        </div>
-      </div>
-      <div class="topbar-side">
-        <div class="actions">
-          <a class="btn" href="/songs.php">Վերադառնալ ադմին վահանակ</a>
-          <a class="btn" href="/version_manifest.php" target="_blank" rel="noopener">Բացել տարբերակի տվյալները</a>
-          <a class="btn" href="/admin_logout.php">Դուրս գալ admin-ից</a>
-        </div>
-        <div class="workspace-note">
-          <strong>Արագ հոսք</strong>
-          <ol>
-            <li>Լրացրու version/message դաշտերը `Թարմացում և տեղադրում` բաժնում։</li>
-            <li>Ընտրիր կիրառման տարբերակը` առանց ֆայլի կամ ֆայլով։</li>
-            <li>Սեղմիր `Կիրառել թարմացումը` ու ավարտիր գործընթացը։</li>
-          </ol>
-        </div>
-      </div>
-    </div>
+  <script>
+    const ADMIN_I18N = {
+      'Թարմացում և տեղադրում': {ru: 'Обновление и установка', en: 'Update & Deploy'},
+      'Թարմացումների Վահանակ': {ru: 'Панель обновлений', en: 'Updates Dashboard'},
+      'Սա update-ների, deploy-ի և maintenance-ի կառավարման հիմնական վահանակն է։ Աշխատանքը բաժանված է պարզ փուլերի, որպեսզի phone-ից ու computer-ից արագ գտնես ուզած գործողությունը և սխալ publish չանես։': {ru: 'Основная панель управления обновлениями и обслуживанием. Работа разделена на простые этапы для быстрого доступа с телефона и ПК.', en: 'Main dashboard for updates, deploy, and maintenance. Work is divided into simple stages for quick access from phone and PC.'},
+      'Ծրագրի ընթացիկ տարբերակ': {ru: 'Текущая версия приложения', en: 'Current App Version'},
+      'Կայքի ընթացիկ տարբերակ': {ru: 'Текущая версия сайта', en: 'Current Web Version'},
+      'Փաթեթի կապի վիճակ': {ru: 'Статус связи пакета', en: 'Package Sync Status'},
+      'Ծրագրի ընդհանուր ճանաչված տեղադրումներ': {ru: 'Общее количество установок', en: 'Total Known Installs'},
+      'Վերադառնալ ադմին վահանակ': {ru: 'Вернуться в админку', en: 'Back to Admin'},
+      'Բացել տարբերակի տվյալները': {ru: 'Данные версии', en: 'Version Data'},
+      'Դուրս գալ admin-ից': {ru: 'Выйти из админки', en: 'Log Out'},
+      'Արագ հոսք': {ru: 'Быстрый старт', en: 'Quick Flow'},
+      'Լրացրու version/message դաշտերը `Թարմացում և տեղադրում` բաժնում։': {ru: 'Заполните поля version/message в разделе «Обновление и установка».', en: 'Fill in version/message fields in the "Update & Deploy" section.'},
+      'Ընտրիր կիրառման տարբերակը` առանց ֆայլի կամ ֆայլով։': {ru: 'Выберите вариант применения: с файлом или без.', en: 'Choose deployment mode: with or without file.'},
+      'Սեղմիր `Կիրառել թարմացումը` ու ավարտիր գործընթացը։': {ru: 'Нажмите «Применить обновление» для завершения.', en: 'Click "Apply Update" to finish.'},
+      '1. Թարմացում և տեղադրում': {ru: '1. Обновление и установка', en: '1. Update & Deploy'},
+      '2. Տեխնիկական աշխատանքներ': {ru: '2. Тех. работы', en: '2. Maintenance'},
+      '3. Push ծանուցումներ': {ru: '3. Push-уведомления', en: '3. Push Notifications'},
+      '4. Սարքեր': {ru: '4. Устройства', en: '4. Devices'},
+      '5. Պատմություն': {ru: '5. История', en: '5. History'},
+      '6. Մուտքեր': {ru: '6. Доступы', en: '6. Access'},
+      '7. Մոդերացիա': {ru: '7. Модерация', en: '7. Moderation'},
+      '8. Թարգմանություններ': {ru: '8. Переводы', en: '8. Translations'},
+      'Թողարկման գլխավոր հոսք': {ru: 'Главный поток релиза', en: 'Main Release Flow'},
+      'Այստեղ լրացնում ես տարբերակները, հաղորդագրությունները և ընտրում ես ինչպես կիրառել թարմացումը։': {ru: 'Здесь вы заполняете версии, сообщения и выбираете способ применения обновления.', en: 'Here you fill in versions, messages, and choose how to apply the update.'},
+      'Ծրագիր': {ru: 'Программа', en: 'App'},
+      'Կայք': {ru: 'Сайт', en: 'Web'},
+      'Փաթեթ պատրաստ': {ru: 'Пакет готов', en: 'Package Ready'},
+      'Գնալ կիրառման կոճակին': {ru: 'Перейти к применению', en: 'Go to Apply button'},
+      'Նոր հնարավորություն': {ru: 'Новая функция', en: 'New Feature'},
+      'ԱՆՋԱՏՎԱԾ': {ru: 'ОТКЛЮЧЕНО', en: 'DISABLED'},
+      'Տեխնիկական աշխատանքների վիճակ': {ru: 'Состояние тех. работ', en: 'Maintenance Status'},
+      'Վերջին թարմացումը (UTC+4)': {ru: 'Последнее обновление', en: 'Last update'},
+      'Թողարկման կենդանի ամփոփում': {ru: 'Живая сводка релиза', en: 'Live Release Summary'},
+      'Մինչև սեղմես `Կիրառել թարմացումը`, այստեղ միանգամից երևում է ինչ տարբերակ է գնալու, ինչ ձևով է կիրառվելու և արդյոք հիմնական դաշտերը լրացված են։': {ru: 'До нажатия кнопки здесь сразу видно, какая версия будет применена.', en: 'Before applying, you can see what version will be deployed.'},
+      'Փոփոխությունները կպահպանվեն ավտոմատ': {ru: 'Изменения сохраняются автоматически', en: 'Changes saved automatically'},
+      'Ծրագրի թողարկում': {ru: 'Релиз программы', en: 'App Release'},
+      'Նոր հնարավորություն - Ծրագրի նոր տարբերակ': {ru: 'Новая версия программы', en: 'New App Version'},
+      'Կայքի թողարկում': {ru: 'Релиз сайта', en: 'Web Release'},
+      'Նոր հնարավորություն - Կայքի նոր տարբերակ': {ru: 'Новая версия сайта', en: 'New Web Version'},
+      'Կիրառման ձև': {ru: 'Способ применения', en: 'Deployment Mode'},
+      'Կփոխվեն միայն տարբերակների, հաղորդագրությունների և կարգավորումների տվյալները` առանց սերվերի ֆայլերի փոփոխման:': {ru: 'Будут изменены только данные версий и настройки.', en: 'Only version data and settings will be changed.'},
+      'ԿԻՐԱՌԵԼ ԹԱՐՄԱՑՈՒՄԸ': {ru: 'ПРИМЕНИТЬ ОБНОВЛЕНИЕ', en: 'APPLY UPDATE'},
+      'ՊԱՏՐԱՍՏ': {ru: 'ГОТОВ', en: 'READY'},
+      'ՍՊԱՍՄԱՆ ՄԵՋ': {ru: 'В ОЖИДАНИИ', en: 'PENDING'}
+    };
+    const currentLang = '<?= $adminLang ?>';
+    if (currentLang !== 'hy') {
+      function translateNode(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          let text = node.textContent.trim();
+          if (text && ADMIN_I18N[text] && ADMIN_I18N[text][currentLang]) {
+            node.textContent = node.textContent.replace(text, ADMIN_I18N[text][currentLang]);
+          }
+        } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') {
+          node.childNodes.forEach(translateNode);
+        }
+      }
+      document.addEventListener('DOMContentLoaded', () => {
+        translateNode(document.body);
+      });
+    }
+  </script>
+  <script>
+    const ADMIN_I18N = {
+      'Թարմացում և տեղադրում': {ru: 'Обновление и установка', en: 'Update & Deploy'},
+      'Թարմացումների Վահանակ': {ru: 'Панель обновлений', en: 'Updates Dashboard'},
+      'Ծրագրի ընթացիկ տարբերակ': {ru: 'Текущая версия приложения', en: 'Current App Version'},
+      'Կայքի ընթացիկ տարբերակ': {ru: 'Текущая версия сайта', en: 'Current Web Version'},
+      'Փաթեթի կապի վիճակ': {ru: 'Статус связи пакета', en: 'Package Sync Status'},
+      'Ծրագրի ընդհանուր ճանաչված տեղադրումներ': {ru: 'Общее количество установок', en: 'Total Known Installs'},
+      '1. Թարմացում և տեղադրում': {ru: 'Обновление и установка', en: 'Update & Deploy'},
+      '2. Տեխնիկական աշխատանքներ': {ru: 'Тех. работы', en: 'Maintenance'},
+      '3. Push ծանուցումներ': {ru: 'Push-уведомления', en: 'Push Notifications'},
+      '4. Սարքեր': {ru: 'Устройства', en: 'Devices'},
+      '5. Պատմություն': {ru: 'История', en: 'History'},
+      '6. Մուտքեր': {ru: 'Доступы', en: 'Access'},
+      '7. Մոդերացիա': {ru: 'Модерация', en: 'Moderation'},
+      '8. Թարգմանություններ': {ru: 'Переводы', en: 'Translations'},
+      'Կարգավորումներ և համակարգ': {ru: 'Настройки и система', en: 'Settings & System'},
+      'Կառավարեք ծրագրի տարբերակները, սարքերը, մուտքերը և այլն։': {ru: 'Управляйте версиями, устройствами, доступами и т.д.', en: 'Manage app versions, devices, accesses, etc.'},
+      'Երգերի ցանկ': {ru: 'Список песен', en: 'Music Library'},
+      'Կարգավորումներ': {ru: 'Настройки', en: 'Settings'},
+      'Դուրս գալ': {ru: 'Выйти', en: 'Log Out'},
+      'Ադմին': {ru: 'Админ', en: 'Admin'}
+    };
+    const currentLang = '<?= $adminLang ?>';
+    if (currentLang !== 'hy') {
+      function translateNode(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          let text = node.textContent.trim();
+          if (text && ADMIN_I18N[text] && ADMIN_I18N[text][currentLang]) {
+            node.textContent = node.textContent.replace(text, ADMIN_I18N[text][currentLang]);
+          }
+        } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') {
+          node.childNodes.forEach(translateNode);
+        }
+      }
+      document.addEventListener('DOMContentLoaded', () => {
+        translateNode(document.body);
+      });
+    }
+</script>
 
-    <div
+<div class="app-layout">
+  <?php
+    $activePage = "settings";
+    include __DIR__ . "/admin_sidebar.php";
+  ?>
+  <main class="app-main">
+    <header class="app-topbar">
+      <div class="date-display" style="color: var(--text); font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <span><?= date('F j, Y') ?></span>
+      </div>
+      <div class="topbar-right">
+        <div class="search-box">
+          <input type="search" placeholder="Search setting...">
+        </div>
+        <div style="width: 44px; height: 44px; border-radius: 50%; background: #ffffff; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 2px 10px rgba(0,0,0,0.02); cursor: pointer;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span style="position: absolute; top: 12px; right: 12px; width: 8px; height: 8px; background: var(--danger); border-radius: 50%; border: 2px solid white;"></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; box-shadow: 0 4px 10px rgba(67, 24, 255, 0.2);">
+            <?= strtoupper(substr($adminDisplayName ?? 'A', 0, 1)) ?>
+          </div>
+          <span style="font-weight: 700; font-size: 15px; color: var(--text);"><?= htmlspecialchars($adminDisplayName ?? 'Admin', ENT_QUOTES) ?></span>
+        </div>
+      </div>
+    </header>
+
+    <div class="app-content">
+      <div class="page-header" style="padding-bottom: 0; border: none; align-items: flex-start; margin-bottom: 32px; display: flex; justify-content: space-between;">
+        <div>
+          <h2 style="font-size: 34px; margin-bottom: 8px; font-weight:800; color:var(--text); letter-spacing:-0.5px;"><?= __('Համակարգի կարգավորումներ') ?> 😍</h2>
+          <p style="margin:0; font-size:15px; color:var(--muted); font-weight: 500;"><?= __('Կառավարեք ծրագրի տարբերակները, սարքերը, մուտքերը և այլն։') ?></p>
+        </div>
+        <div style="display: flex; gap: 12px; background: #ffffff; padding: 6px; border-radius: 12px; box-shadow: var(--shadow-sm);">
+          <button class="btn" style="background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; box-shadow: 0 4px 10px rgba(67,24,255,0.2);">Daily</button>
+          <button class="btn" style="background: transparent; color: var(--muted); border: none; padding: 8px 16px; box-shadow: none;">Monthly</button>
+        </div>
+      </div>
+
+      <!-- HIDDEN section switcher — required for JS section switching functionality -->
+      <?php if ($hasAnyAdminSectionAccess): ?>
+      <div role="tablist" style="display:none; visibility:hidden; position:absolute; pointer-events:none; height:0; overflow:hidden;">
+        <?php if (!empty($adminSectionPermissions["release"])): ?>
+        <button class="section-tab active" type="button" data-section-tab="release"></button>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["maintenance"])): ?>
+        <button class="section-tab" type="button" data-section-tab="maintenance"></button>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["push"])): ?>
+        <button class="section-tab" type="button" data-section-tab="push"></button>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["devices"])): ?>
+        <button class="section-tab" type="button" data-section-tab="devices"></button>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["history"])): ?>
+        <button class="section-tab" type="button" data-section-tab="history"></button>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["access"])): ?>
+        <button class="section-tab" type="button" data-section-tab="access"></button>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["moderation"])): ?>
+        <button class="section-tab" type="button" data-section-tab="moderation"></button>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["translations"])): ?>
+        <button class="section-tab" type="button" data-section-tab="translations"></button>
+        <?php endif; ?>
+      </div>
+      <?php endif; ?>
+
+      <div
       class="banner <?= htmlspecialchars($messageType, ENT_QUOTES) ?>"
       id="adminBanner"
       <?= $message !== '' ? '' : 'hidden' ?>
     ><?= htmlspecialchars($message, ENT_QUOTES) ?></div>
 
-    <?php if ($hasAnyAdminSectionAccess): ?>
-    <div class="section-switcher" role="tablist" aria-label="Admin բաժիններ">
-      <?php if (!empty($adminSectionPermissions['release'])): ?>
-      <button class="section-tab active" type="button" data-section-tab="release"><span>1. Թարմացում և տեղադրում</span><small>Տարբերակներ, հաղորդագրություններ, ZIP փաթեթ և հրապարակում</small></button>
-      <?php endif; ?>
-      <?php if (!empty($adminSectionPermissions['maintenance'])): ?>
-      <button class="section-tab" type="button" data-section-tab="maintenance"><span>2. Տեխնիկական աշխատանքներ</span><small>Միացնել, ժամանակացույց, հաղորդագրություն</small></button>
-      <?php endif; ?>
-      <?php if (!empty($adminSectionPermissions['push'])): ?>
-      <button class="section-tab" type="button" data-section-tab="push"><span>3. Push ծանուցումներ</span><small>Բաժանորդագրումներ, ուղարկում և push settings</small></button>
-      <?php endif; ?>
-      <?php if (!empty($adminSectionPermissions['devices'])): ?>
-      <button class="section-tab" type="button" data-section-tab="devices"><span>4. Սարքեր</span><small>Ծրագրի ակտիվ սարքեր և install տվյալներ</small></button>
-      <?php endif; ?>
-      <?php if (!empty($adminSectionPermissions['history'])): ?>
-      <button class="section-tab" type="button" data-section-tab="history"><span>5. Պատմություն</span><small>Հետ գնալ, փոփոխությունների հետք, ավելին բացել</small></button>
-      <?php endif; ?>
-      <?php if (!empty($adminSectionPermissions['access'])): ?>
-      <button class="section-tab" type="button" data-section-tab="access"><span>6. Մուտքեր</span><small>Admin email-ներ, նշումներ, session տվյալներ</small></button>
-      <?php endif; ?>
-      <?php if (!empty($adminSectionPermissions['moderation'])): ?>
-      <button class="section-tab" type="button" data-section-tab="moderation"><span>7. Մոդերացիա</span><small>Նոր երգերի և խմբագրման հարցումների հերթ</small></button>
-      <?php endif; ?>
-      <?php if (!empty($adminSectionPermissions['translations'])): ?>
-      <button class="section-tab" type="button" data-section-tab="translations"><span>8. Թարգմանություններ</span><small>Ձեռքով թարգմանություններ, պահոց և լեզուների կառավարում</small></button>
-      <?php endif; ?>
-    </div>
-    <?php else: ?>
+    <?php if (!$hasAnyAdminSectionAccess): ?>
     <section class="panel full">
       <h2>Բաժինների հասանելիություն չկա</h2>
       <p>Այս օգտահաշվի համար ադմին բաժինների թույլտվություններ դեռ միացված չեն։ Խնդրիր լիազորված ադմինին՝ միացնել անհրաժեշտ բաժինները <code>Մուտքեր</code> բաժնից։</p>
@@ -2062,21 +2105,81 @@ $csrfToken = wp_admin_updates_csrf_token();
       <form id="releaseControlForm" method="post" enctype="multipart/form-data" class="stack" data-section-container>
         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
         <div class="stats" data-admin-section="release maintenance all" data-admin-permission="release,maintenance">
+          
           <div class="stat">
-            <strong><?= htmlspecialchars((string)$config['app_version'], ENT_QUOTES) ?></strong>
-            <span><?= htmlspecialchars(wp_version_release_label((string)$config['app_release_type']), ENT_QUOTES) ?></span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;"><?= htmlspecialchars(wp_version_release_label((string)$config['app_release_type']), ENT_QUOTES) ?></span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars((string)$config['app_version'], ENT_QUOTES) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
           </div>
+          
           <div class="stat">
-            <strong><?= htmlspecialchars((string)$config['web_version'], ENT_QUOTES) ?></strong>
-            <span><?= htmlspecialchars(wp_version_release_label((string)$config['web_release_type']), ENT_QUOTES) ?></span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;"><?= htmlspecialchars(wp_version_release_label((string)$config['web_release_type']), ENT_QUOTES) ?></span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars((string)$config['web_version'], ENT_QUOTES) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
           </div>
+          
           <div class="stat">
-            <strong><?= $isMaintenanceActive ? 'ՄԻԱՑՎԱԾ' : 'ԱՆՋԱՏՎԱԾ' ?></strong>
-            <span><?= $isScheduledActive ? 'Ժամանակացույցով տեխնիկական աշխատանքը ակտիվ է' : 'Տեխնիկական աշխատանքների վիճակ' ?></span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;"><?= $isScheduledActive ? 'Ժամանակացույցով տեխնիկական աշխատանքը ակտիվ է' : 'Տեխնիկական աշխատանքների վիճակ' ?></span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= $isMaintenanceActive ? 'ՄԻԱՑՎԱԾ' : 'ԱՆՋԱՏՎԱԾ' ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
           </div>
+          
           <div class="stat">
-            <strong><?= htmlspecialchars(wp_version_format_datetime_admin((string)$config['updated_at']) ?: '—', ENT_QUOTES) ?></strong>
-            <span>Վերջին թարմացումը (UTC+4)</span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Վերջին թարմացումը (UTC+4)</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars(wp_version_format_datetime_admin((string)$config['updated_at']) ?: '—', ENT_QUOTES) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
           </div>
         </div>
 
@@ -2488,14 +2591,44 @@ $csrfToken = wp_admin_updates_csrf_token();
             <div class="access-helper" style="margin-top:0">Client ID-ն, Redirect URI-ն և նշումները կպահպանվեն ավտոմատ։ Google-ի գաղտնի բանալին մնում է ձեռքով պահպանմամբ՝ անվտանգության համար։</div>
 
             <div class="stats" style="margin-bottom:16px">
-              <div class="stat">
-                <strong><?= htmlspecialchars((string)($config['social_auth_google_client_id'] !== '' ? 'ՊԱՏՐԱՍՏ Է' : 'ԼՐԱՑՆԵԼ'), ENT_QUOTES) ?></strong>
-                <span>Google public տվյալներ</span>
+              
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Google public տվյալներ</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars((string)($config['social_auth_google_client_id'] !== '' ? 'ՊԱՏՐԱՍՏ Է' : 'ԼՐԱՑՆԵԼ'), ENT_QUOTES) ?></strong>
               </div>
-              <div class="stat">
-                <strong><?= htmlspecialchars($googleClientSecretStatus, ENT_QUOTES) ?></strong>
-                <span>Google գաղտնի բանալի</span>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
               </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
+          </div>
+              
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Google գաղտնի բանալի</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars($googleClientSecretStatus, ENT_QUOTES) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
+          </div>
             </div>
 
             <div class="panel-embed">
@@ -2562,22 +2695,82 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
 
             <div class="stats" style="margin-bottom:16px">
-              <div class="stat">
-                <strong><?= (int)($moderationCounts['pending'] ?? 0) ?></strong>
-                <span>Սպասման մեջ</span>
+              
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Սպասման մեջ</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($moderationCounts['pending'] ?? 0) ?></strong>
               </div>
-              <div class="stat">
-                <strong><?= (int)($moderationCounts['approved'] ?? 0) ?></strong>
-                <span>Հաստատված</span>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
               </div>
-              <div class="stat">
-                <strong><?= (int)($moderationCounts['rejected'] ?? 0) ?></strong>
-                <span>Մերժված</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
+          </div>
+              
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Հաստատված</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($moderationCounts['approved'] ?? 0) ?></strong>
               </div>
-              <div class="stat">
-                <strong><?= (int)($moderationCounts['all'] ?? 0) ?></strong>
-                <span>Ընդհանուր</span>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
               </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
+          </div>
+              
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Մերժված</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($moderationCounts['rejected'] ?? 0) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
+          </div>
+              
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Ընդհանուր</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($moderationCounts['all'] ?? 0) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
+          </div>
             </div>
 
             <form method="get" class="stack" style="margin-top:16px" data-moderation-filter-form="1">
@@ -2819,18 +3012,63 @@ $csrfToken = wp_admin_updates_csrf_token();
           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
 
           <div class="stats" data-admin-section="translations all" data-admin-permission="translations">
-            <div class="stat">
-              <strong>ՁԵՌՔՈՎ</strong>
-              <span>Թարգմանության աշխատակարգ</span>
+            
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Թարգմանության աշխատակարգ</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;">ՁԵՌՔՈՎ</strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
             </div>
-            <div class="stat">
-              <strong><?= htmlspecialchars((string)($translationSettings['mode'] ?? 'manual'), ENT_QUOTES) ?></strong>
-              <span>Ընթացիկ ռեժիմ</span>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
             </div>
-            <div class="stat">
-              <strong><?= (int)($translationCacheStats['all'] ?? 0) ?></strong>
-              <span>Ընդհանուր թարգմանված գրառումներ</span>
+          </div>
+            
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Ընթացիկ ռեժիմ</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars((string)($translationSettings['mode'] ?? 'manual'), ENT_QUOTES) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
             </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
+          </div>
+            
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Ընդհանուր թարգմանված գրառումներ</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($translationCacheStats['all'] ?? 0) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
+          </div>
           </div>
 
           <section class="panel full" id="translationSettingsPanel" data-admin-section="translations all" data-admin-permission="translations">
@@ -2954,25 +3192,100 @@ $csrfToken = wp_admin_updates_csrf_token();
       <form method="post" class="stack" data-section-container>
         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
         <div class="stats" data-admin-section="push devices all" data-admin-permission="push,devices">
+          
           <div class="stat">
-            <strong><?= !empty($pushConfig['enabled']) ? 'ՄԻԱՑՎԱԾ' : 'ԱՆՋԱՏՎԱԾ' ?></strong>
-            <span>Push ծանուցումների վիճակ</span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Push ծանուցումների վիճակ</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= !empty($pushConfig['enabled']) ? 'ՄԻԱՑՎԱԾ' : 'ԱՆՋԱՏՎԱԾ' ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
           </div>
+          
           <div class="stat">
-            <strong><?= (int)($installStats['main']['known_count'] ?? 0) ?></strong>
-            <span>Ծրագրի ընդհանուր ճանաչված տեղադրումներ</span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Ծրագրի ընդհանուր ճանաչված տեղադրումներ</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($installStats['main']['known_count'] ?? 0) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
           </div>
+          
           <div class="stat">
-            <strong><?= (int)($installStats['main']['count'] ?? 0) ?></strong>
-            <span>Վերջին <?= (int)($installStats['window_days'] ?? 60) ?> օրում ակտիվ երևացած սարքեր</span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Վերջին <?= (int)($installStats['window_days'] ?? 60) ?> օրում ակտիվ երևացած սարքեր</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($installStats['main']['count'] ?? 0) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
           </div>
+          
           <div class="stat">
-            <strong><?= (int)($pushStats['subscriptions'] ?? 0) ?></strong>
-            <span>Push միացրած սարքեր</span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Push միացրած սարքեր</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($pushStats['subscriptions'] ?? 0) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
           </div>
+          
           <div class="stat">
-            <strong><?= htmlspecialchars($pushLastSentAt ?: '—', ENT_QUOTES) ?></strong>
-            <span>Վերջին ուղարկումը</span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Վերջին ուղարկումը</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars($pushLastSentAt ?: '—', ENT_QUOTES) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
           </div>
         </div>
 
@@ -3081,30 +3394,120 @@ $csrfToken = wp_admin_updates_csrf_token();
           </div>
 
           <div class="stats" style="margin-top:16px">
-            <div class="stat">
-              <strong><?= (int)($installStats['main']['count'] ?? 0) ?></strong>
-              <span>Հիմնական ծրագիր ակտիվ սարքեր (<?= (int)($installStats['window_days'] ?? 60) ?> օր)</span>
+            
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Հիմնական ծրագիր ակտիվ սարքեր (<?= (int)($installStats['window_days'] ?? 60) ?> օր)</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($installStats['main']['count'] ?? 0) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
             </div>
-            <div class="stat">
-              <strong><?= (int)($installStats['main']['known_count'] ?? 0) ?></strong>
-              <span>Հիմնական ծրագիր ընդհանուր ճանաչված</span>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
             </div>
-            <div class="stat">
-              <strong><?= (int)($installStats['admin']['count'] ?? 0) ?></strong>
-              <span>Ադմին ծրագիր ակտիվ սարքեր (<?= (int)($installStats['window_days'] ?? 60) ?> օր)</span>
+          </div>
+            
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Հիմնական ծրագիր ընդհանուր ճանաչված</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($installStats['main']['known_count'] ?? 0) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
             </div>
-            <div class="stat">
-              <strong><?= (int)($installStats['admin']['known_count'] ?? 0) ?></strong>
-              <span>Ադմին ծրագիր ընդհանուր ճանաչված</span>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
             </div>
-            <div class="stat">
-              <strong><?= htmlspecialchars(wp_version_format_datetime_admin((string)($installStats['main']['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></strong>
-              <span>Վերջին ակտիվություն` հիմնական</span>
+          </div>
+            
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Ադմին ծրագիր ակտիվ սարքեր (<?= (int)($installStats['window_days'] ?? 60) ?> օր)</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($installStats['admin']['count'] ?? 0) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
             </div>
-            <div class="stat">
-              <strong><?= htmlspecialchars(wp_version_format_datetime_admin((string)($installStats['admin']['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></strong>
-              <span>Վերջին ակտիվություն` ադմին</span>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
             </div>
+          </div>
+            
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Ադմին ծրագիր ընդհանուր ճանաչված</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($installStats['admin']['known_count'] ?? 0) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
+          </div>
+            
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Վերջին ակտիվություն` հիմնական</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars(wp_version_format_datetime_admin((string)($installStats['main']['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
+          </div>
+            
+          <div class="stat">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Վերջին ակտիվություն` ադմին</span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars(wp_version_format_datetime_admin((string)($installStats['admin']['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></strong>
+              </div>
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
+              <span style="color: var(--success); display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                +0%
+              </span>
+              <span style="color: var(--muted);">Impression</span>
+            </div>
+          </div>
           </div>
 
           <?php if ($showMainDeviceSection): ?>
@@ -3598,7 +4001,7 @@ $csrfToken = wp_admin_updates_csrf_token();
         </section>
       </aside>
     </div>
-  </main>
+  </div></main></div>
   <script>
     (function(){
       const appVersionInput = document.getElementById('app_version');

@@ -96,7 +96,7 @@ if (!function_exists('wp_song_request_build_combined_title')) {
             wp_song_request_trim($payload['title_en'] ?? ''),
             wp_song_request_trim($payload['title_ru'] ?? ''),
         ];
-        $parts = array_values(array_filter($parts, static fn(string $value): bool => $value !== ''));
+        $parts = array_values(array_filter($parts, function($value) { return $value !== ''; }));
         if ($parts) {
             return implode(' / ', $parts);
         }
@@ -418,22 +418,22 @@ if (!function_exists('wp_song_request_list_for_submitter')) {
 
 if (!function_exists('wp_song_request_status_label')) {
     function wp_song_request_status_label(string $status): string {
-        return match ($status) {
-            'pending' => 'Սպասման մեջ',
-            'approved' => 'Հաստատված',
-            'rejected' => 'Մերժված',
-            default => $status !== '' ? $status : 'Անհայտ',
-        };
+        switch ($status) {
+            case 'pending': return 'Սպասման մեջ';
+            case 'approved': return 'Հաստատված';
+            case 'rejected': return 'Մերժված';
+            default: return $status !== '' ? $status : 'Անհայտ';
+        }
     }
 }
 
 if (!function_exists('wp_song_request_type_label')) {
     function wp_song_request_type_label(string $type): string {
-        return match ($type) {
-            'new' => 'Նոր երգ',
-            'edit' => 'Խմբագրման առաջարկ',
-            default => $type !== '' ? $type : 'Հարցում',
-        };
+        switch ($type) {
+            case 'new': return 'Նոր երգ';
+            case 'edit': return 'Խմբագրման առաջարկ';
+            default: return $type !== '' ? $type : 'Հարցում';
+        }
     }
 }
 

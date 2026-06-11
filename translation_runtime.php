@@ -16,7 +16,7 @@ if (!function_exists('wp_translation_settings')) {
 
 if (!function_exists('wp_translation_requested_lang')) {
     function wp_translation_requested_lang(): string {
-        $value = strtolower(trim((string)($_GET['lang'] ?? $_POST['lang'] ?? '')));
+        $value = strtolower(trim((string)($_GET['lang'] ?? $_POST['lang'] ?? $_COOKIE['admin_lang'] ?? '')));
         return in_array($value, ['hy', 'ru', 'en'], true) ? $value : 'hy';
     }
 }
@@ -387,7 +387,7 @@ if (!function_exists('wp_translation_cache_list_entries')) {
 
                 if ($searchNeedle !== '') {
                     $haystack = mb_strtolower(implode(' ', [$source, $text, $context, $langCode]));
-                    if (!str_contains($haystack, $searchNeedle)) {
+                    if (strpos($haystack, $searchNeedle) === false) {
                         continue;
                     }
                 }

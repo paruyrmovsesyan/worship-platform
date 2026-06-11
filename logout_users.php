@@ -59,24 +59,20 @@ $_SESSION = [];
 
 if (ini_get('session.use_cookies')) {
     $params = session_get_cookie_params();
-    setcookie(session_name(), '', [
-        'expires'  => time() - 42000,
-        'path'     => $params['path'] ?? '/',
-        'domain'   => $params['domain'] ?? '',
-        'secure'   => !empty($params['secure']),
-        'httponly' => !empty($params['httponly']),
-        'samesite' => 'Lax',
-    ]);
+    $sessionName = session_name();
+    foreach ([true, false] as $sec) {
+        setcookie($sessionName, '', [
+            'expires'  => time() - 42000,
+            'path'     => $params['path'] ?? '/',
+            'domain'   => $params['domain'] ?? '',
+            'secure'   => $sec,
+            'httponly' => !empty($params['httponly']),
+            'samesite' => 'Lax',
+        ]);
+    }
 }
 
-setcookie('remember_me', '', [
-    'expires'  => time() - 3600,
-    'path'     => '/',
-    'domain'   => '',
-    'secure'   => $https,
-    'httponly' => true,
-    'samesite' => 'Lax',
-]);
+wp_auth_clear_remember_cookie();
 
 if (session_status() === PHP_SESSION_ACTIVE) {
     session_destroy();

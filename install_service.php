@@ -49,46 +49,30 @@ function wp_install_normalize_scope(string $scope): string {
 }
 
 function wp_install_read_store(): array {
-    if (!is_file(WP_INSTALLS_PATH)) {
-        return [];
-    }
-
-    $json = @file_get_contents(WP_INSTALLS_PATH);
-    if (!is_string($json) || trim($json) === '') {
-        return [];
-    }
-
-    $decoded = json_decode($json, true);
-    if (!is_array($decoded)) {
-        return [];
-    }
-
     $items = [];
-    foreach ($decoded as $row) {
-        if (!is_array($row)) {
-            continue;
-        }
+    try {
+        $conn = wp_runtime_open_mysqli();
+        $result = $conn->query("SELECT * FROM install_stats");
+        while ($row = $result->fetch_assoc()) {
+            $deviceId = trim((string)($row['device_id'] ?? ''));
+            if ($deviceId === '') continue;
 
-        $deviceId = trim((string)($row['device_id'] ?? ''));
-        if ($deviceId === '') {
-            continue;
+            $items[] = [
+                'device_id' => mb_substr($deviceId, 0, 120),
+                'device_signature' => wp_install_sanitize_signature((string)($row['device_signature'] ?? '')),
+                'scope' => wp_install_normalize_scope((string)($row['scope'] ?? 'main')),
+                'source' => mb_substr(trim((string)($row['source'] ?? '')), 0, 80),
+                'user_id' => max(0, (int)($row['user_id'] ?? 0)),
+                'user_name' => mb_substr(trim((string)($row['user_name'] ?? '')), 0, 160),
+                'user_username' => mb_substr(trim((string)($row['user_username'] ?? '')), 0, 160),
+                'user_email' => mb_substr(trim((string)($row['user_email'] ?? '')), 0, 190),
+                'ip_address' => mb_substr(trim((string)($row['ip_address'] ?? '')), 0, 80),
+                'user_agent' => mb_substr(trim((string)($row['user_agent'] ?? '')), 0, 255),
+                'installed_at' => wp_version_normalize_datetime($row['installed_at'] ?? '') ?: wp_version_now_iso(),
+                'last_seen_at' => wp_version_normalize_datetime($row['last_seen_at'] ?? '') ?: wp_version_now_iso(),
+            ];
         }
-
-        $items[] = [
-            'device_id' => mb_substr($deviceId, 0, 120),
-            'device_signature' => wp_install_sanitize_signature((string)($row['device_signature'] ?? '')),
-            'scope' => wp_install_normalize_scope((string)($row['scope'] ?? 'main')),
-            'source' => mb_substr(trim((string)($row['source'] ?? '')), 0, 80),
-            'user_id' => max(0, (int)($row['user_id'] ?? 0)),
-            'user_name' => mb_substr(trim((string)($row['user_name'] ?? '')), 0, 160),
-            'user_username' => mb_substr(trim((string)($row['user_username'] ?? '')), 0, 160),
-            'user_email' => mb_substr(trim((string)($row['user_email'] ?? '')), 0, 190),
-            'ip_address' => mb_substr(trim((string)($row['ip_address'] ?? '')), 0, 80),
-            'user_agent' => mb_substr(trim((string)($row['user_agent'] ?? '')), 0, 255),
-            'installed_at' => wp_version_normalize_datetime($row['installed_at'] ?? '') ?: wp_version_now_iso(),
-            'last_seen_at' => wp_version_normalize_datetime($row['last_seen_at'] ?? '') ?: wp_version_now_iso(),
-        ];
-    }
+    } catch (Throwable $e) {}
 
     return $items;
 }
@@ -253,12 +237,40 @@ function wp_install_canonicalize_items(array $items): array {
 
 function wp_install_write_store(array $items): bool {
     $items = wp_install_canonicalize_items($items);
-    $json = json_encode(array_values($items), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-    if ($json === false) {
+    
+    try {
+        $conn = wp_runtime_open_mysqli();
+        $conn->begin_transaction();
+        
+        $conn->query("TRUNCATE TABLE install_stats");
+        $stmt = $conn->prepare("INSERT INTO install_stats (device_id, device_signature, scope, source, user_id, user_name, user_username, user_email, ip_address, user_agent, installed_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        
+        foreach ($items as $item) {
+            $device_id = $item['device_id'] ?? '';
+            $device_signature = $item['device_signature'] ?? '';
+            $scope = $item['scope'] ?? 'main';
+            $source = $item['source'] ?? '';
+            $user_id = $item['user_id'] ?? 0;
+            $user_name = $item['user_name'] ?? '';
+            $user_username = $item['user_username'] ?? '';
+            $user_email = $item['user_email'] ?? '';
+            $ip_address = $item['ip_address'] ?? '';
+            $user_agent = $item['user_agent'] ?? '';
+            $installed_at = $item['installed_at'] ?? '';
+            $last_seen_at = $item['last_seen_at'] ?? '';
+            
+            $stmt->bind_param('ssssisssssss', $device_id, $device_signature, $scope, $source, $user_id, $user_name, $user_username, $user_email, $ip_address, $user_agent, $installed_at, $last_seen_at);
+            $stmt->execute();
+        }
+        
+        $conn->commit();
+        return true;
+    } catch (Throwable $e) {
+        if (isset($conn) && $conn instanceof mysqli) {
+            $conn->rollback();
+        }
         return false;
     }
-
-    return @file_put_contents(WP_INSTALLS_PATH, $json, LOCK_EX) !== false;
 }
 
 function wp_install_is_active_seen_at(string $seenAt): bool {

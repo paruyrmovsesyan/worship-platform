@@ -14,12 +14,20 @@ function respond(array $arr): void {
 }
 
 if (!empty($_SESSION['user_id'])) {
-  $pdo = wp_auth_open_pdo();
-  if (!wp_auth_current_session_backed($pdo)) {
-    wp_auth_force_local_logout(false);
+  try {
+    $pdo = wp_auth_open_pdo();
+    if (!wp_auth_current_session_backed($pdo)) {
+      wp_auth_force_local_logout(false);
+      respond([
+        "loggedIn" => false,
+        "session_type" => null
+      ]);
+    }
+  } catch (Throwable $e) {
     respond([
       "loggedIn" => false,
-      "session_type" => null
+      "session_type" => null,
+      "error" => "Database connection error: " . $e->getMessage()
     ]);
   }
 

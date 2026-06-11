@@ -2,28 +2,12 @@ RewriteEngine On
 
 # =========================
 # MAINTENANCE MODE (global)
-# Միացվում է եթե site root-ում կա maintenance.flag ֆայլը
 # =========================
 ErrorDocument 503 /maintenance.html
 ErrorDocument 500 /maintenance.html
 
-
-# =========================
-# OPTIONAL: Remove .html extension (եթե պետք է)
-# =========================
-#RewriteCond %{REQUEST_FILENAME} !-d
-#RewriteCond %{REQUEST_FILENAME}.html -f
-#RewriteRule ^(.*)$ $1.html [L]
-
-# =========================
-# OPTIONAL: Force HTTPS (եթե պետք է)
-# =========================
-#RewriteCond %{HTTPS} off
-#RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
-
 # =========================
 # Default index
-# Քեզ մոտ հիմա index.html է. Եթե իրականում index.php ես ուզում՝ փոխիր։
 # =========================
 DirectoryIndex index.html
 
@@ -32,9 +16,6 @@ DirectoryIndex index.html
   Header set Pragma "no-cache"
   Header set Expires "0"
 </IfModule>
-
-# NOTE: քո մոտ ExpiresActive Off + հետո On կա նույն IfModule-ում.
-# Առաջինը անիմաստ է (և կարող է override անի), թողնենք միայն On մասը։
 
 # cache static files
 <IfModule mod_expires.c>
@@ -45,3 +26,27 @@ DirectoryIndex index.html
   ExpiresByType image/svg+xml "access plus 10 days"
   ExpiresByType video/mp4 "access plus 10 days"
 </IfModule>
+
+# =========================
+# Legacy HTML Overrides
+# Force legacy HTML routes to be handled by React Router
+# even if the old files still exist on the server.
+# =========================
+RewriteRule ^main\.html$ /index.html [L]
+RewriteRule ^favorites\.html$ /index.html [L]
+RewriteRule ^news\.html$ /index.html [L]
+RewriteRule ^songs\.html$ /index.html [L]
+RewriteRule ^setlists\.html$ /index.html [L]
+RewriteRule ^setlist_view\.html$ /index.html [L]
+RewriteRule ^setlist_edit\.html$ /index.html [L]
+RewriteRule ^song_view\.html$ /index.html [L]
+RewriteRule ^song_request\.html$ /index.html [L]
+RewriteRule ^account\.html$ /index.html [L]
+RewriteRule ^transpose\.html$ /index.html [L]
+
+# =========================
+# React Router Fallback
+# =========================
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /index.html [QSA,L]

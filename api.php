@@ -1,9 +1,12 @@
 <?php
+declare(strict_types=1);
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+
 require_once __DIR__ . '/runtime_config.php';
 require_once __DIR__ . '/translation_runtime.php';
 
-error_reporting(E_ALL);
-ini_set('display_errors', '0');
 header("Content-Type: application/json; charset=UTF-8");
 
 register_shutdown_function(function () {
@@ -36,6 +39,7 @@ register_shutdown_function(function () {
 try {
     $conn = wp_runtime_open_mysqli();
     wp_runtime_ensure_song_title_columns_mysqli($conn);
+    wp_runtime_ensure_pricing_tables_mysqli($conn);
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(["error" => "DB connection failed"]);

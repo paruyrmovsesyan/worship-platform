@@ -116,14 +116,32 @@ function requireSetlistReadable(PDO $pdo, int $setlistId, int $uid): array {
   ");
   $st->execute([$setlistId, $uid]);
   $row = $st->fetch(PDO::FETCH_ASSOC);
-  if (!$row) {
-    out(["error" => "Setlist not found"], 404);
+  if ($row) {
+    return decorateSetlistAccess($row, 'shared', false, [
+      'id' => $row['access_id'] ?? null,
+      'expires_at' => $row['access_expires_at'] ?? null,
+    ]);
   }
 
-  return decorateSetlistAccess($row, 'shared', false, [
-    'id' => $row['access_id'] ?? null,
-    'expires_at' => $row['access_expires_at'] ?? null,
-  ]);
+  // Check Team Access
+  $st = $pdo->prepare("
+    SELECT s.*, u.name AS owner_name, u.email AS owner_email, m.role AS team_role
+    FROM setlists s
+    JOIN team_members m ON m.team_id = s.team_id
+    LEFT JOIN users u ON u.id = s.user_id
+    WHERE s.id = ? AND m.user_id = ? AND s.status = 'active'
+    LIMIT 1
+  ");
+  $st->execute([$setlistId, $uid]);
+  $row = $st->fetch(PDO::FETCH_ASSOC);
+  if ($row) {
+    $canEdit = ($row['team_role'] === 'owner' || $row['team_role'] === 'admin');
+    $decorated = decorateSetlistAccess($row, 'team', $canEdit);
+    $decorated['team_role'] = $row['team_role'];
+    return $decorated;
+  }
+
+  out(["error" => "Setlist not found"], 404);
 }
 
 function findUserByEmail(PDO $pdo, string $email): ?array {
@@ -135,18 +153,47 @@ function findUserByEmail(PDO $pdo, string $email): ?array {
 
 ensureSetlistAccessTable($pdo);
 
+function ensureTeamArchitectureUpdates(PDO $pdo): void {
+  // Add team_id to setlists
+  try {
+      $pdo->exec("ALTER TABLE setlists ADD COLUMN team_id INT UNSIGNED NULL DEFAULT NULL AFTER user_id");
+  } catch (Exception $e) {}
+  
+  // Add team_id to songs
+  try {
+      $pdo->exec("ALTER TABLE songs ADD COLUMN team_id INT UNSIGNED NULL DEFAULT NULL AFTER id");
+  } catch (Exception $e) {}
+}
+ensureTeamArchitectureUpdates($pdo);
+
 /* CREATE SETLIST */
 if ($action === 'create_setlist' && $method === 'POST') {
     try {
         $d = readJson();
         $name = trim($d['name'] ?? '');
+        $team_id = !empty($d['team_id']) ? (int)$d['team_id'] : null;
 
         if ($name === '') {
             out(["error" => "Name required"], 400);
         }
 
-        $st = $pdo->prepare("INSERT INTO setlists (user_id, name) VALUES (?, ?)");
-        $st->execute([$uid, $name]);
+        // --- ENFORCE PRICING LIMITS ---
+        $stPlan = $pdo->prepare("SELECT plan_type FROM users WHERE id=? LIMIT 1");
+        $stPlan->execute([$uid]);
+        $plan = $stPlan->fetchColumn() ?: 'free';
+
+        if ($plan === 'free') {
+            $stCount = $pdo->prepare("SELECT COUNT(*) FROM setlists WHERE user_id=? AND status='active'");
+            $stCount->execute([$uid]);
+            $count = (int)$stCount->fetchColumn();
+            if ($count >= 3) {
+                out(["error" => "limit_reached", "message" => "Free plan allows up to 3 active setlists. Please upgrade to Pro to create more."], 403);
+            }
+        }
+        // ------------------------------
+
+        $st = $pdo->prepare("INSERT INTO setlists (user_id, team_id, name) VALUES (?, ?, ?)");
+        $st->execute([$uid, $team_id, $name]);
 
         out([
             "ok" => true,
@@ -218,12 +265,34 @@ if ($action === 'get_setlists' && $method === 'GET') {
     ");
     $sharedSt->execute([$uid]);
     $rows = array_merge($rows, $sharedSt->fetchAll(PDO::FETCH_ASSOC));
+
+    $teamSt = $pdo->prepare("
+      SELECT s.*,
+        NULL AS access_id,
+        NULL AS access_expires_at,
+        u.name AS owner_name,
+        u.email AS owner_email,
+        'team' AS access_role,
+        IF(m.role IN ('owner','admin'), 1, 0) AS can_edit,
+        (SELECT COUNT(*) FROM setlist_items i WHERE i.setlist_id = s.id) AS items_count,
+        t.name AS team_name
+      FROM setlists s
+      JOIN team_members m ON m.team_id = s.team_id
+      LEFT JOIN teams t ON t.id = s.team_id
+      LEFT JOIN users u ON u.id = s.user_id
+      WHERE m.user_id = ? AND s.user_id != ? AND s.status = 'active'
+    ");
+    $teamSt->execute([$uid, $uid]);
+    $rows = array_merge($rows, $teamSt->fetchAll(PDO::FETCH_ASSOC));
   }
 
   usort($rows, static function($a, $b) {
-    $aShared = (($a['access_role'] ?? 'owner') === 'shared') ? 1 : 0;
-    $bShared = (($b['access_role'] ?? 'owner') === 'shared') ? 1 : 0;
-    if ($aShared !== $bShared) return $aShared <=> $bShared;
+    $aRole = $a['access_role'] ?? 'owner';
+    $bRole = $b['access_role'] ?? 'owner';
+    $roleOrder = ['owner' => 0, 'team' => 1, 'shared' => 2];
+    $aVal = $roleOrder[$aRole] ?? 9;
+    $bVal = $roleOrder[$bRole] ?? 9;
+    if ($aVal !== $bVal) return $aVal <=> $bVal;
     $aTime = strtotime((string)($a['updated_at'] ?? $a['created_at'] ?? '')) ?: 0;
     $bTime = strtotime((string)($b['updated_at'] ?? $b['created_at'] ?? '')) ?: 0;
     return $bTime <=> $aTime;
@@ -559,7 +628,8 @@ if ($action === 'get_setlist_items' && $method === 'GET') {
     "access_id" => isset($setlist['access_id']) ? (int)$setlist['access_id'] : null,
     "access_expires_at" => $setlist['access_expires_at'] ?? null,
     "owner_name" => $setlist['owner_name'] ?? null,
-    "owner_email" => $setlist['owner_email'] ?? null
+    "owner_email" => $setlist['owner_email'] ?? null,
+    "team_role" => $setlist['team_role'] ?? null
   ], [
     'name' => 'setlists.items.setlist_name',
     'description' => 'setlists.items.setlist_description',
@@ -768,20 +838,24 @@ if ($action === 'search_songs' && $method === 'GET') {
   $like = '%' . $q . '%';
 
   $st = $pdo->prepare("
-    SELECT id, title, artist, song_key, tags,
-           title_hy, title_lat, title_en, title_ru
-    FROM songs
-    WHERE title LIKE ?
-       OR COALESCE(title_hy, '') LIKE ?
-       OR COALESCE(title_lat, '') LIKE ?
-       OR COALESCE(title_en, '') LIKE ?
-       OR COALESCE(title_ru, '') LIKE ?
-       OR artist LIKE ?
-       OR tags LIKE ?
-    ORDER BY COALESCE(NULLIF(title_hy, ''), NULLIF(title, ''), id) ASC
+    SELECT s.id, s.title, s.artist, s.song_key, s.tags,
+           s.title_hy, s.title_lat, s.title_en, s.title_ru
+    FROM songs s
+    LEFT JOIN team_members m ON m.team_id = s.team_id AND m.user_id = ?
+    WHERE (s.is_public = 1 OR s.user_id = ? OR m.id IS NOT NULL)
+      AND (
+         s.title LIKE ?
+      OR COALESCE(s.title_hy, '') LIKE ?
+      OR COALESCE(s.title_lat, '') LIKE ?
+      OR COALESCE(s.title_en, '') LIKE ?
+      OR COALESCE(s.title_ru, '') LIKE ?
+      OR s.artist LIKE ?
+      OR s.tags LIKE ?
+      )
+    ORDER BY COALESCE(NULLIF(s.title_hy, ''), NULLIF(s.title, ''), s.id) ASC
     LIMIT 30
   ");
-  $st->execute([$like, $like, $like, $like, $like, $like, $like]);
+  $st->execute([$uid, $uid, $like, $like, $like, $like, $like, $like, $like]);
 
   $rows = $st->fetchAll(PDO::FETCH_ASSOC);
 

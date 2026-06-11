@@ -1,0 +1,37 @@
+[
+    {
+        "id": "ead1210141c542834574a41c9bcf21acf0bcc95037b7e313adbc56a6ca912a34",
+        "endpoint": "https://fcm.googleapis.com/fcm/send/c2gWlrbCgZs:APA91bFcqOEyejhtjHx3WnVzbcDzpcG3E20oy3A8h_fdVRJWjG-G7nSKgi9GVwRQGsLCpUzXuCPUr_vWBNxoq0NSl3Zb4VIJB9aAFh4_XZcHxdKq6t5xAjM6anPKxHnD3RZEZV-ajfPv",
+        "blocked_at": "2026-03-31T01:54:40+04:00",
+        "actor": "paruyr.movsesyan2005@gmail.com",
+        "reason": "removed_by_admin"
+    },
+    {
+        "id": "a1b589910595ef8ef0a4ca19089088213f4680bb427595e88bc504fedfb0ab05",
+        "endpoint": "https://web.push.apple.com/QIO0eOqBcF7nDUNDAmCWjiM_4DXPVBBEuemjfjeJPyALWnmN8aSRD06TFQnEfPwipxhNNPAmdHcnz1n0X-L9xaMbsGiWNpri5fGAG_zTnpd5l1X0iQLM8bSlgr_nUVQv054LDoxHd0t_ft1zU_LLlXUepEJQtjBzaopOsgKpofE",
+        "blocked_at": "2026-03-31T01:54:47+04:00",
+        "actor": "paruyr.movsesyan2005@gmail.com",
+        "reason": "removed_by_admin"
+    },
+    {
+        "id": "7bcab8ca1b5294126e945ffdda7f24822fde7a9b547767a279035d8b1602cd79",
+        "endpoint": "https://fcm.googleapis.com/fcm/send/fgzlW-Cpmt0:APA91bGAH1PgdZVQeSgDeQvNd_W6uJ1mioiina4jpYkeCE3-NN5SogZp3S3uvPKGDsqlB_mfMUblhC4Fmah287Q3muelwF-uqAOfKRK1JL7_vm-vljRS584aXi2w5dlVWtUSebKRkXAY",
+        "blocked_at": "2026-03-31T01:58:08+04:00",
+        "actor": "paruyr.movsesyan2005@gmail.com",
+        "reason": "removed_by_admin"
+    },
+    {
+        "id": "ea526d0befb05b7b325929b845d0b80f9d3565a07f31b403dc71f17edf54e204",
+        "endpoint": "https://fcm.googleapis.com/fcm/send/c4kKibiWtt4:APA91bHwqk-_cO1tntNNlfOSY53lmVgEpMXDw2RXLrYb6ZYBMSt5MtQhTw_frQ6P3wBVNDmBFepO1vGz5WHluM1jhNdi7Bf6nTUsp5dQjxTA-nBRu7b-OXxx7n5iAgklFNx2j8VFVviB",
+        "blocked_at": "2026-03-31T02:01:36+04:00",
+        "actor": "paruyr.movsesyan2005@gmail.com",
+        "reason": "removed_by_admin"
+    },
+    {
+        "id": "cd04efef173f4d4af7d7303bdc0fffa96e06b3d1e8e733a93a81a1ea1555ccf3",
+        "endpoint": "https://web.push.apple.com/QIJAcPuhntDv3LIf1zeEY5S4UqFGLC4zJe39Lmh0J2eii5jd3SZfbErXNyPxfGIV_QTE_mha64FUJoPPS3JW9ugS2zVNWu7iGnG-ggIEhv9sYsuyoU1SJNQXBqKzM55GVDCLQOHHNdm0j_G2P9CCaWLqszLK7q0nMzDbEvSJBhc",
+        "blocked_at": "2026-03-31T02:06:13+04:00",
+        "actor": "paruyr.movsesyan2005@gmail.com",
+        "reason": "removed_by_admin"
+    }
+]

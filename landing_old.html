@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+<link rel="manifest" href="/manifest.json">
+<title>Worship Platform — Քրիստոնեական փառաբանության երգեր, ակորդներ և սեթլիստներ</title>
+<meta name="description" content="Գտիր քրիստոնեական փառաբանության երգեր, ակորդներ, բառեր և սեթլիստներ Worship Platform-ում։ Օգտագործիր կայքում կամ ծրագրում։">
+<meta property="og:title" content="Worship Platform — Քրիստոնեական փառաբանության երգեր, ակորդներ և սեթլիստներ">
+  <meta property="og:description" content="Գտիր քրիստոնեական փառաբանության երգեր, ակորդներ, բառեր և սեթլիստներ Worship Platform-ում։ Օգտագործիր կայքում կամ ծրագրում։">
+  <meta property="og:image" content="https://worship.pmstudio.am/wolarmyouth.jpg">
+  <meta property="og:url" content="https://worship.pmstudio.am/">
+  <meta property="og:type" content="website">
+<link rel="icon" href="wolarm_youth.png" type="image/png" />
+<link rel="apple-touch-icon" href="/wolarmyouth.jpg" type="image/jpeg" />
+<meta name="theme-color" content="#070910">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Worship Platform">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script src="/site_guard.js" defer></script>
+<script src="/i18n.js" defer></script>
+<script src="loader.js" defer></script>
+<script>document.documentElement.classList.add('auth-lock');</script>
+<link rel="stylesheet" href="nav.css">
+<style>
+:root{
+  --gold:#f6c87a;
+  --gold2:#ffe1a8;
+  --purple:#6b4eff;
+  --blue:#2b6cff;
+  --dark:#070910;
+  --dark2:#0f1424;
+  --text:#f0f1f6;
+  --nav-height: 64px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+
+body{
+  background:radial-gradient(circle at top,#141a33,#05070c 70%);
+  color:var(--text);
+  overflow-x:hidden;
+}
+
+
+
+/* HEADER */
+header{min-height:100vh; position:relative; display:flex; align-items:center; justify-content:center; text-align:center; overflow:hidden;}
+.bg-video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; filter:brightness(.35) saturate(1.4); transform:scale(1.15);}
+.overlay{position:absolute; inset:0; background:radial-gradient(circle at top,rgba(107,78,255,.25),transparent 60%), radial-gradient(circle at center,rgba(246,200,122,.18),transparent 55%), linear-gradient(180deg,rgba(5,7,12,.2),#05070c 85%); z-index:1;}
+.particles{position:absolute; inset:0; background:url('https://www.transparenttextures.com/patterns/stardust.png'); opacity:.35; z-index:2;}
+
+.hero{position:relative; z-index:3; max-width:900px; padding:20px;}
+.hero h1{font-size:66px; font-weight:800; margin-bottom:22px; letter-spacing:1px; text-shadow:0 30px 80px rgba(0,0,0,.9);}
+.hero p{font-size:22px; opacity:.9; margin-bottom:52px;}
+.cta a{display:inline-block; padding:18px 60px; border-radius:90px; background:linear-gradient(135deg,var(--purple),var(--gold)); color:#fff; font-weight:800; text-decoration:none; box-shadow:0 40px 120px rgba(107,78,255,.45); transition:.45s cubic-bezier(.2,.8,.2,1);}
+.cta a:hover{transform:translateY(-10px) scale(1.1); box-shadow:0 60px 160px rgba(246,200,122,.7);}
+
+/* SECTIONS */
+section{padding:75px 20px; position:relative;}
+.reveal{opacity:0; transform:translateY(80px); transition:1s cubic-bezier(.2,.8,.2,1);}
+.reveal.active{opacity:1; transform:none;}
+.features{max-width:1200px; margin:0 auto; display:grid; grid-template-columns:repeat(3,1fr); gap:46px; }
+.section h2{
+      text-align:center;
+      font-size:34px;
+      margin-bottom:50px;
+      position:relative;
+    }
+
+    .section h2::after{
+      content:"";
+      width:70px;
+      height:4px;
+      background: white;
+      display:block;
+      margin:18px auto 0;
+      border-radius:4px;
+    }
+.card{background:linear-gradient(180deg,rgba(20,26,51,.95),rgba(5,7,12,.95)); border-radius:34px; padding:56px 30px; text-align:center; box-shadow:0 40px 120px rgba(0,0,0,.7); transition:.6s; position:relative; overflow:hidden;}
+.card::before{content:''; position:absolute; inset:0; background:radial-gradient(circle at top,rgba(246,200,122,.35),transparent 60%); opacity:0; transition:.6s;}
+.card:hover::before{opacity:1;}
+.card:hover{transform:translateY(-18px) scale(1.06);}
+.card h3{color:var(--gold); margin-bottom:18px; font-size:26px;}
+.card p{opacity:.85;}
+.story{max-width:1200px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center;}
+.story h2{font-size:44px; color:var(--gold); margin-bottom:22px;}
+.visual{height:420px; border-radius:36px; background-size:cover; background-position:center; box-shadow:0 60px 160px rgba(0,0,0,.75); transform:translateY(0);}
+.v1{background-image:url('https://images.unsplash.com/photo-1506157786151-b8491531f063')}
+.v2{background-image:url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee')}
+
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#C5F3BE;color:#21315b;font-size:12px}
+
+/* FOOTER */
+.worship-footer{
+  position:relative;
+  background:var(--bg);
+  padding:20px 10px 20px;
+  overflow:hidden;
+  border-radius: 20px 20px 0 0;
+
+}
+
+.footer-glow{
+  position:absolute;
+  top:-120px;
+  left:50%;
+  transform:translateX(-50%);
+  width:700px;
+  height:300px;
+  background:radial-gradient(circle,rgba(246,200,122,.25),transparent 70%);
+  filter:blur(60px);
+}
+
+.footer-content{
+  max-width:1200px;
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr;
+  gap:60px;
+  position:relative;
+  z-index:2;
+}
+
+.footer-brand h3{
+  color:var(--gold);
+  letter-spacing:4px;
+  font-size:28px;
+  margin-bottom:16px;
+}
+
+.footer-brand p{
+  opacity:.85;
+  line-height:1.6;
+}
+
+.footer-links h4{
+  color:#fff;
+  margin-bottom:18px;
+  font-size:16px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+
+.footer-links a{
+  display:block;
+  color:#ddd;
+  text-decoration:none;
+  margin-bottom:10px;
+  opacity:.85;
+  transition:.3s;
+}
+
+.footer-links a:hover{
+  color:var(--gold);
+  transform:translateX(6px);
+}
+
+.footer-bottom{
+  margin-top:60px;
+  text-align:center;
+  opacity:.6;
+  font-size:14px;
+}
+
+/* MOBILE FOOTER */
+@media(max-width:900px){
+  .footer-content{
+    grid-template-columns:1fr;
+    text-align:center;
+    gap:40px;
+  }
+
+  .footer-links a{
+    transform:none;
+  }
+}
+
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .hero h1{font-size:30px;}
+  .hero p{font-size:18px;}
+  .features{grid-template-columns:1fr;}
+  /* նոր ավելացված */
+  .section h2{
+    font-size:25px; /* փոքրացրած վերնագրերը */
+  }
+  .features h3{
+    font-size:20px; /* փոքրացրած վերնագրերը */
+  }
+  .features p{
+    font-size:16px; /* փոքրացրած պարագրերը */
+  }
+  .story{grid-template-columns:1fr;}
+  .visual{height:280px;}
+  section{padding:50px 50px; position:relative;}
+}
+
+.update-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.55);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:100000;
+  backdrop-filter: blur(4px);
+}
+
+.update-box{
+  background:linear-gradient(180deg,rgba(18,24,32,0.9),rgba(18,24,32,0.85));
+  border-radius:18px;
+  padding:22px;
+  max-width:340px;
+  text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,0.25);
+  color:#fff;
+}
+
+.update-box h3{
+  margin:0 0 10px;
+  font-size:18px;
+}
+
+.update-box p{
+  margin:0 0 14px;
+  color:#6b7280;
+  font-size:14px;
+}
+
+.update-box button{
+  padding:10px 20px;
+  border-radius:12px;
+  border:none;
+  font-weight:700;
+  background:linear-gradient(135deg,var(--primary),var(--primary-variant));
+  color:#fff;
+  cursor:pointer;
+  box-shadow:0 6px 18px rgba(51,103,255,0.25);
+}
+
+#maintenance{
+  position:fixed;
+  inset:0;
+  background:#0f172a;
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:99999;
+}
+
+#maintenance .box{
+  text-align:center;
+  max-width:420px;
+  padding:30px;
+  border-radius:16px;
+  background:rgba(255,255,255,0.08);
+}
+
+
+</style>
+
+</head>
+<body>
+
+
+
+<nav>
+  <div class="logo"><a class="logo" href="/">WORSHIP PLATFORM</a></div>
+  <div class="hamburger" id="hamburger">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+  <div class="menu" id="menu">
+    <a href="/">ԳԼԽԱՎՈՐ</a>
+    <a href="/main.html">ԵՐԳԵՐ</a>
+    <a href="/favorites.html">ՊԱՀՊԱՆԱԾ ԵՐԳԵՐ</a>
+    <a href="/news.html">ՆՈՐՈՒԹՅՈՒՆՆԵՐ</a>
+    <a id="loginBtn" class="login-btn" href="/loginuser.php">
+  <span class="ico" aria-hidden="true">
+    <!-- login icon -->
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 17l5-5-5-5"></path>
+      <path d="M15 12H3"></path>
+      <path d="M21 3v18"></path>
+    </svg>
+  </span>
+  Մուտք
+</a>
+
+<a id="registerBtn" class="login-btn" href="/registeruser.php">
+  <span class="ico" aria-hidden="true">
+    <!-- user-plus / register icon -->
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+      <circle cx="9" cy="7" r="4"></circle>
+      <path d="M19 8v6"></path>
+      <path d="M22 11h-6"></path>
+    </svg>
+  </span>
+  Գրանցում
+</a>
+    <!-- ավելացրու loginBtn-ի կողքին -->
+<span id="userBox" class="user-chip" style="display:none;">
+  <span class="user-avatar" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+      <circle cx="12" cy="7" r="4"></circle>
+    </svg>
+  </span>
+
+  <span class="user-meta">
+    <span id="userName" class="user-name">User</span>
+    <span class="user-sub">Account</span>
+  </span>
+
+  <a href="/account.html" class="icon-btn" title="Account" aria-label="Account">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-1.41 3.41h-.1a2 2 0 0 1-1.41-.59l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82V22a2 2 0 0 1-4 0v-.1a1.65 1.65 0 0 0-.33-1.82 1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 0 1 2 18.59v-.1a2 2 0 0 1 .59-1.41l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33H2a2 2 0 0 1 0-4h.1a1.65 1.65 0 0 0 1.82-.33 1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 0 1 5.41 2h.1a2 2 0 0 1 1.41.59l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.82V2a2 2 0 0 1 4 0v.1a1.65 1.65 0 0 0 .33 1.82 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06A2 2 0 0 1 22 5.41v.1a2 2 0 0 1-.59 1.41l-.06.06A1.65 1.65 0 0 0 19.4 9c.23.31.39.66.6 1a1.65 1.65 0 0 0 1.82.33H22a2 2 0 0 1 0 4h-.1a1.65 1.65 0 0 0-1.82.33c-.21.34-.37.69-.6 1z"></path>
+    </svg>
+  </a>
+
+  <button id="logoutBtn" class="icon-btn" type="button" title="Logout" aria-label="Logout">
+    ⎋
+  </button>
+</span>
+
+  </div>
+</nav>
+
+<header>
+  <video class="bg-video" autoplay muted loop playsinline>
+    <source src="WorshipGroup.mp4" type="video/mp4">
+  </video>
+  <div class="overlay"></div>
+  <div class="particles"></div>
+  <div class="hero reveal">
+    <h1>WORSHIP PLATFORM</h1>
+    <p>Երգեր • Ակկորդներ • Ծառայություն<br>ստեղծված worship թիմերի համար</p>
+    <div class="cta">
+      <a href="/main.html">Սկսել Worship-ը</a>
+    </div>
+  </div>
+</header>
+
+
+<section class="section" id="features">
+  <h2>Կայքի նպատակը</h2>
+  <div class="features">
+    <div class="card reveal">
+      <h3>Worship-ի համար</h3>
+      <p>Ստեղծված worship ծառայությունների և թիմերի փորձի հիման վրա</p>
+    </div>
+    <div class="card reveal">
+      <h3>Երգեր և ակկորդներ</h3>
+      <p>Առանձին էջում՝ մաքուր և հարմար ներկայացմամբ</p>
+    </div>
+    <div class="card reveal">
+      <h3>Արագ և պարզ</h3>
+      <p>Առանց ավելորդ բարդությունների՝ հարմար worship-ի վրա</p>
+    </div>
+  </div>
+</section>
+<section class="section" id="features">
+  <h2>Ինչ կարող եք անել կայքում</h2>
+  <div class="features">
+    <div class="card reveal">
+      <h3>Տեսնել ակկորդներ</h3>
+      <p>Գործիքների համար հարմար դասավորությամբ</p>
+    </div>
+    <div class="card reveal">
+      <h3>Կարդալ բառերը</h3>
+      <p>Մեծ, պարզ տեքստ՝ ծառայության ժամանակ օգտագործելու համար</p>
+    </div>
+    <div class="card reveal">
+      <h3>Տրանսպոզիցիա</h3>
+      <p>Կարող եք փոխել տոնայնությունը։ Հարմար բոլոր երգիչների և գործիքների համար</p>
+    </div>
+  </div>
+</section>
+<section class="section" id="features">
+  <h2>Ինչու՞ ընտրել այս կայքը</h2>
+  <div class="features">
+    <div class="card reveal">
+      <h3>Պարզ ակկորդներ</h3>
+      <p>Հարմար բոլոր գործիքների և band-ի համար</p>
+    </div>
+    <div class="card reveal">
+      <h3>Ժամանակակից UX</h3>
+      <p>Հարմար օգտագործում ցանկացած սարքից</p>
+    </div>
+    <div class="card reveal">
+      <h3>Ծառայություն</h3>
+      <p>Ստեղծված worship թիմերի իրական կարիքների համար</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="story">
+    <div class="reveal">
+      <h2>Բեմից դեպի ծառայություն</h2>
+      <p>Ստեղծված է worship բեմի իրական փորձից, որպեսզի երաժիշտը կենտրոնանա ոչ թե տեխնիկայի, այլ Աստծո ներկայության վրա։</p>
+    </div>
+    <div class="visual v1"></div>
+  </div>
+</section>
+
+<section>
+  <div class="story">
+    <div class="reveal">
+      <h2>Երգը քո ձեռքում</h2>
+      <p>Բառեր, ակկորդներ և ազատություն ցանկացած տոնալության մեջ։</p>
+    </div>
+    <div class="visual v2"></div>
+  </div>
+</section>
+
+<footer class="worship-footer">
+  <div class="footer-glow"></div>
+<div class="pill">v2.5</div>
+  <div class="footer-content">
+    <div class="footer-brand">
+      <h3>WORSHIP PLATFORM</h3>
+      <p>Երգեր • Ակորդներ • Ծառայություն<br>ստեղծված worship թիմերի համար</p>
+    </div>
+    
+    <div class="footer-links">
+      <h4>Բաժիններ</h4>
+      <a href="/">ԳԼԽԱՎՈՐ</a>
+      <a href="/#features">ՀՆԱՐԱՎՈՐՈՒԹՅՈՒՆՆԵՐ</a>
+      <a href="/main.html">ԵՐԳԵՐ</a>
+      <a href="/news.html">ՆՈՐՈՒԹՅՈՒՆՆԵՐ</a>
+      <a href="#features">ԿԱՊ</a>
+    </div>
+
+    <div class="footer-links">
+      <h4>Հետևիր մեզ</h4>
+      <a href="#">Instagram</a>
+      <a href="#">YouTube</a>
+      <a href="#">Telegram</a>
+    </div>
+  </div>
+  
+  <div class="footer-bottom">
+    
+    <p>© 2026 Worship Platform</p>
+  </div>
+</footer>
+
+<div id="updateModal" class="update-modal">
+  <div class="update-box">
+    <h3>🚀 Կայքի նոր տարբերակ</h3>
+    <p>Կայքը թարմացվել է։ Խնդրում ենք թարմացնել էջը նոր ֆունկցիաների համար։</p>
+    <button onclick="refreshSite()">Թարմացնել</button>
+  </div>
+</div>
+
+<script>
+
+/* SCROLL REVEAL */
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting){ entry.target.classList.add('active'); }
+  });
+},{ threshold:0.15 });
+reveals.forEach(r => observer.observe(r));
+
+/* HAMBURGER MENU */
+function initMobileMenuDrawer(){
+  const hamburger = document.getElementById('hamburger');
+  const menu = document.getElementById('menu');
+  if(!hamburger || !menu || hamburger.dataset.drawerBound === '1') return;
+  hamburger.dataset.drawerBound = '1';
+
+  let backdrop = document.querySelector('.mobile-nav-backdrop');
+  if(!backdrop){
+    backdrop = document.createElement('div');
+    backdrop.className = 'mobile-nav-backdrop';
+    document.body.appendChild(backdrop);
+  }
+
+  const finishClose = () => menu.classList.remove('closing');
+  const closeMenu = (animated = true) => {
+    hamburger.classList.remove('active');
+    document.body.classList.remove('menu-open');
+    menu.classList.remove('open');
+    if(animated){
+      menu.classList.add('closing');
+      window.setTimeout(finishClose, 260);
+    } else {
+      finishClose();
+    }
+  };
+  const openMenu = () => {
+    menu.classList.remove('closing');
+    menu.classList.add('open');
+    hamburger.classList.add('active');
+    document.body.classList.add('menu-open');
+  };
+
+  hamburger.addEventListener('click', ()=>{
+    if(window.innerWidth > 900) return;
+    if(menu.classList.contains('open')) closeMenu(false);
+    else openMenu();
+  });
+
+  backdrop.addEventListener('click', ()=> closeMenu(false));
+  menu.querySelectorAll('a').forEach(link => link.addEventListener('click', ()=> closeMenu(true)));
+  window.addEventListener('resize', ()=> {
+    if(window.innerWidth > 900) closeMenu(false);
+  });
+  document.addEventListener('keydown', (event)=>{
+    if(event.key === 'Escape' && menu.classList.contains('open')) closeMenu(false);
+  });
+}
+
+initMobileMenuDrawer();
+
+/* Active menu */
+const links = document.querySelectorAll('nav .menu a');
+
+function setActiveMenu(){
+  const path = window.location.pathname;
+  const hash = window.location.hash;
+
+  links.forEach(link=>{
+    link.classList.remove('active');
+
+    const href = link.getAttribute('href');
+
+    // page link (օր. /index.php)
+    if(href.startsWith('/') && href === path){
+      link.classList.add('active');
+    }
+
+    // section link (օր. #features)
+    if(href.startsWith('#') && href === hash){
+      link.classList.add('active');
+    }
+  });
+}
+
+// initial load
+setActiveMenu();
+
+// when clicking menu
+links.forEach(link=>{
+  link.addEventListener('click', ()=>{
+    setTimeout(setActiveMenu, 50);
+  });
+});
+
+// 🔄 Ստուգել կայքի update-ը
+</script>
+<script type="module">
+  import { initNavbarAuthUI } from '/fav_bridge.js';
+  initNavbarAuthUI();
+</script>
+</body>
+</html>

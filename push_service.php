@@ -3,11 +3,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/version_config.php';
 
-const WP_PUSH_CONFIG_PATH = __DIR__ . '/push_config_store.php';
-const WP_PUSH_SUBSCRIPTIONS_PATH = __DIR__ . '/push_subscriptions_store.json';
-const WP_PUSH_QUEUE_PATH = __DIR__ . '/push_queue_store.json';
-const WP_PUSH_HISTORY_PATH = __DIR__ . '/push_history_store.jsonl';
-const WP_PUSH_BLOCKED_PATH = __DIR__ . '/push_blocked_store.json';
+const WP_PUSH_QUEUE_KEY = 'push_queue_store';
+const WP_PUSH_BLOCKED_KEY = 'push_blocked_store';
 
 function wp_push_defaults(): array {
     return [
@@ -43,23 +40,35 @@ function wp_push_is_supported(): bool {
 
 function wp_push_load_config(): array {
     $defaults = wp_push_defaults();
-    if (!is_file(WP_PUSH_CONFIG_PATH)) {
-        return $defaults;
-    }
+    try {
+        $conn = wp_runtime_open_mysqli();
+        $stmt = $conn->prepare("SELECT setting_value FROM sys_settings WHERE setting_key = 'push_config'");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            $decoded = json_decode($row['setting_value'] ?? '', true);
+            if (is_array($decoded)) {
+                return wp_push_sanitize_config($decoded);
+            }
+        }
+    } catch (Throwable $e) {}
 
-    $loaded = include WP_PUSH_CONFIG_PATH;
-    if (!is_array($loaded)) {
-        return $defaults;
-    }
-
-    return wp_push_sanitize_config($loaded);
+    return $defaults;
 }
 
 function wp_push_save_config(array $payload): bool {
     $current = wp_push_load_config();
     $next = wp_push_sanitize_config(array_merge($current, $payload));
-    $export = "<?php\nreturn " . var_export($next, true) . ";\n";
-    return @file_put_contents(WP_PUSH_CONFIG_PATH, $export, LOCK_EX) !== false;
+    
+    try {
+        $conn = wp_runtime_open_mysqli();
+        $stmt = $conn->prepare("INSERT INTO sys_settings (setting_key, setting_value) VALUES ('push_config', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+        $json = json_encode($next, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $stmt->bind_param('s', $json);
+        return $stmt->execute();
+    } catch (Throwable $e) {
+        return false;
+    }
 }
 
 function wp_push_base64url_encode(string $data): string {
@@ -130,27 +139,31 @@ function wp_push_bootstrap_config(): array {
     return $config;
 }
 
-function wp_push_read_json_file(string $path): array {
-    if (!is_file($path)) {
-        return [];
-    }
-
-    $raw = @file_get_contents($path);
-    if (!is_string($raw) || trim($raw) === '') {
-        return [];
-    }
-
-    $decoded = json_decode($raw, true);
-    return is_array($decoded) ? $decoded : [];
+function wp_push_read_sys_setting(string $key): array {
+    try {
+        $conn = wp_runtime_open_mysqli();
+        $stmt = $conn->prepare("SELECT setting_value FROM sys_settings WHERE setting_key = ?");
+        $stmt->bind_param('s', $key);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            $decoded = json_decode($row['setting_value'] ?? '', true);
+            return is_array($decoded) ? $decoded : [];
+        }
+    } catch (Throwable $e) {}
+    return [];
 }
 
-function wp_push_write_json_file(string $path, array $payload): bool {
-    $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-    if ($json === false) {
+function wp_push_write_sys_setting(string $key, array $payload): bool {
+    try {
+        $conn = wp_runtime_open_mysqli();
+        $stmt = $conn->prepare("INSERT INTO sys_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+        $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $stmt->bind_param('ss', $key, $json);
+        return $stmt->execute();
+    } catch (Throwable $e) {
         return false;
     }
-
-    return @file_put_contents($path, $json, LOCK_EX) !== false;
 }
 
 function wp_push_subscription_id(string $endpoint): string {
@@ -167,44 +180,71 @@ function wp_push_normalize_ip(string $ip): string {
 }
 
 function wp_push_load_subscriptions(): array {
-    $rows = wp_push_read_json_file(WP_PUSH_SUBSCRIPTIONS_PATH);
     $normalized = [];
+    try {
+        $conn = wp_runtime_open_mysqli();
+        $result = $conn->query("SELECT * FROM push_subscriptions");
+        while ($row = $result->fetch_assoc()) {
+            $endpoint = trim((string)($row['endpoint'] ?? ''));
+            if ($endpoint === '') continue;
 
-    foreach ($rows as $row) {
-        if (!is_array($row)) {
-            continue;
+            $normalized[] = [
+                'id' => (string)($row['id'] ?? wp_push_subscription_id($endpoint)),
+                'endpoint' => $endpoint,
+                'public_key' => (string)($row['public_key'] ?? ''),
+                'auth_key' => (string)($row['auth_key'] ?? ''),
+                'user_agent' => mb_substr(trim((string)($row['user_agent'] ?? '')), 0, 255),
+                'user_id' => (int)($row['user_id'] ?? 0),
+                'user_name' => mb_substr(trim((string)($row['user_name'] ?? '')), 0, 190),
+                'user_email' => mb_substr(trim((string)($row['user_email'] ?? '')), 0, 190),
+                'ip_address' => wp_push_normalize_ip((string)($row['ip_address'] ?? '')),
+                'created_at' => wp_version_normalize_datetime($row['created_at'] ?? '') ?: wp_version_now_iso(),
+                'updated_at' => wp_version_normalize_datetime($row['updated_at'] ?? '') ?: wp_version_now_iso(),
+                'last_seen_at' => wp_version_normalize_datetime($row['last_seen_at'] ?? '') ?: '',
+            ];
         }
-
-        $endpoint = trim((string)($row['endpoint'] ?? ''));
-        if ($endpoint === '') {
-            continue;
-        }
-
-        $normalized[] = [
-            'id' => (string)($row['id'] ?? wp_push_subscription_id($endpoint)),
-            'endpoint' => $endpoint,
-            'public_key' => (string)($row['public_key'] ?? ''),
-            'auth_key' => (string)($row['auth_key'] ?? ''),
-            'user_agent' => mb_substr(trim((string)($row['user_agent'] ?? '')), 0, 255),
-            'user_id' => (int)($row['user_id'] ?? 0),
-            'user_name' => mb_substr(trim((string)($row['user_name'] ?? '')), 0, 190),
-            'user_email' => mb_substr(trim((string)($row['user_email'] ?? '')), 0, 190),
-            'ip_address' => wp_push_normalize_ip((string)($row['ip_address'] ?? '')),
-            'created_at' => wp_version_normalize_datetime($row['created_at'] ?? '') ?: wp_version_now_iso(),
-            'updated_at' => wp_version_normalize_datetime($row['updated_at'] ?? '') ?: wp_version_now_iso(),
-            'last_seen_at' => wp_version_normalize_datetime($row['last_seen_at'] ?? '') ?: '',
-        ];
-    }
+    } catch (Throwable $e) {}
 
     return $normalized;
 }
 
 function wp_push_save_subscriptions(array $subscriptions): bool {
-    return wp_push_write_json_file(WP_PUSH_SUBSCRIPTIONS_PATH, array_values($subscriptions));
+    try {
+        $conn = wp_runtime_open_mysqli();
+        $conn->begin_transaction();
+        
+        $conn->query("TRUNCATE TABLE push_subscriptions");
+        $stmt = $conn->prepare("INSERT INTO push_subscriptions (id, endpoint, public_key, auth_key, user_agent, user_id, user_name, user_email, ip_address, created_at, updated_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        
+        foreach ($subscriptions as $sub) {
+            $id = $sub['id'] ?? wp_push_subscription_id($sub['endpoint'] ?? '');
+            $endpoint = $sub['endpoint'] ?? '';
+            $public_key = $sub['public_key'] ?? '';
+            $auth_key = $sub['auth_key'] ?? '';
+            $user_agent = $sub['user_agent'] ?? '';
+            $user_id = $sub['user_id'] ?? 0;
+            $user_name = $sub['user_name'] ?? '';
+            $user_email = $sub['user_email'] ?? '';
+            $ip_address = $sub['ip_address'] ?? '';
+            $created_at = $sub['created_at'] ?? '';
+            $updated_at = $sub['updated_at'] ?? '';
+            $last_seen_at = $sub['last_seen_at'] ?? null;
+            if ($last_seen_at === '') $last_seen_at = null;
+            
+            $stmt->bind_param('sssssissssss', $id, $endpoint, $public_key, $auth_key, $user_agent, $user_id, $user_name, $user_email, $ip_address, $created_at, $updated_at, $last_seen_at);
+            $stmt->execute();
+        }
+        
+        $conn->commit();
+        return true;
+    } catch (Throwable $e) {
+        if (isset($conn) && $conn instanceof mysqli) $conn->rollback();
+        return false;
+    }
 }
 
 function wp_push_load_blocked(): array {
-    $rows = wp_push_read_json_file(WP_PUSH_BLOCKED_PATH);
+    $rows = wp_push_read_sys_setting(WP_PUSH_BLOCKED_KEY);
     $normalized = [];
 
     foreach ($rows as $row) {
@@ -230,7 +270,7 @@ function wp_push_load_blocked(): array {
 }
 
 function wp_push_save_blocked(array $blocked): bool {
-    return wp_push_write_json_file(WP_PUSH_BLOCKED_PATH, array_values($blocked));
+    return wp_push_write_sys_setting(WP_PUSH_BLOCKED_KEY, array_values($blocked));
 }
 
 function wp_push_is_blocked_endpoint(string $endpoint): bool {
@@ -406,7 +446,7 @@ function wp_push_remove_subscription_by_id(string $id): bool {
 }
 
 function wp_push_load_queue(): array {
-    $rows = wp_push_read_json_file(WP_PUSH_QUEUE_PATH);
+    $rows = wp_push_read_sys_setting(WP_PUSH_QUEUE_KEY);
     $normalized = [];
 
     foreach ($rows as $row) {
@@ -430,7 +470,7 @@ function wp_push_load_queue(): array {
 }
 
 function wp_push_save_queue(array $queue): bool {
-    return wp_push_write_json_file(WP_PUSH_QUEUE_PATH, array_values($queue));
+    return wp_push_write_sys_setting(WP_PUSH_QUEUE_KEY, array_values($queue));
 }
 
 function wp_push_remove_queued_for_subscription(string $subscriptionId): void {
@@ -516,61 +556,60 @@ function wp_push_stats(): array {
 }
 
 function wp_push_history_append(array $entry): void {
-    $json = json_encode($entry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    if ($json === false) {
-        return;
-    }
-
-    @file_put_contents(WP_PUSH_HISTORY_PATH, $json . PHP_EOL, FILE_APPEND | LOCK_EX);
+    try {
+        $conn = wp_runtime_open_mysqli();
+        $stmt = $conn->prepare("INSERT INTO push_history (id, at, actor, title, body, url, icon, tag, devices_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        
+        $id = $entry['id'] ?? bin2hex(random_bytes(8));
+        $at = wp_version_normalize_datetime($entry['created_at'] ?? '') ?: wp_version_now_iso();
+        $actor = mb_substr(trim((string)($entry['actor'] ?? 'admin')), 0, 190);
+        $title = mb_substr(trim((string)($entry['title'] ?? '')), 0, 160);
+        $body = (string)($entry['body'] ?? '');
+        $url = mb_substr(trim((string)($entry['url'] ?? '')), 0, 260);
+        $icon = mb_substr(trim((string)($entry['icon'] ?? '')), 0, 260);
+        $tag = mb_substr(trim((string)($entry['tag'] ?? '')), 0, 100);
+        $devices_count = (int)($entry['queued'] ?? 0);
+        
+        $stmt->bind_param('ssssssssi', $id, $at, $actor, $title, $body, $url, $icon, $tag, $devices_count);
+        $stmt->execute();
+    } catch (Throwable $e) {}
 }
 
 function wp_push_history_load(int $limit = 20): array {
-    if (!is_file(WP_PUSH_HISTORY_PATH)) {
-        return [];
-    }
-
-    $lines = @file(WP_PUSH_HISTORY_PATH, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    if (!$lines) {
-        return [];
-    }
-
-    $lines = array_reverse($lines);
     $items = [];
-
-    foreach ($lines as $line) {
-        $decoded = json_decode((string)$line, true);
-        if (!is_array($decoded)) {
-            continue;
+    try {
+        $conn = wp_runtime_open_mysqli();
+        $stmt = $conn->prepare("SELECT * FROM push_history ORDER BY at DESC LIMIT ?");
+        $stmt->bind_param('i', $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        while ($row = $result->fetch_assoc()) {
+            $items[] = [
+                'id' => (string)($row['id'] ?? ''),
+                'title' => (string)($row['title'] ?? ''),
+                'body' => (string)($row['body'] ?? ''),
+                'url' => (string)($row['url'] ?? ''),
+                'tag' => (string)($row['tag'] ?? ''),
+                'actor' => (string)($row['actor'] ?? 'admin'),
+                'created_at' => wp_version_normalize_datetime($row['at'] ?? '') ?: wp_version_now_iso(),
+                'queued' => (int)($row['devices_count'] ?? 0),
+                'success' => 0,
+                'failed' => 0,
+                'removed' => 0,
+            ];
         }
-
-        $items[] = [
-            'id' => (string)($decoded['id'] ?? ''),
-            'title' => mb_substr(trim((string)($decoded['title'] ?? '')), 0, 160),
-            'body' => mb_substr(trim((string)($decoded['body'] ?? '')), 0, 600),
-            'url' => mb_substr(trim((string)($decoded['url'] ?? '')), 0, 260),
-            'tag' => mb_substr(trim((string)($decoded['tag'] ?? '')), 0, 120),
-            'actor' => mb_substr(trim((string)($decoded['actor'] ?? 'admin')), 0, 190),
-            'created_at' => wp_version_normalize_datetime($decoded['created_at'] ?? '') ?: wp_version_now_iso(),
-            'queued' => (int)($decoded['queued'] ?? 0),
-            'success' => (int)($decoded['success'] ?? 0),
-            'failed' => (int)($decoded['failed'] ?? 0),
-            'removed' => (int)($decoded['removed'] ?? 0),
-        ];
-
-        if (count($items) >= $limit) {
-            break;
-        }
-    }
-
+    } catch (Throwable $e) {}
+    
     return $items;
 }
 
 function wp_push_history_clear(): bool {
-    if (!is_file(WP_PUSH_HISTORY_PATH)) {
-        return true;
+    try {
+        $conn = wp_runtime_open_mysqli();
+        return $conn->query("TRUNCATE TABLE push_history");
+    } catch (Throwable $e) {
+        return false;
     }
-
-    return @file_put_contents(WP_PUSH_HISTORY_PATH, '', LOCK_EX) !== false;
 }
 
 function wp_push_der_to_jose(string $der, int $partLength = 32): string {
