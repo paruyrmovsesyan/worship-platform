@@ -46,7 +46,38 @@ const translations = {
       browseByBPM: 'Ըստ տեմպի',
       heroSubtitle1: 'Ավելի խելացի',
       latestNews: 'Վերջին Նորություններ',
-      footerRights: '© 2024 Worship Platform. Բոլոր իրավունքները պաշտպանված են:',
+      footerRights: '© 2026 Worship Platform. Բոլոր իրավունքները պաշտպանված են:',
+      unknownArtist: 'Անհայտ արտիստ',
+      picks: [
+        { title: 'Երախտագիտություն', artist: 'Բրենդոն Լեյք', meta: 'Երգացանկ 14 · 9380 դիտում' },
+        { title: 'Գերեզմաններից Պարտեզներ', artist: 'Bethel Worship', meta: 'Երգացանկ 17 · 320 դիտում' },
+        { title: 'Ճանապարհ Բացող', artist: 'Sinach', meta: 'Երգացանկ 22 · 15k դիտում' }
+      ],
+      newsItems: [
+        { date: 'Ապր 12, 2024', title: 'Նոր Հնարավորություն՝ Դինամիկ Տոնայնություն:', desc: 'Այժմ կարող եք փոխել երգի տոնայնությունը մեկ քլիքով:' },
+        { date: 'Ապր 28, 2024', title: 'Տիրապետեք Երգացանկերի Պլանավորմանը', desc: 'Բացահայտեք, թե ինչպես է մեր գործիքը օգնում պլանավորել ծառայությունը:' },
+        { date: 'Մայ 18, 2024', title: 'Համագործակցեք Ձեր Թիմի Հետ', desc: 'Կիսվեք ակորդներով և նշումներով Ձեր թիմի յուրաքանչյուր անդամի հետ:' }
+      ],
+      footer: {
+        product: 'Պրոդուկտ',
+        company: 'Ընկերություն',
+        resources: 'Ռեսուրսներ',
+        legal: 'Իրավական',
+        songs: 'Երգեր',
+        teams: 'Թիմ',
+        pricing: 'Գներ',
+        setlists: 'Երգացանկեր',
+        about: 'Մեր մասին',
+        blog: 'Բլոգ',
+        careers: 'Կարիերա',
+        community: 'Համայնք',
+        documentation: 'Փաստաթղթեր',
+        tutorials: 'Ուսուցում',
+        support: 'Աջակցություն',
+        privacyPolicy: 'Գաղտնիության քաղաքականություն',
+        terms: 'Պայմաններ',
+        cookies: 'Քուքիներ'
+      }
     },
     songs: {
       title: 'Երգարան',
@@ -63,6 +94,7 @@ const translations = {
       sortBpm: 'Կարգ. BPM',
       sortKey: 'Կարգ. Տոն.',
       sortRecent: 'Վերջին ավելացվածը',
+      unknownArtist: 'Անհայտ արտիստ',
     },
     setlists: {
       loginPrompt: 'Խնդրում ենք մուտք գործել՝ երգացանկեր կազմելու համար։',
@@ -182,7 +214,38 @@ const translations = {
       browseByBPM: 'By BPM',
       heroSubtitle1: 'Smarter',
       latestNews: 'Latest News',
-      footerRights: '© 2024 Worship Platform. All rights reserved.',
+      footerRights: '© 2026 Worship Platform. All rights reserved.',
+      unknownArtist: 'Unknown Artist',
+      picks: [
+        { title: 'Gratitude', artist: 'Brandon Lake', meta: 'Sets 14 · Rev 1 · 9380 plays' },
+        { title: 'Graves Into Gardens', artist: 'Bethel Worship', meta: 'Sets 17 · Rev 5 · 320 plays' },
+        { title: 'Way Maker', artist: 'Sinach', meta: 'Sets 22 · Rev 2 · 15k plays' }
+      ],
+      newsItems: [
+        { date: 'Apr 12, 2024', title: 'New Feature: Dynamic Transposition!', desc: 'Worship teams can now instantly transpose songs to any key with a single click.' },
+        { date: 'Apr 28, 2024', title: 'Mastering Your Setlist Planning', desc: 'Discover how our setlist builder helps worship leaders plan more effectively.' },
+        { date: 'May 18, 2024', title: 'Collaborate with Your Whole Team', desc: 'Share chords, notes, and rehearsal plans with every member of your worship team.' }
+      ],
+      footer: {
+        product: 'Product',
+        company: 'Company',
+        resources: 'Resources',
+        legal: 'Legal',
+        songs: 'Songs',
+        teams: 'Teams',
+        pricing: 'Pricing',
+        setlists: 'Setlists',
+        about: 'About',
+        blog: 'Blog',
+        careers: 'Careers',
+        community: 'Community',
+        documentation: 'Documentation',
+        tutorials: 'Tutorials',
+        support: 'Support',
+        privacyPolicy: 'Privacy Policy',
+        terms: 'Terms',
+        cookies: 'Cookies'
+      }
     },
     songs: {
       title: 'Song Library',
@@ -199,6 +262,7 @@ const translations = {
       sortBpm: 'Sort: BPM',
       sortKey: 'Sort: Key',
       sortRecent: 'Recently Added',
+      unknownArtist: 'Unknown Artist',
     },
     setlists: {
       loginPrompt: 'Please log in to create and manage setlists.',
@@ -316,7 +380,38 @@ const translations = {
       browseByBPM: 'По темпу',
       heroSubtitle1: 'Умнее',
       latestNews: 'Последние Новости',
-      footerRights: '© 2024 Worship Platform. Все права защищены.',
+      footerRights: '© 2026 Worship Platform. Все права защищены.',
+      unknownArtist: 'Неизвестный исполнитель',
+      picks: [
+        { title: 'Gratitude', artist: 'Brandon Lake', meta: 'Сет-листы 14 · 9380 просмптров' },
+        { title: 'Graves Into Gardens', artist: 'Bethel Worship', meta: 'Сет-листы 17 · 320 просмотров' },
+        { title: 'Way Maker', artist: 'Sinach', meta: 'Сет-листы 22 · 15k просмотров' }
+      ],
+      newsItems: [
+        { date: 'Апр 12, 2024', title: 'Новая функция: Динамическая Тональность!', desc: 'Теперь команды могут транспонировать песни в один клик.' },
+        { date: 'Апр 28, 2024', title: 'Мастер планирования', desc: 'Узнайте, как наш инструмент помогает планировать служение.' },
+        { date: 'Май 18, 2024', title: 'Работайте вместе', desc: 'Делитесь аккордами и планами со всей командой.' }
+      ],
+      footer: {
+        product: 'Продукт',
+        company: 'Компания',
+        resources: 'Ресурсы',
+        legal: 'Правовая инф.',
+        songs: 'Песни',
+        teams: 'Команда',
+        pricing: 'Цены',
+        setlists: 'Сет-листы',
+        about: 'О нас',
+        blog: 'Блог',
+        careers: 'Карьера',
+        community: 'Сообщество',
+        documentation: 'Документация',
+        tutorials: 'Уроки',
+        support: 'Поддержка',
+        privacyPolicy: 'Политика конфиденциальности',
+        terms: 'Условия',
+        cookies: 'Файлы cookie'
+      }
     },
     songs: {
       title: 'Библиотека Песен',
@@ -333,6 +428,7 @@ const translations = {
       sortBpm: 'Сорт.: BPM',
       sortKey: 'Сорт.: Тональность',
       sortRecent: 'Недавно добавленные',
+      unknownArtist: 'Неизвестный исполнитель',
     },
     setlists: {
       loginPrompt: 'Пожалуйста, войдите, чтобы создавать сет-листы.',

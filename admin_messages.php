@@ -9,6 +9,18 @@ $adminUser = $access['user'];
 $adminDisplayName = trim((string)($adminUser['name'] ?? 'Admin'));
 $db = wp_runtime_open_mysqli();
 
+// Auto-create table if it doesn't exist on the live server
+$db->query("CREATE TABLE IF NOT EXISTS contact_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_name VARCHAR(255) NOT NULL,
+    user_email VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    is_replied TINYINT(1) DEFAULT 0,
+    reply_text TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    replied_at DATETIME NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
 $message = '';
 $messageType = '';
 

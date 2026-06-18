@@ -17,7 +17,7 @@ export default function LandingPage() {
     let tags = [];
     if (song.tags) tags = song.tags.split(',').map(t => t.trim()).filter(Boolean).slice(0, 2);
     if (tags.length === 0) tags = ['Worship'];
-    return { id: song.id, title: song.title || 'Unknown', artist: song.artist || 'Unknown', key: song.song_key || '?', bpm: song.bpm || '?', tags, img: `bg-gradient-${(index % 9) + 1}` };
+    return { id: song.id, title: song.title || t('landing.unknownArtist'), artist: song.artist && song.artist !== 'Unknown' ? song.artist : t('landing.unknownArtist'), key: song.song_key || '?', bpm: song.bpm, tags, img: `bg-gradient-${(index % 9) + 1}` };
   };
 
   useEffect(() => {
@@ -132,7 +132,7 @@ export default function LandingPage() {
                     <p>{song.artist}</p>
                     <div className="song-meta">
                       <span>Key {song.key}</span>
-                      <span>BPM {song.bpm}</span>
+                      {song.bpm && song.bpm !== '0' && <span>BPM {song.bpm}</span>}
                     </div>
                     <div className="song-tags">
                       {song.tags.map((tag, i) => (
@@ -173,13 +173,9 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="picks-list">
-              {[
-                { title: 'Gratitude', artist: 'Brandon Lake', meta: 'Sets 14 · Rev 1 · 9380 plays', img: 'bg-gradient-1' },
-                { title: 'Graves Into Gardens', artist: 'Bethel Worship', meta: 'Sets 17 · Rev 5 · 320 plays', img: 'bg-gradient-3' },
-                { title: 'Way Maker', artist: 'Sinach', meta: 'Sets 22 · Rev 2 · 15k plays', img: 'bg-gradient-7' },
-              ].map((pick, i) => (
+              {(t('landing.picks', { returnObjects: true }) || []).map((pick, i) => (
                 <div key={i} className="pick-card" onClick={() => navigate('/songs')}>
-                  <div className={`pick-img ${pick.img}`} />
+                  <div className={`pick-img bg-gradient-${(i * 2) + 1}`} />
                   <div className="pick-info">
                     <h4>{pick.title}</h4>
                     <p>{pick.artist}</p>
@@ -203,13 +199,9 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="news-row">
-          {[
-            { date: 'Apr 12, 2024', title: 'New Feature: Dynamic Transposition!', desc: 'Worship teams can now instantly transpose songs to any key with a single click.', cls: 'img-1' },
-            { date: 'Apr 28, 2024', title: 'Mastering Your Setlist Planning', desc: 'Discover how our setlist builder helps worship leaders plan more effectively.', cls: 'img-2' },
-            { date: 'May 18, 2024', title: 'Collaborate with Your Whole Team', desc: 'Share chords, notes, and rehearsal plans with every member of your worship team.', cls: 'img-3' },
-          ].map((item, i) => (
+          {(t('landing.newsItems', { returnObjects: true }) || []).map((item, i) => (
             <div key={i} className="news-card" onClick={() => navigate('/news')}>
-              <div className={`news-img ${item.cls}`} />
+              <div className={`news-img img-${i + 1}`} />
               <div className="news-content">
                 <span className="news-date">{item.date}</span>
                 <h4>{item.title}</h4>

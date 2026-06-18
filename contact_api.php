@@ -29,6 +29,19 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
 try {
     $db = wp_runtime_open_mysqli();
+
+    // Auto-create table if it doesn't exist
+    $db->query("CREATE TABLE IF NOT EXISTS contact_messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_name VARCHAR(255) NOT NULL,
+        user_email VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        is_replied TINYINT(1) DEFAULT 0,
+        reply_text TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        replied_at DATETIME NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
     $stmt = $db->prepare("INSERT INTO contact_messages (user_name, user_email, message) VALUES (?, ?, ?)");
     if (!$stmt) throw new Exception($db->error);
     

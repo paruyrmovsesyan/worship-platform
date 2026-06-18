@@ -33,10 +33,10 @@ export default function Footer() {
         </div>
         <div className="footer-links">
           {[
-            { title: 'Product', links: [['Songs', '/songs'], ['Teams', '/teams'], ['Pricing', '/pricing'], ['Setlists', '/setlists']] },
-            { title: 'Company', links: [['About', '/about'], ['Blog', '/blog'], ['Careers', '/careers'], ['Community', '/community']] },
-            { title: 'Resources', links: [['Documentation', '/documentation'], ['Tutorials', '/tutorials'], ['Pricing', '/pricing'], ['Support', '/support']] },
-            { title: 'Legal', links: [['Privacy Policy', '/privacy'], ['Terms', '/terms'], ['Cookies', '/cookies']] },
+            { title: t('landing.footer.product'), links: [[t('landing.footer.songs'), '/songs'], [t('landing.footer.teams'), '/teams'], [t('landing.footer.pricing'), '/pricing'], [t('landing.footer.setlists'), '/setlists']] },
+            { title: t('landing.footer.company'), links: [[t('landing.footer.about'), '/about'], [t('landing.footer.blog'), '/blog'], [t('landing.footer.careers'), '/careers'], [t('landing.footer.community'), '/community']] },
+            { title: t('landing.footer.resources'), links: [[t('landing.footer.documentation'), '/documentation'], [t('landing.footer.tutorials'), '/tutorials'], [t('landing.footer.pricing'), '/pricing'], [t('landing.footer.support'), '/support']] },
+            { title: t('landing.footer.legal'), links: [[t('landing.footer.privacyPolicy'), '/privacy'], [t('landing.footer.terms'), '/terms'], [t('landing.footer.cookies'), '/cookies']] },
           ].map(group => (
             <div key={group.title} className="link-group">
               <h4>{group.title}</h4>

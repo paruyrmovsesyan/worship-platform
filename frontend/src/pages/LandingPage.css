@@ -64,12 +64,11 @@
 }
 
 .hero-title {
-  font-size: 3.8rem;
+  font-size: clamp(2.5rem, 6vw, 3.8rem);
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -2.5px;
   margin-bottom: 20px;
-  white-space: nowrap;
 }
 
 .text-gradient-cyan {
@@ -256,7 +255,7 @@
 .main-grid {
   display: grid;
   grid-template-columns: 3fr 2fr;
-  gap: 32px;
+  gap: 64px;
   max-width: 1200px;
   margin: 0 auto;
   padding: 16px 40px 40px;
@@ -309,13 +308,13 @@
 /* Gradient presets */
 .bg-gradient-1 { background: linear-gradient(135deg, #FF3366, #FF9933); }
 .bg-gradient-2 { background: linear-gradient(135deg, #2244DD, #4466FF); }
-.bg-gradient-3 { background: linear-gradient(135deg, #11998E, #38EF7D); }
-.bg-gradient-4 { background: linear-gradient(135deg, #F09819, #EDDE5D); }
+.bg-gradient-3 { background: linear-gradient(135deg, #11998E, #38EF7D); color: #1a1a24; text-shadow: none; }
+.bg-gradient-4 { background: linear-gradient(135deg, #F09819, #EDDE5D); color: #1a1a24; text-shadow: none; }
 .bg-gradient-5 { background: linear-gradient(135deg, #8E2DE2, #4A00E0); }
 .bg-gradient-6 { background: linear-gradient(135deg, #FF416C, #FF4B2B); }
 .bg-gradient-7 { background: linear-gradient(135deg, #654ea3, #eaafc8); }
-.bg-gradient-8 { background: linear-gradient(135deg, #F09819, #EDDE5D); }
-.bg-gradient-9 { background: linear-gradient(135deg, #00C9FF, #92FE9D); }
+.bg-gradient-8 { background: linear-gradient(135deg, #F09819, #EDDE5D); color: #1a1a24; text-shadow: none; }
+.bg-gradient-9 { background: linear-gradient(135deg, #00C9FF, #92FE9D); color: #1a1a24; text-shadow: none; }
 
 .song-info { overflow: hidden; }
 .song-info h4 {
