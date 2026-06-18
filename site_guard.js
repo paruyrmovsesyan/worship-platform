@@ -40,6 +40,45 @@
     if(!key || !Object.prototype.hasOwnProperty.call(modesObj, key)) return false;
     return modesObj[key] === false;
   }
+
+  function applyDynamicMenuHiding(modesObj){
+    if(!modesObj || typeof modesObj !== "object") return;
+    const keyToHrefs = {
+      "landing": ["/", "/index.html"],
+      "main": ["/songs", "/songs.php"],
+      "favorites": ["/favorites"],
+      "setlists": ["/setlists"],
+      "account": ["/profile", "/settings"],
+      "news": ["/news"],
+      "teams": ["/teams"],
+      "community": ["/community"],
+      "pricing": ["/pricing"],
+      "resources": ["/resources"],
+      "song_request": ["/song-request"]
+    };
+    let css = "";
+    for(const key in modesObj){
+      if(Object.prototype.hasOwnProperty.call(modesObj, key) && modesObj[key] === false){
+        const hrefs = keyToHrefs[key] || [];
+        hrefs.forEach(href => {
+          if(href === "/"){
+            css += `a.nav-item[href="/"] { display: none !important; }\n`;
+          } else {
+            css += `a[href="${href}"], a[href^="${href}?"] { display: none !important; }\n`;
+          }
+        });
+      }
+    }
+    let styleEl = document.getElementById("wp-dynamic-menu-hider");
+    if(!styleEl){
+      styleEl = document.createElement("style");
+      styleEl.id = "wp-dynamic-menu-hider";
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = css;
+  }
+
+  function isStandaloneAppContext(){
     try{
       const source = (new URL(window.location.href).searchParams.get("source") || "").toLowerCase();
       if(source === "pwa" || source === "admin-app") return true;
@@ -211,6 +250,11 @@
       }
   
       const data = await r.json();
+      
+      const isApp = isStandaloneAppContext();
+      const modesObj = isApp ? data.page_app_modes : data.page_web_modes;
+      applyDynamicMenuHiding(modesObj);
+
       if(isPageDisabledByAdmin(data)){
         const target = buildPageUnavailableUrl(data.message || "Այս էջը ժամանակավորապես անջատված է տեխնիկական աշխատանքների պատճառով։");
         if(window.location.pathname !== "/page_unavailable.html"){

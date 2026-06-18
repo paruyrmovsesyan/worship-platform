@@ -72,6 +72,7 @@ try{
 </head>
 <body>
   <div class="card">
+    <div id="wpLangContainer"></div>
     <h2>Նոր գաղտնաբառ</h2>
 
     <?php if(!$ok): ?>

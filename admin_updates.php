@@ -1419,131 +1419,62 @@ $csrfToken = wp_admin_updates_csrf_token();
   <title>Settings — Worship Platform Admin</title>
   <?php include __DIR__ . '/admin_shared_css.php'; ?>
   <?php include __DIR__ . '/admin_updates_css.php'; ?>
-  <style>
-  /* ── Settings page extras ── */
-  :root {
-    --line-soft: #f1f5f9;
-    --radius-sm: 10px;
-    --radius-md: 20px;
-  }
-
-  [hidden] { display:none !important; }
-
-  /* Badges */
-  .badge { display:inline-flex; align-items:center; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; }
-  .badge.success { background:var(--success-bg); color:var(--success); }
-  .badge.warning { background:var(--warning-bg); color:#b58b00; }
-  .badge.danger  { background:var(--danger-bg);  color:var(--danger); }
-  .badge.neutral { background:#f1f5f9; color:var(--muted); }
-
-  /* Section-tab hidden buttons kept for JS */
-  button.section-tab.nav-item {
-    width:calc(100% - 32px); font-family:inherit; font-size:15px; font-weight:600;
-    background:transparent; border:none; cursor:pointer; color:var(--muted);
-    display:flex; align-items:center; gap:14px;
-    padding:13px 24px; border-radius:12px; margin:2px 16px;
-    transition:background .15s, color .15s; text-align:left;
-  }
-  button.section-tab.nav-item:hover { background:rgba(67,24,255,0.05); color:var(--text); }
-  button.section-tab.nav-item.active { background:var(--primary); color:#fff; box-shadow:0 4px 15px rgba(67,24,255,0.3); }
-  button.section-tab.nav-item.active svg { stroke:#fff; }
-
-  /* Section content */
-  .section-content { display:none; }
-  .section-content.is-active { display:block; }
-
-  /* Settings form */
-  .settings-group { background:var(--surface); border-radius:var(--radius); padding:32px; box-shadow:var(--shadow-sm); margin-bottom:24px; }
-  .settings-group h3 { font-size:18px; font-weight:700; margin:0 0 20px; color:var(--text); }
-  .form-field { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
-  .form-field label { font-size:13px; font-weight:700; color:var(--text); }
-  .form-field input, .form-field textarea, .form-field select {
-    padding:12px 14px; border:1px solid var(--line); border-radius:10px;
-    font-family:inherit; font-size:14px; font-weight:500; color:var(--text);
-    background:var(--surface); outline:none; transition:.15s;
-  }
-  .form-field input:focus, .form-field textarea:focus, .form-field select:focus {
-    border-color:var(--primary); box-shadow:0 0 0 3px rgba(67,24,255,0.1);
-  }
-  .form-field textarea { min-height:100px; resize:vertical; }
-
-  /* Section-specific: banner, chip, push stats */
-  .section-focus { background:var(--surface); border-radius:var(--radius-lg); padding:28px; display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; box-shadow:var(--shadow-sm); }
-  .section-focus-copy h2 { margin:0; font-size:22px; font-weight:700; color:var(--text); }
-  .section-focus-copy p { margin:6px 0 0; color:var(--muted); }
-  .chips { display:flex; gap:8px; flex-wrap:wrap; }
-  .chip { background:#f1f5f9; padding:6px 12px; border-radius:8px; font-size:13px; font-weight:600; color:var(--text); }
-  
-  .banner { background:var(--primary); color:#fff; padding:20px 28px; border-radius:var(--radius); margin-bottom:24px; }
-  .eyebrow { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:8px; }
-
-  code { background:#f1f5f9; padding:2px 8px; border-radius:6px; font-family:monospace; font-size:13px; color:var(--primary); }
-  pre { background:#f8faff; border:1px solid var(--line); border-radius:12px; padding:20px; overflow:auto; font-size:13px; }
-
-  .push-stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:16px; margin-bottom:24px; }
-  .push-stat-card { background:var(--surface); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow-sm); text-align:center; }
-  .push-stat-val { font-size:28px; font-weight:800; color:var(--text); display:block; }
-  .push-stat-lbl { font-size:12px; font-weight:600; color:var(--muted); margin-top:4px; display:block; }
-
-  /* Tab bar for settings sub-sections */
-
-  /* Page heading */
-  .page-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px; }
-  .page-header h2 { font-size:32px; font-weight:800; color:var(--text); letter-spacing:-.5px; margin:0; }
-  .page-header p { margin:8px 0 0; font-size:15px; color:var(--muted); }
-  </style>
-
 
 </head>
 <body>
   <script>
-    const ADMIN_I18N = {
-      'Թարմացում և տեղադրում': {ru: 'Обновление и установка', en: 'Update & Deploy'},
-      'Թարմացումների Վահանակ': {ru: 'Панель обновлений', en: 'Updates Dashboard'},
-      'Սա update-ների, deploy-ի և maintenance-ի կառավարման հիմնական վահանակն է։ Աշխատանքը բաժանված է պարզ փուլերի, որպեսզի phone-ից ու computer-ից արագ գտնես ուզած գործողությունը և սխալ publish չանես։': {ru: 'Основная панель управления обновлениями и обслуживанием. Работа разделена на простые этапы для быстрого доступа с телефона и ПК.', en: 'Main dashboard for updates, deploy, and maintenance. Work is divided into simple stages for quick access from phone and PC.'},
-      'Ծրագրի ընթացիկ տարբերակ': {ru: 'Текущая версия приложения', en: 'Current App Version'},
-      'Կայքի ընթացիկ տարբերակ': {ru: 'Текущая версия сайта', en: 'Current Web Version'},
-      'Փաթեթի կապի վիճակ': {ru: 'Статус связи пакета', en: 'Package Sync Status'},
-      'Ծրագրի ընդհանուր ճանաչված տեղադրումներ': {ru: 'Общее количество установок', en: 'Total Known Installs'},
-      'Վերադառնալ ադմին վահանակ': {ru: 'Вернуться в админку', en: 'Back to Admin'},
-      'Բացել տարբերակի տվյալները': {ru: 'Данные версии', en: 'Version Data'},
-      'Դուրս գալ admin-ից': {ru: 'Выйти из админки', en: 'Log Out'},
-      'Արագ հոսք': {ru: 'Быстрый старт', en: 'Quick Flow'},
-      'Լրացրու version/message դաշտերը `Թարմացում և տեղադրում` բաժնում։': {ru: 'Заполните поля version/message в разделе «Обновление и установка».', en: 'Fill in version/message fields in the "Update & Deploy" section.'},
-      'Ընտրիր կիրառման տարբերակը` առանց ֆայլի կամ ֆայլով։': {ru: 'Выберите вариант применения: с файлом или без.', en: 'Choose deployment mode: with or without file.'},
-      'Սեղմիր `Կիրառել թարմացումը` ու ավարտիր գործընթացը։': {ru: 'Нажмите «Применить обновление» для завершения.', en: 'Click "Apply Update" to finish.'},
-      '1. Թարմացում և տեղադրում': {ru: '1. Обновление и установка', en: '1. Update & Deploy'},
-      '2. Տեխնիկական աշխատանքներ': {ru: '2. Тех. работы', en: '2. Maintenance'},
-      '3. Push ծանուցումներ': {ru: '3. Push-уведомления', en: '3. Push Notifications'},
-      '4. Սարքեր': {ru: '4. Устройства', en: '4. Devices'},
-      '5. Պատմություն': {ru: '5. История', en: '5. History'},
-      '6. Մուտքեր': {ru: '6. Доступы', en: '6. Access'},
-      '7. Մոդերացիա': {ru: '7. Модерация', en: '7. Moderation'},
-      '8. Թարգմանություններ': {ru: '8. Переводы', en: '8. Translations'},
-      'Թողարկման գլխավոր հոսք': {ru: 'Главный поток релиза', en: 'Main Release Flow'},
-      'Այստեղ լրացնում ես տարբերակները, հաղորդագրությունները և ընտրում ես ինչպես կիրառել թարմացումը։': {ru: 'Здесь вы заполняете версии, сообщения и выбираете способ применения обновления.', en: 'Here you fill in versions, messages, and choose how to apply the update.'},
-      'Ծրագիր': {ru: 'Программа', en: 'App'},
-      'Կայք': {ru: 'Сайт', en: 'Web'},
-      'Փաթեթ պատրաստ': {ru: 'Пакет готов', en: 'Package Ready'},
-      'Գնալ կիրառման կոճակին': {ru: 'Перейти к применению', en: 'Go to Apply button'},
-      'Նոր հնարավորություն': {ru: 'Новая функция', en: 'New Feature'},
-      'ԱՆՋԱՏՎԱԾ': {ru: 'ОТКЛЮЧЕНО', en: 'DISABLED'},
-      'Տեխնիկական աշխատանքների վիճակ': {ru: 'Состояние тех. работ', en: 'Maintenance Status'},
-      'Վերջին թարմացումը (UTC+4)': {ru: 'Последнее обновление', en: 'Last update'},
-      'Թողարկման կենդանի ամփոփում': {ru: 'Живая сводка релиза', en: 'Live Release Summary'},
-      'Մինչև սեղմես `Կիրառել թարմացումը`, այստեղ միանգամից երևում է ինչ տարբերակ է գնալու, ինչ ձևով է կիրառվելու և արդյոք հիմնական դաշտերը լրացված են։': {ru: 'До нажатия кнопки здесь сразу видно, какая версия будет применена.', en: 'Before applying, you can see what version will be deployed.'},
-      'Փոփոխությունները կպահպանվեն ավտոմատ': {ru: 'Изменения сохраняются автоматически', en: 'Changes saved automatically'},
-      'Ծրագրի թողարկում': {ru: 'Релиз программы', en: 'App Release'},
-      'Նոր հնարավորություն - Ծրագրի նոր տարբերակ': {ru: 'Новая версия программы', en: 'New App Version'},
-      'Կայքի թողարկում': {ru: 'Релиз сайта', en: 'Web Release'},
-      'Նոր հնարավորություն - Կայքի նոր տարբերակ': {ru: 'Новая версия сайта', en: 'New Web Version'},
-      'Կիրառման ձև': {ru: 'Способ применения', en: 'Deployment Mode'},
-      'Կփոխվեն միայն տարբերակների, հաղորդագրությունների և կարգավորումների տվյալները` առանց սերվերի ֆայլերի փոփոխման:': {ru: 'Будут изменены только данные версий и настройки.', en: 'Only version data and settings will be changed.'},
-      'ԿԻՐԱՌԵԼ ԹԱՐՄԱՑՈՒՄԸ': {ru: 'ПРИМЕНИТЬ ОБНОВЛЕНИЕ', en: 'APPLY UPDATE'},
-      'ՊԱՏՐԱՍՏ': {ru: 'ГОТОВ', en: 'READY'},
-      'ՍՊԱՍՄԱՆ ՄԵՋ': {ru: 'В ОЖИДАНИИ', en: 'PENDING'}
+    <?= __('const ADMIN_I18N = {
+      \'Թարմացում և տեղադրում\': {ru: \'Обновление и установка\', en: \'Update & Deploy\'},
+      \'Թարմացումների Վահանակ\': {ru: \'Панель обновлений\', en: \'Updates Dashboard\'},
+      \'Սա update-ների, deploy-ի և maintenance-ի կառավարման հիմնական վահանակն է։ Աշխատանքը բաժանված է պարզ փուլերի, որպեսզի phone-ից ու computer-ից արագ գտնես ուզած գործողությունը և սխալ publish չանես։\': {ru: \'Основная панель управления обновлениями и обслуживанием. Работа разделена на простые этапы для быстрого доступа с телефона и ПК.\', en: \'Main dashboard for updates, deploy, and maintenance. Work is divided into simple stages for quick access from phone and PC.\'},
+      \'Ծրագրի ընթացիկ տարբերակ\': {ru: \'Текущая версия приложения\', en: \'Current App Version\'},
+      \'Կայքի ընթացիկ տարբերակ\': {ru: \'Текущая версия сайта\', en: \'Current Web Version\'},
+      \'Փաթեթի կապի վիճակ\': {ru: \'Статус связи пакета\', en: \'Package Sync Status\'},
+      \'Ծրագրի ընդհանուր ճանաչված տեղադրումներ\': {ru: \'Общее количество установок\', en: \'Total Known Installs\'},
+      \'Վերադառնալ ադմին վահանակ\': {ru: \'Вернуться в админку\', en: \'Back to Admin\'},
+      \'Բացել տարբերակի տվյալները\': {ru: \'Данные версии\', en: \'Version Data\'},
+      \'Դուրս գալ admin-ից\': {ru: \'Выйти из админки\', en: \'Log Out\'},
+      \'Արագ հոսք\': {ru: \'Быстрый старт\', en: \'Quick Flow\'},
+      \'Լրացրու version/message դաշտերը `Թարմացում և տեղադրում` բաժնում։\': {ru: \'Заполните поля version/message в разделе «Обновление и установка».\', en: \'Fill in version/message fields in the \"Update & Deploy\" section.\'},
+      \'Ընտրիր կիրառման տարբերակը` առանց ֆայլի կամ ֆայլով։\': {ru: \'Выберите вариант применения: с файлом или без.\', en: \'Choose deployment mode: with or without file.\'},
+      \'Սեղմիր `Կիրառել թարմացումը` ու ավարտիր գործընթացը։\': {ru: \'Нажмите «Применить обновление» для завершения.\', en: \'Click \"Apply Update\" to finish.\'},
+      \'1. Թարմացում և տեղադրում\': {ru: \'1. Обновление и установка\', en: \'1. Update & Deploy\'},
+      \'2. Տեխնիկական աշխատանքներ\': {ru: \'2. Тех. работы\', en: \'2. Maintenance\'},
+      \'3. Push ծանուցումներ\': {ru: \'3. Push-уведомления\', en: \'3. Push Notifications\'},
+      \'4. Սարքեր\': {ru: \'4. Устройства\', en: \'4. Devices\'},
+      \'5. Պատմություն\': {ru: \'5. История\', en: \'5. History\'},
+      \'6. Մուտքեր\': {ru: \'6. Доступы\', en: \'6. Access\'},
+      \'7. Մոդերացիա\': {ru: \'7. Модерация\', en: \'7. Moderation\'},
+      \'8. Թարգմանություններ\': {ru: \'8. Переводы\', en: \'8. Translations\'},
+      \'Թողարկման գլխավոր հոսք\': {ru: \'Главный поток релиза\', en: \'Main Release Flow\'},
+      \'Այստեղ լրացնում ես տարբերակները, հաղորդագրությունները և ընտրում ես ինչպես կիրառել թարմացումը։\': {ru: \'Здесь вы заполняете версии, сообщения и выбираете способ применения обновления.\', en: \'Here you fill in versions, messages, and choose how to apply the update.\'},
+      \'Ծրագիր\': {ru: \'Программа\', en: \'App\'},
+      \'Կայք\': {ru: \'Сайт\', en: \'Web\'},
+      \'Փաթեթ պատրաստ\': {ru: \'Пакет готов\', en: \'Package Ready\'},
+      \'Գնալ կիրառման կոճակին\': {ru: \'Перейти к применению\', en: \'Go to Apply button\'},
+      \'Նոր հնարավորություն\': {ru: \'Новая функция\', en: \'New Feature\'},
+      \'ԱՆՋԱՏՎԱԾ\': {ru: \'ОТКЛЮЧЕНО\', en: \'DISABLED\'},
+      \'Տեխնիկական աշխատանքների վիճակ\': {ru: \'Состояние тех. работ\', en: \'Maintenance Status\'},
+      \'Վերջին թարմացումը (UTC+4)\': {ru: \'Последнее обновление\', en: \'Last update\'},
+      \'Թողարկման կենդանի ամփոփում\': {ru: \'Живая сводка релиза\', en: \'Live Release Summary\'},
+      \'Մինչև սեղմես `Կիրառել թարմացումը`, այստեղ միանգամից երևում է ինչ տարբերակ է գնալու, ինչ ձևով է կիրառվելու և արդյոք հիմնական դաշտերը լրացված են։\': {ru: \'До нажатия кнопки здесь сразу видно, какая версия будет применена.\', en: \'Before applying, you can see what version will be deployed.\'},
+      \'Փոփոխությունները կպահպանվեն ավտոմատ\': {ru: \'Изменения сохраняются автоматически\', en: \'Changes saved automatically\'},
+      \'Ծրագրի թողարկում\': {ru: \'Релиз программы\', en: \'App Release\'},
+      \'Նոր հնարավորություն - Ծրագրի նոր տարբերակ\': {ru: \'Новая версия программы\', en: \'New App Version\'},
+      \'Կայքի թողարկում\': {ru: \'Релиз сайта\', en: \'Web Release\'},
+      \'Նոր հնարավորություն - Կայքի նոր տարբերակ\': {ru: \'Новая версия сайта\', en: \'New Web Version\'},
+      \'Կիրառման ձև\': {ru: \'Способ применения\', en: \'Deployment Mode\'},
+      \'Կփոխվեն միայն տարբերակների, հաղորդագրությունների և կարգավորումների տվյալները` առանց սերվերի ֆայլերի փոփոխման:\': {ru: \'Будут изменены только данные версий и настройки.\', en: \'Only version data and settings will be changed.\'},
+      \'ԿԻՐԱՌԵԼ ԹԱՐՄԱՑՈՒՄԸ\': {ru: \'ПРИМЕНИТЬ ОБНОВЛЕНИЕ\', en: \'APPLY UPDATE\'},
+      \'ՊԱՏՐԱՍՏ\': {ru: \'ГОТОВ\', en: \'READY\'},
+      \'ՍՊԱՍՄԱՆ ՄԵՋ\': {ru: \'В ОЖИДАНИИ\', en: \'PENDING\'},
+      \'Կարգավորումներ և համակարգ\': {ru: \'Настройки и система\', en: \'Settings & System\'},
+      \'Երգերի ցանկ\': {ru: \'Список песен\', en: \'Music Library\'},
+      \'Կարգավորումներ\': {ru: \'Настройки\', en: \'Settings\'},
+      \'Դուրս գալ\': {ru: \'Выйти\', en: \'Log Out\'},
+      \'Ադմին\': {ru: \'Админ\', en: \'Admin\'}
     };
-    const currentLang = '<?= $adminLang ?>';
+    const currentLang = \'') ?><?= $adminLang ?>';
     if (currentLang !== 'hy') {
       function translateNode(node) {
         if (node.nodeType === Node.TEXT_NODE) {
@@ -1560,46 +1491,6 @@ $csrfToken = wp_admin_updates_csrf_token();
       });
     }
   </script>
-  <script>
-    const ADMIN_I18N = {
-      'Թարմացում և տեղադրում': {ru: 'Обновление и установка', en: 'Update & Deploy'},
-      'Թարմացումների Վահանակ': {ru: 'Панель обновлений', en: 'Updates Dashboard'},
-      'Ծրագրի ընթացիկ տարբերակ': {ru: 'Текущая версия приложения', en: 'Current App Version'},
-      'Կայքի ընթացիկ տարբերակ': {ru: 'Текущая версия сайта', en: 'Current Web Version'},
-      'Փաթեթի կապի վիճակ': {ru: 'Статус связи пакета', en: 'Package Sync Status'},
-      'Ծրագրի ընդհանուր ճանաչված տեղադրումներ': {ru: 'Общее количество установок', en: 'Total Known Installs'},
-      '1. Թարմացում և տեղադրում': {ru: 'Обновление и установка', en: 'Update & Deploy'},
-      '2. Տեխնիկական աշխատանքներ': {ru: 'Тех. работы', en: 'Maintenance'},
-      '3. Push ծանուցումներ': {ru: 'Push-уведомления', en: 'Push Notifications'},
-      '4. Սարքեր': {ru: 'Устройства', en: 'Devices'},
-      '5. Պատմություն': {ru: 'История', en: 'History'},
-      '6. Մուտքեր': {ru: 'Доступы', en: 'Access'},
-      '7. Մոդերացիա': {ru: 'Модерация', en: 'Moderation'},
-      '8. Թարգմանություններ': {ru: 'Переводы', en: 'Translations'},
-      'Կարգավորումներ և համակարգ': {ru: 'Настройки и система', en: 'Settings & System'},
-      '<?= __('Կառավարեք ծրագրի տարբերակները, սարքերը, մուտքերը և այլն։') ?>': {ru: 'Управляйте версиями, устройствами, доступами и т.д.', en: 'Manage app versions, devices, accesses, etc.'},
-      'Երգերի ցանկ': {ru: 'Список песен', en: 'Music Library'},
-      'Կարգավորումներ': {ru: 'Настройки', en: 'Settings'},
-      'Դուրս գալ': {ru: 'Выйти', en: 'Log Out'},
-      'Ադմին': {ru: 'Админ', en: 'Admin'}
-    };
-    const currentLang = '<?= $adminLang ?>';
-    if (currentLang !== 'hy') {
-      function translateNode(node) {
-        if (node.nodeType === Node.TEXT_NODE) {
-          let text = node.textContent.trim();
-          if (text && ADMIN_I18N[text] && ADMIN_I18N[text][currentLang]) {
-            node.textContent = node.textContent.replace(text, ADMIN_I18N[text][currentLang]);
-          }
-        } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') {
-          node.childNodes.forEach(translateNode);
-        }
-      }
-      document?.addEventListener('DOMContentLoaded', () => {
-        translateNode(document.body);
-      });
-    }
-</script>
 
 <div class="app-layout">
   <?php
@@ -1607,7 +1498,11 @@ $csrfToken = wp_admin_updates_csrf_token();
     include __DIR__ . "/admin_sidebar.php";
   ?>
   <main class="app-main">
-    <?php include __DIR__ . '/admin_topbar.php'; ?>
+    <?php
+      $adminDisplayName = trim((string)($adminUser['name'] ?? 'Admin'));
+      $adminEmail = trim((string)($adminUser['email'] ?? ''));
+      include __DIR__ . '/admin_topbar.php';
+    ?>
 
     <div class="app-content">
       <div class="page-header" style="padding-bottom: 0; border: none; align-items: flex-start; margin-bottom: 32px; display: flex; justify-content: space-between;">
@@ -1700,7 +1595,7 @@ $csrfToken = wp_admin_updates_csrf_token();
         <div class="section-back-nav">
           <button type="button" class="btn" id="btnBackToDashboard">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-            Վերադառնալ կարգավորումներին
+            <?= __('Վերադառնալ կարգավորումներին') ?>
           </button>
         </div>
       <?php endif; ?>
@@ -1714,24 +1609,24 @@ $csrfToken = wp_admin_updates_csrf_token();
     <?php if (!$hasAnyAdminSectionAccess): ?>
     <section class="settings-group">
       <div class="settings-group-header">
-              <h3>Բաժինների հասանելիություն չկա</h3>
-              <p>Այս օգտահաշվի համար ադմին բաժինների թույլտվություններ դեռ միացված չեն։ Խնդրիր լիազորված ադմինին՝ միացնել անհրաժեշտ բաժինները <code><?= __('Մուտքեր') ?></code> բաժնից։</p>
+              <h3><?= __('Բաժինների հասանելիություն չկա') ?></h3>
+              <p><?= __('Այս օգտահաշվի համար ադմին բաժինների թույլտվություններ դեռ միացված չեն։ Խնդրիր լիազորված ադմինին՝ միացնել անհրաժեշտ բաժինները') ?> <code><?= __('Մուտքեր') ?></code> <?= __('բաժնից։') ?></p>
             </div>
     </section>
     <?php endif; ?>
 
     <section class="section-focus" id="sectionFocusBar" aria-live="polite"<?= $hasAnyAdminSectionAccess ? '' : ' hidden' ?>>
       <div class="section-focus-copy">
-        <div class="eyebrow" id="sectionFocusEyebrow">Թարմացում և տեղադրում</div>
-        <h2 id="sectionFocusTitle">Թողարկման գլխավոր հոսք</h2>
-        <p id="sectionFocusDescription">Այստեղ լրացնում ես տարբերակները, հաղորդագրությունները և ընտրում ես ինչպես կիրառել թարմացումը։</p>
+        <div class="eyebrow" id="sectionFocusEyebrow"><?= __('Թարմացում և տեղադրում') ?></div>
+        <h2 id="sectionFocusTitle"><?= __('Թողարկման գլխավոր հոսք') ?></h2>
+        <p id="sectionFocusDescription"><?= __('Այստեղ լրացնում ես տարբերակները, հաղորդագրությունները և ընտրում ես ինչպես կիրառել թարմացումը։') ?></p>
       </div>
       <div class="section-focus-side">
         <div class="chips section-focus-meta" id="sectionFocusMeta">
-          <div class="chip">Ծրագիր <?= htmlspecialchars((string)$config['app_version'], ENT_QUOTES) ?></div>
-          <div class="chip">Կայք <?= htmlspecialchars((string)$config['web_version'], ENT_QUOTES) ?></div>
+          <div class="chip"><?= __('Ծրագիր') ?> <?= htmlspecialchars((string)$config['app_version'], ENT_QUOTES) ?></div>
+          <div class="chip"><?= __('Կայք') ?> <?= htmlspecialchars((string)$config['web_version'], ENT_QUOTES) ?></div>
         </div>
-        <button class="btn btn-primary" type="button" id="sectionFocusActionBtn">Գնալ հիմնական գործողությանը</button>
+        <button class="btn btn-primary" type="button" id="sectionFocusActionBtn"><?= __('Գնալ հիմնական գործողությանը') ?></button>
       </div>
     </section>
 
@@ -1743,522 +1638,362 @@ $csrfToken = wp_admin_updates_csrf_token();
           <div class="stat">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;"><?= htmlspecialchars(wp_version_release_label((string)$config['app_release_type']), ENT_QUOTES) ?></span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars((string)$config['app_version'], ENT_QUOTES) ?></strong>
-              </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
-          </div>
-          
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;"><?= htmlspecialchars(wp_version_release_label((string)$config['web_release_type']), ENT_QUOTES) ?></span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars((string)$config['web_version'], ENT_QUOTES) ?></strong>
-              </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
-          </div>
-          
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
                 <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;"><?= $isScheduledActive ? 'Ժամանակացույցով տեխնիկական աշխատանքը ակտիվ է' : 'Տեխնիկական աշխատանքների վիճակ' ?></span>
                 <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= $isMaintenanceActive ? 'ՄԻԱՑՎԱԾ' : 'ԱՆՋԱՏՎԱԾ' ?></strong>
               </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
+              
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
+            
           </div>
           
           <div class="stat">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Վերջին թարմացումը (UTC+4)</span>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;"><?= __('Վերջին թարմացումը (UTC+4)') ?></span>
                 <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars(wp_version_format_datetime_admin((string)$config['updated_at']) ?: '—', ENT_QUOTES) ?></strong>
               </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
+              
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
+            
           </div>
         </div>
 
-        <section class="settings-group" id="releaseWorkspacePanel" data-admin-section="release all" data-admin-permission="release">
-          <div class="settings-group-header">
-              <h3>Թողարկման կենդանի ամփոփում</h3>
-              <p>Մինչև սեղմես `Կիրառել թարմացումը`, այստեղ միանգամից երևում է ինչ տարբերակ է գնալու, ինչ ձևով է կիրառվելու և արդյոք հիմնական դաշտերը լրացված են։</p>
+        <div class="bento-split" id="releaseWorkspacePanel" data-admin-section="release all" data-admin-permission="release">
+          
+          <!-- LEFT: App & Web Versions -->
+          <div class="bento-card" style="display: flex; flex-direction: column;">
+            <div class="bento-header" style="flex-direction: row; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 20px;">
+              <div>
+                <h3 style="margin: 0;"><?= __('Տարբերակներ և Տեքստեր') ?></h3>
+                <p style="margin: 0; font-size: 12px; color: var(--muted);"><?= __('Լրացրեք նոր տարբերակների տվյալները:') ?></p>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-icon" type="button" data-bump-target="app" data-bump-kind="patch" title="<?= __('Ծրագիր +1') ?>">+A</button>
+                <button class="btn btn-icon" type="button" data-bump-target="web" data-bump-kind="patch" title="<?= __('Կայք +1') ?>">+W</button>
+                <button class="btn" type="button" id="fillDefaultTextsBtn" style="padding: 6px 10px; font-size: 12px;"><?= __('Ավտո լրացում') ?></button>
+              </div>
             </div>
-          <div class="chips" style="margin-top:12px">
-            <div class="autosave-status" id="releaseAutosaveStatus" data-state="idle">Փոփոխությունները կպահպանվեն ավտոմատ</div>
+
+            <div class="bento-split-even" style="margin-bottom:0; gap: 24px;">
+              
+              <!-- App Column -->
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(67,24,255,0.04); padding: 10px 12px; border-radius: 8px;">
+                  <strong style="font-size:13px; color:var(--primary); margin:0;"><span style="margin-right:6px;">📱</span><?= __('Ծրագիր / App') ?></strong>
+                  <span id="releaseAppTypeChip" class="chip primary" style="margin:0; padding: 2px 8px; font-size: 11px;"><?= htmlspecialchars(wp_version_release_label((string)$config['app_release_type']), ENT_QUOTES) ?></span>
+                </div>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                  <div class="form-field" style="margin-bottom:0;">
+                    <label for="app_version"><?= __('Տարբերակ') ?></label>
+                    <input id="app_version" name="app_version" value="<?= htmlspecialchars((string)$config['app_version'], ENT_QUOTES) ?>" required>
+                  </div>
+                  <div class="form-field" style="margin-bottom:0;">
+                    <label for="app_release_type"><?= __('Տեսակ') ?></label>
+                    <select id="app_release_type" name="app_release_type">
+                      <?php foreach ($releaseTypes as $releaseTypeValue => $releaseTypeLabel): ?>
+                        <option value="<?= htmlspecialchars($releaseTypeValue, ENT_QUOTES) ?>" <?= (string)$config['app_release_type'] === $releaseTypeValue ? 'selected' : '' ?>><?= htmlspecialchars($releaseTypeLabel, ENT_QUOTES) ?></option>
+                      <?php endforeach; ?>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-field" style="margin-bottom:0;">
+                  <label for="app_release_summary"><?= __('Կարճ նկարագրություն') ?></label>
+                  <input id="app_release_summary" name="app_release_summary" maxlength="240" value="<?= htmlspecialchars((string)$config['app_release_summary'], ENT_QUOTES) ?>" placeholder="<?= __('Օր.` Տեխնիկական բարելավումներ') ?>">
+                </div>
+                <div class="form-field" style="margin-bottom:0;">
+                  <label for="app_title"><?= __('Վերնագիր') ?></label>
+                  <input id="app_title" name="app_title" value="<?= htmlspecialchars((string)$config['app_title'], ENT_QUOTES) ?>" required>
+                </div>
+                <div class="form-field" style="margin-bottom:0; flex-grow: 1;">
+                  <label for="app_message"><?= __('Հաղորդագրություն (Ամբողջական)') ?></label>
+                  <textarea id="app_message" name="app_message" style="height: 100%; min-height: 80px;" required><?= htmlspecialchars((string)$config['app_message'], ENT_QUOTES) ?></textarea>
+                </div>
+              </div>
+
+              <!-- Web Column -->
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(67,24,255,0.04); padding: 10px 12px; border-radius: 8px;">
+                  <strong style="font-size:13px; color:var(--primary); margin:0;"><span style="margin-right:6px;">💻</span><?= __('Կայք / Web') ?></strong>
+                  <span id="releaseWebTypeChip" class="chip primary" style="margin:0; padding: 2px 8px; font-size: 11px;"><?= htmlspecialchars(wp_version_release_label((string)$config['web_release_type']), ENT_QUOTES) ?></span>
+                </div>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                  <div class="form-field" style="margin-bottom:0;">
+                    <label for="web_version"><?= __('Տարբերակ') ?></label>
+                    <input id="web_version" name="web_version" value="<?= htmlspecialchars((string)$config['web_version'], ENT_QUOTES) ?>" required>
+                  </div>
+                  <div class="form-field" style="margin-bottom:0;">
+                    <label for="web_release_type"><?= __('Տեսակ') ?></label>
+                    <select id="web_release_type" name="web_release_type">
+                      <?php foreach ($releaseTypes as $releaseTypeValue => $releaseTypeLabel): ?>
+                        <option value="<?= htmlspecialchars($releaseTypeValue, ENT_QUOTES) ?>" <?= (string)$config['web_release_type'] === $releaseTypeValue ? 'selected' : '' ?>><?= htmlspecialchars($releaseTypeLabel, ENT_QUOTES) ?></option>
+                      <?php endforeach; ?>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-field" style="margin-bottom:0;">
+                  <label for="web_release_summary"><?= __('Կարճ նկարագրություն') ?></label>
+                  <input id="web_release_summary" name="web_release_summary" maxlength="240" value="<?= htmlspecialchars((string)$config['web_release_summary'], ENT_QUOTES) ?>" placeholder="<?= __('Օր.` Վիզուալ փոփոխություններ') ?>">
+                </div>
+                <div class="form-field" style="margin-bottom:0;">
+                  <label for="web_title"><?= __('Վերնագիր') ?></label>
+                  <input id="web_title" name="web_title" value="<?= htmlspecialchars((string)$config['web_title'], ENT_QUOTES) ?>" required>
+                </div>
+                <div class="form-field" style="margin-bottom:0; flex-grow: 1;">
+                  <label for="web_message"><?= __('Հաղորդագրություն (Ամբողջական)') ?></label>
+                  <textarea id="web_message" name="web_message" style="height: 100%; min-height: 80px;" required><?= htmlspecialchars((string)$config['web_message'], ENT_QUOTES) ?></textarea>
+                </div>
+              </div>
+
+            </div>
           </div>
 
-          <div class="release-workspace">
-            <div class="release-summary-grid">
-              <article class="release-summary-card">
-                <strong>Ծրագրի թողարկում</strong>
-                <span id="releaseAppSummaryText">Տարբերակը և հաղորդագրությունը պատրաստ են ծրագրի համար։</span>
-                <div class="chips">
-                  <div class="chip" id="releaseAppVersionChip"><?= htmlspecialchars((string)$config['app_version'], ENT_QUOTES) ?></div>
-                  <div class="chip" id="releaseAppTypeChip"><?= htmlspecialchars(wp_version_release_label((string)$config['app_release_type']), ENT_QUOTES) ?></div>
-                </div>
-              </article>
-              <article class="release-summary-card">
-                <strong>Կայքի թողարկում</strong>
-                <span id="releaseWebSummaryText">Տարբերակը և հաղորդագրությունը պատրաստ են կայքի համար։</span>
-                <div class="chips">
-                  <div class="chip" id="releaseWebVersionChip"><?= htmlspecialchars((string)$config['web_version'], ENT_QUOTES) ?></div>
-                  <div class="chip" id="releaseWebTypeChip"><?= htmlspecialchars(wp_version_release_label((string)$config['web_release_type']), ENT_QUOTES) ?></div>
-                </div>
-              </article>
-              <article class="release-summary-card">
-                <strong>Կիրառման ձև</strong>
-                <span id="releaseApplySummaryText">Ընթացիկ տարբերակը կորոշի արդյոք փոխվում են միայն տվյալները, թե նաև սերվերի ֆայլերը։</span>
-                <div class="chips">
-                  <div class="chip" id="releaseApplyModeChip">Առանց ֆայլի կցման</div>
-                  <div class="chip" id="releasePackageStatusChip"><?= htmlspecialchars((string)($config['server_package_file'] ?: 'Փաթեթ չկա'), ENT_QUOTES) ?></div>
-                </div>
-              </article>
-            </div>
-
-            <aside class="release-checklist">
-              <h3>Կիրառելուց առաջ ստուգում</h3>
-              <p>Այս փոքր ցանկը օգնում է արագ հասկանալ` կարո՞ղ ես արդեն հրապարակել, թե դեռ մի բան պակասում է։</p>
-              <div class="release-checklist-list">
-                <div class="release-check" id="releaseCheckVersions" data-state="done">
-                  <div class="release-check-badge">1</div>
-                  <div>
-                    <strong>Տարբերակները լրացված են</strong>
-                    <span>Ծրագրի և կայքի տարբերակները պատրաստ են հրապարակման համար։</span>
-                  </div>
-                </div>
-                <div class="release-check" id="releaseCheckMessages" data-state="done">
-                  <div class="release-check-badge">2</div>
-                  <div>
-                    <strong>Հաղորդագրությունները լրացված են</strong>
-                    <span>Օգտատերը կտեսնի հստակ վերնագիր և բացատրություն։</span>
-                  </div>
-                </div>
-                <div class="release-check" id="releaseCheckPackage" data-state="<?= !empty($config['server_package_file']) ? 'done' : 'warn' ?>">
-                  <div class="release-check-badge">3</div>
-                  <div>
-                    <strong>Փաթեթի վիճակը հասկանալի է</strong>
-                    <span id="releaseCheckPackageText"><?= !empty($config['server_package_file']) ? 'Արդեն կա պահված ZIP փաթեթ, որը կարելի է կիրառել։' : 'Եթե ընտրես ֆայլով թարմացում, պետք է ընտրես ZIP փաթեթ կամ պահված փաթեթ ունենաս։' ?></span>
-                  </div>
-                </div>
-                <div class="release-check" id="releaseCheckMaintenance" data-state="<?= $isMaintenanceActive || $isScheduledActive ? 'warn' : 'done' ?>">
-                  <div class="release-check-badge">4</div>
-                  <div>
-                    <strong>Հասանելիության վիճակը ստուգված է</strong>
-                    <span id="releaseCheckMaintenanceText"><?= $isMaintenanceActive || $isScheduledActive ? 'Տեխնիկական աշխատանքները միացված են կամ նախատեսված են, ստուգիր դա նախքան հրապարակելը։' : 'Տեխնիկական աշխատանքները այժմ չեն խանգարում հրապարակմանը։' ?></span>
-                  </div>
-                </div>
+          <!-- RIGHT: Deploy settings & Checklist -->
+          <div style="display:flex; flex-direction:column; gap:24px;">
+            
+            <div class="bento-card">
+              <div class="bento-header" style="margin-bottom: 16px;">
+                <h3><?= __('Տեղադրում (ZIP)') ?></h3>
+                <p><?= __('Ֆայլերի փաթեթի կարգավորումներ') ?></p>
               </div>
-            </aside>
-          </div>
-        </section>
-
-        <div class="grid">
-          <section class="settings-group" data-admin-section="release all" data-admin-permission="release">
-            <div class="settings-group-header">
-              <h3>Ծրագիր / PWA</h3>
-              <p>Այս տարբերակը standalone ծրագրի համար է։ Փոխելիս ծրագիրը կառաջարկի ամբողջական թարմացում և նոր offline sync։ Թարմացման տեսակը բացատրում է փոփոխության բնույթը, իսկ կարճ նկարագրությունը ցույց է տալիս ինչ է փոխվել։</p>
-            </div>
-            <div class="form-field">
-              <label for="app_version">Ծրագրի տարբերակ</label>
-              <input class="input-field" id="app_version" name="app_version" value="<?= htmlspecialchars((string)$config['app_version'], ENT_QUOTES) ?>" class="input-field" required>
-            </div>
-            <div class="form-field">
-              <label for="app_release_type">Թարմացման տեսակ</label>
-              <select id="app_release_type" name="app_release_type" class="input-field">
-                <?php foreach ($releaseTypes as $releaseTypeValue => $releaseTypeLabel): ?>
-                  <option value="<?= htmlspecialchars($releaseTypeValue, ENT_QUOTES) ?>" <?= (string)$config['app_release_type'] === $releaseTypeValue ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($releaseTypeLabel, ENT_QUOTES) ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-            <div class="form-field">
-              <label for="app_release_summary">Կարճ նկարագրություն</label>
-              <input class="input-field" id="app_release_summary" name="app_release_summary" maxlength="240" value="<?= htmlspecialchars((string)$config['app_release_summary'], ENT_QUOTES) ?>" class="input-field" placeholder="Օր.` Offline sync improvements և performance fix-եր">
-            </div>
-            <div class="form-field">
-              <label for="app_title">Թարմացման վերնագիր</label>
-              <input class="input-field" id="app_title" name="app_title" value="<?= htmlspecialchars((string)$config['app_title'], ENT_QUOTES) ?>" class="input-field" required>
-            </div>
-            <div class="form-field">
-              <label for="app_message">Թարմացման հաղորդագրություն</label>
-              <textarea id="app_message" name="app_message" required class="input-field"><?= htmlspecialchars((string)$config['app_message'], ENT_QUOTES) ?></textarea>
-            </div>
-          </section>
-
-          <section class="settings-group" data-admin-section="release all" data-admin-permission="release">
-            <div class="settings-group-header">
-              <h3>Կայք / Web</h3>
-              <p>Այս տարբերակը browser տարբերակի համար է։ Փոխելիս կայքը կբերի refresh պատուհան և կվերբեռնի օնլայն տարբերակը։ Թարմացման տեսակը օգնում է տարբերակել բովանդակության թարմացումը, արագ շտկումը կամ մեծ փոփոխությունը։</p>
-            </div>
-            <div class="form-field">
-              <label for="web_version">Կայքի տարբերակ</label>
-              <input class="input-field" id="web_version" name="web_version" value="<?= htmlspecialchars((string)$config['web_version'], ENT_QUOTES) ?>" class="input-field" required>
-            </div>
-            <div class="form-field">
-              <label for="web_release_type">Թարմացման տեսակ</label>
-              <select id="web_release_type" name="web_release_type" class="input-field">
-                <?php foreach ($releaseTypes as $releaseTypeValue => $releaseTypeLabel): ?>
-                  <option value="<?= htmlspecialchars($releaseTypeValue, ENT_QUOTES) ?>" <?= (string)$config['web_release_type'] === $releaseTypeValue ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($releaseTypeLabel, ENT_QUOTES) ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-            <div class="form-field">
-              <label for="web_release_summary">Կարճ նկարագրություն</label>
-              <input class="input-field" id="web_release_summary" name="web_release_summary" maxlength="240" value="<?= htmlspecialchars((string)$config['web_release_summary'], ENT_QUOTES) ?>" class="input-field" placeholder="Օր.` UI refresh և content update">
-            </div>
-            <div class="form-field">
-              <label for="web_title">Թարմացման վերնագիր</label>
-              <input class="input-field" id="web_title" name="web_title" value="<?= htmlspecialchars((string)$config['web_title'], ENT_QUOTES) ?>" class="input-field" required>
-            </div>
-            <div class="form-field">
-              <label for="web_message">Թարմացման հաղորդագրություն</label>
-              <textarea id="web_message" name="web_message" required class="input-field"><?= htmlspecialchars((string)$config['web_message'], ENT_QUOTES) ?></textarea>
-            </div>
-          </section>
-
-          <section class="settings-group" data-admin-section="release maintenance all" data-admin-permission="release,maintenance">
-            <div class="settings-group-header">
-              <h3>Արագ գործողություններ</h3>
-              <p>Սրանք արագ լրացման և միացման կոճակներ են։ Վերջնական կիրառումը մնում է մեկ հիմնական <code>Կիրառել թարմացումը</code> կոճակով` ըստ ընտրված կիրառման ձևի։</p>
-            </div>
-
-            <div class="quick-stack">
-              <div class="quick-strip">
-                <div class="quick-strip-head">
-                  <strong>Տարբերակներ</strong>
-                  <span>Մի քանի սեղմումով փոխիր տարբերակները կամ լրացրու հիմնական տեքստերը։</span>
-                </div>
-                <div class="quick-actions-grid">
-                  <button class="btn" type="button" data-bump-target="app" data-bump-kind="patch">Ծրագիր +1 patch</button>
-                  <button class="btn" type="button" data-bump-target="web" data-bump-kind="patch">Կայք +1 patch</button>
-                  <button class="btn" type="button" data-bump-target="both" data-bump-kind="patch">Երկուսն էլ +1 patch</button>
-                  <button class="btn" type="button" data-bump-target="both" data-bump-kind="minor">Երկուսն էլ +1 minor</button>
-                  <button class="btn" type="button" data-bump-target="both" data-bump-kind="major">Երկուսն էլ +1 major</button>
-                  <button class="btn" type="button" id="fillDefaultTextsBtn">Լրացնել տեքստերը</button>
-                  <button class="btn" type="button" id="copyAppContentToWebBtn">Ծրագիր -> Կայք</button>
-                  <button class="btn btn-wide" type="button" id="syncVersionsBtn">Նույն տարբերակը երկուսի համար</button>
-                </div>
-              </div>
-
-              <div class="quick-strip">
-                <div class="quick-strip-head">
-                  <strong>Տեխնիկական աշխատանքներ</strong>
-                  <span>Արագ միացրու կամ ժամ տուր տեխնիկական աշխատանքներին՝ առանց schedule դաշտերը ձեռքով լրացնելու։</span>
-                </div>
-                <div class="quick-actions-grid">
-                  <button class="btn" type="button" data-maintenance-hours="0.5">30 րոպե</button>
-                  <button class="btn" type="button" data-maintenance-hours="1">1 ժամ</button>
-                  <button class="btn" type="button" data-maintenance-hours="2">2 ժամ</button>
-                  <button class="btn" type="button" data-maintenance-hours="4">4 ժամ</button>
-                  <button class="btn" type="button" id="startMaintenanceNowBtn">Միացնել հիմա</button>
-                  <button class="btn" type="button" id="clearScheduleBtn">Մաքրել schedule-ը</button>
-                  <button class="btn" type="button" id="disableMaintenanceBtn">Անջատել տեխնիկական աշխատանքները</button>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section class="settings-group" data-admin-section="release all" data-admin-permission="release">
-            <div class="settings-group-header">
-              <h3>Թարմացման տրամաբանություն</h3>
-              <p><code>major.minor.patch</code> մոտեցումը պահպանում է թարմացման իմաստը։ Major-ը մեծ փոփոխություն է, Minor-ը նոր հնարավորություն կամ նկատելի թարմացում, Patch-ը փոքր ուղղում։ Թարմացման տեսակը տալիս է հասկանալի բացատրություն, իսկ կարճ նկարագրությունը երևում է update modal-ում։</p>
-            </div>
-          </section>
-
-          <section class="settings-group" data-admin-section="release all" data-admin-permission="release">
-            <div class="settings-group-header">
-              <h3>Փաթեթ և տեղադրում</h3>
-              <p>Այստեղ ընտրում եք ինչպես կիրառել տարբերակը. միայն version/message թարմացմամբ կամ ZIP ֆայլի կցումով։ Եթե ընտրեք ֆայլով տարբերակը, նույն հոսքի մեջ կկատարվի նաև սերվերի ֆայլերի թարմացումը։</p>
-            </div>
-
-            <div class="package-meta">
-              <div class="chip">Ընթացիկ փաթեթ <?= htmlspecialchars((string)($config['server_package_file'] ?: '—'), ENT_QUOTES) ?></div>
-              <div class="chip">Ռեժիմ <?= htmlspecialchars(wp_version_package_mode_label($packageMode), ENT_QUOTES) ?></div>
-              <div class="chip">Ներբեռնվել է <?= htmlspecialchars($packageUploadedAt ?: '—', ENT_QUOTES) ?></div>
-              <div class="chip">Կիրառվել է <?= htmlspecialchars($packageAppliedAt ?: '—', ENT_QUOTES) ?></div>
-              <div class="chip"><?= $isPackageSyncedToCurrentRelease ? 'Կապը պատրաստ է' : 'Կապը սպասման մեջ է' ?></div>
-              <div class="chip">Կապվել է <?= htmlspecialchars($packageSyncedAt ?: '—', ENT_QUOTES) ?></div>
-              <div class="chip">Կապված ծրագիր <?= htmlspecialchars($packageLinkedAppVersion ?: '—', ENT_QUOTES) ?></div>
-              <div class="chip">Կապված կայք <?= htmlspecialchars($packageLinkedWebVersion ?: '—', ENT_QUOTES) ?></div>
-              <div class="chip">Վերջին պահուստավորում <?= htmlspecialchars((string)($config['server_package_last_backup'] ?: '—'), ENT_QUOTES) ?></div>
-            </div>
-
-            <div class="package-mode-grid">
-              <div class="package-mode-card">
-                <strong>Մասամբ ֆայլերի թարմացում</strong>
-                <span>Փոխվում են միայն ZIP-ի ներսում եղած ֆայլերը։ Հարմար է, երբ թարմացնում եք մեկ կամ մի քանի կոնկրետ ֆայլ։</span>
-              </div>
-              <div class="package-mode-card">
-                <strong>Ամբողջական փաթեթի տեղադրում</strong>
-                <span>Փաթեթը դիտարկվում է որպես ամբողջ release package։ Հարմար է մեծ deploy-երի համար, երբ նույն release-ի հետ շատ ֆայլեր եք թարմացնում։</span>
-              </div>
-            </div>
-
-            <div class="row-2">
               <div class="form-field">
-                <label for="release_apply_mode">Կիրառման տարբերակ</label>
-                <select class="input-field" id="release_apply_mode" name="release_apply_mode">
-                  <option value="without_file">Առանց ֆայլի կցման</option>
-                  <option value="with_file">Ֆայլի կցումով</option>
+                <label for="release_apply_mode"><?= __('Կիրառման տարբերակ') ?></label>
+                <select id="release_apply_mode" name="release_apply_mode">
+                  <option value="without_file"><?= __('Առանց ֆայլի (միայն տեքստեր)') ?></option>
+                  <option value="with_file"><?= __('Ֆայլով (ZIP փաթեթ)') ?></option>
                 </select>
               </div>
               <div class="form-field">
-                <label for="server_package_mode">Տեղադրման ռեժիմ</label>
-                <select class="input-field" id="server_package_mode" name="server_package_mode">
+                <label for="server_package_mode"><?= __('Ռեժիմ') ?></label>
+                <select id="server_package_mode" name="server_package_mode">
                   <?php foreach ($packageModes as $packageModeValue => $packageModeLabel): ?>
-                    <option value="<?= htmlspecialchars($packageModeValue, ENT_QUOTES) ?>" <?= $packageMode === $packageModeValue ? 'selected' : '' ?>>
-                      <?= htmlspecialchars($packageModeLabel, ENT_QUOTES) ?>
-                    </option>
+                    <option value="<?= htmlspecialchars($packageModeValue, ENT_QUOTES) ?>" <?= $packageMode === $packageModeValue ? 'selected' : '' ?>><?= htmlspecialchars($packageModeLabel, ENT_QUOTES) ?></option>
                   <?php endforeach; ?>
                 </select>
               </div>
+              <div class="form-field" style="margin-bottom:0;">
+                <label for="server_package_file"><?= __('Ներբեռնել ZIP ֆայլ') ?></label>
+                <input id="server_package_file" name="server_package_file" type="file" accept=".zip,application/zip" style="padding: 5px 8px; background: #f8fafc;">
+              </div>
+              <div id="packageModeHelper" class="compact-alert info" style="margin-top:12px; margin-bottom:0; display:none;"></div>
+            </div>
+
+            <div class="bento-card" style="background: rgba(248, 250, 255, 0.5); border: 1px solid #eef2ff; box-shadow: none;">
+              <div class="bento-header" style="margin-bottom: 12px;">
+                <h3><?= __('Ստուգում (Checklist)') ?></h3>
+                <p><?= __('Անվտանգության քայլեր նախքան կիրառելը') ?></p>
+              </div>
+              <div class="timeline" style="margin-top: 0;">
+                <div class="timeline-item" id="releaseCheckVersions" data-state="done">
+                  <div class="timeline-head"><span class="timeline-title"><?= __('Տարբերակներ') ?></span></div>
+                </div>
+                <div class="timeline-item" id="releaseCheckMessages" data-state="done">
+                  <div class="timeline-head"><span class="timeline-title"><?= __('Հաղորդագրություն') ?></span></div>
+                </div>
+                <div class="timeline-item" id="releaseCheckPackage" data-state="<?= !empty($config['server_package_file']) ? 'done' : 'warn' ?>">
+                  <div class="timeline-head"><span class="timeline-title"><?= __('Փաթեթ') ?></span></div>
+                  <div class="timeline-content" id="releaseCheckPackageText"><?= !empty($config['server_package_file']) ? 'Արդեն կա պահված փաթեթ։' : 'Սպասում է ընտրության։' ?></div>
+                </div>
+                <div class="timeline-item" id="releaseCheckMaintenance" data-state="<?= $isMaintenanceActive || $isScheduledActive ? 'warn' : 'done' ?>">
+                  <div class="timeline-head"><span class="timeline-title"><?= __('Աշխատանքներ') ?></span></div>
+                  <div class="timeline-content" id="releaseCheckMaintenanceText"><?= $isMaintenanceActive || $isScheduledActive ? 'Տեխ. աշխատանքները ակտիվ են։' : 'Խանգարող հանգամանքներ չկան։' ?></div>
+                </div>
+              </div>
+              <div class="chips" style="margin-top:16px;">
+                <div class="autosave-status chip" id="releaseAutosaveStatus" data-state="idle" style="width:100%;justify-content:center;"><?= __('Ավտոմատ պահպանում') ?></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+          <div class="bento-split-even" id="maintenancePanel" data-admin-section="maintenance" data-admin-permission="maintenance">
+            
+            <div class="bento-card">
+              <div class="bento-header">
+                <h3><?= __('Տեխնիկական աշխատանքներ') ?></h3>
+                <p><?= __('Անջատել հասանելիությունը կամ պլանավորել աշխատանքներ։') ?></p>
+              </div>
+
+              <div class="toggle-switch-wrapper">
+                <div class="toggle-switch-info">
+                  <h4><?= __('Panic Button (Անմիջապես միացնել)') ?></h4>
+                  <p><?= __('Անկախ ժամերից, համակարգը կանցնի սպասարկման ռեժիմի։') ?></p>
+                </div>
+                <label class="toggle-switch" for="maintenance_enabled">
+                  <input id="maintenance_enabled" name="maintenance_enabled" type="checkbox" <?= !empty($config['maintenance_enabled']) ? 'checked' : '' ?>>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
               <div class="form-field">
-                <label for="server_package_file">ZIP թարմացման փաթեթ</label>
-                <input id="server_package_file" name="server_package_file" type="file" accept=".zip,application/zip">
+                <label for="maintenance_message"><?= __('Հաղորդագրություն այցելուների համար') ?></label>
+                <textarea id="maintenance_message" name="maintenance_message" placeholder="<?= __('Կայքում ընթացքի մեջ են տեխնիկական աշխատանքներ...') ?>"><?= htmlspecialchars((string)$config['maintenance_message'], ENT_QUOTES) ?></textarea>
               </div>
-            </div>
 
-            <div id="packageModeHelper" class="package-helper"></div>
-
-            <div class="danger-note">Եթե ընտրեք `ֆայլի կցումով` տարբերակը և նոր ZIP չընտրեք, համակարգը կօգտագործի արդեն ներբեռնված ընթացիկ փաթեթը։ `Առանց ֆայլի կցման` տարբերակում ZIP դաշտը պարզապես անտեսվում է։</div>
-          </section>
-
-          <section class="settings-group" id="maintenancePanel" data-admin-section="maintenance" data-admin-permission="maintenance">
-            <div class="settings-group-header">
-              <h3>Տեխնիկական աշխատանքներ</h3>
-              <p>Միացրեք այս ռեժիմը, երբ կայքում կամ հավելվածում կատարվում են կարևոր թարմացումներ։</p>
-            </div>
-            
-            <div class="toggle-switch-wrapper">
-              <div class="toggle-switch-info">
-                <h4>Ձեռքով միացնել (Maintenance)</h4>
-                <p>Միացրու անմիջապես սպասարկման ռեժիմը՝ անկախ պլանավորված ժամերից։</p>
-              </div>
-              <label class="toggle-switch" for="maintenance_enabled">
-                <input id="maintenance_enabled" name="maintenance_enabled" type="checkbox" <?= !empty($config['maintenance_enabled']) ? 'checked' : '' ?>>
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-
-            <div class="form-field">
-              <label for="maintenance_message">Ցուցադրվող հաղորդագրություն</label>
-              <p class="help-text">Այս տեքստը կտեսնեն օգտատերերը, երբ փորձեն մուտք գործել կայք:</p>
-              <textarea id="maintenance_message" name="maintenance_message" class="input-field" placeholder="Կայքում ընթանում են տեխնիկական աշխատանքներ..."><?= htmlspecialchars((string)$config['maintenance_message'], ENT_QUOTES) ?></textarea>
-            </div>
-
-            <div class="form-field" style="flex-direction: row; gap: 20px; align-items: center;">
-              <div style="flex:1;">
-                <label for="maintenance_start_at">Պլանավորված սկիզբ</label>
-                <input id="maintenance_start_at" name="maintenance_start_at" type="datetime-local" class="input-field" style="margin-top:8px;" value="<?= htmlspecialchars(wp_version_format_datetime_local((string)$config['maintenance_start_at']), ENT_QUOTES) ?>">
-              </div>
-              <div style="flex:1;">
-                <label for="maintenance_end_at">Պլանավորված ավարտ</label>
-                <input id="maintenance_end_at" name="maintenance_end_at" type="datetime-local" class="input-field" style="margin-top:8px;" value="<?= htmlspecialchars(wp_version_format_datetime_local((string)$config['maintenance_end_at']), ENT_QUOTES) ?>">
-              </div>
-            </div>
-
-            <div class="form-field">
-              <label for="maintenance_allowed_ips">Թույլատրված IP հասցեներ (Whitelist)</label>
-              <p class="help-text">Այս IP հասցեներից մուտք գործողների համար կայքը և ծրագիրը կաշխատեն սովորականի պես (նույնիսկ երբ միացված է): Տարանջատեք ստորակետով (օր.` 192.168.1.1, 10.0.0.1)։</p>
-              <input id="maintenance_allowed_ips" name="maintenance_allowed_ips" type="text" class="input-field" placeholder="IP հասցեներ..." value="<?= htmlspecialchars((string)($config['maintenance_allowed_ips'] ?? ''), ENT_QUOTES) ?>">
-            </div>
-
-            <div class="chips" style="margin-top:24px; justify-content: flex-end;">
-              <div class="autosave-status" id="maintenanceAutosaveStatus" data-state="idle">Փոփոխությունները կպահպանվեն ավտոմատ</div>
-            </div>
-          </section>
-
-          <div class="grid" id="pageModesPanel" data-admin-section="maintenance" data-admin-permission="maintenance" style="align-items: flex-start;">
-            <section class="settings-group" style="margin-bottom: 0;">
-              <div class="settings-group-header">
-                <h3>Ծրագրային էջեր (PWA/App Shell)</h3>
-                <p>Ընտրեք, թե որ էջերը պետք է աշխատեն որպես ծրագրային էջեր (առանց վերբեռնման, հավելվածի նման)։</p>
-              </div>
-              <div class="page-app-grid">
-                <input type="hidden" name="page_app_modes_present" value="1">
-                <?php foreach ($pageAppRegistry as $pageKey => $pageMeta): ?>
-                  <?php $pageEnabled = !empty(($config['page_app_modes'] ?? [])[$pageKey]); ?>
-                  <div class="toggle-switch-wrapper" style="margin-bottom: 14px; padding: 16px 20px;">
-                    <div class="toggle-switch-info">
-                      <h4 style="margin-bottom:2px;"><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></h4>
-                      <p style="font-size:12px; margin-bottom:4px;"><?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?></p>
-                      <code style="font-size:11px;"><?= htmlspecialchars((string)($pageMeta['path'] ?? ''), ENT_QUOTES) ?></code>
-                    </div>
-                    <label class="toggle-switch">
-                      <input type="checkbox" name="page_app_modes[<?= htmlspecialchars($pageKey, ENT_QUOTES) ?>]" value="1" <?= $pageEnabled ? 'checked' : '' ?>>
-                      <span class="toggle-slider"></span>
-                    </label>
+              <div class="bento-grid cols-3" style="gap:8px; margin-bottom:8px;">
+                <div class="form-field" style="grid-column: span 1;">
+                  <label for="maintenance_start_at"><?= __('Սկիզբ') ?></label>
+                  <input id="maintenance_start_at" name="maintenance_start_at" type="datetime-local" value="<?= htmlspecialchars(wp_version_format_datetime_local((string)$config['maintenance_start_at']), ENT_QUOTES) ?>" style="padding: 6px;">
+                </div>
+                <div class="form-field" style="grid-column: span 1;">
+                  <label for="maintenance_end_at"><?= __('Ավարտ') ?></label>
+                  <input id="maintenance_end_at" name="maintenance_end_at" type="datetime-local" value="<?= htmlspecialchars(wp_version_format_datetime_local((string)$config['maintenance_end_at']), ENT_QUOTES) ?>" style="padding: 6px;">
+                </div>
+                <div class="form-field" style="grid-column: span 1;">
+                  <label><?= __('Արագ') ?></label>
+                  <div style="display:flex; gap:4px; margin-top:2px;">
+                    <button class="btn btn-icon" type="button" data-maintenance-hours="0.5" title="30ր">30m</button>
+                    <button class="btn btn-icon" type="button" data-maintenance-hours="1" title="1ժ">1h</button>
+                    <button class="btn btn-icon" type="button" id="resetMaintenanceBtn" title="Մաքրել">✕</button>
                   </div>
-                <?php endforeach; ?>
+                </div>
               </div>
-            </section>
 
-            <section class="settings-group" style="margin-bottom: 0;">
-              <div class="settings-group-header">
-                <h3>Կայքի էջեր (Web)</h3>
-                <p>Ընտրեք, թե որ էջերը պետք է հասանելի լինեն կայքում (անջատելու դեպքում այցելուները կստանան «էջը անհասանելի է» հաղորդագրությունը)։</p>
+              <div class="form-field">
+                <label for="maintenance_allowed_ips"><?= __('Whitelist (IP հասցեներ ստորակետով)') ?></label>
+                <input id="maintenance_allowed_ips" name="maintenance_allowed_ips" type="text" placeholder="<?= __('192.168.1.1, 10.0.0.1') ?>" value="<?= htmlspecialchars((string)($config['maintenance_allowed_ips'] ?? ''), ENT_QUOTES) ?>">
               </div>
-              <div class="page-app-grid">
-                <input type="hidden" name="page_web_modes_present" value="1">
-                <?php foreach ($pageWebRegistry as $pageKey => $pageMeta): ?>
-                  <?php $pageEnabled = !empty(($config['page_web_modes'] ?? [])[$pageKey]); ?>
-                  <div class="toggle-switch-wrapper" style="margin-bottom: 14px; padding: 16px 20px;">
-                    <div class="toggle-switch-info">
-                      <h4 style="margin-bottom:2px;"><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></h4>
-                      <p style="font-size:12px; margin-bottom:4px;"><?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?></p>
-                      <code style="font-size:11px;"><?= htmlspecialchars((string)($pageMeta['path'] ?? ''), ENT_QUOTES) ?></code>
+              
+              <div class="chips" style="margin-top:12px">
+                <div class="autosave-status chip" id="maintenanceAutosaveStatus" data-state="idle" style="width:100%;justify-content:center;"><?= __('Փոփոխությունները կպահպանվեն ավտոմատ') ?></div>
+              </div>
+            </div>
+
+            <div class="bento-card" id="pageModesPanel" data-admin-section="maintenance" data-admin-permission="maintenance">
+              <div class="bento-header">
+                <h3><?= __('Էջերի Կառավարում (App / Web)') ?></h3>
+                <p><?= __('Անջատել որոշակի էջեր, եթե կան խնդիրներ։') ?></p>
+              </div>
+
+              <div class="bento-split-even" style="gap: 16px; margin-bottom:0;">
+                <div>
+                  <div class="eyebrow"><?= __('Ծրագիր (PWA)') ?></div>
+                  <input type="hidden" name="page_app_modes_present" value="1">
+                  <?php foreach ($pageAppRegistry as $pageKey => $pageMeta): ?>
+                    <?php $pageEnabled = !empty(($config['page_app_modes'] ?? [])[$pageKey]); ?>
+                    <div class="form-field row" style="border-bottom: 1px solid #f1f5f9; padding-bottom:6px; margin-bottom:6px;" title="<?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?>">
+                      <label style="font-size:12px; font-weight:600; text-transform:none; color:var(--text); cursor:help;"><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></label>
+                      <label class="toggle-switch mini">
+                        <input type="checkbox" name="page_app_modes[<?= htmlspecialchars($pageKey, ENT_QUOTES) ?>]" value="1" <?= $pageEnabled ? 'checked' : '' ?>>
+                        <span class="toggle-slider"></span>
+                      </label>
                     </div>
-                    <label class="toggle-switch">
-                      <input type="checkbox" name="page_web_modes[<?= htmlspecialchars($pageKey, ENT_QUOTES) ?>]" value="1" <?= $pageEnabled ? 'checked' : '' ?>>
-                      <span class="toggle-slider"></span>
-                    </label>
-                  </div>
-                <?php endforeach; ?>
+                  <?php endforeach; ?>
+                </div>
+
+                <div>
+                  <div class="eyebrow"><?= __('Կայք (Web)') ?></div>
+                  <input type="hidden" name="page_web_modes_present" value="1">
+                  <?php foreach ($pageWebRegistry as $pageKey => $pageMeta): ?>
+                    <?php $pageEnabled = !empty(($config['page_web_modes'] ?? [])[$pageKey]); ?>
+                    <div class="form-field row" style="border-bottom: 1px solid #f1f5f9; padding-bottom:6px; margin-bottom:6px;" title="<?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?>">
+                      <label style="font-size:12px; font-weight:600; text-transform:none; color:var(--text); cursor:help;"><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></label>
+                      <label class="toggle-switch mini">
+                        <input type="checkbox" name="page_web_modes[<?= htmlspecialchars($pageKey, ENT_QUOTES) ?>]" value="1" <?= $pageEnabled ? 'checked' : '' ?>>
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                  <?php endforeach; ?>
+                </div>
               </div>
-            </section>
-            
-            <div class="chips" style="grid-column: 1 / -1; justify-content: flex-end;">
-              <div class="autosave-status" id="pageModesAutosaveStatus" data-state="idle">Փոփոխությունները կպահպանվեն ավտոմատ</div>
+
+              <div class="chips" style="margin-top:12px">
+                <div class="autosave-status chip" id="pageModesAutosaveStatus" data-state="idle" style="width:100%;justify-content:center;"><?= __('Փոփոխությունները կպահպանվեն ավտոմատ') ?></div>
+              </div>
             </div>
           </div>
 
-          <section class="settings-group" id="accessOverviewPanel" data-admin-section="access all" data-admin-permission="access">
-            <div class="settings-group-header">
-              <h3>Մուտքերի արագ ամփոփում</h3>
-              <p>Այս բաժինը միանգամից ցույց է տալիս ինչ սկզբունքով է աշխատում ադմինի հասանելիությունը, ով է ներսում և քանի whitelist email կա պահված։</p>
-            </div>
-
-            <div class="access-overview">
-              <article class="access-card">
-                <strong>Ընթացիկ հասանելիության ձև</strong>
-                <span><?= $accessMode === 'modern' ? 'Հիմա աշխատում է դերային մուտքը։ Այսինքն հիմնականում հաշվի են առնվում օգտատիրոջ դերը և ադմին լինելու նշանը։' : 'Հիմա աշխատում է whitelist մուտքը։ Այսինքն հիմնականում որոշողը պահված email-ների ցանկն է։' ?></span>
-                <div class="chips">
-                  <div class="chip"><?= $accessMode === 'modern' ? 'Դերային մուտք' : 'Email whitelist' ?></div>
-                  <div class="chip">Whitelist <?= (int)$adminEmailCount ?></div>
-                </div>
-              </article>
-              <article class="access-card">
-                <strong>Ով է հիմա ներսում</strong>
-                <span>Սա օգնում է արագ տեսնել, թե կոնկրետ որ օգտատիրոջ հաշվով ես աշխատում ադմին վահանակում այս պահին։</span>
-                <div class="chips">
-                  <div class="chip"><?= htmlspecialchars((string)($adminUser['name'] ?? 'Օգտատեր'), ENT_QUOTES) ?></div>
-                  <?php if (!empty($adminUser['email'])): ?>
-                    <div class="chip"><?= htmlspecialchars((string)$adminUser['email'], ENT_QUOTES) ?></div>
-                  <?php endif; ?>
-                </div>
-              </article>
-              <article class="access-card">
-                <strong>Ներքին խորհուրդ</strong>
-                <span>Եթե ուզում ես կարճաժամկետ հասանելիություն տալ, ավելացրու email-ը whitelist-ում։ Եթե օգտատերերի դերերը արդեն ճիշտ են, թող whitelist-ը պահես հնարավորինս փոքր։</span>
-                <div class="chips">
-                  <div class="chip">Մաքուր whitelist</div>
-                  <div class="chip">Փոքր ռիսկ</div>
-                </div>
-              </article>
-            </div>
-          </section>
-
-          <section class="settings-group" id="accessPanel" data-admin-section="access all" data-admin-permission="access">
-            <div class="settings-group-header">
-              <h3>Admin մուտքեր</h3>
-              <p>Եթե տվյալ օգտատիրոջ հաշվին դեր կամ ադմին նշան չկա, այստեղի email whitelist-ը կորոշի ով ունի admin access։ Մեկ email ամեն տողում։</p>
-            </div>
-            <div class="chips" style="margin-top:12px">
-              <div class="autosave-status" id="accessDraftAutosaveStatus" data-state="idle">Փոփոխությունները կպահպանվեն ավտոմատ</div>
-            </div>
-            <div class="form-field">
-              <label for="admin_emails">Admin email-ներ</label>
-              <textarea class="input-field" id="admin_emails" name="admin_emails"><?= htmlspecialchars($adminEmailsText, ENT_QUOTES) ?></textarea>
-            </div>
-            <div class="access-helper">Խորհուրդ է տրվում այստեղ պահել միայն այն email-ները, որոնք իսկապես պետք է պահեստային կամ լրացուցիչ ադմին հասանելիություն ունենան։</div>
-          </section>
-
-          <section class="settings-group" id="accessPermissionsPanel" data-admin-section="access all" data-admin-permission="access">
-            <div class="history-head">
-              <div>
-                <div class="settings-group-header">
-              <h3>Բաժինների թույլտվություններ ըստ օգտատիրոջ</h3>
-              <p>Այս բլոկով կարող ես սահմանել, թե որ email-ը ադմինի որ բաժիններն է տեսնելու։ Եթե email-ը այստեղ չկա, կաշխատի հին տրամաբանությամբ և տվյալ ադմինը կունենա լիարժեք հասանելիություն։</p>
-            </div>
+          <div class="bento-grid cols-3" id="accessOverviewPanel" data-admin-section="access all" data-admin-permission="access" style="gap:16px;">
+            <div class="bento-card" style="padding:20px;">
+              <span style="display:block; color:var(--muted); font-size:12px; font-weight:600; text-transform:uppercase; margin-bottom:8px;"><?= __('Ընթացիկ հասանելիություն') ?></span>
+              <p style="font-size:13px; color:var(--text); line-height:1.4; margin:0 0 12px;"><?= $accessMode === 'modern' ? 'Հիմա աշխատում է դերային մուտքը։ Այսինքն հաշվի են առնվում օգտատիրոջ դերը և ադմին նշանը։' : 'Հիմա աշխատում է whitelist մուտքը։ Որոշողը պահված email-ների ցանկն է։' ?></p>
+              <div class="chips">
+                <div class="chip <?= $accessMode === 'modern' ? 'primary' : 'warning' ?>"><?= $accessMode === 'modern' ? 'Դերային մուտք' : 'Email whitelist' ?></div>
+                <div class="chip"><?= __('Whitelist') ?> <?= (int)$adminEmailCount ?></div>
               </div>
-              <button class="history-btn" id="addPermissionRowBtn" type="button">Ավելացնել օգտատեր</button>
             </div>
 
-            <div class="history-toolbar">
-              <div class="history-toolbar-copy">Սա չի փոխարինում ադմին մուտքի իրավունքը. այն միայն սահմանում է արդեն թույլատրված ադմինի ներսի բաժինները։</div>
-              <div class="permission-status" id="permissionAutosaveStatus" data-state="idle">Փոփոխությունները կպահպանվեն ավտոմատ</div>
+            <div class="bento-card" style="padding:20px;">
+              <span style="display:block; color:var(--muted); font-size:12px; font-weight:600; text-transform:uppercase; margin-bottom:8px;"><?= __('Ով է հիմա ներսում') ?></span>
+              <p style="font-size:13px; color:var(--text); line-height:1.4; margin:0 0 12px;"><?= __('Կոնկրետ որ օգտատիրոջ հաշվով ես աշխատում ադմին վահանակում այս պահին։') ?></p>
+              <div class="chips">
+                <div class="chip primary"><?= htmlspecialchars((string)($adminUser['name'] ?? 'Օգտատեր'), ENT_QUOTES) ?></div>
+                <?php if (!empty($adminUser['email'])): ?>
+                  <div class="chip"><?= htmlspecialchars((string)$adminUser['email'], ENT_QUOTES) ?></div>
+                <?php endif; ?>
+              </div>
             </div>
 
-            <div class="permission-list" id="permissionList">
+            <div class="bento-card" style="padding:20px;">
+              <span style="display:block; color:var(--muted); font-size:12px; font-weight:600; text-transform:uppercase; margin-bottom:8px;"><?= __('Ներքին խորհուրդ') ?></span>
+              <p style="font-size:13px; color:var(--text); line-height:1.4; margin:0 0 12px;"><?= __('Եթե օգտատերերի դերերը արդեն ճիշտ են, թող whitelist-ը պահես հնարավորինս փոքր՝ անվտանգության համար։') ?></p>
+              <div class="chips">
+                <div class="chip success"><?= __('Փոքր ռիսկ') ?></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bento-split-even" style="margin-top:24px; gap:24px;">
+            <div class="bento-card" id="accessPanel" data-admin-section="access all" data-admin-permission="access">
+              <div class="bento-header" style="margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <h3 style="margin:0;"><?= __('Admin մուտքեր (Whitelist)') ?></h3>
+                    <p style="margin:4px 0 0; font-size:13px; color:var(--muted);"><?= __('Մեկ email ամեն տողում։') ?></p>
+                  </div>
+                  <div class="chip" id="accessDraftAutosaveStatus" data-state="idle" style="font-size:11px;"><?= __('Ավտոմատ պահպանում') ?></div>
+                </div>
+              </div>
+              <div class="form-field" style="margin:0;">
+                <textarea class="input-field" id="admin_emails" name="admin_emails" style="min-height:120px; font-family:monospace; padding:12px; font-size:13px;"><?= htmlspecialchars($adminEmailsText, ENT_QUOTES) ?></textarea>
+              </div>
+            </div>
+
+            <div class="bento-card" data-admin-section="access all" data-admin-permission="access">
+              <div class="bento-header" style="margin-bottom:12px;">
+                <h3 style="margin:0;"><?= __('Ներքին նշումներ') ?></h3>
+                <p style="margin:4px 0 0; font-size:13px; color:var(--muted);"><?= __('Այս նշումը կերևա պատմության մեջ։') ?></p>
+              </div>
+              <div class="form-field" style="margin:0;">
+                <textarea class="input-field" id="meta_note" name="meta_note" style="min-height:120px; padding:12px; font-size:13px;"><?= htmlspecialchars((string)$config['meta_note'], ENT_QUOTES) ?></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="bento-card" id="accessPermissionsPanel" data-admin-section="access all" data-admin-permission="access" style="margin-top:24px;">
+            <div class="bento-header">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                <div style="flex:1;">
+                  <h3 style="margin:0;"><?= __('Բաժինների թույլտվություններ') ?></h3>
+                  <p style="margin:4px 0 0; font-size:13px; color:var(--muted);"><?= __('Սահմանիր, թե որ email-ը ադմինի որ բաժիններն է տեսնելու։ Եթե email-ը այստեղ չկա, կունենա լիարժեք հասանելիություն։') ?></p>
+                </div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div class="chip" id="permissionAutosaveStatus" data-state="idle" style="font-size:11px;"><?= __('Ավտոմատ պահպանում') ?></div>
+                  <button class="btn btn-primary" id="addPermissionRowBtn" type="button" style="padding:6px 16px; font-size:13px; border-radius:8px;"><?= __('+ Ավելացնել օգտատեր') ?></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="permission-list" id="permissionList" style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
               <input type="hidden" name="admin_permission_rows_present" value="1">
               <?php foreach ($adminPermissionRows as $index => $row): ?>
-                <div class="permission-card" data-permission-row>
-                  <div class="permission-row-head">
-                    <div class="form-field" style="margin-top:0;flex:1 1 280px">
-                      <label>Email</label>
-                      <input
-                        type="email"
-                        name="admin_permission_rows[<?= (int)$index ?>][email]"
-                        value="<?= htmlspecialchars((string)$row['email'], ENT_QUOTES) ?>"
-                        placeholder="admin@example.com"
-                      >
+                <div class="bento-card" data-permission-row style="padding:16px; background:#f8fafc; border-radius:12px; box-shadow:none;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:12px;">
+                    <div class="form-field" style="margin:0; flex:1; max-width:300px;">
+                      <input class="input-field" type="email" name="admin_permission_rows[<?= (int)$index ?>][email]" value="<?= htmlspecialchars((string)$row['email'], ENT_QUOTES) ?>" placeholder="admin@example.com" style="padding:8px;">
                     </div>
-                    <button class="history-btn danger" type="button" data-remove-permission-row>Հեռացնել</button>
+                    <button class="btn btn-ghost danger" type="button" data-remove-permission-row style="padding:4px 8px; font-size:12px;"><?= __('Հեռացնել') ?></button>
                   </div>
-                  <div class="permission-grid">
+                  <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:12px;">
                     <?php foreach ($adminSectionRegistry as $sectionKey => $sectionMeta): ?>
-                      <label class="permission-check">
-                        <input
-                          type="checkbox"
-                          name="admin_permission_rows[<?= (int)$index ?>][sections][<?= htmlspecialchars($sectionKey, ENT_QUOTES) ?>]"
-                          value="1"
-                          <?= !empty($row['permissions'][$sectionKey]) ? 'checked' : '' ?>
-                        >
-                        <span>
+                      <label class="permission-check" style="margin:0; background:#fff; padding:8px 12px; border-radius:8px; border:1px solid #e2e8f0; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" name="admin_permission_rows[<?= (int)$index ?>][sections][<?= htmlspecialchars($sectionKey, ENT_QUOTES) ?>]" value="1" <?= !empty($row['permissions'][$sectionKey]) ? 'checked' : '' ?>>
+                        <span style="font-size:13px; color:var(--text);">
                           <strong><?= htmlspecialchars((string)($sectionMeta['label'] ?? $sectionKey), ENT_QUOTES) ?></strong>
-                          <small><?= htmlspecialchars((string)($sectionMeta['description'] ?? ''), ENT_QUOTES) ?></small>
                         </span>
                       </label>
                     <?php endforeach; ?>
@@ -2266,226 +2001,109 @@ $csrfToken = wp_admin_updates_csrf_token();
                 </div>
               <?php endforeach; ?>
             </div>
-          </section>
+          </div>
 
-          <section class="settings-group" id="socialAuthPanel" data-admin-section="access all" data-admin-permission="access">
-            <div class="history-head">
-              <div>
-                <div class="settings-group-header">
-              <h3>Google մուտք</h3>
-              <p>Այստեղ կարող ես լրացնել Google մուտքի տվյալները։ Բաց դաշտերը պահվում են ընդհանուր կարգավորումներում, իսկ գաղտնի բանալին պահվում է առանձին փակ պահոցում։ Եթե գաղտնի դաշտը դատարկ թողնես, գործող արժեքը կմնա նույնը։</p>
-            </div>
-              </div>
-            </div>
-            <div class="access-helper" style="margin-top:0">Client ID-ն, Redirect URI-ն և նշումները կպահպանվեն ավտոմատ։ Google-ի գաղտնի բանալին մնում է ձեռքով պահպանմամբ՝ անվտանգության համար։</div>
-
-            <div class="stats" style="margin-bottom:16px">
+          <div class="bento-split-even" id="socialAuthPanel" data-admin-section="access all" data-admin-permission="access" style="margin-top:24px; gap:24px;">
+            <div class="bento-card" style="padding:24px; display:flex; flex-direction:column; justify-content:center;">
+              <h3 style="margin:0 0 12px;"><?= __('Google մուտք (Social Auth)') ?></h3>
+              <p style="font-size:13px; color:var(--muted); line-height:1.5; margin:0 0 16px;"><?= __('Client ID-ն և Redirect URI-ն պահվում են ընդհանուր կարգավորումներում, իսկ Secret-ը՝ անվտանգ պահոցում։') ?></p>
               
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Google public տվյալներ</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars((string)($config['social_auth_google_client_id'] !== '' ? 'ՊԱՏՐԱՍՏ Է' : 'ԼՐԱՑՆԵԼ'), ENT_QUOTES) ?></strong>
-              </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <div style="background:#f8fafc; padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-size:13px; font-weight:600; color:var(--muted);"><?= __('Client ID') ?></span>
+                  <div class="chip <?= $config['social_auth_google_client_id'] !== '' ? 'success' : 'warning' ?>"><?= htmlspecialchars((string)($config['social_auth_google_client_id'] !== '' ? 'Պատրաստ է' : 'Բացակայում է'), ENT_QUOTES) ?></div>
+                </div>
+                <div style="background:#f8fafc; padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-size:13px; font-weight:600; color:var(--muted);"><?= __('Client Secret') ?></span>
+                  <div class="chip <?= strpos($googleClientSecretStatus, 'ԲԱՑԱԿԱՅՈՒՄ') === false ? 'success' : 'warning' ?>"><?= htmlspecialchars($googleClientSecretStatus, ENT_QUOTES) ?></div>
+                </div>
               </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
+
+            <div class="bento-card" style="padding:24px;">
+              <div class="form-field">
+                <label for="social_auth_google_client_id" style="font-size:12px;"><?= __('Client ID') ?></label>
+                <input class="input-field" id="social_auth_google_client_id" name="social_auth_google_client_id" value="<?= htmlspecialchars((string)($config['social_auth_google_client_id'] ?? ''), ENT_QUOTES) ?>" placeholder="<?= __('Google client id') ?>" style="padding:8px;">
+              </div>
+              <div class="form-field">
+                <label for="social_auth_google_client_secret" style="font-size:12px;"><?= __('Client Secret (Նոր)') ?></label>
+                <input class="input-field" id="social_auth_google_client_secret" name="social_auth_google_client_secret" type="password" value="" placeholder="<?= __('Լրացրեք նոր բանալին պահպանելու համար') ?>" style="padding:8px;">
+              </div>
+              <div class="form-field">
+                <label for="social_auth_google_redirect_uri" style="font-size:12px;"><?= __('Redirect URI') ?></label>
+                <input class="input-field" id="social_auth_google_redirect_uri" name="social_auth_google_redirect_uri" value="<?= htmlspecialchars((string)($config['social_auth_google_redirect_uri'] ?? ''), ENT_QUOTES) ?>" placeholder="<?= __('Դատարկ թողնելու դեպքում կկազմվի ավտոմատ') ?>" style="padding:8px;">
+              </div>
+              
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+                <label class="permission-check" style="margin:0; font-size:12px;">
+                  <input type="checkbox" name="social_auth_google_client_secret_clear" value="1">
+                  <span><?= __('Մաքրել Secret-ը') ?></span>
+                </label>
+                <button class="btn btn-primary" type="submit" name="form_action" value="save_access" style="padding:8px 16px; font-size:13px; border-radius:8px;"><?= __('Պահպանել Secret-ը') ?></button>
+              </div>
             </div>
           </div>
-              
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Google գաղտնի բանալի</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars($googleClientSecretStatus, ENT_QUOTES) ?></strong>
-              </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
-          </div>
-            </div>
-
-            <div class="panel-embed">
-              <h3>Google մուտք</h3>
-              <div class="form-field">
-                <label for="social_auth_google_client_id">Client ID</label>
-                <input class="input-field" id="social_auth_google_client_id" name="social_auth_google_client_id" value="<?= htmlspecialchars((string)($config['social_auth_google_client_id'] ?? ''), ENT_QUOTES) ?>" placeholder="Google client id">
-              </div>
-              <div class="form-field">
-                <label for="social_auth_google_client_secret">Client Secret</label>
-                <input class="input-field" id="social_auth_google_client_secret" name="social_auth_google_client_secret" type="password" value="" placeholder="Նոր Google client secret">
-              </div>
-              <label class="permission-check" style="margin-top:10px">
-                <input type="checkbox" name="social_auth_google_client_secret_clear" value="1">
-                <span>
-                  <strong>Մաքրել Google գաղտնի բանալին</strong>
-                  <small>Նշիր միայն այն դեպքում, եթե ուզում ես ամբողջությամբ անջատել Google մուտքը։</small>
-                </span>
-              </label>
-              <div class="form-field">
-                <label for="social_auth_google_redirect_uri">Redirect URI</label>
-                <input class="input-field" id="social_auth_google_redirect_uri" name="social_auth_google_redirect_uri" value="<?= htmlspecialchars((string)($config['social_auth_google_redirect_uri'] ?? ''), ENT_QUOTES) ?>" placeholder="Դատարկ թողնելու դեպքում կկազմվի ավտոմատ">
-              </div>
-              <div class="access-helper">Google Console-ում redirect հասցեն պետք է ցույց տա դեպի <code>/social_auth.php?provider=google</code>։</div>
-              <div class="action-buttons" style="margin-top:14px">
-                <button class="btn" type="submit" name="form_action" value="save_access">Պահպանել Google գաղտնի բանալին</button>
-              </div>
-            </div>
-          </section>
-
-          <section class="settings-group" data-admin-section="access all" data-admin-permission="access">
-            <div class="settings-group-header">
-              <h3>Նշումներ</h3>
-              <p>Ներքին նշում է։ Պատմության մեջ նույնպես կերևա։</p>
-            </div>
-            <div class="form-field">
-              <label for="meta_note">Ներքին նշում</label>
-              <textarea class="input-field" id="meta_note" name="meta_note"><?= htmlspecialchars((string)$config['meta_note'], ENT_QUOTES) ?></textarea>
-            </div>
-
-            <div class="access-helper">Նշումները և admin email-ները պահպանվում են ավտոմատ։</div>
-          </section>
 
           <div class="sticky-actions" id="releaseActionPanel" data-admin-section="release" data-admin-permission="release">
-            <span style="font-size: 13px; color: var(--muted); margin-right: auto; padding-left: 8px;">Ընտրիր կիրառման տարբերակը և սեղմիր հիմնական կոճակը։</span>
-            <button class="btn btn-primary" type="submit" name="form_action" value="apply_release" style="padding: 14px 24px; font-size: 15px; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 15px rgba(67, 24, 255, 0.25);">Կիրառել թարմացումը</button>
+            <span style="font-size: 13px; color: var(--muted); margin-right: auto; padding-left: 8px;"><?= __('Ընտրիր կիրառման տարբերակը և սեղմիր հիմնական կոճակը։') ?></span>
+            <button class="btn btn-primary" type="submit" name="form_action" value="apply_release" style="padding: 14px 24px; font-size: 15px; font-weight: 800; border-radius: 12px; box-shadow: 0 4px 15px rgba(67, 24, 255, 0.25);"><?= __('Կիրառել թարմացումը') ?></button>
           </div>
         </div>
       </form>
 
       <div class="stack" data-section-container>
         <div class="stack">
-          <section class="settings-group" id="moderationPanel" data-admin-section="moderation all" data-admin-permission="moderation">
-            <div class="history-head">
-              <div>
-                <div class="settings-group-header">
-              <h3>Երգերի մոդերացիայի հերթ</h3>
-              <p>Այս բաժնում երևում են օգտատերերի ուղարկած նոր երգերի և խմբագրման բոլոր հարցումները։ Հաստատելուց հետո տվյալները անմիջապես կկիրառվեն երգերի բազայում, իսկ մերժելու դեպքում հարցումը կմնա պատմության մեջ որպես մերժված։</p>
+          <div class="bento-card" id="moderationPanel" data-admin-section="moderation all" data-admin-permission="moderation">
+            <div class="bento-header">
+              <h3 style="margin:0 0 4px;"><?= __('Երգերի մոդերացիայի հերթ') ?></h3>
+              <p style="margin:0; font-size:13px; color:var(--muted);"><?= __('Այս բաժնում երևում են օգտատերերի ուղարկած նոր երգերի և խմբագրման բոլոր հարցումները։ Հաստատելուց հետո տվյալները անմիջապես կկիրառվեն երգերի բազայում։') ?></p>
             </div>
+
+            <div class="bento-grid cols-4" style="gap:12px; margin-top:16px;">
+              <div class="bento-card" style="padding:16px; text-align:center;">
+                <span style="display:block; color:var(--muted); font-size:12px; margin-bottom:4px;"><?= __('Սպասման մեջ') ?></span>
+                <strong style="font-size:24px; color:var(--warning);"><?= (int)($moderationCounts['pending'] ?? 0) ?></strong>
+              </div>
+              <div class="bento-card" style="padding:16px; text-align:center;">
+                <span style="display:block; color:var(--muted); font-size:12px; margin-bottom:4px;"><?= __('Հաստատված') ?></span>
+                <strong style="font-size:24px; color:var(--success);"><?= (int)($moderationCounts['approved'] ?? 0) ?></strong>
+              </div>
+              <div class="bento-card" style="padding:16px; text-align:center;">
+                <span style="display:block; color:var(--muted); font-size:12px; margin-bottom:4px;"><?= __('Մերժված') ?></span>
+                <strong style="font-size:24px; color:var(--danger);"><?= (int)($moderationCounts['rejected'] ?? 0) ?></strong>
+              </div>
+              <div class="bento-card" style="padding:16px; text-align:center;">
+                <span style="display:block; color:var(--muted); font-size:12px; margin-bottom:4px;"><?= __('Ընդհանուր') ?></span>
+                <strong style="font-size:24px; color:var(--primary);"><?= (int)($moderationCounts['all'] ?? 0) ?></strong>
               </div>
             </div>
 
-            <div class="stats" style="margin-bottom:16px">
-              
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Սպասման մեջ</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($moderationCounts['pending'] ?? 0) ?></strong>
+            <form method="get" style="margin-top:24px; padding:16px; background:#f8fafc; border-radius:12px; border:1px solid var(--border);" data-moderation-filter-form="1">
+              <div class="bento-grid cols-3" style="gap:12px; align-items:end;">
+                <div class="form-field" style="margin:0;">
+                  <label for="moderation_status" style="font-size:12px;"><?= __('Վիճակ') ?></label>
+                  <select class="input-field" id="moderation_status" name="moderation_status" style="padding:8px;">
+                    <option value="pending" <?= $moderationFilters['status'] === 'pending' ? 'selected' : '' ?>><?= __('Միայն սպասման մեջ') ?></option>
+                    <option value="approved" <?= $moderationFilters['status'] === 'approved' ? 'selected' : '' ?>><?= __('Միայն հաստատված') ?></option>
+                    <option value="rejected" <?= $moderationFilters['status'] === 'rejected' ? 'selected' : '' ?>><?= __('Միայն մերժված') ?></option>
+                    <option value="all" <?= $moderationFilters['status'] === 'all' ? 'selected' : '' ?>><?= __('Բոլորը') ?></option>
+                  </select>
+                </div>
+                <div class="form-field" style="margin:0;">
+                  <label for="moderation_search" style="font-size:12px;"><?= __('Որոնում') ?></label>
+                  <input class="input-field" id="moderation_search" name="moderation_search" value="<?= htmlspecialchars($moderationFilters['search'], ENT_QUOTES) ?>" placeholder="<?= __('Վերնագիր, հեղինակ կամ email') ?>" style="padding:8px;">
+                </div>
+                <div style="display:flex; gap:8px;">
+                  <button class="btn btn-primary" type="submit" style="padding:8px 16px; flex:1;"><?= __('Զտել') ?></button>
+                  <a class="btn" href="/admin_updates.php" data-moderation-clear-filters="1" style="padding:8px 16px; flex:1; text-align:center;"><?= __('Մաքրել') ?></a>
+                </div>
               </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
-          </div>
-              
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Հաստատված</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($moderationCounts['approved'] ?? 0) ?></strong>
-              </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
-          </div>
-              
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Մերժված</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($moderationCounts['rejected'] ?? 0) ?></strong>
-              </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
-          </div>
-              
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Ընդհանուր</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($moderationCounts['all'] ?? 0) ?></strong>
-              </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
-          </div>
-            </div>
-
-            <form method="get" class="stack" style="margin-top:16px" data-moderation-filter-form="1">
-            <div class="row-2">
-              <div class="form-field">
-                <label for="moderation_status">Վիճակ</label>
-                <select class="input-field" id="moderation_status" name="moderation_status">
-                  <option value="pending" <?= $moderationFilters['status'] === 'pending' ? 'selected' : '' ?>>Միայն սպասման մեջ</option>
-                  <option value="approved" <?= $moderationFilters['status'] === 'approved' ? 'selected' : '' ?>>Միայն հաստատված</option>
-                  <option value="rejected" <?= $moderationFilters['status'] === 'rejected' ? 'selected' : '' ?>>Միայն մերժված</option>
-                  <option value="all" <?= $moderationFilters['status'] === 'all' ? 'selected' : '' ?>>Բոլորը</option>
-                </select>
-              </div>
-              <div class="form-field">
-                <label for="moderation_search">Որոնում</label>
-                <input class="input-field" id="moderation_search" name="moderation_search" value="<?= htmlspecialchars($moderationFilters['search'], ENT_QUOTES) ?>" placeholder="Որոնել վերնագրով, կատարողով կամ email-ով">
-              </div>
-            </div>
-
-            <div class="action-buttons">
-              <button class="btn" type="submit">Կիրառել զտումը</button>
-              <a class="btn" href="/admin_updates.php" data-moderation-clear-filters="1">Մաքրել</a>
-            </div>
             </form>
 
             <?php if (!$moderationRequests): ?>
               <div class="history-item" style="margin-top:16px">
-                <div class="history-title">Հարցումներ չեն գտնվել</div>
-                <div class="note">Ընթացիկ զտման պայմաններով մոդերացիայի հերթում գրառում չկա։</div>
+                <div class="history-title"><?= __('Հարցումներ չեն գտնվել') ?></div>
+                <div class="note"><?= __('Ընթացիկ զտման պայմաններով մոդերացիայի հերթում գրառում չկա։') ?></div>
               </div>
             <?php else: ?>
               <div class="stack" style="margin-top:16px">
@@ -2508,43 +2126,36 @@ $csrfToken = wp_admin_updates_csrf_token();
                     $sourceBpmValue = (int)($sourceSnapshot['bpm'] ?? 0);
                     $sourceTagsValue = trim((string)($sourceSnapshot['tags'] ?? ''));
                   ?>
-                  <article class="device-card">
-                    <div class="device-header">
-                      <div class="device-identity">
-                        <div class="device-title"><?= htmlspecialchars($requestTitleValue !== '' ? $requestTitleValue : 'Անվերնագիր հարցում', ENT_QUOTES) ?></div>
-                        <div class="device-subtitle"><?= htmlspecialchars(wp_song_request_type_label($requestType), ENT_QUOTES) ?> • <?= htmlspecialchars((string)($request['submitted_by_name'] ?: $request['submitted_by_email'] ?: 'Օգտատեր'), ENT_QUOTES) ?></div>
-                        <div class="history-time"><?= htmlspecialchars(wp_version_format_datetime_admin((string)($request['created_at'] ?? '')) ?: '—', ENT_QUOTES) ?></div>
+                  <article class="bento-card" style="padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05); border:1px solid var(--border);">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+                      <div>
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                          <div class="chip <?= $requestStatus === 'approved' ? 'success' : ($requestStatus === 'rejected' ? 'danger' : 'warning') ?>"><?= htmlspecialchars(wp_song_request_status_label($requestStatus), ENT_QUOTES) ?></div>
+                          <div class="chip" style="background:#f1f5f9; border:none;"><?= htmlspecialchars(wp_song_request_type_label($requestType), ENT_QUOTES) ?></div>
+                          <span style="font-size:12px; color:var(--muted);"><?= htmlspecialchars(wp_version_format_datetime_admin((string)($request['created_at'] ?? '')) ?: '—', ENT_QUOTES) ?></span>
+                        </div>
+                        <h4 style="margin:0; font-size:18px; color:var(--text);"><?= htmlspecialchars($requestTitleValue !== '' ? $requestTitleValue : 'Անվերնագիր հարցում', ENT_QUOTES) ?></h4>
+                        <div style="font-size:13px; color:var(--muted); margin-top:4px;">
+                          <?= __('Առաջարկող:') ?> <strong><?= htmlspecialchars((string)($request['submitted_by_name'] ?: $request['submitted_by_email'] ?: 'Անանուն'), ENT_QUOTES) ?></strong>
+                          <?php if (!empty($request['submitted_by_email'])): ?>
+                            <span style="color:var(--primary);">(<?= htmlspecialchars((string)$request['submitted_by_email'], ENT_QUOTES) ?>)</span>
+                          <?php endif; ?>
+                        </div>
                       </div>
-                      <div class="device-actions">
-                        <div class="chip <?= $requestStatus === 'approved' ? 'success' : ($requestStatus === 'rejected' ? 'warning' : '') ?>"><?= htmlspecialchars(wp_song_request_status_label($requestStatus), ENT_QUOTES) ?></div>
-                        <?php if (!empty($request['submitted_by_email'])): ?>
-                          <div class="chip"><?= htmlspecialchars((string)$request['submitted_by_email'], ENT_QUOTES) ?></div>
-                        <?php endif; ?>
-                      </div>
-                    </div>
-
-                    <div class="device-meta-grid">
-                      <div class="device-meta"><strong>Հայերեն</strong><span><?= htmlspecialchars((string)($request['title_hy'] ?? ''), ENT_QUOTES) ?: '—' ?></span></div>
-                      <div class="device-meta"><strong>Լատինատառ</strong><span><?= htmlspecialchars((string)($request['title_lat'] ?? ''), ENT_QUOTES) ?: '—' ?></span></div>
-                      <div class="device-meta"><strong>Անգլերեն</strong><span><?= htmlspecialchars((string)($request['title_en'] ?? ''), ENT_QUOTES) ?: '—' ?></span></div>
-                      <div class="device-meta"><strong>Ռուսերեն</strong><span><?= htmlspecialchars((string)($request['title_ru'] ?? ''), ENT_QUOTES) ?: '—' ?></span></div>
-                      <div class="device-meta"><strong>Կատարող</strong><span><?= htmlspecialchars($requestArtistValue !== '' ? $requestArtistValue : '—', ENT_QUOTES) ?></span></div>
-                      <div class="device-meta"><strong>Տոնայնություն</strong><span><?= htmlspecialchars($requestKeyValue !== '' ? $requestKeyValue : '—', ENT_QUOTES) ?></span></div>
-                      <div class="device-meta"><strong>BPM</strong><span><?= $requestBpmValue > 0 ? (int)$requestBpmValue : '—' ?></span></div>
-                      <div class="device-meta"><strong>Տեգեր</strong><span><?= htmlspecialchars($requestTagsValue !== '' ? $requestTagsValue : '—', ENT_QUOTES) ?></span></div>
-                      <div class="device-meta"><strong>Կապված երգ</strong><span><?= !empty($request['song_id']) ? '#' . (int)$request['song_id'] : 'Նոր երգ' ?></span></div>
+                      <?php if (!empty($request['song_id'])): ?>
+                        <div class="chip" style="background:var(--primary); color:#fff; border:none;">Song #<?= (int)$request['song_id'] ?></div>
+                      <?php endif; ?>
                     </div>
 
                     <?php if ($requestMessageValue !== ''): ?>
-                      <div class="note" style="margin-top:10px"><strong>Օգտատիրոջ մեկնաբանություն.</strong> <?= htmlspecialchars($requestMessageValue, ENT_QUOTES) ?></div>
+                      <div style="background:#fef3c7; border-left:4px solid #f59e0b; padding:12px; border-radius:4px; font-size:13px; margin-bottom:16px;">
+                        <strong><?= __('Մեկնաբանություն:') ?></strong> <?= htmlspecialchars($requestMessageValue, ENT_QUOTES) ?>
+                      </div>
                     <?php endif; ?>
 
                     <?php if ($requestType === 'edit' && $requestChanges): ?>
-                      <div class="moderation-history">
-                        <strong>Խմբագրման տարբերությունները</strong>
-                        <span>Սա պահվում է մոդերացիայի պատմության մեջ նաև հաստատելուց կամ մերժելուց հետո։ Ընդամենը փոփոխված դաշտեր՝ <?= count($requestChanges) ?>։</span>
-                      </div>
-                      <div class="moderation-diff-grid">
+                      <div style="font-size:13px; font-weight:600; margin-bottom:8px; border-bottom:1px solid var(--border); padding-bottom:4px;"><?= __('Խմբագրման տարբերությունները') ?> (<?= count($requestChanges) ?>)</div>
+                      <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
                         <?php foreach ($requestChanges as $change): ?>
                           <?php
                             $changeLabel = (string)($change['label'] ?? 'Դաշտ');
@@ -2558,26 +2169,26 @@ $csrfToken = wp_admin_updates_csrf_token();
                             $afterValue = (string)($change['after'] ?? '—');
                             $isLongChange = !empty($change['is_long']);
                           ?>
-                          <div class="moderation-diff-item" data-kind="<?= htmlspecialchars($changeKind, ENT_QUOTES) ?>">
-                            <div class="moderation-diff-head">
-                              <div class="moderation-diff-title"><?= htmlspecialchars($changeLabel, ENT_QUOTES) ?></div>
-                              <div class="moderation-diff-badge"><?= htmlspecialchars($changeKindLabel, ENT_QUOTES) ?></div>
+                          <div style="background:#fff; border:1px solid var(--border); border-radius:8px; overflow:hidden;">
+                            <div style="background:#f8fafc; padding:8px 12px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                              <strong style="font-size:13px;"><?= htmlspecialchars($changeLabel, ENT_QUOTES) ?></strong>
+                              <span style="font-size:11px; padding:2px 6px; border-radius:4px; background:<?= $changeKind === 'added' ? '#dcfce7' : ($changeKind === 'removed' ? '#fee2e2' : '#fef9c3') ?>; color:<?= $changeKind === 'added' ? '#166534' : ($changeKind === 'removed' ? '#991b1b' : '#854d0e') ?>;"><?= htmlspecialchars($changeKindLabel, ENT_QUOTES) ?></span>
                             </div>
-                            <div class="moderation-diff-values">
-                              <div class="moderation-diff-box">
-                                <strong>Գործող տարբերակ</strong>
+                            <div class="bento-split-even" style="gap:0; grid-template-columns:1fr 1fr;">
+                              <div style="padding:12px; border-right:1px solid var(--border); background:#fff5f5;">
+                                <div style="font-size:11px; color:#991b1b; font-weight:600; text-transform:uppercase; margin-bottom:4px;"><?= __('Ընթացիկ (Հին)') ?></div>
                                 <?php if ($isLongChange): ?>
-                                  <pre><?= htmlspecialchars($beforeValue, ENT_QUOTES) ?></pre>
+                                  <pre style="margin:0; font-size:12px; white-space:pre-wrap; word-break:break-word; max-height:150px; overflow-y:auto;"><?= htmlspecialchars($beforeValue, ENT_QUOTES) ?></pre>
                                 <?php else: ?>
-                                  <span><?= htmlspecialchars($beforeValue, ENT_QUOTES) ?></span>
+                                  <div style="font-size:13px; word-break:break-word;"><?= htmlspecialchars($beforeValue, ENT_QUOTES) ?></div>
                                 <?php endif; ?>
                               </div>
-                              <div class="moderation-diff-box">
-                                <strong>Առաջարկված տարբերակ</strong>
+                              <div style="padding:12px; background:#f0fdf4;">
+                                <div style="font-size:11px; color:#166534; font-weight:600; text-transform:uppercase; margin-bottom:4px;"><?= __('Առաջարկված (Նոր)') ?></div>
                                 <?php if ($isLongChange): ?>
-                                  <pre><?= htmlspecialchars($afterValue, ENT_QUOTES) ?></pre>
+                                  <pre style="margin:0; font-size:12px; white-space:pre-wrap; word-break:break-word; max-height:150px; overflow-y:auto;"><?= htmlspecialchars($afterValue, ENT_QUOTES) ?></pre>
                                 <?php else: ?>
-                                  <span><?= htmlspecialchars($afterValue, ENT_QUOTES) ?></span>
+                                  <div style="font-size:13px; word-break:break-word;"><?= htmlspecialchars($afterValue, ENT_QUOTES) ?></div>
                                 <?php endif; ?>
                               </div>
                             </div>
@@ -2586,74 +2197,60 @@ $csrfToken = wp_admin_updates_csrf_token();
                       </div>
                     <?php endif; ?>
 
-                    <?php if ($sourceSnapshot): ?>
-                      <details class="panel-embed" style="margin-top:12px">
-                        <summary style="cursor:pointer;font-weight:800;">Բացել գործող տարբերակը</summary>
-                        <div class="device-meta-grid" style="margin-top:12px">
-                          <div class="device-meta"><strong>Վերնագիր</strong><span><?= htmlspecialchars($sourceTitleValue !== '' ? $sourceTitleValue : '—', ENT_QUOTES) ?></span></div>
-                          <div class="device-meta"><strong>Կատարող</strong><span><?= htmlspecialchars($sourceArtistValue !== '' ? $sourceArtistValue : '—', ENT_QUOTES) ?></span></div>
-                          <div class="device-meta"><strong>Տոնայնություն</strong><span><?= htmlspecialchars($sourceKeyValue !== '' ? $sourceKeyValue : '—', ENT_QUOTES) ?></span></div>
-                          <div class="device-meta"><strong>BPM</strong><span><?= $sourceBpmValue > 0 ? (int)$sourceBpmValue : '—' ?></span></div>
-                          <div class="device-meta"><strong>Տեգեր</strong><span><?= htmlspecialchars($sourceTagsValue !== '' ? $sourceTagsValue : '—', ENT_QUOTES) ?></span></div>
+                    <?php if ($requestType === 'new'): ?>
+                      <div style="font-size:13px; font-weight:600; margin-bottom:8px; border-bottom:1px solid var(--border); padding-bottom:4px;"><?= __('Նոր Երգի Տվյալներ') ?></div>
+                      <div class="bento-grid cols-2" style="gap:16px; margin-bottom:16px; background:#f8fafc; padding:16px; border-radius:8px; border:1px solid var(--border);">
+                        <div>
+                          <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;"><?= __('Մետատվյալներ') ?></div>
+                          <ul style="margin:0; padding:0; list-style:none; font-size:13px; display:flex; flex-direction:column; gap:4px;">
+                            <li><strong>HY:</strong> <?= htmlspecialchars((string)($request['title_hy'] ?? ''), ENT_QUOTES) ?: '—' ?></li>
+                            <li><strong>EN:</strong> <?= htmlspecialchars((string)($request['title_en'] ?? ''), ENT_QUOTES) ?: '—' ?></li>
+                            <li><strong>RU:</strong> <?= htmlspecialchars((string)($request['title_ru'] ?? ''), ENT_QUOTES) ?: '—' ?></li>
+                            <li><strong>Հեղինակ:</strong> <?= htmlspecialchars($requestArtistValue !== '' ? $requestArtistValue : '—', ENT_QUOTES) ?></li>
+                            <li><strong>Տոնայնություն:</strong> <?= htmlspecialchars($requestKeyValue !== '' ? $requestKeyValue : '—', ENT_QUOTES) ?></li>
+                            <li><strong>BPM:</strong> <?= $requestBpmValue > 0 ? (int)$requestBpmValue : '—' ?></li>
+                            <li><strong>Տեգեր:</strong> <?= htmlspecialchars($requestTagsValue !== '' ? $requestTagsValue : '—', ENT_QUOTES) ?></li>
+                          </ul>
                         </div>
-                        <?php if (!empty($sourceSnapshot['chords'])): ?>
-                          <div class="form-field" style="margin-top:12px">
-                            <label>Գործող ակորդներ</label>
-                            <textarea class="input-field" readonly><?= htmlspecialchars((string)$sourceSnapshot['chords'], ENT_QUOTES) ?></textarea>
-                          </div>
-                        <?php endif; ?>
-                        <?php if (!empty($sourceSnapshot['lyrics'])): ?>
-                          <div class="form-field">
-                            <label>Գործող բառեր</label>
-                            <textarea class="input-field" readonly><?= htmlspecialchars((string)$sourceSnapshot['lyrics'], ENT_QUOTES) ?></textarea>
-                          </div>
-                        <?php endif; ?>
-                      </details>
-                    <?php endif; ?>
-
-                    <?php if (!empty($request['chords']) || !empty($request['lyrics'])): ?>
-                      <details class="panel-embed" style="margin-top:12px">
-                        <summary style="cursor:pointer;font-weight:800;">Բացել առաջարկված ակորդներն ու բառերը</summary>
-                        <?php if (!empty($request['chords'])): ?>
-                          <div class="form-field" style="margin-top:12px">
-                            <label>Առաջարկվող ակորդներ</label>
-                            <textarea class="input-field" readonly><?= htmlspecialchars((string)$request['chords'], ENT_QUOTES) ?></textarea>
-                          </div>
-                        <?php endif; ?>
-                        <?php if (!empty($request['lyrics'])): ?>
-                          <div class="form-field">
-                            <label>Առաջարկվող բառեր</label>
-                            <textarea class="input-field" readonly><?= htmlspecialchars((string)$request['lyrics'], ENT_QUOTES) ?></textarea>
-                          </div>
-                        <?php endif; ?>
-                      </details>
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                          <?php if (!empty($request['chords'])): ?>
+                            <div>
+                              <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;"><?= __('Ակորդներ') ?></div>
+                              <pre style="margin:0; padding:8px; background:#fff; border:1px solid var(--border); border-radius:4px; font-size:11px; max-height:100px; overflow-y:auto;"><?= htmlspecialchars((string)$request['chords'], ENT_QUOTES) ?></pre>
+                            </div>
+                          <?php endif; ?>
+                          <?php if (!empty($request['lyrics'])): ?>
+                            <div>
+                              <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;"><?= __('Բառեր') ?></div>
+                              <pre style="margin:0; padding:8px; background:#fff; border:1px solid var(--border); border-radius:4px; font-size:11px; max-height:100px; overflow-y:auto;"><?= htmlspecialchars((string)$request['lyrics'], ENT_QUOTES) ?></pre>
+                            </div>
+                          <?php endif; ?>
+                        </div>
+                      </div>
                     <?php endif; ?>
 
                     <?php if ($requestStatus === 'pending'): ?>
-                      <form method="post" class="stack" style="margin-top:14px" data-moderation-decision-form="1">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
-                        <input type="hidden" name="song_request_id" value="<?= $requestId ?>">
-                        <div class="form-field" style="margin-top:0">
-                          <label for="song_request_review_note_<?= $requestId ?>">Ադմինի նշում</label>
-                          <textarea class="input-field" id="song_request_review_note_<?= $requestId ?>" name="song_request_review_note" rows="3" placeholder="Օր. սա լավ ուղղում է, կամ՝ խնդրում եմ ուղարկել ավելի ամբողջական տարբերակ"></textarea>
-                        </div>
-                        <div class="action-buttons">
-                          <button class="btn btn-primary" type="submit" name="form_action" value="approve_song_request">Հաստատել և կիրառել</button>
-                          <button class="history-btn danger" type="submit" name="form_action" value="reject_song_request">Մերժել</button>
-                        </div>
-                      </form>
+                      <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
+                        <form method="post" data-moderation-decision-form="1" style="margin:0; display:flex; flex-direction:column; gap:12px;">
+                          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
+                          <input type="hidden" name="song_request_id" value="<?= $requestId ?>">
+                          <div class="form-field" style="margin:0;">
+                            <label for="song_request_review_note_<?= $requestId ?>" style="font-size:12px;"><?= __('Ադմինի նշում (պարտադիր չէ)') ?></label>
+                            <input class="input-field" id="song_request_review_note_<?= $requestId ?>" name="song_request_review_note" placeholder="<?= __('Օր. շատ լավ հավելում է...') ?>" style="padding:8px;">
+                          </div>
+                          <div style="display:flex; gap:12px; justify-content:flex-end;">
+                            <button class="btn danger" type="submit" name="form_action" value="reject_song_request" style="padding:8px 16px;"><?= __('Մերժել') ?></button>
+                            <button class="btn btn-primary success" type="submit" name="form_action" value="approve_song_request" style="padding:8px 24px; background:var(--success); border-color:var(--success);"><?= __('Հաստատել և Պահպանել') ?></button>
+                          </div>
+                        </form>
+                      </div>
                     <?php else: ?>
-                      <div class="note" style="margin-top:12px">
-                        <strong>Ադմինի որոշում.</strong>
-                        <?= htmlspecialchars((string)($request['review_note'] ?? 'Նշում չկա։'), ENT_QUOTES) ?>
-                        <?php if (!empty($request['reviewed_by_name']) || !empty($request['reviewed_at'])): ?>
-                          <br>
-                          <span style="color:var(--muted)">
-                            <?= htmlspecialchars((string)($request['reviewed_by_name'] ?? 'admin'), ENT_QUOTES) ?>
-                            •
-                            <?= htmlspecialchars(wp_version_format_datetime_admin((string)($request['reviewed_at'] ?? '')) ?: '—', ENT_QUOTES) ?>
-                          </span>
-                        <?php endif; ?>
+                      <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px; font-size:13px;">
+                        <strong><?= __('Որոշում:') ?></strong> 
+                        <span style="color:<?= $requestStatus === 'approved' ? 'var(--success)' : 'var(--danger)' ?>;"><?= htmlspecialchars((string)($request['review_note'] ?? 'Առանց նշումի'), ENT_QUOTES) ?></span>
+                        <div style="color:var(--muted); margin-top:4px; font-size:12px;">
+                          <?= __('Ադմին՝') ?> <?= htmlspecialchars((string)($request['reviewed_by_name'] ?? 'admin'), ENT_QUOTES) ?> • <?= htmlspecialchars(wp_version_format_datetime_admin((string)($request['reviewed_at'] ?? '')) ?: '—', ENT_QUOTES) ?>
+                        </div>
                       </div>
                     <?php endif; ?>
                   </article>
@@ -2666,110 +2263,60 @@ $csrfToken = wp_admin_updates_csrf_token();
 
       <div class="stack" data-section-container>
         <form method="get" class="stack">
-          <section class="settings-group" id="translationFilterPanel" data-admin-section="translations all" data-admin-permission="translations">
-            <div class="history-head">
-              <div>
-                <div class="settings-group-header">
-              <h3>Թարգմանությունների դիտում և զտում</h3>
-              <p>Այստեղ կարող ես տեսնել cache եղած թարգմանությունները, զտել ըստ լեզվի և գտնել կոնկրետ աղբյուր տեքստը կամ արդեն թարգմանված տարբերակը։</p>
+          <div class="bento-card" id="translationFilterPanel" data-admin-section="translations all" data-admin-permission="translations" style="margin-bottom:24px;">
+            <div class="bento-header" style="margin-bottom:16px;">
+              <h3 style="margin:0 0 4px;"><?= __('Թարգմանությունների դիտում և զտում') ?></h3>
+              <p style="margin:0; font-size:13px; color:var(--muted);"><?= __('Այստեղ կարող ես տեսնել cache եղած թարգմանությունները, զտել ըստ լեզվի և գտնել կոնկրետ աղբյուր տեքստը կամ արդեն թարգմանված տարբերակը։') ?></p>
             </div>
-              </div>
-            </div>
-            <div class="row-2">
-              <div class="form-field">
-                <label for="translation_lang">Լեզու</label>
-                <select class="input-field" id="translation_lang" name="translation_lang">
-                  <option value="all" <?= $translationFilters['lang'] === 'all' ? 'selected' : '' ?>>Բոլորը</option>
-                  <option value="ru" <?= $translationFilters['lang'] === 'ru' ? 'selected' : '' ?>>Ռուսերեն</option>
-                  <option value="en" <?= $translationFilters['lang'] === 'en' ? 'selected' : '' ?>>Անգլերեն</option>
+            <form method="get" class="bento-grid cols-3" style="gap:12px; align-items:end; background:#f8fafc; padding:16px; border-radius:12px; border:1px solid var(--border);">
+              <div class="form-field" style="margin:0;">
+                <label for="translation_lang" style="font-size:12px;"><?= __('Լեզու') ?></label>
+                <select class="input-field" id="translation_lang" name="translation_lang" style="padding:8px;">
+                  <option value="all" <?= $translationFilters['lang'] === 'all' ? 'selected' : '' ?>><?= __('Բոլորը') ?></option>
+                  <option value="ru" <?= $translationFilters['lang'] === 'ru' ? 'selected' : '' ?>><?= __('Ռուսերեն') ?></option>
+                  <option value="en" <?= $translationFilters['lang'] === 'en' ? 'selected' : '' ?>><?= __('Անգլերեն') ?></option>
                 </select>
               </div>
-              <div class="form-field">
-                <label for="translation_search">Որոնում</label>
-                <input class="input-field" id="translation_search" name="translation_search" value="<?= htmlspecialchars($translationFilters['search'], ENT_QUOTES) ?>" placeholder="Որոնել աղբյուրով, թարգմանությամբ կամ context-ով">
+              <div class="form-field" style="margin:0;">
+                <label for="translation_search" style="font-size:12px;"><?= __('Որոնում') ?></label>
+                <input class="input-field" id="translation_search" name="translation_search" value="<?= htmlspecialchars($translationFilters['search'], ENT_QUOTES) ?>" placeholder="<?= __('Աղբյուր, թարգմանություն կամ context') ?>" style="padding:8px;">
               </div>
-            </div>
-            <div class="action-buttons">
-              <button class="btn" type="submit">Կիրառել զտումը</button>
-              <a class="btn" href="/admin_updates.php">Մաքրել զտումը</a>
-            </div>
-          </section>
-        </form>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-primary" type="submit" style="padding:8px 16px; flex:1;"><?= __('Զտել') ?></button>
+                <a class="btn" href="/admin_updates.php" style="padding:8px 16px; flex:1; text-align:center;"><?= __('Մաքրել') ?></a>
+              </div>
+            </form>
+          </div>
 
-        <form method="post" class="stack" id="translationControlForm">
+        <form method="post" id="translationControlForm">
           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
 
-          <div class="stats" data-admin-section="translations all" data-admin-permission="translations">
-            
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Թարգմանության աշխատակարգ</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;">ՁԵՌՔՈՎ</strong>
-              </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
+          <div class="bento-grid cols-3" data-admin-section="translations all" data-admin-permission="translations" style="gap:16px; margin-bottom:24px;">
+            <div class="bento-card" style="padding:16px; text-align:center;">
+              <span style="display:block; color:var(--muted); font-size:12px; margin-bottom:4px;"><?= __('Թարգմանության աշխատակարգ') ?></span>
+              <strong style="font-size:24px; color:var(--primary);"><?= __('ՁԵՌՔՈՎ') ?></strong>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
+            <div class="bento-card" style="padding:16px; text-align:center;">
+              <span style="display:block; color:var(--muted); font-size:12px; margin-bottom:4px;"><?= __('Ընթացիկ ռեժիմ') ?></span>
+              <strong style="font-size:24px; color:var(--text);"><?= htmlspecialchars((string)($translationSettings['mode'] ?? 'manual'), ENT_QUOTES) ?></strong>
             </div>
-          </div>
-            
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Ընթացիկ ռեժիմ</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars((string)($translationSettings['mode'] ?? 'manual'), ENT_QUOTES) ?></strong>
-              </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
+            <div class="bento-card" style="padding:16px; text-align:center;">
+              <span style="display:block; color:var(--muted); font-size:12px; margin-bottom:4px;"><?= __('Թարգմանված գրառումներ') ?></span>
+              <strong style="font-size:24px; color:var(--text);"><?= (int)($translationCacheStats['all'] ?? 0) ?></strong>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
-          </div>
-            
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Ընդհանուր թարգմանված գրառումներ</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($translationCacheStats['all'] ?? 0) ?></strong>
-              </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
-          </div>
           </div>
 
-          <section class="settings-group" id="translationSettingsPanel" data-admin-section="translations all" data-admin-permission="translations">
-            <div class="settings-group-header">
-              <h3>Երգ ընտրել և վերնագիրը թարգմանել</h3>
-              <p>Ընտրիր երգը ցանկից, և նույն տեղում լրացրու ռուսերեն ու անգլերեն վերնագրերը։ Եթե տվյալ լեզվի թարգմանությունը արդեն կա, դաշտը կլրացվի ավտոմատ։</p>
+          <div class="bento-card" id="translationSettingsPanel" data-admin-section="translations all" data-admin-permission="translations" style="margin-bottom:24px;">
+            <div class="bento-header" style="margin-bottom:16px;">
+              <h3 style="margin:0 0 4px;"><?= __('Երգ ընտրել և վերնագիրը թարգմանել') ?></h3>
+              <p style="margin:0; font-size:13px; color:var(--muted);"><?= __('Ընտրիր երգը ցանկից, և նույն տեղում լրացրու ռուսերեն ու անգլերեն վերնագրերը։ Եթե տվյալ լեզվի թարգմանությունը արդեն կա, դաշտը կլրացվի ավտոմատ։') ?></p>
             </div>
 
-            <div class="row-2">
-              <div class="form-field">
-                <label for="translation_song_id">Երգը ցանկից</label>
-                <select class="input-field" id="translation_song_id" name="translation_song_id">
-                  <option value="">Ընտրիր երգը</option>
+            <div class="bento-split-even" style="gap:16px; margin-bottom:16px;">
+              <div class="form-field" style="margin:0;">
+                <label for="translation_song_id" style="font-size:12px;"><?= __('Երգը ցանկից') ?></label>
+                <select class="input-field" id="translation_song_id" name="translation_song_id" style="padding:8px;">
+                  <option value=""><?= __('Ընտրիր երգը') ?></option>
                   <?php foreach ($translationSongOptions as $songOption): ?>
                     <option
                       value="<?= (int)$songOption['id'] ?>"
@@ -2784,100 +2331,100 @@ $csrfToken = wp_admin_updates_csrf_token();
                   <?php endforeach; ?>
                 </select>
               </div>
-              <div class="form-field">
-                <label for="translation_song_source_preview">Հայերեն վերնագիր</label>
-                <input class="input-field" id="translation_song_source_preview" type="text" value="" placeholder="Ընտրելուց հետո այստեղ կերևա վերնագիրը" readonly>
+              <div class="form-field" style="margin:0;">
+                <label for="translation_song_source_preview" style="font-size:12px;"><?= __('Հայերեն վերնագիր') ?></label>
+                <input class="input-field" id="translation_song_source_preview" type="text" value="" placeholder="<?= __('Ընտրելուց հետո այստեղ կերևա վերնագիրը') ?>" style="padding:8px;" readonly>
               </div>
             </div>
 
-            <div class="row-2">
-              <div class="form-field">
-                <label for="translation_song_lat">Հայերեն լատինատառ</label>
-                <textarea class="input-field" id="translation_song_lat" name="translation_song_lat" rows="4" placeholder="Օր. Egiptos"></textarea>
+            <div class="bento-split-even" style="gap:16px; margin-bottom:16px;">
+              <div class="form-field" style="margin:0;">
+                <label for="translation_song_lat" style="font-size:12px;"><?= __('Հայերեն լատինատառ') ?></label>
+                <textarea class="input-field" id="translation_song_lat" name="translation_song_lat" rows="2" placeholder="<?= __('Օր. Egiptos') ?>" style="padding:8px;"></textarea>
               </div>
-              <div class="form-field">
-                <label for="translation_song_ru">Ռուսերեն վերնագիր</label>
-                <textarea class="input-field" id="translation_song_ru" name="translation_song_ru" rows="4" placeholder="Ռուսերեն տարբերակ"></textarea>
-              </div>
-            </div>
-
-            <div class="row-2">
-              <div class="form-field">
-                <label for="translation_song_en">Անգլերեն վերնագիր</label>
-                <textarea class="input-field" id="translation_song_en" name="translation_song_en" rows="4" placeholder="Անգլերեն տարբերակ"></textarea>
+              <div class="form-field" style="margin:0;">
+                <label for="translation_song_ru" style="font-size:12px;"><?= __('Ռուսերեն վերնագիր') ?></label>
+                <textarea class="input-field" id="translation_song_ru" name="translation_song_ru" rows="2" placeholder="<?= __('Ռուսերեն տարբերակ') ?>" style="padding:8px;"></textarea>
               </div>
             </div>
 
-            <div class="access-helper">Պահպանումը գրում է ընտրված երգի վերնագրի թարգմանությունը, և այն կաշխատի նաև երգերի ցանկում ու երգի դիտման էջում։</div>
-
-            <div class="action-buttons">
-              <button class="btn btn-primary" type="submit" name="form_action" value="save_song_title_translations">Պահպանել երկու լեզուներով</button>
-            </div>
-          </section>
-
-          <section class="settings-group" id="translationCachePanel" data-admin-section="translations all" data-admin-permission="translations">
-            <div class="history-head">
-              <div>
-                <div class="settings-group-header">
-              <h3>Թարգմանված գրառումների կառավարում</h3>
-              <p>Սա պահված թարգմանությունների ցանկն է։ Կարող ես ձեռքով ուղղել թարգմանված տարբերակը, ջնջել մեկ գրառում, կամ մաքրել ամբողջ պահոցը։</p>
-            </div>
+            <div class="bento-split-even" style="gap:16px; margin-bottom:16px;">
+              <div class="form-field" style="margin:0;">
+                <label for="translation_song_en" style="font-size:12px;"><?= __('Անգլերեն վերնագիր') ?></label>
+                <textarea class="input-field" id="translation_song_en" name="translation_song_en" rows="2" placeholder="<?= __('Անգլերեն տարբերակ') ?>" style="padding:8px;"></textarea>
+              </div>
+              <div style="display:flex; align-items:flex-end;">
+                <button class="btn btn-primary" type="submit" name="form_action" value="save_song_title_translations" style="padding:8px 24px; width:100%;"><?= __('Պահպանել թարգմանությունները') ?></button>
               </div>
             </div>
 
-            <div class="chips" style="margin-bottom:16px">
-              <div class="chip">Ընդամենը <?= (int)($translationCacheStats['all'] ?? 0) ?></div>
-              <div class="chip">Ռուսերեն <?= (int)($translationCacheStats['ru'] ?? 0) ?></div>
-              <div class="chip">Անգլերեն <?= (int)($translationCacheStats['en'] ?? 0) ?></div>
-              <div class="chip">Ցուցադրվում է մինչև 80 գրառում</div>
+            <div class="access-helper" style="margin:0;"><?= __('Պահպանումը գրում է ընտրված երգի վերնագրի թարգմանությունը, և այն կաշխատի նաև երգերի ցանկում ու երգի դիտման էջում։') ?></div>
+          </div>
+
+          <div class="bento-card" id="translationCachePanel" data-admin-section="translations all" data-admin-permission="translations">
+            <div class="bento-header" style="margin-bottom:16px;">
+              <h3 style="margin:0 0 4px;"><?= __('Թարգմանված գրառումների կառավարում') ?></h3>
+              <p style="margin:0; font-size:13px; color:var(--muted);"><?= __('Սա պահված թարգմանությունների ցանկն է։ Կարող ես ձեռքով ուղղել թարգմանված տարբերակը կամ ջնջել այն։') ?></p>
             </div>
 
-            <div class="action-buttons" style="margin-bottom:16px">
-              <button class="btn" type="button" data-translation-clear-cache="ru">Մաքրել ռուսերենի cache-ը</button>
-              <button class="btn" type="button" data-translation-clear-cache="en">Մաքրել անգլերենի cache-ը</button>
-              <button class="history-btn danger" type="button" data-translation-clear-cache="all">Մաքրել ամբողջ cache-ը</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:20px; padding:12px; background:#f8fafc; border-radius:8px;">
+              <div class="chips" style="margin:0;">
+                <div class="chip"><?= __('Ընդամենը') ?> <?= (int)($translationCacheStats['all'] ?? 0) ?></div>
+                <div class="chip"><?= __('Ռուսերեն') ?> <?= (int)($translationCacheStats['ru'] ?? 0) ?></div>
+                <div class="chip"><?= __('Անգլերեն') ?> <?= (int)($translationCacheStats['en'] ?? 0) ?></div>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-ghost" type="button" data-translation-clear-cache="ru" style="padding:4px 8px; font-size:12px;"><?= __('Մաքրել RU') ?></button>
+                <button class="btn btn-ghost" type="button" data-translation-clear-cache="en" style="padding:4px 8px; font-size:12px;"><?= __('Մաքրել EN') ?></button>
+                <button class="btn btn-ghost danger" type="button" data-translation-clear-cache="all" style="padding:4px 8px; font-size:12px;"><?= __('Մաքրել Ամբողջը') ?></button>
+              </div>
             </div>
 
-            <div class="autosave-status" id="translationActionStatus" data-state="idle">Պատրաստ է կառավարման համար</div>
+            <div class="autosave-status" id="translationActionStatus" data-state="idle" style="margin-bottom:16px;"><?= __('Պատրաստ է կառավարման համար') ?></div>
 
             <?php if (!$translationEntries): ?>
-              <div class="access-helper" style="margin-top:16px">Ընթացիկ զտման պայմաններով cache-ում թարգմանված գրառում չի գտնվել։</div>
+              <div style="padding:32px; text-align:center; color:var(--muted); background:#f8fafc; border-radius:12px;">
+                <?= __('Ընթացիկ զտման պայմաններով cache-ում թարգմանված գրառում չի գտնվել։') ?>
+              </div>
             <?php else: ?>
-              <div class="stack" style="margin-top:16px">
+              <div style="display:flex; flex-direction:column; gap:16px;">
                 <?php foreach ($translationEntries as $entry): ?>
-                  <article class="panel-embed" data-translation-entry>
+                  <article class="bento-card" data-translation-entry style="padding:16px; border:1px solid var(--border); box-shadow:none;">
                     <input type="hidden" data-translation-lang value="<?= htmlspecialchars((string)$entry['lang'], ENT_QUOTES) ?>">
                     <input type="hidden" data-translation-context value="<?= htmlspecialchars((string)$entry['context'], ENT_QUOTES) ?>">
                     <textarea class="input-field" data-translation-source hidden><?= htmlspecialchars((string)$entry['source'], ENT_QUOTES) ?></textarea>
 
-                    <div class="history-toolbar" style="margin-bottom:12px">
-                      <div class="history-toolbar-copy">
-                        <?= htmlspecialchars(wp_admin_updates_translation_lang_label((string)$entry['lang']), ENT_QUOTES) ?> •
-                        <?= htmlspecialchars((string)$entry['context'], ENT_QUOTES) ?> •
-                        <?= htmlspecialchars(wp_version_format_datetime_admin((string)($entry['updated_at'] ?? '')) ?: '—', ENT_QUOTES) ?>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border);">
+                      <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="chip" style="background:#e0f2fe; color:#0369a1; border:none; font-weight:600;"><?= htmlspecialchars(wp_admin_updates_translation_lang_label((string)$entry['lang']), ENT_QUOTES) ?></span>
+                        <span style="font-size:12px; color:var(--muted);"><?= htmlspecialchars((string)$entry['context'], ENT_QUOTES) ?></span>
                       </div>
-                      <div class="autosave-status" data-translation-entry-status data-state="idle">Պատրաստ է խմբագրման</div>
+                      <div class="autosave-status" data-translation-entry-status data-state="idle" style="font-size:11px;"><?= __('Պատրաստ է խմբագրման') ?></div>
                     </div>
 
-                    <div class="form-field">
-                      <label>Հայերեն աղբյուր</label>
-                      <textarea class="input-field" readonly><?= htmlspecialchars((string)$entry['source'], ENT_QUOTES) ?></textarea>
+                    <div class="bento-split-even" style="gap:16px; margin-bottom:12px;">
+                      <div class="form-field" style="margin:0;">
+                        <label style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;"><?= __('Աղբյուր (HY)') ?></label>
+                        <div style="padding:12px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0; font-size:13px; line-height:1.5; min-height:80px;">
+                          <?= nl2br(htmlspecialchars((string)$entry['source'], ENT_QUOTES)) ?>
+                        </div>
+                      </div>
+
+                      <div class="form-field" style="margin:0;">
+                        <label style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;"><?= __('Թարգմանություն') ?></label>
+                        <textarea class="input-field" data-translation-text style="min-height:80px; padding:12px; font-size:13px; line-height:1.5; border-color:#cbd5e1;"><?= htmlspecialchars((string)$entry['text'], ENT_QUOTES) ?></textarea>
+                      </div>
                     </div>
 
-                    <div class="form-field">
-                      <label>Թարգմանված տարբերակ</label>
-                      <textarea class="input-field" data-translation-text><?= htmlspecialchars((string)$entry['text'], ENT_QUOTES) ?></textarea>
-                    </div>
-
-                    <div class="action-buttons">
-                      <button class="btn" type="button" data-translation-save-entry>Պահպանել ուղղումը</button>
-                      <button class="history-btn danger" type="button" data-translation-delete-entry>Ջնջել այս գրառումը</button>
+                    <div style="display:flex; justify-content:flex-end; gap:8px;">
+                      <button class="btn btn-ghost danger" type="button" data-translation-delete-entry style="padding:6px 12px; font-size:12px;"><?= __('Ջնջել') ?></button>
+                      <button class="btn btn-primary" type="button" data-translation-save-entry style="padding:6px 16px; font-size:12px;"><?= __('Պահպանել') ?></button>
                     </div>
                   </article>
                 <?php endforeach; ?>
               </div>
             <?php endif; ?>
-          </section>
+          </div>
         </form>
       </div>
 
@@ -2888,825 +2435,653 @@ $csrfToken = wp_admin_updates_csrf_token();
           <div class="stat">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Push ծանուցումների վիճակ</span>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;"><?= __('Push ծանուցումների վիճակ') ?></span>
                 <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= !empty($pushConfig['enabled']) ? 'ՄԻԱՑՎԱԾ' : 'ԱՆՋԱՏՎԱԾ' ?></strong>
               </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
+              
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
+            
           </div>
           
           <div class="stat">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Ծրագրի ընդհանուր ճանաչված տեղադրումներ</span>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;"><?= __('Ծրագրի ընդհանուր ճանաչված տեղադրումներ') ?></span>
                 <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($installStats['main']['known_count'] ?? 0) ?></strong>
               </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
+              
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
+            
           </div>
           
           <div class="stat">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Վերջին <?= (int)($installStats['window_days'] ?? 60) ?> օրում ակտիվ երևացած սարքեր</span>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;"><?= __('Վերջին') ?> <?= (int)($installStats['window_days'] ?? 60) ?> <?= __('օրում ակտիվ երևացած սարքեր') ?></span>
                 <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($installStats['main']['count'] ?? 0) ?></strong>
               </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
+              
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
+            
           </div>
           
           <div class="stat">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Push միացրած սարքեր</span>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;"><?= __('Push միացրած սարքեր') ?></span>
                 <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($pushStats['subscriptions'] ?? 0) ?></strong>
               </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
+              
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
+            
           </div>
           
           <div class="stat">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Վերջին ուղարկումը</span>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;"><?= __('Վերջին ուղարկումը') ?></span>
                 <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars($pushLastSentAt ?: '—', ENT_QUOTES) ?></strong>
               </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              
+            </div>
+            
+          </div>
+        </div>
+
+        <div class="bento-card" data-admin-section="push all" data-admin-permission="push" style="margin-bottom: 16px;">
+          <div class="bento-header">
+            <h3><?= __('Push ծանուցումներ') ?></h3>
+            <p><?= __('Այս բաժնից կարող եք միացնել browser/app push ծանուցումները:') ?></p>
+          </div>
+          
+          <div class="toggle-switch-wrapper" style="margin-bottom: 16px;">
+            <div class="toggle-switch-info">
+              <h4><?= __('Միացնել push ծանուցումները') ?></h4>
+              <p><?= !empty($pushConfig['supported']) ? 'Եթե սա ակտիվ է, կայքի և ծրագրի user-ները կարող են բաժանորդագրվել push ծանուցումներին։' : 'Սերվերի վրա OpenSSL աջակցություն չկա, դրա համար push notifications-ը չի կարող ամբողջությամբ աշխատել։' ?></p>
+            </div>
+            <label class="toggle-switch" for="push_enabled">
+              <input id="push_enabled" name="push_enabled" type="checkbox" <?= !empty($pushConfig['enabled']) ? 'checked' : '' ?> <?= empty($pushConfig['supported']) ? 'disabled' : '' ?>>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="bento-grid cols-2" style="gap:8px;">
+            <div class="form-field" style="margin:0;">
+              <label for="push_subject"><?= __('Կապի հասցե (VAPID subject)') ?></label>
+              <input class="input-field" id="push_subject" name="push_subject" value="<?= htmlspecialchars((string)($pushConfig['vapid_subject'] ?? ''), ENT_QUOTES) ?>" placeholder="mailto:admin@example.com">
+            </div>
+            <div class="form-field" style="margin:0;">
+              <label for="push_public_key_preview"><?= __('Հանրային բանալի') ?></label>
+              <input class="input-field" id="push_public_key_preview" value="<?= htmlspecialchars((string)($pushConfig['vapid_public_key'] ?? ''), ENT_QUOTES) ?>" readonly>
+            </div>
+          </div>
+          <div class="chips" style="margin-top:12px; justify-content: flex-end;">
+            <div class="autosave-status chip" id="pushAutosaveStatus" data-state="idle"><?= __('Ավտոմատ պահպանվում է') ?></div>
+          </div>
+        </div>
+
+        <div class="bento-card" id="devicesPanel" data-admin-section="devices all" data-admin-permission="devices">
+          <div class="bento-header">
+            <h3><?= __('Ծրագրի ակտիվ սարքեր') ?></h3>
+            <p><?= __('Այս բաժնում երևում են ակտիվ սարքերը։ Տվյալները թարմացվում են, երբ ծրագիրը օնլայն բացվում է։') ?></p>
+          </div>
+
+          <div class="bento-grid cols-6" style="gap:8px; margin-bottom:16px;">
+            <div class="form-field" style="margin:0; grid-column: span 2;">
+              <input class="input-field" id="device_search" name="device_search" value="<?= htmlspecialchars($deviceFilters['search'], ENT_QUOTES) ?>" placeholder="<?= __('Անուն, email, IP, սարք...') ?>" style="padding:6px;">
+            </div>
+            <div class="form-field" style="margin:0; grid-column: span 1;">
+              <select class="input-field" id="device_scope" name="device_scope" style="padding:6px;">
+                <option value="all" <?= $deviceFilters['scope'] === 'all' ? 'selected' : '' ?>><?= __('Բոլորը (App/Admin)') ?></option>
+                <option value="main" <?= $deviceFilters['scope'] === 'main' ? 'selected' : '' ?>><?= __('Միայն App') ?></option>
+                <option value="admin" <?= $deviceFilters['scope'] === 'admin' ? 'selected' : '' ?>><?= __('Միայն Admin') ?></option>
+              </select>
+            </div>
+            <div class="form-field" style="margin:0; grid-column: span 1;">
+              <select class="input-field" id="device_link" name="device_link" style="padding:6px;">
+                <option value="all" <?= $deviceFilters['link'] === 'all' ? 'selected' : '' ?>><?= __('Բոլորը (Auth)') ?></option>
+                <option value="linked" <?= $deviceFilters['link'] === 'linked' ? 'selected' : '' ?>><?= __('Մուտք գործած') ?></option>
+                <option value="guest" <?= $deviceFilters['link'] === 'guest' ? 'selected' : '' ?>><?= __('Անանուն') ?></option>
+              </select>
+            </div>
+            <div class="form-field" style="margin:0; grid-column: span 1;">
+              <select class="input-field" id="device_platform" name="device_platform" style="padding:6px;">
+                <option value="all"><?= __('Բոլոր հարթակներ') ?></option>
+                <?php foreach ($deviceFilterOptions['platforms'] as $platformOption): ?>
+                  <option value="<?= htmlspecialchars($platformOption, ENT_QUOTES) ?>" <?= $deviceFilters['platform'] === $platformOption ? 'selected' : '' ?>><?= htmlspecialchars($platformOption, ENT_QUOTES) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="form-field" style="margin:0; grid-column: span 1;">
+              <select class="input-field" id="device_sort" name="device_sort" style="padding:6px;">
+                <option value="last_seen_newest" <?= $deviceFilters['sort'] === 'last_seen_newest' ? 'selected' : '' ?>><?= __('Նորից հին') ?></option>
+                <option value="last_seen_oldest" <?= $deviceFilters['sort'] === 'last_seen_oldest' ? 'selected' : '' ?>><?= __('Հինից նոր') ?></option>
+              </select>
+            </div>
+            
+            <div style="grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center;">
+              <div style="font-size:12px; color:var(--muted);">
+                <?= __('Ֆիլտրից հետո երևում է') ?> <?= count($filteredMainInstallDevices) ?> <?= __('հիմնական և') ?> <?= count($filteredAdminInstallDevices) ?> <?= __('ադմին սարք։') ?>
               </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
+          </div>
+            
+          <div class="bento-grid cols-6" style="gap:12px; margin-top:16px;">
+            <div class="bento-card" style="padding:16px; text-align:center;">
+              <span style="display:block; color:var(--muted); font-size:12px; margin-bottom:4px;"><?= __('Ակտիվ (App)') ?></span>
+              <strong style="font-size:24px; color:var(--text);"><?= (int)($installStats['main']['count'] ?? 0) ?></strong>
+            </div>
+            <div class="bento-card" style="padding:16px; text-align:center;">
+              <span style="display:block; color:var(--muted); font-size:12px; margin-bottom:4px;"><?= __('Ընդհանուր (App)') ?></span>
+              <strong style="font-size:24px; color:var(--text);"><?= (int)($installStats['main']['known_count'] ?? 0) ?></strong>
+            </div>
+            <div class="bento-card" style="padding:16px; text-align:center;">
+              <span style="display:block; color:var(--muted); font-size:12px; margin-bottom:4px;"><?= __('Ակտիվ (Admin)') ?></span>
+              <strong style="font-size:24px; color:var(--text);"><?= (int)($installStats['admin']['count'] ?? 0) ?></strong>
+            </div>
+            <div class="bento-card" style="padding:16px; text-align:center;">
+              <span style="display:block; color:var(--muted); font-size:12px; margin-bottom:4px;"><?= __('Ընդհանուր (Admin)') ?></span>
+              <strong style="font-size:24px; color:var(--text);"><?= (int)($installStats['admin']['known_count'] ?? 0) ?></strong>
+            </div>
+            <div class="bento-card" style="padding:16px; text-align:center; grid-column: span 2;">
+              <span style="display:block; color:var(--muted); font-size:12px; margin-bottom:4px;"><?= __('Վերջին կապ (App / Admin)') ?></span>
+              <strong style="font-size:14px; color:var(--text); display:block; margin-top:6px;"><?= htmlspecialchars(wp_version_format_datetime_admin((string)($installStats['main']['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></strong>
+              <strong style="font-size:14px; color:var(--text); display:block; margin-top:2px;"><?= htmlspecialchars(wp_version_format_datetime_admin((string)($installStats['admin']['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></strong>
+            </div>
+          </div>
+
+          <?php if ($showMainDeviceSection): ?>
+            <h4 style="margin:24px 0 12px 0; font-size:15px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;"><?= __('Հիմնական ծրագրի սարքեր (App)') ?></h4>
+            <?php if (!$filteredMainInstallDevices): ?>
+              <div style="padding:16px; text-align:center; color:var(--muted);"><?= __('Հիմնական ծրագրի սարքեր չեն գտնվել') ?></div>
+            <?php else: ?>
+              <div style="overflow-x:auto;">
+                <table class="bento-table">
+                  <thead>
+                    <tr>
+                      <th><?= __('Օգտատեր') ?></th>
+                      <th><?= __('IP / ID') ?></th>
+                      <th><?= __('Հարթակ / Browser') ?></th>
+                      <th><?= __('Ակտիվություն') ?></th>
+                      <th style="text-align:right;"><?= __('Գործ.') ?></th>
+                    </tr>
+                  </thead>
+                  <tbody id="mainDevicesTbody">
+                    <?php $mainIndex = 0; foreach ($filteredMainInstallDevices as $device): $mainIndex++; ?>
+                      <tr class="main-device-row" <?= $mainIndex > 10 ? 'style="display:none;"' : '' ?>>
+                        <td>
+                          <div class="table-primary"><?= htmlspecialchars(wp_admin_updates_install_identity($device), ENT_QUOTES) ?></div>
+                          <div class="table-meta"><?= htmlspecialchars(wp_admin_updates_install_secondary($device), ENT_QUOTES) ?></div>
+                          <?php if (!empty($device['user_id'])): ?>
+                            <div class="chip success" style="margin-top:4px; padding:2px 6px; font-size:10px;">User #<?= (int)$device['user_id'] ?></div>
+                          <?php endif; ?>
+                        </td>
+                        <td>
+                          <div class="table-primary"><?= htmlspecialchars(wp_admin_updates_install_ip($device), ENT_QUOTES) ?></div>
+                          <div class="table-meta" style="font-family:monospace;"><?= htmlspecialchars(wp_install_mask_device_id((string)($device['device_id'] ?? '')), ENT_QUOTES) ?></div>
+                        </td>
+                        <td>
+                          <div class="table-primary"><?= htmlspecialchars(wp_admin_updates_install_platform((string)($device['user_agent'] ?? '')), ENT_QUOTES) ?></div>
+                          <div class="table-meta"><?= htmlspecialchars(wp_admin_updates_install_browser((string)($device['user_agent'] ?? '')), ENT_QUOTES) ?></div>
+                        </td>
+                        <td>
+                          <div class="table-primary"><?= htmlspecialchars(wp_version_format_datetime_admin((string)($device['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></div>
+                          <div class="table-meta"><?= __('Առաջին:') ?> <?= htmlspecialchars(wp_version_format_datetime_admin((string)($device['installed_at'] ?? '')) ?: '—', ENT_QUOTES) ?></div>
+                        </td>
+                        <td style="text-align:right;">
+                          <form method="post" style="margin:0" onsubmit="return window.confirm('Հեռացնե՞լ սարքը:');">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
+                            <input type="hidden" name="form_action" value="remove_install_device">
+                            <input type="hidden" name="install_scope" value="main">
+                            <input type="hidden" name="install_device_id" value="<?= htmlspecialchars((string)($device['device_id'] ?? ''), ENT_QUOTES) ?>">
+                            <input type="hidden" name="install_device_signature" value="<?= htmlspecialchars((string)($device['device_signature'] ?? ''), ENT_QUOTES) ?>">
+                            <button class="btn btn-icon danger" type="submit" style="padding:4px 8px; font-size:11px;"><?= __('✕') ?></button>
+                          </form>
+                        </td>
+                      </tr>
+                    <?php endforeach; ?>
+                  </tbody>
+                </table>
+              </div>
+              <?php if (count($filteredMainInstallDevices) > 10): ?>
+                <div style="text-align:center; padding:16px;" id="mainDevicesLoadMoreContainer">
+                  <button type="button" class="btn btn-outline" style="padding:6px 16px; font-size:13px;" onclick="
+                    let hidden = document.querySelectorAll('.main-device-row[style*=\'none\']');
+                    for(let i=0; i<10 && i<hidden.length; i++) hidden[i].style.display='table-row';
+                    if(hidden.length <= 10) this.parentElement.style.display='none';
+                  "><?= __('Ցույց տալ ևս 10-ը') ?></button>
+                </div>
+              <?php endif; ?>
+            <?php endif; ?>
+          <?php endif; ?>
+
+          <?php if ($showAdminDeviceSection): ?>
+            <h4 style="margin:32px 0 12px 0; font-size:15px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;"><?= __('Ադմին ծրագրի սարքեր (Admin Panel)') ?></h4>
+            <?php if (!$filteredAdminInstallDevices): ?>
+              <div style="padding:16px; text-align:center; color:var(--muted);"><?= __('Ադմին ծրագրի սարքեր չեն գտնվել') ?></div>
+            <?php else: ?>
+              <div style="overflow-x:auto;">
+                <table class="bento-table">
+                  <thead>
+                    <tr>
+                      <th><?= __('Օգտատեր') ?></th>
+                      <th><?= __('IP / ID') ?></th>
+                      <th><?= __('Հարթակ / Browser') ?></th>
+                      <th><?= __('Ակտիվություն') ?></th>
+                      <th style="text-align:right;"><?= __('Գործ.') ?></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php foreach ($filteredAdminInstallDevices as $device): ?>
+                      <tr>
+                        <td>
+                          <div class="table-primary"><?= htmlspecialchars(wp_admin_updates_install_identity($device), ENT_QUOTES) ?></div>
+                          <div class="table-meta"><?= htmlspecialchars(wp_admin_updates_install_secondary($device), ENT_QUOTES) ?></div>
+                          <?php if (!empty($device['user_id'])): ?>
+                            <div class="chip success" style="margin-top:4px; padding:2px 6px; font-size:10px;">User #<?= (int)$device['user_id'] ?></div>
+                          <?php endif; ?>
+                        </td>
+                        <td>
+                          <div class="table-primary"><?= htmlspecialchars(wp_admin_updates_install_ip($device), ENT_QUOTES) ?></div>
+                          <div class="table-meta" style="font-family:monospace;"><?= htmlspecialchars(wp_install_mask_device_id((string)($device['device_id'] ?? '')), ENT_QUOTES) ?></div>
+                        </td>
+                        <td>
+                          <div class="table-primary"><?= htmlspecialchars(wp_admin_updates_install_platform((string)($device['user_agent'] ?? '')), ENT_QUOTES) ?></div>
+                          <div class="table-meta"><?= htmlspecialchars(wp_admin_updates_install_browser((string)($device['user_agent'] ?? '')), ENT_QUOTES) ?></div>
+                        </td>
+                        <td>
+                          <div class="table-primary"><?= htmlspecialchars(wp_version_format_datetime_admin((string)($device['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></div>
+                          <div class="table-meta"><?= __('Առաջին:') ?> <?= htmlspecialchars(wp_version_format_datetime_admin((string)($device['installed_at'] ?? '')) ?: '—', ENT_QUOTES) ?></div>
+                        </td>
+                        <td style="text-align:right;">
+                          <form method="post" style="margin:0" onsubmit="return window.confirm('Հեռացնե՞լ սարքը:');">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
+                            <input type="hidden" name="form_action" value="remove_install_device">
+                            <input type="hidden" name="install_scope" value="admin">
+                            <input type="hidden" name="install_device_id" value="<?= htmlspecialchars((string)($device['device_id'] ?? ''), ENT_QUOTES) ?>">
+                            <input type="hidden" name="install_device_signature" value="<?= htmlspecialchars((string)($device['device_signature'] ?? ''), ENT_QUOTES) ?>">
+                            <button class="btn btn-icon danger" type="submit" style="padding:4px 8px; font-size:11px;"><?= __('✕') ?></button>
+                          </form>
+                        </td>
+                      </tr>
+                    <?php endforeach; ?>
+                  </tbody>
+                </table>
+              </div>
+            <?php endif; ?>
+          <?php endif; ?>
+        </div>
+
+        <div class="bento-split-even" id="pushComposerPanel" data-admin-section="push all" data-admin-permission="push" style="align-items: stretch;">
+          <div class="bento-card" style="display: flex; flex-direction: column;">
+            <div class="bento-header">
+              <h3><?= __('Ստեղծել ծանուցում') ?></h3>
+              <p><?= __('Լրացրեք տվյալները ուղարկելու համար։') ?></p>
+            </div>
+
+            <div class="bento-grid cols-2" style="gap:8px;">
+              <div class="form-field" style="margin:0;">
+                <label for="push_title"><?= __('Վերնագիր') ?></label>
+                <input class="input-field" id="push_title" name="push_title" maxlength="160" value="Worship Platform" required style="padding:6px;">
+              </div>
+              <div class="form-field" style="margin:0;">
+                <label for="push_tag"><?= __('Խումբ (tag)') ?></label>
+                <input class="input-field" id="push_tag" name="push_tag" maxlength="120" value="worship-update" style="padding:6px;">
+              </div>
+            </div>
+
+            <div class="form-field" style="margin-top:8px; margin-bottom:8px;">
+              <label for="push_body"><?= __('Բովանդակություն') ?></label>
+              <textarea class="input-field" id="push_body" name="push_body" required style="min-height:60px;"><?= __('Նոր թարմացում կամ հայտարարություն կա։ Բացեք Worship Platform-ը մանրամասների համար։') ?></textarea>
+            </div>
+
+            <div class="bento-grid cols-2" style="gap:8px;">
+              <div class="form-field" style="margin:0;">
+                <label for="push_url"><?= __('Բացվող հղում') ?></label>
+                <input class="input-field" id="push_url" name="push_url" value="/main.html" placeholder="/main.html" style="padding:6px;">
+              </div>
+              <div class="form-field" style="margin:0;">
+                <label for="push_icon"><?= __('Նշան (icon)') ?></label>
+                <input class="input-field" id="push_icon" name="push_icon" value="/wolarm_youth.png" placeholder="/wolarm_youth.png" style="padding:6px;">
+              </div>
+            </div>
+
+            <div class="push-template-strip" style="margin-top:12px; display:flex; gap:6px; flex-wrap:wrap;">
+              <button class="btn btn-icon" style="font-size:11px; padding:4px 8px;" type="button" data-push-template="release"><?= __('Թարմացում') ?></button>
+              <button class="btn btn-icon" style="font-size:11px; padding:4px 8px;" type="button" data-push-template="news"><?= __('Նորություն') ?></button>
+              <button class="btn btn-icon" style="font-size:11px; padding:4px 8px;" type="button" data-push-template="maintenance"><?= __('Տեխ. աշխ.') ?></button>
+              <button class="btn btn-icon" style="font-size:11px; padding:4px 8px;" type="button" data-push-template="reminder"><?= __('Հիշեցում') ?></button>
+            </div>
+
+            <div style="margin-top:auto; padding-top:16px;">
+              <button class="btn btn-primary" style="width:100%" id="sendPushBtn" type="button" <?= empty($pushConfig['supported']) ? 'disabled' : '' ?>><?= __('Ուղարկել Push ծանուցումը') ?></button>
+            </div>
+          </div>
+
+          <div class="bento-card push-preview" style="display:flex; flex-direction:column; justify-content:flex-start; align-items:center; background:#f8fafc;">
+            <div class="bento-header" style="width:100%;">
+              <h3 style="margin-bottom:4px;"><?= __('Phone Preview') ?></h3>
+              <p style="font-size:11px;"><?= __('Այսպես այն կերևա հեռախոսի վրա') ?></p>
+            </div>
+            
+            <div class="push-preview-phone" style="margin-top:auto; margin-bottom:auto; transform:scale(0.9);">
+              <div class="push-preview-screen">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding: 4px 16px 12px 16px; font-size:10px; font-weight:600; color:#000;">
+                  <span>9:41</span>
+                  <div style="display:flex; gap:4px; align-items:center;">
+                    <svg width="12" height="10" viewBox="0 0 16 12" fill="black"><path d="M16 3.5C16 3.5 12.5 0 8 0C3.5 0 0 3.5 0 3.5L8 12L16 3.5Z"/></svg>
+                    <svg width="12" height="10" viewBox="0 0 16 12" fill="black"><rect x="0" y="2" width="14" height="8" rx="2"/><path d="M14 4H16V8H14V4Z"/></svg>
+                  </div>
+                </div>
+                <div class="push-preview-banner">
+                  <div class="push-preview-top">
+                    <div class="push-preview-app">Worship Platform</div>
+                    <div class="push-preview-tag" id="pushPreviewTag">worship-update</div>
+                  </div>
+                  <div class="push-preview-title" id="pushPreviewTitle">Worship Platform</div>
+                  <div class="push-preview-body" id="pushPreviewBody"><?= __('Նոր թարմացում կամ հայտարարություն կա։ Բացեք Worship Platform-ը մանրամասների համար։') ?></div>
+                </div>
+                <div class="push-preview-meta">
+                  <div class="chip" id="pushPreviewUrl"><?= __('Հղում /main.html') ?></div>
+                  <div class="chip" id="pushPreviewIcon"><?= __('Նշան /wolarm_youth.png') ?></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <section class="settings-group" data-admin-section="push all" data-admin-permission="push">
-          <div class="settings-group-header">
-              <h3>Push ծանուցումներ</h3>
-              <p>Այս բաժնից կարող եք միացնել browser/app push ծանուցումները, տեսնել քանի սարք է բաժանորդագրված, և ուղարկել ձեռքով նորություն, թարմացում կամ հայտարարություն։ Push-ը հասնում է բոլոր այն տեղադրված ծրագրերին, որոնք թույլ են տվել ծանուցումները։ <code>Ծրագրի ընդհանուր ճանաչված տեղադրումներ</code> թիվը կայուն ընդհանուր հաշվիչն է, իսկ <code>վերջին <?= (int)($installStats['window_days'] ?? 60) ?> օրում ակտիվ երևացած սարքեր</code>-ը ժամանակավոր activity հաշվիչն է և կարող է պակասել, եթե ծրագիրը երկար ժամանակ չի բացվել օնլայն։</p>
-            </div>
-          <div class="chips" style="margin-top:12px">
-            <div class="autosave-status" id="pushAutosaveStatus" data-state="idle">Փոփոխությունները կպահպանվեն ավտոմատ</div>
-          </div>
-
-          <div class="switch-row">
-            <div class="switch-copy">
-              <strong>Միացնել push ծանուցումները</strong>
-              <span><?= !empty($pushConfig['supported']) ? 'Եթե սա ակտիվ է, կայքի և ծրագրի user-ները կարող են բաժանորդագրվել push ծանուցումներին։' : 'Սերվերի վրա OpenSSL աջակցություն չկա, դրա համար push notifications-ը չի կարող ամբողջությամբ աշխատել։' ?></span>
-            </div>
-            <label class="switch" for="push_enabled">
-              <input id="push_enabled" name="push_enabled" type="checkbox" <?= !empty($pushConfig['enabled']) ? 'checked' : '' ?> <?= empty($pushConfig['supported']) ? 'disabled' : '' ?>>
-              <span class="slider"></span>
-            </label>
-          </div>
-
-          <div class="row-2">
-            <div class="form-field">
-              <label for="push_subject">Կապի հասցե (VAPID subject)</label>
-              <input class="input-field" id="push_subject" name="push_subject" value="<?= htmlspecialchars((string)($pushConfig['vapid_subject'] ?? ''), ENT_QUOTES) ?>" placeholder="mailto:admin@example.com">
-            </div>
-            <div class="form-field">
-              <label for="push_public_key_preview">Հանրային բանալի</label>
-              <input class="input-field" id="push_public_key_preview" value="<?= htmlspecialchars((string)($pushConfig['vapid_public_key'] ?? ''), ENT_QUOTES) ?>" readonly>
-            </div>
-          </div>
-
-          <div class="access-helper">Push կարգավորումների այս դաշտերը պահպանվում են ավտոմատ։</div>
-        </section>
-
-        <section class="settings-group" id="devicesPanel" data-admin-section="devices all" data-admin-permission="devices">
-          <div class="history-head">
-            <div>
-              <div class="settings-group-header">
-              <h3>Ծրագրի ակտիվ սարքեր</h3>
-              <p>Այս բաժնում երևում են ինչպես հիմնական ծրագրի, այնպես էլ admin ծրագրի ակտիվ սարքերը։ Տվյալները թարմացվում են, երբ տեղադրված ծրագիրը օնլայն բացվում է և install հաշվիչին activity է ուղարկում։</p>
-            </div>
-            </div>
-          </div>
-
-          <div class="device-toolbar">
-            <div class="device-toolbar-grid">
-              <div class="form-field" style="margin-top:0">
-                <label for="device_search">Որոնել սարք կամ օգտատեր</label>
-                <input class="input-field" id="device_search" name="device_search" value="<?= htmlspecialchars($deviceFilters['search'], ENT_QUOTES) ?>" placeholder="Անուն, email, username, IP, սարք">
-              </div>
-              <div class="form-field" style="margin-top:0">
-                <label for="device_scope">Տեսք</label>
-                <select class="input-field" id="device_scope" name="device_scope">
-                  <option value="all" <?= $deviceFilters['scope'] === 'all' ? 'selected' : '' ?>>Բոլորը</option>
-                  <option value="main" <?= $deviceFilters['scope'] === 'main' ? 'selected' : '' ?>>Միայն հիմնական ծրագիր</option>
-                  <option value="admin" <?= $deviceFilters['scope'] === 'admin' ? 'selected' : '' ?>>Միայն ադմին ծրագիր</option>
-                </select>
-              </div>
-              <div class="form-field" style="margin-top:0">
-                <label for="device_link">Կապվածություն</label>
-                <select class="input-field" id="device_link" name="device_link">
-                  <option value="all" <?= $deviceFilters['link'] === 'all' ? 'selected' : '' ?>>Բոլորը</option>
-                  <option value="linked" <?= $deviceFilters['link'] === 'linked' ? 'selected' : '' ?>>Միայն կապված օգտահաշվով</option>
-                  <option value="guest" <?= $deviceFilters['link'] === 'guest' ? 'selected' : '' ?>>Միայն անանուն</option>
-                </select>
-              </div>
-              <div class="form-field" style="margin-top:0">
-                <label for="device_platform">Հարթակ</label>
-                <select class="input-field" id="device_platform" name="device_platform">
-                  <option value="all">Բոլորը</option>
-                  <?php foreach ($deviceFilterOptions['platforms'] as $platformOption): ?>
-                    <option value="<?= htmlspecialchars($platformOption, ENT_QUOTES) ?>" <?= $deviceFilters['platform'] === $platformOption ? 'selected' : '' ?>><?= htmlspecialchars($platformOption, ENT_QUOTES) ?></option>
-                  <?php endforeach; ?>
-                </select>
-              </div>
-              <div class="form-field" style="margin-top:0">
-                <label for="device_browser">Դիտարկիչ</label>
-                <select class="input-field" id="device_browser" name="device_browser">
-                  <option value="all">Բոլորը</option>
-                  <?php foreach ($deviceFilterOptions['browsers'] as $browserOption): ?>
-                    <option value="<?= htmlspecialchars($browserOption, ENT_QUOTES) ?>" <?= $deviceFilters['browser'] === $browserOption ? 'selected' : '' ?>><?= htmlspecialchars($browserOption, ENT_QUOTES) ?></option>
-                  <?php endforeach; ?>
-                </select>
-              </div>
-              <div class="form-field" style="margin-top:0">
-                <label for="device_sort">Դասավորել ըստ</label>
-                <select class="input-field" id="device_sort" name="device_sort">
-                  <option value="last_seen_newest" <?= $deviceFilters['sort'] === 'last_seen_newest' ? 'selected' : '' ?>>Վերջին ակտիվություն՝ նորից հին</option>
-                  <option value="last_seen_oldest" <?= $deviceFilters['sort'] === 'last_seen_oldest' ? 'selected' : '' ?>>Վերջին ակտիվություն՝ հինից նոր</option>
-                  <option value="installed_newest" <?= $deviceFilters['sort'] === 'installed_newest' ? 'selected' : '' ?>>Առաջին գրանցում՝ նորից հին</option>
-                  <option value="installed_oldest" <?= $deviceFilters['sort'] === 'installed_oldest' ? 'selected' : '' ?>>Առաջին գրանցում՝ հինից նոր</option>
-                  <option value="identity_asc" <?= $deviceFilters['sort'] === 'identity_asc' ? 'selected' : '' ?>>Անուն՝ Ա-Ֆ</option>
-                  <option value="identity_desc" <?= $deviceFilters['sort'] === 'identity_desc' ? 'selected' : '' ?>>Անուն՝ Ֆ-Ա</option>
-                  <option value="platform_asc" <?= $deviceFilters['sort'] === 'platform_asc' ? 'selected' : '' ?>>Հարթակով խմբավորված</option>
-                </select>
-              </div>
-            </div>
-            <div class="device-toolbar-actions">
-              <div class="device-toolbar-summary">
-                Ֆիլտրից հետո երևում է <?= count($filteredMainInstallDevices) ?> հիմնական և <?= count($filteredAdminInstallDevices) ?> ադմին սարք։
-              </div>
-              <div class="action-buttons">
-                <button class="btn" id="applyDeviceFiltersBtn" type="button">Կիրառել</button>
-                <a class="btn btn-ghost" href="/admin_updates.php">Մաքրել ֆիլտրերը</a>
-              </div>
-            </div>
-          </div>
-
-          <div class="stats" style="margin-top:16px">
-            
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div class="bento-card" id="pushSubscriptionsPanel" data-admin-section="push all" data-admin-permission="push" style="margin-bottom: 16px;">
+          <div class="bento-header">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; width:100%;">
               <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Հիմնական ծրագիր ակտիվ սարքեր (<?= (int)($installStats['window_days'] ?? 60) ?> օր)</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($installStats['main']['count'] ?? 0) ?></strong>
+                <h3 style="margin:0;"><?= __('Push միացրած սարքեր') ?></h3>
+                <p style="margin:4px 0 0; font-size:13px; color:var(--muted);"><?= __('Այստեղ երևում են բաժանորդագրված սարքերի տվյալները:') ?></p>
               </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
-          </div>
-            
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Հիմնական ծրագիր ընդհանուր ճանաչված</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($installStats['main']['known_count'] ?? 0) ?></strong>
-              </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              <div class="form-field" style="margin:0; min-width:250px;">
+                <input class="input-field" id="pushSubscriptionSearch" type="search" placeholder="<?= __('Անուն, email, IP, endpoint, browser') ?>" style="padding:6px; font-size:13px;">
               </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
-          </div>
-            
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Ադմին ծրագիր ակտիվ սարքեր (<?= (int)($installStats['window_days'] ?? 60) ?> օր)</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($installStats['admin']['count'] ?? 0) ?></strong>
-              </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
-          </div>
-            
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Ադմին ծրագիր ընդհանուր ճանաչված</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($installStats['admin']['known_count'] ?? 0) ?></strong>
-              </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
-          </div>
-            
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Վերջին ակտիվություն` հիմնական</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars(wp_version_format_datetime_admin((string)($installStats['main']['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></strong>
-              </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
-          </div>
-            
-          <div class="stat">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;">Վերջին ակտիվություն` ադմին</span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= htmlspecialchars(wp_version_format_datetime_admin((string)($installStats['admin']['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></strong>
-              </div>
-              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(67, 24, 255, 0.05); color: var(--primary); display: flex; align-items: center; justify-content: center;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600;">
-              <span style="color: var(--success); display: flex; align-items: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                +0%
-              </span>
-              <span style="color: var(--muted);">Impression</span>
-            </div>
-          </div>
-          </div>
-
-          <?php if ($showMainDeviceSection): ?>
-          <div class="history-head" style="margin-top:18px">
-            <div>
-              <div class="settings-group-header">
-              <h3>Հիմնական ծրագրի սարքեր</h3>
-              <p>Վերջին <?= (int)($installStats['window_days'] ?? 60) ?> օրում օնլայն երևացած հիմնական ծրագրի սարքերը։</p>
-            </div>
-            </div>
-          </div>
-
-          <?php if (!$filteredMainInstallDevices): ?>
-            <div class="history-item">
-              <div class="history-title">Հիմնական ծրագրի սարքեր չեն գտնվել</div>
-              <div class="note">Փորձիր փոխել ֆիլտրերը կամ սպասիր, մինչև հիմնական ծրագիրը նորից օնլայն երևա։</div>
-            </div>
-          <?php else: ?>
-            <div class="device-list">
-              <?php foreach ($filteredMainInstallDevices as $device): ?>
-                <div class="device-card">
-                  <div class="device-header">
-                    <div class="device-identity">
-                      <div class="device-title"><?= htmlspecialchars(wp_admin_updates_install_identity($device), ENT_QUOTES) ?></div>
-                      <div class="device-subtitle"><?= htmlspecialchars(wp_admin_updates_install_secondary($device), ENT_QUOTES) ?></div>
-                      <div class="history-time">Վերջին ակտիվությունը <?= htmlspecialchars(wp_version_format_datetime_admin((string)($device['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></div>
-                    </div>
-                    <div class="device-actions">
-                      <div class="chip <?= !empty($device['user_id']) || !empty($device['user_name']) || !empty($device['user_username']) || !empty($device['user_email']) ? 'success' : 'warning' ?>"><?= htmlspecialchars(wp_admin_updates_install_link_status($device), ENT_QUOTES) ?></div>
-                      <form method="post" style="margin:0" onsubmit="return window.confirm('Վստա՞հ եք, որ ուզում եք մաքրել այս սարքի տվյալը։');">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
-                        <input type="hidden" name="form_action" value="remove_install_device">
-                        <input type="hidden" name="install_scope" value="main">
-                        <input type="hidden" name="install_device_id" value="<?= htmlspecialchars((string)($device['device_id'] ?? ''), ENT_QUOTES) ?>">
-                        <input type="hidden" name="install_device_signature" value="<?= htmlspecialchars((string)($device['device_signature'] ?? ''), ENT_QUOTES) ?>">
-                        <button class="history-btn danger" type="submit">Մաքրել տվյալը</button>
-                      </form>
-                    </div>
-                  </div>
-
-                  <div class="chips">
-                      <?php if (!empty($device['user_id'])): ?>
-                        <div class="chip">Օգտատեր #<?= (int)$device['user_id'] ?></div>
-                      <?php endif; ?>
-                      <?php if (!empty($device['user_username'])): ?>
-                        <div class="chip">@<?= htmlspecialchars((string)$device['user_username'], ENT_QUOTES) ?></div>
-                      <?php endif; ?>
-                      <?php if (!empty($device['user_email'])): ?>
-                        <div class="chip">Email <?= htmlspecialchars((string)$device['user_email'], ENT_QUOTES) ?></div>
-                      <?php endif; ?>
-                  </div>
-
-                  <div class="device-meta-grid">
-                    <div class="device-meta"><strong>Սարքի ID</strong><span><?= htmlspecialchars(wp_install_mask_device_id((string)($device['device_id'] ?? '')), ENT_QUOTES) ?></span></div>
-                    <div class="device-meta"><strong>IP հասցե</strong><span><?= htmlspecialchars(wp_admin_updates_install_ip($device), ENT_QUOTES) ?></span></div>
-                    <div class="device-meta"><strong>Աղբյուր</strong><span><?= htmlspecialchars((string)($device['source'] ?? '—'), ENT_QUOTES) ?></span></div>
-                    <div class="device-meta"><strong>Հարթակ</strong><span><?= htmlspecialchars(wp_admin_updates_install_platform((string)($device['user_agent'] ?? '')), ENT_QUOTES) ?></span></div>
-                    <div class="device-meta"><strong>Browser</strong><span><?= htmlspecialchars(wp_admin_updates_install_browser((string)($device['user_agent'] ?? '')), ENT_QUOTES) ?></span></div>
-                    <div class="device-meta"><strong>Առաջին գրանցում</strong><span><?= htmlspecialchars(wp_version_format_datetime_admin((string)($device['installed_at'] ?? '')) ?: '—', ENT_QUOTES) ?></span></div>
-                    <div class="device-meta"><strong>Վերջին կապ</strong><span><?= htmlspecialchars(wp_version_format_datetime_admin((string)($device['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></span></div>
-                  </div>
-
-                  <?php if (!empty($device['user_agent'])): ?>
-                    <div class="note" style="margin-top:10px;word-break:break-word"><?= htmlspecialchars((string)$device['user_agent'], ENT_QUOTES) ?></div>
-                  <?php endif; ?>
-                </div>
-              <?php endforeach; ?>
-            </div>
-          <?php endif; ?>
-          <?php endif; ?>
-
-          <?php if ($showAdminDeviceSection): ?>
-          <div class="history-head" style="margin-top:18px">
-            <div>
-              <div class="settings-group-header">
-              <h3>Ադմին ծրագրի սարքեր</h3>
-              <p>Այստեղ երևում են admin panel-ը որպես առանձին ծրագիր բացող ակտիվ սարքերը։</p>
-            </div>
-            </div>
-          </div>
-
-          <?php if (!$filteredAdminInstallDevices): ?>
-            <div class="history-item">
-              <div class="history-title">Ադմին ծրագրի սարքեր չեն գտնվել</div>
-              <div class="note">Փորձիր փոխել ֆիլտրերը կամ սպասիր, մինչև ադմին ծրագիրը նորից օնլայն երևա։</div>
-            </div>
-          <?php else: ?>
-            <div class="device-list">
-              <?php foreach ($filteredAdminInstallDevices as $device): ?>
-                <div class="device-card">
-                  <div class="device-header">
-                    <div class="device-identity">
-                      <div class="device-title"><?= htmlspecialchars(wp_admin_updates_install_identity($device), ENT_QUOTES) ?></div>
-                      <div class="device-subtitle"><?= htmlspecialchars(wp_admin_updates_install_secondary($device), ENT_QUOTES) ?></div>
-                      <div class="history-time">Վերջին ակտիվությունը <?= htmlspecialchars(wp_version_format_datetime_admin((string)($device['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></div>
-                    </div>
-                    <div class="device-actions">
-                      <div class="chip <?= !empty($device['user_id']) || !empty($device['user_name']) || !empty($device['user_username']) || !empty($device['user_email']) ? 'success' : 'warning' ?>"><?= htmlspecialchars(wp_admin_updates_install_link_status($device), ENT_QUOTES) ?></div>
-                      <form method="post" style="margin:0" onsubmit="return window.confirm('Վստա՞հ եք, որ ուզում եք մաքրել այս սարքի տվյալը։');">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
-                        <input type="hidden" name="form_action" value="remove_install_device">
-                        <input type="hidden" name="install_scope" value="admin">
-                        <input type="hidden" name="install_device_id" value="<?= htmlspecialchars((string)($device['device_id'] ?? ''), ENT_QUOTES) ?>">
-                        <input type="hidden" name="install_device_signature" value="<?= htmlspecialchars((string)($device['device_signature'] ?? ''), ENT_QUOTES) ?>">
-                        <button class="history-btn danger" type="submit">Մաքրել տվյալը</button>
-                      </form>
-                    </div>
-                  </div>
-
-                  <div class="chips">
-                      <?php if (!empty($device['user_id'])): ?>
-                        <div class="chip">Օգտատեր #<?= (int)$device['user_id'] ?></div>
-                      <?php endif; ?>
-                      <?php if (!empty($device['user_username'])): ?>
-                        <div class="chip">@<?= htmlspecialchars((string)$device['user_username'], ENT_QUOTES) ?></div>
-                      <?php endif; ?>
-                      <?php if (!empty($device['user_email'])): ?>
-                        <div class="chip">Email <?= htmlspecialchars((string)$device['user_email'], ENT_QUOTES) ?></div>
-                      <?php endif; ?>
-                  </div>
-
-                  <div class="device-meta-grid">
-                    <div class="device-meta"><strong>Սարքի ID</strong><span><?= htmlspecialchars(wp_install_mask_device_id((string)($device['device_id'] ?? '')), ENT_QUOTES) ?></span></div>
-                    <div class="device-meta"><strong>IP հասցե</strong><span><?= htmlspecialchars(wp_admin_updates_install_ip($device), ENT_QUOTES) ?></span></div>
-                    <div class="device-meta"><strong>Աղբյուր</strong><span><?= htmlspecialchars((string)($device['source'] ?? '—'), ENT_QUOTES) ?></span></div>
-                    <div class="device-meta"><strong>Հարթակ</strong><span><?= htmlspecialchars(wp_admin_updates_install_platform((string)($device['user_agent'] ?? '')), ENT_QUOTES) ?></span></div>
-                    <div class="device-meta"><strong>Browser</strong><span><?= htmlspecialchars(wp_admin_updates_install_browser((string)($device['user_agent'] ?? '')), ENT_QUOTES) ?></span></div>
-                    <div class="device-meta"><strong>Առաջին գրանցում</strong><span><?= htmlspecialchars(wp_version_format_datetime_admin((string)($device['installed_at'] ?? '')) ?: '—', ENT_QUOTES) ?></span></div>
-                    <div class="device-meta"><strong>Վերջին կապ</strong><span><?= htmlspecialchars(wp_version_format_datetime_admin((string)($device['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></span></div>
-                  </div>
-
-                  <?php if (!empty($device['user_agent'])): ?>
-                    <div class="note" style="margin-top:10px;word-break:break-word"><?= htmlspecialchars((string)$device['user_agent'], ENT_QUOTES) ?></div>
-                  <?php endif; ?>
-                </div>
-              <?php endforeach; ?>
-            </div>
-          <?php endif; ?>
-          <?php endif; ?>
-        </section>
-
-        <section class="settings-group" id="pushComposerPanel" data-admin-section="push all" data-admin-permission="push">
-          <div class="settings-group-header">
-              <h3>Ուղարկել Push ծանուցում</h3>
-              <p>Այս գործողությունը հերթագրում է ծանուցումը բոլոր բաժանորդագրված սարքերի համար և անմիջապես ուղարկում է push signal-ը, որպեսզի notification-ը երևա user-ի սարքում։</p>
-            </div>
-
-          <div class="push-workspace">
-            <div>
-              <div class="row-2">
-                <div class="form-field">
-                  <label for="push_title">Վերնագիր</label>
-                  <input class="input-field" id="push_title" name="push_title" maxlength="160" value="Worship Platform" required>
-                </div>
-                <div class="form-field">
-                  <label for="push_tag">Խումբ (tag)</label>
-                  <input class="input-field" id="push_tag" name="push_tag" maxlength="120" value="worship-update">
-                </div>
-              </div>
-
-              <div class="form-field">
-                <label for="push_body">Բովանդակություն</label>
-                <textarea class="input-field" id="push_body" name="push_body" required>Նոր թարմացում կամ հայտարարություն կա։ Բացեք Worship Platform-ը մանրամասների համար։</textarea>
-              </div>
-
-              <div class="row-2">
-                <div class="form-field">
-                  <label for="push_url">Բացվող հղում</label>
-                  <input class="input-field" id="push_url" name="push_url" value="/main.html" placeholder="/main.html">
-                </div>
-                <div class="form-field">
-                  <label for="push_icon">Նշան (icon)</label>
-                  <input class="input-field" id="push_icon" name="push_icon" value="/wolarm_youth.png" placeholder="/wolarm_youth.png">
-                </div>
-              </div>
-
-              <div class="push-template-strip">
-                <button class="btn" type="button" data-push-template="release">Թարմացում</button>
-                <button class="btn" type="button" data-push-template="news">Նորություն</button>
-                <button class="btn" type="button" data-push-template="maintenance">Տեխնիկական աշխատանք</button>
-                <button class="btn" type="button" data-push-template="reminder">Հիշեցում</button>
-              </div>
-
-              <div class="action-buttons" style="margin-top:14px">
-                <button class="btn btn-primary" id="sendPushBtn" type="button" <?= empty($pushConfig['supported']) ? 'disabled' : '' ?>>Ուղարկել Push ծանուցումը</button>
-              </div>
-            </div>
-
-            <aside class="push-preview">
-              <h3>Ուղարկման նախադիտում</h3>
-              <p>Այստեղ նույն պահին երևում է ինչպես կարող է notification-ը նստել սարքի վրա, որպեսզի ուղարկելուց առաջ արագ ստուգես տեքստը։</p>
-              <div class="push-preview-phone">
-                <div class="push-preview-screen">
-                  <div class="push-preview-banner">
-                    <div class="push-preview-top">
-                      <div class="push-preview-app">Worship Platform</div>
-                      <div class="push-preview-tag" id="pushPreviewTag">worship-update</div>
-                    </div>
-                    <div class="push-preview-title" id="pushPreviewTitle">Worship Platform</div>
-                    <div class="push-preview-body" id="pushPreviewBody">Նոր թարմացում կամ հայտարարություն կա։ Բացեք Worship Platform-ը մանրամասների համար։</div>
-                  </div>
-                  <div class="push-preview-meta">
-                    <div class="chip" id="pushPreviewUrl">Հղում /main.html</div>
-                    <div class="chip" id="pushPreviewIcon">Նշան /wolarm_youth.png</div>
-                  </div>
-                </div>
-              </div>
-            </aside>
-          </div>
-        </section>
-
-        <section class="settings-group" id="pushSubscriptionsPanel" data-admin-section="push all" data-admin-permission="push">
-            <div class="history-head">
-            <div>
-              <div class="settings-group-header">
-              <h3>Push միացրած սարքերի տվյալներ</h3>
-              <p>Այստեղ երևում են բաժանորդագրված սարքերի տվյալները` օգտահաշիվը, IP-ն, browser/device signature-ը, endpoint host-ը և վերջին ակտիվությունը։</p>
-            </div>
-            </div>
-          </div>
-
-          <div class="history-toolbar">
-            <div class="field history-search">
-              <label for="pushSubscriptionSearch">Որոնել push սարքերի մեջ</label>
-              <input class="input-field" id="pushSubscriptionSearch" type="search" placeholder="Անուն, email, IP, endpoint, browser">
-            </div>
-            <div class="history-toolbar-copy" id="pushSubscriptionSummary">Ցուցադրվում են բոլոր գրանցված push սարքերը։</div>
           </div>
 
           <?php if (!$pushSubscriptions): ?>
-            <div class="history-item">
-              <div class="history-title">Բաժանորդագրված սարքեր դեռ չկան</div>
-              <div class="note">Երբ user-ը միացնի push ծանուցումները, նրա սարքը կհայտնվի այստեղ։</div>
+            <div class="history-item" style="padding:16px; text-align:center; color:var(--muted);">
+              <strong><?= __('Բաժանորդագրված սարքեր դեռ չկան') ?></strong>
             </div>
           <?php else: ?>
-            <div class="history-list">
-              <?php foreach ($pushSubscriptions as $subscription): ?>
-                <div class="history-item" data-push-subscription-item data-push-subscription-search="<?= htmlspecialchars(wp_admin_updates_push_search_haystack($subscription), ENT_QUOTES) ?>">
-                  <div class="history-top">
-                    <div>
-                      <div class="history-title"><?= htmlspecialchars(wp_admin_updates_push_identity($subscription), ENT_QUOTES) ?></div>
-                      <div class="history-time">Գրանցվել է <?= htmlspecialchars(wp_version_format_datetime_admin((string)($subscription['created_at'] ?? '')) ?: '—', ENT_QUOTES) ?></div>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
-                      <div class="chip">ID <?= htmlspecialchars(substr((string)($subscription['id'] ?? ''), 0, 12) ?: '—', ENT_QUOTES) ?></div>
-                      <button
-                        class="history-btn danger"
-                        type="submit"
-                        name="form_action"
-                        value="remove_push_subscription:<?= htmlspecialchars((string)($subscription['id'] ?? ''), ENT_QUOTES) ?>"
-                        onclick="return confirm('Վստա՞հ եք, որ ուզում եք հեռացնել այս push սարքը։');"
-                      >Հեռացնել</button>
-                    </div>
-                  </div>
-
-                  <div class="chips">
-                    <div class="chip">Endpoint <?= htmlspecialchars(wp_admin_updates_push_endpoint_host((string)($subscription['endpoint'] ?? '')), ENT_QUOTES) ?></div>
-                    <div class="chip">IP <?= htmlspecialchars(wp_admin_updates_push_ip($subscription), ENT_QUOTES) ?></div>
-                    <div class="chip">Վերջին կապ <?= htmlspecialchars(wp_version_format_datetime_admin((string)($subscription['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></div>
-                    <div class="chip">Թարմացվել է <?= htmlspecialchars(wp_version_format_datetime_admin((string)($subscription['updated_at'] ?? '')) ?: '—', ENT_QUOTES) ?></div>
-                    <?php if (!empty($subscription['user_id'])): ?>
-                      <div class="chip">User ID <?= (int)$subscription['user_id'] ?></div>
-                    <?php endif; ?>
-                  </div>
-
-                  <?php if (!empty($subscription['user_agent'])): ?>
-                    <div class="note"><?= htmlspecialchars((string)$subscription['user_agent'], ENT_QUOTES) ?></div>
-                  <?php endif; ?>
-                </div>
-              <?php endforeach; ?>
+            <div style="overflow-x:auto;">
+              <table class="bento-table" id="pushSubscriptionsTable">
+                <thead>
+                  <tr>
+                    <th><?= __('Օգտատեր / ID') ?></th>
+                    <th><?= __('IP / Endpoint') ?></th>
+                    <th><?= __('Ակտիվություն') ?></th>
+                    <th style="text-align:right;"><?= __('Գործ.') ?></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php foreach ($pushSubscriptions as $subscription): ?>
+                    <tr data-push-subscription-item data-push-subscription-search="<?= htmlspecialchars(wp_admin_updates_push_search_haystack($subscription), ENT_QUOTES) ?>">
+                      <td>
+                        <div class="table-primary"><?= htmlspecialchars(wp_admin_updates_push_identity($subscription), ENT_QUOTES) ?></div>
+                        <div class="table-meta"><?= __('ID:') ?> <?= htmlspecialchars(substr((string)($subscription['id'] ?? ''), 0, 8) ?: '—', ENT_QUOTES) ?></div>
+                        <?php if (!empty($subscription['user_id'])): ?>
+                          <div class="chip success" style="margin-top:4px; padding:2px 6px; font-size:10px;">User #<?= (int)$subscription['user_id'] ?></div>
+                        <?php endif; ?>
+                      </td>
+                      <td>
+                        <div class="table-primary"><?= htmlspecialchars(wp_admin_updates_push_ip($subscription), ENT_QUOTES) ?></div>
+                        <div class="table-meta" style="font-family:monospace;" title="<?= htmlspecialchars(wp_admin_updates_push_endpoint_host((string)($subscription['endpoint'] ?? '')), ENT_QUOTES) ?>">
+                          <?= htmlspecialchars(wp_admin_updates_push_endpoint_host((string)($subscription['endpoint'] ?? '')), ENT_QUOTES) ?>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="table-primary"><?= htmlspecialchars(wp_version_format_datetime_admin((string)($subscription['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></div>
+                        <div class="table-meta"><?= __('Վերջին կապ') ?></div>
+                      </td>
+                      <td style="text-align:right;">
+                        <form method="post" style="margin:0" onsubmit="return window.confirm('Հեռացնե՞լ սարքը push ցանցից:');">
+                          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
+                          <input type="hidden" name="form_action" value="remove_push_subscription:<?= htmlspecialchars((string)($subscription['id'] ?? ''), ENT_QUOTES) ?>">
+                          <button class="btn btn-icon danger" type="submit" style="padding:4px 8px; font-size:11px;"><?= __('✕') ?></button>
+                        </form>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
             </div>
-            <div class="history-item" id="pushSubscriptionEmptyState" hidden>
-              <div class="history-title">Համընկնող push սարք չգտնվեց</div>
-              <div class="note">Փոխիր որոնման բառը կամ մաքրիր դաշտը, որպեսզի տեսնես բոլոր գրանցված սարքերը։</div>
+            <div class="history-item" id="pushSubscriptionEmptyState" hidden style="padding:16px; text-align:center; color:var(--muted);">
+              <strong><?= __('Համընկնող push սարք չգտնվեց') ?></strong>
             </div>
           <?php endif; ?>
-        </section>
+        </div>
 
-        <section class="settings-group" id="pushHistoryPanel" data-admin-section="push all" data-admin-permission="push">
-          <div class="history-head">
-            <div>
-              <div class="settings-group-header">
-              <h3>Push հաղորդագրությունների պատմություն</h3>
-              <p>Այստեղ պահվում են վերջին ուղարկված push հաղորդագրությունները, ուղարկող ադմինը և ուղարկման արդյունքը ըստ սարքերի։</p>
+        <div class="bento-card" id="pushHistoryPanel" data-admin-section="push all" data-admin-permission="push">
+          <div class="bento-header">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; width:100%;">
+              <div>
+                <h3 style="margin:0;"><?= __('Ուղարկումների պատմություն') ?></h3>
+                <p style="margin:4px 0 0; font-size:13px; color:var(--muted);"><?= __('Վերջին ուղարկված հաղորդագրությունները:') ?></p>
+              </div>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <div class="form-field" style="margin:0;">
+                  <input class="input-field" id="pushHistorySearch" type="search" placeholder="<?= __('Որոնել...') ?>" style="padding:6px; font-size:13px; width:150px;">
+                </div>
+                <?php if ($pushHistory): ?>
+                  <button class="btn danger" style="padding:6px 12px; font-size:12px;" type="submit" name="form_action" value="clear_push_history" onclick="return confirm('Ջնջե՞լ ամբողջ պատմությունը։');"><?= __('Մաքրել') ?></button>
+                <?php endif; ?>
+              </div>
             </div>
-            </div>
-            <?php if ($pushHistory): ?>
-              <button
-                class="history-btn"
-                type="submit"
-                name="form_action"
-                value="clear_push_history"
-                onclick="return confirm('Վստա՞հ եք, որ ուզում եք ամբողջությամբ ջնջել push պատմությունը։');"
-              >Մաքրել push պատմությունը</button>
-            <?php endif; ?>
-          </div>
-
-          <div class="history-toolbar">
-            <div class="field history-search">
-              <label for="pushHistorySearch">Որոնել push պատմության մեջ</label>
-              <input class="input-field" id="pushHistorySearch" type="search" placeholder="Վերնագիր, բովանդակություն, ուղարկող, խումբ">
-            </div>
-            <div class="history-toolbar-copy" id="pushHistorySummary">Այստեղ երևում են բոլոր վերջին ուղարկումները։</div>
           </div>
 
           <?php if (!$pushHistory): ?>
-            <div class="history-item">
-              <div class="history-title">Push պատմություն դեռ չկա</div>
-              <div class="note">Առաջին ուղարկումից հետո այստեղ կտեսնեք ուղարկված հաղորդագրությունները և դրանց արդյունքը։</div>
+            <div class="history-item" style="padding:16px; text-align:center; color:var(--muted);">
+              <strong><?= __('Push պատմություն դեռ չկա') ?></strong>
             </div>
           <?php else: ?>
             <div class="history-list" id="pushHistoryList">
               <?php foreach ($pushHistory as $item): ?>
-                <div class="history-item" data-push-history-item data-push-history-search="<?= htmlspecialchars(wp_admin_updates_push_history_search_haystack($item), ENT_QUOTES) ?>">
-                  <div class="history-top">
+                <div class="history-item bento-row" data-push-history-item data-push-history-search="<?= htmlspecialchars(wp_admin_updates_push_history_search_haystack($item), ENT_QUOTES) ?>" style="padding:12px; border-bottom:1px solid #f1f5f9;">
+                  
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
                     <div>
-                      <div class="history-title"><?= htmlspecialchars((string)($item['title'] ?? 'Push հաղորդագրություն'), ENT_QUOTES) ?></div>
-                      <div class="history-time"><?= htmlspecialchars(wp_version_format_datetime_admin((string)($item['created_at'] ?? '')) ?: '—', ENT_QUOTES) ?></div>
+                      <div style="font-weight:600; color:var(--text);"><?= htmlspecialchars((string)($item['title'] ?? 'Push հաղորդագրություն'), ENT_QUOTES) ?></div>
+                      <div style="font-size:12px; color:var(--muted); margin-top:2px;">
+                        <?= htmlspecialchars(wp_version_format_datetime_admin((string)($item['created_at'] ?? '')) ?: '—', ENT_QUOTES) ?> • <?= __('Ուղարկել է') ?> <?= htmlspecialchars((string)($item['actor'] ?? 'admin'), ENT_QUOTES) ?>
+                      </div>
                     </div>
-                    <div class="chip">Ուղարկել է <?= htmlspecialchars((string)($item['actor'] ?? 'admin'), ENT_QUOTES) ?></div>
-                  </div>
-
-                  <div class="chips">
-                    <div class="chip">Հերթագրվել է <?= (int)($item['queued'] ?? 0) ?></div>
-                    <div class="chip">Հասել է <?= (int)($item['success'] ?? 0) ?></div>
-                    <div class="chip">Ձախողվել է <?= (int)($item['failed'] ?? 0) ?></div>
-                    <?php if (!empty($item['removed'])): ?>
-                      <div class="chip">Հեռացվել է <?= (int)$item['removed'] ?></div>
-                    <?php endif; ?>
-                    <?php if (!empty($item['tag'])): ?>
-                      <div class="chip">Tag <?= htmlspecialchars((string)$item['tag'], ENT_QUOTES) ?></div>
-                    <?php endif; ?>
-                    <?php if (!empty($item['url'])): ?>
-                      <div class="chip">Հղում <?= htmlspecialchars((string)$item['url'], ENT_QUOTES) ?></div>
-                    <?php endif; ?>
+                    <div class="chips" style="gap:4px;">
+                      <div class="chip" style="background:#e0f2fe; color:#0369a1; border:none;"><?= __('Հերթ.') ?> <?= (int)($item['queued'] ?? 0) ?></div>
+                      <div class="chip success" style="border:none;"><?= __('Հասել է') ?> <?= (int)($item['success'] ?? 0) ?></div>
+                      <?php if ((int)($item['failed'] ?? 0) > 0): ?>
+                        <div class="chip danger" style="border:none;"><?= __('Սխալ') ?> <?= (int)($item['failed'] ?? 0) ?></div>
+                      <?php endif; ?>
+                    </div>
                   </div>
 
                   <?php if (!empty($item['body'])): ?>
-                    <div class="note"><?= htmlspecialchars((string)$item['body'], ENT_QUOTES) ?></div>
+                    <div style="font-size:13px; color:var(--text); background:#f8fafc; padding:8px 12px; border-radius:6px;"><?= htmlspecialchars((string)$item['body'], ENT_QUOTES) ?></div>
                   <?php endif; ?>
+
                 </div>
               <?php endforeach; ?>
             </div>
-            <div class="history-item" id="pushHistoryEmptyState" hidden>
-              <div class="history-title">Push պատմության մեջ համընկնում չգտնվեց</div>
-              <div class="note">Փոխիր որոնումը կամ մաքրիր դաշտը, որպեսզի նորից տեսնես ամբողջ պատմությունը։</div>
+            <div class="history-item" id="pushHistoryEmptyState" hidden style="padding:16px; text-align:center; color:var(--muted);">
+              <strong><?= __('Համընկնում չգտնվեց') ?></strong>
             </div>
             <?php if (count($pushHistory) > 5): ?>
-              <div class="history-more">
-                <button class="history-btn" id="loadMorePushHistoryBtn" type="button">Բեռնել ևս 5-ը</button>
+              <div class="history-more" style="padding:12px; text-align:center;">
+                <button class="btn btn-ghost" id="loadMorePushHistoryBtn" type="button" style="font-size:13px;"><?= __('Բեռնել ևս 5-ը') ?></button>
               </div>
             <?php endif; ?>
           <?php endif; ?>
-        </section>
+        </div>
       </form>
 
       <aside class="stack" data-section-container>
-        <section class="settings-group" id="historyPanel" data-admin-section="history all" data-admin-permission="history">
-          <div class="history-head">
-            <div>
-              <div class="settings-group-header">
-              <h3>Թարմացումների պատմություն</h3>
-              <p>Այստեղ պահվում են միայն իրական փոփոխությունները` ամբողջ snapshot-ով, որպեսզի հետո հնարավոր լինի վերականգնել ցանկացած տարբերակ մեկ սեղմումով։</p>
+        <div class="bento-card" id="historyPanel" data-admin-section="history all" data-admin-permission="history">
+          <div class="bento-header">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; width:100%;">
+              <div>
+                <h3 style="margin:0;"><?= __('Փոփոխությունների պատմություն և Վերականգնում') ?></h3>
+                <p style="margin:6px 0 0; font-size:13px; color:var(--muted); line-height:1.5; max-width:600px;">
+                  <?= __('Այստեղ ավտոմատ պահվում են Ձեր կատարած բոլոր պահպանումները։ Յուրաքանչյուր կետ (snapshot) ցույց է տալիս, թե այդ պահին ինչպիսին էին կարգավորումները։ Եթե ինչ-որ բան սխալ է գնացել, կարող եք ընտրել նախկին վիճակներից մեկը և <b>«Վերականգնել»</b> այն (Rollback)։') ?>
+                </p>
+              </div>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <div class="form-field" style="margin:0;">
+                  <input class="input-field" id="historySearch" type="search" placeholder="<?= __('Որոնել (օրինակ՝ ադմինի անուն)') ?>" style="padding:6px; font-size:13px; width:200px;">
+                </div>
+                <?php if ($history): ?>
+                  <form method="post" onsubmit="if(confirm('Վստա՞հ եք, որ ուզում եք ամբողջությամբ ջնջել պատմությունը։')) { return confirm('Հաստա՞տ ցանկանում եք մաքրել պատմությունը: Այս գործողությունը հնարավոր չէ հետարկել:'); } return false;" style="margin:0;">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
+                    <input type="hidden" name="form_action" value="clear_history">
+                    <button class="btn danger" type="submit" style="padding:6px 14px; font-size:12px; font-weight:600; background:#ef4444; color:#fff; border:1px solid #dc2626; box-shadow:0 2px 8px rgba(239,68,68,0.3); border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='#dc2626';" onmouseout="this.style.background='#ef4444';"><?= __('Մաքրել պատմությունը') ?></button>
+                  </form>
+                <?php endif; ?>
+              </div>
             </div>
-            </div>
-            <?php if ($history): ?>
-              <form method="post" onsubmit="return confirm('Վստա՞հ եք, որ ուզում եք ամբողջությամբ ջնջել update history-ը։');">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
-                <input type="hidden" name="form_action" value="clear_history">
-                <button class="history-btn" type="submit">Ջնջել ամբողջ պատմությունը</button>
-              </form>
-            <?php endif; ?>
-          </div>
-
-          <div class="history-toolbar">
-            <div class="field history-search">
-              <label for="historySearch">Որոնել պատմության մեջ</label>
-              <input class="input-field" id="historySearch" type="search" placeholder="Ադմին, գործողություն, տարբերակ, նշում">
-            </div>
-            <div class="history-toolbar-copy" id="historySummary">Այստեղ երևում են բոլոր վերջին իրական փոփոխությունները։</div>
           </div>
 
           <?php if (!$history): ?>
-            <div class="history-item">
-              <div class="history-title">Պատմություն դեռ չկա</div>
-              <div class="note">Առաջին save-ից հետո այստեղ կտեսնեք ով, երբ և ինչ է փոխել։</div>
+            <div style="padding:24px; text-align:center; color:var(--muted);">
+              <strong><?= __('Պատմություն դեռ չկա') ?></strong>
+              <div style="font-size:13px; margin-top:4px;"><?= __('Առաջին save-ից հետո այստեղ կտեսնեք փոփոխությունները։') ?></div>
             </div>
           <?php else: ?>
-            <div class="history-list" id="historyList">
-              <?php foreach ($history as $item): ?>
-                <div class="history-item" data-history-item data-history-search="<?= htmlspecialchars(wp_admin_updates_history_search_haystack($item), ENT_QUOTES) ?>">
-                  <div class="history-top">
-                    <div>
-                      <div class="history-title"><?= htmlspecialchars((string)($item['actor'] ?? 'admin'), ENT_QUOTES) ?> · <?= htmlspecialchars(wp_admin_updates_history_action_label((string)($item['action'] ?? 'save')), ENT_QUOTES) ?></div>
-                      <div class="history-time"><?= htmlspecialchars(wp_version_format_datetime_admin((string)($item['at'] ?? '')) ?: '—', ENT_QUOTES) ?></div>
+            <div class="bento-timeline" id="historyList">
+              <?php 
+              $lastSnapshotJson = null;
+              foreach ($history as $item): 
+                $currentSnapshotJson = json_encode($item['snapshot'] ?? []);
+                // Skip adjacent identical snapshots (usually caused by double form submissions)
+                if ($currentSnapshotJson === $lastSnapshotJson) continue;
+                $lastSnapshotJson = $currentSnapshotJson;
+              ?>
+                <div class="bento-timeline-item" data-history-item data-history-search="<?= htmlspecialchars(wp_admin_updates_history_search_haystack($item), ENT_QUOTES) ?>">
+                  <div class="bento-timeline-dot"></div>
+                  <div class="bento-timeline-content">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                      <div>
+                        <div style="font-weight:600; color:var(--text); font-size:14px;">
+                          <?= htmlspecialchars((string)($item['actor'] ?? 'admin'), ENT_QUOTES) ?> 
+                          <span style="color:var(--muted); font-weight:400; margin:0 4px;">•</span> 
+                          <span style="color:var(--primary);"><?= htmlspecialchars(wp_admin_updates_history_action_label((string)($item['action'] ?? 'save')), ENT_QUOTES) ?></span>
+                        </div>
+                        <div style="font-size:12px; color:var(--muted); margin-top:4px;">
+                          <?= htmlspecialchars(wp_version_format_datetime_admin((string)($item['at'] ?? '')) ?: '—', ENT_QUOTES) ?>
+                        </div>
+                      </div>
+                      <?php if (!empty($item['snapshot']) && is_array($item['snapshot']) && !empty($adminSectionPermissions['release'])): ?>
+                        <form method="post" style="margin:0;">
+                          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
+                          <input type="hidden" name="form_action" value="rollback">
+                          <input type="hidden" name="history_id" value="<?= htmlspecialchars((string)($item['id'] ?? ''), ENT_QUOTES) ?>">
+                          <button class="btn btn-outline" type="submit" style="font-size:12px; padding:6px 12px; border-color:var(--primary); color:var(--primary);" onmouseover="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='var(--primary)';"><?= __('↺ Վերականգնել այս վիճակը') ?></button>
+                        </form>
+                      <?php endif; ?>
                     </div>
-                    <div class="chip"><?= !empty($item['snapshot']['maintenance_enabled']) ? 'Ձեռքով միացված է' : 'Ձեռքով անջատված է' ?></div>
-                  </div>
 
-                  <div class="chips">
-                    <div class="chip">App <?= htmlspecialchars((string)($item['snapshot']['app_version'] ?? '—'), ENT_QUOTES) ?></div>
-                    <div class="chip">Web <?= htmlspecialchars((string)($item['snapshot']['web_version'] ?? '—'), ENT_QUOTES) ?></div>
-                    <div class="chip">App Type <?= htmlspecialchars(wp_version_release_label((string)($item['snapshot']['app_release_type'] ?? 'feature')), ENT_QUOTES) ?></div>
-                    <div class="chip">Web Type <?= htmlspecialchars(wp_version_release_label((string)($item['snapshot']['web_release_type'] ?? 'content')), ENT_QUOTES) ?></div>
-                    <?php if (!empty($item['snapshot']['server_package_file'])): ?>
-                      <div class="chip">Փաթեթ <?= htmlspecialchars((string)$item['snapshot']['server_package_file'], ENT_QUOTES) ?></div>
-                    <?php endif; ?>
-                    <?php if (!empty($item['snapshot']['server_package_linked_app_version']) || !empty($item['snapshot']['server_package_linked_web_version'])): ?>
-                      <div class="chip">
-                        Կապված <?= htmlspecialchars((string)($item['snapshot']['server_package_linked_app_version'] ?? '—'), ENT_QUOTES) ?>/<?= htmlspecialchars((string)($item['snapshot']['server_package_linked_web_version'] ?? '—'), ENT_QUOTES) ?>
+                    <?php if (!empty($item['changed_fields']) && is_array($item['changed_fields'])): ?>
+                      <?php
+                      $fieldNames = [
+                        'app_version' => 'Հավելվածի տարբերակ',
+                        'web_version' => 'Վեբ տարբերակ',
+                        'maintenance_enabled' => 'Տեխ. աշխատանքներ',
+                        'app_release_summary' => 'Հավելվածի նկարագրություն',
+                        'web_release_summary' => 'Վեբ կայքի նկարագրություն',
+                        'server_package_file' => 'ZIP Փաթեթ',
+                        'admin_usernames' => 'Ադմիններ',
+                        'page_app_modes' => 'Էջերի ռեժիմներ',
+                        'access_restrictions' => 'Հասանելիություն',
+                        'push_enabled' => 'Push ծանուցումներ'
+                      ];
+                      $readableFields = array_map(fn($f) => $fieldNames[$f] ?? $f, $item['changed_fields']);
+                      ?>
+                      <div style="font-size:12px; color:var(--text); margin-bottom:12px; padding:8px 12px; background: rgba(67,24,255,0.05); border-left: 3px solid var(--primary); border-radius:4px;">
+                        <span style="color:var(--primary); font-weight:600;"><?= __('Այս քայլով փոխվել է՝') ?></span> 
+                        <?= htmlspecialchars(implode(', ', $readableFields), ENT_QUOTES) ?>
                       </div>
                     <?php endif; ?>
-                    <?php if (!empty($item['ip'])): ?>
-                      <div class="chip">IP <?= htmlspecialchars((string)$item['ip'], ENT_QUOTES) ?></div>
+
+                    <div style="font-size:11px; color:var(--muted); margin-bottom:6px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;"><?= __('Տվյալ պահի կարգավորումները (Snapshot)') ?></div>
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px;">
+                      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                        <div class="chip" style="font-size:12px; padding:4px 8px; background:#fff; border:1px solid #cbd5e1;"><?= __('App:') ?> <strong style="color:var(--text)"><?= htmlspecialchars((string)($item['snapshot']['app_version'] ?? '—'), ENT_QUOTES) ?></strong></div>
+                        <div class="chip" style="font-size:12px; padding:4px 8px; background:#fff; border:1px solid #cbd5e1;"><?= __('Web:') ?> <strong style="color:var(--text)"><?= htmlspecialchars((string)($item['snapshot']['web_version'] ?? '—'), ENT_QUOTES) ?></strong></div>
+                        <div class="chip <?= !empty($item['snapshot']['maintenance_enabled']) ? 'warning' : 'success' ?>" style="font-size:12px; padding:4px 8px; border:none; font-weight:600;">
+                          <?= !empty($item['snapshot']['maintenance_enabled']) ? __('Տեխ. աշխատանքները միացված էր') : __('Տեխ. աշխատանքները անջատված էր') ?>
+                        </div>
+                      </div>
+
+                      <?php if (!empty($item['snapshot']['app_release_summary']) || !empty($item['snapshot']['web_release_summary'])): ?>
+                        <div style="font-size:13px; color:var(--text); margin-top:8px; padding-top:8px; border-top:1px solid #e2e8f0;">
+                          <?php if (!empty($item['snapshot']['app_release_summary'])): ?>
+                            <div style="margin-bottom:4px;"><strong><?= __('Հավելվածի նկարագրություն:') ?></strong> <span style="color:var(--muted)"><?= htmlspecialchars((string)($item['snapshot']['app_release_summary']), ENT_QUOTES) ?></span></div>
+                          <?php endif; ?>
+                          <?php if (!empty($item['snapshot']['web_release_summary'])): ?>
+                            <div><strong><?= __('Վեբի նկարագրություն:') ?></strong> <span style="color:var(--muted)"><?= htmlspecialchars((string)($item['snapshot']['web_release_summary']), ENT_QUOTES) ?></span></div>
+                          <?php endif; ?>
+                        </div>
+                      <?php endif; ?>
+                    </div>
+
+                    <?php if (!empty($item['note'])): ?>
+                      <div style="font-size:12px; color:var(--primary); font-style:italic;">
+                        "<?= htmlspecialchars((string)$item['note'], ENT_QUOTES) ?>"
+                      </div>
                     <?php endif; ?>
                   </div>
-
-                  <?php if (!empty($item['snapshot']['app_release_summary']) || !empty($item['snapshot']['web_release_summary'])): ?>
-                    <div class="note"><?=
-                      htmlspecialchars(
-                        trim(
-                          'App: ' . ((string)($item['snapshot']['app_release_summary'] ?? '') ?: '—') .
-                          "\n" .
-                          'Web: ' . ((string)($item['snapshot']['web_release_summary'] ?? '') ?: '—')
-                        ),
-                        ENT_QUOTES
-                      )
-                    ?></div>
-                  <?php endif; ?>
-
-                  <?php if (!empty($item['changed_fields']) && is_array($item['changed_fields'])): ?>
-                    <div class="chips">
-                      <?php foreach ($item['changed_fields'] as $field): ?>
-                        <div class="chip"><?= htmlspecialchars((string)$field, ENT_QUOTES) ?></div>
-                      <?php endforeach; ?>
-                    </div>
-                  <?php endif; ?>
-
-                  <?php if (!empty($item['note'])): ?>
-                    <div class="note"><?= htmlspecialchars((string)$item['note'], ENT_QUOTES) ?></div>
-                  <?php endif; ?>
-
-                  <?php if (!empty($item['snapshot']) && is_array($item['snapshot']) && !empty($adminSectionPermissions['release'])): ?>
-                    <div class="history-actions">
-                      <form method="post">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
-                        <input type="hidden" name="form_action" value="rollback">
-                        <input type="hidden" name="history_id" value="<?= htmlspecialchars((string)($item['id'] ?? ''), ENT_QUOTES) ?>">
-                        <button class="history-btn" type="submit">Rollback այս տարբերակին</button>
-                      </form>
-                    </div>
-                  <?php endif; ?>
                 </div>
               <?php endforeach; ?>
             </div>
-            <div class="history-item" id="historyEmptyState" hidden>
-              <div class="history-title">Պատմության մեջ համընկնում չգտնվեց</div>
-              <div class="note">Փոխիր որոնումը կամ մաքրիր դաշտը, որպեսզի տեսնես ամբողջ փոփոխությունների ցանկը։</div>
+            <div id="historyEmptyState" hidden style="padding:16px; text-align:center; color:var(--muted);">
+              <strong><?= __('Պատմության մեջ համընկնում չգտնվեց') ?></strong>
             </div>
             <?php if (count($history) > 5): ?>
-              <div class="history-more">
-                <button class="history-btn" id="loadMoreHistoryBtn" type="button">Բեռնել ևս 5-ը</button>
+              <div style="padding-top:16px; text-align:center;">
+                <button class="btn btn-ghost" id="loadMoreHistoryBtn" type="button" style="font-size:13px;"><?= __('Բեռնել ևս 5-ը') ?></button>
               </div>
             <?php endif; ?>
           <?php endif; ?>
-        </section>
+        </div>
 
         <section class="settings-group" data-admin-section="access all" data-admin-permission="access">
           <div class="settings-group-header">
-              <h3>Ադմին session</h3>
-              <p>Այս էջը բացվել է նոր admin login հարթակով։ Access-ը ստուգվում է user login + <code>role/is_admin</code> կամ admin email whitelist-ով, և նույն login/logout հոսքն է կիսում <code>/songs.php</code>-ի հետ։</p>
+              <h3><?= __('Ադմին session') ?></h3>
+              <p><?= __('Այս էջը բացվել է նոր admin login հարթակով։ Access-ը ստուգվում է user login +') ?> <code>role/is_admin</code> <?= __('կամ admin email whitelist-ով, և նույն login/logout հոսքն է կիսում') ?> <code>/songs.php</code><?= __('-ի հետ։') ?></p>
             </div>
           <div class="access-mini-grid">
             <div class="access-mini">
-              <strong>Մուտքի ձև</strong>
+              <strong><?= __('Մուտքի ձև') ?></strong>
               <span><?= $accessMode === 'modern' ? 'Դերային մուտք' : 'Ադմին whitelist' ?></span>
             </div>
             <div class="access-mini">
-              <strong>Ընթացիկ օգտատեր</strong>
+              <strong><?= __('Ընթացիկ օգտատեր') ?></strong>
               <span><?= htmlspecialchars((string)($adminUser['name'] ?? 'Օգտատեր'), ENT_QUOTES) ?></span>
             </div>
             <div class="access-mini">
-              <strong>Հիմնական ծրագիր</strong>
-              <span><?= (int)($installStats['main']['known_count'] ?? 0) ?> ճանաչված, <?= (int)($installStats['main']['count'] ?? 0) ?> ակտիվ</span>
+              <strong><?= __('Հիմնական ծրագիր') ?></strong>
+              <span><?= (int)($installStats['main']['known_count'] ?? 0) ?> <?= __('ճանաչված,') ?> <?= (int)($installStats['main']['count'] ?? 0) ?> <?= __('ակտիվ') ?></span>
             </div>
             <div class="access-mini">
-              <strong>Ադմին ծրագիր</strong>
-              <span><?= (int)($installStats['admin']['known_count'] ?? 0) ?> ճանաչված, <?= (int)($installStats['admin']['count'] ?? 0) ?> ակտիվ</span>
+              <strong><?= __('Ադմին ծրագիր') ?></strong>
+              <span><?= (int)($installStats['admin']['known_count'] ?? 0) ?> <?= __('ճանաչված,') ?> <?= (int)($installStats['admin']['count'] ?? 0) ?> <?= __('ակտիվ') ?></span>
             </div>
             <?php if (!empty($adminUser['email'])): ?>
               <div class="access-mini">
-                <strong>Email</strong>
+                <strong><?= __('Email') ?></strong>
                 <span><?= htmlspecialchars((string)$adminUser['email'], ENT_QUOTES) ?></span>
               </div>
             <?php endif; ?>
             <div class="access-mini">
-              <strong>Whitelist email-ներ</strong>
-              <span><?= (int)$adminEmailCount ?> պահված հասցե</span>
+              <strong><?= __('Whitelist email-ներ') ?></strong>
+              <span><?= (int)$adminEmailCount ?> <?= __('պահված հասցե') ?></span>
             </div>
           </div>
           <div class="access-actions">
-            <a class="btn" href="/songs.php">Բացել ադմին վահանակը</a>
-            <a class="btn" href="/admin_logout.php">Դուրս գալ ադմինից</a>
+            <a class="btn" href="/songs.php"><?= __('Բացել ադմին վահանակը') ?></a>
+            <a class="btn" href="/admin_logout.php"><?= __('Դուրս գալ ադմինից') ?></a>
           </div>
         </section>
       </aside>
@@ -3855,7 +3230,7 @@ $csrfToken = wp_admin_updates_csrf_token();
         maintenance: {
           title: 'Տեխնիկական աշխատանքներ',
           body: 'Տեղի են ունենում կարճ տեխնիկական աշխատանքներ։ Շնորհակալ ենք համբերատարության համար։',
-          url: '/page_unavailable.html',
+          url: '/maintenance.html',
           icon: '/wolarm_youth.png',
           tag: 'worship-maintenance'
         },
@@ -3991,17 +3366,19 @@ $csrfToken = wp_admin_updates_csrf_token();
       }
 
       function toDatetimeLocal(date) {
+        const utc = date.getTime();
+        const yerevanDate = new Date(utc + 4 * 3600000);
         const pad = (n) => String(n).padStart(2, '0');
         return [
-          date.getFullYear(),
+          yerevanDate.getUTCFullYear(),
           '-',
-          pad(date.getMonth() + 1),
+          pad(yerevanDate.getUTCMonth() + 1),
           '-',
-          pad(date.getDate()),
+          pad(yerevanDate.getUTCDate()),
           'T',
-          pad(date.getHours()),
+          pad(yerevanDate.getUTCHours()),
           ':',
-          pad(date.getMinutes())
+          pad(yerevanDate.getUTCMinutes())
         ].join('');
       }
 
@@ -4238,9 +3615,14 @@ $csrfToken = wp_admin_updates_csrf_token();
           return;
         }
         element.dataset.state = state;
-        const textNode = element.querySelector('span');
-        if (textNode && typeof text === 'string') {
-          textNode.textContent = text;
+        let contentNode = element.querySelector('.timeline-content');
+        if (!contentNode) {
+          contentNode = document.createElement('div');
+          contentNode.className = 'timeline-content';
+          element.appendChild(contentNode);
+        }
+        if (typeof text === 'string') {
+          contentNode.textContent = text;
         }
       }
 
@@ -4430,10 +3812,9 @@ $csrfToken = wp_admin_updates_csrf_token();
             if (csrfTokenInput) {
               csrfTokenInput.value = result.new_csrf_token;
             }
-            if (!data || !data.toString().includes('_retry=1')) {
-              const retryData = new URLSearchParams(data || {});
-              retryData.append('_retry', '1');
-              return postAdminAction(action, retryData);
+            if (!fields || !fields._retry) {
+              const retryFields = Object.assign({}, fields || {}, { _retry: '1' });
+              return postAdminAction(action, retryFields);
             }
           }
           throw new Error((result && result.message) ? result.message : 'Չհաջողվեց պահպանել տվյալները։');
@@ -4970,6 +4351,15 @@ $csrfToken = wp_admin_updates_csrf_token();
         releaseAutosave.schedule(450);
       });
 
+      const resetMaintenanceBtn = document.getElementById('resetMaintenanceBtn');
+      resetMaintenanceBtn?.addEventListener('click', () => {
+        if (maintenanceStartInput) maintenanceStartInput.value = '';
+        if (maintenanceEndInput) maintenanceEndInput.value = '';
+        if (maintenanceMessageInput) maintenanceMessageInput.value = '';
+        if (maintenanceEnabledInput) maintenanceEnabledInput.checked = false;
+        maintenanceAutosave.schedule(100);
+      });
+
       document.querySelectorAll('[data-maintenance-hours]').forEach((btn) => {
         btn?.addEventListener('click', () => {
           const hours = Number(btn.getAttribute('data-maintenance-hours') || '0');
@@ -5403,7 +4793,7 @@ $csrfToken = wp_admin_updates_csrf_token();
         }
       });
 
-      document.querySelectorAll('input[name^="page_app_modes["]').forEach((input) => {
+      document.querySelectorAll('input[name^="page_app_modes["], input[name^="page_web_modes["]').forEach((input) => {
         input?.addEventListener('change', () => {
           pageModesAutosave.schedule(300);
         });
@@ -5529,12 +4919,10 @@ $csrfToken = wp_admin_updates_csrf_token();
         initialSection = window.localStorage.getItem(sectionStorageKey) || defaultSection || 'all';
       } catch (error) {
       }
-      // If URL has a specific section, use it. But if empty, stick to 'all'
+      // If URL has a specific section, use it.
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('section')) {
         initialSection = urlParams.get('section');
-      } else {
-        initialSection = 'all'; // Default to dashboard grid!
       }
 
       setActiveSection(initialSection);

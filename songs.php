@@ -23,7 +23,12 @@ $js_i18n_keys = [
     'Saved' => __('Պահպանված է'),
     'Error' => __('Սխալ'),
     'Loading' => __('Բեռնվում է...'),
-    'ConfirmDelete' => __('Վստա՞հ եք, որ ուզում եք ջնջել այս երգը:')
+    'ConfirmDelete' => __('Վստա՞հ եք, որ ուզում եք ջնջել այս երգը:'),
+    'UnknownArtist' => __('Հեղինակ նշված չէ'),
+    'Untitled' => __('Անանուն'),
+    'TotalSongs' => __('ընդհանուր'),
+    'WithLyricsCount' => __('բառերով'),
+    'Update' => __('Թարմացնել')
 ];
 
 
@@ -40,17 +45,17 @@ if (empty($adminPermissions['songs_editor'])):
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Երգերի խմբագրումը հասանելի չէ</title>
+  <title><?= __('Երգերի խմբագրումը հասանելի չէ') ?></title>
   
 </head>
 <body>
   <main class="gate">
-    <div class="eyebrow">Ադմին հասանելիություն</div>
-    <h1>Երգերի խմբագրումը հասանելի չէ</h1>
-    <p>Քո օգտահաշիվը մուտք ունի ադմին միջավայր, բայց <strong>Երգերի խմբագրում</strong> թույլտվությունը դեռ միացված չէ։ Եթե այս էջը քեզ պետք է, խնդրիր լիազորված ադմինին այն միացնել `Բաժինների թույլտվություններ ըստ օգտատիրոջ` բաժնից։</p>
+    <div class="eyebrow"><?= __('Ադմին հասանելիություն') ?></div>
+    <h1><?= __('Երգերի խմբագրումը հասանելի չէ') ?></h1>
+    <p><?= __('Քո օգտահաշիվը մուտք ունի ադմին միջավայր, բայց') ?> <strong><?= __('Երգերի խմբագրում') ?></strong> <?= __('թույլտվությունը դեռ միացված չէ։ Եթե այս էջը քեզ պետք է, խնդրիր լիազորված ադմինին այն միացնել `Բաժինների թույլտվություններ ըստ օգտատիրոջ` բաժնից։') ?></p>
     <div class="actions">
-      <a class="btn btn-primary" href="/admin_updates.php">Բացել ադմինի կարգավորումները</a>
-      <a class="btn btn-danger" href="/admin_logout.php">Դուրս գալ ադմինից</a>
+      <a class="btn btn-primary" href="/admin_updates.php"><?= __('Բացել ադմինի կարգավորումները') ?></a>
+      <a class="btn btn-danger" href="/admin_logout.php"><?= __('Դուրս գալ ադմինից') ?></a>
     </div>
   </main>
 </body>
@@ -229,7 +234,7 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
   <main class="app-main">
     <?php
       $adminEmail = trim((string)($adminUser['email'] ?? ''));
-      $searchPlaceholder = 'Search by name, artist...';
+      $searchPlaceholder = 'Search by name, author...';
       include __DIR__ . '/admin_topbar.php';
     ?>
 
@@ -259,7 +264,7 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
               <div>
                 <div class="stat-label">
                   <span class="period-badge" style="background:#e5f3ff; color:#228fff;"><?= __('Database') ?></span><br>
-                  Total Songs
+                  <?= __('Total Songs') ?>
                 </div>
                 <div class="stat-value" id="statTotalSongs">0</div>
               </div>
@@ -275,7 +280,7 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
               <div>
                 <div class="stat-label">
                   <span class="period-badge" style="background:#f3ebff; color:#7d40ff;"><?= __('Content') ?></span><br>
-                  With Lyrics
+                  <?= __('With Lyrics') ?>
                 </div>
                 <div class="stat-value" id="statLyricsSongs">0</div>
               </div>
@@ -290,8 +295,8 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
             <div class="stat-row">
               <div>
                 <div class="stat-label">
-                  <span class="period-badge" style="background:#e6f9f3; color:#05cd99;">Current View</span><br>
-                  Filtered Results
+                  <span class="period-badge" style="background:#e6f9f3; color:#05cd99;"><?= __('Current View') ?></span><br>
+                  <?= __('Filtered Results') ?>
                 </div>
                 <div class="stat-value" id="statVisibleSongs">0</div>
               </div>
@@ -316,11 +321,11 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
         
         <!-- Filters (Hidden by default in new design, but kept for JS compatibility) -->
         <div id="filtersPanel" class="hidden">
-           <select id="sortBy"><option value="newest">Նորից հին</option></select>
-           <select id="lyricsFilter"><option value="all">Բոլորը</option></select>
+           <select id="sortBy"><option value="newest"><?= __('Նորից հին') ?></option></select>
+           <select id="lyricsFilter"><option value="all"><?= __('Բոլորը') ?></option></select>
            <input id="keyFilter" type="text">
            <input id="tagFilter" type="text">
-           <button id="clearFilters">Մաքրել</button>
+           <button id="clearFilters"><?= __('Մաքրել') ?></button>
            <div id="activeFilters"></div>
         </div>
 
@@ -339,7 +344,7 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
             <tbody id="songsTable"></tbody>
           </table>
           <div style="padding:24px; text-align:center; border-top: 1px solid var(--line);">
-             <button id="loadMoreBtn" class="btn hidden"><?= __('Load More') ?></button>
+             <button id="loadMoreBtn" class="btn" hidden><?= __('Load More') ?></button>
           </div>
         </div>
         
@@ -358,7 +363,7 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
       <div class="editor-header">
         <h3 style="margin:0;"><?= __('Ավելացնել / Խմբագրել երգ') ?></h3>
         <div style="display: flex; gap: 8px;">
-          <button id="clearForm" class="btn compact-btn" title="Մաքրել">🔄</button>
+          <button id="clearForm" class="btn compact-btn" title="<?= __('Մաքրել') ?>">🔄</button>
           <button id="downloadTxt" class="btn compact-btn">TXT</button>
           <button id="exportPdf" class="btn compact-btn">PDF</button>
           <button id="cancelEdit" class="btn compact-btn" style="background:#fee2e2; color:#ef4444; border:none;"><?= __('Չեղարկել') ?></button>
@@ -369,7 +374,7 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
         <div class="form-grid">
           <div class="form-field">
             <label><?= __('Անվանում') ?></label>
-            <input id="title" type="text" placeholder="Օր. Մեր սուրբ Աստված">
+            <input id="title" type="text" placeholder="<?= __('Օր. Մեր սուրբ Աստված') ?>">
           </div>
           <div class="form-field">
             <label><?= __('Անվանում') ?> (RU)</label>
@@ -387,7 +392,7 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
         
         <div class="form-grid">
           <div class="form-field">
-            <label><?= __('Կատարող') ?></label>
+            <label><?= __('Հեղինակ') ?></label>
             <input id="artist" type="text">
           </div>
           <div class="form-field">
@@ -446,7 +451,7 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
     <div class="editor-drawer" style="width:600px;">
       <div class="editor-header">
         <h3 id="preview<?= __('Title') ?>" style="margin:0;"><?= __('Preview') ?></h3>
-        <button class="btn" onclick="document.getElementById('previewPane').classList.remove('is-active')">Close <?= __('Preview') ?></button>
+        <button class="btn" onclick="document.getElementById('previewPane').classList.remove('is-active')"><?= __('Close') ?> <?= __('Preview') ?></button>
       </div>
       <div class="editor-body">
          <div id="preview" style="white-space:pre-wrap; font-family:monospace;"></div>
@@ -723,83 +728,13 @@ function isAppleMobile() {
 }
 
 function ensureAdminInstallBanner() {
-  var existing = document.getElementById('adminInstallBanner');
-  if (existing) return existing;
-
-  var banner = document.createElement('div');
-  banner.id = 'adminInstallBanner';
-  banner.className = 'admin-install-banner';
-  banner.innerHTML =
-    '<div class="admin-install-copy">' +
-    '  <strong>Ներբեռնեք ադմին ծրագիրը</strong>' +
-    '  <span id="adminInstallBannerText">Արագ մուտք գործեք երգերի կառավարման բաժին առանձին հավելվածով։</span>' +
-    '</div>' +
-    '<div class="admin-install-actions">' +
-    '  <button class="btn btn-secondary" id="adminInstallLaterBtn" type="button">Հետո</button>' +
-    '  <button class="btn btn-primary" id="adminInstallPromptBtn" type="button">Ներբեռնել</button>' +
-    '</div>';
-  document.body.appendChild(banner);
-  return banner;
+  return null;
 }
 
 function hideAdminInstallBanner(persist) {
-  var banner = document.getElementById('adminInstallBanner');
-  if (banner) banner.classList.remove('show');
-  if (persist) {
-    try {
-      localStorage.setItem(adminInstallStorageKey, '1');
-    } catch (e) {
-      // ignore storage errors
-    }
-  }
 }
 
 function updateAdminInstallBanner() {
-  var banner = ensureAdminInstallBanner();
-  var text = document.getElementById('adminInstallBannerText');
-  var promptBtn = document.getElementById('adminInstallPromptBtn');
-  var laterBtn = document.getElementById('adminInstallLaterBtn');
-
-  if (laterBtn && !laterBtn.dataset.bound) {
-    laterBtn.dataset.bound = '1';
-    laterBtn?.addEventListener('click', function() {
-      hideAdminInstallBanner(true);
-    });
-  }
-
-  if (promptBtn && !promptBtn.dataset.bound) {
-    promptBtn.dataset.bound = '1';
-    promptBtn?.addEventListener('click', function() {
-      handleAdminInstallRequest();
-    });
-  }
-
-  if (isStandaloneAdminApp()) {
-    banner.classList.remove('show');
-    return;
-  }
-
-  try {
-    if (localStorage.getItem(adminInstallStorageKey) === '1') {
-      banner.classList.remove('show');
-      return;
-    }
-  } catch (e) {
-    // ignore storage errors
-  }
-
-  if (!deferredAdminInstallPrompt && !isAppleMobile()) {
-    banner.classList.remove('show');
-    return;
-  }
-
-  if (text) {
-    text.textContent = isAppleMobile()
-      ? 'Safari-ում կարող եք այս էջը պահել որպես առանձին հավելված։'
-      : 'Ներբեռնեք երգերի կառավարման առանձին ծրագիրը արագ մուտքի համար։';
-  }
-
-  banner.classList.add('show');
 }
 
 function updateInstallAdminButton() {
@@ -1237,7 +1172,7 @@ function renderPreview() {
   transposeInfo.textContent = `Տրանսպոզ: ${semi >= 0 ? '+' + semi : semi}`;
 
   if (!raw) {
-    preview.innerHTML = '<span class="empty-preview">Այստեղ կերևա ակորդների նախադիտումը</span>';
+    preview.innerHTML = '<span class="empty-preview"><?= __('Այստեղ կերևա ակորդների նախադիտումը') ?></span><?= __('\';
     updateWorkspaceState();
     return;
   }
@@ -1263,8 +1198,8 @@ function getFormData() {
 }
 
 function validateSong(song) {
-  if (!song.title) return 'Լրացրու երգի անունը';
-  if (song.bpm && (song.bpm < 20 || song.bpm > 400)) return 'BPM-ը գրիր 20-ից 400 միջակայքում';
+  if (!song.title) return \'Լրացրու երգի անունը\';
+  if (song.bpm && (song.bpm') ?> < 20 || song.bpm > 400)) return 'BPM-ը գրիր 20-ից 400 միջակայքում';
   if (!song.chords.trim() && !song.lyrics.trim()) return 'Լրացրու գոնե ակորդները կամ բառերը';
   return '';
 }
@@ -1405,7 +1340,7 @@ function renderTable(songs = [], totalCount = songs.length) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td colspan="3">
-        <div class="song-meta" style="padding:12px 0;">Ոչինչ չի գտնվել</div>
+        <div class="song-meta" style="padding:12px 0;"><?= __('Ոչինչ չի գտնվել') ?></div>
       </td>
     `;
     tableBody.appendChild(tr);
@@ -1425,7 +1360,7 @@ function renderTable(songs = [], totalCount = songs.length) {
         </div>
       </td>
       <td>
-        <div class="song-meta" style="margin-top:0;">${escapeHtml(s.artist || (window.I18N?.UnknownArtist || 'Կատարող նշված չէ'))}</div>
+        <div class="song-meta" style="margin-top:0;">${escapeHtml(s.artist || (window.I18N?.UnknownArtist || 'Հեղինակ նշված չէ'))}</div>
       </td>
       <td>
         <div class="mini-pills" style="margin-top:0;">
@@ -1439,23 +1374,23 @@ function renderTable(songs = [], totalCount = songs.length) {
       </td>
       <td>
         <div class="mini-pills" style="margin-top:0;">
-          <span class="mini-pill status-pill ${hasLyrics ? 'has-lyrics' : 'no-lyrics'}">${hasLyrics ? (window.I18N?.Published || 'Բառերով') : (window.I18N?.Draft || 'Առանց բառերի')}</span>
+          <span class="mini-pill status-pill ${hasLyrics ? 'has-lyrics' : 'no-lyrics'}" style="white-space: nowrap;">${hasLyrics ? (window.I18N?.Published || 'Բառերով') : (window.I18N?.Draft || 'Առանց բառերի')}</span>
         </div>
       </td>
       <td>
-        <div class="row-actions">
+        <div class="row-actions" style="display: flex; gap: 8px; align-items: center; white-space: nowrap;">
           <button class="btn" type="button" data-action="edit" data-id="${s.id}">${window.I18N?.Edit || 'Խմբագրել'}</button>
           <button class="btn" style="color:var(--danger); border-color:#fca5a5;" type="button" data-action="delete" data-id="${s.id}">${window.I18N?.Delete || 'Ջնջել'}</button>
         </div>
       </td>
-    `;
+    <?= __('`;
     tableBody.appendChild(tr);
   }
 }
 
 async function fetchSongs() {
-  const res = await fetch('api.php');
-  if (!res.ok) throw new Error('Չհաջողվեց բեռնել երգերը');
+  const res = await fetch(\'api.php\');
+  if (!res.ok) throw new Error(\'Չհաջողվեց բեռնել երգերը\');
   const songs = await res.json();
   ALL_SONGS = Array.isArray(songs) ? songs.map(normalizeSong) : [];
   visibleSongsCount = SONGS_PAGE_SIZE;
@@ -1463,20 +1398,20 @@ async function fetchSongs() {
 }
 
 async function startEditSong(id) {
-  const res = await fetch('api.php?id=' + encodeURIComponent(id));
-  if (!res.ok) throw new Error('Չհաջողվեց բեռնել երգը');
+  const res = await fetch(\'api.php?id=\' + encodeURIComponent(id));
+  if (!res.ok) throw new Error(\'Չհաջողվեց բեռնել երգը\');
   const song = normalizeSong(await res.json());
   fillForm(song);
   setEditMode(song);
   markCurrentSnapshotAsSaved();
-  showNotice('Խմբագրման ռեժիմը ակտիվացված է', 'info');
+  showNotice(\'Խմբագրման ռեժիմը ակտիվացված է\', \'info\');
 }
 
 async function saveCurrentSong() {
   const song = getFormData();
   const error = validateSong(song);
   if (error) {
-    showNotice(error, 'error');
+    showNotice(error, \'error\');
     return;
   }
 
@@ -1492,48 +1427,48 @@ async function saveCurrentSong() {
   };
 
   if (currentEditId !== null) {
-    const res = await fetch('api.php?id=' + encodeURIComponent(currentEditId), {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch(\'api.php?id=\' + encodeURIComponent(currentEditId), {
+      method: \'PUT\',
+      headers: { \'Content-Type\': \'application/json\' },
       body: JSON.stringify(song)
     });
     const { raw, json: result } = await parseApiResponse(res);
     if (!res.ok || result.success === false) {
-      const detail = result?.details?.message || result?.error || raw || 'Չհաջողվեց թարմացնել երգը';
+      const detail = result?.details?.message || result?.error || raw || \'Չհաջողվեց թարմացնել երգը\';
       throw new Error(detail);
     }
-    showNotice(window.I18N?.Saved || 'Երգը պահպանված է ✅', 'success');
+    showNotice(window.I18N?.Saved || \'Երգը պահպանված է ✅\', \'success\');
   } else {
-    const res = await fetch('api.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch(\'api.php\', {
+      method: \'POST\',
+      headers: { \'Content-Type\': \'application/json\' },
       body: JSON.stringify(song)
     });
     const { raw, json: result } = await parseApiResponse(res);
     if (!res.ok || result.success === false) {
-      const detail = result?.details?.message || result?.error || raw || 'Չհաջողվեց պահպանել երգը';
+      const detail = result?.details?.message || result?.error || raw || \'Չհաջողվեց պահպանել երգը\';
       throw new Error(detail);
     }
-    showNotice(window.I18N?.Saved || 'Երգը պահպանված է ✅', 'success');
+    showNotice(window.I18N?.Saved || \'Երգը պահպանված է ✅\', \'success\');
   }
 
   clearForm();
   await fetchSongs();
-  activateWorkspaceTab('libraryPane');
+  activateWorkspaceTab(\'libraryPane\');
   markCurrentSnapshotAsSaved();
 }
 
 async function deleteSong(id) {
-  if (!confirm(window.I18N?.ConfirmDelete || 'Իսկապե՞ս ջնջել այս երգը։')) return;
-  const res = await fetch('api.php?id=' + encodeURIComponent(id), { method: 'DELETE' });
-  if (!res.ok) throw new Error('Չհաջողվեց ջնջել երգը');
-  showNotice('Երգը ջնջված է', 'success');
+  if (!confirm(window.I18N?.ConfirmDelete || \'Իսկապե՞ս ջնջել այս երգը։\')) return;
+  const res = await fetch(\'api.php?id=\' + encodeURIComponent(id), { method: \'DELETE\' });
+  if (!res.ok) throw new Error(\'Չհաջողվեց ջնջել երգը\');
+  showNotice(\'Երգը ջնջված է\', \'success\');
   if (currentEditId === Number(id)) clearForm();
   await fetchSongs();
 }
 
 function openSongInNewTab(id) {
-  window.open('song_view.html?id=' + encodeURIComponent(id), '_blank');
+  window.open(\'song_view.html?id=\' + encodeURIComponent(id), \'_blank\');
 }
 
 function rerenderList() {
@@ -1542,21 +1477,21 @@ function rerenderList() {
   updateFiltersButtonState();
 }
 
-downloadTxtBtn?.addEventListener('click', () => {
-  const blob = new Blob([chordsI.value || ''], { type:'text/plain;charset=utf-8' });
+downloadTxtBtn?.addEventListener(\'click\', () => {
+  const blob = new Blob([chordsI.value || \'\'], { type:\'text/plain;charset=utf-8\' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement(\'a\');
   a.href = url;
-  a.download = (titleI.value || titleLatI.value || titleRuI.value || titleEnI.value || 'song') + '.txt';
+  a.download = (titleI.value || titleLatI.value || titleRuI.value || titleEnI.value || \'song\') + \'.txt\';
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
 });
 
-exportPdfBtn?.addEventListener('click', () => {
+exportPdfBtn?.addEventListener(\'click\', () => {
   if (!window.jspdf || !window.jspdf.jsPDF) {
-    showNotice('jsPDF չի բեռնվել', 'error');
+    showNotice(\'jsPDF չի բեռնվել\', \'error\');
     return;
   }
 
@@ -1566,21 +1501,21 @@ exportPdfBtn?.addEventListener('click', () => {
   const semi = getCurrentSemi();
 
   doc.setFontSize(16);
-  doc.text(titleI.value || titleLatI.value || titleRuI.value || titleEnI.value || 'Անանուն', 10, y); y += 10;
+  doc.text(titleI.value || titleLatI.value || titleRuI.value || titleEnI.value || \'Անանուն\', 10, y); y += 10;
   doc.setFontSize(12);
-  if (artistI.value) { doc.text('Կատարող: ' + artistI.value, 10, y); y += 8; }
-  if (keyI.value) { doc.text('Տոնայնություն: ' + keyI.value, 10, y); y += 8; }
-  if (bpmI.value) { doc.text('BPM: ' + bpmI.value, 10, y); y += 8; }
-  if (selectedTargetKey) { doc.text('Թիրախային տոնայնություն: ' + selectedTargetKey, 10, y); y += 8; }
+  if (artistI.value) { doc.text(\'Հեղինակ: \' + artistI.value, 10, y); y += 8; }
+  if (keyI.value) { doc.text(\'Տոնայնություն: \' + keyI.value, 10, y); y += 8; }
+  if (bpmI.value) { doc.text(\'BPM: \' + bpmI.value, 10, y); y += 8; }
+  if (selectedTargetKey) { doc.text(\'Թիրախային տոնայնություն: \' + selectedTargetKey, 10, y); y += 8; }
 
-  const lines = (chordsI.value || '').split('\n');
+  const lines = (chordsI.value || \'\').split(\'\\n\');
   for (const line of lines) {
-    const plain = line.replace(/\b([A-G][#b]?)(m|maj|min|dim|aug|sus2|sus4|7|9|11|13)?(\/[A-G][#b]?)?\b/g,
+    const plain = line.replace(/\\b([A-G][#b]?)(m|maj|min|dim|aug|sus2|sus4|7|9|11|13)?(\\/[A-G][#b]?)?\\b/g,
       (match, root, type, bass) => {
         const newRoot = transposeRoot(root, semi, useFlatsI.checked);
-        let out = newRoot + (type || '');
-        if (bass) out += '/' + transposeRoot(bass.slice(1), semi, useFlatsI.checked);
-        return '(' + out + ')';
+        let out = newRoot + (type || \'\');
+        if (bass) out += \'/\' + transposeRoot(bass.slice(1), semi, useFlatsI.checked);
+        return \'(\' + out + \')\';
       }
     );
 
@@ -1592,18 +1527,18 @@ exportPdfBtn?.addEventListener('click', () => {
     }
   }
 
-  doc.save((titleI.value || titleLatI.value || titleRuI.value || titleEnI.value || 'song') + '.pdf');
+  doc.save((titleI.value || titleLatI.value || titleRuI.value || titleEnI.value || \'song\') + \'.pdf\');
 });
 
-exportAllPdfBtn?.addEventListener('click', async () => {
+exportAllPdfBtn?.addEventListener(\'click\', async () => {
   if (!window.jspdf || !window.jspdf.jsPDF) {
-    showNotice('jsPDF չի բեռնվել', 'error');
+    showNotice(\'jsPDF չի բեռնվել\', \'error\');
     return;
   }
 
   const songs = getFilteredSongs();
   if (!songs.length) {
-    showNotice('Արտահանելու երգեր չկան', 'error');
+    showNotice(\'Արտահանելու երգեր չկան\', \'error\');
     return;
   }
 
@@ -1614,15 +1549,15 @@ exportAllPdfBtn?.addEventListener('click', async () => {
     if (index > 0) doc.addPage();
     let y = 18;
     doc.setFontSize(16);
-    doc.text(displayEditorSongTitle(song.title || '') || 'Անանուն', 10, y); y += 9;
+    doc.text(displayEditorSongTitle(song.title || \'\') || \'Անանուն\', 10, y); y += 9;
     doc.setFontSize(12);
-    if (song.artist) { doc.text('Կատարող: ' + song.artist, 10, y); y += 7; }
-    if (song.song_key) { doc.text('Տոնայնություն: ' + song.song_key, 10, y); y += 7; }
-    if (song.bpm) { doc.text('BPM: ' + song.bpm, 10, y); y += 7; }
-    if (song.tags) { doc.text('Տեգեր: ' + song.tags, 10, y); y += 7; }
+    if (song.artist) { doc.text(\'Հեղինակ: \' + song.artist, 10, y); y += 7; }
+    if (song.song_key) { doc.text(\'Տոնայնություն: \' + song.song_key, 10, y); y += 7; }
+    if (song.bpm) { doc.text(\'BPM: \' + song.bpm, 10, y); y += 7; }
+    if (song.tags) { doc.text(\'Տեգեր: \' + song.tags, 10, y); y += 7; }
     y += 3;
 
-    const lines = (song.chords || '').split('\n');
+    const lines = (song.chords || \'\').split(\'\\n\');
     for (const line of lines) {
       const chunks = doc.splitTextToSize(line, 180);
       for (const chunk of chunks) {
@@ -1633,108 +1568,108 @@ exportAllPdfBtn?.addEventListener('click', async () => {
     }
   });
 
-  doc.save('songs-export.pdf');
+  doc.save(\'songs-export.pdf\');
 });
 
-[keyI, chordsI, useFlatsI, titleI, titleLatI, titleRuI, titleEnI, artistI].forEach(el => el?.addEventListener('input', renderPreview));
-tagsI?.addEventListener('input', updateWorkspaceState);
-lyricsI?.addEventListener('input', updateWorkspaceState);
-searchI?.addEventListener('input', rerenderList);
-sortByI?.addEventListener('change', rerenderList);
-lyricsFilterI?.addEventListener('change', rerenderList);
-keyFilterI?.addEventListener('input', rerenderList);
-tagFilterI?.addEventListener('input', rerenderList);
+[keyI, chordsI, useFlatsI, titleI, titleLatI, titleRuI, titleEnI, artistI].forEach(el => el?.addEventListener(\'input\', renderPreview));
+tagsI?.addEventListener(\'input\', updateWorkspaceState);
+lyricsI?.addEventListener(\'input\', updateWorkspaceState);
+searchI?.addEventListener(\'input\', rerenderList);
+sortByI?.addEventListener(\'change\', rerenderList);
+lyricsFilterI?.addEventListener(\'change\', rerenderList);
+keyFilterI?.addEventListener(\'input\', rerenderList);
+tagFilterI?.addEventListener(\'input\', rerenderList);
 
-toggleFiltersBtn?.addEventListener('click', () => {
+toggleFiltersBtn?.addEventListener(\'click\', () => {
   filtersPanel.hidden = !filtersPanel.hidden;
   updateFiltersButtonState();
 });
 
-clearFiltersBtn?.addEventListener('click', () => {
-  sortByI.value = 'newest';
-  lyricsFilterI.value = 'all';
-  keyFilterI.value = '';
-  tagFilterI.value = '';
-  searchI.value = '';
+clearFiltersBtn?.addEventListener(\'click\', () => {
+  sortByI.value = \'newest\';
+  lyricsFilterI.value = \'all\';
+  keyFilterI.value = \'\';
+  tagFilterI.value = \'\';
+  searchI.value = \'\';
   rerenderList();
   filtersPanel.hidden = true;
   updateFiltersButtonState();
-  showNotice('Ֆիլտրերը մաքրված են', 'info');
+  showNotice(\'Ֆիլտրերը մաքրված են\', \'info\');
 });
 
-saveBtn?.addEventListener('click', async () => {
+saveBtn?.addEventListener(\'click\', async () => {
   try {
     await saveCurrentSong();
   } catch (err) {
-    showNotice(err.message || 'Սխալ է տեղի ունեցել', 'error');
+    showNotice(err.message || \'Սխալ է տեղի ունեցել\', \'error\');
   }
 });
 
-cancelEditBtn?.addEventListener('click', () => {
+cancelEditBtn?.addEventListener(\'click\', () => {
   clearForm();
-  showNotice('Խմբագրումը չեղարկված է', 'info');
-  activateWorkspaceTab('libraryPane');
+  showNotice(\'Խմբագրումը չեղարկված է\', \'info\');
+  activateWorkspaceTab(\'libraryPane\');
 });
 
-clearBtn?.addEventListener('click', clearForm);
-installAdminAppBtn?.addEventListener('click', async () => {
+clearBtn?.addEventListener(\'click\', clearForm);
+installAdminAppBtn?.addEventListener(\'click\', async () => {
   await handleAdminInstallRequest();
 });
 
-sidebarSearchBtn?.addEventListener('click', () => {
-  activateWorkspaceTab('libraryPane');
+sidebarSearchBtn?.addEventListener(\'click\', () => {
+  activateWorkspaceTab(\'libraryPane\');
   scrollWorkspaceIntoView();
   searchI.focus();
-  searchI.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  searchI.scrollIntoView({ behavior: \'smooth\', block: \'center\' });
 });
-newSongBtn?.addEventListener('click', () => {
+newSongBtn?.addEventListener(\'click\', () => {
   clearForm();
-  activateWorkspaceTab('editorPane');
+  activateWorkspaceTab(\'editorPane\');
   scrollWorkspaceIntoView();
   titleI.focus();
-  showNotice('Բացված է նոր երգի ռեժիմը', 'info');
+  showNotice(\'Բացված է նոր երգի ռեժիմը\', \'info\');
 });
 
-refreshListBtn?.addEventListener('click', async () => {
+refreshListBtn?.addEventListener(\'click\', async () => {
   try {
     await fetchSongs();
-    showNotice(window.I18N?.Loading || 'Բեռնվում է...', 'info');
+    showNotice(window.I18N?.Loading || \'Բեռնվում է...\', \'info\');
   } catch (err) {
-    showNotice(err.message || 'Չհաջողվեց թարմացնել ցանկը', 'error');
+    showNotice(err.message || \'Չհաջողվեց թարմացնել ցանկը\', \'error\');
   }
 });
-sidebarRefreshBtn?.addEventListener('click', () => refreshListBtn.click());
-sidebarClearBtn?.addEventListener('click', () => {
+sidebarRefreshBtn?.addEventListener(\'click\', () => refreshListBtn.click());
+sidebarClearBtn?.addEventListener(\'click\', () => {
   clearForm();
-  showNotice('Ձևը մաքրված է', 'info');
+  showNotice(\'Ձևը մաքրված է\', \'info\');
 });
 
-loadMoreBtn?.addEventListener('click', () => {
+loadMoreBtn?.addEventListener(\'click\', () => {
   visibleSongsCount += SONGS_PAGE_SIZE;
   renderTable(getVisibleSongs(), getFilteredSongs().length);
 });
 
-tableBody?.addEventListener('click', async (e) => {
-  const btn = e.target.closest('button[data-action]');
+tableBody?.addEventListener(\'click\', async (e) => {
+  const btn = e.target.closest(\'button[data-action]\');
   if (btn) {
     const id = btn.dataset.id;
     const action = btn.dataset.action;
     try {
-      if (action === 'edit') await startEditSong(id);
-      if (action === 'delete') await deleteSong(id);
+      if (action === \'edit\') await startEditSong(id);
+      if (action === \'delete\') await deleteSong(id);
     } catch (err) {
-      showNotice(err.message || 'Սխալ է տեղի ունեցել', 'error');
+      showNotice(err.message || \'Սխալ է տեղի ունեցել\', \'error\');
     }
     return;
   }
 
-  const openTarget = e.target.closest('[data-open-song]');
+  const openTarget = e.target.closest(\'[data-open-song]\');
   if (openTarget) {
     openSongInNewTab(openTarget.dataset.openSong);
     return;
   }
 
-  const row = e.target.closest('tr.clickable-row');
+  const row = e.target.closest(\'tr.clickable-row\');
   if (row && row.dataset.songId) {
     openSongInNewTab(row.dataset.songId);
   }
@@ -1743,15 +1678,15 @@ tableBody?.addEventListener('click', async (e) => {
 buildKeysGrid();
 setEditMode(null);
 renderPreview();
-activateWorkspaceTab('libraryPane');
+activateWorkspaceTab(\'libraryPane\');
 markCurrentSnapshotAsSaved();
 updateInstallAdminButton();
 updateAdminInstallBanner();
 
-window?.addEventListener('beforeunload', (e) => {
+window?.addEventListener(\'beforeunload\', (e) => {
   if (!hasUnsavedChanges()) return;
   e.preventDefault();
-  e.returnValue = '';
+  e.returnValue = \'\';
 });
 
 (async function init() {
@@ -1761,11 +1696,11 @@ window?.addEventListener('beforeunload', (e) => {
     await fetchSongs();
     updateFiltersButtonState();
   } catch (err) {
-    showNotice(err.message || 'Չհաջողվեց բեռնել տվյալները', 'error');
+    showNotice(err.message || \'Չհաջողվեց բեռնել տվյալները\', \'error\');
   } finally {
     hideAdminPageLoader(120);
   }
-})();
+})();') ?>
 </script>
 </body>
 </html>

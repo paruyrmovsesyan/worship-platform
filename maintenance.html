@@ -238,16 +238,23 @@
     <h1>Տեխնիկական<br>աշխատանքներ</h1>
 
     <p class="desc" id="mainMsg">
-      Կայքում այս պահին ընթանում են տեխնիկական աշխատանքներ։<br>
-      Շուտով ամեն ինչ կնորոգվի — կփորձենք հնարավորինս արագ։
+      Կայքում ընթացքի մեջ են տեխնիկական աշխատանքներ։<br>Խնդրում ենք փորձել մի փոքր հետո։
     </p>
 
     <div class="status-row">
       <div class="status-dot"></div>
       Թիմը աշխատում է — ամեն ինչ շուտ կլինի
     </div>
+    
+    <div class="status-row" id="endAtRow" style="display:none; color: #a89bff; font-weight: 700; font-size: 14px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+      </svg>
+      Հասանելի կլինի՝ <span id="endAtTimer" style="margin-left:4px;"></span>
+    </div>
 
-    <button class="btn-retry" onclick="location.reload()">
+    <button class="btn-retry" onclick="checkStatus(); this.style.opacity='0.7'; setTimeout(() => this.style.opacity='1', 500);">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
       </svg>
@@ -260,7 +267,7 @@
   </div>
 
   <script>
-    // Load message from URL param (set by site_guard.js)
+    // Load initial message from URL param
     (function() {
       try {
         const params = new URLSearchParams(window.location.search);
@@ -271,28 +278,103 @@
       } catch(e) {}
     })();
 
-    // Countdown + auto-check
     let seconds = 30;
     const el = document.getElementById('countdown');
-    const timer = setInterval(function() {
+    
+    function checkStatus() {
+      fetch('/status.php?_=' + Date.now(), { cache: 'no-store' })
+        .then(function(r) {
+          return r.json().then(function(data) {
+            return { ok: r.ok, status: r.status, data: data };
+          }).catch(function() {
+            return { ok: r.ok, status: r.status, data: null };
+          });
+        })
+        .then(function(res) {
+          // If maintenance is turned off
+          if (res.ok || (res.data && res.data.maintenance === false)) {
+            window.location.replace('/');
+            return;
+          }
+          
+          // If still in maintenance, update message dynamically if provided
+          if (res.data && res.data.message) {
+            document.getElementById('mainMsg').textContent = res.data.message;
+            // Also update URL so manual refresh keeps the new message
+            try {
+              const url = new URL(window.location);
+              url.searchParams.set('message', res.data.message);
+              window.history.replaceState({}, '', url);
+            } catch(e) {}
+          }
+          
+          if (res.data && res.data.maintenance_end_at) {
+            targetEndTime = new Date(res.data.maintenance_end_at).getTime();
+            document.getElementById('endAtRow').style.display = 'flex';
+            if (!endAtTimerInterval) {
+              endAtTimerInterval = setInterval(updateEndAtTimer, 1000);
+              updateEndAtTimer();
+            }
+          } else {
+            targetEndTime = null;
+            document.getElementById('endAtRow').style.display = 'none';
+            if (endAtTimerInterval) {
+              clearInterval(endAtTimerInterval);
+              endAtTimerInterval = null;
+            }
+          }
+          
+          // Restart countdown
+          seconds = 30;
+          if (el) el.textContent = seconds;
+          setTimeout(tick, 1000);
+        })
+        .catch(function(err) {
+          // Network error - restart countdown
+          seconds = 30;
+          if (el) el.textContent = seconds;
+          setTimeout(tick, 1000);
+        });
+    }
+
+    function tick() {
       seconds--;
       if (el) el.textContent = seconds;
       if (seconds <= 0) {
-        clearInterval(timer);
-        // Try fetching status.php - if OK, go back to homepage
-        fetch('/status.php?_=' + Date.now(), { cache: 'no-store' })
-          .then(function(r) {
-            if (r.ok) {
-              window.location.replace('/');
-            } else {
-              // Still in maintenance - reset timer
-              seconds = 30;
-              setInterval(arguments.callee, 1000);
-            }
-          })
-          .catch(function() {});
+        if (el) el.textContent = "0";
+        checkStatus();
+      } else {
+        setTimeout(tick, 1000);
       }
-    }, 1000);
+    }
+
+    let targetEndTime = null;
+    let endAtTimerInterval = null;
+
+    function updateEndAtTimer() {
+      if (!targetEndTime) return;
+      const now = new Date().getTime();
+      const diff = targetEndTime - now;
+      if (diff <= 0) {
+        document.getElementById('endAtTimer').textContent = "Շուտով...";
+        return;
+      }
+      
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      let timeString = "";
+      if (hours > 0) timeString += hours + "ժ ";
+      if (mins > 0 || hours > 0) timeString += mins + "ր ";
+      timeString += secs + "վ";
+      
+      document.getElementById('endAtTimer').textContent = timeString;
+    }
+
+    // Call checkStatus immediately to fetch accurate info, 
+    // then start the normal 30s polling cycle
+    checkStatus();
   </script>
 </body>
 </html>

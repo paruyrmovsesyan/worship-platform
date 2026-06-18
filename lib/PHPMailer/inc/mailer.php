@@ -286,3 +286,46 @@ function send_team_invite_email(string $toEmail, string $toName, string $teamNam
     return _wp_mailer_send($toEmail, $displayName, $subject, $htmlBody, $textBody);
 }
 
+function send_contact_reply_email(string $toEmail, string $toName, string $replyText, string $originalMsg): array
+{
+    $displayName = trim($toName) !== '' ? $toName : 'օգտատեր';
+    $subject = 'Worship Platform — Պատասխան ձեր նամակին';
+    
+    $textBody = "Ողջույն, {$displayName}\n\n"
+    ."Մենք ստացանք ձեր նամակը և ահա մեր պատասխանը:\n\n"
+    ."Պատասխան:\n{$replyText}\n\n"
+    ."Ձեր հաղորդագրությունը:\n{$originalMsg}\n\n"
+    ."Շնորհակալություն Worship Platform-ից օգտվելու համար:\n";
+
+    $htmlBody = '
+<!doctype html>
+<html>
+  <body style="margin:0;background:#05050A;padding:24px;font-family:Inter,Arial,sans-serif;">
+    <div style="max-width:560px;margin:0 auto;background:#12121A;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;">
+      <div style="padding:18px 20px;background:linear-gradient(135deg,#9D72FF,#00F0FF);color:#05050A;">
+        <div style="font-weight:800;letter-spacing:.5px;font-size:16px;">WORSHIP PLATFORM</div>
+        <div style="opacity:.9;font-size:13px;margin-top:6px;font-weight:600;">Պատասխան ձեր հարցմանը</div>
+      </div>
+      <div style="padding:20px;color:#ffffff;line-height:1.55;">
+        <p style="margin:0 0 12px;">Ողջույն, <b>'.htmlspecialchars($displayName, ENT_QUOTES, "UTF-8").'</b>,</p>
+        <p style="margin:0 0 14px;">Շնորհակալություն մեզ հետ կապ հաստատելու համար։ Ահա մեր պատասխանը ձեր հաղորդագրությանը.</p>
+        
+        <div style="background:rgba(255,255,255,.05);padding:14px;border-radius:10px;margin:18px 0;">
+          <p style="margin:0;white-space:pre-wrap;">'.htmlspecialchars($replyText, ENT_QUOTES, "UTF-8").'</p>
+        </div>
+        
+        <p style="margin:0 0 8px;font-size:12px;color:#A0A0B0;">Ձեր ուղարկած նամակը՝</p>
+        <div style="background:rgba(255,255,255,.02);border-left:3px solid rgba(255,255,255,.1);padding:10px 14px;border-radius:0 10px 10px 0;font-size:13px;color:#8A8AA0;">
+          <p style="margin:0;white-space:pre-wrap;font-style:italic;">'.htmlspecialchars($originalMsg, ENT_QUOTES, "UTF-8").'</p>
+        </div>
+      </div>
+      <div style="padding:14px 20px;background:rgba(255,255,255,.03);color:#A0A0B0;font-size:12px;">
+        © '.date('Y').' Worship Platform
+      </div>
+    </div>
+  </body>
+</html>';
+
+    // To allow the user to reply to support, we add a Reply-To header. Wait, _wp_mailer_send doesn't support custom Reply-To easily without changing its signature. We'll leave it as is.
+    return _wp_mailer_send($toEmail, $displayName, $subject, $htmlBody, $textBody);
+}

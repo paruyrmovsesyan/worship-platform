@@ -46,6 +46,7 @@ $sourceQuery = $source !== '' ? '&source=' . rawurlencode($source) : '';
 <body>
   <div class="card">
     <a href="/" class="back-home">← Հետ գլխավոր էջ</a>
+    <div id="wpLangContainer"></div>
     <h2>Վերականգնել գաղտնաբառը</h2>
     
 

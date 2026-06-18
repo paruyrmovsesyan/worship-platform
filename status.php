@@ -21,6 +21,7 @@ if (wp_version_is_maintenance_active($config)) {
         "maintenance" => true,
         "scheduled" => wp_version_is_scheduled_maintenance_active($config),
         "message" => (string)$config['maintenance_message'],
+        "maintenance_end_at" => (string)($config['maintenance_end_at'] ?? ''),
         "page_app_modes" => $config['page_app_modes'] ?? wp_version_default_page_app_modes(),
         "page_web_modes" => $config['page_web_modes'] ?? wp_version_default_page_web_modes(),
     ], 503);

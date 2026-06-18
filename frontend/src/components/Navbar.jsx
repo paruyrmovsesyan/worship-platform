@@ -15,8 +15,50 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen]   = useState(false);
   const [menuOpen, setMenuOpen]       = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const dropdownTimeoutRef = useRef(null);
+
+  // Magic Pill sliding animation state
+  const [hoverStyle, setHoverStyle] = useState({ opacity: 0, width: 0, transform: 'translateX(0px)' });
+  const navMenuRef = useRef(null);
+
+  // Calculate position of the pill
+  const updatePillPosition = (element) => {
+    if (!element || !navMenuRef.current) return;
+    const navRect = navMenuRef.current.getBoundingClientRect();
+    const itemRect = element.getBoundingClientRect();
+    
+    setHoverStyle({
+      opacity: 1,
+      width: itemRect.width,
+      transform: `translateX(${itemRect.left - navRect.left}px)`
+    });
+  };
+
+  const handleMenuEnter = (e, menuName) => {
+    updatePillPosition(e.currentTarget);
+    if (menuName) onMenuEnter(menuName);
+  };
+
+  const handleMenuLeaveWrapper = (e) => {
+    // Hide pill when leaving the entire menu container
+    setHoverStyle(prev => ({ ...prev, opacity: 0 }));
+  };
+
   const searchRef = useRef(null);
   const formRef   = useRef(null);
+  const hideTimeout = useRef(null);
+
+  const onMenuEnter = (menu) => {
+    clearTimeout(hideTimeout.current);
+    setActiveDropdown(menu);
+  };
+
+  const onMenuLeave = () => {
+    hideTimeout.current = setTimeout(() => {
+      setActiveDropdown(null);
+    }, 200);
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -213,12 +255,86 @@ export default function Navbar() {
           </div>
 
           {/* ── NAV LINKS (Desktop only) ── */}
-          <div className="navbar-menu hide-mobile">
-            {navItems.map(item => (
-              <Link key={item.to} to={item.to} className={isActive(item.to) ? 'active' : ''}>
-                {item.label}
-              </Link>
-            ))}
+          <div className="navbar-menu hide-mobile" ref={navMenuRef} onMouseLeave={handleMenuLeaveWrapper}>
+            <div className="nav-hover-pill" style={hoverStyle}></div>
+
+            <Link 
+              to="/" 
+              className={`nav-item ${isActive('/') ? 'active' : ''}`}
+              onMouseEnter={(e) => handleMenuEnter(e, null)}
+            >
+              {t('nav.home')}
+            </Link>
+            
+            <div 
+              className={`nav-item has-dropdown ${activeDropdown === 'solutions' ? 'active-dropdown' : ''} ${isActive('/songs') || isActive('/setlists') || isActive('/teams') || isActive('/pricing') ? 'active' : ''}`}
+              onMouseEnter={(e) => handleMenuEnter(e, 'solutions')}
+              onMouseLeave={onMenuLeave}
+            >
+              <span>{t('megaMenu.features')}</span>
+              <svg className="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              
+              <div className={`mega-menu ${activeDropdown === 'solutions' ? 'show' : ''}`}>
+                <div className="mega-menu-inner">
+                  <div className="mega-menu-cols">
+                    <div className="mega-col">
+                      <h4>{t('megaMenu.music')}</h4>
+                      <div className="mega-col-links">
+                        <Link to="/songs">{t('nav.songs')}</Link>
+                        <Link to="/setlists">{t('nav.sets')}</Link>
+                      </div>
+                    </div>
+                    <div className="mega-col">
+                      <h4>{t('megaMenu.management')}</h4>
+                      <div className="mega-col-links">
+                        <Link to="/teams">{t('nav.teams')}</Link>
+                        <Link to="/pricing">{t('nav.pricing')}</Link>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mega-featured">
+                    <h4>{t('megaMenu.latestArrival')}</h4>
+                    <p>{t('megaMenu.discoverSongs')}</p>
+                    <Link to="/news" className="mega-btn">{t('megaMenu.readArticle')}</Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div 
+              className={`nav-item has-dropdown ${activeDropdown === 'resources' ? 'active-dropdown' : ''} ${isActive('/news') || isActive('/resources') || isActive('/community') ? 'active' : ''}`}
+              onMouseEnter={(e) => handleMenuEnter(e, 'resources')}
+              onMouseLeave={onMenuLeave}
+            >
+              <span>{t('megaMenu.materials')}</span>
+              <svg className="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+
+              <div className={`mega-menu ${activeDropdown === 'resources' ? 'show' : ''}`}>
+                <div className="mega-menu-inner">
+                  <div className="mega-menu-cols">
+                    <div className="mega-col">
+                      <h4>{t('megaMenu.info')}</h4>
+                      <div className="mega-col-links">
+                        <Link to="/news">{t('nav.news')}</Link>
+                        <Link to="/resources">{t('nav.resources')}</Link>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mega-featured">
+                    <h4>{t('nav.community')}</h4>
+                    <p>{t('megaMenu.communityDesc')}</p>
+                    <Link to="/community" className="mega-btn">{t('megaMenu.joinNow')}</Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <Link 
+              to="/contact" 
+              className={`nav-item ${isActive('/contact') ? 'active' : ''}`}
+              onMouseEnter={(e) => handleMenuEnter(e, null)}
+            >
+              {t('megaMenu.contacts')}
+            </Link>
           </div>
 
           {/* ── RIGHT SIDE ── */}

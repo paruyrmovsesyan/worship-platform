@@ -406,7 +406,7 @@ render:
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#05050A">
 <style id="wp-prepaint-bg">html,body{background:#05050A;color-scheme:dark}</style>
-<script src="/i18n.js" defer></script>
+<script src="/i18n.js?v=2" defer></script>
 <script src="/loader.js" defer></script>
 <script src="/pwa-init.js" defer></script>
 <title>Գրանցում — Worship Platform</title>
@@ -594,6 +594,9 @@ body {
   font-size: 11px;
   font-weight: 600;
   color: #00F0FF;
+}
+.input-group input::placeholder {
+  color: transparent !important;
 }
 
 /* Error */
@@ -786,6 +789,7 @@ body {
           </a>
         <?php endif; ?>
 
+        <div id="wpLangContainer"></div>
         <div class="form-header">
           <h2>Գրանցում</h2>
           <p><?= htmlspecialchars($authHint, ENT_QUOTES) ?></p>

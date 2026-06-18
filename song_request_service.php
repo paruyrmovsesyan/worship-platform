@@ -444,7 +444,7 @@ if (!function_exists('wp_song_request_change_field_labels')) {
             'title_lat' => 'Լատինատառ վերնագիր',
             'title_en' => 'Անգլերեն վերնագիր',
             'title_ru' => 'Ռուսերեն վերնագիր',
-            'artist' => 'Կատարող / հեղինակ',
+            'artist' => 'Հեղինակ',
             'song_key' => 'Տոնայնություն',
             'bpm' => 'BPM',
             'tags' => 'Տեգեր',

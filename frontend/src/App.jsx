@@ -12,6 +12,7 @@ const LegacySongRedirect = () => {
 import MobileNav from './components/MobileNav';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
+import Footer from './components/Footer';
 import Home from './pages/Home';
 import Songs from './pages/Songs';
 import SongView from './pages/SongView';
@@ -24,6 +25,16 @@ import TeamView from './pages/TeamView';
 import Community from './pages/Community';
 import Pricing from './pages/Pricing';
 import Resources from './pages/Resources';
+import Contact from './pages/Contact';
+import About from './pages/About';
+import Blog from './pages/Blog';
+import Careers from './pages/Careers';
+import Documentation from './pages/Documentation';
+import Tutorials from './pages/Tutorials';
+import Support from './pages/Support';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
+import Cookies from './pages/Cookies';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import SongRequest from './pages/SongRequest';
@@ -76,6 +87,16 @@ function App() {
           <Route path="/community" element={<Community />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/resources" element={<Resources />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/documentation" element={<Documentation />} />
+          <Route path="/tutorials" element={<Tutorials />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/cookies" element={<Cookies />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/song-request" element={<SongRequest />} />
@@ -89,6 +110,7 @@ function App() {
           <Route path="/song_view.html" element={<LegacySongRedirect />} />
         </Routes>
       </main>
+      {!isPWA && <Footer />}
     </div>
   );
 }

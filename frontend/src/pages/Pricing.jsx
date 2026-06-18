@@ -8,6 +8,7 @@ export default function Pricing() {
   const { t, language } = useLanguage();
   const [currentPlan, setCurrentPlan] = useState('free');
   const [loading, setLoading] = useState(false);
+  const [dynamicFaqs, setDynamicFaqs] = useState([]);
 
   useEffect(() => {
     fetch('/user_api.php?action=get_profile')
@@ -18,6 +19,17 @@ export default function Pricing() {
         }
       })
       .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    fetch('/data/admin_faq.json')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setDynamicFaqs(data.map(item => ({ q: item.question, a: item.answer })));
+        }
+      })
+      .catch(() => { /* Silent fail to use fallback */ });
   }, []);
 
   const handleUpgrade = async (planType) => {
@@ -82,8 +94,8 @@ export default function Pricing() {
       { q: 'Могу ли я экспортировать свои данные?', a: 'Да. Вы можете экспортировать сет-листы и аккорды в формате PDF в любое время.' }
     ]
   }[language] || [];
-  
-  const currentFaqs = faqs.length > 0 ? faqs : faqs.en;
+  const fallbackFaqs = faqs.length > 0 ? faqs : faqs.en;
+  const currentFaqs = dynamicFaqs.length > 0 ? dynamicFaqs : fallbackFaqs;
 
   return (
     <div className="pricing-page">

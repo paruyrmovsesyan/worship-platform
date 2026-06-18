@@ -81,8 +81,11 @@ $adminEmail        = $adminEmail ?? '';
   <!-- Date -->
   <div style="display:flex; align-items:center; gap:10px; color:var(--text); font-weight:700; font-size:15px;">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-    <?= date('F j, Y') ?>
+    <span id="topbar-date"><?= date('F j, Y') ?></span>
   </div>
+  <script>
+    document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  </script>
 
   <div class="topbar-right">
     <!-- Search -->
@@ -133,7 +136,7 @@ $adminEmail        = $adminEmail ?? '';
         <div style="padding:6px 0;">
           <a class="ud-item" href="/admin_dashboard.php">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-            Dashboard
+            <?= __('Dashboard') ?>
           </a>
           <a class="ud-item" href="/songs.php">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>

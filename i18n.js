@@ -229,7 +229,7 @@
           requiredSongs: "Պարտադիր երգեր",
           saveMeta: "Պահպանել տվյալները",
           addSong: "Ավելացնել երգ",
-          songSearchPlaceholder: "Որոնել երգ անունով, կատարողով կամ tag-ով",
+          songSearchPlaceholder: "Որոնել երգ անունով, հեղինակով կամ tag-ով",
           targetKeyPlaceholder: "Թիրախային տոն (օր. G)",
           addSection: "Ավելացնել բաժին",
           sectionPlaceholder: "Օր. Փառաբանություն / Աղոթք / Խոսք",
@@ -288,7 +288,7 @@
           titleEnPh: "Օր. Egypt",
           titleRu: "Ռուսերեն վերնագիր",
           titleRuPh: "Օր. Египет",
-          artist: "Կատարող / հեղինակ",
+          artist: "Հեղինակ",
           artistPh: "Եթե կա՝ գրիր այստեղ",
           tags: "Տեգեր",
           tagsPh: "Օր. worship, oldies, communion",
@@ -692,7 +692,7 @@
           titleEnPh: "Напр. Egypt",
           titleRu: "Название на русском",
           titleRuPh: "Напр. Египет",
-          artist: "Исполнитель / автор",
+          artist: "Автор",
           artistPh: "Если есть — напиши здесь",
           tags: "Теги",
           tagsPh: "Напр. worship, oldies, communion",
@@ -1037,7 +1037,7 @@
           requiredSongs: "Required songs",
           saveMeta: "Save details",
           addSong: "Add song",
-          songSearchPlaceholder: "Search by song title, artist or tag",
+          songSearchPlaceholder: "Search by song title, author or tag",
           targetKeyPlaceholder: "Target key (e.g. G)",
           addSection: "Add section",
           sectionPlaceholder: "e.g. Worship / Prayer / Message",
@@ -1096,7 +1096,7 @@
           titleEnPh: "Ex. Egypt",
           titleRu: "Russian title",
           titleRuPh: "Ex. Египет",
-          artist: "Performer / author",
+          artist: "Author",
           artistPh: "If there is one, write it here",
           tags: "Tags",
           tagsPh: "Ex. worship, oldies, communion",
@@ -1244,7 +1244,9 @@
 
   function getStoredLang() {
     try {
-      var value = String(localStorage.getItem(STORAGE_KEY) || "").toLowerCase();
+      var match = document.cookie.match(/(?:^|;\s*)admin_lang=([^;]*)/);
+      var cookieVal = match ? match[1] : "";
+      var value = String(cookieVal || localStorage.getItem(STORAGE_KEY) || "").toLowerCase();
       return SUPPORTED.indexOf(value) >= 0 ? value : "";
     } catch (err) {
       return "";
@@ -1264,6 +1266,7 @@
     lang = SUPPORTED.indexOf(lang) >= 0 ? lang : "hy";
     try {
       localStorage.setItem(STORAGE_KEY, lang);
+      document.cookie = "admin_lang=" + lang + "; path=/; max-age=31536000";
     } catch (err) {}
 
     if (options.reload === false) {
@@ -1329,14 +1332,15 @@
     var style = document.createElement("style");
     style.id = "wpI18nStyles";
     style.textContent =
-      ".wp-lang-switcher{display:inline-flex;align-items:center;gap:6px;margin-left:18px;padding:6px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04)}" +
-      ".wp-lang-switcher button{border:0;background:transparent;color:#fff;padding:7px 10px;border-radius:999px;font:700 11px/1 Inter,system-ui,sans-serif;cursor:pointer;opacity:.74}" +
+      ".wp-lang-switcher{display:inline-flex;align-items:center;gap:6px;margin-left:18px;padding:6px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);transition:all .2s}" +
+      ".wp-lang-switcher button{border:0;background:transparent;color:#fff;padding:7px 10px;border-radius:999px;font:700 11px/1 Inter,system-ui,sans-serif;cursor:pointer;opacity:.74;transition:all .2s}" +
+      ".wp-lang-switcher button:hover{opacity:1}" +
       ".wp-lang-switcher button.is-active{background:rgba(255,255,255,.12);opacity:1}" +
-      "body.wp-main-app #wpAppPagebar .wp-lang-switcher{margin-left:auto;padding:5px 6px;border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.05)}" +
-      "body.wp-main-app #wpAppPagebar .wp-lang-switcher button{padding:7px 8px;font-size:10px}" +
-      ".wp-lang-floating{position:fixed;top:14px;right:14px;z-index:100002;display:inline-flex;align-items:center;gap:6px;padding:6px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(10,15,27,.88);backdrop-filter:blur(14px)}" +
-      ".wp-lang-floating button{border:0;background:transparent;color:#fff;padding:7px 10px;border-radius:999px;font:700 11px/1 Inter,system-ui,sans-serif;cursor:pointer;opacity:.74}" +
-      ".wp-lang-floating button.is-active{background:rgba(255,255,255,.12);opacity:1}";
+      "body.wp-main-app #wpAppPagebar .wp-lang-switcher, #wpLangContainer .wp-lang-switcher{padding:5px 6px;border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.05)}" +
+      "body.wp-main-app #wpAppPagebar .wp-lang-switcher{margin-left:auto}" +
+      "body.wp-main-app #wpAppPagebar .wp-lang-switcher button, #wpLangContainer .wp-lang-switcher button{padding:7px 8px;font-size:10px}" +
+      "#wpLangContainer{display:flex;justify-content:flex-end;margin-bottom:12px}" +
+      "#wpLangContainer .wp-lang-switcher{margin-left:0}";
     document.head.appendChild(style);
   }
 
@@ -1349,18 +1353,22 @@
 
   function injectSwitcher(lang) {
     ensureStyles();
-    var target = document.querySelector("#wpAppPagebar .wp-app-pagebar-side") || document.querySelector("nav .menu");
+    var target = document.getElementById("wpLangContainer") || document.querySelector("#wpAppPagebar .wp-app-pagebar-side") || document.querySelector("nav .menu");
     var existing = document.getElementById("wpLangSwitcher");
     if (!existing) {
       var wrap = document.createElement("div");
       wrap.id = "wpLangSwitcher";
-      wrap.className = target ? "wp-lang-switcher" : "wp-lang-floating";
+      wrap.className = "wp-lang-switcher";
       wrap.setAttribute("aria-label", t("common.language"));
       wrap.innerHTML = buildSwitcherMarkup(lang);
       if (target) {
         target.appendChild(wrap);
       } else {
         document.body.appendChild(wrap);
+        wrap.style.position = "fixed";
+        wrap.style.top = "14px";
+        wrap.style.right = "14px";
+        wrap.style.zIndex = "100002";
       }
       wrap.addEventListener("click", function (event) {
         var button = event.target.closest("button[data-lang]");
@@ -1371,7 +1379,7 @@
       if (target && existing.parentNode !== target) {
         target.appendChild(existing);
       }
-      existing.className = target ? "wp-lang-switcher" : "wp-lang-floating";
+      existing.className = "wp-lang-switcher";
       existing.innerHTML = buildSwitcherMarkup(lang);
     }
   }
@@ -1612,8 +1620,8 @@
     setText(".auth-point:nth-of-type(4) span", t("pages.login.feature4Text"));
     setText(".back-home", t("pages.login.backHome"));
     setText(".login-container h2", t("pages.login.title"));
-    setPlaceholder('input[name="login"]', t("pages.login.loginPlaceholder"));
-    setPlaceholder('input[name="password"]', t("pages.login.passwordPlaceholder"));
+    setText('label[for="login"]', t("pages.login.loginPlaceholder"));
+    setText('label[for="password"]', t("pages.login.passwordPlaceholder"));
     setText(".chk-text", t("pages.login.rememberMe"));
     setText(".link-chip[href*=\"registeruser.php\"]", t("pages.login.noAccount"));
     setText(".login-container button[type=\"submit\"]", t("pages.login.submit"));
@@ -1633,8 +1641,8 @@
     setText(".auth-point:nth-of-type(4) span", t("pages.register.feature4Text"));
     setText(".back-home", t("pages.register.backHome"));
     setText(".login-container h2", t("pages.register.title"));
-    setPlaceholder('input[name="name"]', t("pages.register.namePlaceholder"));
-    setPlaceholder('input[name="login"]', t("pages.register.loginPlaceholder"));
+    setText('label[for="name"]', t("pages.register.namePlaceholder"));
+    setText('label[for="login"]', t("pages.register.loginPlaceholder"));
     setText(".login-container button[type=\"submit\"]", t("pages.register.submit"));
     setText(".link-chip[href*=\"loginuser.php\"]", t("pages.register.hasAccount"));
     setText(".social-auth-sep", t("pages.register.continueWith"));
