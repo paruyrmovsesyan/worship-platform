@@ -527,10 +527,10 @@ export function LanguageProvider({ children }) {
           if (fallback && fallback[fk] !== undefined) fallback = fallback[fk];
           else return key;
         }
-        return typeof fallback === 'string' ? fallback : key;
+        return typeof fallback === 'string' || typeof fallback === 'object' ? fallback : key;
       }
     }
-    return typeof value === 'string' ? value : key;
+    return typeof value === 'string' || typeof value === 'object' ? value : key;
   };
 
   return (

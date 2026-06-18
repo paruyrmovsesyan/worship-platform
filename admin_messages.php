@@ -84,8 +84,14 @@ if (isset($_GET['msg'])) {
     $messageType = $_GET['type'] ?? 'success';
 }
 
+$messages = [];
 $res = $db->query("SELECT * FROM contact_messages ORDER BY created_at DESC");
-$messages = $res->fetch_all(MYSQLI_ASSOC);
+if ($res) {
+    $messages = $res->fetch_all(MYSQLI_ASSOC);
+} else {
+    $message = "Database Error: " . $db->error;
+    $messageType = "error";
+}
 
 $activePage = 'messages';
 $searchPlaceholder = 'Search messages...';
