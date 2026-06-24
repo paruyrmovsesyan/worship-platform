@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
-import './SongsApp.css'; // Reuse library styles
+import './Favorites.css';
 
 export default function Favorites() {
   const [songs, setSongs] = useState([]);
@@ -55,7 +55,7 @@ export default function Favorites() {
 
   if (!user) {
     return (
-      <div className="library-page container animate-fade-in" style={{ textAlign: 'center', paddingTop: '60px' }}>
+      <div className="favorites-page" style={{ textAlign: 'center', paddingTop: '100px' }}>
         <h2>{t('favorites.loginTitle')}</h2>
         <p style={{ color: 'var(--color-text-secondary)', marginTop: '16px' }}>{t('favorites.loginPrompt')}</p>
         <Link to="/login" className="btn btn-primary" style={{ marginTop: '24px', display: 'inline-block' }}>{t('favorites.loginBtn')}</Link>
@@ -64,80 +64,97 @@ export default function Favorites() {
   }
 
   return (
-    <div className="library-page container animate-fade-in">
-      <div className="library-header">
-        <div className="library-title-group">
-          <h1>{t('favorites.title')}</h1>
-          <p>{songs.length} {t('favorites.savedSongs')}</p>
+    <div className="favorites-page">
+      {/* Hero Header */}
+      <div className="fav-hero">
+        <div className="fav-hero-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+        </div>
+        <div className="fav-hero-info">
+          <span className="fav-hero-type">{t('favorites.playlist', 'Playlist')}</span>
+          <h1 className="fav-hero-title">{t('favorites.title')}</h1>
+          <div className="fav-hero-meta">
+            <span>{user?.name || 'User'}</span> • {songs.length} {t('favorites.savedSongs')}
+          </div>
         </div>
       </div>
 
-      {loading ? (
-        <div className="track-list">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="track-item skeleton-item">
-              <div className="track-cover skeleton-box"></div>
-              <div className="track-info">
-                <div className="skeleton-line title-line"></div>
-                <div className="skeleton-line artist-line"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : error ? (
-        <div className="error-state"><p>{error}</p></div>
-      ) : (
-        <div className="track-list">
-          {songs.map((song, idx) => (
-            <div 
-              key={song.id} 
-              className="track-item animate-fade-in"
-              style={{ animationDelay: `${Math.min(idx * 0.03, 0.5)}s` }}
-              onClick={() => navigate(`/song/${song.id}?list=favorites`)}
-            >
-              <div className="track-number desk-only dim">
-                {(idx + 1).toString().padStart(2, '0')}
-              </div>
+      <div className="fav-content">
+        {/* Play Action Row */}
+        {songs.length > 0 && !loading && (
+          <div className="fav-action-row animate-fade-in">
+            <button className="fav-play-btn" onClick={() => navigate(`/song/${songs[0].id}?list=favorites`)}>
+              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+          </div>
+        )}
 
-              <div className={`track-cover ${GRADS[(song.id||idx) % GRADS.length]}`}>
-                {song.title?.charAt(0)?.toUpperCase() || '?'}
+        {loading ? (
+          <div className="fav-track-list">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="fav-track-item skeleton-item">
+                <div className="fav-track-img skeleton-box"></div>
+                <div className="fav-track-info">
+                  <div className="skeleton-line" style={{ width: '200px', height: '16px', marginBottom: '6px' }}></div>
+                  <div className="skeleton-line" style={{ width: '120px', height: '12px' }}></div>
+                </div>
               </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="error-state"><p>{error}</p></div>
+        ) : (
+          <div className="fav-track-list">
+            {songs.map((song, idx) => (
+              <div 
+                key={song.id} 
+                className="fav-track-item animate-fade-in"
+                style={{ animationDelay: `${Math.min(idx * 0.03, 0.5)}s` }}
+                onClick={() => navigate(`/song/${song.id}?list=favorites`)}
+              >
+                <div className="fav-track-num">{idx + 1}</div>
 
-              <div className="track-info">
-                <span className="track-title">{getLocalizedTitle(song.title, language)}</span>
-                <span className="track-artist">{song.artist || t('songs.unknownArtist', 'Unknown Artist')}</span>
-              </div>
-              
-              <div className="track-meta">
-                {(song.target_key || song.song_key) && <span className="track-key-badge">{song.target_key || song.song_key}</span>}
-                {song.bpm && <span className="track-bpm desk-only dim">{song.bpm} BPM</span>}
-              </div>
+                <div className={`fav-track-img ${GRADS[(song.id||idx) % GRADS.length]}`}>
+                  {song.title?.charAt(0)?.toUpperCase() || '?'}
+                </div>
 
-              <div className="track-actions">
-                <button 
-                  className="heart-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeFavorite(song.id);
-                  }}
-                  title={t('favorites.removeFromFav', 'Remove')}
-                >
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--color-text-secondary)" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
-                  </svg>
-                </button>
+                <div className="fav-track-info">
+                  <div className="fav-track-title">{getLocalizedTitle(song.title, language)}</div>
+                  <div className="fav-track-artist">{song.artist || t('songs.unknownArtist', 'Unknown Artist')}</div>
+                </div>
+                
+                <div className="fav-track-meta">
+                  {(song.target_key || song.song_key) && <span className="fav-track-badge">{song.target_key || song.song_key}</span>}
+                  
+                  <button 
+                    className="fav-remove-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFavorite(song.id);
+                    }}
+                    title={t('favorites.removeFromFav', 'Remove')}
+                  >
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-          
-          {songs.length === 0 && (
-            <div className="list-placeholder empty-state animate-fade-in">
-              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-              <p>{t('favorites.noFavorites')}</p>
-            </div>
-          )}
-        </div>
-      )}
+            ))}
+            
+            {songs.length === 0 && (
+              <div className="fav-empty animate-fade-in">
+                <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                <h3>{t('favorites.noFavorites')}</h3>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
