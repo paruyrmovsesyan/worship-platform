@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { getLocalizedTitle } from '../utils/titleParser';
 import './MobileHub.css';
 
 export default function MobileHub() {
@@ -173,8 +174,8 @@ export default function MobileHub() {
                     <line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line>
                   </svg>
                 </div>
-                <div className="recent-info">
-                  <h4>{song.title}</h4>
+                <div className="hub-item-info">
+                  <h4>{getLocalizedTitle(song.title, language)}</h4>
                   <p>{song.artist || t('songs.unknownArtist', 'Unknown Artist')}<br/>{t('songView.key', 'Key:')} {song.song_key || '?'}</p>
                 </div>
                 <div className="recent-time">

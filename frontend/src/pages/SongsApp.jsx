@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { getLocalizedTitle } from '../utils/titleParser';
 import './SongsApp.css';
 
 const KEYS = ['All','C','Cm','D','Dm','E','Em','F','G','Gm','A','Am','B','Bm','Eb','Bb','F#'];
@@ -217,7 +218,7 @@ export default function SongsApp() {
             </div>
 
             <div className="track-info">
-              <span className="track-title">{song.title}</span>
+              <span className="track-title">{getLocalizedTitle(song.title, language)}</span>
               <span className="track-artist">{song.artist || t('songs.unknownArtist', 'Unknown Artist')}</span>
             </div>
 

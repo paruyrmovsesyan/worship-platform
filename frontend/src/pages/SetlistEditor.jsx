@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { getLocalizedTitle } from '../utils/titleParser';
 import './Setlists.css';
 import './SongsApp.css'; // ensure track-list styles are loaded
 
 const GRADS = ['bg-purple', 'bg-blue', 'bg-cyan', 'bg-gold', 'bg-orange'];
 
 export default function SetlistEditor() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -240,7 +241,7 @@ export default function SetlistEditor() {
                 {song.title?.charAt(0)?.toUpperCase()}
               </div>
               <div className="track-info">
-                <span className="track-title">{song.title}</span>
+                <span className="track-title">{getLocalizedTitle(song.title, language)}</span>
                 <span className="track-artist">{song.artist || t('songs.unknownArtist')}</span>
               </div>
               <div className="track-actions">
@@ -272,7 +273,7 @@ export default function SetlistEditor() {
               </div>
 
               <div className="track-info">
-                <span className="track-title">{item.title || item.song_title}</span>
+                <span className="track-title">{getLocalizedTitle(item.title || item.song_title, language)}</span>
                 <span className="track-artist">{item.artist || item.song_artist || t('songs.unknownArtist')}</span>
               </div>
 

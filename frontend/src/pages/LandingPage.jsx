@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import './LandingPage.css';
 import { useLanguage } from '../context/LanguageContext';
+import { getLocalizedTitle } from '../utils/titleParser';
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [allSongs, setAllSongs] = useState([]);
   const [popularSongs, setPopularSongs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +19,7 @@ export default function LandingPage() {
     let tags = [];
     if (song.tags) tags = song.tags.split(',').map(t => t.trim()).filter(Boolean).slice(0, 2);
     if (tags.length === 0) tags = ['Worship'];
-    return { id: song.id, title: song.title || t('landing.unknownArtist'), artist: song.artist && song.artist !== 'Unknown' ? song.artist : t('landing.unknownArtist'), key: song.song_key || '?', bpm: song.bpm, tags, img: `bg-gradient-${(index % 9) + 1}` };
+    return { id: song.id, title: getLocalizedTitle(song.title, language) || t('landing.unknownArtist'), artist: song.artist && song.artist !== 'Unknown' ? song.artist : t('landing.unknownArtist'), key: song.song_key || '?', bpm: song.bpm, tags, img: `bg-gradient-${(index % 9) + 1}` };
   };
 
   useEffect(() => {

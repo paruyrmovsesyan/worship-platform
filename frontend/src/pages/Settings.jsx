@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { useIsPWA } from '../hooks/useIsPWA';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import { getLocalizedTitle } from '../utils/titleParser';
 import './Settings.css';
 
 export default function Settings() {
@@ -452,7 +453,7 @@ export default function Settings() {
                   <div key={r.id} className="request-item">
                     <div className="req-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 0 }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <strong style={{ fontSize: '1.2rem', lineHeight: '1.2' }}>{r.title}</strong>
+                        <strong style={{ fontSize: '1.2rem', lineHeight: '1.2' }}>{getLocalizedTitle(r.title, language)}</strong>
                         {r.artist && <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>{r.artist}</span>}
                       </div>
                       <span className={`badge req-${r.status}`} style={{ whiteSpace: 'nowrap', marginLeft: '1rem' }}>{r.status_label}</span>

@@ -4,12 +4,14 @@ import { Link } from "react-router-dom";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { getLocalizedTitle } from '../utils/titleParser';
+import { renderWithChords } from '../utils/chordTransposer';
 import './DesktopDashboard.css';
 
 export default function DesktopDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   const [songs, setSongs] = useState([]);
   const [setlists, setSetlists] = useState([]);
@@ -62,10 +64,11 @@ export default function DesktopDashboard() {
     }
   }, [activeSetlistId]);
 
-  const filteredSongs = songs.filter(song => 
-    song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (song.artist && song.artist.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredSongs = songs.filter(song => {
+    const localizedTitle = getLocalizedTitle(song.title, language).toLowerCase();
+    return localizedTitle.includes(searchQuery.toLowerCase()) ||
+           (song.artist && song.artist.toLowerCase().includes(searchQuery.toLowerCase()));
+  });
 
   return (
     <>
@@ -97,7 +100,7 @@ export default function DesktopDashboard() {
               onClick={() => setPreviewSong(song)}
             >
               <div className="item-info">
-                <h4>{song.title}</h4>
+                <h4>{getLocalizedTitle(song.title, language)}</h4>
                 <p>{song.artist || 'Worship'}</p>
               </div>
               <div className="item-meta">
@@ -156,7 +159,7 @@ export default function DesktopDashboard() {
           <div className="preview-container">
             <div className="preview-header">
               <div style={{ flex: 1 }}>
-                <h2 style={{ fontSize: '2.2rem', fontWeight: '700', lineHeight: '1.2', letterSpacing: '-0.5px', marginBottom: '12px' }}>{previewSong.title}</h2>
+                <h2 style={{ fontSize: '2.2rem', fontWeight: '700', lineHeight: '1.2', letterSpacing: '-0.5px', marginBottom: '12px' }}>{getLocalizedTitle(previewSong.title, language)}</h2>
                 <p style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--color-text-secondary)' }}></span>
                   {previewSong.song_key || 'C'}

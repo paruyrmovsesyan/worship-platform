@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { getLocalizedTitle } from '../utils/titleParser';
 import './SongsApp.css'; // Reuse library styles
 
 export default function Favorites() {
@@ -12,7 +13,7 @@ export default function Favorites() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     if (!user) {
@@ -70,7 +71,7 @@ export default function Favorites() {
             >
               <div className="card-top">
                 <span className="card-artist">{song.artist || t('songs.unknownArtist')}</span>
-                <h3 className="card-title">{song.title}</h3>
+                <h3 className="card-title">{getLocalizedTitle(song.title, language)}</h3>
                 
                 <div className="card-tags">
                   <span className="tag active-tag">{t('favorites.favoriteTag')}</span>
