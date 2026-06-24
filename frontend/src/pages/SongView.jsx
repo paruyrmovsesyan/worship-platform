@@ -10,7 +10,7 @@ export default function SongView() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   const [song, setSong] = useState(null);
   const [loading, setLoading] = useState(true);

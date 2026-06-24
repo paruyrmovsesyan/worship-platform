@@ -9,7 +9,7 @@ import './Settings.css';
 
 export default function Settings() {
   const { user, logout } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const isPWA = useIsPWA();
   const isMobile = useMediaQuery('(max-width: 900px)');

@@ -8,7 +8,7 @@ import './MobileHub.css';
 export default function MobileHub() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   const [recentSongs, setRecentSongs] = useState([]);
   const [upcomingSetlist, setUpcomingSetlist] = useState(null);
