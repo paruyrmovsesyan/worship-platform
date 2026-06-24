@@ -45,14 +45,14 @@ try {
     if ($search !== '') {
         $like = '%' . $search . '%';
         $stmt = $conn->prepare(
-            "SELECT id, name, email, created_at, role, is_admin
+            "SELECT id, name, email, created_at, role
              FROM users WHERE name LIKE ? OR email LIKE ?
              ORDER BY id DESC LIMIT ? OFFSET ?"
         );
         $stmt->bind_param('ssii', $like, $like, $perPage, $offset);
     } else {
         $stmt = $conn->prepare(
-            "SELECT id, name, email, created_at, role, is_admin
+            "SELECT id, name, email, created_at, role
              FROM users ORDER BY id DESC LIMIT ? OFFSET ?"
         );
         $stmt->bind_param('ii', $perPage, $offset);
@@ -117,13 +117,12 @@ $searchPlaceholder = 'Search users...';
               <th><?= __('NAME') ?></th>
               <th><?= __('EMAIL') ?></th>
               <th><?= __('ROLE') ?></th>
-              <th><?= __('Admin') ?></th>
               <th><?= __('Registered') ?></th>
             </tr>
           </thead>
           <tbody>
             <?php if (empty($users)): ?>
-            <tr><td colspan="6" style="text-align:center; padding:40px; color:var(--muted);"><?= __('No users found') ?></td></tr>
+            <tr><td colspan="5" style="text-align:center; padding:40px; color:var(--muted);"><?= __('No users found') ?></td></tr>
             <?php else: ?>
             <?php foreach ($users as $u): ?>
             <tr>
@@ -142,10 +141,6 @@ $searchPlaceholder = 'Search users...';
                 <span class="badge <?= $role === 'admin' ? 'badge-success' : ($role !== '' ? 'badge-warning' : 'badge-neutral') ?>">
                   <?= htmlspecialchars($role ?: 'user') ?>
                 </span>
-              </td>
-              <td>
-                <?php $isAdmin = !empty($u['is_admin']); ?>
-                <span class="badge <?= $isAdmin ? 'badge-success' : 'badge-neutral' ?>"><?= $isAdmin ? 'Yes' : 'No' ?></span>
               </td>
               <td style="color:var(--muted); font-size:13px;"><?= htmlspecialchars((string)($u['created_at'] ?? '—')) ?></td>
             </tr>

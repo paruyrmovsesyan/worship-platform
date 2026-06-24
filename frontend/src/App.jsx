@@ -19,6 +19,9 @@ import SongView from './pages/SongView';
 import Setlists from './pages/Setlists';
 import SetlistEditor from './pages/SetlistEditor';
 import Favorites from './pages/Favorites';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import { useAuth } from './context/AuthContext';
 import News from './pages/News';
 import Teams from './pages/Teams';
 import TeamView from './pages/TeamView';
@@ -38,17 +41,20 @@ import Cookies from './pages/Cookies';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import SongRequest from './pages/SongRequest';
+import Notifications from './pages/Notifications';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useIsPWA } from './hooks/useIsPWA';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   const isMobile = useMediaQuery('(max-width: 900px)');
   const isPWA = useIsPWA();
 
   useEffect(() => {
-    document.body.classList.remove('mobile-theme', 'app-desktop-theme', 'website-theme');
+    document.body.classList.remove('mobile-theme', 'app-desktop-theme', 'website-theme', 'is-pwa');
     
     if (isPWA) {
+      document.body.classList.add('is-pwa');
       if (isMobile) {
         document.body.classList.add('mobile-theme');
       } else {
@@ -72,10 +78,13 @@ function App() {
 
   return (
     <div className={`app-container ${isPWA && !isMobile ? 'with-sidebar' : ''}`}>
+      <ScrollToTop />
       {renderNav()}
       <main className={isPWA && !isMobile ? 'main-with-sidebar' : ''}>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/songs" element={<Songs />} />
           <Route path="/song/:id" element={<SongView />} />
           <Route path="/setlists" element={<Setlists />} />
@@ -100,6 +109,7 @@ function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/song-request" element={<SongRequest />} />
+          <Route path="/notifications" element={<Notifications />} />
 
           {/* Legacy URL Redirects */}
           <Route path="/main.html" element={<Navigate to="/songs" replace />} />

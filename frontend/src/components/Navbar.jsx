@@ -184,12 +184,12 @@ export default function Navbar() {
           </div>
         ) : (
           <div className="menu-auth-section">
-            <a href="/registeruser.php?next=/" className="menu-btn-register" onClick={() => setMenuOpen(false)}>
+            <Link to="/register" className="menu-btn-register" onClick={() => setMenuOpen(false)}>
               {t('nav.register')}
-            </a>
-            <a href="/loginuser.php?next=/" className="menu-btn-login" onClick={() => setMenuOpen(false)}>
+            </Link>
+            <Link to="/login" className="menu-btn-login" onClick={() => setMenuOpen(false)}>
               {t('nav.login')}
-            </a>
+            </Link>
           </div>
         )}
 
@@ -373,8 +373,8 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="navbar-auth-btns hide-mobile">
-                <a href="/loginuser.php?next=/" className="nav-login-link">{t('nav.login')}</a>
-                <a href="/registeruser.php?next=/" className="btn-get-started">{t('nav.register')}</a>
+                <Link to="/login" className="nav-login-link">{t('nav.login')}</Link>
+                <Link to="/register" className="btn-get-started">{t('nav.register')}</Link>
               </div>
             )}
 

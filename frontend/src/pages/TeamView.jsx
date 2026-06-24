@@ -8,7 +8,7 @@ export default function TeamView() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   
   const [team, setTeam] = useState(location.state?.team || null);
   const [members, setMembers] = useState([]);
@@ -58,7 +58,7 @@ export default function TeamView() {
   };
 
   const handleAddMember = async () => {
-    const email = prompt(language === 'am' ? 'Մուտքագրեք նոր անդամի էլ. հասցեն:' : 'Enter new member email:');
+    const email = prompt(t('teams.addMemberPrompt'));
     if (!email) return;
 
     try {
@@ -79,7 +79,7 @@ export default function TeamView() {
   };
 
   const handleRemoveMember = async (userId) => {
-    if (!confirm(language === 'am' ? 'Համոզվա՞ծ եք:' : 'Are you sure you want to remove this member?')) return;
+    if (!confirm(t('teams.confirmRemoveMember'))) return;
     
     try {
       const res = await fetch('/teams_api.php?action=remove_member', {
@@ -99,7 +99,7 @@ export default function TeamView() {
   };
 
   const handleDeleteTeam = async () => {
-    if (!confirm(language === 'am' ? 'Համոզվա՞ծ եք, որ ուզում եք ջնջել այս թիմը:' : 'Are you sure you want to delete this team entirely?')) return;
+    if (!confirm(t('teams.confirmDeleteTeam'))) return;
     
     try {
       const res = await fetch('/teams_api.php?action=delete_team', {
@@ -129,16 +129,16 @@ export default function TeamView() {
           <button className="icon-btn" onClick={() => navigate('/teams')} style={{ flexShrink: 0, width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }}>
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
-          <h1 className="page-title">{team ? team.name : 'Team Details'}</h1>
+          <h1 className="page-title">{team ? team.name : t('teams.teamDetails')}</h1>
         </div>
         
         {isOwner && (
           <div className="header-actions" style={{ display: 'flex', gap: '12px' }}>
             <button className="btn btn-secondary" onClick={handleDeleteTeam} style={{ color: '#ff4a6a', borderColor: 'rgba(255,74,106,0.3)' }}>
-              {language === 'am' ? 'Ջնջել Թիմը' : 'Delete Team'}
+              {t('teams.deleteTeamBtn')}
             </button>
             <button className="btn btn-primary glow-btn" onClick={handleAddMember} style={{ borderRadius: '99px', padding: '10px 24px' }}>
-              {language === 'am' ? '+ Ավելացնել Անդամ' : '+ Add Member'}
+              {t('teams.addMemberBtn')}
             </button>
           </div>
         )}
@@ -146,11 +146,11 @@ export default function TeamView() {
 
       <div className="card glass-panel" style={{ padding: '32px', borderRadius: '24px' }}>
         <h2 style={{ fontSize: '1.2rem', marginBottom: '24px', color: '#eef3ff' }}>
-          {language === 'am' ? 'Թիմի Անդամներ' : 'Team Members'}
+          {t('teams.teamMembersListTitle')}
         </h2>
         
         {members.length === 0 ? (
-          <p style={{ color: '#888' }}>{language === 'am' ? 'Այս թիմում դեռ անդամներ չկան:' : 'No members in this team yet.'}</p>
+          <p style={{ color: '#888' }}>{t('teams.noMembers')}</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {members.map(member => (

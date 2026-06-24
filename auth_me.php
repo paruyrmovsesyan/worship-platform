@@ -31,16 +31,42 @@ if (!empty($_SESSION['user_id'])) {
     ]);
   }
 
-  respond([
-    "loggedIn" => true,
-    "session_type" => !empty($_SESSION['auth_via_remember']) ? "remember" : "session",
-    "user" => [
+    try {
+      $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+      $stmt->execute([$_SESSION['user_id']]);
+      $u = $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (Throwable $e) {
+      respond([
+        "loggedIn" => false,
+        "session_type" => null,
+        "error" => "Query failed: " . $e->getMessage()
+      ]);
+    }
+
+    $userData = [
       "id" => (int)$_SESSION['user_id'],
       "name" => (string)($_SESSION['name'] ?? 'User'),
-      "username" => (string)($_SESSION['username'] ?? ($_SESSION['name'] ?? 'User')),
-      "email" => (string)($_SESSION['email'] ?? '')
-    ]
-  ]);
+      "username" => (string)($_SESSION['username'] ?? 'User'),
+      "email" => (string)($_SESSION['email'] ?? ''),
+      "birth_date" => null,
+      "gender" => null,
+      "phone_number" => null
+    ];
+
+    if ($u) {
+      $userData["name"] = $u["name"] ?? $userData["name"];
+      $userData["username"] = $u["username"] ?? $userData["username"];
+      $userData["email"] = $u["email"] ?? $userData["email"];
+      $userData["birth_date"] = $u["birth_date"] ?? null;
+      $userData["gender"] = $u["gender"] ?? null;
+      $userData["phone_number"] = $u["phone_number"] ?? null;
+    }
+
+    respond([
+      "loggedIn" => true,
+      "session_type" => !empty($_SESSION['auth_via_remember']) ? "remember" : "session",
+      "user" => $userData
+    ]);
 }
 
 respond([

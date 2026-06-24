@@ -1,0 +1,21 @@
+{
+  "name": "Worship Platform",
+  "short_name": "Worship",
+  "description": "Premium worship resource platform.",
+  "start_url": "/?source=pwa",
+  "display": "standalone",
+  "background_color": "#070910",
+  "theme_color": "#070910",
+  "icons": [
+    {
+      "src": "/wolarm_youth.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

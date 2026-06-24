@@ -388,7 +388,9 @@ exit;
 <html lang="hy">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="apple-touch-icon" href="/wolarm_youth.png">
+<meta name="theme-color" content="#070910">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/wolarmyouth.jpg" type="image/jpeg">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -508,9 +510,18 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 40px 24px;
+  /*
+    Bug 3 fix: use --vv-height (set by JS via visualViewport) so the form section
+    shrinks when the iOS soft keyboard opens, pushing content above it.
+    Fallback chain: JS-set var → keyboard-inset-height CSS env → 100svh.
+  */
+  min-height: var(--vv-height, env(keyboard-inset-height, 100svh));
+  padding: env(safe-area-inset-top, 20px) 24px calc(env(safe-area-inset-bottom, 20px) + 108px);
   background: #05050A;
   position: relative;
+  /* Enable smooth scroll so the active input scrolls into view */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .form-container {
@@ -768,10 +779,26 @@ body {
 @media (min-width: 900px) {
   .hero-section { display: flex; }
 }
+
+/* React SPA equivalent animation for Login */
+.animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media all and (display-mode: standalone) {
+  .animate-fade-in {
+    animation: fadeInPWA 0.28s ease-out forwards;
+  }
+}
+@keyframes fadeInPWA {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 </style>
 </head>
 <body class="<?= htmlspecialchars($authBodyClass, ENT_QUOTES) ?>">
-  <div class="split-layout">
+  <div class="split-layout animate-fade-in">
     
     <!-- Hero Section -->
     <div class="hero-section">
@@ -877,6 +904,37 @@ document.addEventListener('DOMContentLoaded', function(){
         }
         link.href = url.toString();
       } catch (e) {}
+    });
+  });
+
+  /*
+   * Bug 3 fix: iOS PWA keyboard avoidance.
+   *
+   * On iOS Safari (PWA mode), the soft keyboard does NOT resize window.innerHeight —
+   * it only resizes the visualViewport. We listen to that resize and set a CSS custom
+   * property (--vv-height) on the body so the form-section can shrink accordingly,
+   * which causes the form content to scroll above the keyboard.
+   *
+   * We also scroll the focused input into view with a slight delay so it clears
+   * the keyboard toolbar.
+   */
+  function applyViewportHeight() {
+    var vvh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.body.style.setProperty('--vv-height', vvh + 'px');
+  }
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', applyViewportHeight);
+    window.visualViewport.addEventListener('scroll', applyViewportHeight);
+    applyViewportHeight();
+  }
+
+  /* Scroll focused input into view above keyboard toolbar */
+  document.querySelectorAll('input').forEach(function(input) {
+    input.addEventListener('focus', function() {
+      setTimeout(function() {
+        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 350);
     });
   });
 });

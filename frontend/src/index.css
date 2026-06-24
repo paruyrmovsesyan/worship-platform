@@ -39,31 +39,12 @@
   --glow-color-2: rgba(0, 240, 255, 0.05);
 }
 
-body.mobile-theme {
-  /* ─── GLOBAL DARK PWA THEME (Blue/Purple Hub Style) ─── */
-  --color-bg: #0A0A0A;
-  --color-surface: #1C1C1E;
-  --color-surface-hover: #2C2C2E;
-  
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #EBEBF599; 
-  --color-text-tertiary: #EBEBF54D; 
-  
-  --color-accent-gold: #0A84FF;
-  --color-accent-cyan: #BF5AF2;
-  --color-accent-red: #FF453A;
-  
-  --color-accent-gold-glow: rgba(10, 132, 255, 0.15);
-  --color-accent-cyan-glow: rgba(191, 90, 242, 0.15);
-  
-  --glass-bg: rgba(28, 28, 30, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-border-hover: rgba(255, 255, 255, 0.2);
-
-  /* Ambient Glow for Mobile */
-  --glow-color-1: rgba(94, 92, 230, 0.15);
-  --glow-color-2: rgba(10, 132, 255, 0.05);
+html {
+  background-color: var(--color-bg);
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
 }
+
 
 * { 
   margin: 0; 
@@ -82,18 +63,35 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   transition: background-color 0.3s ease;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+body.is-pwa {
+  overscroll-behavior-y: none;
+  overscroll-behavior: none;
+}
+
+* {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Optional subtle top ambient glow for the whole app */
 body::before {
   content: '';
   position: fixed;
-  top: -200px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100vw;
-  height: 500px;
-  background: radial-gradient(ellipse at top, var(--glow-color-1) 0%, var(--glow-color-2) 50%, transparent 100%);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at 50% 0%, var(--glow-color-1) 0%, var(--glow-color-2) 20%, transparent 60%);
   pointer-events: none;
   z-index: 0;
   transition: background 0.5s ease;
@@ -109,7 +107,16 @@ h2 { font-size: 1.6rem; }
 h3 { font-size: 1.2rem; }
 
 /* ─── Layout ─── */
-#root { display: flex; flex-direction: column; min-height: 100vh; position: relative; z-index: 1; }
+#root { 
+  display: flex; 
+  flex-direction: column; 
+  min-height: 100vh; 
+  position: relative; 
+  z-index: 1; 
+  padding-top: env(safe-area-inset-top); 
+  overflow-x: hidden;
+  width: 100%;
+}
 
 .app-container {
   display: flex;
@@ -220,6 +227,92 @@ textarea.form-control {
   min-height: 100px;
 }
 
+.toast-message {
+  padding: 12px 20px;
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 500;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  z-index: 1000;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+
+/* Ensure full-page loading placeholders center the spinner in the screen */
+.list-placeholder, .sl-placeholder, .loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  width: 100%;
+  text-align: center;
+}
+
+.list-placeholder .spinner,
+.sl-placeholder .spinner,
+.loading-state .spinner {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  z-index: 9999;
+}
+
+.list-placeholder p,
+.sl-placeholder p,
+.loading-state p {
+  position: fixed !important;
+  top: calc(50% + 46px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  margin: 0 !important;
+  z-index: 9999;
+  color: var(--color-text-secondary);
+  width: 100%;
+  text-align: center;
+}
+
+/* Global App Loader / Spinner */
+.spinner {
+  width: 56px;
+  height: 56px;
+  position: relative;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #B100FF, #00C6FF, #0072FF, #B100FF);
+  animation: spinRotate 1.5s linear infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  flex-shrink: 0;
+}
+
+.spinner::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  background: var(--color-surface, #0f1524);
+  border-radius: 50%;
+}
+
+.spinner::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  background: inherit;
+  border-radius: 50%;
+  filter: blur(12px);
+  opacity: 0.5;
+  z-index: -1;
+}
+
+@keyframes spinRotate { 
+  0% { transform: rotate(0deg); } 
+  100% { transform: rotate(360deg); } 
+}
+
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
   padding: 12px 24px; border-radius: 9999px;
@@ -262,8 +355,21 @@ textarea.form-control {
   background-clip: text;
 }
 
-.animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+.animate-fade-in { 
+  opacity: 0;
+  animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+}
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  0% { opacity: 0; transform: translateY(12px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Fix for iOS PWA Status Bar Black Line */
+html, body, #root, .app-container, .login-page-container {
+  background-color: #05050A;
+}
+@supports (padding-top: env(safe-area-inset-top)) {
+  body {
+    padding-top: 0 !important;
+  }
 }

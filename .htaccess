@@ -9,7 +9,7 @@ ErrorDocument 500 /maintenance.html
 # =========================
 # Default index
 # =========================
-DirectoryIndex index.html
+DirectoryIndex index.php index.html
 
 <IfModule mod_headers.c>
   Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
@@ -32,21 +32,21 @@ DirectoryIndex index.html
 # Force legacy HTML routes to be handled by React Router
 # even if the old files still exist on the server.
 # =========================
-RewriteRule ^main\.html$ /index.html [L]
-RewriteRule ^favorites\.html$ /index.html [L]
-RewriteRule ^news\.html$ /index.html [L]
-RewriteRule ^songs\.html$ /index.html [L]
-RewriteRule ^setlists\.html$ /index.html [L]
-RewriteRule ^setlist_view\.html$ /index.html [L]
-RewriteRule ^setlist_edit\.html$ /index.html [L]
-RewriteRule ^song_view\.html$ /index.html [L]
-RewriteRule ^song_request\.html$ /index.html [L]
-RewriteRule ^account\.html$ /index.html [L]
-RewriteRule ^transpose\.html$ /index.html [L]
+RewriteRule ^main\.html$ /index.php [L]
+RewriteRule ^favorites\.html$ /index.php [L]
+RewriteRule ^news\.html$ /index.php [L]
+RewriteRule ^songs\.html$ /index.php [L]
+RewriteRule ^setlists\.html$ /index.php [L]
+RewriteRule ^setlist_view\.html$ /index.php [L]
+RewriteRule ^setlist_edit\.html$ /index.php [L]
+RewriteRule ^song_view\.html$ /index.php [L]
+RewriteRule ^song_request\.html$ /index.php [L]
+RewriteRule ^account\.html$ /index.php [L]
+RewriteRule ^transpose\.html$ /index.php [L]
 
 # =========================
 # React Router Fallback
 # =========================
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ /index.html [QSA,L]
+RewriteRule ^(.*)$ /index.php [QSA,L]

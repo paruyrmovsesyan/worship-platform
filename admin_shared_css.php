@@ -374,5 +374,55 @@ body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color
 .sticky-actions { position: sticky; bottom: 0; z-index: 10; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-top: 1px solid var(--line); padding: 16px 28px; display: flex; align-items: center; gap: 14px; justify-content: flex-end; margin: 0 -28px; box-shadow: 0 -4px 20px rgba(112,144,176,0.1); }
 
 .btn-wide { width: 100%; justify-content: center; }
+
+/* ── MOBILE RESPONSIVENESS ── */
+@media (max-width: 992px) {
+  /* Sidebar */
+  .app-sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 1000;
+    transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  body.sidebar-open .app-sidebar { transform: translateX(0); }
+  
+  /* Sidebar overlay */
+  .sidebar-overlay {
+    position: fixed; inset: 0; background: rgba(17,28,68,0.4);
+    z-index: 999; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s; backdrop-filter: blur(2px);
+  }
+  body.sidebar-open .sidebar-overlay { opacity: 1; pointer-events: auto; }
+  
+  /* Mobile menu button */
+  .mobile-menu-btn { display: block !important; }
+  
+  /* Topbar */
+  .app-topbar { padding: 16px 20px; }
+  .search-box input { width: 160px; }
+  
+  /* Content */
+  .app-content { padding: 20px; }
+  .page-heading-row { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .page-heading-row .btn, .page-heading-row form { width: 100%; display: flex; }
+  .page-heading-row .btn { justify-content: center; }
+  
+  /* Stats grid */
+  .stats { grid-template-columns: 1fr !important; }
+  
+  /* Tables grid */
+  .tables-grid { grid-template-columns: 1fr !important; }
+  
+  /* Responsive Tables */
+  .table-card { overflow-x: auto; }
+  table { min-width: 600px; }
+  
+  /* Form Grids */
+  .grid-2 { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 480px) {
+  .search-box { display: none; } /* Hide search on very small screens to save space */
+  .topbar-right { gap: 12px; }
+  .page-heading h1 { font-size: 22px; }
+}
 </style>
 

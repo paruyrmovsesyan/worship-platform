@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import './Songs.css';
+import './SongsApp.css';
 
 export default function News() {
   const { t, language } = useLanguage();

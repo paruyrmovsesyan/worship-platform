@@ -22,7 +22,75 @@
   padding: 0 20px;
 }
 
-/* Upcoming Card */
+/* ── Hero Search & Categories ── */
+.hub-hero {
+  margin-bottom: 32px;
+}
+
+.hub-search-box {
+  background: var(--color-surface);
+  border: 1px solid var(--color-surface-hover);
+  border-radius: 16px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-text-secondary);
+  font-size: 1.05rem;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  cursor: text;
+  transition: all 0.2s;
+}
+
+.hub-search-box:hover, .hub-search-box:active {
+  background: var(--color-surface-hover);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.hub-categories {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.hub-cat-btn {
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s;
+}
+
+.hub-cat-btn:hover {
+  transform: translateY(-2px);
+  color: var(--color-text-primary);
+}
+
+.cat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.bg-cyan { background: linear-gradient(135deg, #00C6FF, #0072FF); }
+.bg-gold { background: linear-gradient(135deg, #FFD700, #FFA500); }
+.bg-purple { background: linear-gradient(135deg, #B100FF, #8E2DE2); }
+.bg-orange { background: linear-gradient(135deg, #FF512F, #DD2476); }
+
+/* ── Upcoming Card ── */
 .upcoming-card {
   position: relative;
   padding: 24px;
@@ -60,7 +128,7 @@
 }
 
 .upcoming-card .btn-primary {
-  background: var(--color-accent-cyan); /* Bright Blue */
+  background: var(--color-accent-cyan);
   color: white;
   border: none;
   font-weight: 600;
@@ -69,7 +137,7 @@
   box-shadow: 0 4px 15px rgba(10, 132, 255, 0.4);
 }
 
-/* Section Blocks */
+/* ── Section Blocks ── */
 .section-block {
   margin-bottom: 32px;
 }
@@ -94,7 +162,7 @@
   text-decoration: none;
 }
 
-/* Horizontal Scroll (Favorites) */
+/* ── Horizontal Scroll (Favorites) ── */
 .hub-horizontal {
   display: flex;
   gap: 16px;
@@ -118,6 +186,7 @@
   justify-content: space-between;
   background: linear-gradient(180deg, #2A2A2E 0%, #1A1A1C 100%);
   border: 1px solid rgba(255,255,255,0.05);
+  cursor: pointer;
 }
 
 .fav-icon {
@@ -146,7 +215,7 @@
   margin: 0;
 }
 
-/* Recent List */
+/* ── Recent List ── */
 .recent-list {
   display: flex;
   flex-direction: column;
@@ -160,6 +229,7 @@
   border-radius: 16px;
   background: var(--color-surface);
   border: 1px solid rgba(255,255,255,0.05);
+  cursor: pointer;
 }
 
 .recent-icon {
@@ -194,3 +264,63 @@
   font-size: 0.75rem;
   color: var(--color-text-tertiary);
 }
+
+/* ── News Feed ── */
+.news-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hub-news-card {
+  background: var(--color-surface);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--color-surface-hover);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.hub-news-card:hover {
+  transform: translateY(-2px);
+}
+
+.hub-news-card .news-img {
+  width: 100%;
+  height: 140px;
+  background-size: cover;
+  background-position: center;
+}
+
+.hub-news-card .news-img.img-1 { background-image: url('https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=400'); }
+.hub-news-card .news-img.img-2 { background-image: url('https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&q=80&w=400'); }
+
+.hub-news-card .news-content {
+  padding: 16px;
+}
+
+.hub-news-card .news-date {
+  font-size: 0.75rem;
+  color: var(--color-accent-cyan);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.hub-news-card h4 {
+  font-size: 1.1rem;
+  margin: 0 0 6px 0;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.hub-news-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+.bg-green { background: linear-gradient(135deg, #11998E, #38EF7D); }

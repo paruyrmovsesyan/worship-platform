@@ -78,10 +78,15 @@ $adminEmail        = $adminEmail ?? '';
 </style>
 
 <header class="app-topbar">
-  <!-- Date -->
-  <div style="display:flex; align-items:center; gap:10px; color:var(--text); font-weight:700; font-size:15px;">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-    <span id="topbar-date"><?= date('F j, Y') ?></span>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <button class="mobile-menu-btn" onclick="document.body.classList.toggle('sidebar-open')" title="Toggle Menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
+    <!-- Date -->
+    <div class="topbar-date-wrapper" style="display:flex; align-items:center; gap:10px; color:var(--text); font-weight:700; font-size:15px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+      <span id="topbar-date"><?= date('F j, Y') ?></span>
+    </div>
   </div>
   <script>
     document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });

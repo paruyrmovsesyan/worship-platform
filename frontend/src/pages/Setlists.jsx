@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import './Songs.css';
+import './Setlists.css';
+
+const GRADS = ['bg-purple', 'bg-blue', 'bg-cyan', 'bg-gold', 'bg-orange'];
 
 export default function Setlists() {
   const [setlists, setSetlists] = useState([]);
@@ -11,6 +13,7 @@ export default function Setlists() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useLanguage();
+  
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeMsg, setUpgradeMsg] = useState('');
   
@@ -81,63 +84,109 @@ export default function Setlists() {
 
   if (!user) {
     return (
-      <div className="page-container">
-        <div style={{ textAlign: 'center', marginTop: '100px' }}>
+      <div className="setlists-page animate-fade-in">
+        <div className="login-prompt">
+          <div className="prompt-icon">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          </div>
           <h2>{t('nav.login')}</h2>
-          <p className="muted-text" style={{ marginTop: '16px' }}>{t('setlists.loginPrompt')}</p>
-          <a href="/loginuser.php?next=/setlists" className="btn btn-primary" style={{ marginTop: '24px', display: 'inline-block', borderRadius: '99px', padding: '12px 32px' }}>{t('nav.login')}</a>
+          <p>{t('setlists.loginPrompt')}</p>
+          <Link to="/login?next=/setlists" className="btn btn-primary">{t('nav.login')}</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">{t('nav.setlists')} <span className="count-badge">{setlists.length}</span></h1>
-        
-        <div className="header-actions">
-           <button className="btn btn-primary glow-btn" style={{ borderRadius: '99px', padding: '10px 24px' }} onClick={() => setShowCreateModal(true)}>
-            {t('setlists.newSetlist')}
-           </button>
-        </div>
+    <div className="setlists-page animate-fade-in">
+      {/* Header */}
+      <div className="sl-header">
+        <h1 className="sl-title" style={{ minWidth: 0, flexGrow: 1 }}>
+          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('nav.setlists')}</span>
+          <span className="count-badge" style={{ flexShrink: 0 }}>{setlists.length}</span>
+        </h1>
+        <button className="btn btn-primary btn-new-set" onClick={() => setShowCreateModal(true)}>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          {t('setlists.newSetlist')}
+        </button>
       </div>
 
-      {showUpgrade && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: '#1c1f2e', padding: '32px', borderRadius: '16px', maxWidth: '400px', width: '90%', textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}>
-            <h2 style={{ marginBottom: '16px', color: '#fff' }}>Upgrade Required</h2>
-            <p style={{ color: '#aaa', marginBottom: '24px', lineHeight: '1.5' }}>{upgradeMsg}</p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff' }} onClick={() => setShowUpgrade(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={() => navigate('/pricing')}>See Plans</button>
+      {error && <div className="error-state"><p>{error}</p></div>}
+
+      {/* Setlists Grid */}
+      <div className="sl-grid">
+        {loading ? (
+          <div className="sl-placeholder">
+            <div className="spinner"></div>
+            <p>{t('setlists.loading')}</p>
+          </div>
+        ) : setlists.length === 0 ? (
+          <div className="sl-placeholder empty-state animate-fade-in">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+            <p>{t('setlists.empty')}</p>
+          </div>
+        ) : setlists.map((list, idx) => (
+          <div key={list.id} className="sl-card animate-fade-in" style={{ animationDelay: `${Math.min(idx * 0.05, 0.5)}s` }} onClick={() => navigate(`/setlists/${list.id}`)}>
+            <div className={`sl-cover ${GRADS[(list.id || idx) % GRADS.length]}`}>
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            </div>
+            <div className="sl-info">
+              <h3>{list.name}</h3>
+              <p className="sl-date">{list.service_date || t('setlists.unknownDate')}</p>
+              
+              <div className="sl-meta">
+                <span className="sl-songs-count">{list.items_count} {t('setlists.songsCount')}</span>
+                <span className="sl-badge">
+                  {list.access_role === 'team' ? (
+                    <><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg> {list.team_name || 'Team'}</>
+                  ) : list.access_role === 'shared' ? (
+                    <><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg> {t('setlists.typeShared')}</>
+                  ) : (
+                    <><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> {t('setlists.typePersonal')}</>
+                  )}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
 
+      {/* Create Modal */}
       {showCreateModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowCreateModal(false)}>
-          <div style={{ background: '#1c1f2e', padding: '32px', borderRadius: '16px', maxWidth: '400px', width: '90%', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginBottom: '20px', color: '#fff' }}>{t('setlists.newSetlist')}</h2>
+        <div className="sl-modal-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="sl-modal" onClick={e => e.stopPropagation()}>
+            <div className="sl-modal-header">
+              <h2>{t('setlists.newSetlist')}</h2>
+              <button className="sl-modal-close" onClick={() => setShowCreateModal(false)}>✕</button>
+            </div>
             
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', color: '#aaa', fontSize: '0.9rem' }}>Setlist Name</label>
-              <input type="text" className="form-control" value={newSetName} onChange={e => setNewSetName(e.target.value)} placeholder="e.g. Sunday Service" autoFocus />
+            <div className="sl-form-group">
+              <label>Setlist Name</label>
+              <input 
+                type="text" 
+                className="sl-input" 
+                value={newSetName} 
+                onChange={e => setNewSetName(e.target.value)} 
+                placeholder="e.g. Sunday Service" 
+                autoFocus 
+              />
             </div>
 
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', color: '#aaa', fontSize: '0.9rem' }}>Assign to Team (Optional)</label>
-              <select className="form-control" value={newSetTeamId} onChange={e => setNewSetTeamId(e.target.value)}>
-                <option value="">-- Personal --</option>
-                {teams.map(t => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
+            <div className="sl-form-group">
+              <label>Assign to Team (Optional)</label>
+              <div className="sl-select-wrapper">
+                <select className="sl-select" value={newSetTeamId} onChange={e => setNewSetTeamId(e.target.value)}>
+                  <option value="">-- Personal --</option>
+                  {teams.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+                <svg className="sl-select-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff' }} onClick={() => setShowCreateModal(false)}>Cancel</button>
+            <div className="sl-modal-actions">
+              <button className="btn btn-ghost" onClick={() => setShowCreateModal(false)}>Cancel</button>
               <button className="btn btn-primary" onClick={handleCreateSetlist} disabled={!newSetName.trim() || isCreating}>
                 {isCreating ? 'Creating...' : 'Create'}
               </button>
@@ -146,45 +195,23 @@ export default function Setlists() {
         </div>
       )}
 
-      {error && <div className="error-state" style={{ color: 'var(--color-accent-red)' }}><p>{error}</p></div>}
-
-      <div className="list-container" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {loading ? (
-          <div className="glass-panel" style={{ padding: '40px', textAlign: 'center', color: '#888' }}>{t('setlists.loading')}</div>
-        ) : setlists.length === 0 ? (
-          <div className="glass-panel" style={{ padding: '40px', textAlign: 'center', color: '#888' }}>{t('setlists.empty')}</div>
-        ) : setlists.map((list) => (
-          <div key={list.id} className="glass-panel" onClick={() => navigate(`/setlists/${list.id}`)} style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', transition: 'all 0.2s ease' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <span style={{ fontSize: '1.2rem', fontWeight: '600', color: '#fff', letterSpacing: '-0.01em' }}>{list.name}</span>
-              <span style={{ fontSize: '0.9rem', color: '#a0a0a5' }}>{list.service_date || t('setlists.unknownDate')}</span>
+      {/* Upgrade Modal */}
+      {showUpgrade && (
+        <div className="sl-modal-overlay" onClick={() => setShowUpgrade(false)}>
+          <div className="sl-modal upgrade-modal" onClick={e => e.stopPropagation()}>
+            <div className="upgrade-icon">
+              <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
             </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <span style={{ background: 'rgba(255,255,255,0.08)', padding: '6px 14px', borderRadius: '99px', fontSize: '0.85rem', color: '#fff', fontWeight: '500' }}>
-                  {list.items_count} {t('setlists.songsCount')}
-                </span>
-                <span style={{ fontSize: '0.9rem', color: '#8e8e93', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  {list.access_role === 'team' ? (
-                    <><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> {list.team_name || 'Team'}</>
-                  ) : list.access_role === 'shared' ? (
-                    <><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> {t('setlists.typeShared')}</>
-                  ) : (
-                    <><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> {t('setlists.typePersonal')}</>
-                  )}
-                </span>
-              </div>
-              
-              <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#eef3ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '2px' }}>
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </div>
+            <h2>Upgrade Required</h2>
+            <p>{upgradeMsg}</p>
+            <div className="sl-modal-actions">
+              <button className="btn btn-ghost" onClick={() => setShowUpgrade(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => navigate('/pricing')}>See Plans</button>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+
     </div>
   );
 }

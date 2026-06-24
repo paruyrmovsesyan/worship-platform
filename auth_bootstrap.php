@@ -172,10 +172,6 @@ if (!function_exists('wp_auth_remember_context_matches')) {
             return false;
         }
 
-        if ($storedUserAgent !== '' && $currentUserAgent !== '' && hash_equals($storedUserAgent, $currentUserAgent) === false) {
-            return false;
-        }
-
         return true;
     }
 }

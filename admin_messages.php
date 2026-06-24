@@ -87,7 +87,9 @@ if (isset($_GET['msg'])) {
 $messages = [];
 $res = $db->query("SELECT * FROM contact_messages ORDER BY created_at DESC");
 if ($res) {
-    $messages = $res->fetch_all(MYSQLI_ASSOC);
+    while ($row = $res->fetch_assoc()) {
+        $messages[] = $row;
+    }
 } else {
     $message = "Database Error: " . $db->error;
     $messageType = "error";
@@ -123,29 +125,14 @@ $searchPlaceholder = 'Search messages...';
   </style>
 </head>
 <body>
+<div class="app-layout">
   <?php include __DIR__ . '/admin_sidebar.php'; ?>
 
-  <main class="main-content">
-    <header class="topbar">
-      <div class="topbar-left">
-        <div class="date-display">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-          <?= date('F j, Y') ?>
-        </div>
-      </div>
-      <div class="topbar-right">
-        <!-- Search omitted for brevity -->
-        <button class="icon-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></button>
-        <div class="user-profile">
-          <div class="avatar"><?= strtoupper(substr($adminDisplayName, 0, 1)) ?></div>
-          <span class="user-name"><?= htmlspecialchars($adminDisplayName) ?></span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </div>
-      </div>
-    </header>
+  <main class="app-main">
+    <?php include __DIR__ . '/admin_topbar.php'; ?>
 
-    <div class="page-content">
-      <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
+    <div class="app-content">
+      <div class="page-heading">
         <div>
           <h1>Նամակներ 💬</h1>
           <p style="color:var(--muted); margin-top:4px;">Messages from the Contact page</p>
@@ -226,5 +213,6 @@ $searchPlaceholder = 'Search messages...';
       }
     }
   </script>
+</div>
 </body>
 </html>

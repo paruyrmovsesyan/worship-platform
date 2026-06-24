@@ -2,7 +2,9 @@
 <html lang="hy">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#060a18" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Տեխնիկական աշխատանքներ — Worship Platform</title>
   <meta name="robots" content="noindex,nofollow" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,13 +18,19 @@
       --glow: rgba(67, 24, 255, 0.35);
     }
 
+    html, body {
+      width: 100%;
+      height: 100%;
+      min-height: 100vh;
+      background-color: #060a18;
+    }
+
     body {
-      min-height: 100dvh;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: 'Inter', system-ui, sans-serif;
-      background: #060a18;
+      color: #fff;
       color: #fff;
       overflow: hidden;
       padding: 24px;
@@ -31,9 +39,10 @@
     /* Animated background */
     .bg {
       position: fixed;
-      inset: 0;
+      top: -100px; left: -100px; right: -100px; bottom: -100px;
       z-index: 0;
       overflow: hidden;
+      background-color: #060a18;
     }
     .bg-orb {
       position: absolute;

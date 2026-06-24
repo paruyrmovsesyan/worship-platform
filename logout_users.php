@@ -85,7 +85,7 @@ if (isset($_GET['silent']) && $_GET['silent'] === '1') {
 }
 
 $source = strtolower((string)($_GET['source'] ?? ''));
-$target = '/loginuser.php?logged_out=1';
+$target = '/login?logged_out=1';
 if ($source !== '') {
     $target .= '&source=' . urlencode($source);
 }

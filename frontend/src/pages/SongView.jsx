@@ -9,36 +9,23 @@ export default function SongView() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   
-  const msg = {
-    am: { added: 'Ավելացվեց նախընտրածներում ♥', removed: 'Հեռացվեց նախընտրածներից', loading: 'Բեռնվում է...', error: 'Չհաջողվեց բեռնել երգի տվյալները', back: 'Հետ գնալ', useFlats: 'Բեմոլներ (b)', transpose: 'Տրանսպոզիցիա', capoSub: 'Գիթառի դիրք', fontSize: 'Տառաչափ', downloadTxt: 'Ներբեռնել TXT', requestEdit: 'Խմբագրել երգը', chordsOnly: 'Միայն ակորդներ', lyricsOnly: 'Միայն բառեր', bothModes: 'Ակորդներ + բառեր', noCapo: 'Առանց Capo', clear: 'Ջնջել', keyPrefix: 'Տոնայնություն:', playAs: 'Նվագել որպես:', keySavedAlert: 'Տոնայնությունը պահպանվեց', keyIsSaved: '✓ Տոնայնությունը պահպանված է', saveKey: '💾 Պահպանել տոնայնությունը', semitones: 'կիսատոն', reset: 'Reset' },
-    en: { added: 'Added to Favorites ♥', removed: 'Removed from Favorites', loading: 'Loading...', error: 'Failed to fetch song', back: 'Go Back', useFlats: 'Use flats (b)', transpose: 'Transpose', capoSub: 'Guitar position', fontSize: 'Font size', downloadTxt: 'Download TXT', requestEdit: 'Request Edit', chordsOnly: 'Chords only', lyricsOnly: 'Lyrics only', bothModes: 'Chords + lyrics', noCapo: 'No Capo', clear: 'Clear', keyPrefix: 'Key:', playAs: 'Play as:', keySavedAlert: 'Key saved', keyIsSaved: '✓ Key is saved', saveKey: '💾 Save key', semitones: 'semitones', reset: 'Reset' },
-    ru: { added: 'Добавлено в избранное ♥', removed: 'Удалено из избранного', loading: 'Загрузка...', error: 'Не удалось загрузить данные песни', back: 'Назад', useFlats: 'Бемоли (b)', transpose: 'Транспозиция', capoSub: 'Позиция гитары', fontSize: 'Размер шрифта', downloadTxt: 'Скачать TXT', requestEdit: 'Предложить правку', chordsOnly: 'Только аккорды', lyricsOnly: 'Только слова', bothModes: 'Аккорды + слова', noCapo: 'Без Capo', clear: 'Очистить', keyPrefix: 'Тональность:', playAs: 'Играть как:', keySavedAlert: 'Тональность сохранена', keyIsSaved: '✓ Тональность сохранена', saveKey: '💾 Сохранить тональность', semitones: 'полутонов', reset: 'Сброс' }
-  }[language] || { added: 'Added to Favorites ♥', removed: 'Removed from Favorites', loading: 'Loading...', error: 'Failed to fetch song', back: 'Go Back', useFlats: 'Use flats (b)', transpose: 'Transpose', capoSub: 'Guitar position', fontSize: 'Font size', downloadTxt: 'Download TXT', requestEdit: 'Request Edit', chordsOnly: 'Chords only', lyricsOnly: 'Lyrics only', bothModes: 'Chords + lyrics', noCapo: 'No Capo', clear: 'Clear', keyPrefix: 'Key:', playAs: 'Play as:', keySavedAlert: 'Key saved', keyIsSaved: '✓ Key is saved', saveKey: '💾 Save key', semitones: 'semitones', reset: 'Reset' };
-
   const [song, setSong] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Musician Controls
+  // Controls state
   const [fontSize, setFontSize] = useState(() => parseInt(localStorage.getItem('song_font_size') || '18', 10));
-  const [viewMode, setViewMode] = useState(() => localStorage.getItem('song_view_mode') || 'chords'); // 'chords' or 'lyrics'
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('song_view_mode') || 'chords');
   const [semi, setSemi] = useState(0);
   const [capo, setCapo] = useState(() => parseInt(localStorage.getItem(`capo_${id}`) || '0', 10));
   const [useFlats, setUseFlats] = useState(false);
-  const [isAutoScrolling, setIsAutoScrolling] = useState(false);
-  const [toolbarVisible, setToolbarVisible] = useState(true);
+  
   const [isFavorite, setIsFavorite] = useState(false);
-  const [targetKey, setTargetKey] = useState(null); // The saved favorite key
+  const [targetKey, setTargetKey] = useState(null); 
   const [favMsg, setFavMsg] = useState('');
   
-  // Sequential Navigation State
-  const [navList, setNavList] = useState([]);
-  const [navIndex, setNavIndex] = useState(-1);
-  const [listType, setListType] = useState(null);
-  
-  // Setlist Nav State
   const [setlistNavData, setSetlistNavData] = useState(null);
 
   const copyShareLink = async () => {
@@ -62,16 +49,15 @@ export default function SongView() {
     }
   };
 
-  // Toggle favorite via API or localStorage fallback
   const toggleFavorite = async (e) => {
     e.stopPropagation();
     if (!user) {
-      window.location.href = '/loginuser.php?next=' + window.location.pathname;
+      navigate('/login?next=' + window.location.pathname);
       return;
     }
     const newState = !isFavorite;
     setIsFavorite(newState);
-    setFavMsg(newState ? msg.added : msg.removed);
+    setFavMsg(newState ? t('songView.added') : t('songView.removed'));
     setTimeout(() => setFavMsg(''), 2000);
     try {
       await fetch('/user_favorites_api.php', {
@@ -82,10 +68,7 @@ export default function SongView() {
     } catch {}
   };
 
-
-  // Fetch Song and context (favorite / nav)
   useEffect(() => {
-    // 1. Fetch song
     fetch(`/api.php?id=${id}`)
       .then(res => res.json())
       .then(data => {
@@ -93,14 +76,12 @@ export default function SongView() {
         setSong(data);
         setLoading(false);
         
-        // Parse URL params for tkey, capo
         const params = new URLSearchParams(window.location.search);
         const urlTkey = params.get('tkey');
         const urlCapo = params.get('capo');
         
         let initialTargetKey = null;
 
-        // 2. Fetch favorite status and target_key
         if (user) {
           fetch(`/user_favorites_api.php?action=get_favorite&song_id=${id}`)
             .then(r => r.json())
@@ -109,7 +90,6 @@ export default function SongView() {
               initialTargetKey = urlTkey || favData.target_key;
               if (initialTargetKey) {
                 setTargetKey(initialTargetKey);
-                // Calculate semi
                 if (data.song_key) {
                   const KEYS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
                   let fromIdx = KEYS.indexOf(data.song_key);
@@ -138,7 +118,6 @@ export default function SongView() {
           }
         }
         
-        // Handle Capo from URL or Legacy Storage
         if (urlCapo) {
           setCapo(parseInt(urlCapo, 10) || 0);
         } else {
@@ -151,7 +130,6 @@ export default function SongView() {
           } catch(e) {}
         }
         
-        // Add to recently viewed
         if (user) {
           fetch('/account_api.php?action=add_recent_view', {
             method: 'POST',
@@ -161,13 +139,12 @@ export default function SongView() {
         }
       })
       .catch(err => {
-        setError(msg.error);
+        setError(t('songView.error'));
         setLoading(false);
       });
   }, [id, user]);
 
   useEffect(() => {
-    // Fetch Setlist Nav from legacy URL structure
     const params = new URLSearchParams(window.location.search);
     const setlistId = params.get('setlist_id');
     const setlistToken = params.get('setlist_token');
@@ -188,151 +165,32 @@ export default function SongView() {
         }).catch(() => {});
     }
 
-    // List logic for native react app
     const listQuery = params.get('list');
-    if (listQuery) {
-      setListType(listQuery);
-      if (listQuery === 'favorites' && user) {
-        fetch('/user_favorites_api.php?action=get_favorites')
-          .then(r => r.json())
-          .then(d => {
-            if (Array.isArray(d)) {
-              setNavList(d);
-              setNavIndex(d.findIndex(s => String(s.id) === String(id)));
-            }
-          });
-      } else if (listQuery.startsWith('setlist_')) {
-        const setId = listQuery.split('_')[1];
-        fetch(`/setlists_api.php?action=get_setlist_items&setlist_id=${setId}`)
-          .then(r => r.json())
-          .then(d => {
-            if (d && d.items && d.setlist) {
-              setNavList(d.items);
-              setNavIndex(d.items.findIndex(s => String(s.song_id) === String(id)));
-              
-              // Role-based automatic view mode
-              if (d.setlist.team_role === 'vocalist' && !localStorage.getItem('view_mode_overridden')) {
-                setViewMode('lyrics');
-              }
-            }
-          });
-      }
+    if (listQuery && listQuery.startsWith('setlist_')) {
+      const setId = listQuery.split('_')[1];
+      fetch(`/setlists_api.php?action=get_setlist_items&setlist_id=${setId}`)
+        .then(r => r.json())
+        .then(d => {
+          if (d && d.setlist && d.setlist.team_role === 'vocalist' && !localStorage.getItem('view_mode_overridden')) {
+            setViewMode('lyrics');
+          }
+        });
     }
   }, [id, user]);
 
-  const toggleToolbar = () => setToolbarVisible(!toolbarVisible);
-
-  const increaseFontSize = (e) => { 
-    e.stopPropagation(); 
+  const increaseFontSize = () => { 
     setFontSize(prev => {
       const v = Math.min(prev + 2, 40);
       localStorage.setItem('song_font_size', v);
       return v;
     }); 
   };
-  const decreaseFontSize = (e) => { 
-    e.stopPropagation(); 
+  const decreaseFontSize = () => { 
     setFontSize(prev => {
       const v = Math.max(prev - 2, 14);
       localStorage.setItem('song_font_size', v);
       return v;
     }); 
-  };
-  
-  const changeTranspose = (amount, e) => {
-    e.stopPropagation();
-    setSemi(prev => prev + amount);
-  };
-  const resetTranspose = (e) => {
-    e.stopPropagation();
-    setSemi(0);
-    setCapo(0);
-    localStorage.setItem(`capo_${id}`, 0);
-  };
-  
-  const changeCapo = (amount, e) => {
-    if (e) e.stopPropagation();
-    setCapo(prev => {
-      const v = Math.max(0, Math.min(prev + amount, 11));
-      localStorage.setItem(`capo_${id}`, v);
-      localStorage.setItem(`song_capo_pref:${id}`, JSON.stringify({ capo: v, capo_mode: v > 0 ? 1 : 0 }));
-      return v;
-    });
-  };
-
-  const toggleViewMode = (e) => {
-    if (!e) return;
-    e.stopPropagation();
-    setViewMode(prev => {
-      let next = 'chords';
-      if (prev === 'chords') next = 'lyrics';
-      else if (prev === 'lyrics') next = 'both';
-      localStorage.setItem('song_view_mode', next);
-      return next;
-    });
-  };
-
-  // Touch Swipe for Navigation
-  const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
-  const handleTouchStart = (e) => {
-    setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-  };
-  const handleTouchEnd = (e) => {
-    const touchEndX = e.changedTouches[0].clientX;
-    const touchEndY = e.changedTouches[0].clientY;
-    const dx = touchEndX - touchStart.x;
-    const dy = touchEndY - touchStart.y;
-    
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)) return;
-
-    if (setlistNavData) {
-      if (dx > 0 && setlistNavData.prev) navigateToSetlistSong(setlistNavData.prev);
-      else if (dx < 0 && setlistNavData.next) navigateToSetlistSong(setlistNavData.next);
-    } else if (navList.length > 0 && navIndex >= 0) {
-      if (dx > 0 && navIndex > 0) {
-        navigate(`/song/${listType.startsWith('setlist_') ? navList[navIndex-1].song_id : navList[navIndex-1].id}?list=${listType}`);
-      } else if (dx < 0 && navIndex < navList.length - 1) {
-        navigate(`/song/${listType.startsWith('setlist_') ? navList[navIndex+1].song_id : navList[navIndex+1].id}?list=${listType}`);
-      }
-    }
-  };
-
-  const navigateToSetlistSong = (item) => {
-    let url = `/song/${item.id}?`;
-    if (item.target_key) url += `tkey=${encodeURIComponent(item.target_key)}&`;
-    const pref = JSON.parse(localStorage.getItem(`song_capo_pref:${item.id}`) || '{"capo":0,"capo_mode":0}');
-    if (pref.capo_mode === 1 && pref.capo > 0) url += `capo=${pref.capo}&capo_mode=1&`;
-    
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('setlist_id')) url += `setlist_id=${params.get('setlist_id')}&`;
-    if (params.get('setlist_token')) url += `setlist_token=${params.get('setlist_token')}&`;
-    if (item.item_id) url += `setlist_item_id=${item.item_id}&`;
-    
-    navigate(url);
-  };
-
-  const saveFavoriteKey = async (e, currentPlayKey) => {
-    e.stopPropagation();
-    if (!user || !isFavorite) return;
-    try {
-      const res = await fetch('/user_favorites_api.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update_favorite_key', song_id: id, target_key: currentPlayKey })
-      });
-      const data = await res.json();
-      if (data.ok) {
-        setTargetKey(currentPlayKey);
-        setFavMsg(msg.keySavedAlert);
-        setTimeout(() => setFavMsg(''), 2000);
-      }
-    } catch {}
-  };
-
-  const toggleAutoScroll = (e) => {
-    e.stopPropagation();
-    setIsAutoScrolling(!isAutoScrolling);
-    setToolbarVisible(true);
   };
   
   const handleViewModeChange = (mode) => {
@@ -341,23 +199,6 @@ export default function SongView() {
     localStorage.setItem('view_mode_overridden', 'true');
   };
 
-  if (loading || authLoading) {
-    return (
-      <div className="stage-reader loading-state">
-        <p>{msg.loading}</p>
-      </div>
-    );
-  }
-
-  if (error || !song) {
-    return (
-      <div className="stage-reader error-state">
-        <p>{error}</p>
-        <button className="btn btn-secondary" onClick={() => navigate(-1)}>{msg.back}</button>
-      </div>
-    );
-  }
-  
   const getTransposedFullKey = (originalKey, semitones) => {
     if (!originalKey) return '';
     const trimmed = originalKey.trim();
@@ -388,259 +229,273 @@ export default function SongView() {
     }
   };
 
-  const currentChords = song.chords ? renderWithChords(song.chords, semi - capo, useFlats) : '';
-  const currentLyrics = song.lyrics || 'Բառերը հասանելի չեն';
-
-  const toggleFullscreen = async () => {
+  const saveFavoriteKey = async (currentPlayKey) => {
+    if (!user || !isFavorite) return;
     try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
-      } else {
-        await document.exitFullscreen();
+      const res = await fetch('/user_favorites_api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_favorite_key', song_id: id, target_key: currentPlayKey })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setTargetKey(currentPlayKey);
+        setFavMsg(t('songView.keySavedAlert'));
+        setTimeout(() => setFavMsg(''), 2000);
       }
-    } catch (e) {
-      console.error(e);
-    }
+    } catch {}
   };
 
-  const handleDownloadTxt = () => {
-    const text = viewMode === 'chords' 
-      ? currentChords.replace(/<[^>]*>?/gm, '') 
-      : currentLyrics;
-    const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    const fileName = `${song.title || 'song'} (${soundingKey || song.song_key || ''}).txt`.replace(/[\\/:*?"<>|]+/g, '');
-    const a = document.createElement('a'); 
-    a.href = url; 
-    a.download = fileName; 
-    document.body.appendChild(a); 
-    a.click(); 
-    a.remove(); 
-    URL.revokeObjectURL(url);
+  const navigateToSetlistSong = (item) => {
+    let url = `/song/${item.id}?`;
+    if (item.target_key) url += `tkey=${encodeURIComponent(item.target_key)}&`;
+    const pref = JSON.parse(localStorage.getItem(`song_capo_pref:${item.id}`) || '{"capo":0,"capo_mode":0}');
+    if (pref.capo_mode === 1 && pref.capo > 0) url += `capo=${pref.capo}&capo_mode=1&`;
+    
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('setlist_id')) url += `setlist_id=${params.get('setlist_id')}&`;
+    if (params.get('setlist_token')) url += `setlist_token=${params.get('setlist_token')}&`;
+    if (item.item_id) url += `setlist_item_id=${item.item_id}&`;
+    
+    navigate(url);
   };
 
-  const getRequestEditUrl = () => {
-    if (!id) return '#';
-    return `/song-request?song_id=${encodeURIComponent(String(id))}`;
-  };
+  const currentChords = song?.chords ? renderWithChords(song.chords, semi - capo, useFlats) : '';
+  const currentLyrics = song?.lyrics || t('songView.noLyrics');
+
+  if (loading || authLoading) {
+    return (
+      <div className="song-view-page">
+        <div className="sl-placeholder animate-fade-in">
+          <div className="spinner"></div>
+          <p>{t('songView.loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !song) {
+    return (
+      <div className="song-view-page">
+        <div className="sl-placeholder empty-state animate-fade-in">
+          <p style={{color: 'var(--color-accent-red)'}}>{error}</p>
+          <button className="btn btn-secondary" onClick={() => navigate(-1)} style={{marginTop: '16px'}}>{t('songView.back')}</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="page-container song-view-page">
-      <div className="song-view-main">
-        {/* Left Column: Song Content */}
-        <div className="song-content">
-          <div className="card glass-panel" style={{ padding: '24px' }}>
-            <div className="song-header">
-              <div className="song-header-main">
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                  <div style={{ flex: 1, minWidth: 0, paddingRight: '12px' }}>
-                    <h1 className="song-title" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{song.title}</h1>
-                    <div className="song-artist">{song.artist}</div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <button className="icon-btn" onClick={copyShareLink} title="Կիսվել (Share)" style={{ color: 'var(--color-text-dim)' }}>
-                      ⤴
-                    </button>
-                    <button className="icon-btn" onClick={toggleFullscreen} title="Fullscreen" style={{ color: 'var(--color-text-dim)' }}>
-                      ⛶
-                    </button>
-                    <button className={`icon-btn fav-btn ${isFavorite ? 'active' : ''}`} onClick={toggleFavorite} title={isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}>
-                      <svg viewBox="0 0 24 24" width="24" height="24" fill={isFavorite ? '#FF4A6A' : 'none'} stroke={isFavorite ? '#FF4A6A' : 'currentColor'} strokeWidth="2">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="info-row">
-
-                  <div className="info-pill">{msg.keyPrefix} {soundingKey || '?'}</div>
-                  {song.bpm && <div className="info-pill">BPM: {song.bpm}</div>}
-                  {song.tags && <div className="info-pill">{song.tags}</div>}
-                  {capo > 0 && <div className="info-pill" style={{color: '#ffcc00'}}>{msg.playAs} {playingKey} (Capo {capo})</div>}
-                  <Link to={getRequestEditUrl()} className="btn btn-sm btn-secondary" style={{ marginLeft: 'auto', fontSize: '0.75rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
-                    {msg.requestEdit}
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            <div className={`chords-container ${viewMode === 'lyrics' ? 'lyrics-only-mode' : ''}`} style={{ fontSize: `${fontSize}px` }}>
-              {viewMode === 'chords' && song.chords ? (
-                <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
-              ) : viewMode === 'both' && song.chords ? (
-                <>
-                  <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
-                  <pre className="lyrics-block" style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>{currentLyrics}</pre>
-                </>
-              ) : (
-                <pre className="lyrics-block">{currentLyrics}</pre>
-              )}
-            </div>
-            
-            <div className="view-modes">
-              <button className={`btn btn-sm ${viewMode === 'chords' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => handleViewModeChange('chords')}>{msg.chordsOnly}</button>
-              <button className={`btn btn-sm ${viewMode === 'lyrics' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => handleViewModeChange('lyrics')}>{msg.lyricsOnly}</button>
-              <button className={`btn btn-sm ${viewMode === 'both' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => handleViewModeChange('both')}>{msg.bothModes}</button>
-            </div>
+    <div className="song-view-page animate-fade-in">
+      {/* Top Header */}
+      <div className="sv-header">
+        <div className="sv-header-left">
+          <button className="icon-btn" onClick={() => navigate(-1)} style={{ background: 'rgba(255,255,255,0.05)', padding: '8px', borderRadius: '12px' }}>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <div className="sv-title-area">
+            <h1 className="sv-title">{song.title}</h1>
+            <p className="sv-artist">{song.artist}</p>
           </div>
         </div>
 
-        {/* Right Column: Controls Panel */}
-        <div className="song-control-panel">
-          <div className="card glass-panel control-panel-inner">
-            <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div className="panel-title">{msg.transpose}</div>
-              <label className="checkbox-label" style={{ fontSize: '0.8rem', color: 'var(--color-text-dim)' }}>
-                <input type="checkbox" checked={useFlats} onChange={e => setUseFlats(e.target.checked)} /> {msg.useFlats}
-              </label>
-            </div>
-            
-            <div className="keys-grid">
-              {KEYS.map(k => {
-                let isActive = false;
-                if (soundingKey) {
-                  const rootMatch = soundingKey.match(/^([A-G](?:#|b)?)/i);
-                  const activeRoot = rootMatch ? rootMatch[1] : soundingKey;
-                  // Handle enharmonic equivalents for active state (e.g. Bb == A#)
-                  isActive = noteIndex(activeRoot) === noteIndex(k);
-                }
-                return (
-                  <button 
-                    key={k} 
-                    className={`key-btn ${isActive ? 'active' : ''}`}
-                    onClick={() => handleKeyClick(k)}
-                  >
-                    {k}
-                  </button>
-                );
-              })}
-            </div>
-            
-            <input 
-              type="range" 
-              min="-11" max="11" 
-              value={semi} 
-              onChange={e => setSemi(parseInt(e.target.value, 10))}
-              style={{ width: '100%', margin: '12px 0 4px' }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--color-text-dim)', marginBottom: '12px' }}>
-              <span>{semi} {msg.semitones}</span>
-              <span style={{ cursor: 'pointer', color: 'var(--color-accent-cyan)' }} onClick={() => setSemi(0)}>{msg.reset}</span>
-            </div>
+        <div className="sv-header-actions">
+          <button className={`icon-btn ${isFavorite ? 'active' : ''}`} onClick={toggleFavorite}>
+            <svg viewBox="0 0 24 24" width="24" height="24" fill={isFavorite ? '#FF4A6A' : 'none'} stroke={isFavorite ? '#FF4A6A' : 'currentColor'} strokeWidth="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
 
-            {isFavorite && (
-              <div style={{ marginTop: '16px' }}>
-                <button 
-                  className={`btn w-100 ${isKeySaved ? 'btn-secondary' : 'btn-primary'}`} 
-                  onClick={(e) => saveFavoriteKey(e, playingKey)}
-                  disabled={isKeySaved}
-                >
-                  {isKeySaved ? msg.keyIsSaved : msg.saveKey}
-                </button>
-              </div>
-            )}
+      {/* Meta Bar */}
+      <div className="sv-meta-row">
+        <div className="sv-meta-pill key-pill">{t('songView.keyPrefix')} {soundingKey || song.song_key || '?'}</div>
+        {song.bpm && <div className="sv-meta-pill">BPM: {song.bpm}</div>}
+        <button className="icon-btn" onClick={copyShareLink} style={{ marginLeft: 'auto', opacity: 0.6, padding: '4px' }}>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+        </button>
+      </div>
 
-            <div className="capo-wrap" style={{marginTop: '16px'}}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <div style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>Capo</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-dim)' }}>{msg.capoSub}</div>
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <select 
-                  className="form-control" 
-                  value={capo} 
-                  onChange={e => {
-                    const v = parseInt(e.target.value, 10);
-                    setCapo(v);
-                    localStorage.setItem(`capo_${id}`, v);
-                    localStorage.setItem(`song_capo_pref:${id}`, JSON.stringify({ capo: v, capo_mode: v > 0 ? 1 : 0 }));
-                  }}
-                  style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '10px 14px', borderRadius: '10px', fontSize: '0.9rem', appearance: 'none', cursor: 'pointer' }}
-                >
-                  <option value="0">{msg.noCapo}</option>
-                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => (
-                    <option key={n} value={n}>Capo {n}</option>
-                  ))}
-                </select>
-                {capo > 0 && (
-                  <button className="btn btn-secondary" style={{ padding: '0 16px', borderRadius: '10px', backgroundColor: 'rgba(255,74,106,0.1)', color: '#FF4A6A', border: '1px solid rgba(255,74,106,0.2)' }} onClick={() => { 
-                    setCapo(0); 
-                    localStorage.setItem(`capo_${id}`, 0); 
-                    localStorage.setItem(`song_capo_pref:${id}`, JSON.stringify({ capo: 0, capo_mode: 0 }));
-                  }}>✕ {msg.clear}</button>
-                )}
-              </div>
-            </div>
+      {/* Web Controls (Hidden in PWA) */}
+      <div className="sv-inline-controls">
+        <div className="sv-keys-scroll">
+          {KEYS.map(k => {
+            let isActive = false;
+            if (soundingKey) {
+              const rootMatch = soundingKey.match(/^([A-G](?:#|b)?)/i);
+              const activeRoot = rootMatch ? rootMatch[1] : soundingKey;
+              isActive = noteIndex(activeRoot) === noteIndex(k);
+            }
+            return (
+              <button key={k} className={`sv-key-btn ${isActive ? 'active' : ''}`} onClick={() => handleKeyClick(k)}>
+                {k}
+              </button>
+            );
+          })}
+        </div>
+        
+        <div className="sv-secondary-controls">
+          <div className="sv-control-item">
+            <label className="checkbox-label" style={{ margin: 0, padding: '6px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+              <input type="checkbox" checked={useFlats} onChange={e => setUseFlats(e.target.checked)} /> {t('songView.useFlats')}
+            </label>
+          </div>
 
-            <div className="font-panel" style={{ marginTop: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: '12px' }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-dim)' }}>{msg.fontSize}</span>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <button className="btn btn-secondary btn-sm" onClick={decreaseFontSize}>A-</button>
-                <span style={{ fontSize: '0.9rem', fontWeight: 'bold', width: '30px', textAlign: 'center' }}>{fontSize}</span>
-                <button className="btn btn-secondary btn-sm" onClick={increaseFontSize}>A+</button>
-              </div>
-            </div>
+          <div className="sv-control-item sv-capo-item">
+            <select 
+              className="sv-capo-select" 
+              value={capo} 
+              onChange={e => {
+                const v = parseInt(e.target.value, 10);
+                setCapo(v);
+                localStorage.setItem(`capo_${id}`, v);
+                localStorage.setItem(`song_capo_pref:${id}`, JSON.stringify({ capo: v, capo_mode: v > 0 ? 1 : 0 }));
+              }}
+            >
+              <option value="0">{t('songView.noCapo')}</option>
+              {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => <option key={n} value={n}>Capo {n}</option>)}
+            </select>
+          </div>
 
-            <button className="btn btn-secondary w-100" style={{ marginTop: '12px' }} onClick={handleDownloadTxt}>
-              {msg.downloadTxt}
-            </button>
-
+          <div className="sv-control-item sv-font-item">
+            <button className="sv-font-btn" onClick={decreaseFontSize}>A-</button>
+            <span className="sv-font-val">{fontSize}</span>
+            <button className="sv-font-btn" onClick={increaseFontSize}>A+</button>
           </div>
         </div>
       </div>
 
-      {/* Legacy Setlist API Navigation */}
+      {/* Premium Controls Panel (Hidden in Web, Shown in PWA) */}
+      <div className="sv-control-panel">
+        <div className="sv-control-row">
+          <div className="sv-stepper-group">
+            <span className="sv-stepper-label">{t('songView.transpose')}</span>
+            <div className="sv-stepper">
+              <button className="sv-step-btn" onClick={() => setSemi(s => s - 1)}>-</button>
+              <select 
+                className="sv-step-val" 
+                value={soundingKey ? getTransposedFullKey(soundingKey, 0) : ''}
+                onChange={(e) => handleKeyClick(e.target.value)}
+                style={{ appearance: 'none', WebkitAppearance: 'none', background: 'transparent', border: 'none', borderLeft: '1px solid rgba(255,255,255,0.08)', borderRight: '1px solid rgba(255,255,255,0.08)', outline: 'none', color: 'var(--color-accent-cyan)', textAlign: 'center', textAlignLast: 'center', cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                <option value="" disabled>?</option>
+                {KEYS.map(k => {
+                  const displayK = getTransposedFullKey(k, 0);
+                  return <option key={k} value={displayK} style={{background: 'var(--color-surface)', color: 'var(--color-text-primary)'}}>{displayK}</option>;
+                })}
+              </select>
+              <button className="sv-step-btn" onClick={() => setSemi(s => s + 1)}>+</button>
+            </div>
+          </div>
+          <div className="sv-stepper-group">
+            <span className="sv-stepper-label">{t('songView.capoSub')}</span>
+            <div className="sv-stepper">
+              <button className="sv-step-btn" onClick={() => {
+                const v = Math.max(0, capo - 1);
+                setCapo(v);
+                localStorage.setItem(`capo_${id}`, v);
+                localStorage.setItem(`song_capo_pref:${id}`, JSON.stringify({ capo: v, capo_mode: v > 0 ? 1 : 0 }));
+              }} disabled={capo <= 0}>-</button>
+              <select 
+                className="sv-step-val" 
+                value={capo}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  setCapo(v);
+                  localStorage.setItem(`capo_${id}`, v);
+                  localStorage.setItem(`song_capo_pref:${id}`, JSON.stringify({ capo: v, capo_mode: v > 0 ? 1 : 0 }));
+                }}
+                style={{ appearance: 'none', WebkitAppearance: 'none', background: 'transparent', border: 'none', borderLeft: '1px solid rgba(255,255,255,0.08)', borderRight: '1px solid rgba(255,255,255,0.08)', outline: 'none', color: 'var(--color-accent-cyan)', textAlign: 'center', textAlignLast: 'center', cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                <option value="0" style={{background: 'var(--color-surface)', color: 'var(--color-text-primary)'}}>{t('songView.noCapo')}</option>
+                {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => <option key={n} value={n} style={{background: 'var(--color-surface)', color: 'var(--color-text-primary)'}}>Capo {n}</option>)}
+              </select>
+              <button className="sv-step-btn" onClick={() => {
+                const v = Math.min(12, capo + 1);
+                setCapo(v);
+                localStorage.setItem(`capo_${id}`, v);
+                localStorage.setItem(`song_capo_pref:${id}`, JSON.stringify({ capo: v, capo_mode: v > 0 ? 1 : 0 }));
+              }} disabled={capo >= 12}>+</button>
+            </div>
+          </div>
+        </div>
+        <div className="sv-control-row" style={{ marginTop: '16px' }}>
+          <div className="sv-stepper-group">
+            <span className="sv-stepper-label">{t('songView.fontSize')}</span>
+            <div className="sv-stepper">
+              <button className="sv-step-btn" onClick={decreaseFontSize}>A-</button>
+              <div className="sv-step-val">{fontSize}</div>
+              <button className="sv-step-btn" onClick={increaseFontSize}>A+</button>
+            </div>
+          </div>
+          <div className="sv-stepper-group">
+            <span className="sv-stepper-label">{t('songView.signs')}</span>
+            <button 
+              className={`sv-toggle-btn ${useFlats ? 'active' : ''}`}
+              onClick={() => setUseFlats(!useFlats)}
+            >
+              {useFlats ? t('songView.flats') : t('songView.sharps')}
+            </button>
+          </div>
+        </div>
+        
+        {isFavorite && targetKey !== playingKey && (
+          <button className="btn btn-primary btn-sm w-100" style={{ marginTop: '12px' }} onClick={() => saveFavoriteKey(playingKey)}>
+            {t('songView.saveKey')}
+          </button>
+        )}
+      </div>
+
+      {/* Segmented Control for View Mode */}
+      <div className="sv-segment-control">
+        <button className={`sv-segment ${viewMode === 'lyrics' ? 'active' : ''}`} onClick={() => handleViewModeChange('lyrics')}>{t('songView.lyricsOnly')}</button>
+        <button className={`sv-segment ${viewMode === 'chords' ? 'active' : ''}`} onClick={() => handleViewModeChange('chords')}>{t('songView.chordsOnly')}</button>
+        <button className={`sv-segment ${viewMode === 'both' ? 'active' : ''}`} onClick={() => handleViewModeChange('both')}>{t('songView.bothModes')}</button>
+      </div>
+
+      {/* Sheet Music / Lyrics Content */}
+      <div className={`sv-sheet ${viewMode === 'lyrics' ? 'lyrics-mode' : ''}`} style={{ fontSize: `${fontSize}px` }}>
+        {viewMode === 'chords' && song.chords ? (
+          <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
+        ) : viewMode === 'both' && song.chords ? (
+          <>
+            <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
+            <div className="sv-divider"></div>
+            <pre className="lyrics-block">{currentLyrics}</pre>
+          </>
+        ) : (
+          <pre className="lyrics-block">{currentLyrics}</pre>
+        )}
+      </div>
+
+      {/* Setlist Navigation */}
       {setlistNavData && (
         <div className="seq-nav">
-          <button 
-            className="seq-btn" 
-            disabled={!setlistNavData.prev}
-            onClick={() => navigateToSetlistSong(setlistNavData.prev)}
-          >
-            ←
+          <button className="seq-btn" disabled={!setlistNavData.prev} onClick={() => navigateToSetlistSong(setlistNavData.prev)}>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
           <div className="seq-info">
-            <div className="seq-count">{setlistNavData.index} / {setlistNavData.total}</div>
-            <div className="seq-title">{setlistNavData.setlist?.name || 'Setlist'}</div>
+            <span className="seq-count">{setlistNavData.current.index} / {setlistNavData.total}</span>
+            <span className="seq-title">Setlist</span>
           </div>
-          <button 
-            className="seq-btn" 
-            disabled={!setlistNavData.next}
-            onClick={() => navigateToSetlistSong(setlistNavData.next)}
-          >
-            →
+          <button className="seq-btn" disabled={!setlistNavData.next} onClick={() => navigateToSetlistSong(setlistNavData.next)}>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </button>
         </div>
       )}
 
-      {/* Sequential Navigation (Bottom Floating Bar) */}
-      {!setlistNavData && navList.length > 0 && navIndex >= 0 && (
-        <div className="seq-nav">
-          <button 
-            className="seq-btn" 
-            disabled={navIndex === 0}
-            onClick={() => navigate(`/song/${listType.startsWith('setlist_') ? navList[navIndex-1].song_id : navList[navIndex-1].id}?list=${listType}`)}
-          >
-            ←
-          </button>
-          <div className="seq-info">
-            <div className="seq-count">{navIndex + 1} / {navList.length}</div>
-            <div className="seq-title">{listType === 'favorites' ? 'Պահպանվածներ' : 'Երգացանկ'}</div>
-          </div>
-          <button 
-            className="seq-btn" 
-            disabled={navIndex === navList.length - 1}
-            onClick={() => navigate(`/song/${listType.startsWith('setlist_') ? navList[navIndex+1].song_id : navList[navIndex+1].id}?list=${listType}`)}
-          >
-            →
-          </button>
-        </div>
-      )}
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '32px 0 24px' }}>
+        <button className="btn btn-secondary" onClick={() => navigate(`/song-request?song_id=${song.id}`)} style={{ gap: '8px', padding: '10px 20px', borderRadius: '20px', opacity: 0.8, fontSize: '0.9rem' }}>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          {t('songView.requestEdit')}
+        </button>
+      </div>
 
-      {favMsg && (
-        <div className="toast-message">{favMsg}</div>
-      )}
+      {favMsg && <div className="toast-message animate-fade-in">{favMsg}</div>}
     </div>
   );
 }

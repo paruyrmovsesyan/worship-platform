@@ -186,12 +186,22 @@ if($action === 'update_profile' && $method === 'POST'){
   $d = readJson();
   $name = trim((string)($d["name"] ?? ''));
   $email = trim((string)($d["email"] ?? ''));
+  $birth_date = trim((string)($d["birth_date"] ?? ''));
+  $gender = trim((string)($d["gender"] ?? ''));
+  $phone_number = trim((string)($d["phone_number"] ?? ''));
 
   if($name === '') out(["error"=>"Name required"], 400);
   if(strlen($name) > 80) out(["error"=>"Name too long"], 400);
 
-  // update name
-  $pdo->prepare("UPDATE users SET name=? WHERE id=?")->execute([$name, $uid]);
+  $bDate = $birth_date === '' ? null : $birth_date;
+  $gndr = $gender === '' ? null : $gender;
+  if ($gndr !== null && !in_array($gndr, ['male', 'female', 'other', 'prefer_not_to_say'])) {
+    $gndr = null;
+  }
+  $phone = $phone_number === '' ? null : $phone_number;
+
+  // update name & other fields
+  $pdo->prepare("UPDATE users SET name=?, birth_date=?, gender=?, phone_number=? WHERE id=?")->execute([$name, $bDate, $gndr, $phone, $uid]);
   $_SESSION['name'] = $name;
 
   // optional: if email passed here, set pending_email (NOT direct)
@@ -263,7 +273,7 @@ if($action === 'get_active_sessions' && $method === 'GET'){
   $outRows = array_map(function($row) use ($currentSelector, $currentSessionKey){
     return [
       "id" => (int)$row["id"],
-      "device_name" => (string)($row["device_name"] ?? ''),
+      "device_name" => preg_replace('/(?:\s*\|\s*)?origin:(?:app|admin-app|web)$/i', '', (string)($row["device_name"] ?? '')),
       "session_origin" => sessionOriginFromDeviceName((string)($row["device_name"] ?? '')),
       "browser" => (string)($row["browser"] ?? ''),
       "platform" => (string)($row["platform"] ?? ''),
@@ -276,6 +286,31 @@ if($action === 'get_active_sessions' && $method === 'GET'){
       "is_current" => ((string)$row["session_key"] === (string)$currentSessionKey)
     ];
   }, $rows);
+
+  $hasCurrent = false;
+  foreach($outRows as $r){
+    if(!empty($r["is_current"])) {
+      $hasCurrent = true;
+      break;
+    }
+  }
+
+  if(!$hasCurrent){
+    array_unshift($outRows, [
+      "id" => -1,
+      "device_name" => "Ընթացիկ սարք (Legacy)",
+      "session_origin" => "unknown",
+      "browser" => "Անհայտ",
+      "platform" => "Անհայտ",
+      "ip_address" => wp_runtime_remote_ip(),
+      "user_agent" => (string)($_SERVER['HTTP_USER_AGENT'] ?? ''),
+      "last_used_at" => date("Y-m-d H:i:s"),
+      "expires_at" => "",
+      "created_at" => date("Y-m-d H:i:s"),
+      "remembered" => false,
+      "is_current" => true
+    ]);
+  }
 
   out($outRows);
 }
@@ -603,10 +638,13 @@ if($action === 'email_status' && $method === 'GET'){
   if(!$u) out(["error"=>"User not found"], 404);
 
   out([
-    "email" => (string)($u["email"] ?? ''),
-    "pending_email" => (string)($u["pending_email"] ?? ''),
-    "verified" => !empty($u["email_verified_at"]),
-    "pending" => !empty($u["pending_email"]),
+    "ok" => true,
+    "status" => [
+      "email" => (string)($u["email"] ?? ''),
+      "pending_email" => (string)($u["pending_email"] ?? ''),
+      "verified" => !empty($u["email_verified_at"]),
+      "pending" => !empty($u["pending_email"]),
+    ]
   ]);
 }
 

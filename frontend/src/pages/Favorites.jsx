@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from "react-router-dom";
+
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import './Songs.css'; // Reuse library styles
+import { useLanguage } from '../context/LanguageContext';
+import './SongsApp.css'; // Reuse library styles
 
 export default function Favorites() {
   const [songs, setSongs] = useState([]);
@@ -9,6 +12,7 @@ export default function Favorites() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!user) {
@@ -27,7 +31,7 @@ export default function Favorites() {
       })
       .catch(err => {
         console.error(err);
-        setError('Չհաջողվեց բեռնել ֆավորիտները');
+        setError(t('favorites.errorLoad'));
         setLoading(false);
       });
   }, [user]);
@@ -35,9 +39,9 @@ export default function Favorites() {
   if (!user) {
     return (
       <div className="library-page container animate-fade-in" style={{ textAlign: 'center', paddingTop: '60px' }}>
-        <h2>Մուտք գործեք</h2>
-        <p style={{ color: 'var(--color-text-secondary)', marginTop: '16px' }}>Խնդրում ենք մուտք գործել՝ ձեր ֆավորիտ երգերը տեսնելու համար:</p>
-        <a href="/loginuser.php?next=/" className="btn btn-primary" style={{ marginTop: '24px', display: 'inline-block' }}>Մուտք</a>
+        <h2>{t('favorites.loginTitle')}</h2>
+        <p style={{ color: 'var(--color-text-secondary)', marginTop: '16px' }}>{t('favorites.loginPrompt')}</p>
+        <Link to="/login" className="btn btn-primary" style={{ marginTop: '24px', display: 'inline-block' }}>{t('favorites.loginBtn')}</Link>
       </div>
     );
   }
@@ -46,13 +50,13 @@ export default function Favorites() {
     <div className="library-page container animate-fade-in">
       <div className="library-header">
         <div className="library-title-group">
-          <h1>Իմ Ընտրանին</h1>
-          <p>{songs.length} պահպանված երգեր</p>
+          <h1>{t('favorites.title')}</h1>
+          <p>{songs.length} {t('favorites.savedSongs')}</p>
         </div>
       </div>
 
       {loading ? (
-        <div className="loading-state"><p>Բեռնվում է...</p></div>
+        <div className="loading-state"><p>{t('favorites.loading')}</p></div>
       ) : error ? (
         <div className="error-state"><p>{error}</p></div>
       ) : (
@@ -65,27 +69,27 @@ export default function Favorites() {
               onClick={() => navigate(`/song/${song.id}?list=favorites`)}
             >
               <div className="card-top">
-                <span className="card-artist">{song.artist || 'Անհայտ'}</span>
+                <span className="card-artist">{song.artist || t('songs.unknownArtist')}</span>
                 <h3 className="card-title">{song.title}</h3>
                 
                 <div className="card-tags">
-                  <span className="tag active-tag">Ֆավորիտ</span>
+                  <span className="tag active-tag">{t('favorites.favoriteTag')}</span>
                   {song.target_key ? (
-                    <span className="tag">Տոնայնություն: {song.target_key}</span>
+                    <span className="tag">{t('favorites.keyTag')} {song.target_key}</span>
                   ) : song.song_key ? (
-                    <span className="tag">Տոնայնություն: {song.song_key}</span>
+                    <span className="tag">{t('favorites.keyTag')} {song.song_key}</span>
                   ) : null}
                 </div>
               </div>
               
               <div className="card-bottom" style={{ justifyContent: 'flex-end' }}>
-                <span className="time">Բացել Երգը &rarr;</span>
+                <span className="time">{t('favorites.openSong')} &rarr;</span>
               </div>
             </div>
           ))}
           {songs.length === 0 && (
             <div className="no-results">
-              <p>Դեռ չունեք պահպանված երգեր:</p>
+              <p>{t('favorites.noFavorites')}</p>
             </div>
           )}
         </div>

@@ -372,19 +372,29 @@
 }
 .sidebar-filter-nav a {
   display: block;
-  padding: 9px 14px;
+  padding: 10px 16px;
   color: #70708A;
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   border-radius: 8px;
-  border-left: 2px solid transparent;
-  transition: all 0.18s;
+  transition: all 0.2s;
+  position: relative;
 }
 .sidebar-filter-nav a:hover { color: #fff; background: rgba(255,255,255,0.04); }
 .sidebar-filter-nav a.active {
   color: #00F0FF;
-  background: rgba(0,240,255,0.06);
-  border-left-color: #00F0FF;
+  background: rgba(0, 240, 255, 0.08);
+}
+.sidebar-filter-nav a.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 60%;
+  width: 3px;
+  background: #00F0FF;
+  border-radius: 0 4px 4px 0;
 }
 
 /* Community Picks */

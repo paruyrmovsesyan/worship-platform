@@ -841,9 +841,7 @@ if ($action === 'search_songs' && $method === 'GET') {
     SELECT s.id, s.title, s.artist, s.song_key, s.tags,
            s.title_hy, s.title_lat, s.title_en, s.title_ru
     FROM songs s
-    LEFT JOIN team_members m ON m.team_id = s.team_id AND m.user_id = ?
-    WHERE (s.is_public = 1 OR s.user_id = ? OR m.id IS NOT NULL)
-      AND (
+    WHERE (
          s.title LIKE ?
       OR COALESCE(s.title_hy, '') LIKE ?
       OR COALESCE(s.title_lat, '') LIKE ?
@@ -855,7 +853,7 @@ if ($action === 'search_songs' && $method === 'GET') {
     ORDER BY COALESCE(NULLIF(s.title_hy, ''), NULLIF(s.title, ''), s.id) ASC
     LIMIT 30
   ");
-  $st->execute([$uid, $uid, $like, $like, $like, $like, $like, $like, $like]);
+  $st->execute([$like, $like, $like, $like, $like, $like, $like]);
 
   $rows = $st->fetchAll(PDO::FETCH_ASSOC);
 

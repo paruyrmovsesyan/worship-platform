@@ -9,7 +9,8 @@ export default function LandingPage() {
   const [allSongs, setAllSongs] = useState([]);
   const [popularSongs, setPopularSongs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [songPage, setSongPage] = useState(0); // 0 = first 9, 1 = next 9, etc.
+  const [songPage, setSongPage] = useState(0);
+  const [activeFilter, setActiveFilter] = useState('songs');
   const contentRef = useRef(null);
   const SONGS_PER_PAGE = 9;
 
@@ -26,19 +27,34 @@ export default function LandingPage() {
       .then(data => {
         if (Array.isArray(data)) {
           setAllSongs(data);
-          setPopularSongs(data.slice(0, SONGS_PER_PAGE).map(mapSong));
         }
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (allSongs.length === 0) return;
+    
+    let sorted = [...allSongs];
+    if (activeFilter === 'artists') {
+      sorted.sort((a, b) => (a.artist || '').localeCompare(b.artist || ''));
+    } else if (activeFilter === 'key') {
+      sorted.sort((a, b) => (a.song_key || '').localeCompare(b.song_key || ''));
+    } else if (activeFilter === 'bpm') {
+      sorted.sort((a, b) => (parseInt(a.bpm) || 0) - (parseInt(b.bpm) || 0));
+    } else if (activeFilter === 'collections') {
+      sorted.sort((a, b) => (a.tags || '').localeCompare(b.tags || ''));
+    }
+    
+    const start = songPage * SONGS_PER_PAGE;
+    setPopularSongs(sorted.slice(start, start + SONGS_PER_PAGE).map((s, i) => mapSong(s, start + i)));
+  }, [activeFilter, allSongs, songPage]);
+
   const goToPage = (dir) => {
     const totalPages = Math.ceil(allSongs.length / SONGS_PER_PAGE);
     const newPage = (songPage + dir + totalPages) % totalPages;
     setSongPage(newPage);
-    const start = newPage * SONGS_PER_PAGE;
-    setPopularSongs(allSongs.slice(start, start + SONGS_PER_PAGE).map((s, i) => mapSong(s, start + i)));
   };
 
   const scrollToContent = () => {
@@ -62,7 +78,7 @@ export default function LandingPage() {
           </h1>
           <p className="hero-subtitle">{t('landing.heroSubtitle')}</p>
           <div className="hero-actions">
-            <button className="btn-start" onClick={() => window.location.href = '/registeruser.php?next=/'} style={{ minWidth: '160px' }}>
+            <button className="btn-start" onClick={() => navigate('/register')} style={{ minWidth: '160px' }}>
               {t('landing.startBtn')}
             </button>
             <button className="btn-demo" onClick={scrollToContent}>  
@@ -155,11 +171,11 @@ export default function LandingPage() {
               <h2>{t('landing.browse')}</h2>
             </div>
             <nav className="sidebar-filter-nav">
-              <Link to="/songs" className="active">{t('landing.browseSongs')}</Link>
-              <Link to="/songs">{t('landing.browseArtists')}</Link>
-              <Link to="/setlists">{t('landing.browseCollections')}</Link>
-              <Link to="/songs">{t('landing.browseByKey')}</Link>
-              <Link to="/songs">{t('landing.browseByBPM')}</Link>
+              <Link to="#" className={activeFilter === 'songs' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveFilter('songs'); setSongPage(0); }}>{t('landing.browseSongs')}</Link>
+              <Link to="#" className={activeFilter === 'artists' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveFilter('artists'); setSongPage(0); }}>{t('landing.browseArtists')}</Link>
+              <Link to="#" className={activeFilter === 'collections' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveFilter('collections'); setSongPage(0); }}>{t('landing.browseCollections')}</Link>
+              <Link to="#" className={activeFilter === 'key' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveFilter('key'); setSongPage(0); }}>{t('landing.browseByKey')}</Link>
+              <Link to="#" className={activeFilter === 'bpm' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveFilter('bpm'); setSongPage(0); }}>{t('landing.browseByBPM')}</Link>
             </nav>
           </div>
 

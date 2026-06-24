@@ -31,6 +31,7 @@ $navItems = [
   });
 </script>
 
+<div class="sidebar-overlay" onclick="document.body.classList.remove('sidebar-open')"></div>
 <aside class="app-sidebar">
   <div class="brand">
     <div class="brand-icon">

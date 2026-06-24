@@ -27,12 +27,21 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = () => {
-    window.location.href = '/loginuser.php?next=/';
+    var url = '/login?next=/';
+    if (window.WP && typeof window.WP.navigate === 'function') {
+      window.WP.navigate(url, { loaderDelay: 50, navigationDelay: 70 });
+    } else {
+      window.location.href = url;
+    }
   };
 
   const logout = () => {
-    // There is logout_users.php in root directory
-    window.location.href = '/logout_users.php?next=/';
+    var url = '/logout_users.php?next=/';
+    if (window.WP && typeof window.WP.navigate === 'function') {
+      window.WP.navigate(url, { loaderDelay: 50, navigationDelay: 70 });
+    } else {
+      window.location.href = url;
+    }
   };
 
   return (

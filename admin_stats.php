@@ -107,7 +107,7 @@ try {
     }
 
     // Recent songs (last 10)
-    $r = $conn->query("SELECT id, title, artist, created_at FROM songs $whereCreated ORDER BY id DESC LIMIT 10");
+    $r = $conn->query("SELECT id, title, artist, created_at FROM songs ORDER BY id DESC LIMIT 10");
     if ($r) { while($row=$r->fetch_assoc()) { $recentSongs[] = $row; } }
 
     // Top artists by song count
@@ -115,7 +115,7 @@ try {
     if ($r) { while($row=$r->fetch_assoc()) { $topArtists[] = $row; } }
 
     // Recent users (last 10)
-    $r = $conn->query("SELECT id, name, email, created_at FROM users $whereCreated ORDER BY id DESC LIMIT 10");
+    $r = $conn->query("SELECT id, name, email, created_at FROM users ORDER BY id DESC LIMIT 10");
     if ($r) { while($row=$r->fetch_assoc()) { $recentUsers[] = $row; } }
 
     // Moderation (Song Requests)
@@ -161,7 +161,7 @@ try {
 
     // Recent Push
     $recentPush = [];
-    $r = $conn->query("SELECT id, title, body, devices_count, at FROM push_history $whereAt ORDER BY at DESC LIMIT 5");
+    $r = $conn->query("SELECT id, title, body, devices_count, at FROM push_history ORDER BY at DESC LIMIT 5");
     if ($r) { while($row=$r->fetch_assoc()) { $recentPush[] = $row; } }
 
     $conn->close();
@@ -424,10 +424,10 @@ $searchPlaceholder = 'Search stats...';
           <tbody>
             <?php foreach ($recentPush as $p): ?>
             <tr>
-              <td><strong><?= htmlspecialchars((string)($p['subject'] ?? '—')) ?></strong></td>
-              <td style="color:var(--muted); font-size:13px; max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><?= htmlspecialchars((string)($p['message'] ?? '—')) ?></td>
-              <td><span class="badge" style="background:#dcfce7; color:#166534; font-weight:700;"><?= (int)$p['success_count'] ?></span></td>
-              <td style="color:var(--muted); font-size:13px;"><?= htmlspecialchars((string)($p['created_at'] ?? '—')) ?></td>
+              <td><strong><?= htmlspecialchars((string)($p['title'] ?? '—')) ?></strong></td>
+              <td style="color:var(--muted); font-size:13px; max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><?= htmlspecialchars((string)($p['body'] ?? '—')) ?></td>
+              <td><span class="badge" style="background:#dcfce7; color:#166534; font-weight:700;"><?= (int)($p['devices_count'] ?? 0) ?></span></td>
+              <td style="color:var(--muted); font-size:13px;"><?= htmlspecialchars((string)($p['at'] ?? '—')) ?></td>
             </tr>
             <?php endforeach; ?>
             <?php if (empty($recentPush)): ?>
