@@ -241,7 +241,7 @@ export default function SetlistEditor() {
                 {song.title?.charAt(0)?.toUpperCase()}
               </div>
               <div className="track-info">
-                <span className="track-title">{getLocalizedTitle(song.title, language)}</span>
+                <span className="track-title">{getLocalizedTitle(song, language)}</span>
                 <span className="track-artist">{song.artist || t('songs.unknownArtist')}</span>
               </div>
               <div className="track-actions">
@@ -273,7 +273,7 @@ export default function SetlistEditor() {
               </div>
 
               <div className="track-info">
-                <span className="track-title">{getLocalizedTitle(item.title || item.song_title, language)}</span>
+                <span className="track-title">{getLocalizedTitle(item, language)}</span>
                 <span className="track-artist">{item.artist || item.song_artist || t('songs.unknownArtist')}</span>
               </div>
 

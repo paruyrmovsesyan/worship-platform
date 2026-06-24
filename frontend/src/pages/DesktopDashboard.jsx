@@ -65,7 +65,7 @@ export default function DesktopDashboard() {
   }, [activeSetlistId]);
 
   const filteredSongs = songs.filter(song => {
-    const localizedTitle = getLocalizedTitle(song.title, language).toLowerCase();
+    const localizedTitle = getLocalizedTitle(song, language).toLowerCase();
     return localizedTitle.includes(searchQuery.toLowerCase()) ||
            (song.artist && song.artist.toLowerCase().includes(searchQuery.toLowerCase()));
   });
@@ -100,7 +100,7 @@ export default function DesktopDashboard() {
               onClick={() => setPreviewSong(song)}
             >
               <div className="item-info">
-                <h4>{getLocalizedTitle(song.title, language)}</h4>
+                <h4>{getLocalizedTitle(song, language)}</h4>
                 <p>{song.artist || 'Worship'}</p>
               </div>
               <div className="item-meta">
@@ -159,7 +159,7 @@ export default function DesktopDashboard() {
           <div className="preview-container">
             <div className="preview-header">
               <div style={{ flex: 1 }}>
-                <h2 style={{ fontSize: '2.2rem', fontWeight: '700', lineHeight: '1.2', letterSpacing: '-0.5px', marginBottom: '12px' }}>{getLocalizedTitle(previewSong.title, language)}</h2>
+                <h2 style={{ fontSize: '2.2rem', fontWeight: '700', lineHeight: '1.2', letterSpacing: '-0.5px', marginBottom: '12px' }}>{getLocalizedTitle(previewSong, language)}</h2>
                 <p style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--color-text-secondary)' }}></span>
                   {previewSong.song_key || 'C'}

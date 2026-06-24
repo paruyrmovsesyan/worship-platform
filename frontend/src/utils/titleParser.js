@@ -43,9 +43,26 @@ export function parseSongTitleVariants(text) {
   return { hy, lat, ru, en };
 }
 
-export function getLocalizedTitle(title, language) {
-  if (!title) return '';
-  const variants = parseSongTitleVariants(title);
+export function getLocalizedTitle(songOrTitle, language) {
+  if (!songOrTitle) return '';
+  
+  let titleString = songOrTitle;
+
+  // If a full song object is passed
+  if (typeof songOrTitle === 'object') {
+    if (language === 'am' && songOrTitle.title_hy) return songOrTitle.title_hy;
+    if (language === 'ru' && songOrTitle.title_ru) return songOrTitle.title_ru;
+    if (language === 'en') {
+      if (songOrTitle.title_en) return songOrTitle.title_en;
+      if (songOrTitle.title_lat) return songOrTitle.title_lat;
+    }
+    // Fallback if the specific language field is missing
+    titleString = songOrTitle.title || songOrTitle.title_hy || songOrTitle.title_ru || songOrTitle.title_en || songOrTitle.title_lat || '';
+  }
+
+  if (!titleString) return '';
+
+  const variants = parseSongTitleVariants(titleString);
   
   if (language === 'am' && variants.hy) return variants.hy;
   if (language === 'ru' && variants.ru) return variants.ru;
@@ -55,5 +72,5 @@ export function getLocalizedTitle(title, language) {
   }
   
   // Ultimate fallback
-  return variants.hy || variants.ru || variants.en || variants.lat || title;
+  return variants.hy || variants.ru || variants.en || variants.lat || titleString;
 }

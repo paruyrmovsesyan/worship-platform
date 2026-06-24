@@ -175,7 +175,7 @@ export default function MobileHub() {
                   </svg>
                 </div>
                 <div className="hub-item-info">
-                  <h4>{getLocalizedTitle(song.title, language)}</h4>
+                  <h4>{getLocalizedTitle(song, language)}</h4>
                   <p>{song.artist || t('songs.unknownArtist', 'Unknown Artist')}<br/>{t('songView.key', 'Key:')} {song.song_key || '?'}</p>
                 </div>
                 <div className="recent-time">

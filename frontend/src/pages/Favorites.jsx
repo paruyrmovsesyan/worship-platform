@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from "react-router-dom";
-
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
-import './Favorites.css';
+import './SongsApp.css'; // Reuse library styles
 
 export default function Favorites() {
   const [songs, setSongs] = useState([]);
@@ -36,7 +34,7 @@ export default function Favorites() {
         setError(t('favorites.errorLoad'));
         setLoading(false);
       });
-  }, [user]);
+  }, [user, t]);
 
   const removeFavorite = async (songId) => {
     if (!window.confirm(t('favorites.confirmRemove', 'Հեռացնե՞լ երգը պահպանվածներից:'))) return;
@@ -66,20 +64,22 @@ export default function Favorites() {
   }
 
   return (
-    <div className="favorites-page animate-fade-in">
-      <div className="favorites-header">
-        <h1 className="favorites-title">{t('favorites.title')}</h1>
-        <p className="favorites-subtitle">{songs.length} {t('favorites.savedSongs')}</p>
+    <div className="library-page container animate-fade-in">
+      <div className="library-header">
+        <div className="library-title-group">
+          <h1>{t('favorites.title')}</h1>
+          <p>{songs.length} {t('favorites.savedSongs')}</p>
+        </div>
       </div>
 
       {loading ? (
-        <div className="favorites-grid">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="fav-card skeleton-item">
-              <div className="fav-cover-wrapper skeleton-box"></div>
-              <div className="fav-info">
-                <div className="skeleton-line" style={{ width: '80%', height: '16px', marginTop: '4px' }}></div>
-                <div className="skeleton-line" style={{ width: '50%', height: '12px' }}></div>
+        <div className="track-list">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="track-item skeleton-item">
+              <div className="track-cover skeleton-box"></div>
+              <div className="track-info">
+                <div className="skeleton-line title-line"></div>
+                <div className="skeleton-line artist-line"></div>
               </div>
             </div>
           ))}
@@ -87,45 +87,51 @@ export default function Favorites() {
       ) : error ? (
         <div className="error-state"><p>{error}</p></div>
       ) : (
-        <div className="favorites-grid">
+        <div className="track-list">
           {songs.map((song, idx) => (
             <div 
               key={song.id} 
-              className="fav-card animate-fade-in"
+              className="track-item animate-fade-in"
               style={{ animationDelay: `${Math.min(idx * 0.03, 0.5)}s` }}
               onClick={() => navigate(`/song/${song.id}?list=favorites`)}
             >
-              <div className="fav-cover-wrapper">
-                <div className={`fav-cover ${GRADS[(song.id||idx) % GRADS.length]}`}>
-                  {song.title?.charAt(0)?.toUpperCase() || '?'}
-                </div>
-                
-                {(song.target_key || song.song_key) && (
-                  <span className="fav-badge">{song.target_key || song.song_key}</span>
-                )}
-                
+              <div className="track-number desk-only dim">
+                {(idx + 1).toString().padStart(2, '0')}
+              </div>
+
+              <div className={`track-cover ${GRADS[(song.id||idx) % GRADS.length]}`}>
+                {song.title?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+
+              <div className="track-info">
+                <span className="track-title">{getLocalizedTitle(song.title, language)}</span>
+                <span className="track-artist">{song.artist || t('songs.unknownArtist', 'Unknown Artist')}</span>
+              </div>
+              
+              <div className="track-meta">
+                {(song.target_key || song.song_key) && <span className="track-key-badge">{song.target_key || song.song_key}</span>}
+                {song.bpm && <span className="track-bpm desk-only dim">{song.bpm} BPM</span>}
+              </div>
+
+              <div className="track-actions">
                 <button 
-                  className="fav-remove"
+                  className="heart-btn"
                   onClick={(e) => {
                     e.stopPropagation();
                     removeFavorite(song.id);
                   }}
                   title={t('favorites.removeFromFav', 'Remove')}
                 >
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--color-text-secondary)" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>
                   </svg>
                 </button>
               </div>
-
-              <div className="fav-info">
-                <span className="fav-title">{getLocalizedTitle(song.title, language)}</span>
-                <span className="fav-artist">{song.artist || t('songs.unknownArtist', 'Unknown Artist')}</span>
-              </div>
             </div>
           ))}
+          
           {songs.length === 0 && (
-            <div className="list-placeholder empty-state animate-fade-in" style={{ gridColumn: '1 / -1', marginTop: '40px' }}>
+            <div className="list-placeholder empty-state animate-fade-in">
               <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
               <p>{t('favorites.noFavorites')}</p>
             </div>

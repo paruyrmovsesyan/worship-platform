@@ -12,6 +12,7 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [songPage, setSongPage] = useState(0);
   const [activeFilter, setActiveFilter] = useState('songs');
+  const [showVideo, setShowVideo] = useState(false);
   const contentRef = useRef(null);
   const SONGS_PER_PAGE = 9;
 
@@ -19,7 +20,7 @@ export default function LandingPage() {
     let tags = [];
     if (song.tags) tags = song.tags.split(',').map(t => t.trim()).filter(Boolean).slice(0, 2);
     if (tags.length === 0) tags = ['Worship'];
-    return { id: song.id, title: getLocalizedTitle(song.title, language) || t('landing.unknownArtist'), artist: song.artist && song.artist !== 'Unknown' ? song.artist : t('landing.unknownArtist'), key: song.song_key || '?', bpm: song.bpm, tags, img: `bg-gradient-${(index % 9) + 1}` };
+    return { id: song.id, title: getLocalizedTitle(song, language) || t('landing.unknownArtist'), artist: song.artist && song.artist !== 'Unknown' ? song.artist : t('landing.unknownArtist'), key: song.song_key || '?', bpm: song.bpm, tags, img: `bg-gradient-${(index % 9) + 1}` };
   };
 
   useEffect(() => {
@@ -82,7 +83,7 @@ export default function LandingPage() {
             <button className="btn-start" onClick={() => navigate('/register')} style={{ minWidth: '160px' }}>
               {t('landing.startBtn')}
             </button>
-            <button className="btn-demo" onClick={scrollToContent}>  
+            <button className="btn-demo" onClick={() => setShowVideo(true)}>  
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                 <path d="M8 5v14l11-7z"/>
               </svg>
@@ -230,6 +231,16 @@ export default function LandingPage() {
       </div>
 
       {/* FOOTER MOVED TO APP.JSX */}
+      {/* Video Modal Overlay */}
+      {showVideo && (
+        <div className="video-modal-overlay" onClick={() => setShowVideo(false)}>
+          <div className="video-modal-content" onClick={e => e.stopPropagation()}>
+            <button className="video-close" onClick={() => setShowVideo(false)}>&times;</button>
+            <video src="/demo.mp4" controls autoPlay playsInline className="demo-video-player" />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

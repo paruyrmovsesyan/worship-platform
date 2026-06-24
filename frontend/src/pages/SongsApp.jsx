@@ -218,7 +218,7 @@ export default function SongsApp() {
             </div>
 
             <div className="track-info">
-              <span className="track-title">{getLocalizedTitle(song.title, language)}</span>
+              <span className="track-title">{getLocalizedTitle(song, language)}</span>
               <span className="track-artist">{song.artist || t('songs.unknownArtist', 'Unknown Artist')}</span>
             </div>
 
