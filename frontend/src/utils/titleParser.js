@@ -14,32 +14,30 @@ export function parseSongTitleVariants(text) {
   const parts = String(text || '').split(/\s*\/\s*/u).map(p => p.trim()).filter(Boolean);
   let hy = '', lat = '', ru = '', en = '';
   
-  const latinParts = parts.filter(part => hasLatinText(part) && !hasArmenianText(part) && !hasCyrillicText(part));
-  const cyrillicParts = parts.filter(part => hasCyrillicText(part) && !hasArmenianText(part));
-
-  if (parts.length >= 3 && hasArmenianText(parts[0])) {
-    hy = parts[0] || '';
-    if (latinParts.length >= 2) {
-      lat = latinParts[0] || '';
-      en = latinParts[latinParts.length - 1] || '';
-    } else if (latinParts.length === 1 && parts.length === 2) {
-      en = latinParts[0] || '';
-    }
-    ru = cyrillicParts[0] || '';
-    return { hy, lat, ru, en };
-  }
-
   parts.forEach((part) => {
-    if (!hy && hasArmenianText(part)) { hy = part; return; }
-    if (!ru && hasCyrillicText(part) && !hasArmenianText(part)) { ru = part; return; }
-    if (!lat && hasLatinText(part) && !hasArmenianText(part) && !hasCyrillicText(part)) { lat = part; return; }
-    if (!en && hasLatinText(part) && !hasArmenianText(part) && !hasCyrillicText(part)) { en = part; }
+    if (!hy && hasArmenianText(part)) { 
+      hy = part; 
+      return; 
+    }
+    if (!ru && hasCyrillicText(part) && !hasArmenianText(part)) { 
+      ru = part; 
+      return; 
+    }
+    if (hasLatinText(part) && !hasArmenianText(part) && !hasCyrillicText(part)) {
+      if (!lat) {
+        lat = part; // First latin part goes to lat
+      } else if (!en) {
+        en = part; // Second latin part goes to en
+      }
+      return;
+    }
   });
 
-  if (!hy && parts.length) hy = parts[0];
-  if (!en && !ru && lat && parts.length === 2 && hy) {
-    en = lat;
-    lat = '';
+  // If we only found one latin string, and it looks like English (maybe no translit was provided)
+  // we can use it as English. The fallback in getLocalizedTitle already handles this,
+  // but let's be explicit if there is only one.
+  if (!hy && parts.length > 0 && !lat && !ru && !en) {
+    hy = parts[0]; // Ultimate fallback for hy
   }
 
   return { hy, lat, ru, en };
@@ -51,10 +49,10 @@ export function getLocalizedTitle(title, language) {
   
   if (language === 'am' && variants.hy) return variants.hy;
   if (language === 'ru' && variants.ru) return variants.ru;
-  if (language === 'en' && variants.en) return variants.en;
-  
-  // Fallbacks if requested language is not found
-  if (language === 'en' && variants.lat) return variants.lat;
+  if (language === 'en') {
+    if (variants.en) return variants.en;
+    if (variants.lat) return variants.lat;
+  }
   
   // Ultimate fallback
   return variants.hy || variants.ru || variants.en || variants.lat || title;
