@@ -241,9 +241,19 @@ const translations = {
       flats: '♭ Flats',
       sharps: '♯ Sharps',
       signs: 'Նշաններ',
-      noLyrics: 'Բառերը հասանելի չեն'
+      signs: 'Նշաններ',
+      noLyrics: 'Բառերը հասանելի չեն',
+      linkCopied: 'Հղումը պատճենվեց',
+      linkCopyError: 'Չհաջողվեց պատճենել հղումը',
+      setlistTitle: 'Երգացանկ',
+      key: 'Տոնայնություն:',
+      tempo: 'Տեմպ:',
+      addToSetlist: 'Ավելացնել երգացանկում',
+      download: 'Ներբեռնել',
+      edit: 'Խմբագրել'
     },
     songRequest: {
+      title: 'Երգի հարցում',
       titleNew: 'Առաջարկել Նոր Երգ',
       titleEdit: 'Խմբագրել երգը',
       needLogin: 'Հարցում ուղարկելու համար նախ մուտք գործիր։',
@@ -379,14 +389,7 @@ const translations = {
       subtitle: 'Ուղեցույցներ, ձեռնարկներ և գործիքներ քո թիմի հաջողության համար:',
       search: 'Որոնել ռեսուրսներ...'
     },
-    songView: {
-      key: 'Տոնայնություն:',
-      tempo: 'Տեմպ:',
-      addToSetlist: 'Ավելացնել երգացանկում',
-      download: 'Ներբեռնել',
-      edit: 'Խմբագրել',
-      noLyrics: 'Տեքստ կամ ակորդներ չկան:'
-    },
+
     profile: {
       title: 'Պրոֆիլ',
       desc: 'Կառավարեք Ձեր հաշիվը և նախընտրությունները:',
@@ -658,9 +661,18 @@ const translations = {
       flats: '♭ Flats',
       sharps: '♯ Sharps',
       signs: 'Signs',
-      noLyrics: 'Lyrics not available'
+      noLyrics: 'Lyrics are not available',
+      linkCopied: 'Link copied',
+      linkCopyError: 'Failed to copy link',
+      setlistTitle: 'Setlist',
+      key: 'Key:',
+      tempo: 'Tempo:',
+      addToSetlist: 'Add to Setlist',
+      download: 'Download',
+      edit: 'Edit'
     },
     songRequest: {
+      title: 'Song Request',
       titleNew: 'Suggest New Song',
       titleEdit: 'Edit Song',
       needLogin: 'Please log in to submit a request.',
@@ -794,14 +806,7 @@ const translations = {
       subtitle: 'Guides, tutorials, and tools to help your worship team thrive.',
       search: 'Search resources…'
     },
-    songView: {
-      key: 'Key:',
-      tempo: 'Tempo:',
-      addToSetlist: 'Add to Setlist',
-      download: 'Download',
-      edit: 'Edit',
-      noLyrics: 'No lyrics or chords available.'
-    },
+
     profile: {
       title: 'Profile',
       desc: 'Manage your account and preferences.',
@@ -829,9 +834,7 @@ const translations = {
       recentChords: 'Recently Added',
       latestNews: 'Community News'
     },
-    songRequest: {
-      title: 'Song Request'
-    }
+
   },
   ru: {
     auth: {
@@ -1073,9 +1076,18 @@ const translations = {
       flats: '♭ Бемоли',
       sharps: '♯ Диезы',
       signs: 'Знаки',
-      noLyrics: 'Слова недоступны'
+      noLyrics: 'Текст недоступен',
+      linkCopied: 'Ссылка скопирована',
+      linkCopyError: 'Не удалось скопировать ссылку',
+      setlistTitle: 'Сет-лист',
+      key: 'Тональность:',
+      tempo: 'Темп:',
+      addToSetlist: 'Добавить в сет-лист',
+      download: 'Скачать',
+      edit: 'Редактировать'
     },
     songRequest: {
+      title: 'Запрос песни',
       titleNew: 'Предложить новую песню',
       titleEdit: 'Редактировать песню',
       needLogin: 'Пожалуйста, войдите, чтобы отправить запрос.',
@@ -1209,14 +1221,7 @@ const translations = {
       subtitle: 'Руководства, обучение и инструменты для вашей команды.',
       search: 'Поиск ресурсов…'
     },
-    songView: {
-      key: 'Том:',
-      tempo: 'Темп:',
-      addToSetlist: 'В сет-лист',
-      download: 'Скачать',
-      edit: 'Редактировать',
-      noLyrics: 'Текст или аккорды отсутствуют.'
-    },
+
     profile: {
       title: 'Профиль',
       desc: 'Управляйте своим аккаунтом и настройками.',
@@ -1244,9 +1249,7 @@ const translations = {
       recentChords: 'Недавно добавленные',
       latestNews: 'Новости сообщества'
     },
-    songRequest: {
-      title: 'Запрос песни'
-    }
+
   },
 };
 

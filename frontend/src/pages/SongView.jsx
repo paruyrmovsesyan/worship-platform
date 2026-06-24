@@ -41,10 +41,10 @@ export default function SongView() {
       url.searchParams.set('font', String(fontSize));
       
       await navigator.clipboard.writeText(url.toString());
-      setFavMsg('Հղումը պատճենվեց');
+      setFavMsg(t('songView.linkCopied'));
       setTimeout(() => setFavMsg(''), 2000);
     } catch (e) {
-      setFavMsg('Չհաջողվեց պատճենել հղումը');
+      setFavMsg(t('songView.linkCopyError'));
       setTimeout(() => setFavMsg(''), 2000);
     }
   };
@@ -477,7 +477,7 @@ export default function SongView() {
           </button>
           <div className="seq-info">
             <span className="seq-count">{setlistNavData.current.index} / {setlistNavData.total}</span>
-            <span className="seq-title">Setlist</span>
+            <span className="seq-title">{t('songView.setlistTitle')}</span>
           </div>
           <button className="seq-btn" disabled={!setlistNavData.next} onClick={() => navigateToSetlistSong(setlistNavData.next)}>
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
