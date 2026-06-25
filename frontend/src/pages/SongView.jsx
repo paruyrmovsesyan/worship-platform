@@ -357,9 +357,6 @@ export default function SongView() {
       <div className="sv-meta-row">
         <div className="sv-meta-pill key-pill">{t('songView.keyPrefix')} {soundingKey || song.song_key || '?'}</div>
         {song.bpm && <div className="sv-meta-pill">BPM: {song.bpm}</div>}
-        <button className="icon-btn" onClick={copyShareLink} style={{ marginLeft: 'auto', opacity: 0.6, padding: '4px' }}>
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-        </button>
       </div>
 
       {/* Segmented Control for View Mode */}
