@@ -362,6 +362,28 @@ export default function SongView() {
         </button>
       </div>
 
+      {/* Segmented Control for View Mode */}
+      <div className="sv-segment-control">
+        <button className={`sv-segment ${viewMode === 'lyrics' ? 'active' : ''}`} onClick={() => handleViewModeChange('lyrics')}>{t('songView.lyricsOnly')}</button>
+        <button className={`sv-segment ${viewMode === 'chords' ? 'active' : ''}`} onClick={() => handleViewModeChange('chords')}>{t('songView.chordsOnly')}</button>
+        <button className={`sv-segment ${viewMode === 'both' ? 'active' : ''}`} onClick={() => handleViewModeChange('both')}>{t('songView.bothModes')}</button>
+      </div>
+
+      {/* Sheet Music / Lyrics Content */}
+      <div className={`sv-sheet ${viewMode === 'lyrics' ? 'lyrics-mode' : ''}`} style={{ fontSize: `${fontSize}px` }}>
+        {viewMode === 'chords' && song.chords ? (
+          <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
+        ) : viewMode === 'both' && song.chords ? (
+          <>
+            <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
+            <div className="sv-divider"></div>
+            <pre className="lyrics-block">{currentLyrics}</pre>
+          </>
+        ) : (
+          <pre className="lyrics-block">{currentLyrics}</pre>
+        )}
+      </div>
+
       {/* Web Controls (Hidden in PWA) */}
       <div className="sv-inline-controls">
         <div className="sv-keys-scroll">
@@ -489,28 +511,6 @@ export default function SongView() {
           <button className="btn btn-primary btn-sm w-100" style={{ marginTop: '12px' }} onClick={() => saveFavoriteKey(playingKey)}>
             {t('songView.saveKey')}
           </button>
-        )}
-      </div>
-
-      {/* Segmented Control for View Mode */}
-      <div className="sv-segment-control">
-        <button className={`sv-segment ${viewMode === 'lyrics' ? 'active' : ''}`} onClick={() => handleViewModeChange('lyrics')}>{t('songView.lyricsOnly')}</button>
-        <button className={`sv-segment ${viewMode === 'chords' ? 'active' : ''}`} onClick={() => handleViewModeChange('chords')}>{t('songView.chordsOnly')}</button>
-        <button className={`sv-segment ${viewMode === 'both' ? 'active' : ''}`} onClick={() => handleViewModeChange('both')}>{t('songView.bothModes')}</button>
-      </div>
-
-      {/* Sheet Music / Lyrics Content */}
-      <div className={`sv-sheet ${viewMode === 'lyrics' ? 'lyrics-mode' : ''}`} style={{ fontSize: `${fontSize}px` }}>
-        {viewMode === 'chords' && song.chords ? (
-          <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
-        ) : viewMode === 'both' && song.chords ? (
-          <>
-            <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
-            <div className="sv-divider"></div>
-            <pre className="lyrics-block">{currentLyrics}</pre>
-          </>
-        ) : (
-          <pre className="lyrics-block">{currentLyrics}</pre>
         )}
       </div>
 
