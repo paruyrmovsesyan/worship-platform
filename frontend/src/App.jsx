@@ -66,6 +66,15 @@ function App() {
         document.body.classList.add('mobile-theme'); // Still mobile size, but maybe website styling
       }
     }
+
+    // Artificial Splash Screen Delay
+    const loader = document.getElementById('app-loader');
+    if (loader) {
+      setTimeout(() => {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.remove(), 500); // Wait for transition to finish
+      }, 1500); // Artificial wait time before fading out
+    }
   }, [isMobile, isPWA]);
 
   const renderNav = () => {
