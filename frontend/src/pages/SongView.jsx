@@ -538,7 +538,7 @@ export default function SongView() {
         </button>
       </div>
 
-      {favMsg && <div className="toast-message animate-fade-in">{favMsg}</div>}
+      {favMsg && <div className="toast-message">{favMsg}</div>}
     </div>
   );
 }
