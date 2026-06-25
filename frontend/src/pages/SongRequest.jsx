@@ -6,6 +6,8 @@ import { useAuth } from '../context/AuthContext';
 export default function SongRequest() {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   const songIdParam = searchParams.get('song_id');
   const songId = songIdParam ? parseInt(songIdParam, 10) : 0;
