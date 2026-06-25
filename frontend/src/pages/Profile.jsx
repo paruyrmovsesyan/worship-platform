@@ -61,22 +61,6 @@ export default function Profile() {
         </div>
       </div>
 
-      <div className="profile-plan-section">
-        <div className="plan-info-left">
-          <h3>{t('profile.currentPlan')}</h3>
-          {loading ? (
-            <span style={{color: 'var(--color-text-secondary)'}}>{t('profile.loading')}</span>
-          ) : (
-            <span className={`plan-badge plan-${planType}`}>
-              {planType.toUpperCase()}
-            </span>
-          )}
-        </div>
-        <button className="upgrade-btn" onClick={() => navigate('/pricing')}>
-          {t('profile.upgradePlan')}
-        </button>
-      </div>
-
       <div className="profile-links">
         <button className="profile-link-btn" onClick={() => navigate('/favorites')}>
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

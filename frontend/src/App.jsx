@@ -26,7 +26,6 @@ import News from './pages/News';
 import Teams from './pages/Teams';
 import TeamView from './pages/TeamView';
 import Community from './pages/Community';
-import Pricing from './pages/Pricing';
 import Resources from './pages/Resources';
 import Contact from './pages/Contact';
 import About from './pages/About';
@@ -103,7 +102,6 @@ function App() {
           <Route path="/teams" element={<Teams />} />
           <Route path="/teams/:id" element={<TeamView />} />
           <Route path="/community" element={<Community />} />
-          <Route path="/pricing" element={<Pricing />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />

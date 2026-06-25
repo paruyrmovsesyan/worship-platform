@@ -33,9 +33,9 @@ export default function Footer() {
         </div>
         <div className="footer-links">
           {[
-            { title: t('landing.footer.product'), links: [[t('landing.footer.songs'), '/songs'], [t('landing.footer.teams'), '/teams'], [t('landing.footer.pricing'), '/pricing'], [t('landing.footer.setlists'), '/setlists']] },
+            { title: t('landing.footer.product'), links: [[t('landing.footer.songs'), '/songs'], [t('landing.footer.teams'), '/teams'], [t('landing.footer.setlists'), '/setlists']] },
             { title: t('landing.footer.company'), links: [[t('landing.footer.about'), '/about'], [t('landing.footer.blog'), '/blog'], [t('landing.footer.careers'), '/careers'], [t('landing.footer.community'), '/community']] },
-            { title: t('landing.footer.resources'), links: [[t('landing.footer.documentation'), '/documentation'], [t('landing.footer.tutorials'), '/tutorials'], [t('landing.footer.pricing'), '/pricing'], [t('landing.footer.support'), '/support']] },
+            { title: t('landing.footer.resources'), links: [[t('landing.footer.documentation'), '/documentation'], [t('landing.footer.tutorials'), '/tutorials'], [t('landing.footer.support'), '/support']] },
             { title: t('landing.footer.legal'), links: [[t('landing.footer.privacyPolicy'), '/privacy'], [t('landing.footer.terms'), '/terms'], [t('landing.footer.cookies'), '/cookies']] },
           ].map(group => (
             <div key={group.title} className="link-group">

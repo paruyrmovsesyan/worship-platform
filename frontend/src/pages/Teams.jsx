@@ -10,8 +10,6 @@ export default function Teams() {
   const { t } = useLanguage();
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showUpgrade, setShowUpgrade] = useState(false);
-  const [upgradeMsg, setUpgradeMsg] = useState('');
 
   useEffect(() => {
     if (!user) {
@@ -64,8 +62,7 @@ export default function Teams() {
         alert(t('teams.addedAlert'));
         fetchTeams();
       } else if (data.error === 'limit_reached') {
-        setUpgradeMsg(data.message);
-        setShowUpgrade(true);
+        alert(data.message || 'Team limit reached.');
       } else {
         alert(data.error);
       }
@@ -88,19 +85,6 @@ export default function Teams() {
              </button>
           </div>
         </div>
-
-        {showUpgrade && (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ background: '#1c1f2e', padding: '32px', borderRadius: '16px', maxWidth: '400px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}>
-              <h2 style={{ marginBottom: '16px', color: '#fff' }}>{t('teams.upgradeRequired')}</h2>
-              <p style={{ color: '#aaa', marginBottom: '24px', lineHeight: '1.5' }}>{upgradeMsg}</p>
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                <button className="btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff' }} onClick={() => setShowUpgrade(false)}>{t('teams.cancelBtn')}</button>
-                <button className="btn btn-primary" onClick={() => navigate('/pricing')}>{t('teams.seePlansBtn')}</button>
-              </div>
-            </div>
-          </div>
-        )}
 
         <div className="table-container" style={{ marginTop: '30px' }}>
           {loading ? (
@@ -143,7 +127,6 @@ export default function Teams() {
             <button className="btn-primary-cyan" onClick={() => navigate(user ? '/setlists' : '/register')}>
               {user ? t('teams.dashboard') : t('teams.ctaJoin')}
             </button>
-            <button className="btn-ghost" onClick={() => navigate('/pricing')}>{t('teams.cta')} →</button>
           </div>
         </div>
         <div className="teams-hero-visual">
@@ -177,7 +160,9 @@ export default function Teams() {
         <div className="teams-container">
           <h2>{t('teams.ctaTitle')}</h2>
           <p>{t('teams.ctaSub')}</p>
-          <button className="btn-primary-cyan" onClick={() => navigate('/pricing')}>{t('teams.cta')}</button>
+          <button className="btn-primary-cyan" onClick={() => navigate(user ? '/setlists' : '/register')}>
+            {user ? t('teams.dashboard') : t('teams.ctaJoin')}
+          </button>
         </div>
       </div>
     </div>

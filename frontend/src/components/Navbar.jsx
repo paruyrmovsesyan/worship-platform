@@ -132,10 +132,6 @@ export default function Navbar() {
       icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
     },
     {
-      to: '/pricing', label: t('nav.pricing'),
-      icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-    },
-    {
       to: '/resources', label: t('nav.resources'),
       icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
     },
@@ -262,7 +258,7 @@ export default function Navbar() {
             </Link>
             
             <div 
-              className={`nav-item has-dropdown ${activeDropdown === 'solutions' ? 'active-dropdown' : ''} ${isActive('/songs') || isActive('/setlists') || isActive('/teams') || isActive('/pricing') ? 'active' : ''}`}
+              className={`nav-item has-dropdown ${activeDropdown === 'solutions' ? 'active-dropdown' : ''} ${isActive('/songs') || isActive('/setlists') || isActive('/teams') ? 'active' : ''}`}
               onMouseEnter={(e) => handleMenuEnter(e, 'solutions')}
               onMouseLeave={onMenuLeave}
             >
@@ -283,7 +279,6 @@ export default function Navbar() {
                       <h4>{t('megaMenu.management')}</h4>
                       <div className="mega-col-links">
                         <Link to="/teams">{t('nav.teams')}</Link>
-                        <Link to="/pricing">{t('nav.pricing')}</Link>
                       </div>
                     </div>
                   </div>
