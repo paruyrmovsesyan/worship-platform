@@ -42,7 +42,7 @@ export default function SongView() {
       url.searchParams.set('font', String(fontSize));
       
       await navigator.clipboard.writeText(url.toString());
-      setFavMsg(t('songView.linkCopied', 'Հղումը պատճենվեց'));
+      setFavMsg(t('songView.linkCopied', 'Հղումը պատճենված է'));
       setTimeout(() => setFavMsg(''), 2000);
     } catch (e) {
       setFavMsg(t('songView.linkCopyError', 'Սխալ պատճենման ժամանակ'));

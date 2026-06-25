@@ -243,7 +243,7 @@ const translations = {
       signs: 'Նշաններ',
       signs: 'Նշաններ',
       noLyrics: 'Բառերը հասանելի չեն',
-      linkCopied: 'Հղումը պատճենվեց',
+      linkCopied: 'Հղումը պատճենված է',
       linkCopyError: 'Չհաջողվեց պատճենել հղումը',
       setlistTitle: 'Երգացանկ',
       key: 'Տոնայնություն:',
