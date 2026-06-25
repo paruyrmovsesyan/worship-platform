@@ -45,12 +45,10 @@ import Notifications from './pages/Notifications';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useIsPWA } from './hooks/useIsPWA';
 import ScrollToTop from './components/ScrollToTop';
-import SplashScreen from './components/SplashScreen';
 
 function App() {
   const isMobile = useMediaQuery('(max-width: 900px)');
   const isPWA = useIsPWA();
-  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     document.body.classList.remove('mobile-theme', 'app-desktop-theme', 'website-theme', 'is-pwa');
@@ -79,10 +77,8 @@ function App() {
   };
 
   return (
-    <>
-      {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
-      <div className={`app-container ${isPWA && !isMobile ? 'with-sidebar' : ''}`}>
-        <ScrollToTop />
+    <div className={`app-container ${isPWA && !isMobile ? 'with-sidebar' : ''}`}>
+      <ScrollToTop />
       {renderNav()}
       <main className={isPWA && !isMobile ? 'main-with-sidebar' : ''}>
         <Routes>
@@ -126,7 +122,6 @@ function App() {
       </main>
       {isPWA && isMobile ? null : <Footer />}
     </div>
-    </>
   );
 }
 
