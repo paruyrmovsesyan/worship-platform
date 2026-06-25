@@ -85,12 +85,17 @@ export default function Setlists() {
   if (!user) {
     return (
       <div className="setlists-page animate-fade-in">
+        <div className="sl-header">
+          <h1 className="sl-title">
+            <span>{t('nav.setlists')}</span>
+          </h1>
+        </div>
         <div className="login-prompt">
           <div className="prompt-icon">
-            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
           </div>
           <h2>{t('nav.login')}</h2>
-          <p>{t('setlists.loginPrompt')}</p>
+          <p>{t('setlists.loginPrompt', 'Խնդրում ենք մուտք գործել՝ երգացանկեր ստեղծելու և դիտելու համար:')}</p>
           <Link to="/login?next=/setlists" className="btn btn-primary">{t('nav.login')}</Link>
         </div>
       </div>

@@ -319,3 +319,41 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* Login Prompt */
+.login-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-top: 40px;
+  padding: 40px 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-surface-hover);
+  border-radius: 24px;
+}
+
+.prompt-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(0, 240, 255, 0.1);
+  color: var(--color-accent-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.login-prompt h2 {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+  color: var(--color-text-primary);
+}
+
+.login-prompt p {
+  color: var(--color-text-secondary);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
