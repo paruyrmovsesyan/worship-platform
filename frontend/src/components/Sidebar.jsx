@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import LanguageSwitcher from './LanguageSwitcher';
 import './Sidebar.css';
 
 export default function Sidebar() {
@@ -47,20 +48,8 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
-        <div className="sidebar-lang" style={{ display: 'flex', gap: '8px', marginBottom: '16px', justifyContent: 'center' }}>
-          {['am', 'en', 'ru'].map(l => (
-            <button
-              key={l}
-              onClick={() => setLanguage(l)}
-              style={{
-                background: 'none', border: 'none', color: language === l ? '#00f0ff' : 'var(--color-text-tertiary)',
-                fontSize: '12px', fontWeight: language === l ? '700' : '400', cursor: 'pointer',
-                textTransform: 'uppercase'
-              }}
-            >
-              {l}
-            </button>
-          ))}
+        <div className="sidebar-lang" style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+          <LanguageSwitcher />
         </div>
         {user ? (
           <div className="sidebar-user">

@@ -1,0 +1,52 @@
+.lang-switcher-pill {
+  position: relative;
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 30px;
+  padding: 4px;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 10;
+  width: fit-content;
+}
+
+.lang-pill-btn {
+  position: relative;
+  z-index: 2;
+  background: none;
+  border: none;
+  color: var(--color-text-tertiary, rgba(255,255,255,0.5));
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  outline: none;
+  letter-spacing: 0.5px;
+  flex: 1;
+  text-align: center;
+}
+
+.lang-pill-btn.active {
+  color: #fff;
+}
+
+.lang-pill-btn:hover:not(.active) {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.lang-pill-glider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / 3);
+  height: calc(100% - 8px);
+  background: linear-gradient(135deg, #00f0ff, #0072ff);
+  border-radius: 20px;
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  z-index: 1;
+  box-shadow: 0 4px 12px rgba(0, 240, 255, 0.3);
+}

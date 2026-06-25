@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import LanguageSwitcher from './LanguageSwitcher';
 import './Navbar.css';
 
 export default function Navbar() {
@@ -218,14 +219,8 @@ export default function Navbar() {
               {t('nav.logout')}
             </button>
           )}
-          <div className="menu-lang">
-            {['am','en','ru'].map(l => (
-              <button
-                key={l}
-                className={`menu-lang-btn ${language === l ? 'active' : ''}`}
-                onClick={() => { setLanguage(l); setMenuOpen(false); }}
-              >{l.toUpperCase()}</button>
-            ))}
+          <div className="menu-lang" style={{ display: 'flex', justifyContent: 'center' }}>
+            <LanguageSwitcher />
           </div>
         </div>
 
@@ -378,13 +373,8 @@ export default function Navbar() {
               </div>
             )}
 
-            {/* Language toggle */}
-            <div className="lang-toggle hide-mobile">
-              {['am','en','ru'].map(l => (
-                <button key={l} className={`lang-btn ${language === l ? 'active' : ''}`} onClick={() => setLanguage(l)}>
-                  {l.toUpperCase()}
-                </button>
-              ))}
+            <div className="lang-toggle hide-mobile" style={{ marginLeft: '12px' }}>
+              <LanguageSwitcher />
             </div>
 
             {/* ── HAMBURGER (Mobile only) ── */}
