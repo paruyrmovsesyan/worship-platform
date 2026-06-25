@@ -331,7 +331,14 @@ export default function SongView() {
           </div>
         </div>
 
-        <div className="sv-header-actions">
+      </div>
+
+      {/* Meta Bar */}
+      <div className="sv-meta-row">
+        <div className="sv-meta-pill key-pill">{t('songView.keyPrefix')} {soundingKey || song.song_key || '?'}</div>
+        {song.bpm && <div className="sv-meta-pill">BPM: {song.bpm}</div>}
+        
+        <div className="sv-header-actions" style={{ marginLeft: 'auto' }}>
             {setlistNavData?.current?.id && (
               <button 
                 className="icon-btn highlight-btn"
@@ -350,13 +357,7 @@ export default function SongView() {
             <button className={`icon-btn ${isFavorite ? 'active' : ''}`} onClick={toggleFavorite} title={isFavorite ? t('songView.removeFav') : t('songView.addFav')}>
               <svg viewBox="0 0 24 24" width="20" height="20" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
             </button>
-          </div>
-      </div>
-
-      {/* Meta Bar */}
-      <div className="sv-meta-row">
-        <div className="sv-meta-pill key-pill">{t('songView.keyPrefix')} {soundingKey || song.song_key || '?'}</div>
-        {song.bpm && <div className="sv-meta-pill">BPM: {song.bpm}</div>}
+        </div>
       </div>
 
       {/* Segmented Control for View Mode */}
