@@ -42,10 +42,41 @@ export default function SongView() {
       url.searchParams.set('font', String(fontSize));
       
       await navigator.clipboard.writeText(url.toString());
-      setFavMsg(t('songView.linkCopied'));
+      setFavMsg(t('songView.linkCopied', 'Հղումը պատճենվեց'));
       setTimeout(() => setFavMsg(''), 2000);
     } catch (e) {
-      setFavMsg(t('songView.linkCopyError'));
+      setFavMsg(t('songView.linkCopyError', 'Սխալ պատճենման ժամանակ'));
+      setTimeout(() => setFavMsg(''), 2000);
+    }
+  };
+
+  const copySongContent = async () => {
+    try {
+      let text = `${getLocalizedTitle(song.title, language)}\n`;
+      
+      const keyToCopy = targetKey || playingKey;
+      if (keyToCopy) {
+        text += `${t('songView.key', 'Key')}: ${keyToCopy}\n`;
+      }
+      
+      text += '\n';
+
+      if (song.chords) {
+        const rawChords = renderWithChords(song.chords, semi - capo, useFlats).replace(/<[^>]*>?/gm, '');
+        text += `--- ${t('songView.chords', 'Chords')} ---\n`;
+        text += rawChords + '\n\n';
+      }
+
+      if (song.lyrics) {
+        text += `--- ${t('songView.lyrics', 'Lyrics')} ---\n`;
+        text += song.lyrics + '\n';
+      }
+
+      await navigator.clipboard.writeText(text.trim());
+      setFavMsg(t('songView.copied', 'Պատճենվեց'));
+      setTimeout(() => setFavMsg(''), 2000);
+    } catch (err) {
+      setFavMsg(t('songView.copyError', 'Սխալ պատճենման ժամանակ'));
       setTimeout(() => setFavMsg(''), 2000);
     }
   };
@@ -295,18 +326,31 @@ export default function SongView() {
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
           <div className="sv-title-area">
-            <h1 className="sv-title">{getLocalizedTitle(song, language)}</h1>
+            <h1 className="sv-title">{getLocalizedTitle(song.title, language)}</h1>
             <p className="sv-artist">{song.artist}</p>
           </div>
         </div>
 
         <div className="sv-header-actions">
-          <button className={`icon-btn ${isFavorite ? 'active' : ''}`} onClick={toggleFavorite}>
-            <svg viewBox="0 0 24 24" width="24" height="24" fill={isFavorite ? '#FF4A6A' : 'none'} stroke={isFavorite ? '#FF4A6A' : 'currentColor'} strokeWidth="2">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-            </svg>
-          </button>
-        </div>
+            {setlistNavData?.current?.id && (
+              <button 
+                className="icon-btn highlight-btn"
+                onClick={() => navigate(`/setlists/${setlistNavData.current.setlist_id}`)}
+                title={t('songView.backToSetlist')}
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+              </button>
+            )}
+            <button className="icon-btn" onClick={copySongContent} title={t('songView.copyContent', 'Copy Song')}>
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+            <button className="icon-btn" onClick={copyShareLink} title={t('songView.copyLink')}>
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            </button>
+            <button className={`icon-btn ${isFavorite ? 'active' : ''}`} onClick={toggleFavorite} title={isFavorite ? t('songView.removeFav') : t('songView.addFav')}>
+              <svg viewBox="0 0 24 24" width="20" height="20" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            </button>
+          </div>
       </div>
 
       {/* Meta Bar */}
