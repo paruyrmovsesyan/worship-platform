@@ -66,13 +66,17 @@ function App() {
       }
     }
 
-    // Artificial Splash Screen Delay
+    // Artificial Splash Screen Delay for PWA
     const loader = document.getElementById('app-loader');
     if (loader) {
-      setTimeout(() => {
-        loader.style.opacity = '0';
-        setTimeout(() => loader.remove(), 500); // Wait for transition to finish
-      }, 1500); // Artificial wait time before fading out
+      if (window.__SKIP_SPLASH) {
+        loader.remove(); // Remove immediately if on website
+      } else {
+        setTimeout(() => {
+          loader.style.opacity = '0';
+          setTimeout(() => loader.remove(), 500); // Wait for transition to finish
+        }, 1500); // Artificial wait time before fading out
+      }
     }
   }, [isMobile, isPWA]);
 
