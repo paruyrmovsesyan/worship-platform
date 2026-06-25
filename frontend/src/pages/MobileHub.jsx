@@ -127,21 +127,23 @@ export default function MobileHub() {
         </div>
 
         {/* Dashboard: Upcoming Service */}
-        <div className="upcoming-card">
-          <div className="card-bg-glow"></div>
-          <div className="card-content">
-            <h2 className="card-label">{t('hub.upcomingService')}:<br/>{upcomingSetlist ? upcomingSetlist.name : 'Sunday AM'}</h2>
-            <p>{getFormattedDate()}</p>
-            
-            <button 
-              className="btn btn-primary" 
-              style={{ width: '100%', marginTop: '16px' }}
-              onClick={() => upcomingSetlist ? navigate(`/setlists/${upcomingSetlist.id}`) : navigate('/setlists')}
-            >
-              {t('hub.startRehearsal')}
-            </button>
+        {user && (
+          <div className="upcoming-card">
+            <div className="card-bg-glow"></div>
+            <div className="card-content">
+              <h2 className="card-label">{t('hub.upcomingService')}:<br/>{upcomingSetlist ? upcomingSetlist.name : 'Sunday AM'}</h2>
+              <p>{getFormattedDate()}</p>
+              
+              <button 
+                className="btn btn-primary" 
+                style={{ width: '100%', marginTop: '16px' }}
+                onClick={() => upcomingSetlist ? navigate(`/setlists/${upcomingSetlist.id}`) : navigate('/setlists')}
+              >
+                {t('hub.startRehearsal')}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* My Favorites (Horizontal Scroll) */}
         {user && favorites.length > 0 && (
