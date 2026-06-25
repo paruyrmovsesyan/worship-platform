@@ -8,7 +8,7 @@ import './MobileHub.css';
 export default function MobileHub() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { t, language } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   
   const [recentSongs, setRecentSongs] = useState([]);
   const [upcomingSetlist, setUpcomingSetlist] = useState(null);
@@ -69,9 +69,26 @@ export default function MobileHub() {
     <div className="mobile-hub animate-fade-in">
       <div className="hub-header">
         <h1>Worship Platform</h1>
-        <button className="icon-btn" style={{ border: 'none' }} onClick={() => navigate('/notifications')}>
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '4px', marginRight: '8px' }}>
+            {['am', 'en', 'ru'].map(l => (
+              <button 
+                key={l}
+                onClick={() => setLanguage(l)}
+                style={{
+                  background: 'none', border: 'none', color: language === l ? '#00f0ff' : '#888',
+                  fontSize: '12px', fontWeight: language === l ? '700' : '400', cursor: 'pointer',
+                  textTransform: 'uppercase', padding: '2px 4px'
+                }}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+          <button className="icon-btn" style={{ border: 'none' }} onClick={() => navigate('/notifications')}>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          </button>
+        </div>
       </div>
 
       <div className="hub-content">

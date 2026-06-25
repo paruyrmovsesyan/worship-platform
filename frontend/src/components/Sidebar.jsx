@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
 
 export default function Sidebar() {
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -47,6 +47,21 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
+        <div className="sidebar-lang" style={{ display: 'flex', gap: '8px', marginBottom: '16px', justifyContent: 'center' }}>
+          {['am', 'en', 'ru'].map(l => (
+            <button
+              key={l}
+              onClick={() => setLanguage(l)}
+              style={{
+                background: 'none', border: 'none', color: language === l ? '#00f0ff' : 'var(--color-text-tertiary)',
+                fontSize: '12px', fontWeight: language === l ? '700' : '400', cursor: 'pointer',
+                textTransform: 'uppercase'
+              }}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
         {user ? (
           <div className="sidebar-user">
             <Link to="/profile" className="user-name">

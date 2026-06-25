@@ -16,7 +16,7 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
 
   // Apply visual viewport fix for iOS PWA keyboard
@@ -103,6 +103,21 @@ const Register = () => {
           <span className="register-hero-badge">Worship Platform</span>
           <h1 className="register-hero-title">{t('auth.registerTitle')}</h1>
           <p className="register-hero-lead">{t('auth.registerSubtitle')}</p>
+        </div>
+        <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '8px', background: 'rgba(0,0,0,0.3)', padding: '6px 12px', borderRadius: '20px', backdropFilter: 'blur(10px)' }}>
+          {['am', 'en', 'ru'].map(l => (
+            <button 
+              key={l}
+              onClick={() => setLanguage(l)}
+              style={{
+                background: 'none', border: 'none', color: language === l ? '#00f0ff' : '#fff',
+                fontSize: '14px', fontWeight: language === l ? '600' : '400', cursor: 'pointer',
+                opacity: language === l ? 1 : 0.7, textTransform: 'uppercase'
+              }}
+            >
+              {l}
+            </button>
+          ))}
         </div>
       </div>
 
