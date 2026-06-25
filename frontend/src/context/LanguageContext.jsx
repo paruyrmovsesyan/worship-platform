@@ -250,7 +250,11 @@ const translations = {
       tempo: 'Տեմպ:',
       addToSetlist: 'Ավելացնել երգացանկում',
       download: 'Ներբեռնել',
-      edit: 'Խմբագրել'
+      edit: 'Խմբագրել',
+      copied: 'Պատճենված է',
+      copyError: 'Սխալ պատճենման ժամանակ',
+      copyContent: 'Պատճենել երգը',
+      copyLink: 'Պատճենել հղումը'
     },
     songRequest: {
       title: 'Երգի հարցում',
@@ -669,7 +673,11 @@ const translations = {
       tempo: 'Tempo:',
       addToSetlist: 'Add to Setlist',
       download: 'Download',
-      edit: 'Edit'
+      edit: 'Edit',
+      copied: 'Copied',
+      copyError: 'Error copying',
+      copyContent: 'Copy Song',
+      copyLink: 'Copy Link'
     },
     songRequest: {
       title: 'Song Request',
@@ -1084,7 +1092,11 @@ const translations = {
       tempo: 'Темп:',
       addToSetlist: 'Добавить в сет-лист',
       download: 'Скачать',
-      edit: 'Редактировать'
+      edit: 'Редактировать',
+      copied: 'Скопировано',
+      copyError: 'Ошибка при копировании',
+      copyContent: 'Копировать песню',
+      copyLink: 'Копировать ссылку'
     },
     songRequest: {
       title: 'Запрос песни',
