@@ -28,6 +28,7 @@ export default function SongView() {
   const [favMsg, setFavMsg] = useState('');
   
   const [setlistNavData, setSetlistNavData] = useState(null);
+  const [touchStartX, setTouchStartX] = useState(null);
 
   const copyShareLink = async () => {
     try {
@@ -198,7 +199,23 @@ export default function SongView() {
     }
 
     const listQuery = params.get('list');
-    if (listQuery && listQuery.startsWith('setlist_')) {
+    if (listQuery === 'favorites' && user) {
+      fetch('/user_favorites_api.php?action=get_favorites')
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.favorites && Array.isArray(data.favorites)) {
+            const idx = data.favorites.findIndex(s => String(s.id) === String(id));
+            if (idx !== -1) {
+              setSetlistNavData({
+                current: { id, index: idx + 1 },
+                total: data.favorites.length,
+                prev: idx > 0 ? data.favorites[idx - 1] : null,
+                next: idx < data.favorites.length - 1 ? data.favorites[idx + 1] : null,
+              });
+            }
+          }
+        }).catch(() => {});
+    } else if (listQuery && listQuery.startsWith('setlist_')) {
       const setId = listQuery.split('_')[1];
       fetch(`/setlists_api.php?action=get_setlist_items&setlist_id=${setId}`)
         .then(r => r.json())
@@ -285,6 +302,7 @@ export default function SongView() {
     if (pref.capo_mode === 1 && pref.capo > 0) url += `capo=${pref.capo}&capo_mode=1&`;
     
     const params = new URLSearchParams(window.location.search);
+    if (params.get('list')) url += `list=${params.get('list')}&`;
     if (params.get('setlist_id')) url += `setlist_id=${params.get('setlist_id')}&`;
     if (params.get('setlist_token')) url += `setlist_token=${params.get('setlist_token')}&`;
     if (item.item_id) url += `setlist_item_id=${item.item_id}&`;
@@ -317,8 +335,29 @@ export default function SongView() {
     );
   }
 
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      setTouchStartX(e.touches[0].clientX);
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+
+    if (Math.abs(diff) > 70) {
+      if (diff > 0 && setlistNavData?.next) {
+        navigateToSetlistSong(setlistNavData.next);
+      } else if (diff < 0 && setlistNavData?.prev) {
+        navigateToSetlistSong(setlistNavData.prev);
+      }
+    }
+    setTouchStartX(null);
+  };
+
   return (
-    <div className="song-view-page animate-fade-in">
+    <div className="song-view-page animate-fade-in" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {/* Top Header */}
       <div className="sv-header">
         <div className="sv-header-left">
