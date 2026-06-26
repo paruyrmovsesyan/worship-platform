@@ -191,8 +191,10 @@
   border-radius: 6px;
 }
 
-.sv-font-btn:hover {
-  background: rgba(255,255,255,0.1);
+@media (hover: hover) and (pointer: fine) {
+  .sv-font-btn:hover {
+    background: rgba(255,255,255,0.1);
+  }
 }
 
 .sv-font-val {
@@ -258,8 +260,10 @@
   justify-content: center;
 }
 
-.sv-step-btn:hover:not(:disabled) {
-  background: rgba(255,255,255,0.1);
+@media (hover: hover) and (pointer: fine) {
+  .sv-step-btn:hover:not(:disabled) {
+    background: rgba(255,255,255,0.1);
+  }
 }
 
 .sv-step-btn:disabled {
