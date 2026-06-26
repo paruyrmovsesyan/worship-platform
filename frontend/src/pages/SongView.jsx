@@ -93,10 +93,10 @@ export default function SongView() {
     setFavMsg(newState ? t('songView.added') : t('songView.removed'));
     setTimeout(() => setFavMsg(''), 2000);
     try {
-      await fetch('/user_favorites_api.php', {
+      await fetch('/user_favorites_api.php?action=toggle_favorite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ song_id: id, action: newState ? 'add' : 'remove' }),
+        body: JSON.stringify({ song_id: id }),
       });
     } catch {}
   };
@@ -281,10 +281,10 @@ export default function SongView() {
   const saveFavoriteKey = async (currentPlayKey) => {
     if (!user || !isFavorite) return;
     try {
-      const res = await fetch('/user_favorites_api.php', {
+      const res = await fetch('/user_favorites_api.php?action=update_favorite_key', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update_favorite_key', song_id: id, target_key: currentPlayKey })
+        body: JSON.stringify({ song_id: id, target_key: currentPlayKey })
       });
       const data = await res.json();
       if (data.ok) {
