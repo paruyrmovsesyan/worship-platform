@@ -203,14 +203,14 @@ export default function SongView() {
       fetch('/user_favorites_api.php?action=get_favorites')
         .then(r => r.json())
         .then(data => {
-          if (data && data.favorites && Array.isArray(data.favorites)) {
-            const idx = data.favorites.findIndex(s => String(s.id) === String(id));
+          if (Array.isArray(data)) {
+            const idx = data.findIndex(s => String(s.id) === String(id));
             if (idx !== -1) {
               setSetlistNavData({
                 current: { id, index: idx + 1 },
-                total: data.favorites.length,
-                prev: idx > 0 ? data.favorites[idx - 1] : null,
-                next: idx < data.favorites.length - 1 ? data.favorites[idx + 1] : null,
+                total: data.length,
+                prev: idx > 0 ? data[idx - 1] : null,
+                next: idx < data.length - 1 ? data[idx + 1] : null,
               });
             }
           }
