@@ -61,15 +61,13 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
-  overflow-x: hidden;
   transition: background-color 0.3s ease;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
 body.is-pwa {
-  overscroll-behavior-y: none;
-  overscroll-behavior: none;
+  overscroll-behavior-y: contain;
 }
 
 * {
@@ -337,7 +335,10 @@ textarea.form-control {
   color: var(--color-text-primary);
   border: 1px solid var(--glass-border);
 }
-.btn-secondary:hover { border-color: var(--color-text-secondary); }
+@media (hover: hover) and (pointer: fine) {
+  .btn-secondary:hover { border-color: var(--color-text-secondary); }
+}
+.btn-secondary:active { transform: scale(0.97); }
 
 .icon-btn {
   width: 36px; height: 36px; border-radius: 50%;
@@ -346,7 +347,13 @@ textarea.form-control {
   border: 1px solid var(--glass-border);
   transition: var(--transition-smooth);
 }
-.icon-btn:hover { color: var(--color-text-primary); border-color: var(--color-text-primary); }
+@media (hover: hover) and (pointer: fine) {
+  .icon-btn:hover { color: var(--color-text-primary); border-color: var(--color-text-primary); }
+}
+.icon-btn:active {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.05);
+}
 
 .text-gradient {
   background: linear-gradient(180deg, #ffffff 0%, #a3a3a3 100%);
