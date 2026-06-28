@@ -44,18 +44,16 @@
     </style>
     <script>
       // Avoid document.write which can be blocked by browsers and cause white screens
-      var isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                         window.matchMedia('(display-mode: fullscreen)').matches || 
-                         window.navigator.standalone;
+      var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
                          
       if (!isStandalone) {
-        document.documentElement.classList.add('is-website');
         window.__SKIP_SPLASH = true;
+        // Inject style directly to guarantee it applies
+        var style = document.createElement('style');
+        style.innerHTML = '#app-loader { display: none !important; opacity: 0 !important; visibility: hidden !important; z-index: -1 !important; }';
+        document.head.appendChild(style);
       }
     </script>
-    <style>
-      .is-website #app-loader { display: none !important; }
-    </style>
   </head>
   <body>
       <div id="app-loader">
