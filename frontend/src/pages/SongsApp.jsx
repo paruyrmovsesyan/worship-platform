@@ -42,6 +42,11 @@ export default function SongsApp() {
   const [searchQuery, setSearchQuery] = useState(
     new URLSearchParams(location.search).get('q') || ''
   );
+  const [visibleCount, setVisibleCount] = useState(15);
+
+  useEffect(() => {
+    setVisibleCount(15);
+  }, [searchQuery, selectedKey, sortBy, activeTab]);
 
   useEffect(() => {
     const q = new URLSearchParams(location.search).get('q') || '';
@@ -117,6 +122,8 @@ export default function SongsApp() {
       if (sortBy === 'recent') return (parseInt(b.id)||0) - (parseInt(a.id)||0);
       return (a.title||'').localeCompare(b.title||'');
     });
+
+  const visibleSongs = filtered.slice(0, visibleCount);
 
   return (
     <div className="songs-page animate-fade-in">
@@ -206,8 +213,10 @@ export default function SongsApp() {
             <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
             <p>{t('songs.noResults')}</p>
           </div>
-        ) : filtered.map((song, idx) => (
-          <div key={song.id} className="track-item animate-fade-in" style={{ animationDelay: `${Math.min(idx * 0.03, 0.5)}s` }} onClick={() => navigate(`/song/${song.id}`)}>
+        ) : (
+          <>
+            {visibleSongs.map((song, idx) => (
+              <div key={song.id} className="track-item animate-fade-in" style={{ animationDelay: `${Math.min(idx * 0.03, 0.5)}s` }} onClick={() => navigate(`/song/${song.id}`)}>
             
             <div className="track-number desk-only dim">
               {(idx + 1).toString().padStart(2, '0')}
@@ -244,7 +253,18 @@ export default function SongsApp() {
             </div>
 
           </div>
-        ))}
+            ))}
+            {visibleCount < filtered.length && (
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => setVisibleCount(v => v + 15)} 
+                style={{ width: '100%', marginTop: '16px', gridColumn: '1 / -1' }}
+              >
+                {t('songs.loadMore', 'Load More')}
+              </button>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

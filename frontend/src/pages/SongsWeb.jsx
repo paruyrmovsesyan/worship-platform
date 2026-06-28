@@ -39,6 +39,11 @@ export default function SongsWeb() {
   const [searchQuery, setSearchQuery] = useState(
     new URLSearchParams(location.search).get('q') || ''
   );
+  const [visibleCount, setVisibleCount] = useState(15);
+
+  useEffect(() => {
+    setVisibleCount(15);
+  }, [searchQuery, selectedKey, sortBy]);
 
   useEffect(() => {
     const q = new URLSearchParams(location.search).get('q') || '';
@@ -105,8 +110,9 @@ export default function SongsWeb() {
       if (sortBy === 'bpm')    return (parseInt(a.bpm)||0) - (parseInt(b.bpm)||0);
       if (sortBy === 'key')    return (a.song_key||'').localeCompare(b.song_key||'');
       if (sortBy === 'recent') return (parseInt(b.id)||0) - (parseInt(a.id)||0);
-      return (a.title||'').localeCompare(b.title||'');
     });
+
+  const visibleSongs = filtered.slice(0, visibleCount);
 
   return (
     <div className="songs-web-view songs-page">
@@ -171,9 +177,11 @@ export default function SongsWeb() {
           <div className="list-placeholder">{t('songs.loading')}</div>
         ) : filtered.length === 0 ? (
           <div className="list-placeholder">{t('songs.noResults')}</div>
-        ) : filtered.map((song, idx) => (
-          <div key={song.id} className="song-row data-row"
-            onClick={() => navigate(`/song/${song.id}`)}>
+        ) : (
+          <>
+            {visibleSongs.map((song, idx) => (
+              <div key={song.id} className="song-row data-row"
+                onClick={() => navigate(`/song/${song.id}`)}>
 
             <div className="col-name">
               <div className={`s-avatar ${GRADS[(song.id||idx)%4]}`}>
@@ -212,7 +220,18 @@ export default function SongsWeb() {
             </div>
 
           </div>
-        ))}
+            ))}
+            {visibleCount < filtered.length && (
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => setVisibleCount(v => v + 15)} 
+                style={{ width: '100%', marginTop: '16px', padding: '12px' }}
+              >
+                {t('songs.loadMore', 'Load More')}
+              </button>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
