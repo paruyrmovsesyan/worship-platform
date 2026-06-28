@@ -88,7 +88,8 @@ function App() {
         className={isPWA && !isMobile ? 'main-with-sidebar' : ''}
         style={{
           opacity: isLoading ? 0 : 1,
-          transition: isLoading ? 'none' : 'opacity 0.25s ease',
+          transform: isLoading ? 'translateY(8px)' : 'translateY(0)',
+          transition: 'opacity 0.4s ease, transform 0.4s ease',
           pointerEvents: isLoading ? 'none' : 'auto',
         }}
       >
