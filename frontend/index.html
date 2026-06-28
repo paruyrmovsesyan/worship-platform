@@ -43,8 +43,10 @@
       @keyframes spinRotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
     <script>
-      // Show splash screen on all platforms
-      window.__SKIP_SPLASH = false;
+      if (!window.matchMedia('(display-mode: standalone)').matches && !window.navigator.standalone) {
+        document.write('<style>#app-loader { display: none !important; }</style>');
+        window.__SKIP_SPLASH = true;
+      }
     </script>
   </head>
   <body>
