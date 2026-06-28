@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { usePageLoading } from './context/PageLoadingContext';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 
 const LegacySongRedirect = () => {
@@ -76,12 +77,21 @@ function App() {
     return <Navbar />;
   };
 
+  const { isLoading } = usePageLoading() || {};
+
   return (
     <div className={`app-container ${isPWA && !isMobile ? 'with-sidebar' : ''}`}>
       <TopLoader />
       <ScrollToTop />
       {renderNav()}
-      <main className={isPWA && !isMobile ? 'main-with-sidebar' : ''}>
+      <main
+        className={isPWA && !isMobile ? 'main-with-sidebar' : ''}
+        style={{
+          opacity: isLoading ? 0 : 1,
+          transition: isLoading ? 'none' : 'opacity 0.25s ease',
+          pointerEvents: isLoading ? 'none' : 'auto',
+        }}
+      >
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
