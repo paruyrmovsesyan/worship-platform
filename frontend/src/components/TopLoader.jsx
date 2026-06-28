@@ -1,23 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-export default function TopLoader() {
-  const [loading, setLoading] = useState(false);
+export default function TopLoader({ forcedVisible = false }) {
+  const [loading, setLoading] = useState(forcedVisible);
   const location = useLocation();
 
   useEffect(() => {
+    if (forcedVisible) return; // Controlled externally by Suspense
+
     setLoading(true);
     const timeout = setTimeout(() => {
       setLoading(false);
-    }, 400); // Quick 400ms flash to feel like a real load
+    }, 300);
 
     return () => clearTimeout(timeout);
-  }, [location.pathname]);
+  }, [location.pathname, forcedVisible]);
 
-  if (!loading) return null;
+  if (!loading && !forcedVisible) return null;
 
   return (
-    <div 
+    <div
       style={{
         position: 'fixed',
         inset: 0,
@@ -25,11 +27,10 @@ export default function TopLoader() {
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 999999,
-        backgroundColor: 'rgba(15, 15, 19, 0.6)', /* Darkened background */
+        backgroundColor: 'rgba(15, 15, 19, 0.6)',
         backdropFilter: 'blur(3px)',
         WebkitBackdropFilter: 'blur(3px)',
-        transition: 'opacity 0.2s ease-out',
-        animation: 'fadeIn 0.2s ease-in'
+        animation: 'fadeIn 0.15s ease-in',
       }}
     >
       <div className="premium-spinner-container">
