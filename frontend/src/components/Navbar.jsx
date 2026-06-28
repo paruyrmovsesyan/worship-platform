@@ -150,16 +150,7 @@ export default function Navbar() {
         {/* Header */}
         <div className="menu-drawer-header">
           <div className="menu-drawer-logo">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                stroke="url(#mdl2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <defs>
-                <linearGradient id="mdl2" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#9D72FF"/>
-                  <stop offset="1" stopColor="#00F0FF"/>
-                </linearGradient>
-              </defs>
-            </svg>
+            <img src="/user_uploaded_logo.png" alt="Worship Logo" className="brand-logo-img" />
             <span>Worship Platform</span>
           </div>
           <button className="menu-drawer-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">
@@ -232,16 +223,7 @@ export default function Navbar() {
 
           {/* ── LOGO ── */}
           <div className="navbar-logo" onClick={() => navigate('/')}>
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                stroke="url(#nl)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <defs>
-                <linearGradient id="nl" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#9D72FF"/>
-                  <stop offset="1" stopColor="#00F0FF"/>
-                </linearGradient>
-              </defs>
-            </svg>
+            <img src="/user_uploaded_logo.png" alt="Worship Logo" className="brand-logo-img" />
             Worship Platform
           </div>
 

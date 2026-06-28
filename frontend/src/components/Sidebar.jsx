@@ -16,16 +16,7 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-header" onClick={() => navigate('/')}>
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-            stroke="url(#sl)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <defs>
-            <linearGradient id="sl" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#9D72FF"/>
-              <stop offset="1" stopColor="#00F0FF"/>
-            </linearGradient>
-          </defs>
-        </svg>
+        <img src="/user_uploaded_logo.png" alt="Worship Logo" className="brand-logo-img" />
         <span>Worship</span>
       </div>
 

@@ -1,22 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import React from 'react';
+import { usePageLoading } from '../context/PageLoadingContext';
 
-export default function TopLoader({ forcedVisible = false }) {
-  const [loading, setLoading] = useState(forcedVisible);
-  const location = useLocation();
-
-  useEffect(() => {
-    if (forcedVisible) return; // Controlled externally by Suspense
-
-    setLoading(true);
-    const timeout = setTimeout(() => {
-      setLoading(false);
-    }, 300);
-
-    return () => clearTimeout(timeout);
-  }, [location.pathname, forcedVisible]);
-
-  if (!loading && !forcedVisible) return null;
+export default function TopLoader() {
+  const ctx = usePageLoading();
+  if (!ctx || !ctx.isLoading) return null;
 
   return (
     <div

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { usePageReady } from '../hooks/usePageReady';
 
 export default function TeamView() {
   const { id } = useParams();
@@ -13,6 +14,7 @@ export default function TeamView() {
   const [team, setTeam] = useState(location.state?.team || null);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  usePageReady(loading);
   const [error, setError] = useState(null);
   
   const isOwner = team?.user_role === 'owner';

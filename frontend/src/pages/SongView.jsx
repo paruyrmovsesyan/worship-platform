@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { renderWithChords, transposeRoot, noteIndex } from '../utils/chordTransposer';
 import { getLocalizedTitle } from '../utils/titleParser';
+import { usePageReady } from '../hooks/usePageReady';
 import './SongView.css';
 
 export default function SongView() {
@@ -14,6 +15,7 @@ export default function SongView() {
   
   const [song, setSong] = useState(null);
   const [loading, setLoading] = useState(true);
+  usePageReady(loading);
   const [error, setError] = useState(null);
   
   // Controls state

@@ -12,16 +12,7 @@ export default function Footer() {
         <div className="footer-content">
           <div className="footer-brand">
           <div className="footer-logo">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-                stroke="url(#fg)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <defs>
-                <linearGradient id="fg" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#9D72FF"/>
-                  <stop offset="1" stopColor="#00F0FF"/>
-                </linearGradient>
-              </defs>
-            </svg>
+            <img src="/user_uploaded_logo.png" alt="Worship Logo" className="brand-logo-img" />
             Worship Platform
           </div>
           <div className="social-icons">

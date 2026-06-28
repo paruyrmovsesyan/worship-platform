@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { usePageReady } from '../hooks/usePageReady';
 import './Setlists.css';
 
 const GRADS = ['bg-purple', 'bg-blue', 'bg-cyan', 'bg-gold', 'bg-orange'];
@@ -9,6 +10,7 @@ const GRADS = ['bg-purple', 'bg-blue', 'bg-cyan', 'bg-gold', 'bg-orange'];
 export default function Setlists() {
   const [setlists, setSetlists] = useState([]);
   const [loading, setLoading] = useState(true);
+  usePageReady(loading);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const { user } = useAuth();

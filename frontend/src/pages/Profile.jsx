@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { usePageReady } from '../hooks/usePageReady';
 import './Profile.css';
 
 export default function Profile() {
@@ -10,6 +11,7 @@ export default function Profile() {
   const { t, language, setLanguage } = useLanguage();
   const [planType, setPlanType] = useState('free');
   const [loading, setLoading] = useState(true);
+  usePageReady(loading);
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
 
   const languageLabels = {

@@ -13,7 +13,8 @@ const Register = () => {
   const next = searchParams.get('next') || '/';
   
   const [name, setName] = useState('');
-  const [login, setLogin] = useState('');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
@@ -70,7 +71,8 @@ const Register = () => {
         },
         body: JSON.stringify({
           name: name.trim(),
-          login: login.trim(),
+          username: username.trim(),
+          email: email.trim(),
           password,
           remember_me: rememberMe,
           source
@@ -145,16 +147,31 @@ const Register = () => {
             <div className="register-input-group">
               <input 
                 type="text" 
-                id="login" 
+                id="username" 
                 required 
                 placeholder=" "
                 autoComplete="username"
-                value={login}
-                onChange={(e) => setLogin(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 onFocus={handleFocus}
                 disabled={isLoading}
               />
-              <label htmlFor="login">{t('auth.loginOrEmail')}</label>
+              <label htmlFor="username">{t('auth.username')}</label>
+            </div>
+
+            <div className="register-input-group">
+              <input 
+                type="email" 
+                id="email" 
+                required 
+                placeholder=" "
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onFocus={handleFocus}
+                disabled={isLoading}
+              />
+              <label htmlFor="email">{t('auth.email')}</label>
             </div>
 
             <div className="register-input-group">

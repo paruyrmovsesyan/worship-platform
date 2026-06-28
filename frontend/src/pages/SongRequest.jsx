@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { usePageReady } from '../hooks/usePageReady';
 
 export default function SongRequest() {
   const { user } = useAuth();
@@ -14,6 +15,7 @@ export default function SongRequest() {
   const isEditMode = songId > 0;
   
   const [loading, setLoading] = useState(isEditMode);
+  usePageReady(loading);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState('');

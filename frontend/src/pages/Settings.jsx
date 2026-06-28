@@ -19,6 +19,7 @@ export default function Settings() {
 
   // Profile States
   const [name, setName] = useState(user?.name || '');
+  const [username, setUsername] = useState(user?.username || '');
   const [birthDate, setBirthDate] = useState(user?.birth_date || '');
   const [gender, setGender] = useState(user?.gender || '');
   const [phoneNumber, setPhoneNumber] = useState(user?.phone_number || '');
@@ -115,6 +116,7 @@ export default function Settings() {
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ 
           name,
+          username,
           birth_date: birthDate,
           gender,
           phone_number: phoneNumber
@@ -287,9 +289,14 @@ export default function Settings() {
             <div className="settings-card mb-4" style={{ marginBottom: '1.5rem' }}>
               <h3>{t('settings.profile.title')}</h3>
               <div className="form-group">
-              <label>{t('settings.profile.name')}</label>
-              <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="" />
-            </div>
+                <label>{t('settings.profile.name')}</label>
+                <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="" />
+              </div>
+
+              <div className="form-group">
+                <label>{t('auth.username') || 'Username'}</label>
+                <input type="text" value={username} onChange={e => setUsername(e.target.value)} placeholder="" />
+              </div>
 
             <div className="form-group">
               <label>{t('settings.profile.birthDate')}</label>

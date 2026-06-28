@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { usePageReady } from '../hooks/usePageReady';
 import './Teams.css';
 
 export default function Teams() {
@@ -10,6 +11,7 @@ export default function Teams() {
   const { t } = useLanguage();
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
+  usePageReady(loading);
 
   useEffect(() => {
     if (!user) {

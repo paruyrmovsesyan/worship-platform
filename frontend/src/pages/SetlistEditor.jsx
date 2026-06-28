@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
+import { usePageReady } from '../hooks/usePageReady';
 import './Setlists.css';
 import './SongsApp.css'; // ensure track-list styles are loaded
 
@@ -17,6 +18,7 @@ export default function SetlistEditor() {
   const [setlistData, setSetlistData] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  usePageReady(loading);
   const [error, setError] = useState(null);
   
   const [isSearching, setIsSearching] = useState(false);

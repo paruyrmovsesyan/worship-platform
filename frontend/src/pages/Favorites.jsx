@@ -3,11 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
+import { usePageReady } from '../hooks/usePageReady';
 import './Favorites.css';
 
 export default function Favorites() {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
+  usePageReady(loading);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const { user } = useAuth();
