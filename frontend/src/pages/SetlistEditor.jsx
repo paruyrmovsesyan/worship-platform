@@ -18,7 +18,7 @@ export default function SetlistEditor() {
   const [setlistData, setSetlistData] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  usePageReady(loading);
+  usePageReady(loading || authLoading);
   const [error, setError] = useState(null);
   
   const [isSearching, setIsSearching] = useState(false);
@@ -144,14 +144,7 @@ export default function SetlistEditor() {
   };
 
   if (authLoading || loading) {
-    return (
-      <div className="setlists-page">
-        <div className="sl-placeholder animate-fade-in">
-          <div className="spinner"></div>
-          <p>{t('setlists.loading')}</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   if (error || !setlistData) {

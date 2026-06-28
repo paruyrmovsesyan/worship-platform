@@ -15,7 +15,7 @@ export default function SongView() {
   
   const [song, setSong] = useState(null);
   const [loading, setLoading] = useState(true);
-  usePageReady(loading);
+  usePageReady(loading || authLoading);
   const [error, setError] = useState(null);
   
   // Controls state
@@ -316,14 +316,7 @@ export default function SongView() {
   const currentLyrics = song?.lyrics || t('songView.noLyrics');
 
   if (loading || authLoading) {
-    return (
-      <div className="song-view-page">
-        <div className="sl-placeholder animate-fade-in">
-          <div className="spinner"></div>
-          <p>{t('songView.loading')}</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   if (error || !song) {

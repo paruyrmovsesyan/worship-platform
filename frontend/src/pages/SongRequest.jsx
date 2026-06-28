@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { usePageReady } from '../hooks/usePageReady';
 
 export default function SongRequest() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -15,7 +15,7 @@ export default function SongRequest() {
   const isEditMode = songId > 0;
   
   const [loading, setLoading] = useState(isEditMode);
-  usePageReady(loading);
+  usePageReady(loading || authLoading);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState('');
@@ -125,8 +125,8 @@ export default function SongRequest() {
     );
   }
 
-  if (loading) {
-    return <div className="page-container loading-state animate-fade-in"><div className="spinner"></div></div>;
+  if (loading || authLoading) {
+    return null;
   }
 
   return (

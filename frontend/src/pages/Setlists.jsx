@@ -9,11 +9,11 @@ const GRADS = ['bg-purple', 'bg-blue', 'bg-cyan', 'bg-gold', 'bg-orange'];
 
 export default function Setlists() {
   const [setlists, setSetlists] = useState([]);
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
-  usePageReady(loading);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  usePageReady(loading || authLoading);
   const { t } = useLanguage();
   
   const [teams, setTeams] = useState([]);
@@ -117,12 +117,7 @@ export default function Setlists() {
 
       {/* Setlists Grid */}
       <div className="sl-grid">
-        {loading ? (
-          <div className="sl-placeholder">
-            <div className="spinner"></div>
-            <p>{t('setlists.loading')}</p>
-          </div>
-        ) : setlists.length === 0 ? (
+        {loading || authLoading ? null : setlists.length === 0 ? (
           <div className="sl-placeholder empty-state animate-fade-in">
             <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
             <p>{t('setlists.empty')}</p>
