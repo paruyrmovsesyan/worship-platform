@@ -255,13 +255,14 @@ export default function SongsApp() {
           </div>
             ))}
             {visibleCount < filtered.length && (
-              <button 
-                className="btn btn-secondary" 
-                onClick={() => setVisibleCount(v => v + 15)} 
-                style={{ width: '100%', marginTop: '16px', gridColumn: '1 / -1' }}
-              >
-                {t('songs.loadMore', 'Load More')}
-              </button>
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px', marginBottom: '24px', gridColumn: '1 / -1' }}>
+                <button 
+                  className="btn load-more-btn" 
+                  onClick={() => setVisibleCount(v => v + 15)} 
+                >
+                  {t('songs.loadMore', 'Load More')}
+                </button>
+              </div>
             )}
           </>
         )}

@@ -340,6 +340,31 @@ textarea.form-control {
 }
 .btn-secondary:active { transform: scale(0.97); }
 
+.load-more-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-text-secondary);
+  border-radius: 100px;
+  padding: 12px 32px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .load-more-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+}
+.load-more-btn:active {
+  transform: scale(0.96);
+}
+
 .icon-btn {
   width: 36px; height: 36px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
@@ -518,4 +543,25 @@ html, body, #root, .app-container, .login-page-container {
 @keyframes p-spin2 {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(-360deg); }
+}
+
+/* ── Load More Button ── */
+.load-more-btn {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: var(--color-text-secondary) !important;
+  border-radius: 24px !important;
+  padding: 8px 32px !important;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  font-size: 14px;
+  transition: all 0.3s ease !important;
+}
+
+.load-more-btn:hover {
+  background: rgba(0, 212, 255, 0.08) !important;
+  border-color: rgba(0, 212, 255, 0.4) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 15px var(--glow-color-2) !important;
+  transform: translateY(-2px);
 }
