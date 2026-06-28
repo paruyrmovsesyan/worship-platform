@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import './LandingPage.css';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
+import { usePageReady } from '../hooks/usePageReady';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ export default function LandingPage() {
   const [allSongs, setAllSongs] = useState([]);
   const [popularSongs, setPopularSongs] = useState([]);
   const [loading, setLoading] = useState(true);
+  usePageReady(loading);
   const [songPage, setSongPage] = useState(0);
   const [activeFilter, setActiveFilter] = useState('songs');
   const [showVideo, setShowVideo] = useState(false);
