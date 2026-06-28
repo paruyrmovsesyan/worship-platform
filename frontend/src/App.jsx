@@ -44,8 +44,10 @@ import Notifications from './pages/Notifications';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useIsPWA } from './hooks/useIsPWA';
 import ScrollToTop from './components/ScrollToTop';
+import TopLoader from './components/TopLoader';
 
 function App() {
+  const { loading } = useAuth();
   const isMobile = useMediaQuery('(max-width: 900px)');
   const isPWA = useIsPWA();
 
@@ -66,19 +68,19 @@ function App() {
       }
     }
 
-    // Artificial Splash Screen Delay for PWA
+    // Wait for the main app and AuthContext to finish loading before hiding the splash screen
     const loader = document.getElementById('app-loader');
-    if (loader) {
+    if (loader && !loading) {
       if (window.__SKIP_SPLASH) {
         loader.remove(); // Remove immediately if on website
       } else {
         setTimeout(() => {
           loader.style.opacity = '0';
           setTimeout(() => loader.remove(), 500); // Wait for transition to finish
-        }, 1500); // Artificial wait time before fading out
+        }, 400); // Short artificial wait time after data is ready
       }
     }
-  }, [isMobile, isPWA]);
+  }, [isMobile, isPWA, loading]);
 
   const renderNav = () => {
     if (isPWA) {
@@ -90,6 +92,7 @@ function App() {
 
   return (
     <div className={`app-container ${isPWA && !isMobile ? 'with-sidebar' : ''}`}>
+      <TopLoader />
       <ScrollToTop />
       {renderNav()}
       <main className={isPWA && !isMobile ? 'main-with-sidebar' : ''}>
