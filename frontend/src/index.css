@@ -10,12 +10,12 @@
   --color-text-secondary: #A0A0B0;
   --color-text-tertiary: #6E6E80;
   
-  --color-accent-gold: #9D72FF;
-  --color-accent-cyan: #00F0FF;
+  --color-accent-gold: #3A2DFF;
+  --color-accent-cyan: #00D4FF;
   --color-accent-red: #FF4A4A;
   
-  --color-accent-gold-glow: rgba(157, 114, 255, 0.15);
-  --color-accent-cyan-glow: rgba(0, 240, 255, 0.15);
+  --color-accent-gold-glow: rgba(58, 45, 255, 0.15);
+  --color-accent-cyan-glow: rgba(0, 212, 255, 0.15);
   
   --glass-bg: rgba(18, 18, 26, 0.7);
   --glass-border: rgba(255, 255, 255, 0.08);
@@ -35,14 +35,13 @@
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Ambient Glow */
-  --glow-color-1: rgba(157, 114, 255, 0.12);
-  --glow-color-2: rgba(0, 240, 255, 0.05);
+  --glow-color-1: rgba(58, 45, 255, 0.12);
+  --glow-color-2: rgba(0, 212, 255, 0.05);
 }
 
 html {
   background-color: var(--color-bg);
   overflow-x: hidden;
-  overscroll-behavior-y: none;
 }
 
 
@@ -61,14 +60,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
-  overflow-x: hidden;
   transition: background-color 0.3s ease;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
 body.is-pwa {
-  overscroll-behavior-y: contain;
 }
 
 * {
@@ -380,4 +377,143 @@ html, body, #root, .app-container, .login-page-container {
   body {
     padding-top: 0 !important;
   }
+}
+
+/* ── Brand Logo ── */
+.brand-logo-img {
+  height: 26px;
+  width: auto;
+  object-fit: contain;
+  vertical-align: middle;
+}
+.sidebar-header .brand-logo-img {
+  height: 32px;
+}
+.menu-drawer-logo .brand-logo-img {
+  height: 24px;
+}
+
+/* ── Skeleton Loading (Website Only) ── */
+.skeleton-overlay {
+  position: fixed;
+  top: 70px; /* Below Navbar */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #0F0F13;
+  z-index: 999;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.skeleton-pulse {
+  background: linear-gradient(90deg, #1A1A24 0%, #2A2A38 50%, #1A1A24 100%);
+  background-size: 200% 100%;
+  animation: skeletonPulse 1.5s infinite linear;
+  border-radius: 8px;
+}
+
+.skeleton-title {
+  width: 40%;
+  height: 40px;
+  margin-bottom: 20px;
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.skeleton-card {
+  height: 200px;
+  border-radius: 12px;
+}
+
+@keyframes skeletonPulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Specific Skeleton Layouts ── */
+.skeleton-row {
+  height: 60px;
+  border-radius: 8px;
+  width: 100%;
+}
+.skeleton-lyrics-line {
+  height: 20px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+.skeleton-album-square {
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+}
+.skeleton-header {
+  height: 60px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  width: 100%;
+}
+.skeleton-badge {
+  height: 30px;
+  width: 80px;
+  border-radius: 16px;
+  display: inline-block;
+  margin-right: 10px;
+}
+.skeleton-hero-title {
+  height: 50px;
+  width: 60%;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+/* ── Premium TopLoader Spinner ── */
+.premium-spinner-container {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.premium-spinner-ring1 {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: #00F0FF;
+  border-bottom-color: #00F0FF;
+  animation: p-spin1 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.premium-spinner-ring2 {
+  position: absolute;
+  width: 70%;
+  height: 70%;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-left-color: #9D72FF;
+  border-right-color: #9D72FF;
+  animation: p-spin2 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  box-shadow: 0 0 10px rgba(157, 114, 255, 0.3);
+}
+
+@keyframes p-spin1 {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes p-spin2 {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
 }
