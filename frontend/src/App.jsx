@@ -47,7 +47,6 @@ import ScrollToTop from './components/ScrollToTop';
 import TopLoader from './components/TopLoader';
 
 function App() {
-  const { loading } = useAuth();
   const isMobile = useMediaQuery('(max-width: 900px)');
   const isPWA = useIsPWA();
 
@@ -64,23 +63,10 @@ function App() {
     } else {
       document.body.classList.add('website-theme');
       if (isMobile) {
-        document.body.classList.add('mobile-theme'); // Still mobile size, but maybe website styling
+        document.body.classList.add('mobile-theme');
       }
     }
-
-    // Wait for the main app and AuthContext to finish loading before hiding the splash screen
-    const loader = document.getElementById('app-loader');
-    if (loader && !loading) {
-      if (window.__SKIP_SPLASH) {
-        loader.remove(); // Remove immediately if on website
-      } else {
-        setTimeout(() => {
-          loader.style.opacity = '0';
-          setTimeout(() => loader.remove(), 500); // Wait for transition to finish
-        }, 400); // Short artificial wait time after data is ready
-      }
-    }
-  }, [isMobile, isPWA, loading]);
+  }, [isMobile, isPWA]);
 
   const renderNav = () => {
     if (isPWA) {
