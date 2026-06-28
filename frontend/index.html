@@ -1,51 +1,93 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/favicon.png?v=2" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon-v7.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#05050A" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Worship Platform" />
-    
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="/favicon.png?v=2">
+    <link rel="apple-touch-icon" href="/apple-touch-icon-v7.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#05050A">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Worship Platform">
+
     <!-- Anti-Cache Meta Tags to force PWA refresh -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    
-    <link rel="manifest" href="/manifest.json?v=9" />
+    <link rel="manifest" href="/manifest.json?v=9">
     <title>Worship Platform</title>
-    <meta name="description" content="Worship Platform - Equip your worship team with chord charts, setlists, and collaboration tools." />
-    
-    <!-- Open Graph / Social Media Meta Tags -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://worship.pmstudio.am/" />
-    <meta property="og:title" content="Worship Platform" />
-    <meta property="og:description" content="Equip your worship team with chord charts, setlists, and collaboration tools." />
-    <meta property="og:image" content="https://worship.pmstudio.am/og-image.png" />
-    <meta property="og:image:width" content="1024" />
-    <meta property="og:image:height" content="537" />
+    <meta name="description" content="Worship Platform - Equip your worship team with chord charts, setlists, and collaboration tools.">
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="https://worship.pmstudio.am/" />
-    <meta name="twitter:title" content="Worship Platform" />
-    <meta name="twitter:description" content="Equip your worship team with chord charts, setlists, and collaboration tools." />
-    <meta name="twitter:image" content="https://worship.pmstudio.am/og-image.png" />
-    
-    <script src="/site_guard.js?v=11" defer></script>
+    <!-- Open Graph / Social Media Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://worship.pmstudio.am/">
+    <meta property="og:title" content="Worship Platform">
+    <meta property="og:description" content="Equip your worship team with chord charts, setlists, and collaboration tools.">
+    <meta property="og:image" content="https://worship.pmstudio.am/og-image.png">
+    <meta property="og:image:width" content="1024">
+    <meta property="og:image:height" content="537">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://worship.pmstudio.am/">
+    <meta name="twitter:title" content="Worship Platform">
+    <meta name="twitter:description" content="Equip your worship team with chord charts, setlists, and collaboration tools.">
+    <meta name="twitter:image" content="https://worship.pmstudio.am/og-image.png">
+    <script src="/site_guard.js?v=11" defer=""></script>
     <style>
-      body { margin: 0; background-color: #0F0F13; }
-      #app-loader { position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;z-index:999999;background: linear-gradient(135deg, #3A2DFF 0%, #00D4FF 100%); transition: opacity 0.5s ease-out; }
-      .splash-logo { width: 120px; height: 120px; border-radius: 28px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.15); animation: pulseLogo 2s infinite ease-in-out; object-fit: cover; }
-      @keyframes pulseLogo { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-      .splash-spinner { width: 32px; height: 32px; border: 3px solid rgba(255, 255, 255, 0.1); border-top-color: #00F0FF; border-radius: 50%; animation: spinRotate 1s linear infinite; }
-      @keyframes spinRotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      body {
+        margin: 0;
+        background-color: #0F0F13;
+      }
+      #app-loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 30px;
+        z-index: 999999;
+        background: linear-gradient(135deg, #3A2DFF 0%, #00D4FF 100%);
+        transition: opacity 0.5s ease-out;
+      }
+      .splash-logo {
+        width: 120px;
+        height: 120px;
+        border-radius: 28px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        animation: pulseLogo 2s infinite ease-in-out;
+        object-fit: cover;
+      }
+      @keyframes pulseLogo {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+      .splash-spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top-color: #00F0FF;
+        border-radius: 50%;
+        animation: spinRotate 1s linear infinite;
+      }
+      @keyframes spinRotate {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
     </style>
     <script>
       // Avoid document.write which can be blocked by browsers and cause white screens
       var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-                         
       if (!isStandalone) {
         window.__SKIP_SPLASH = true;
         // Inject style directly to guarantee it applies
@@ -54,12 +96,36 @@
         document.head.appendChild(style);
       }
     </script>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-2064-2752.jpg" media="(device-width: 1032px) and (device-height: 1376px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-2048-2732.jpg" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1668-2420.jpg" media="(device-width: 834px) and (device-height: 1210px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1668-2388.jpg" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1668-2224.jpg" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1536-2048.jpg" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1640-2360.jpg" media="(device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1620-2160.jpg" media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1488-2266.jpg" media="(device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1320-2868.jpg" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1206-2622.jpg" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1260-2736.jpg" media="(device-width: 420px) and (device-height: 912px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1290-2796.jpg" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1179-2556.jpg" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1170-2532.jpg" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1284-2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1080-2340.jpg" media="(device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1242-2688.jpg" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1125-2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-828-1792.jpg" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-1242-2208.jpg" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-750-1334.jpg" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/splash/apple-splash-640-1136.jpg" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
   </head>
   <body>
-      <div id="app-loader">
-        <img src="/user_uploaded_logo.png" alt="Worship Platform Logo" class="splash-logo" onerror="this.src='/icon-512-v7.png';" />
-        <div class="splash-spinner"></div>
-      </div>
+    <div id="app-loader">
+      <img src="/user_uploaded_logo.png" alt="Worship Platform Logo" class="splash-logo" onerror="this.src='/icon-512-v7.png';">
+      <div class="splash-spinner"></div>
+    </div>
     <div id="root">
     </div>
     <script type="module" src="/src/main.jsx"></script>
