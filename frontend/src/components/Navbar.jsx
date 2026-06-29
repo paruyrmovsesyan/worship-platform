@@ -124,7 +124,7 @@ export default function Navbar() {
       icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
     },
     {
-      to: '/teams', label: t('nav.teams'),
+      to: '/friends', label: t('nav.friends'),
       icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     },
     {
@@ -240,7 +240,7 @@ export default function Navbar() {
             </Link>
             
             <div 
-              className={`nav-item has-dropdown ${activeDropdown === 'solutions' ? 'active-dropdown' : ''} ${isActive('/songs') || isActive('/setlists') || isActive('/teams') ? 'active' : ''}`}
+              className={`nav-item has-dropdown ${activeDropdown === 'solutions' ? 'active-dropdown' : ''} ${isActive('/songs') || isActive('/setlists') || isActive('/friends') ? 'active' : ''}`}
               onMouseEnter={(e) => handleMenuEnter(e, 'solutions')}
               onMouseLeave={onMenuLeave}
             >
@@ -260,7 +260,7 @@ export default function Navbar() {
                     <div className="mega-col">
                       <h4>{t('megaMenu.management')}</h4>
                       <div className="mega-col-links">
-                        <Link to="/teams">{t('nav.teams')}</Link>
+                        <Link to="/friends">{t('nav.friends')}</Link>
                       </div>
                     </div>
                   </div>

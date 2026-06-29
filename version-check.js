@@ -37,6 +37,22 @@
     window.location.href = url.toString();
   }
 
+  function detectOS() {
+    var userAgent = window.navigator.userAgent || window.navigator.vendor || window.opera;
+    if (/android/i.test(userAgent)) return "android";
+    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) return "ios";
+    if (/Mac OS X/.test(userAgent) && !/iPhone|iPad|iPod/.test(userAgent)) return "macos";
+    if (/Win/.test(userAgent)) return "windows";
+    if (/Linux/.test(userAgent)) return "linux";
+    return "unknown";
+  }
+
+  function isOSBlocked(data) {
+    if (!data || !data.blocked_os_list || !Array.isArray(data.blocked_os_list)) return false;
+    var os = detectOS();
+    return data.blocked_os_list.indexOf(os) !== -1;
+  }
+
   function closeModal() {
     var modal = document.getElementById("wpVersionModal");
     if (!modal) return;
@@ -321,6 +337,13 @@
       })
       .then(function(data) {
         if (data && data.ok) {
+          if (isOSBlocked(data)) {
+            if (window.location.pathname !== "/maintenance.html") {
+              var msg = encodeURIComponent("Ձեր օպերացիոն համակարգի համար մուտքը ժամանակավորապես փակ է։");
+              window.location.replace("/maintenance.html?message=" + msg);
+            }
+            return;
+          }
           applyVersionManifest(data);
         }
       })

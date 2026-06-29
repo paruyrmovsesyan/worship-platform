@@ -140,12 +140,9 @@ if (!function_exists('wp_auth_sync_install_identity')) {
     $source = strtolower(trim($source));
     if (!in_array($source, ['pwa', 'admin-app'], true)) {
       $hasMainInstallCookie = !empty($_COOKIE['wp_install_device_id']);
-      $hasAdminInstallCookie = !empty($_COOKIE['wp_admin_install_device_id']);
 
       if ($hasMainInstallCookie) {
         $source = 'pwa';
-      } elseif ($hasAdminInstallCookie) {
-        $source = 'admin-app';
       } else {
         return;
       }

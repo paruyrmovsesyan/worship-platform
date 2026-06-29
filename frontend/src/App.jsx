@@ -25,8 +25,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import { useAuth } from './context/AuthContext';
 import News from './pages/News';
-import Teams from './pages/Teams';
-import TeamView from './pages/TeamView';
+import Friends from './pages/Friends';
+import Chat from './pages/Chat';
 import Community from './pages/Community';
 import Resources from './pages/Resources';
 import Contact from './pages/Contact';
@@ -103,8 +103,8 @@ function App() {
           <Route path="/setlists/:id" element={<SetlistEditor />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/news" element={<News />} />
-          <Route path="/teams" element={<Teams />} />
-          <Route path="/teams/:id" element={<TeamView />} />
+          <Route path="/friends" element={<Friends />} />
+          <Route path="/chat/:id" element={<Chat />} />
           <Route path="/community" element={<Community />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/contact" element={<Contact />} />

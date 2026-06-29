@@ -8,6 +8,7 @@ $adminEmail        = $adminEmail ?? '';
 ?>
 <style>
 /* ── User dropdown ── */
+.mobile-menu-btn { display: none; background: transparent; border: none; cursor: pointer; color: var(--text); padding: 4px; }
 .user-menu-wrapper { position: relative; }
 .user-menu-trigger {
   display: flex; align-items: center; gap: 12px;

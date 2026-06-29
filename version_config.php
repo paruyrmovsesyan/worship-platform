@@ -376,6 +376,7 @@ function wp_version_defaults(): array {
         'social_auth_google_redirect_uri' => '',
         'page_app_modes' => wp_version_default_page_app_modes(),
         'page_web_modes' => wp_version_default_page_web_modes(),
+        'blocked_os_list' => [],
         'meta_note' => '',
         'updated_at' => wp_version_now_iso(),
     ];
@@ -477,6 +478,10 @@ function wp_version_sanitize(array $raw): array {
     $config['admin_user_permissions'] = wp_version_sanitize_admin_user_permissions($config['admin_user_permissions'] ?? []);
     $config['page_app_modes'] = wp_version_sanitize_page_app_modes($config['page_app_modes'] ?? []);
     $config['page_web_modes'] = wp_version_sanitize_page_web_modes($config['page_web_modes'] ?? []);
+    
+    $blocked_os = is_array($config['blocked_os_list'] ?? null) ? $config['blocked_os_list'] : [];
+    $config['blocked_os_list'] = array_values(array_filter(array_map('strtolower', array_map('trim', $blocked_os))));
+    
     $config['social_auth_google_client_id'] = mb_substr(trim((string)($config['social_auth_google_client_id'] ?? '')), 0, 255);
     $config['social_auth_google_redirect_uri'] = mb_substr(trim((string)($config['social_auth_google_redirect_uri'] ?? '')), 0, 255);
     $config['meta_note'] = mb_substr(trim((string)($config['meta_note'] ?? '')), 0, 1200);

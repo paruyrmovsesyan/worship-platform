@@ -40,7 +40,7 @@ function readJson(){
 
 /* GET USER PROFILE & PLAN */
 if ($action === 'get_profile' && $method === 'GET') {
-    $st = $pdo->prepare("SELECT id, name, email, plan_type FROM users WHERE id=? LIMIT 1");
+    $st = $pdo->prepare("SELECT id, name, username, email, plan_type FROM users WHERE id=? LIMIT 1");
     $st->execute([$uid]);
     $user = $st->fetch(PDO::FETCH_ASSOC);
 
@@ -53,6 +53,7 @@ if ($action === 'get_profile' && $method === 'GET') {
         "user" => [
             "id" => (int)$user['id'],
             "name" => $user['name'],
+            "username" => $user['username'] ?? '',
             "email" => $user['email'],
             "plan_type" => $user['plan_type'] ?: 'free'
         ]
@@ -74,6 +75,38 @@ if ($action === 'upgrade_plan' && $method === 'POST') {
     out([
         "ok" => true,
         "plan_type" => $plan
+    ]);
+}
+
+/* UPDATE PROFILE */
+if ($action === 'update_profile' && $method === 'POST') {
+    $d = readJson();
+    $name = trim($d['name'] ?? '');
+    $username = trim($d['username'] ?? '');
+
+    if ($name === '') {
+        out(["error" => "Անունը պարտադիր է"], 400);
+    }
+
+    // Check if username is already taken by someone else
+    if ($username !== '') {
+        $st = $pdo->prepare("SELECT id FROM users WHERE username=? AND id!=?");
+        $st->execute([$username, $uid]);
+        if ($st->fetch()) {
+            out(["error" => "Այդ մուտքանունը արդեն զբաղված է"], 400);
+        }
+    }
+
+    $st = $pdo->prepare("UPDATE users SET name=?, username=? WHERE id=?");
+    $st->execute([$name, $username, $uid]);
+
+    out([
+        "ok" => true,
+        "message" => "Պրոֆիլը թարմացվել է",
+        "user" => [
+            "name" => $name,
+            "username" => $username
+        ]
     ]);
 }
 

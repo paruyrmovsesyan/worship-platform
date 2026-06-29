@@ -325,8 +325,8 @@ textarea { min-height: 70px; resize: vertical; line-height: 1.4; }
 /* ── BUTTONS ── */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; padding: 6px 14px; border-radius: 8px; border: 1px solid #cbd5e1; color: var(--text); text-decoration: none; background: #fff; font-weight: 600; font-size: 12px; cursor: pointer; transition: all .15s; }
 .btn:hover { background: #f8fafc; border-color: #94a3b8; }
-.btn-primary { background: linear-gradient(135deg, #4318FF, #6340FF); border-color: transparent; color: #fff; box-shadow: 0 4px 12px rgba(67,24,255,0.2); }
-.btn-primary:hover { background: linear-gradient(135deg, #3510e0, #5535ef); box-shadow: 0 6px 16px rgba(67,24,255,0.3); color: #fff; }
+.btn-primary { background: linear-gradient(135deg, #3A2DFF, #00D4FF); border-color: transparent; color: #fff; box-shadow: 0 4px 12px rgba(58,45,255,0.25); }
+.btn-primary:hover { background: linear-gradient(135deg, #2418B5, #00BFFF); box-shadow: 0 6px 16px rgba(58,45,255,0.4); color: #fff; }
 .btn-danger { background: #fef2f2; color: #dc2626; border-color: #fca5a5; }
 .btn-danger:hover { background: #fee2e2; border-color: #f87171; }
 .btn-icon { padding: 6px; min-height: unset; border-radius: 6px; }

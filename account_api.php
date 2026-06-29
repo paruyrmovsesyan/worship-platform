@@ -185,6 +185,7 @@ if($action === 'me' && $method === 'GET'){
 if($action === 'update_profile' && $method === 'POST'){
   $d = readJson();
   $name = trim((string)($d["name"] ?? ''));
+  $username = trim((string)($d["username"] ?? ''));
   $email = trim((string)($d["email"] ?? ''));
   $birth_date = trim((string)($d["birth_date"] ?? ''));
   $gender = trim((string)($d["gender"] ?? ''));
@@ -203,6 +204,17 @@ if($action === 'update_profile' && $method === 'POST'){
   // update name & other fields
   $pdo->prepare("UPDATE users SET name=?, birth_date=?, gender=?, phone_number=? WHERE id=?")->execute([$name, $bDate, $gndr, $phone, $uid]);
   $_SESSION['name'] = $name;
+
+  // update username
+  if ($username !== '') {
+    if(strlen($username) > 80) out(["error"=>"Username too long"], 400);
+    $st = $pdo->prepare("SELECT id FROM users WHERE LOWER(username)=LOWER(?) AND id<>? LIMIT 1");
+    $st->execute([$username, $uid]);
+    if($st->fetchColumn()) out(["error"=>"Այս մուտքանունով (username) օգտատեր արդեն կա"], 409);
+
+    $pdo->prepare("UPDATE users SET username=? WHERE id=?")->execute([$username, $uid]);
+    $_SESSION['username'] = $username;
+  }
 
   // optional: if email passed here, set pending_email (NOT direct)
   if($email !== ''){

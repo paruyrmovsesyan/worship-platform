@@ -251,9 +251,9 @@ function wp_admin_find_user_by_login(PDO $pdo, string $login): ?array {
     }
 
     $columns = wp_admin_user_columns($pdo);
-    $sql = 'SELECT ' . implode(', ', $columns) . ' FROM users WHERE name = ? OR LOWER(email) = ? LIMIT 1';
+    $sql = 'SELECT ' . implode(', ', $columns) . ' FROM users WHERE LOWER(username) = ? OR LOWER(email) = ? LIMIT 1';
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([$login, strtolower($login)]);
+    $stmt->execute([strtolower($login), strtolower($login)]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
     return is_array($row) ? $row : null;

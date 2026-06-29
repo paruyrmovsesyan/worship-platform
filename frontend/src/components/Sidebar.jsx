@@ -30,8 +30,8 @@ export default function Sidebar() {
         <Link to="/setlists" className={`sidebar-link ${isActive('/setlists') ? 'active' : ''}`}>
           <span className="icon">📋</span> {t('nav.sets')}
         </Link>
-        <Link to="/teams" className={`sidebar-link ${isActive('/teams') ? 'active' : ''}`}>
-          <span className="icon">👥</span> {t('nav.teams')}
+        <Link to="/friends" className={`sidebar-link ${isActive('/friends') ? 'active' : ''}`}>
+          <span className="icon">💬</span> {t('nav.friends', 'Ընկերներ / Չաթ')}
         </Link>
         <Link to="/community" className={`sidebar-link ${isActive('/community') ? 'active' : ''}`}>
           <span className="icon">🌐</span> {t('nav.community')}

@@ -835,6 +835,7 @@ function wp_admin_updates_collect_input(array $config): array {
         'maintenance_start_at' => array_key_exists('maintenance_start_at', $_POST) ? $_POST['maintenance_start_at'] : ($config['maintenance_start_at'] ?? ''),
         'maintenance_end_at' => array_key_exists('maintenance_end_at', $_POST) ? $_POST['maintenance_end_at'] : ($config['maintenance_end_at'] ?? ''),
         'maintenance_allowed_ips' => array_key_exists('maintenance_allowed_ips', $_POST) ? $_POST['maintenance_allowed_ips'] : ($config['maintenance_allowed_ips'] ?? ''),
+        'blocked_os_list' => array_key_exists('blocked_os_list_present', $_POST) ? ($_POST['blocked_os_list'] ?? []) : ($config['blocked_os_list'] ?? []),
         'admin_emails' => array_key_exists('admin_emails', $_POST) ? $_POST['admin_emails'] : ($config['admin_emails'] ?? ''),
         'admin_user_permissions' => array_key_exists('admin_permission_rows', $_POST) ? $_POST['admin_permission_rows'] : ($config['admin_user_permissions'] ?? []),
         'social_auth_google_client_id' => array_key_exists('social_auth_google_client_id', $_POST) ? $_POST['social_auth_google_client_id'] : ($config['social_auth_google_client_id'] ?? ''),
@@ -1858,6 +1859,29 @@ $csrfToken = wp_admin_updates_csrf_token();
                 <input id="maintenance_allowed_ips" name="maintenance_allowed_ips" type="text" placeholder="<?= __('192.168.1.1, 10.0.0.1') ?>" value="<?= htmlspecialchars((string)($config['maintenance_allowed_ips'] ?? ''), ENT_QUOTES) ?>">
               </div>
               
+              <div class="bento-header" style="margin-top:24px;">
+                <h3><?= __('Օպերացիոն համակարգերի սահմանափակում') ?></h3>
+                <p><?= __('Ընտրեք այն հարթակները, որոնց համար մուտքը պետք է արգելափակվի։') ?></p>
+              </div>
+              
+              <div class="bento-grid cols-2" style="gap:12px;">
+                <?php 
+                $platforms = ['ios' => 'iOS', 'android' => 'Android', 'windows' => 'Windows', 'macos' => 'macOS', 'linux' => 'Linux'];
+                foreach ($platforms as $pk => $plabel): 
+                  $isChecked = in_array($pk, $config['blocked_os_list'] ?? []);
+                ?>
+                <label class="toggle-switch-wrapper" style="padding:12px 16px;">
+                  <div class="toggle-switch-info">
+                    <h4 style="margin-bottom:2px;"><?= $plabel ?></h4>
+                    <p style="font-size:11px; color:var(--muted);"><?= __('Արգելափակել մուտքը') ?></p>
+                  </div>
+                  <div class="toggle-switch">
+                    <input type="checkbox" name="blocked_os_list[<?= $pk ?>]" value="<?= $pk ?>" class="blocked-os-input" <?= $isChecked ? 'checked' : '' ?>>
+                    <span class="toggle-slider"></span>
+                  </div>
+                </label>
+                <?php endforeach; ?>
+              </div>
               <div class="chips" style="margin-top:12px">
                 <div class="autosave-status chip" id="maintenanceAutosaveStatus" data-state="idle" style="width:100%;justify-content:center;"><?= __('Փոփոխությունները կպահպանվեն ավտոմատ') ?></div>
               </div>
@@ -2992,6 +3016,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                         'web_release_summary' => 'Վեբ կայքի նկարագրություն',
                         'server_package_file' => 'ZIP Փաթեթ',
                         'admin_usernames' => 'Ադմիններ',
+                        'blocked_os_list' => 'ՕՀ արգելափակում',
                         'page_app_modes' => 'Էջերի ռեժիմներ',
                         'access_restrictions' => 'Հասանելիություն',
                         'push_enabled' => 'Push ծանուցումներ'
@@ -4248,13 +4273,18 @@ $csrfToken = wp_admin_updates_csrf_token();
       }
 
       function buildMaintenanceFields() {
-        return {
+        const payload = {
           maintenance_enabled: maintenanceEnabledInput && maintenanceEnabledInput.checked ? '1' : '',
           maintenance_start_at: maintenanceStartInput ? maintenanceStartInput.value : '',
           maintenance_end_at: maintenanceEndInput ? maintenanceEndInput.value : '',
           maintenance_message: maintenanceMessageInput ? maintenanceMessageInput.value : '',
-          maintenance_allowed_ips: maintenanceAllowedIpsInput ? maintenanceAllowedIpsInput.value : ''
+          maintenance_allowed_ips: maintenanceAllowedIpsInput ? maintenanceAllowedIpsInput.value : '',
+          blocked_os_list_present: '1'
         };
+        document.querySelectorAll('input.blocked-os-input:checked').forEach((input) => {
+          payload['blocked_os_list[' + input.value + ']'] = input.value;
+        });
+        return payload;
       }
 
       function buildPageModesFields() {
@@ -4456,6 +4486,10 @@ $csrfToken = wp_admin_updates_csrf_token();
       ].forEach((input) => {
         input?.addEventListener('input', () => maintenanceAutosave.schedule(750));
         input?.addEventListener('change', () => maintenanceAutosave.schedule(450));
+      });
+      
+      document.querySelectorAll('.blocked-os-input').forEach((input) => {
+        input.addEventListener('change', () => maintenanceAutosave.schedule(450));
       });
 
       sectionTabs.forEach((tab) => {

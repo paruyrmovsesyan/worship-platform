@@ -34,5 +34,6 @@ echo json_encode([
     'maintenance_end_at' => $config['maintenance_end_at'],
     'meta_note' => $config['meta_note'],
     'page_app_modes' => $config['page_app_modes'] ?? wp_version_default_page_app_modes(),
+    'blocked_os_list' => $config['blocked_os_list'] ?? [],
     'updated_at' => $config['updated_at'],
 ], JSON_UNESCAPED_UNICODE);

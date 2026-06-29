@@ -107,6 +107,22 @@
     return window.matchMedia("(max-width: 720px)").matches ? 92 : 104;
   }
 
+  function detectOS() {
+    const userAgent = window.navigator.userAgent || window.navigator.vendor || window.opera;
+    if (/android/i.test(userAgent)) return "android";
+    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) return "ios";
+    if (/Mac OS X/.test(userAgent) && !/iPhone|iPad|iPod/.test(userAgent)) return "macos";
+    if (/Win/.test(userAgent)) return "windows";
+    if (/Linux/.test(userAgent)) return "linux";
+    return "unknown";
+  }
+
+  function isOSBlocked(data) {
+    if (!data || !data.blocked_os_list || !Array.isArray(data.blocked_os_list)) return false;
+    const os = detectOS();
+    return data.blocked_os_list.includes(os);
+  }
+
   function buildPageUnavailableUrl(message){
     const params = new URLSearchParams();
     const key = getCurrentPageKey();
@@ -218,6 +234,15 @@
 
         if (isJson) {
           const data = await r.json().catch(function(){ return null; });
+          
+          if (isOSBlocked(data)) {
+            if (window.location.pathname !== "/maintenance.html") {
+              const msg = encodeURIComponent("Ձեր օպերացիոն համակարգի համար մուտքը ժամանակավորապես փակ է։");
+              window.location.replace("/maintenance.html?message=" + msg);
+            }
+            return;
+          }
+          
           if (data && data.maintenance) {
             if (window.location.pathname !== "/maintenance.html") {
               const msg = encodeURIComponent(data.message || "");
@@ -268,6 +293,14 @@
         });
         return;
       }
+      if(isOSBlocked(data)) {
+        if (window.location.pathname !== "/maintenance.html") {
+          const msg = encodeURIComponent("Ձեր օպերացիոն համակարգի համար մուտքը ժամանակավորապես փակ է։");
+          window.location.replace("/maintenance.html?message=" + msg);
+        }
+        return;
+      }
+
       if(data && data.maintenance){
         if (window.location.pathname !== "/maintenance.html") {
           const msg = encodeURIComponent(data.message || "");

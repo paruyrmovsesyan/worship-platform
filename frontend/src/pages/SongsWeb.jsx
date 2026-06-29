@@ -222,13 +222,14 @@ export default function SongsWeb() {
           </div>
             ))}
             {visibleCount < filtered.length && (
-              <button 
-                className="btn btn-secondary" 
-                onClick={() => setVisibleCount(v => v + 15)} 
-                style={{ width: '100%', marginTop: '16px', padding: '12px' }}
-              >
-                {t('songs.loadMore', 'Load More')}
-              </button>
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px', marginBottom: '20px' }}>
+                <button 
+                  className="btn load-more-btn" 
+                  onClick={() => setVisibleCount(v => v + 15)} 
+                >
+                  {t('songs.loadMore', 'Load More')}
+                </button>
+              </div>
             )}
           </>
         )}

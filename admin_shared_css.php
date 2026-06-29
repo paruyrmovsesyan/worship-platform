@@ -13,8 +13,8 @@
   --line: #e2e8f0;
   --text: #111c44;
   --muted: #a3aed1;
-  --primary: #4318FF;
-  --primary-hover: #3311DB;
+  --primary: #3A2DFF;
+  --primary-hover: #2418B5;
   --success: #05cd99;
   --success-bg: #e6f9f3;
   --warning: #ffce20;

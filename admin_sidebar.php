@@ -65,11 +65,5 @@ $navItems = [
     </a>
   </div>
 
-  <div style="padding: 24px; padding-top: 0; margin-top: auto;">
-    <div style="background: linear-gradient(135deg, #4318FF, #3311DB); border-radius: 20px; padding: 24px; color: white; text-align: center; box-shadow: 0 10px 20px rgba(67,24,255,0.3);">
-      <h4 style="margin: 0 0 8px; font-size: 16px; font-weight: 700;"><?= __('Upgrade your plan') ?></h4>
-      <p style="margin: 0 0 16px; font-size: 13px; opacity: 0.9;"><?= __('Go to pro to access all features') ?></p>
-      <button style="background: white; color: #4318FF; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%;"><?= __('Upgrade') ?></button>
-    </div>
-  </div>
+
 </aside>

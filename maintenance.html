@@ -287,6 +287,22 @@
       } catch(e) {}
     })();
 
+    function detectOS() {
+      const userAgent = window.navigator.userAgent || window.navigator.vendor || window.opera;
+      if (/android/i.test(userAgent)) return "android";
+      if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) return "ios";
+      if (/Mac OS X/.test(userAgent) && !/iPhone|iPad|iPod/.test(userAgent)) return "macos";
+      if (/Win/.test(userAgent)) return "windows";
+      if (/Linux/.test(userAgent)) return "linux";
+      return "unknown";
+    }
+
+    function isOSBlocked(data) {
+      if (!data || !data.blocked_os_list || !Array.isArray(data.blocked_os_list)) return false;
+      const os = detectOS();
+      return data.blocked_os_list.includes(os);
+    }
+
     let seconds = 30;
     const el = document.getElementById('countdown');
     
@@ -300,14 +316,16 @@
           });
         })
         .then(function(res) {
-          // If maintenance is turned off
-          if (res.ok || (res.data && res.data.maintenance === false)) {
+          // If maintenance is turned off and OS is not blocked
+          if ((res.ok || (res.data && res.data.maintenance === false)) && !isOSBlocked(res.data)) {
             window.location.replace('/');
             return;
           }
           
           // If still in maintenance, update message dynamically if provided
-          if (res.data && res.data.message) {
+          if (isOSBlocked(res.data)) {
+            document.getElementById('mainMsg').textContent = "Ձեր օպերացիոն համակարգի համար մուտքը ժամանակավորապես փակ է։";
+          } else if (res.data && res.data.message) {
             document.getElementById('mainMsg').textContent = res.data.message;
             // Also update URL so manual refresh keeps the new message
             try {

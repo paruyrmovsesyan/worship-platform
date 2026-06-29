@@ -24,6 +24,7 @@ if (wp_version_is_maintenance_active($config)) {
         "maintenance_end_at" => (string)($config['maintenance_end_at'] ?? ''),
         "page_app_modes" => $config['page_app_modes'] ?? wp_version_default_page_app_modes(),
         "page_web_modes" => $config['page_web_modes'] ?? wp_version_default_page_web_modes(),
+        "blocked_os_list" => $config['blocked_os_list'] ?? [],
     ], 503);
 }
 
@@ -45,6 +46,7 @@ if (!$ok) {
         "message" => $msg,
         "page_app_modes" => $config['page_app_modes'] ?? wp_version_default_page_app_modes(),
         "page_web_modes" => $config['page_web_modes'] ?? wp_version_default_page_web_modes(),
+        "blocked_os_list" => $config['blocked_os_list'] ?? [],
     ], 503);
 }
 
@@ -54,4 +56,5 @@ out([
     "message" => $msg,
     "page_app_modes" => $config['page_app_modes'] ?? wp_version_default_page_app_modes(),
     "page_web_modes" => $config['page_web_modes'] ?? wp_version_default_page_web_modes(),
+    "blocked_os_list" => $config['blocked_os_list'] ?? [],
 ], 200);

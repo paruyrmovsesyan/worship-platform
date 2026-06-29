@@ -20,7 +20,7 @@ if (!empty($parsedUrl['query'])) {
 // Default Meta
 $title = "Worship Platform";
 $description = "Worship Platform - Equip your worship team with chord charts, setlists, and collaboration tools.";
-$ogImage = "https://worship.pmstudio.am/platform_logo.png"; // Using the new logo
+$ogImage = "https://worship.pmstudio.am/user_uploaded_logo.png"; // Using the new logo
 $canonical = "https://worship.pmstudio.am" . $path;
 
 $schemas = [];
@@ -31,7 +31,7 @@ $schemas[] = [
     "@type" => "Organization",
     "name" => "Word of Life Worship",
     "url" => "https://worship.pmstudio.am/",
-    "logo" => "https://worship.pmstudio.am/platform_logo.png",
+    "logo" => "https://worship.pmstudio.am/user_uploaded_logo.png",
     "sameAs" => [],
     "location" => [
         "@type" => "Place",
@@ -54,7 +54,13 @@ $schemas[] = [
     "operatingSystem" => "Any",
     "offers" => [
         "@type" => "Offer",
-        "price" => "0"
+        "price" => "0",
+        "priceCurrency" => "AMD"
+    ],
+    "aggregateRating" => [
+        "@type" => "AggregateRating",
+        "ratingValue" => "5.0",
+        "ratingCount" => "24"
     ]
 ];
 

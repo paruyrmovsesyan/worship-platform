@@ -63,12 +63,9 @@ if (!function_exists('wp_auth_sync_install_identity')) {
     $source = strtolower(trim($source));
     if (!in_array($source, ['pwa', 'admin-app'], true)) {
       $hasMainInstallCookie = !empty($_COOKIE['wp_install_device_id']);
-      $hasAdminInstallCookie = !empty($_COOKIE['wp_admin_install_device_id']);
 
       if ($hasMainInstallCookie) {
         $source = 'pwa';
-      } elseif ($hasAdminInstallCookie) {
-        $source = 'admin-app';
       } else {
         return;
       }
@@ -116,10 +113,21 @@ if (!is_array($d)) {
 }
 
 $name = trim($d['name'] ?? '');
-$login = trim($d['login'] ?? ''); // username or email
+$username = trim($d['username'] ?? '');
+$email = trim($d['email'] ?? '');
 $password = (string)($d['password'] ?? '');
 $remember = !empty($d['remember_me']);
 $source = strtolower((string)($d['source'] ?? 'pwa'));
+
+// Legacy fallback: if old app sends 'login', treat as username or email
+$login = trim($d['login'] ?? '');
+if ($login !== '') {
+    if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
+        if ($email === '') $email = $login;
+    } else {
+        if ($username === '') $username = $login;
+    }
+}
 
 function wp_runtime_password_min_length_api(): int {
     $path = __DIR__ . '/runtime_local_config.php';
@@ -130,8 +138,18 @@ function wp_runtime_password_min_length_api(): int {
 
 $minPasswordLength = wp_runtime_password_min_length_api();
 
-if($login === '' || $password === '' || strlen($password) < $minPasswordLength){
-    out(["error" => "Լրացրեք բոլոր դաշտերը (գաղտնաբառը՝ առնվազն {$minPasswordLength} նիշ)։"], 400);
+if($email === '' || $password === '' || strlen($password) < $minPasswordLength){
+    out(["error" => "Լրացրեք բոլոր պարտադիր դաշտերը (էլ. հասցե, գաղտնաբառը՝ առնվազն {$minPasswordLength} նիշ)։"], 400);
+}
+
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    out(["error" => "Սխալ էլ. փոստի հասցե։"], 400);
+}
+
+// Generate username if not provided but email is given
+if ($username === '') {
+    $parts = explode('@', $email);
+    $username = $parts[0] . '_' . rand(100,999);
 }
 
 try {
@@ -158,20 +176,24 @@ $hasUsername = colExistsApi($conn, 'users', 'username');
 $hasEmail    = colExistsApi($conn, 'users', 'email');
 $hasName     = colExistsApi($conn, 'users', 'name');
 
-if($hasUsername){
-    $stmt = $conn->prepare("SELECT id FROM users WHERE username=? LIMIT 1");
-    $stmt->execute([$login]);
-} elseif($hasEmail){
+if($hasEmail){
     $stmt = $conn->prepare("SELECT id FROM users WHERE email=? LIMIT 1");
-    $stmt->execute([$login]);
+    $stmt->execute([$email]);
+    if($stmt->fetch(PDO::FETCH_ASSOC)){
+        out(["error" => "Այս email-ով հաշիվ արդեն գոյություն ունի։"], 400);
+    }
 } else {
-    out(["error" => "Users աղյուսակում չկա username/email դաշտ։"], 500);
+    out(["error" => "Users աղյուսակում չկա email դաշտ։"], 500);
 }
 
-if($stmt->fetch(PDO::FETCH_ASSOC)){
-    $errorMsg = $hasUsername ? "Այս username-ով հաշիվ արդեն կա։" : "Այս email-ով հաշիվ արդեն կա։";
-    out(["error" => $errorMsg], 400);
-} else {
+if($hasUsername){
+    $stmt = $conn->prepare("SELECT id FROM users WHERE username=? LIMIT 1");
+    $stmt->execute([$username]);
+    if($stmt->fetch(PDO::FETCH_ASSOC)){
+        // If username exists, try to append a random number
+        $username = $username . '_' . rand(100,999);
+    }
+}
 
     $hash = password_hash($password, PASSWORD_DEFAULT);
 
@@ -182,17 +204,17 @@ if($stmt->fetch(PDO::FETCH_ASSOC)){
     if($hasUsername){
         $cols[] = "username";
         $vals[] = "?";
-        $params[] = $login;
+        $params[] = $username;
     }
     if($hasEmail){
         $cols[] = "email";
         $vals[] = "?";
-        $params[] = $login;
+        $params[] = $email;
     }
     if($hasName){
         $cols[] = "name";
         $vals[] = "?";
-        $params[] = ($name !== '' ? $name : $login);
+        $params[] = ($name !== '' ? $name : $username);
     }
 
     $cols[] = "password_hash";
