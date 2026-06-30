@@ -1,8 +1,22 @@
 .song-view-page {
-  padding: 1rem 1.5rem;
+  padding: 16px 24px;
   max-width: 800px;
+  width: 100%;
+  box-sizing: border-box;
   margin: 0 auto;
   padding-bottom: 120px;
+}
+
+@media (max-width: 900px) {
+  .song-view-page {
+    padding: 16px;
+  }
+}
+
+@media all and (display-mode: standalone) {
+  .song-view-page {
+    padding: 16px;
+  }
 }
 
 /* Header */
@@ -216,7 +230,12 @@
 
 .sv-control-row {
   display: flex;
-  gap: 16px;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: stretch;
+}
+.sv-control-row:last-child {
+  margin-bottom: 0;
 }
 
 .sv-stepper-group {
@@ -339,6 +358,12 @@
   border-radius: 16px;
   padding: 24px;
   min-height: 400px;
+}
+
+@media (max-width: 900px) {
+  .sv-sheet {
+    padding: 16px;
+  }
 }
 
 .sv-divider {

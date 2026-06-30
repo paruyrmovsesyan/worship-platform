@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v21";
+const CACHE_VERSION = "worship-v66";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -319,25 +319,26 @@ async function fetchQueuedPushPayload() {
 }
 
 async function handleNotificationClick(event) {
-  const rawUrl = (event.notification && event.notification.data && event.notification.data.url) || "/main.html";
-  const targetUrl = new URL(rawUrl, self.location.origin).href;
+  const rawUrl = (event.notification && event.notification.data && event.notification.data.url) || "/";
+  const targetUrl = new URL(rawUrl, self.location.origin);
+  const targetPath = targetUrl.pathname + targetUrl.search + targetUrl.hash;
+
   const windowClients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
 
+  // Prefer an existing PWA client — send postMessage so React Router handles it (preserves history)
   for (const client of windowClients) {
-    if (client.url === targetUrl && "focus" in client) {
-      return client.focus();
+    const clientUrl = new URL(client.url);
+    if (clientUrl.origin === self.location.origin) {
+      // Focus the existing window and tell React Router where to go
+      await client.focus();
+      client.postMessage({ type: "PUSH_NAVIGATE", path: targetPath });
+      return;
     }
   }
 
-  for (const client of windowClients) {
-    if (client.url.startsWith(self.location.origin) && "focus" in client) {
-      client.navigate(targetUrl);
-      return client.focus();
-    }
-  }
-
+  // No existing client — open a new window (fresh PWA launch, history starts from chat)
   if (self.clients.openWindow) {
-    return self.clients.openWindow(targetUrl);
+    return self.clients.openWindow(targetUrl.href);
   }
 }
 

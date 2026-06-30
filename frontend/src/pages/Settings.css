@@ -1,14 +1,22 @@
 .settings-page {
   padding: 2rem 1rem;
   max-width: 1000px;
+  width: 100%;
+  box-sizing: border-box;
   margin: 0 auto;
   animation: fadeIn 0.4s ease forwards;
   min-height: calc(100vh - var(--nav-height, 60px));
 }
 
+@media (max-width: 900px) {
+  .settings-page {
+    padding: 16px;
+  }
+}
+
 .settings-page.pwa-mode {
-  padding: 1rem 0.5rem;
-  padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 90px); /* Bottom nav space */
+  padding: 16px;
+  padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 90px);
 }
 
 /* Messages */
@@ -36,6 +44,7 @@
   display: flex;
   gap: 2rem;
   align-items: flex-start;
+  width: 100%;
 }
 
 /* Sidebar (Menu) */
@@ -59,6 +68,14 @@
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 900px) {
+  .settings-menu-list {
+    border-left: none;
+    border-right: none;
+    box-shadow: none;
+  }
 }
 
 .settings-menu-item {
@@ -427,6 +444,7 @@ input[type="date"] {
 @media (max-width: 900px) {
   .settings-layout {
     flex-direction: column;
+    align-items: stretch;
   }
   .settings-sidebar {
     width: 100%;
