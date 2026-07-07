@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { useIsPWA } from '../hooks/useIsPWA';
 import LanguageSwitcher from './LanguageSwitcher';
 import './Navbar.css';
 
@@ -11,6 +12,7 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const isPWA = useIsPWA();
 
   const [scrolled, setScrolled]       = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,6 +24,17 @@ export default function Navbar() {
   // Magic Pill sliding animation state
   const [hoverStyle, setHoverStyle] = useState({ opacity: 0, width: 0, transform: 'translateX(0px)' });
   const navMenuRef = useRef(null);
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      fetch('/user_notifications_api.php?action=get_unread_count')
+        .then(r => r.json())
+        .then(d => { if(d.ok) setUnreadCount(d.count); })
+        .catch(console.error);
+    }
+  }, [user, location.pathname]);
 
   // Calculate position of the pill
   const updatePillPosition = (element) => {
@@ -336,6 +349,40 @@ export default function Navbar() {
                 </button>
               )}
             </form>
+
+            {/* Notifications Bell */}
+            {user && isPWA && (
+              <button 
+                className="notification-bell-btn hide-mobile" 
+                onClick={() => navigate('/notifications')}
+                aria-label="Notifications"
+                style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  color: 'var(--color-text-primary)', position: 'relative',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: '40px', height: '40px', borderRadius: '50%',
+                  marginRight: '8px', transition: 'background 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute', top: '4px', right: '4px',
+                    background: 'var(--color-danger)', color: '#fff',
+                    fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    borderRadius: '50%', border: '2px solid var(--color-surface)'
+                  }}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+            )}
 
             {/* Auth buttons */}
             {user ? (

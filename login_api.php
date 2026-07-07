@@ -60,15 +60,9 @@ if (!function_exists('wp_auth_sync_install_identity')) {
       return;
     }
 
-    $source = strtolower(trim($source));
+    $source = function_exists('wp_auth_normalize_session_source') ? wp_auth_normalize_session_source($source) : strtolower(trim($source));
     if (!in_array($source, ['pwa', 'admin-app'], true)) {
-      $hasMainInstallCookie = !empty($_COOKIE['wp_install_device_id']);
-
-      if ($hasMainInstallCookie) {
-        $source = 'pwa';
-      } else {
-        return;
-      }
+      return;
     }
 
     $scope = $source === 'admin-app' ? 'admin' : 'main';
@@ -112,25 +106,37 @@ if (!is_array($d)) {
     $d = $_POST;
 }
 
-$login = trim($d['login'] ?? '');
+$login = trim((string)($d['login'] ?? ''));
 $password = (string)($d['password'] ?? '');
 $remember = !empty($d['remember_me']);
-$source = strtolower((string)($d['source'] ?? 'pwa'));
+$source = function_exists('wp_auth_normalize_session_source')
+  ? wp_auth_normalize_session_source((string)($d['source'] ?? ''))
+  : strtolower((string)($d['source'] ?? 'web'));
 
 if($login === '' || $password === ''){
   out(["error" => "Լրացրեք բոլոր դաշտերը"], 400);
 }
 
+if(!filter_var($login, FILTER_VALIDATE_EMAIL)){
+  out(["error" => "Մուտքագրեք վավեր էլ. փոստի հասցե"], 400);
+}
+
 try {
   $conn = wp_runtime_open_pdo();
   $conn->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+  try {
+    $conn->exec("ALTER TABLE users ADD COLUMN is_blocked TINYINT(1) NOT NULL DEFAULT 0 AFTER email");
+  } catch (Throwable $e) {}
+  try {
+    $conn->exec("ALTER TABLE users ADD COLUMN blocked_at DATETIME NULL DEFAULT NULL AFTER is_blocked");
+  } catch (Throwable $e) {}
 } catch (Exception $e) {
   out(["error" => "DB connection failed"], 500);
 }
 
 $loginNorm = strtolower($login);
-$stmt = $conn->prepare("SELECT * FROM users WHERE LOWER(username) = ? OR LOWER(email) = ? LIMIT 1");
-$stmt->execute([$loginNorm, $loginNorm]);
+$stmt = $conn->prepare("SELECT * FROM users WHERE LOWER(email) = ? AND COALESCE(is_blocked, 0) = 0 LIMIT 1");
+$stmt->execute([$loginNorm]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if($user && !empty($user['password_hash']) && password_verify($password, $user['password_hash'])){
@@ -140,7 +146,9 @@ if($user && !empty($user['password_hash']) && password_verify($password, $user['
   $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
   $ip = function_exists('wp_runtime_remote_ip') ? wp_runtime_remote_ip() : (string)($_SERVER['REMOTE_ADDR'] ?? '');
   $info = getDeviceInfo($ua);
-  $sessionDeviceName = wp_auth_compose_device_name($info['device_name'], $source);
+  $sessionDeviceName = function_exists('wp_auth_compose_session_device_name')
+    ? wp_auth_compose_session_device_name($info['device_name'], $source)
+    : wp_auth_compose_device_name($info['device_name'], $source);
   $existingSessionId = wp_auth_find_existing_device_session_id($conn, (int)$user['id'], $info, $sessionDeviceName);
 
   session_regenerate_id(true);
@@ -156,21 +164,15 @@ if($user && !empty($user['password_hash']) && password_verify($password, $user['
   $tokenHash = null;
   $remembered = $remember ? 1 : 0;
 
-  $expiresTs = $remember ? time() + 60*60*24*30 : time() + 60*60*12;
-  $expiresAt = date('Y-m-d H:i:s', $expiresTs);
+  $expiresTs = $remember ? wp_auth_remember_cookie_expiry_ts() : time() + 60*60*12;
+  $expiresAt = $remember ? date('Y-m-d H:i:s', $expiresTs) : date('Y-m-d H:i:s', $expiresTs);
 
   if($remember){
     $selector = bin2hex(random_bytes(12));
     $validator = bin2hex(random_bytes(32));
     $tokenHash = hash('sha256', $validator);
 
-    setcookie("remember_me", $selector . ':' . $validator, [
-      "expires"  => $expiresTs,
-      "path"     => "/",
-      "secure"   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
-      "httponly" => true,
-      "samesite" => "Lax",
-    ]);
+    wp_auth_issue_remember_cookie($selector, $validator);
   } else {
     $selector = null;
     $tokenHash = null;
@@ -248,5 +250,5 @@ if($user && !empty($user['password_hash']) && password_verify($password, $user['
   ]);
 
 } else {
-  out(["error" => "Սխալ մուտքանուն/էլ. փոստ կամ գաղտնաբառ"], 401);
+  out(["error" => "Սխալ էլ. փոստ կամ գաղտնաբառ"], 401);
 }

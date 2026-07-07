@@ -1,26 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
+import { getSongCoverStyle } from '../utils/songCover';
 import { usePageReady } from '../hooks/usePageReady';
 import './Favorites.css';
 
 export default function Favorites() {
   const [songs, setSongs] = useState([]);
+  const [activeKeyFilter, setActiveKeyFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   usePageReady(loading);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, language } = useLanguage();
-  const GRADS = ['bg-purple','bg-blue','bg-cyan','bg-gold', 'bg-orange'];
 
-  useEffect(() => {
+  const loadFavorites = useCallback(() => {
     if (!user) {
+      setSongs([]);
       setLoading(false);
       return;
     }
+
+    setLoading(true);
+    setError(null);
 
     fetch('/user_favorites_api.php?action=get_favorites')
       .then(res => {
@@ -28,7 +33,7 @@ export default function Favorites() {
         return res.json();
       })
       .then(data => {
-        setSongs(data || []);
+        setSongs(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(err => {
@@ -38,8 +43,40 @@ export default function Favorites() {
       });
   }, [user, t]);
 
+  useEffect(() => {
+    loadFavorites();
+  }, [loadFavorites]);
+
+  const availableKeys = useMemo(() => {
+    const counts = new Map();
+    songs.forEach(song => {
+      const key = song.target_key || song.song_key;
+      if (!key) return;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+
+    return Array.from(counts.entries())
+      .sort((a, b) => {
+        if (b[1] !== a[1]) return b[1] - a[1];
+        return a[0].localeCompare(b[0]);
+      })
+      .map(([key]) => key);
+  }, [songs]);
+
+  const filteredSongs = useMemo(() => {
+    if (activeKeyFilter === 'all') return songs;
+    return songs.filter(song => (song.target_key || song.song_key) === activeKeyFilter);
+  }, [activeKeyFilter, songs]);
+
+  useEffect(() => {
+    if (activeKeyFilter === 'all') return;
+    if (!availableKeys.includes(activeKeyFilter)) {
+      setActiveKeyFilter('all');
+    }
+  }, [activeKeyFilter, availableKeys]);
+
   const removeFavorite = async (songId) => {
-    if (!window.confirm(t('favorites.confirmRemove', 'Հեռացնե՞լ երգը պահպանվածներից:'))) return;
+    if (!window.confirm(t('favorites.confirmRemove'))) return;
     try {
       const res = await fetch('/user_favorites_api.php?action=toggle_favorite', {
         method: 'POST',
@@ -57,10 +94,15 @@ export default function Favorites() {
 
   if (!user) {
     return (
-      <div className="favorites-page" style={{ textAlign: 'center', paddingTop: '100px' }}>
-        <h2>{t('favorites.loginTitle')}</h2>
-        <p style={{ color: 'var(--color-text-secondary)', marginTop: '16px' }}>{t('favorites.loginPrompt')}</p>
-        <Link to="/login" className="btn btn-primary" style={{ marginTop: '24px', display: 'inline-block' }}>{t('favorites.loginBtn')}</Link>
+      <div className="favorites-page favorites-guest-page">
+        <div className="fav-empty animate-fade-in">
+          <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <h3>{t('favorites.loginTitle')}</h3>
+          <p>{t('favorites.loginPrompt')}</p>
+          <Link to="/login" className="fav-cta-btn">{t('favorites.loginBtn')}</Link>
+        </div>
       </div>
     );
   }
@@ -75,7 +117,7 @@ export default function Favorites() {
           </svg>
         </div>
         <div className="fav-hero-info">
-          <span className="fav-hero-type">{t('favorites.playlist', 'Playlist')}</span>
+          <span className="fav-hero-type">{t('favorites.playlist')}</span>
           <h1 className="fav-hero-title">{t('favorites.title')}</h1>
           <div className="fav-hero-meta">
             <span>{user?.name || 'User'}</span> • {songs.length} {t('favorites.savedSongs')}
@@ -87,9 +129,39 @@ export default function Favorites() {
         {/* Play Action Row */}
         {songs.length > 0 && !loading && (
           <div className="fav-action-row animate-fade-in">
-            <button className="fav-play-btn" onClick={() => navigate(`/song/${songs[0].id}?list=favorites`)}>
+            <button
+              className="fav-action-pill primary"
+              onClick={() => filteredSongs[0] && navigate(`/song/${filteredSongs[0].id}?list=favorites`)}
+              disabled={filteredSongs.length === 0}
+            >
               <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              <span>{t('favorites.openFirst')}</span>
             </button>
+            <button className="fav-action-pill secondary" onClick={() => navigate('/songs')}>
+              <span>{t('favorites.browseSongs')}</span>
+            </button>
+          </div>
+        )}
+
+        {availableKeys.length > 0 && !loading && (
+          <div className="fav-filter-row animate-fade-in">
+            <button
+              type="button"
+              className={`fav-filter-chip ${activeKeyFilter === 'all' ? 'active' : ''}`}
+              onClick={() => setActiveKeyFilter('all')}
+            >
+              {t('favorites.filterAll')}
+            </button>
+            {availableKeys.map(key => (
+              <button
+                key={key}
+                type="button"
+                className={`fav-filter-chip ${activeKeyFilter === key ? 'active' : ''}`}
+                onClick={() => setActiveKeyFilter(key)}
+              >
+                {key}
+              </button>
+            ))}
           </div>
         )}
 
@@ -106,10 +178,18 @@ export default function Favorites() {
             ))}
           </div>
         ) : error ? (
-          <div className="error-state"><p>{error}</p></div>
+          <div className="fav-empty animate-fade-in">
+            <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <h3>{error}</h3>
+            <button className="fav-cta-btn" onClick={loadFavorites}>{t('favorites.retry')}</button>
+          </div>
         ) : (
           <div className="fav-track-list">
-            {songs.map((song, idx) => (
+            {filteredSongs.map((song, idx) => (
               <div 
                 key={song.id} 
                 className="fav-track-item animate-fade-in"
@@ -118,12 +198,15 @@ export default function Favorites() {
               >
                 <div className="fav-track-num">{idx + 1}</div>
 
-                <div className={`fav-track-img ${GRADS[(song.id||idx) % GRADS.length]}`}>
-                  {song.title?.charAt(0)?.toUpperCase() || '?'}
+                <div
+                  className="fav-track-img"
+                  style={getSongCoverStyle(song.id || idx, song.title || song.song_key || '')}
+                >
+                  <span className="fav-track-key">{song.target_key || song.song_key || '?'}</span>
                 </div>
 
                 <div className="fav-track-info">
-                  <div className="fav-track-title">{getLocalizedTitle(song.title, language)}</div>
+                  <div className="fav-track-title">{getLocalizedTitle(song, language)}</div>
                   <div className="fav-track-artist">{song.artist || t('songs.unknownArtist', 'Unknown Artist')}</div>
                 </div>
                 
@@ -152,6 +235,21 @@ export default function Favorites() {
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
                 <h3>{t('favorites.noFavorites')}</h3>
+                <p>{t('favorites.emptyDesc')}</p>
+                <button className="fav-cta-btn" onClick={() => navigate('/songs')}>{t('favorites.browseSongs')}</button>
+              </div>
+            )}
+
+            {songs.length > 0 && filteredSongs.length === 0 && (
+              <div className="fav-empty animate-fade-in">
+                <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M3 5h18"></path>
+                  <path d="M6 12h12"></path>
+                  <path d="M10 19h4"></path>
+                </svg>
+                <h3>{t('favorites.noFilterResults')}</h3>
+                <p>{t('favorites.noFilterResultsDesc')}</p>
+                <button className="fav-cta-btn" onClick={() => setActiveKeyFilter('all')}>{t('favorites.filterReset')}</button>
               </div>
             )}
           </div>

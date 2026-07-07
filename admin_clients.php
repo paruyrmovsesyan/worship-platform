@@ -3,6 +3,18 @@ declare(strict_types=1);
 require_once __DIR__ . '/admin_access.php';
 require_once __DIR__ . '/runtime_config.php';
 
+function wp_admin_clients_ensure_user_access_columns(mysqli $conn): void {
+    $checkBlocked = $conn->query("SHOW COLUMNS FROM users LIKE 'is_blocked'");
+    if ($checkBlocked && $checkBlocked->num_rows === 0) {
+        $conn->query("ALTER TABLE users ADD COLUMN is_blocked TINYINT(1) NOT NULL DEFAULT 0 AFTER email");
+    }
+
+    $checkBlockedAt = $conn->query("SHOW COLUMNS FROM users LIKE 'blocked_at'");
+    if ($checkBlockedAt && $checkBlockedAt->num_rows === 0) {
+        $conn->query("ALTER TABLE users ADD COLUMN blocked_at DATETIME NULL DEFAULT NULL AFTER is_blocked");
+    }
+}
+
 $access = wp_admin_require_access('/admin_clients.php');
 $adminUser = $access['user'];
 $adminDisplayName = trim((string)($adminUser['name'] ?? 'Admin'));
@@ -17,21 +29,121 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['ac
     header('Content-Type: application/json');
     try {
         $conn = wp_runtime_open_mysqli();
+        wp_admin_clients_ensure_user_access_columns($conn);
         $uid = (int)($_POST['id'] ?? 0);
         $name = trim((string)($_POST['name'] ?? ''));
         $username = trim((string)($_POST['username'] ?? ''));
-        $email = trim((string)($_POST['email'] ?? ''));
+        $email = ltrim(trim((string)($_POST['email'] ?? '')), '@');
         $phone = trim((string)($_POST['phone_number'] ?? ''));
         $birth = trim((string)($_POST['birth_date'] ?? ''));
         if ($birth === '') $birth = null;
         $gender = trim((string)($_POST['gender'] ?? ''));
         if (!in_array($gender, ['male','female','other','prefer_not_to_say'])) $gender = null;
+
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new RuntimeException('Մուտքագրեք վավեր էլ. փոստի հասցե');
+        }
         
         $stmt = $conn->prepare("UPDATE users SET name=?, username=?, email=?, phone_number=?, birth_date=?, gender=? WHERE id=?");
         $stmt->bind_param('ssssssi', $name, $username, $email, $phone, $birth, $gender, $uid);
         $stmt->execute();
         echo json_encode(['ok' => true]);
     } catch(Throwable $e) {
+        echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'toggle_block_user') {
+    header('Content-Type: application/json');
+    try {
+        $conn = wp_runtime_open_mysqli();
+        wp_admin_clients_ensure_user_access_columns($conn);
+
+        $uid = (int)($_POST['id'] ?? 0);
+        $block = !empty($_POST['block']) ? 1 : 0;
+        if ($uid <= 0) {
+            throw new RuntimeException('Invalid user id');
+        }
+        if ((int)($adminUser['id'] ?? 0) === $uid) {
+            throw new RuntimeException('Դուք չեք կարող արգելափակել ձեր սեփական հաշիվը');
+        }
+
+        if ($block) {
+            $stmt = $conn->prepare("UPDATE users SET is_blocked = 1, blocked_at = NOW() WHERE id = ? LIMIT 1");
+            $stmt->bind_param('i', $uid);
+            $stmt->execute();
+            $stmt = $conn->prepare("DELETE FROM user_sessions WHERE user_id = ?");
+            $stmt->bind_param('i', $uid);
+            $stmt->execute();
+        } else {
+            $stmt = $conn->prepare("UPDATE users SET is_blocked = 0, blocked_at = NULL WHERE id = ? LIMIT 1");
+            $stmt->bind_param('i', $uid);
+            $stmt->execute();
+        }
+
+        echo json_encode(['ok' => true, 'blocked' => (bool)$block]);
+    } catch (Throwable $e) {
+        echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'delete_user') {
+    header('Content-Type: application/json');
+    try {
+        $pdo = wp_runtime_open_pdo();
+        wp_auth_ensure_user_access_columns($pdo);
+        $uid = (int)($_POST['id'] ?? 0);
+        if ($uid <= 0) {
+            throw new RuntimeException('Invalid user id');
+        }
+        if ((int)($adminUser['id'] ?? 0) === $uid) {
+            throw new RuntimeException('Դուք չեք կարող ջնջել ձեր սեփական հաշիվը');
+        }
+
+        $pdo->beginTransaction();
+        try {
+            $tables = [
+                ['user_favorites', 'user_id'],
+                ['favorites', 'user_id'],
+                ['recent_views', 'user_id'],
+                ['password_resets', 'user_id'],
+                ['user_sessions', 'user_id'],
+                ['push_subscriptions', 'user_id'],
+                ['friends', 'user_id_1'],
+                ['friends', 'user_id_2'],
+                ['notifications', 'user_id'],
+                ['contact_messages', 'user_id'],
+                ['chat_messages', 'user_id'],
+                ['chat_members', 'user_id'],
+                ['song_change_requests', 'submitted_by_user_id'],
+            ];
+
+            foreach ($tables as [$table, $column]) {
+                try {
+                    $stmt = $pdo->prepare("DELETE FROM {$table} WHERE {$column} = ?");
+                    $stmt->execute([$uid]);
+                } catch (Throwable $e) {
+                    // Ignore missing tables/columns and continue cleanup.
+                }
+            }
+
+            try {
+                $stmt = $pdo->prepare("DELETE FROM chats WHERE type = 'direct' AND (created_by = ? OR id NOT IN (SELECT chat_id FROM chat_members))");
+                $stmt->execute([$uid]);
+            } catch (Throwable $e) {}
+
+            $stmt = $pdo->prepare("DELETE FROM users WHERE id = ? LIMIT 1");
+            $stmt->execute([$uid]);
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+
+        echo json_encode(['ok' => true]);
+    } catch (Throwable $e) {
         echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
     }
     exit;
@@ -108,6 +220,7 @@ try {
     if ($checkCol && $checkCol->num_rows === 0) {
         $conn->query("ALTER TABLE users ADD COLUMN username VARCHAR(160) NOT NULL DEFAULT '' AFTER id");
     }
+    wp_admin_clients_ensure_user_access_columns($conn);
 
     // Total count
     if ($search !== '') {
@@ -127,14 +240,14 @@ try {
     if ($search !== '') {
         $like = '%' . $search . '%';
         $stmt = $conn->prepare(
-            "SELECT id, username, name, email, created_at, birth_date, gender, phone_number
+            "SELECT id, username, name, email, created_at, birth_date, gender, phone_number, COALESCE(is_blocked, 0) AS is_blocked, blocked_at
              FROM users WHERE name LIKE ? OR email LIKE ? OR username LIKE ?
              ORDER BY id DESC LIMIT ? OFFSET ?"
         );
         $stmt->bind_param('sssii', $like, $like, $like, $perPage, $offset);
     } else {
         $stmt = $conn->prepare(
-            "SELECT id, username, name, email, created_at, birth_date, gender, phone_number
+            "SELECT id, username, name, email, created_at, birth_date, gender, phone_number, COALESCE(is_blocked, 0) AS is_blocked, blocked_at
              FROM users ORDER BY id DESC LIMIT ? OFFSET ?"
         );
         $stmt->bind_param('ii', $perPage, $offset);
@@ -206,18 +319,23 @@ $searchPlaceholder = 'Search users...';
             <tr><td colspan="4" style="text-align:center; padding:40px; color:var(--muted);"><?= __('No users found') ?></td></tr>
             <?php else: ?>
             <?php foreach ($users as $u): ?>
-            <tr onclick="openUserModal(<?= (int)$u['id'] ?>, '<?= htmlspecialchars((string)($u['name'] ?? '—'), ENT_QUOTES) ?>', '<?= htmlspecialchars((string)($u['email'] ?? '—'), ENT_QUOTES) ?>', '<?= htmlspecialchars((string)($u['username'] ?? '—'), ENT_QUOTES) ?>', '<?= htmlspecialchars((string)($u['created_at'] ?? '—'), ENT_QUOTES) ?>', '<?= htmlspecialchars((string)($u['phone_number'] ?? ''), ENT_QUOTES) ?>', '<?= htmlspecialchars((string)($u['birth_date'] ?? ''), ENT_QUOTES) ?>', '<?= htmlspecialchars((string)($u['gender'] ?? ''), ENT_QUOTES) ?>')" style="cursor: pointer;">
+            <tr onclick="openUserModal(<?= (int)$u['id'] ?>, '<?= htmlspecialchars((string)($u['name'] ?? '—'), ENT_QUOTES) ?>', '<?= htmlspecialchars((string)($u['email'] ?? '—'), ENT_QUOTES) ?>', '<?= htmlspecialchars((string)($u['username'] ?? '—'), ENT_QUOTES) ?>', '<?= htmlspecialchars((string)($u['created_at'] ?? '—'), ENT_QUOTES) ?>', '<?= htmlspecialchars((string)($u['phone_number'] ?? ''), ENT_QUOTES) ?>', '<?= htmlspecialchars((string)($u['birth_date'] ?? ''), ENT_QUOTES) ?>', '<?= htmlspecialchars((string)($u['gender'] ?? ''), ENT_QUOTES) ?>', <?= !empty($u['is_blocked']) ? 'true' : 'false' ?>, '<?= htmlspecialchars((string)($u['blocked_at'] ?? ''), ENT_QUOTES) ?>')" style="cursor: pointer;">
               <td style="color:var(--muted); font-size:13px;"><?= (int)$u['id'] ?></td>
               <td>
                 <div style="display:flex; align-items:center; gap:10px;">
                   <div style="width:32px; height:32px; border-radius:50%; background:var(--primary); color:white; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;">
                     <?= htmlspecialchars(mb_substr((string)($u['name'] ?? 'U'), 0, 1)) ?>
                   </div>
-                  <div style="font-weight:600; color:var(--text);"><?= htmlspecialchars((string)($u['name'] ?? '—')) ?></div>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="font-weight:600; color:var(--text);"><?= htmlspecialchars((string)($u['name'] ?? '—')) ?></div>
+                    <?php if (!empty($u['is_blocked'])): ?>
+                      <span style="display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px; background:rgba(220,38,38,0.12); color:#dc2626; font-size:11px; font-weight:700;">Արգելափակված</span>
+                    <?php endif; ?>
+                  </div>
                 </div>
               </td>
               <td style="color:var(--muted);">
-                <div><?= htmlspecialchars((string)($u['email'] ?? '—')) ?></div>
+                <div><?= htmlspecialchars(ltrim((string)($u['email'] ?? '—'), '@')) ?></div>
                 <div style="font-size:11px; opacity:0.6; margin-top:2px;">@<?= htmlspecialchars((string)($u['username'] ?? '—')) ?></div>
               </td>
               <td style="color:var(--muted); font-size:13px;"><?= htmlspecialchars((string)($u['created_at'] ?? '—')) ?></td>
@@ -273,8 +391,16 @@ $searchPlaceholder = 'Search users...';
           <div style="background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:6px 12px; color:var(--text);">
              <span style="color:var(--muted); font-weight:600; margin-right:4px;">📅</span> <span id="umRegistered">-</span>
           </div>
+          <div id="umBlockedBadge" style="display:none; background:rgba(220,38,38,0.12); border:1px solid rgba(220,38,38,0.24); border-radius:8px; padding:6px 12px; color:#dc2626;">
+             <span style="font-weight:700; margin-right:4px;">⛔</span> <span id="umBlockedText">Արգելափակված</span>
+          </div>
         </div>
       </div>
+    </div>
+
+    <div style="display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;">
+      <button id="umBlockBtn" onclick="toggleUserBlock()" class="btn" style="background:rgba(220,38,38,0.1); color:#dc2626; border:1px solid rgba(220,38,38,0.2);">Արգելափակել</button>
+      <button id="umDeleteBtn" onclick="deleteUserAccount()" class="btn" style="background:#dc2626; color:#fff; border:1px solid #dc2626;">Ջնջել հաշիվը</button>
     </div>
     
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
@@ -366,12 +492,16 @@ $searchPlaceholder = 'Search users...';
 <script>
 let currentUserData = {};
 
-function openUserModal(id, name, email, username, registered, phone, birth, gender) {
-    currentUserData = { id, name, email, username, registered, phone, birth, gender };
+function normalizeEmail(email) {
+    return String(email || '').replace(/^@+/, '').trim();
+}
+
+function openUserModal(id, name, email, username, registered, phone, birth, gender, isBlocked, blockedAt) {
+    currentUserData = { id, name, email: normalizeEmail(email), username, registered, phone, birth, gender, isBlocked, blockedAt };
     
     document.getElementById('umName').textContent = name;
     document.getElementById('umAvatar').textContent = name ? name.charAt(0).toUpperCase() : '?';
-    document.getElementById('umEmail').textContent = email;
+    document.getElementById('umEmail').textContent = currentUserData.email;
     document.getElementById('umUsername').textContent = '@' + username;
     document.getElementById('umRegistered').textContent = registered.split(' ')[0]; // Show only date
     
@@ -380,6 +510,11 @@ function openUserModal(id, name, email, username, registered, phone, birth, gend
     
     let genderTrans = {'male':'Տղամարդ', 'female':'Կին', 'other':'Այլ', 'prefer_not_to_say':'Նշված չէ'};
     document.getElementById('umGender').textContent = genderTrans[gender] || gender || '—';
+    document.getElementById('umBlockedBadge').style.display = isBlocked ? 'inline-flex' : 'none';
+    document.getElementById('umBlockedText').textContent = isBlocked
+        ? ('Արգելափակված' + (blockedAt ? ' • ' + blockedAt.split(' ')[0] : ''))
+        : 'Արգելափակված';
+    document.getElementById('umBlockBtn').textContent = isBlocked ? 'Ապաարգելափակել' : 'Արգելափակել';
 
     
     document.getElementById('umFavs').textContent = '...';
@@ -465,7 +600,7 @@ function closeUserModal() {
 function openEditModal() {
     document.getElementById('euId').value = currentUserData.id;
     document.getElementById('euName').value = currentUserData.name;
-    document.getElementById('euEmail').value = currentUserData.email;
+    document.getElementById('euEmail').value = normalizeEmail(currentUserData.email);
     document.getElementById('euUsername').value = currentUserData.username;
     document.getElementById('euPhone').value = currentUserData.phone;
     document.getElementById('euBirth').value = currentUserData.birth;
@@ -499,6 +634,56 @@ function saveUserEdit(e) {
     .catch(err => {
         alert('Սխալ: ' + err.message);
     });
+}
+
+function toggleUserBlock() {
+    if (!currentUserData.id) return;
+    const nextBlocked = !currentUserData.isBlocked;
+    const question = nextBlocked
+        ? 'Վստա՞հ եք, որ ուզում եք արգելափակել այս օգտատիրոջը։ Նա այլևս չի կարող մուտք գործել։'
+        : 'Ապաարգելափակե՞լ այս օգտատիրոջը։';
+    if (!window.confirm(question)) return;
+
+    const data = new FormData();
+    data.append('id', String(currentUserData.id));
+    data.append('block', nextBlocked ? '1' : '0');
+
+    fetch('?action=toggle_block_user', {
+        method: 'POST',
+        body: data
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.ok) {
+            location.reload();
+        } else {
+            alert('Սխալ առաջացավ: ' + (res.error || ''));
+        }
+    })
+    .catch(err => alert('Սխալ: ' + err.message));
+}
+
+function deleteUserAccount() {
+    if (!currentUserData.id) return;
+    if (!window.confirm('Վստա՞հ եք, որ ուզում եք վերջնականապես ջնջել այս հաշիվը։ Այս գործողությունը հետ բերել հնարավոր չէ։')) return;
+
+    const data = new FormData();
+    data.append('id', String(currentUserData.id));
+
+    fetch('?action=delete_user', {
+        method: 'POST',
+        body: data
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.ok) {
+            closeUserModal();
+            location.reload();
+        } else {
+            alert('Սխալ առաջացավ: ' + (res.error || ''));
+        }
+    })
+    .catch(err => alert('Սխալ: ' + err.message));
 }
 </script>
 

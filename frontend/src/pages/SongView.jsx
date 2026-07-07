@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { renderWithChords, transposeRoot, noteIndex } from '../utils/chordTransposer';
@@ -31,6 +32,34 @@ export default function SongView() {
   
   const [setlistNavData, setSetlistNavData] = useState(null);
   const [touchStartX, setTouchStartX] = useState(null);
+
+  useEffect(() => {
+    document.body.classList.add('song-view-active');
+    
+    // Wake Lock
+    let wakeLock = null;
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator && localStorage.getItem('keepAwake') === 'true') {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {}
+    };
+    requestWakeLock();
+    
+    const handleVisibilityChange = () => {
+      if (wakeLock !== null && document.visibilityState === 'visible') {
+        requestWakeLock();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.body.classList.remove('song-view-active');
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (wakeLock !== null) wakeLock.release().catch(() => {});
+    };
+  }, []);
 
   const copyShareLink = async () => {
     try {
@@ -352,7 +381,8 @@ export default function SongView() {
   };
 
   return (
-    <div className="song-view-page animate-fade-in" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+    <>
+    <div className={`song-view-page animate-fade-in ${setlistNavData ? 'has-seq-nav' : ''}`} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {/* Top Header */}
       <div className="sv-header">
         <div className="sv-header-left">
@@ -478,7 +508,7 @@ export default function SongView() {
                 onChange={(e) => handleKeyClick(e.target.value)}
                 style={{ appearance: 'none', WebkitAppearance: 'none', background: 'transparent', border: 'none', borderLeft: '1px solid rgba(255,255,255,0.08)', borderRight: '1px solid rgba(255,255,255,0.08)', outline: 'none', color: 'var(--color-accent-cyan)', textAlign: 'center', textAlignLast: 'center', cursor: 'pointer', fontFamily: 'inherit' }}
               >
-                <option value="" disabled>?</option>
+                <option value="" disabled>{song?.song_key || t('songView.originalKey', 'Սկզբնական')}</option>
                 {KEYS.map(k => {
                   const displayK = getTransposedFullKey(k, 0);
                   return <option key={k} value={displayK} style={{background: 'var(--color-surface)', color: 'var(--color-text-primary)'}}>{displayK}</option>;
@@ -546,33 +576,35 @@ export default function SongView() {
         )}
       </div>
 
-      {/* Setlist Navigation */}
-      {setlistNavData && (
-        <div className="seq-nav">
-          <button className="seq-btn" disabled={!setlistNavData.prev} onClick={() => navigateToSetlistSong(setlistNavData.prev)}>
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
-          </button>
-          <div className="seq-info">
-            <span className="seq-count">{setlistNavData.current.index} / {setlistNavData.total}</span>
-            <span className="seq-title">{t('songView.setlistTitle')}</span>
-          </div>
-          <button className="seq-btn" disabled={!setlistNavData.next} onClick={() => navigateToSetlistSong(setlistNavData.next)}>
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </button>
-        </div>
-      )}
-
-      <div style={{ display: 'flex', justifyContent: 'center', margin: '32px 0 24px' }}>
-        <button className="btn btn-secondary" onClick={() => navigate(`/song-request?song_id=${song.id}`)} style={{ gap: '8px', padding: '10px 20px', borderRadius: '20px', opacity: 0.8, fontSize: '0.9rem' }}>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-          </svg>
-          {t('songView.requestEdit')}
+    {/* Setlist Navigation */}
+    {setlistNavData && createPortal(
+      <div className="seq-nav">
+        <button className="seq-btn" disabled={!setlistNavData.prev} onClick={() => navigateToSetlistSong(setlistNavData.prev)}>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
         </button>
-      </div>
+        <div className="seq-info">
+          <span className="seq-count">{setlistNavData.current.index} / {setlistNavData.total}</span>
+          <span className="seq-title">{t('songView.setlistTitle')}</span>
+        </div>
+        <button className="seq-btn" disabled={!setlistNavData.next} onClick={() => navigateToSetlistSong(setlistNavData.next)}>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>,
+      document.body
+    )}
 
-      {favMsg && <div className="toast-message">{favMsg}</div>}
+    <div className="sv-edit-action">
+      <button className="btn btn-secondary sv-edit-btn" onClick={() => navigate(`/song-request?song_id=${song.id}`)}>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        {t('songView.requestEdit')}
+      </button>
     </div>
+
+    {favMsg && createPortal(<div className="toast-message">{favMsg}</div>, document.body)}
+    </div>
+    </>
   );
 }

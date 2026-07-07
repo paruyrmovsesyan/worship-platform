@@ -1,6 +1,6 @@
 .settings-page {
   padding: 2rem 1rem;
-  max-width: 1000px;
+  max-width: 1000px; /* Increased for sidebar + content */
   width: 100%;
   box-sizing: border-box;
   margin: 0 auto;
@@ -10,12 +10,13 @@
 
 @media (max-width: 900px) {
   .settings-page {
-    padding: 16px;
+    max-width: 650px; /* Keep narrow on mobile/tablet */
+    padding: 12px 0 calc(env(safe-area-inset-bottom, 20px) + 100px);
   }
 }
 
 .settings-page.pwa-mode {
-  padding: 16px;
+  padding: 12px;
   padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 90px);
 }
 
@@ -331,6 +332,40 @@ input[type="date"] {
   align-items: center;
 }
 
+.remember-device-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.remember-device-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.remember-device-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+
+.remember-device-title-row strong {
+  font-size: 1rem;
+  color: var(--color-text-primary);
+}
+
+.remember-device-card .text-muted {
+  margin: 0;
+  line-height: 1.5;
+}
+
 .request-item {
   padding: 1.25rem;
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -459,6 +494,13 @@ input[type="date"] {
     align-items: flex-start;
     gap: 1rem;
   }
+  .remember-device-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .remember-device-card .settings-btn {
+    width: 100%;
+  }
   .session-item button {
     width: 100%;
   }
@@ -528,4 +570,82 @@ input[type="date"] {
 .req-rejected {
   background: rgba(255, 69, 58, 0.15);
   color: #ff453a;
+}
+
+
+
+
+
+body.mobile-theme .settings-layout {
+  flex-direction: column;
+  align-items: stretch;
+}
+body.mobile-theme .settings-sidebar {
+  width: 100%;
+  flex: none;
+}
+body.mobile-theme .settings-card {
+  padding: 1.25rem 1rem;
+  border-radius: 16px;
+}
+body.mobile-theme .session-item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+body.mobile-theme .session-item button {
+  width: 100%;
+}
+body.mobile-theme .btn-row {
+  flex-direction: column;
+}
+body.mobile-theme .btn-row button {
+  width: 100%;
+}
+
+/* PWA/mobile settings menu should be edge-to-edge, matching the app shell. */
+body.mobile-theme .settings-page.settings-menu-screen,
+body.is-pwa .settings-page.settings-menu-screen,
+.settings-page.settings-menu-screen,
+.settings-page.pwa-mode.settings-menu-screen {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 12px 0 calc(env(safe-area-inset-bottom, 20px) + 100px);
+}
+
+body.mobile-theme .settings-page.settings-menu-screen .settings-layout,
+body.is-pwa .settings-page.settings-menu-screen .settings-layout,
+.settings-page.settings-menu-screen .settings-layout,
+.settings-page.pwa-mode.settings-menu-screen .settings-layout {
+  width: 100%;
+  margin: 0;
+  gap: 0;
+}
+
+body.mobile-theme .settings-page.settings-menu-screen .settings-sidebar,
+body.is-pwa .settings-page.settings-menu-screen .settings-sidebar,
+.settings-page.settings-menu-screen .settings-sidebar,
+.settings-page.pwa-mode.settings-menu-screen .settings-sidebar {
+  width: 100%;
+  flex: none;
+}
+
+body.mobile-theme .settings-page.settings-menu-screen .settings-menu-title,
+body.is-pwa .settings-page.settings-menu-screen .settings-menu-title,
+.settings-page.settings-menu-screen .settings-menu-title,
+.settings-page.pwa-mode.settings-menu-screen .settings-menu-title {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+body.mobile-theme .settings-page.settings-menu-screen .settings-menu-list,
+body.is-pwa .settings-page.settings-menu-screen .settings-menu-list,
+.settings-page.settings-menu-screen .settings-menu-list,
+.settings-page.pwa-mode.settings-menu-screen .settings-menu-list {
+  width: calc(100% - 32px);
+  max-width: none;
+  margin-left: 16px;
+  margin-right: 16px;
+  border-radius: 20px;
 }

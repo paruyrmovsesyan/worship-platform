@@ -132,8 +132,10 @@ try {
 
     // Push Subscriptions
     $pushSubCount = 0;
-    $r = $conn->query("SELECT COUNT(*) FROM push_subscriptions $whereCreated"); if($r){ $row=$r->fetch_row(); $pushSubCount=(int)($row[0]??0); }
-    if ($period !== 'all') { $r = $conn->query("SELECT COUNT(*) FROM push_subscriptions $wherePrevCreated"); if($r){ $row=$r->fetch_row(); $prevPushSubCount=(int)($row[0]??0); } }
+    $pushWhereCreated = trim($whereCreated) !== '' ? $whereCreated . " AND is_active = 1 AND permission_state = 'granted' AND device_id <> ''" : "WHERE is_active = 1 AND permission_state = 'granted' AND device_id <> ''";
+    $pushWherePrevCreated = trim($wherePrevCreated) !== '' ? $wherePrevCreated . " AND is_active = 1 AND permission_state = 'granted' AND device_id <> ''" : "WHERE is_active = 1 AND permission_state = 'granted' AND device_id <> ''";
+    $r = $conn->query("SELECT COUNT(*) FROM push_subscriptions $pushWhereCreated"); if($r){ $row=$r->fetch_row(); $pushSubCount=(int)($row[0]??0); }
+    if ($period !== 'all') { $r = $conn->query("SELECT COUNT(*) FROM push_subscriptions $pushWherePrevCreated"); if($r){ $row=$r->fetch_row(); $prevPushSubCount=(int)($row[0]??0); } }
 
     // Top Viewed Songs
     $topViews = [];

@@ -3,6 +3,25 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/social_auth_bootstrap.php';
 
+function wp_social_auth_status_response(): void {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+
+    $providers = [];
+    foreach (wp_social_auth_provider_labels() as $provider => $label) {
+        $providers[$provider] = [
+            'label' => $label,
+            'enabled' => wp_social_auth_provider_enabled((string)$provider),
+        ];
+    }
+
+    echo json_encode([
+        'ok' => true,
+        'providers' => $providers,
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 function wp_social_auth_safe_next(string $next): string {
     $next = trim($next);
     if ($next === '') {
@@ -33,6 +52,41 @@ function wp_social_auth_redirect_to_auth(string $mode, string $next, string $sou
 
     header('Location: ' . $target . '?' . http_build_query($query));
     exit;
+}
+
+function wp_social_auth_google_exchange_message(array $tokenResponse, array $tokenJson, string $redirectUri): string {
+    $status = (int)($tokenResponse['status'] ?? 0);
+    $curlError = trim((string)($tokenResponse['error'] ?? ''));
+    $googleError = trim((string)($tokenJson['error'] ?? ''));
+    $description = trim((string)($tokenJson['error_description'] ?? ''));
+
+    error_log(sprintf(
+        '[social_auth] google_token_exchange_failed status=%d curl_error=%s google_error=%s description=%s redirect_uri=%s host=%s',
+        $status,
+        $curlError !== '' ? $curlError : '-',
+        $googleError !== '' ? $googleError : '-',
+        $description !== '' ? mb_substr($description, 0, 240) : '-',
+        $redirectUri,
+        (string)($_SERVER['HTTP_HOST'] ?? '')
+    ));
+
+    if ($curlError !== '' || $status === 0) {
+        return 'Google-ի հետ կապ հաստատել չհաջողվեց։ Խնդրում ենք կրկին փորձել։';
+    }
+
+    if (in_array($googleError, ['invalid_client', 'unauthorized_client'], true)) {
+        return 'Google Client ID կամ Client Secret-ը սխալ է։ Խնդրում ենք ստուգել կարգավորումները ադմինում։';
+    }
+
+    if ($googleError === 'redirect_uri_mismatch' || stripos($description, 'redirect_uri') !== false) {
+        return 'Google Redirect URI-ն չի համընկնում։ Ադմինում և Google Console-ում պետք է նույն հասցեն լինի։';
+    }
+
+    if ($googleError === 'invalid_grant') {
+        return 'Google հաստատման կոդը չընդունվեց։ Ստուգեք Redirect URI-ն և նորից փորձեք մուտք գործել։';
+    }
+
+    return 'Google մուտքի փոխանակումը չստացվեց։ Խնդրում ենք կրկին փորձել։';
 }
 
 function wp_social_auth_pending(): array {
@@ -107,11 +161,12 @@ function wp_social_auth_handle_google_callback(PDO $pdo, array $pending) {
         wp_social_auth_redirect_to_auth((string)$pending['mode'], (string)$pending['next'], (string)$pending['source'], 'Google մուտքը չհաստատվեց։', $authTarget);
     }
 
+    $redirectUri = wp_social_auth_redirect_uri('google', $config);
     $tokenResponse = wp_social_auth_http_post_form('https://oauth2.googleapis.com/token', [
         'code' => $code,
         'client_id' => (string)$config['client_id'],
         'client_secret' => (string)$config['client_secret'],
-        'redirect_uri' => wp_social_auth_redirect_uri('google', $config),
+        'redirect_uri' => $redirectUri,
         'grant_type' => 'authorization_code',
     ]);
 
@@ -121,7 +176,7 @@ function wp_social_auth_handle_google_callback(PDO $pdo, array $pending) {
     $idToken = trim((string)($tokenJson['id_token'] ?? ''));
 
     if ($accessToken === '' && $idToken === '') {
-        wp_social_auth_redirect_to_auth((string)$pending['mode'], (string)$pending['next'], (string)$pending['source'], 'Google մուտքի փոխանակումը չստացվեց։', $authTarget);
+        wp_social_auth_redirect_to_auth((string)$pending['mode'], (string)$pending['next'], (string)$pending['source'], wp_social_auth_google_exchange_message($tokenResponse, $tokenJson, $redirectUri), $authTarget);
     }
 
     $userinfo = [];
@@ -172,33 +227,43 @@ function wp_social_auth_handle_google_callback(PDO $pdo, array $pending) {
         }
 
         if (!$user) {
-            wp_social_auth_clear_pending();
-
             $existingEmailUser = !empty($profile['email'])
                 ? wp_social_auth_find_user_by_email($pdo, (string)$profile['email'])
                 : null;
 
             if ($existingEmailUser) {
+                if (!empty($profile['email_verified'])) {
+                    wp_social_auth_store_link('google', (string)$profile['subject'], [
+                        'user_id' => (int)($existingEmailUser['id'] ?? 0),
+                        'email' => (string)($existingEmailUser['email'] ?? $profile['email']),
+                        'name' => (string)($existingEmailUser['name'] ?? ($profile['name'] ?? '')),
+                        'username' => (string)($existingEmailUser['username'] ?? ''),
+                    ]);
+                    $user = $existingEmailUser;
+                } else {
+                    wp_social_auth_clear_pending();
+                    wp_social_auth_redirect_to_auth(
+                        'login',
+                        (string)$pending['next'],
+                        (string)$pending['source'],
+                        'Google-ը չի հաստատել այս էլ. փոստը, դրա համար չենք կարող այն կապել առկա հաշվին։',
+                        $authTarget
+                    );
+                }
+            }
+
+            if (!$user) {
+                wp_social_auth_clear_pending();
                 wp_social_auth_redirect_to_auth(
                     'login',
                     (string)$pending['next'],
                     (string)$pending['source'],
                     $authTarget === 'admin'
-                        ? 'Այս էլ. փոստով հաշիվ արդեն կա, բայց Google մուտքը դեռ կապված չէ։ Նախ սովորական մուտքի կամ գրանցման էջից միացրու Google մուտքը, հետո նորից փորձիր admin մուտքը։'
-                        : 'Այս էլ. փոստով հաշիվ արդեն կա, բայց Google մուտքը դեռ կապված չէ։ Նախ գրանցվիր Google-ով։',
+                        ? 'Այս Google հաշիվը դեռ կապված չէ Worship-ի օգտահաշվին։ Նախ Google-ով գրանցվիր սովորական էջից, հետո նորից փորձիր admin մուտքը։'
+                        : 'Այս Google հաշիվը դեռ կապված չէ։ Նախ գրանցվիր Google-ով։',
                     $authTarget
                 );
             }
-
-            wp_social_auth_redirect_to_auth(
-                'login',
-                (string)$pending['next'],
-                (string)$pending['source'],
-                $authTarget === 'admin'
-                    ? 'Այս Google հաշիվը դեռ կապված չէ Worship-ի օգտահաշվին։ Նախ Google-ով գրանցվիր սովորական էջից, հետո նորից փորձիր admin մուտքը։'
-                    : 'Այս Google հաշիվը դեռ կապված չէ։ Նախ գրանցվիր Google-ով։',
-                $authTarget
-            );
         }
     } else {
         $existingLink = wp_social_auth_find_link('google', (string)$profile['subject']);
@@ -220,6 +285,8 @@ function wp_social_auth_handle_google_callback(PDO $pdo, array $pending) {
     wp_social_auth_issue_session($pdo, $user, (string)$pending['source'], !empty($pending['remember']));
     wp_social_auth_clear_pending();
     $targetNext = wp_social_auth_safe_next((string)$pending['next']);
+    $sep = strpos($targetNext, '?') === false ? '?' : '&';
+    $targetNext .= $sep . 'session_login=' . (!empty($pending['remember']) ? '0' : '1');
     if (!empty($isNewRegistration)) {
         $sep = strpos($targetNext, '?') === false ? '?' : '&';
         $targetNext .= $sep . 'social_registered=1&password_hint=1';
@@ -227,6 +294,11 @@ function wp_social_auth_handle_google_callback(PDO $pdo, array $pending) {
 
     header('Location: ' . $targetNext);
     exit;
+}
+
+$endpointAction = strtolower(trim((string)($_GET['action'] ?? $_POST['action'] ?? '')));
+if ($endpointAction === 'status') {
+    wp_social_auth_status_response();
 }
 
 $provider = strtolower(trim((string)($_GET['provider'] ?? $_POST['provider'] ?? '')));

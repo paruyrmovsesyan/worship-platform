@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
 error_reporting(E_ALL);
 
 require_once __DIR__ . '/runtime_config.php';
@@ -28,11 +28,6 @@ register_shutdown_function(function () {
     echo json_encode([
         "success" => false,
         "error" => "API fatal error",
-        "details" => [
-            "message" => (string)($error['message'] ?? 'Unknown fatal error'),
-            "file" => basename((string)($error['file'] ?? '')),
-            "line" => (int)($error['line'] ?? 0),
-        ],
     ], JSON_UNESCAPED_UNICODE);
 });
 
@@ -94,6 +89,30 @@ function wp_api_json_error(string $message, int $status = 500): void {
     http_response_code($status);
     echo json_encode(["success" => false, "error" => $message], JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+function wp_api_require_admin_access(): void {
+    require_once __DIR__ . '/admin_access.php';
+    $config = wp_version_load();
+    $user = wp_admin_get_current_user();
+
+    if (!$user && !wp_admin_has_logout_lock(null)) {
+        $restoredUser = wp_admin_restore_user_from_access_cookie();
+        if ($restoredUser && wp_admin_is_authorized($restoredUser, $config)) {
+            wp_admin_sign_user_in($restoredUser);
+            $user = wp_admin_get_current_user() ?: $restoredUser;
+        }
+    }
+
+    if (!$user || wp_admin_has_logout_lock($user) || !wp_admin_is_authorized($user, $config)) {
+        wp_api_json_error('Admin access required', 403);
+    }
+
+    $hasCookieTicket = wp_admin_has_valid_access_cookie($user);
+    $hasSessionTicket = wp_admin_has_session_ticket($user);
+    if (empty($_SESSION['admin_access_granted']) && !$hasCookieTicket && !$hasSessionTicket) {
+        wp_api_json_error('Admin access required', 403);
+    }
 }
 
 $hasSeparateTitleColumns = wp_api_song_title_columns_present($conn);
@@ -170,7 +189,13 @@ if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'search')
 if ($method === "GET") {
     if (isset($_GET['id'])) {
         $id = intval($_GET['id']);
-        $res = $conn->query("SELECT * FROM songs WHERE id=$id");
+        $stmt = $conn->prepare("SELECT * FROM songs WHERE id=? LIMIT 1");
+        if (!$stmt) {
+            wp_api_json_error('Չհաջողվեց բեռնել երգը', 500);
+        }
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $res = $stmt->get_result();
         $song = $res ? $res->fetch_assoc() : null;
         if (is_array($song)) {
             $sourceTitle = trim((string)($song['title'] ?? ''));
@@ -212,6 +237,7 @@ if ($method === "GET") {
 
 // ---------- CREATE ----------
 if ($method === "POST") {
+    wp_api_require_admin_access();
     $data = json_decode(file_get_contents("php://input"), true);
     if (!is_array($data)) {
         wp_api_json_error('Սխալ տվյալներ են ուղարկվել', 400);
@@ -264,6 +290,7 @@ if ($method === "POST") {
 
 // --- PUT (update existing) ---
 if ($method === "PUT") {
+    wp_api_require_admin_access();
     parse_str($_SERVER['QUERY_STRING'], $params);
     $id = intval($params['id'] ?? 0);
     $data = json_decode(file_get_contents("php://input"), true);
@@ -322,9 +349,15 @@ if ($method === "PUT") {
 
 // ---------- DELETE ----------
 if ($method === "DELETE") {
+    wp_api_require_admin_access();
     parse_str($_SERVER['QUERY_STRING'], $params);
     $id = intval($params['id'] ?? 0);
-    $conn->query("DELETE FROM songs WHERE id=$id");
+    $stmt = $conn->prepare("DELETE FROM songs WHERE id=?");
+    if (!$stmt) {
+        wp_api_json_error('Չհաջողվեց պատրաստել երգի ջնջումը', 500);
+    }
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
     echo json_encode(["success" => true]);
     exit;
 }

@@ -137,15 +137,9 @@ if (!function_exists('wp_auth_sync_install_identity')) {
       return;
     }
 
-    $source = strtolower(trim($source));
+    $source = function_exists('wp_auth_normalize_session_source') ? wp_auth_normalize_session_source($source) : strtolower(trim($source));
     if (!in_array($source, ['pwa', 'admin-app'], true)) {
-      $hasMainInstallCookie = !empty($_COOKIE['wp_install_device_id']);
-
-      if ($hasMainInstallCookie) {
-        $source = 'pwa';
-      } else {
-        return;
-      }
+      return;
     }
 
     $scope = $source === 'admin-app' ? 'admin' : 'main';
@@ -179,7 +173,9 @@ if (!function_exists('wp_auth_sync_install_identity')) {
 }
 
 $next = safeNext($_GET['next'] ?? ($_POST['next'] ?? '/main.html'));
-$source = strtolower((string)($_GET['source'] ?? $_POST['source'] ?? ''));
+$source = function_exists('wp_auth_normalize_session_source')
+  ? wp_auth_normalize_session_source((string)($_GET['source'] ?? $_POST['source'] ?? ''))
+  : strtolower((string)($_GET['source'] ?? $_POST['source'] ?? 'web'));
 $isProgramAuth = in_array($source, ['pwa', 'admin-app'], true);
 $authBodyClass = $isProgramAuth ? 'auth-app' : 'auth-web';
 $sourceQuery = $source !== '' ? '&source=' . rawurlencode($source) : '';
@@ -232,7 +228,9 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
       $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
       $ip = wp_runtime_remote_ip();
       $info = getDeviceInfo($ua);
-      $sessionDeviceName = wp_auth_compose_device_name($info['device_name'], $source);
+      $sessionDeviceName = function_exists('wp_auth_compose_session_device_name')
+        ? wp_auth_compose_session_device_name($info['device_name'], $source)
+        : wp_auth_compose_device_name($info['device_name'], $source);
       $existingSessionId = wp_auth_find_existing_device_session_id($conn, (int)$user['id'], $info, $sessionDeviceName);
 
       session_regenerate_id(true);
@@ -250,7 +248,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
       $remembered = $remember ? 1 : 0;
 
 $expiresTs = $remember
-  ? time() + 60*60*24*30
+  ? wp_auth_remember_cookie_expiry_ts()
   : time() + 60*60*12;
 
 $expiresAt = date('Y-m-d H:i:s', $expiresTs);
@@ -260,13 +258,7 @@ if($remember){
   $validator = bin2hex(random_bytes(32));
   $tokenHash = hash('sha256', $validator);
 
-  setcookie("remember_me", $selector . ':' . $validator, [
-    "expires"  => $expiresTs,
-    "path"     => "/",
-    "secure"   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
-    "httponly" => true,
-    "samesite" => "Lax",
-  ]);
+  wp_auth_issue_remember_cookie($selector, $validator);
 } else {
   $selector = null;
   $tokenHash = null;

@@ -3,10 +3,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { getLocalizedTitle } from '../utils/titleParser';
+import { getSongCoverStyle } from '../utils/songCover';
+import { usePageReady } from '../hooks/usePageReady';
 import './SongsApp.css';
 
 const KEYS = ['All','C','Cm','D','Dm','E','Em','F','G','Gm','A','Am','B','Bm','Eb','Bb','F#'];
-const GRADS = ['bg-purple','bg-blue','bg-cyan','bg-gold', 'bg-orange'];
 
 export default function SongsApp() {
   const { t, language } = useLanguage();
@@ -35,6 +36,8 @@ export default function SongsApp() {
   const [favorites, setFavorites] = useState(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  
+  usePageReady(isLoading);
   
   const [selectedKey, setSelectedKey] = useState('All');
   const [activeTab, setActiveTab] = useState('all'); // 'all' or 'favorites'
@@ -222,7 +225,10 @@ export default function SongsApp() {
               {(idx + 1).toString().padStart(2, '0')}
             </div>
 
-            <div className={`track-cover ${GRADS[(song.id||idx) % GRADS.length]}`}>
+            <div
+              className="track-cover"
+              style={getSongCoverStyle(song.id || idx, song.title || song.song_key || '')}
+            >
               {song.title?.charAt(0)?.toUpperCase()}
             </div>
 

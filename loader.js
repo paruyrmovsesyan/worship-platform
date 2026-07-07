@@ -2739,6 +2739,7 @@
       },
       clearSuppression: clearPromptSuppression
     };
+    window.dispatchEvent(new CustomEvent("wp-push-manager-ready"));
 
     window.addEventListener("load", async function() {
       var currentConfig = await fetchConfig();

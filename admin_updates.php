@@ -82,7 +82,13 @@ $moderationRequests = wp_song_request_list($moderationFilters['status'], 80, $mo
 $translationSongOptions = [];
 $showMainDeviceSection = $deviceFilters['scope'] !== 'admin';
 $showAdminDeviceSection = $deviceFilters['scope'] !== 'main';
-$pushSubscriptions = wp_push_load_subscriptions();
+$allPushSubscriptions = wp_push_load_subscriptions();
+$pushSubscriptions = array_values(array_filter(
+    $allPushSubscriptions,
+    static fn(array $row): bool => !empty($row['is_active'])
+        && (string)($row['permission_state'] ?? '') === 'granted'
+        && trim((string)($row['device_id'] ?? '')) !== ''
+));
 $accessMode = (string)($adminUser['access_mode'] ?? 'modern');
 $visibleAdminSections = array_values(array_keys(array_filter(
     $adminSectionPermissions,
@@ -392,6 +398,9 @@ function wp_admin_updates_push_search_haystack(array $subscription): string {
         (string)($subscription['endpoint'] ?? ''),
         wp_admin_updates_push_endpoint_host((string)($subscription['endpoint'] ?? '')),
         wp_admin_updates_push_ip($subscription),
+        (string)($subscription['device_id'] ?? ''),
+        (string)($subscription['device_scope'] ?? ''),
+        (string)($subscription['permission_state'] ?? ''),
         (string)($subscription['user_agent'] ?? ''),
         (string)($subscription['id'] ?? ''),
     ];
@@ -2493,7 +2502,8 @@ $csrfToken = wp_admin_updates_csrf_token();
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
                 <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;"><?= __('Push միացրած սարքեր') ?></span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($pushStats['subscriptions'] ?? 0) ?></strong>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($pushStats['active_subscriptions'] ?? 0) ?></strong>
+                <span style="display:block; color:var(--muted); font-size:12px;"><?= __('MAIN') ?>: <?= (int)($pushStats['active_main_subscriptions'] ?? 0) ?> • <?= __('ADMIN') ?>: <?= (int)($pushStats['active_admin_subscriptions'] ?? 0) ?></span>
               </div>
               
             </div>
@@ -2848,6 +2858,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                       <td>
                         <div class="table-primary"><?= htmlspecialchars(wp_admin_updates_push_identity($subscription), ENT_QUOTES) ?></div>
                         <div class="table-meta"><?= __('ID:') ?> <?= htmlspecialchars(substr((string)($subscription['id'] ?? ''), 0, 8) ?: '—', ENT_QUOTES) ?></div>
+                        <div class="table-meta"><?= htmlspecialchars(strtoupper((string)($subscription['device_scope'] ?? 'main')), ENT_QUOTES) ?> · <?= htmlspecialchars((string)($subscription['permission_state'] ?? 'granted'), ENT_QUOTES) ?></div>
                         <?php if (!empty($subscription['user_id'])): ?>
                           <div class="chip success" style="margin-top:4px; padding:2px 6px; font-size:10px;">User #<?= (int)$subscription['user_id'] ?></div>
                         <?php endif; ?>
@@ -2857,6 +2868,9 @@ $csrfToken = wp_admin_updates_csrf_token();
                         <div class="table-meta" style="font-family:monospace;" title="<?= htmlspecialchars(wp_admin_updates_push_endpoint_host((string)($subscription['endpoint'] ?? '')), ENT_QUOTES) ?>">
                           <?= htmlspecialchars(wp_admin_updates_push_endpoint_host((string)($subscription['endpoint'] ?? '')), ENT_QUOTES) ?>
                         </div>
+                        <?php if (!empty($subscription['device_id'])): ?>
+                          <div class="table-meta" style="font-family:monospace;"><?= htmlspecialchars(wp_install_mask_device_id((string)$subscription['device_id']), ENT_QUOTES) ?></div>
+                        <?php endif; ?>
                       </td>
                       <td>
                         <div class="table-primary"><?= htmlspecialchars(wp_version_format_datetime_admin((string)($subscription['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></div>
@@ -3299,7 +3313,7 @@ $csrfToken = wp_admin_updates_csrf_token();
           targetId: 'pushComposerPanel',
           meta: [
             `Ծանուցումներ <?= !empty($pushConfig['enabled']) ? 'միացված են' : 'անջատված են' ?>`,
-            `Սարքեր <?= (int)($pushStats['subscriptions'] ?? 0) ?>`,
+            `Սարքեր <?= (int)($pushStats['active_subscriptions'] ?? 0) ?>`,
             `Վերջին ուղարկում <?= htmlspecialchars($pushLastSentAt ?: '—', ENT_QUOTES) ?>`
           ]
         },

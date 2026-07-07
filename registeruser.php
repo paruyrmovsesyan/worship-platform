@@ -306,7 +306,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
             $deviceName = wp_auth_compose_device_name(trim($platform . ' • ' . $browser), $source);
 
             $expiresTs = $remember
-                ? time() + 60*60*24*30
+                ? wp_auth_remember_cookie_expiry_ts()
                 : time() + 60*60*12;
             $expiresAt = date('Y-m-d H:i:s', $expiresTs);
 

@@ -523,7 +523,7 @@ function wp_social_auth_resolve_user(PDO $pdo, string $provider, array $profile)
 }
 
 function wp_social_auth_session_origin_key(string $source): string {
-    $source = strtolower(trim($source));
+    $source = function_exists('wp_auth_normalize_session_source') ? wp_auth_normalize_session_source($source) : strtolower(trim($source));
     if ($source === 'pwa') {
         return 'app';
     }
@@ -538,7 +538,7 @@ function wp_social_auth_sync_install_identity(array $user, string $source): void
         return;
     }
 
-    $source = strtolower(trim($source));
+    $source = function_exists('wp_auth_normalize_session_source') ? wp_auth_normalize_session_source($source) : strtolower(trim($source));
     if (!in_array($source, ['pwa', 'admin-app'], true)) {
         return;
     }
@@ -701,22 +701,14 @@ function wp_social_auth_issue_session(PDO $pdo, array $user, string $source = ''
 
     $selector = null;
     $tokenHash = null;
-    $expiresTs = $remember ? time() + 60 * 60 * 24 * 30 : time() + 60 * 60 * 12;
+    $expiresTs = $remember ? wp_auth_remember_cookie_expiry_ts() : time() + 60 * 60 * 12;
     $expiresAt = date('Y-m-d H:i:s', $expiresTs);
-    $https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
 
     if ($remember) {
         $selector = bin2hex(random_bytes(12));
         $validator = bin2hex(random_bytes(32));
         $tokenHash = hash('sha256', $validator);
-
-        setcookie('remember_me', $selector . ':' . $validator, [
-            'expires' => $expiresTs,
-            'path' => '/',
-            'secure' => $https,
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ]);
+        wp_auth_issue_remember_cookie($selector, $validator);
     } else {
         wp_auth_clear_remember_cookie();
     }

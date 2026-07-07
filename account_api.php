@@ -42,6 +42,28 @@ function readJson(){
   return is_array($d) ? $d : [];
 }
 
+function accountColumnExists(PDO $pdo, string $table, string $column): bool {
+  $st = $pdo->prepare("
+    SELECT 1
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = ?
+      AND COLUMN_NAME = ?
+    LIMIT 1
+  ");
+  $st->execute([$table, $column]);
+  return (bool)$st->fetchColumn();
+}
+
+function accountEnsureUserLanguageColumn(PDO $pdo): void {
+  static $done = false;
+  if($done) return;
+  $done = true;
+
+  if(accountColumnExists($pdo, 'users', 'language')) return;
+  $pdo->exec("ALTER TABLE users ADD COLUMN language VARCHAR(8) NOT NULL DEFAULT 'am' AFTER email");
+}
+
 
 function getCurrentRememberSelector(){
   if(empty($_COOKIE['remember_me'])) return null;
@@ -208,6 +230,7 @@ if($action === 'update_profile' && $method === 'POST'){
   // update username
   if ($username !== '') {
     if(strlen($username) > 80) out(["error"=>"Username too long"], 400);
+    if (preg_match('/\s/u', $username)) out(["error"=>"Մուտքանունը չի կարող բացատ պարունակել։"], 400);
     $st = $pdo->prepare("SELECT id FROM users WHERE LOWER(username)=LOWER(?) AND id<>? LIMIT 1");
     $st->execute([$username, $uid]);
     if($st->fetchColumn()) out(["error"=>"Այս մուտքանունով (username) օգտատեր արդեն կա"], 409);
@@ -238,6 +261,7 @@ if($action === 'update_profile' && $method === 'POST'){
 if($action === 'auth_status' && $method === 'GET'){
   if(!empty($_SESSION['user_id']) && !wp_auth_current_session_backed($pdo)){
     wp_auth_force_local_logout(false);
+    wp_auth_restore_from_remember_cookie($pdo);
   }
 
   out([
@@ -252,10 +276,195 @@ if($action === 'auth_status' && $method === 'GET'){
   ]);
 }
 
+if($action === 'enable_remember_me' && $method === 'POST'){
+  try{
+    $d = readJson();
+    $requestSource = function_exists('wp_auth_normalize_session_source')
+      ? wp_auth_normalize_session_source((string)($d['source'] ?? ''))
+      : strtolower((string)($d['source'] ?? 'web'));
+    $currentSessionKey = session_id();
+    $sessionRowId = !empty($_SESSION['user_session_row_id']) ? (int)$_SESSION['user_session_row_id'] : 0;
+    $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
+    $ip = function_exists('wp_runtime_remote_ip') ? wp_runtime_remote_ip() : (string)($_SERVER['REMOTE_ADDR'] ?? '');
+    $meta = function_exists('wp_auth_detect_device_meta')
+      ? wp_auth_detect_device_meta($ua)
+      : ['browser' => 'Unknown', 'platform' => 'Unknown', 'device_name' => 'Unknown'];
+    $deviceNameBase = trim((string)($meta['device_name'] ?? 'Unknown'));
+
+    $st = null;
+    if($sessionRowId > 0){
+      $st = $pdo->prepare("
+        SELECT id, selector, session_key, remembered, device_name
+        FROM user_sessions
+        WHERE id = ? AND user_id = ?
+        LIMIT 1
+      ");
+      $st->execute([$sessionRowId, $uid]);
+    } else {
+      $st = $pdo->prepare("
+        SELECT id, selector, session_key, remembered, device_name
+        FROM user_sessions
+        WHERE user_id = ? AND session_key = ?
+        ORDER BY id DESC
+        LIMIT 1
+      ");
+      $st->execute([$uid, $currentSessionKey]);
+    }
+
+    $row = $st->fetch(PDO::FETCH_ASSOC);
+    $existingOrigin = $row ? wp_auth_extract_session_origin_from_device_name((string)($row['device_name'] ?? '')) : '';
+    $origin = $existingOrigin !== ''
+      ? $existingOrigin
+      : (function_exists('wp_auth_session_origin_key') ? wp_auth_session_origin_key($requestSource) : ($requestSource === 'pwa' ? 'app' : ($requestSource === 'admin-app' ? 'admin-app' : 'web')));
+    $deviceName = function_exists('wp_auth_merge_device_name_with_origin')
+      ? wp_auth_merge_device_name_with_origin($deviceNameBase, $origin)
+      : $deviceNameBase;
+
+    $selector = bin2hex(random_bytes(12));
+    $validator = bin2hex(random_bytes(32));
+    $tokenHash = hash('sha256', $validator);
+
+    $alreadyEnabled = (bool)($row && !empty($row['remembered']) && !empty($row['selector']));
+
+    if($row){
+      $upd = $pdo->prepare("
+        UPDATE user_sessions
+        SET
+          selector = ?,
+          token_hash = ?,
+          remembered = 1,
+          expires_at = ?,
+          session_key = ?,
+          device_name = ?,
+          browser = ?,
+          platform = ?,
+          ip_address = ?,
+          user_agent = ?,
+          last_used_at = NOW()
+        WHERE id = ? AND user_id = ?
+        LIMIT 1
+      ");
+      $upd->execute([
+        $selector,
+        $tokenHash,
+        wp_auth_remember_session_expires_at(),
+        $currentSessionKey,
+        $deviceName,
+        (string)($meta['browser'] ?? 'Unknown'),
+        (string)($meta['platform'] ?? 'Unknown'),
+        $ip,
+        mb_substr($ua, 0, 255),
+        (int)$row['id'],
+        $uid
+      ]);
+
+      $rememberRowId = (int)$row['id'];
+    } else {
+      $ins = $pdo->prepare("
+        INSERT INTO user_sessions
+        (user_id, selector, token_hash, remembered, device_name, browser, platform, ip_address, user_agent, session_key, last_used_at, expires_at, created_at)
+        VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?, ?, NOW(), ?, NOW())
+      ");
+      $ins->execute([
+        $uid,
+        $selector,
+        $tokenHash,
+        $deviceName,
+        (string)($meta['browser'] ?? 'Unknown'),
+        (string)($meta['platform'] ?? 'Unknown'),
+        $ip,
+        mb_substr($ua, 0, 255),
+        $currentSessionKey,
+        wp_auth_remember_session_expires_at()
+      ]);
+
+      $rememberRowId = (int)$pdo->lastInsertId();
+    }
+
+    wp_auth_issue_remember_cookie($selector, $validator);
+    $_SESSION['auth_via_remember'] = 1;
+    $_SESSION['user_session_row_id'] = $rememberRowId;
+
+    out(["ok" => true, "remembered" => true, "already_enabled" => $alreadyEnabled]);
+  }catch(Throwable $e){
+    out(["error" => "Remember save failed: " . $e->getMessage()], 500);
+  }
+}
+
+if($action === 'disable_remember_me' && $method === 'POST'){
+  try{
+    $currentSessionKey = session_id();
+    $sessionRowId = !empty($_SESSION['user_session_row_id']) ? (int)$_SESSION['user_session_row_id'] : 0;
+    $expiresAt = date('Y-m-d H:i:s', time() + 60 * 60 * 12);
+
+    if($sessionRowId > 0){
+      $st = $pdo->prepare("
+        UPDATE user_sessions
+        SET
+          selector = NULL,
+          token_hash = NULL,
+          remembered = 0,
+          expires_at = ?,
+          last_used_at = NOW()
+        WHERE id = ? AND user_id = ?
+        LIMIT 1
+      ");
+      $st->execute([$expiresAt, $sessionRowId, $uid]);
+    } else {
+      $st = $pdo->prepare("
+        UPDATE user_sessions
+        SET
+          selector = NULL,
+          token_hash = NULL,
+          remembered = 0,
+          expires_at = ?,
+          last_used_at = NOW()
+        WHERE user_id = ? AND session_key = ?
+      ");
+      $st->execute([$expiresAt, $uid, $currentSessionKey]);
+    }
+
+    wp_auth_clear_remember_cookie();
+    if(function_exists('wp_auth_issue_session_cookie')){
+      wp_auth_issue_session_cookie(time() + 60 * 60 * 12);
+    }
+    $_SESSION['auth_via_remember'] = 0;
+
+    out(["ok" => true, "remembered" => false]);
+  }catch(Throwable $e){
+    out(["error" => "Remember disable failed: " . $e->getMessage()], 500);
+  }
+}
+
 
 if($action === 'get_active_sessions' && $method === 'GET'){
   $currentSelector = getCurrentRememberSelector();
   $currentSessionKey = session_id();
+  $requestSource = function_exists('wp_auth_normalize_session_source')
+    ? wp_auth_normalize_session_source((string)($_GET['source'] ?? ''))
+    : strtolower((string)($_GET['source'] ?? 'web'));
+
+  if(in_array($requestSource, ['pwa', 'admin-app', 'web'], true) && $currentSessionKey !== ''){
+    try{
+      $meta = function_exists('wp_auth_detect_device_meta')
+        ? wp_auth_detect_device_meta((string)($_SERVER['HTTP_USER_AGENT'] ?? ''))
+        : ['device_name' => 'Unknown'];
+      $origin = function_exists('wp_auth_session_origin_key')
+        ? wp_auth_session_origin_key($requestSource)
+        : ($requestSource === 'pwa' ? 'app' : ($requestSource === 'admin-app' ? 'admin-app' : 'web'));
+      $deviceName = function_exists('wp_auth_merge_device_name_with_origin')
+        ? wp_auth_merge_device_name_with_origin((string)($meta['device_name'] ?? 'Unknown'), $origin)
+        : (string)($meta['device_name'] ?? 'Unknown');
+
+      $pdo->prepare("
+        UPDATE user_sessions
+        SET device_name = ?, last_used_at = NOW()
+        WHERE user_id = ? AND session_key = ?
+      ")->execute([$deviceName, $uid, $currentSessionKey]);
+    }catch(Throwable $e){
+      // Session list should still load even if origin refresh fails.
+    }
+  }
 
   $st = $pdo->prepare("
     SELECT
@@ -366,6 +575,18 @@ if($action === 'delete_session' && $method === 'POST'){
   $isCurrent = ((string)$row["session_key"] === (string)$currentSessionKey);
 
   if($isCurrent){
+    try{
+      require_once __DIR__ . '/push_service.php';
+      $mainDeviceId = function_exists('wp_install_sanitize_device_id') ? wp_install_sanitize_device_id((string)($_COOKIE['wp_install_device_id'] ?? '')) : '';
+      $adminDeviceId = function_exists('wp_install_sanitize_device_id') ? wp_install_sanitize_device_id((string)($_COOKIE['wp_admin_install_device_id'] ?? '')) : '';
+      $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
+      $ip = function_exists('wp_runtime_remote_ip') ? wp_runtime_remote_ip() : (string)($_SERVER['REMOTE_ADDR'] ?? '');
+      wp_push_detach_user_from_device($mainDeviceId, 'main', $uid, $ua, $ip);
+      wp_push_detach_user_from_device($adminDeviceId, 'admin', $uid, $ua, $ip);
+    }catch(Throwable $e){
+      // Push detach should not block logout.
+    }
+
     $_SESSION = [];
     if (ini_get("session.use_cookies")) {
       $params = session_get_cookie_params();
@@ -802,4 +1023,20 @@ if($action === 'forgot_password_email' && $method === 'POST'){
     out(["error"=>"SERVER ERROR: ".$e->getMessage()], 500);
   }
 }
+if($action === 'set_language' && $method === 'POST'){
+  try{
+    if(empty($_SESSION['user_id'])) out(["error"=>"Not logged in"], 401);
+    accountEnsureUserLanguageColumn($pdo);
+    $json = json_decode(file_get_contents('php://input'), true);
+    $lang = trim((string)($json['language'] ?? 'am'));
+    if(!in_array($lang, ['am', 'ru', 'en'], true)) $lang = 'am';
+    
+    $st = $pdo->prepare("UPDATE users SET language = ? WHERE id = ?");
+    $st->execute([$lang, (int)$_SESSION['user_id']]);
+    out(["ok"=>true]);
+  }catch(Throwable $e){
+    out(["error"=>"Language save failed: " . $e->getMessage()], 500);
+  }
+}
+
 out(["error"=>"Unknown action"], 404);

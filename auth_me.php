@@ -18,10 +18,14 @@ if (!empty($_SESSION['user_id'])) {
     $pdo = wp_auth_open_pdo();
     if (!wp_auth_current_session_backed($pdo)) {
       wp_auth_force_local_logout(false);
-      respond([
-        "loggedIn" => false,
-        "session_type" => null
-      ]);
+      if (wp_auth_restore_from_remember_cookie($pdo) && !empty($_SESSION['user_id'])) {
+        // restored below
+      } else {
+        respond([
+          "loggedIn" => false,
+          "session_type" => null
+        ]);
+      }
     }
   } catch (Throwable $e) {
     respond([
@@ -32,7 +36,7 @@ if (!empty($_SESSION['user_id'])) {
   }
 
     try {
-      $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+      $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ? AND COALESCE(is_blocked, 0) = 0");
       $stmt->execute([$_SESSION['user_id']]);
       $u = $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (Throwable $e) {
@@ -60,6 +64,12 @@ if (!empty($_SESSION['user_id'])) {
       $userData["birth_date"] = $u["birth_date"] ?? null;
       $userData["gender"] = $u["gender"] ?? null;
       $userData["phone_number"] = $u["phone_number"] ?? null;
+    } else {
+      wp_auth_force_local_logout(true);
+      respond([
+        "loggedIn" => false,
+        "session_type" => null
+      ]);
     }
 
     respond([

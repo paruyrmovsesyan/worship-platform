@@ -38,6 +38,24 @@ function readJson(){
   return is_array($d) ? $d : [];
 }
 
+function wp_friends_current_user_display_name(PDO $pdo, int $uid): string {
+    $name = trim((string)($_SESSION['name'] ?? $_SESSION['username'] ?? ''));
+    if ($name !== '') {
+        return $name;
+    }
+
+    try {
+        $st = $pdo->prepare("SELECT COALESCE(NULLIF(name, ''), NULLIF(username, ''), email) FROM users WHERE id = ? LIMIT 1");
+        $st->execute([$uid]);
+        $dbName = trim((string)$st->fetchColumn());
+        if ($dbName !== '') {
+            return $dbName;
+        }
+    } catch (Throwable $e) {}
+
+    return 'Someone';
+}
+
 if ($action === 'search_users' && $method === 'GET') {
     $q = trim($_GET['q'] ?? '');
     if (strlen($q) < 2) {
@@ -67,7 +85,7 @@ if ($action === 'search_users' && $method === 'GET') {
     out(["ok" => true, "users" => $users]);
 }
 
-if ($action === 'list' && $method === 'GET') {
+if (($action === 'list' || $action === 'get_friends') && $method === 'GET') {
     $st = $pdo->prepare("
         SELECT f.user_id_1, f.user_id_2, f.status,
                IF(f.user_id_1 = ?, u2.id, u1.id) as friend_id,
@@ -79,8 +97,14 @@ if ($action === 'list' && $method === 'GET') {
         JOIN users u2 ON f.user_id_2 = u2.id
         WHERE f.user_id_1 = ? OR f.user_id_2 = ?
     ");
-    $st->execute([$uid, $uid, $uid, $uid, $uid, $uid]);
+    $st->execute([$uid, $uid, $uid, $uid, $uid]);
     $list = $st->fetchAll(PDO::FETCH_ASSOC);
+
+    if ($action === 'get_friends') {
+        $list = array_values(array_filter($list, static function ($row) {
+            return (string)($row['status'] ?? '') === 'accepted';
+        }));
+    }
     
     out(["ok" => true, "friends" => $list]);
 }
@@ -102,10 +126,40 @@ if ($action === 'add' && $method === 'POST') {
     $st->execute([$uid, $friend_id]);
     
     require_once __DIR__ . '/push_service.php';
-    $senderName = $_SESSION['user_name'] ?? 'Someone';
-    wp_push_send_to_user($pdo, $friend_id, "New Friend Request", "$senderName wants to be your friend.", "/friends");
+    $senderName = wp_friends_current_user_display_name($pdo, $uid);
+    
+    // Fetch recipient's language
+    $stLang = $pdo->prepare("SELECT language FROM users WHERE id = ?");
+    $stLang->execute([$friend_id]);
+    $lang = $stLang->fetchColumn() ?: 'am';
+    
+    $push_title = "New Friend Request";
+    $push_msg = "$senderName wants to be your friend.";
+    $notif_text = "$senderName wants to be your friend.";
+    
+    if ($lang === 'am') {
+        $push_title = "Նոր ընկերության հարցում";
+        $push_msg = "$senderName-ը ցանկանում է դառնալ ձեր ընկերը:";
+        $notif_text = "$senderName-ը ցանկանում է դառնալ ձեր ընկերը:";
+    } elseif ($lang === 'ru') {
+        $push_title = "Новый запрос в друзья";
+        $push_msg = "$senderName хочет добавить вас в друзья.";
+        $notif_text = "$senderName хочет добавить вас в друзья.";
+    }
 
-    out(["ok" => true]);
+    $pushResult = wp_push_send_to_user($pdo, $friend_id, $push_title, $push_msg, "/friends");
+
+    $st_notif = $pdo->prepare("INSERT INTO user_notifications (user_id, sender_id, type, content, action_link) VALUES (?, ?, 'friend_request', ?, '/friends')");
+    $st_notif->execute([$friend_id, $uid, json_encode(['text' => $notif_text])]);
+
+    out([
+        "ok" => true,
+        "push" => [
+            "ok" => !empty($pushResult['ok']),
+            "success_count" => (int)($pushResult['success_count'] ?? 0),
+            "message" => (string)($pushResult['message'] ?? ''),
+        ],
+    ]);
 }
 
 if ($action === 'accept' && $method === 'POST') {
@@ -116,6 +170,13 @@ if ($action === 'accept' && $method === 'POST') {
     $st->execute([$friend_id, $uid]); 
     
     if ($st->rowCount() > 0) {
+        require_once __DIR__ . '/push_service.php';
+        $senderName = wp_friends_current_user_display_name($pdo, $uid);
+        $st_notif = $pdo->prepare("INSERT INTO user_notifications (user_id, sender_id, type, content, action_link) VALUES (?, ?, 'friend_accepted', ?, '/friends')");
+        $st_notif->execute([$friend_id, $uid, json_encode(['text' => "$senderName accepted your friend request."])]);
+
+        wp_push_send_to_user($pdo, $friend_id, "Friend request accepted", "$senderName accepted your friend request.", "/friends");
+
         out(["ok" => true]);
     } else {
         out(["error" => "No pending request found"], 400);

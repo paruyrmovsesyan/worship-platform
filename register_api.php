@@ -60,15 +60,9 @@ if (!function_exists('wp_auth_sync_install_identity')) {
       return;
     }
 
-    $source = strtolower(trim($source));
+    $source = function_exists('wp_auth_normalize_session_source') ? wp_auth_normalize_session_source($source) : strtolower(trim($source));
     if (!in_array($source, ['pwa', 'admin-app'], true)) {
-      $hasMainInstallCookie = !empty($_COOKIE['wp_install_device_id']);
-
-      if ($hasMainInstallCookie) {
-        $source = 'pwa';
-      } else {
-        return;
-      }
+      return;
     }
 
     $scope = $source === 'admin-app' ? 'admin' : 'main';
@@ -117,7 +111,9 @@ $username = trim($d['username'] ?? '');
 $email = trim($d['email'] ?? '');
 $password = (string)($d['password'] ?? '');
 $remember = !empty($d['remember_me']);
-$source = strtolower((string)($d['source'] ?? 'pwa'));
+$source = function_exists('wp_auth_normalize_session_source')
+  ? wp_auth_normalize_session_source((string)($d['source'] ?? ''))
+  : strtolower((string)($d['source'] ?? 'web'));
 
 // Legacy fallback: if old app sends 'login', treat as username or email
 $login = trim($d['login'] ?? '');
@@ -144,6 +140,14 @@ if($email === '' || $password === '' || strlen($password) < $minPasswordLength){
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     out(["error" => "Սխալ էլ. փոստի հասցե։"], 400);
+}
+
+if($username === ''){
+    out(["error" => "Մուտքանունը պարտադիր է։"], 400);
+}
+
+if (preg_match('/\s/u', $username)) {
+    out(["error" => "Մուտքանունը չի կարող բացատ պարունակել։"], 400);
 }
 
 // Generate username if not provided but email is given
@@ -229,10 +233,9 @@ if($hasUsername){
 
     session_regenerate_id(true);
     $_SESSION['user_id'] = $uid;
-    $_SESSION['email'] = ($hasEmail && filter_var($login, FILTER_VALIDATE_EMAIL)) ? $login : '';
-    $_SESSION['name'] = $name !== '' ? $name : $login;
-
-    $_SESSION['username'] = $hasUsername ? $login : ($_SESSION['name'] ?: $login);
+    $_SESSION['email'] = $hasEmail ? $email : '';
+    $_SESSION['name'] = $name !== '' ? $name : $username;
+    $_SESSION['username'] = $hasUsername ? $username : ($_SESSION['name'] ?: $email);
     $_SESSION['auth_via_remember'] = $remember ? 1 : 0;
 
     $selector = null;
@@ -240,9 +243,11 @@ if($hasUsername){
     $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
     $ip = function_exists('wp_runtime_remote_ip') ? wp_runtime_remote_ip() : (string)($_SERVER['REMOTE_ADDR'] ?? '');
     $info = getDeviceInfo($ua);
-    $sessionDeviceName = wp_auth_compose_device_name($info['device_name'], $source);
+    $sessionDeviceName = function_exists('wp_auth_compose_session_device_name')
+        ? wp_auth_compose_session_device_name($info['device_name'], $source)
+        : wp_auth_compose_device_name($info['device_name'], $source);
 
-    $expiresTs = $remember ? time() + 60*60*24*30 : time() + 60*60*12;
+    $expiresTs = $remember ? wp_auth_remember_cookie_expiry_ts() : time() + 60*60*12;
     $expiresAt = date('Y-m-d H:i:s', $expiresTs);
 
     if($remember){
@@ -250,13 +255,7 @@ if($hasUsername){
         $validator = bin2hex(random_bytes(32));
         $tokenHash = hash('sha256', $validator);
 
-        setcookie("remember_me", $selector . ':' . $validator, [
-            "expires"  => $expiresTs,
-            "path"     => "/",
-            "secure"   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
-            "httponly" => true,
-            "samesite" => "Lax",
-        ]);
+        wp_auth_issue_remember_cookie($selector, $validator);
     } else {
         if(!empty($_COOKIE['remember_me'])){
             $parts = explode(':', $_COOKIE['remember_me'], 2);
@@ -307,13 +306,12 @@ if($hasUsername){
         'email' => (string)$_SESSION['email'],
     ], $source);
 
-    out([
-        "ok" => true,
-        "user" => [
-            "id" => $uid,
-            "name" => $_SESSION['name'],
-            "username" => $_SESSION['username'],
-            "email" => $_SESSION['email']
-        ]
-    ]);
-}
+out([
+    "ok" => true,
+    "user" => [
+        "id" => $uid,
+        "name" => $_SESSION['name'],
+        "username" => $_SESSION['username'],
+        "email" => $_SESSION['email']
+    ]
+]);

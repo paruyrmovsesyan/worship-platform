@@ -6,6 +6,8 @@ import { useLanguage } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import './Login.css';
 
+const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
+
 const Login = () => {
   const navigate = useNavigate();
   const isPWA = useIsPWA();
@@ -19,6 +21,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const { t, language, setLanguage } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
+  const [googleEnabled, setGoogleEnabled] = useState(false);
 
   // Apply visual viewport fix for iOS PWA keyboard
   useEffect(() => {
@@ -41,6 +44,32 @@ const Login = () => {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadSocialStatus = async () => {
+      try {
+        const response = await fetch('/social_auth.php?action=status', {
+          headers: { Accept: 'application/json' },
+          cache: 'no-store',
+        });
+        const data = await response.json();
+        if (!cancelled) {
+          setGoogleEnabled(Boolean(data?.providers?.google?.enabled));
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setGoogleEnabled(false);
+        }
+      }
+    };
+
+    loadSocialStatus();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleFocus = (e) => {
     setTimeout(() => {
       e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -51,6 +80,11 @@ const Login = () => {
     e.preventDefault();
     if (!login.trim() || !password) {
       setError(t('auth.fillAllFields'));
+      return;
+    }
+
+    if (!isValidEmail(login)) {
+      setError(t('auth.invalidEmail'));
       return;
     }
 
@@ -87,7 +121,13 @@ const Login = () => {
     }
   };
 
-  const googleAuthUrl = `/social_auth.php?provider=google&action=login&next=${encodeURIComponent(next)}&source=${encodeURIComponent(source)}`;
+  const googleAuthUrl = `/social_auth.php?provider=google&mode=login&next=${encodeURIComponent(next)}&source=${encodeURIComponent(source)}&remember=${rememberMe ? '1' : '0'}`;
+  const handleGoogleClick = (event) => {
+    if (!googleEnabled || isLoading) {
+      event.preventDefault();
+      setError(t('auth.googleDisabled'));
+    }
+  };
 
   return (
     <div className="login-page-container animate-fade-in">
@@ -98,9 +138,11 @@ const Login = () => {
           <h1 className="login-hero-title">{t('auth.loginTitle')}</h1>
           <p className="login-hero-lead">{t('auth.loginSubtitle')}</p>
         </div>
-        <LanguageSwitcher 
-          style={{ position: 'absolute', top: '20px', right: '20px' }} 
-        />
+        {isPWA && (
+          <LanguageSwitcher 
+            style={{ position: 'absolute', top: '20px', right: '20px' }} 
+          />
+        )}
       </div>
 
       {/* Form Section */}
@@ -122,10 +164,11 @@ const Login = () => {
           <form onSubmit={handleSubmit}>
             <div className="login-input-group">
               <input 
-                type="text" 
+                type="email" 
                 id="login" 
                 required 
                 placeholder=" "
+                autoComplete="email"
                 value={login}
                 onChange={(e) => setLogin(e.target.value)}
                 onFocus={handleFocus}
@@ -171,7 +214,12 @@ const Login = () => {
 
           <div className="login-social-sep">{t('auth.orContinue')}</div>
           <div className="login-social-btns">
-            <a className="login-social-btn" href={googleAuthUrl}>
+            <a
+              className={`login-social-btn ${!googleEnabled ? 'is-disabled' : ''}`}
+              href={googleEnabled ? googleAuthUrl : '#'}
+              onClick={handleGoogleClick}
+              aria-disabled={!googleEnabled}
+            >
               <span className="login-social-icon">
                 <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -183,7 +231,9 @@ const Login = () => {
               </span>
               <span>
                 {t('auth.googleLogin')}
-                <small className="login-social-note">{t('auth.googleReady')}</small>
+                <small className="login-social-note">
+                  {googleEnabled ? t('auth.googleReady') : t('auth.googleDisabledShort')}
+                </small>
               </span>
             </a>
           </div>

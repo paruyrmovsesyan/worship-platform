@@ -4,6 +4,7 @@ import './LandingPage.css';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { usePageReady } from '../hooks/usePageReady';
+import { fallbackNews, fetchNewsList, formatNewsDate } from '../utils/news';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export default function LandingPage() {
   const [allSongs, setAllSongs] = useState([]);
   const [popularSongs, setPopularSongs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [newsItems, setNewsItems] = useState(fallbackNews);
   usePageReady(loading);
   const [songPage, setSongPage] = useState(0);
   const [activeFilter, setActiveFilter] = useState('songs');
@@ -36,6 +38,20 @@ export default function LandingPage() {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchNewsList({ language, limit: 3, featured: true })
+      .then(items => {
+        if (!cancelled) setNewsItems(items.length ? items : fallbackNews);
+      })
+      .catch(() => {
+        if (!cancelled) setNewsItems(fallbackNews);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [language]);
 
   useEffect(() => {
     if (allSongs.length === 0) return;
@@ -219,13 +235,16 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="news-row">
-          {(t('landing.newsItems', { returnObjects: true }) || []).map((item, i) => (
-            <div key={i} className="news-card" onClick={() => navigate('/news')}>
-              <div className={`news-img img-${i + 1}`} />
+          {newsItems.slice(0, 3).map((item, i) => (
+            <div key={item.slug || i} className="news-card" onClick={() => navigate(`/news/${item.slug}`)}>
+              <div
+                className={`news-img img-${i + 1}`}
+                style={item.image_url ? { backgroundImage: `url("${item.image_url}")`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+              />
               <div className="news-content">
-                <span className="news-date">{item.date}</span>
+                <span className="news-date">{formatNewsDate(item.published_at || item.date, language)}</span>
                 <h4>{item.title}</h4>
-                <p>{item.desc}</p>
+                <p>{item.excerpt || item.desc}</p>
               </div>
             </div>
           ))}

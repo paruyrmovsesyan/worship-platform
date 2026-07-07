@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { getSongCoverStyle } from '../utils/songCover';
+import { usePageReady } from '../hooks/usePageReady';
 import './SongsWeb.css';
 
 const KEYS = ['All','C','Cm','D','Dm','E','Em','F','G','Gm','A','Am','B','Bm','Eb','Bb','F#'];
-const GRADS = ['bg-purple','bg-blue','bg-cyan','bg-gold'];
 
 export default function SongsWeb() {
   const { t, language } = useLanguage();
@@ -33,6 +34,7 @@ export default function SongsWeb() {
   const [songs, setSongs]         = useState([]);
   const [favorites, setFavorites] = useState(new Set());
   const [isLoading, setIsLoading] = useState(true);
+  usePageReady(isLoading);
   const { user } = useAuth();
   const [selectedKey, setSelectedKey] = useState('All');
   const [sortBy, setSortBy]       = useState('title');
@@ -184,7 +186,10 @@ export default function SongsWeb() {
                 onClick={() => navigate(`/song/${song.id}`)}>
 
             <div className="col-name">
-              <div className={`s-avatar ${GRADS[(song.id||idx)%4]}`}>
+              <div
+                className="s-avatar"
+                style={getSongCoverStyle(song.id || idx, song.title || song.song_key || '')}
+              >
                 {song.title?.charAt(0)?.toUpperCase()}
               </div>
               <div className="s-name-block">

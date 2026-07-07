@@ -337,6 +337,14 @@
   border-color: rgba(255,255,255,0.12);
   transform: translateY(-1px);
 }
+.login-social-btn.is-disabled,
+.login-social-btn.is-disabled:hover {
+  cursor: not-allowed;
+  opacity: 0.58;
+  transform: none;
+  background: rgba(255,255,255,0.015);
+  border-color: rgba(255,255,255,0.05);
+}
 .login-social-icon {
   width: 20px; height: 20px;
   display: flex;

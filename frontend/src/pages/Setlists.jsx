@@ -3,9 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { usePageReady } from '../hooks/usePageReady';
+import { getSongCoverStyle } from '../utils/songCover';
 import './Setlists.css';
-
-const GRADS = ['bg-purple', 'bg-blue', 'bg-cyan', 'bg-gold', 'bg-orange'];
 
 export default function Setlists() {
   const [setlists, setSetlists] = useState([]);
@@ -124,7 +123,10 @@ export default function Setlists() {
           </div>
         ) : setlists.map((list, idx) => (
           <div key={list.id} className="sl-card animate-fade-in" style={{ animationDelay: `${Math.min(idx * 0.05, 0.5)}s` }} onClick={() => navigate(`/setlists/${list.id}`)}>
-            <div className={`sl-cover ${GRADS[(list.id || idx) % GRADS.length]}`}>
+            <div
+              className="sl-cover"
+              style={getSongCoverStyle(list.id || idx, list.name || '')}
+            >
               <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
             </div>
             <div className="sl-info">

@@ -190,6 +190,71 @@
   border-color: rgba(255, 255, 255, 0.15);
 }
 
+.profile-push-card {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.9rem;
+  padding: 1.1rem 1.2rem;
+}
+
+.profile-push-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.profile-push-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.profile-push-copy svg {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.profile-push-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.profile-push-text span {
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.profile-push-text small {
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.profile-push-toggle {
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+
+.profile-push-note {
+  border: 1px solid rgba(242, 194, 125, 0.18);
+  background: rgba(242, 194, 125, 0.08);
+  color: #f2c27d;
+  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  font-weight: 500;
+}
+
 /* Language Modal */
 .profile-lang-modal {
   width: 90%;
@@ -299,6 +364,50 @@
   border-color: var(--color-accent-red, #ff453a);
 }
 
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: var(--color-surface-hover);
+  transition: .3s;
+  border-radius: 28px;
+}
+
+.toggle-switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.toggle-switch input:checked + .slider {
+  background: linear-gradient(135deg, var(--color-accent-cyan), var(--color-accent-gold));
+}
+
+.toggle-switch input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
 @media (max-width: 600px) {
   .profile-header h2 {
     font-size: 2rem;
@@ -318,5 +427,22 @@
   
   .profile-links {
     grid-template-columns: 1fr;
+  }
+
+  .profile-push-card {
+    align-items: flex-start;
+  }
+
+  .profile-push-top {
+    gap: 0.8rem;
+  }
+
+  .profile-push-text span {
+    font-size: 0.98rem;
+  }
+
+  .profile-push-note {
+    font-size: 0.8rem;
+    padding: 0.72rem 0.8rem;
   }
 }

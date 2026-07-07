@@ -393,6 +393,16 @@ if (!function_exists('wp_runtime_ensure_admin_tables_mysqli')) {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
         $conn->query("ALTER TABLE push_subscriptions MODIFY COLUMN created_at VARCHAR(60) NOT NULL, MODIFY COLUMN updated_at VARCHAR(60) NOT NULL, MODIFY COLUMN last_seen_at VARCHAR(60) NULL");
+        foreach ([
+            "ALTER TABLE push_subscriptions ADD COLUMN device_id VARCHAR(120) NOT NULL DEFAULT '' AFTER ip_address",
+            "ALTER TABLE push_subscriptions ADD COLUMN device_scope VARCHAR(20) NOT NULL DEFAULT 'main' AFTER device_id",
+            "ALTER TABLE push_subscriptions ADD COLUMN permission_state VARCHAR(20) NOT NULL DEFAULT 'granted' AFTER device_scope",
+            "ALTER TABLE push_subscriptions ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER permission_state",
+            "ALTER TABLE push_subscriptions ADD KEY idx_push_device (device_scope, device_id)",
+            "ALTER TABLE push_subscriptions ADD KEY idx_push_active (is_active, permission_state, last_seen_at)"
+        ] as $sql) {
+            try { $conn->query($sql); } catch (Throwable $e) {}
+        }
 
         // 5. push_history table
         $conn->query("

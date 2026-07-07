@@ -1,6 +1,6 @@
 .song-view-page {
   padding: 16px 24px;
-  max-width: 800px;
+  max-width: 650px;
   width: 100%;
   box-sizing: border-box;
   margin: 0 auto;
@@ -9,13 +9,21 @@
 
 @media (max-width: 900px) {
   .song-view-page {
-    padding: 16px;
+    width: 100vw;
+    max-width: none;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding: 12px 0 calc(var(--bottom-nav-total-offset, 88px) + 128px);
   }
 }
 
 @media all and (display-mode: standalone) {
   .song-view-page {
-    padding: 16px;
+    width: 100vw;
+    max-width: none;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding: 12px 0 calc(var(--bottom-nav-total-offset, 88px) + 128px);
   }
 }
 
@@ -357,7 +365,9 @@
   border: 1px solid var(--color-surface-hover);
   border-radius: 16px;
   padding: 24px;
-  min-height: 400px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 @media (max-width: 900px) {
@@ -378,6 +388,12 @@
   white-space: pre-wrap;
   margin: 0;
   padding: 0;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
 }
 
 .chords-block .chord {
@@ -421,11 +437,14 @@
 
 .seq-nav {
   position: fixed;
-  bottom: calc(var(--bottom-nav-height, 90px) + 16px);
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: calc(var(--bottom-nav-total-offset, 88px) + 4px);
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: min(304px, calc(100vw - 96px));
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   background: rgba(18, 22, 34, 0.85);
   backdrop-filter: blur(12px) saturate(150%);
@@ -433,7 +452,24 @@
   border-radius: 99px;
   border: 1px solid rgba(255,255,255,0.08);
   box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-  z-index: 1000;
+  z-index: 1002;
+}
+
+body.mobile-theme .seq-nav,
+body.is-pwa .seq-nav,
+body.mobile-theme .song-view-page .seq-nav,
+body.is-pwa .song-view-page .seq-nav {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: auto !important;
+  bottom: calc(var(--bottom-nav-safe-gap, 24px) + var(--bottom-nav-actual-height, 64px) + 8px) !important;
+  transform: none !important;
+  width: min(304px, calc(100vw - 80px)) !important;
+  justify-content: space-between !important;
+  display: flex !important;
+  z-index: 1200 !important;
+  margin: 0 auto !important;
 }
 
 .seq-btn {
@@ -471,4 +507,154 @@
   font-size: 0.7rem;
   color: var(--color-text-dim);
   text-transform: uppercase;
+}
+
+.sv-edit-action {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0 24px;
+}
+
+.sv-edit-btn {
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 20px;
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+
+/* Mobile/PWA song view should use one stable full-width layout. */
+body.mobile-theme .song-view-page,
+body.is-pwa .song-view-page,
+body.wp-main-app.song-view-active .song-view-page {
+  width: 100vw;
+  max-width: none;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding: 12px 0 16px;
+}
+
+body.mobile-theme .song-view-page.has-seq-nav,
+body.is-pwa .song-view-page.has-seq-nav {
+  padding-bottom: calc(var(--bottom-nav-total-offset, 88px) + 72px);
+}
+
+body.song-view-active.wp-main-app #root,
+body.song-view-active.wp-main-app .app-container,
+body.song-view-active.wp-main-app main,
+body.song-view-active.is-pwa #root,
+body.song-view-active.is-pwa .app-container,
+body.song-view-active.is-pwa main {
+  width: 100%;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  overflow-x: hidden;
+}
+
+body.mobile-theme .song-view-page .sv-header,
+body.mobile-theme .song-view-page .sv-meta-row,
+body.is-pwa .song-view-page .sv-header,
+body.is-pwa .song-view-page .sv-meta-row,
+body.wp-main-app.song-view-active .song-view-page .sv-header,
+body.wp-main-app.song-view-active .song-view-page .sv-meta-row {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+body.mobile-theme .song-view-page .sv-segment-control,
+body.mobile-theme .song-view-page .sv-sheet,
+body.mobile-theme .song-view-page .sv-control-panel,
+body.mobile-theme .song-view-page .sv-inline-controls,
+body.is-pwa .song-view-page .sv-segment-control,
+body.is-pwa .song-view-page .sv-sheet,
+body.is-pwa .song-view-page .sv-control-panel,
+body.is-pwa .song-view-page .sv-inline-controls,
+body.wp-main-app.song-view-active .song-view-page .sv-segment-control,
+body.wp-main-app.song-view-active .song-view-page .sv-sheet,
+body.wp-main-app.song-view-active .song-view-page .sv-control-panel,
+body.wp-main-app.song-view-active .song-view-page .sv-inline-controls {
+  max-width: none;
+  margin-left: 16px;
+  margin-right: 16px;
+  width: calc(100% - 32px);
+}
+
+body.mobile-theme .song-view-page .sv-sheet,
+body.is-pwa .song-view-page .sv-sheet,
+body.wp-main-app.song-view-active .song-view-page .sv-sheet {
+  padding: 16px;
+}
+
+body.mobile-theme .song-view-page .sv-control-panel,
+body.mobile-theme .song-view-page .sv-inline-controls,
+body.is-pwa .song-view-page .sv-control-panel,
+body.is-pwa .song-view-page .sv-inline-controls,
+body.wp-main-app.song-view-active .song-view-page .sv-control-panel,
+body.wp-main-app.song-view-active .song-view-page .sv-inline-controls {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+body.mobile-theme .song-view-page.has-seq-nav .sv-control-panel,
+body.is-pwa .song-view-page.has-seq-nav .sv-control-panel {
+  margin-bottom: 18px;
+}
+
+@media (max-width: 900px), all and (display-mode: standalone) {
+  .song-view-page .sv-header,
+  .song-view-page .sv-meta-row {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .song-view-page .sv-segment-control,
+  .song-view-page .sv-sheet,
+  .song-view-page .sv-control-panel,
+  .song-view-page .sv-inline-controls {
+    width: calc(100% - 32px);
+    max-width: none;
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
+  .song-view-page .sv-sheet {
+    padding: 16px;
+  }
+
+  .song-view-page .sv-control-panel,
+  .song-view-page .sv-inline-controls {
+    padding-left: 16px;
+    padding-right: 16px;
+    margin-bottom: 16px;
+  }
+
+  .song-view-page.has-seq-nav .sv-control-panel {
+    margin-bottom: 18px;
+  }
+
+  .song-view-page .sv-edit-action {
+    margin-top: 8px;
+    margin-bottom: 12px;
+  }
+
+  .song-view-page.has-seq-nav .sv-edit-action {
+    margin-bottom: calc(var(--bottom-nav-total-offset, 88px) + 24px);
+  }
+}
+
+@media (max-width: 900px) {
+  body.song-view-active #root,
+  body.song-view-active .app-container,
+  body.song-view-active main {
+    width: 100%;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    overflow-x: hidden;
+  }
 }

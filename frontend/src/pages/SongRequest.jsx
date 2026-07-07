@@ -105,10 +105,10 @@ export default function SongRequest() {
           });
         }
       } else {
-        setError(data.message || 'Failed to submit request');
+        setError(data.message || t('songRequest.submitError'));
       }
     } catch (err) {
-      setError('Network error');
+      setError(t('songRequest.networkError'));
     } finally {
       setSubmitting(false);
     }
@@ -150,7 +150,7 @@ export default function SongRequest() {
           
           {/* Section 1: Basic Titles */}
           <div style={{ background: 'var(--color-surface)', padding: '24px', borderRadius: '20px', border: '1px solid var(--color-surface-hover)' }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.2rem', color: 'var(--color-accent-gold)' }}>Հիմնական Տվյալներ</h3>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.2rem', color: 'var(--color-accent-gold)' }}>{t('songRequest.basicsSection')}</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>{t('songRequest.titleHy')} *</label>
@@ -173,7 +173,7 @@ export default function SongRequest() {
 
           {/* Section 2: Musical Details */}
           <div style={{ background: 'var(--color-surface)', padding: '24px', borderRadius: '20px', border: '1px solid var(--color-surface-hover)' }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.2rem', color: 'var(--color-accent-cyan)' }}>Երաժշտական Մանրամասներ</h3>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.2rem', color: 'var(--color-accent-cyan)' }}>{t('songRequest.musicSection')}</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>{t('songRequest.artist')}</label>

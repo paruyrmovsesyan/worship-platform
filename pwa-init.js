@@ -204,7 +204,15 @@
     var rect = dock.getBoundingClientRect();
     if (!rect || !rect.height) return safeArea;
 
-    return Math.max(safeArea, Math.round(window.innerHeight - rect.top + 12));
+    return Math.max(safeArea, Math.round(window.innerHeight - rect.top + 24));
+  }
+
+  function getFloatingOverlayTopInset() {
+    var safeTop = 24;
+    try {
+      safeTop = Math.max(24, parseInt(getComputedStyle(document.body).paddingTop || "24", 10) || 24);
+    } catch (err) {}
+    return safeTop + 72;
   }
 
   function getAppScope() {
@@ -256,18 +264,18 @@
       style.id = "wpStandaloneChromeStyles";
       style.textContent =
         "html.wp-standalone-app{background:#0b1020;color-scheme:dark}" +
-        "body.wp-standalone-app{min-height:100svh;padding-top:max(10px,env(safe-area-inset-top));padding-right:max(10px,env(safe-area-inset-right));padding-bottom:max(18px,env(safe-area-inset-bottom));padding-left:max(10px,env(safe-area-inset-left));overscroll-behavior-y:contain}" +
+        "body.wp-standalone-app{min-height:100svh;padding-top:max(10px,env(safe-area-inset-top));padding-right:env(safe-area-inset-right, 0px);padding-bottom:max(18px,env(safe-area-inset-bottom));padding-left:env(safe-area-inset-left, 0px);overscroll-behavior-y:contain}" +
         "body.wp-main-app{background:radial-gradient(circle at top left,rgba(107,124,255,.18),transparent 28%),radial-gradient(circle at top right,rgba(87,214,195,.14),transparent 24%),linear-gradient(180deg,#0b1020 0%,#10182f 100%)}" +
         "body.wp-admin-app{background:radial-gradient(circle at top left,rgba(107,124,255,.2),transparent 26%),radial-gradient(circle at top right,rgba(87,214,195,.1),transparent 20%),linear-gradient(180deg,#0f1730 0%,#14203f 100%)}" +
         "body.wp-standalone-app::before{content:'';position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 22%),radial-gradient(circle at 20% 0%,rgba(255,255,255,.05),transparent 24%);z-index:0}" +
         "body.wp-standalone-app>*{position:relative;z-index:1}" +
-        "body.wp-standalone-app .container,body.wp-standalone-app .shell,body.wp-standalone-app main{max-width:min(1480px,calc(100vw - 2px));margin-inline:auto}" +
+        "body.wp-standalone-app .container,body.wp-standalone-app .shell,body.wp-standalone-app:not(.wp-main-app) main{max-width:min(1480px,calc(100vw - 2px));margin-inline:auto}" +
         "body.wp-standalone-app .topbar,body.wp-standalone-app .toolbar,body.wp-standalone-app .header,body.wp-standalone-app .search-card,body.wp-standalone-app .table-card,body.wp-standalone-app .panel,body.wp-standalone-app .card{backdrop-filter:blur(20px) saturate(140%)}" +
         "body.wp-standalone-app .topbar,body.wp-standalone-app .toolbar,body.wp-standalone-app .header{border:1px solid rgba(255,255,255,.07);box-shadow:0 20px 44px rgba(0,0,0,.28)}" +
         "body.wp-admin-app .topbar{background:rgba(10,16,32,.52)}" +
         "body.wp-standalone-app .section{padding-bottom:max(28px,env(safe-area-inset-bottom))}" +
         "body.wp-standalone-app #wpInstallBanner,body.wp-standalone-app .wp-install{display:none!important}" +
-        "@media (max-width:720px){body.wp-standalone-app{padding-top:max(8px,env(safe-area-inset-top));padding-right:max(8px,env(safe-area-inset-right));padding-bottom:max(16px,env(safe-area-inset-bottom));padding-left:max(8px,env(safe-area-inset-left))}}";
+        "@media (max-width:720px){body.wp-standalone-app{padding-top:max(8px,env(safe-area-inset-top));padding-right:env(safe-area-inset-right, 0px);padding-bottom:max(16px,env(safe-area-inset-bottom));padding-left:env(safe-area-inset-left, 0px)}}";
       document.head.appendChild(style);
     };
 
@@ -501,7 +509,7 @@
     }
 
   var hideTimer = null;
-    function showNotice(text, autoHide) {
+  function showNotice(text, autoHide) {
       var notice = ensureNotice();
       notice.style.top = getNoticeTopOffset() + "px";
       notice.style.bottom = "auto";
@@ -514,6 +522,14 @@
       }, 2500);
     }
   }
+
+  window.WP = window.WP || {};
+  window.WP.showNotice = function(text, autoHide) {
+    showNotice(text, autoHide !== false);
+  };
+  window.WP.showOfflineBlockedNotice = function(text) {
+    showNotice(text || "Այս բաժինը օֆֆլայն ռեժիմում հասանելի չէ։ Միացրեք ինտերնետը՝ շարունակելու համար։", true);
+  };
 
   function showOffline() {
     showNotice("Ինտերնետ կապը բացակայում է։ Աշխատում եք օֆֆլայն ռեժիմում։", true);
@@ -935,8 +951,8 @@
 
   (function setupPushPrompt() {
     if (window.WPPushManager) return;
-    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
-    if (!isStandaloneMode()) return;
+    
+    var isPushSupported = ("Notification" in window) && ("serviceWorker" in navigator) && ("PushManager" in window);
 
     var config = null;
     var sessionHideKey = "wp_push_prompt_hidden_session";
@@ -944,26 +960,37 @@
     var accountDisabledKey = "wp_push_account_disabled";
     var autoAttemptKey = "wp_push_auto_attempted";
     var adminRemovedKey = "wp_push_admin_removed";
-    var pushPromptText = "Ցանկանո՞ւմ եք միացնել Worship Platform-ի ծանուցումները, որպեսզի ստանաք նորությունները, թարմացումներն ու հայտարարությունները։";
+    var pushPromptTitle = "Միացրեք ծանուցումները";
+    var pushPromptBody = "Ծանուցումները պետք են, որպեսզի ստանաք չաթի նոր նամակները, նորությունները և կարևոր թարմացումները։";
+    var pushPromptNote = "Եթե ծանուցումները անջատված լինեն, չաթից հաղորդագրություններ չեք ստանա։";
 
     function ensureStyles() {
       if (document.getElementById("wpPushStyles")) return;
       var style = document.createElement("style");
       style.id = "wpPushStyles";
       style.textContent =
-        ".wp-push{position:fixed;left:16px;right:16px;bottom:16px;z-index:100000;display:none;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:rgba(18,24,32,.96);color:#fff;border:1px solid rgba(255,255,255,.14);box-shadow:0 12px 30px rgba(0,0,0,.35);font-family:Inter,system-ui,sans-serif}" +
+        ".wp-push{position:fixed;left:16px;right:16px;bottom:16px;z-index:100000;display:none;flex-direction:column;align-items:stretch;gap:12px;padding:15px 15px 14px;border-radius:18px;background:rgba(10,16,28,.98);color:#fff;border:1px solid rgba(122,211,255,.22);box-shadow:0 18px 40px rgba(0,0,0,.45);font-family:Inter,system-ui,sans-serif;white-space:normal;word-break:normal;overflow-wrap:anywhere;overflow:hidden}" +
         ".wp-push.show{display:flex}" +
-        ".wp-push-text{font-size:13px;font-weight:700;line-height:1.35}" +
-        ".wp-push-actions{display:flex;gap:8px;flex:0 0 auto}" +
-        ".wp-push button{border:0;border-radius:10px;padding:8px 10px;cursor:pointer;font-weight:700;font-size:12px}" +
-        ".wp-push-enable{background:linear-gradient(135deg,#18a957,#6b7cff);color:#fff}" +
-        ".wp-push-close{background:rgba(255,255,255,.14);color:#fff}" +
-        "@media (min-width: 860px){.wp-push{left:auto;right:16px;max-width:390px}}" +
-        "body.wp-main-app .wp-push{left:50%;right:auto;transform:translateX(-50%);width:min(420px,calc(100vw - 36px));max-width:none}" +
-        "body.wp-main-app .wp-push-text{flex:1 1 auto}" +
-        "body.wp-main-app .wp-push-actions{align-self:flex-end}" +
-        "@media (max-width:720px){body.wp-main-app .wp-push{width:min(340px,calc(100vw - 24px));padding:11px 12px;gap:8px}body.wp-main-app .wp-push-text{font-size:12px}body.wp-main-app .wp-push button{padding:8px 9px;font-size:12px}}";
+        ".wp-push-text{display:flex;flex-direction:column;gap:8px;min-width:0;white-space:normal;word-break:normal;overflow-wrap:anywhere}" +
+        ".wp-push-title{font-size:15px;font-weight:800;line-height:1.2;color:#fff;white-space:normal;word-break:normal;overflow-wrap:anywhere}" +
+        ".wp-push-body{font-size:13px;font-weight:600;line-height:1.5;color:rgba(255,255,255,.88);white-space:normal;word-break:normal;overflow-wrap:anywhere}" +
+        ".wp-push-note{font-size:11.5px;line-height:1.45;color:#ffd89a;background:rgba(255,184,77,.12);border:1px solid rgba(255,184,77,.2);padding:8px 9px;border-radius:10px;white-space:normal;word-break:normal;overflow-wrap:anywhere}" +
+        ".wp-push-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}" +
+        ".wp-push button{border:0;border-radius:12px;padding:11px 12px;cursor:pointer;font-weight:800;font-size:12.5px;min-height:42px}" +
+        ".wp-push-enable{background:linear-gradient(135deg,#11b36f,#2f7bff);color:#fff;box-shadow:0 8px 20px rgba(47,123,255,.25)}" +
+        ".wp-push-close{background:rgba(255,255,255,.12);color:#fff}" +
+        "@media (min-width: 860px){.wp-push{left:auto;right:16px;max-width:410px}}" +
+        "body.wp-main-app .wp-push{left:50%;right:auto;transform:translateX(-50%);width:min(430px,calc(100vw - 24px));max-width:none}" +
+        "@media (max-width:720px){body.wp-main-app .wp-push{width:min(380px,calc(100vw - 18px));padding:14px 13px 13px;gap:11px}body.wp-main-app .wp-push-title{font-size:14.5px}body.wp-main-app .wp-push-body{font-size:12.5px}body.wp-main-app .wp-push-note{font-size:11.5px}body.wp-main-app .wp-push button{padding:10px 10px;font-size:12px}}";
       document.head.appendChild(style);
+    }
+
+    function getPushPromptMarkup() {
+      return (
+        '<div class="wp-push-title">' + pushPromptTitle + '</div>' +
+        '<div class="wp-push-body">' + pushPromptBody + '</div>' +
+        '<div class="wp-push-note">' + pushPromptNote + '</div>'
+      );
     }
 
     function ensureBanner() {
@@ -977,10 +1004,10 @@
       banner.id = "wpPushBanner";
       banner.className = "wp-push";
       banner.innerHTML =
-        '<div class="wp-push-text">' + pushPromptText + "</div>" +
+        '<div class="wp-push-text">' + getPushPromptMarkup() + "</div>" +
         '<div class="wp-push-actions">' +
         '  <button class="wp-push-close" type="button">Հետո</button>' +
-        '  <button class="wp-push-enable" type="button">Միացնել</button>' +
+        '  <button class="wp-push-enable" type="button">Միացնել հիմա</button>' +
         "</div>";
       document.body.appendChild(banner);
       applyBannerLayout(banner);
@@ -991,13 +1018,19 @@
       if (!banner) return;
       if (document.body && document.body.classList.contains("wp-main-app")) {
         var compact = !!(window.matchMedia && window.matchMedia("(max-width: 720px)").matches);
+        var bottomOffset = getFloatingOverlayBottomOffset();
+        var topInset = getFloatingOverlayTopInset();
+        var maxHeight = Math.max(180, Math.round(window.innerHeight - bottomOffset - topInset));
         banner.style.position = "fixed";
         banner.style.left = "50%";
         banner.style.right = "auto";
         banner.style.transform = "translateX(-50%)";
-        banner.style.width = compact ? "min(340px, calc(100vw - 24px))" : "min(420px, calc(100vw - 36px))";
+        banner.style.width = compact ? "min(380px, calc(100vw - 18px))" : "min(430px, calc(100vw - 24px))";
         banner.style.maxWidth = "none";
         banner.style.margin = "0";
+        banner.style.bottom = bottomOffset + "px";
+        banner.style.maxHeight = maxHeight + "px";
+        banner.style.overflowY = "auto";
       }
     }
 
@@ -1030,10 +1063,55 @@
       return outputArray;
     }
 
+    function escapeCookieName(name) {
+      return String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function readCookie(name) {
+      try {
+        var match = document.cookie.match(new RegExp('(?:^|; )' + escapeCookieName(name) + '=([^;]*)'));
+        return match ? decodeURIComponent(match[1]) : "";
+      } catch (err) {
+        return "";
+      }
+    }
+
+    function getPushDeviceScope() {
+      return getDeclaredAppScope() === "admin" ? "admin" : "main";
+    }
+
+    function getPushDeviceId() {
+      var key = getPushDeviceScope() === "admin" ? "wp_admin_install_device_id" : "wp_install_device_id";
+      try {
+        return String(localStorage.getItem(key) || readCookie(key) || "").trim();
+      } catch (err) {
+        return String(readCookie(key) || "").trim();
+      }
+    }
+
+    async function syncPushStatus(subscription) {
+      if (!isPushSupported) return;
+      try {
+        await fetch("/push_api.php?action=status", {
+          method: "POST",
+          credentials: "same-origin",
+          keepalive: true,
+          headers: { "Content-Type": "application/json; charset=UTF-8" },
+          body: JSON.stringify({
+            endpoint: subscription ? subscription.endpoint : "",
+            subscribed: !!subscription,
+            permission: Notification.permission,
+            device_id: getPushDeviceId(),
+            device_scope: getPushDeviceScope()
+          })
+        });
+      } catch (err) {}
+    }
+
     async function fetchConfig() {
       if (config) return config;
       try {
-        var res = await fetch("/push_api.php?action=config", { cache: "no-store" });
+        var res = await fetch("/push_api.php?action=config", { credentials: "same-origin", cache: "no-store" });
         if (!res.ok) return null;
         config = await res.json();
         return config;
@@ -1043,6 +1121,7 @@
     }
 
     async function handleAdminDisabled(subscription) {
+      if (!isPushSupported) return;
       try {
         if (subscription) {
           await subscription.unsubscribe();
@@ -1061,6 +1140,7 @@
     }
 
     async function registerSubscription(forceEnable) {
+      if (!isPushSupported) return false;
       var currentConfig = await fetchConfig();
       if (!currentConfig || !currentConfig.enabled || !currentConfig.publicKey) return false;
 
@@ -1079,9 +1159,13 @@
 
         var response = await fetch("/push_api.php?action=subscribe", {
           method: "POST",
+          credentials: "same-origin",
           headers: { "Content-Type": "application/json; charset=UTF-8" },
           body: JSON.stringify({
             subscription: subscription.toJSON(),
+            permission: Notification.permission,
+            device_id: getPushDeviceId(),
+            device_scope: getPushDeviceScope(),
             force_enable: !!forceEnable
           })
         });
@@ -1097,6 +1181,7 @@
           return false;
         }
         setAdminRemoved(false);
+        await syncPushStatus(subscription);
         return true;
       } catch (err) {
         console.error("Push subscribe failed", err);
@@ -1108,15 +1193,25 @@
       try {
         var registration = await navigator.serviceWorker.ready;
         var subscription = await registration.pushManager.getSubscription();
-        if (!subscription) return true;
+        if (!subscription) {
+          await syncPushStatus(null);
+          return true;
+        }
 
         await fetch("/push_api.php?action=unsubscribe", {
           method: "POST",
+          credentials: "same-origin",
           headers: { "Content-Type": "application/json; charset=UTF-8" },
-          body: JSON.stringify({ endpoint: subscription.endpoint })
+          body: JSON.stringify({
+            endpoint: subscription.endpoint,
+            device_id: getPushDeviceId(),
+            device_scope: getPushDeviceScope(),
+            permission: Notification.permission
+          })
         });
 
         await subscription.unsubscribe();
+        await syncPushStatus(null);
         return true;
       } catch (err) {
         console.error("Push unsubscribe failed", err);
@@ -1202,25 +1297,36 @@
       if (hasSubscription) return;
 
       setAccountDisabled(false);
-      setUserDisabled(false);
-      setSessionHidden(false);
+      if (!isUserDisabled()) {
+        setSessionHidden(false);
+      }
     }
 
     function clearLegacyPromptSuppressionForApp() {
       if (!isStandaloneMode()) return;
       if (isAccountDisabled()) return;
+      if (isUserDisabled()) return;
       if (Notification.permission === "denied") return;
 
       try {
         sessionStorage.removeItem(sessionHideKey);
       } catch (err) {}
-
-      try {
-        localStorage.removeItem(disabledKey);
-      } catch (err) {}
     }
 
     async function getStatus() {
+      if (!isPushSupported) {
+        return {
+          supported: false,
+          enabledBySite: false,
+          permission: 'denied',
+          subscribed: false,
+          suppressed: false,
+          userDisabled: true,
+          accountDisabled: false,
+          adminRemoved: false
+        };
+      }
+
       var currentConfig = await fetchConfig();
       var subscription = null;
 
@@ -1231,7 +1337,7 @@
         subscription = null;
       }
 
-      return {
+      var status = {
         supported: !!currentConfig && !!currentConfig.supported,
         enabledBySite: !!currentConfig && !!currentConfig.enabled,
         permission: Notification.permission,
@@ -1241,9 +1347,14 @@
         accountDisabled: isAccountDisabled(),
         adminRemoved: isAdminRemoved()
       };
+      syncPushStatus(subscription);
+      return status;
     }
 
     async function enablePush(options) {
+      if (!isPushSupported) {
+         return { ok: false, permission: 'denied', error: 'not_supported' };
+      }
       options = options || {};
       clearPromptSuppression();
 
@@ -1273,19 +1384,15 @@
     async function disablePush() {
       setAdminRemoved(false);
       setAccountDisabled(false);
-      setUserDisabled(false);
+      setUserDisabled(true);
       setSessionHidden(false);
       hideBanner();
       var ok = await unregisterSubscription();
-      if (ok && Notification.permission !== "denied") {
-        setTimeout(function() {
-          showBannerIfNeeded();
-        }, 600);
-      }
       return { ok: ok, permission: Notification.permission };
     }
 
     async function showBannerIfNeeded() {
+      if (!isPushSupported) return;
       if (isAuthProgramPage()) {
         hideBanner();
         return;
@@ -1294,7 +1401,6 @@
       if (!currentConfig || !currentConfig.enabled) return;
       if (Notification.permission === "denied") return;
       if (isAccountDisabled()) return;
-      if (isUserDisabled()) return;
       if (isSessionHidden()) return;
 
       var adminRemoved = isAdminRemoved();
@@ -1310,9 +1416,8 @@
       var banner = ensureBanner();
       var text = banner.querySelector(".wp-push-text");
       applyBannerLayout(banner);
-      banner.style.bottom = getFloatingOverlayBottomOffset() + "px";
       if (text) {
-        text.textContent = pushPromptText;
+        text.innerHTML = getPushPromptMarkup();
       }
       banner.classList.add("show");
 
@@ -1339,7 +1444,6 @@
       var banner = document.getElementById("wpPushBanner");
       if (!banner) return;
       applyBannerLayout(banner);
-      banner.style.bottom = getFloatingOverlayBottomOffset() + "px";
     });
 
     async function tryAutomaticPrompt() {
@@ -1379,6 +1483,23 @@
       },
       clearSuppression: clearPromptSuppression
     };
+    window.dispatchEvent(new CustomEvent("wp-push-manager-ready"));
+
+    async function runAutomaticPushRecovery() {
+      var currentConfig = await fetchConfig();
+      if (!currentConfig || !currentConfig.enabled) return;
+      if (Notification.permission !== "granted") return;
+      if (isUserDisabled() || isAccountDisabled() || isAdminRemoved()) return;
+
+      var registered = await registerSubscription(true);
+      if (!registered) {
+        try {
+          var registration = await navigator.serviceWorker.ready;
+          var subscription = await registration.pushManager.getSubscription();
+          await syncPushStatus(subscription);
+        } catch (err) {}
+      }
+    }
 
     window.addEventListener("load", async function() {
       var currentConfig = await fetchConfig();
@@ -1388,7 +1509,13 @@
       await restorePromptAfterExternalDisable();
 
       if (Notification.permission === "granted") {
-        var registered = await registerSubscription(false);
+        if (isUserDisabled()) {
+          setTimeout(function() {
+            showBannerIfNeeded();
+          }, 900);
+          return;
+        }
+        var registered = await registerSubscription(true);
         if (!registered) {
           setTimeout(function() {
             showBannerIfNeeded();
@@ -1404,6 +1531,20 @@
       setTimeout(function() {
         showBannerIfNeeded();
       }, isStandaloneMode() ? 1400 : 2200);
+    });
+
+    window.addEventListener("online", function() {
+      runAutomaticPushRecovery();
+    });
+
+    window.addEventListener("focus", function() {
+      runAutomaticPushRecovery();
+    });
+
+    document.addEventListener("visibilitychange", function() {
+      if (document.visibilityState === "visible") {
+        runAutomaticPushRecovery();
+      }
     });
   })();
 })();

@@ -66,12 +66,96 @@ if (!function_exists('wp_auth_clear_remember_cookie')) {
     }
 }
 
+if (!function_exists('wp_auth_remember_cookie_expiry_ts')) {
+    function wp_auth_remember_cookie_expiry_ts(): int {
+        return time() + (86400 * 365 * 10);
+    }
+}
+
+if (!function_exists('wp_auth_remember_session_expires_at')) {
+    function wp_auth_remember_session_expires_at(): string {
+        return date('Y-m-d H:i:s', wp_auth_remember_cookie_expiry_ts());
+    }
+}
+
+if (!function_exists('wp_auth_issue_session_cookie')) {
+    function wp_auth_issue_session_cookie(int $expiresTs): void {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            return;
+        }
+
+        $sessionId = session_id();
+        if ($sessionId === '') {
+            return;
+        }
+
+        $params = session_get_cookie_params();
+        setcookie(session_name(), $sessionId, [
+            'expires'  => $expiresTs,
+            'path'     => $params['path'] ?? '/',
+            'domain'   => $params['domain'] ?? '',
+            'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+    }
+}
+
+if (!function_exists('wp_auth_issue_remember_cookie')) {
+    function wp_auth_issue_remember_cookie(string $selector, string $validator): void {
+        if ($selector === '' || $validator === '') {
+            return;
+        }
+
+        $expiresTs = wp_auth_remember_cookie_expiry_ts();
+        setcookie('remember_me', $selector . ':' . $validator, [
+            'expires'  => $expiresTs,
+            'path'     => '/',
+            'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+
+        wp_auth_issue_session_cookie($expiresTs);
+    }
+}
+
 if (!function_exists('wp_auth_open_pdo')) {
     function wp_auth_open_pdo(): ?PDO {
         try {
             return wp_runtime_open_pdo();
         } catch (Throwable $e) {
             return null;
+        }
+    }
+}
+
+if (!function_exists('wp_auth_ensure_user_access_columns')) {
+    function wp_auth_ensure_user_access_columns(?PDO $pdo): void {
+        static $done = false;
+        if ($done || !$pdo) {
+            return;
+        }
+
+        $done = true;
+        try {
+            $columns = [];
+            $st = $pdo->query("SHOW COLUMNS FROM users");
+            while ($row = $st ? $st->fetch(PDO::FETCH_ASSOC) : false) {
+                $field = (string)($row['Field'] ?? '');
+                if ($field !== '') {
+                    $columns[$field] = true;
+                }
+            }
+
+            if (empty($columns['is_blocked'])) {
+                $pdo->exec("ALTER TABLE users ADD COLUMN is_blocked TINYINT(1) NOT NULL DEFAULT 0 AFTER email");
+            }
+            if (empty($columns['blocked_at'])) {
+                $pdo->exec("ALTER TABLE users ADD COLUMN blocked_at DATETIME NULL DEFAULT NULL AFTER is_blocked");
+            }
+        } catch (Throwable $e) {
+            // Column sync should never block auth flow.
         }
     }
 }
@@ -96,6 +180,18 @@ if (!function_exists('wp_auth_touch_current_session')) {
                 (int)$_SESSION['user_id'],
                 $sessionKey
             ]);
+            
+            // Also update user's overall last active time (throttled to 60s)
+            if (empty($_SESSION['last_activity_update']) || time() - $_SESSION['last_activity_update'] > 60) {
+                $prevTime = $_SESSION['last_activity_update'] ?? 0;
+                $_SESSION['last_activity_update'] = time();
+                try {
+                    $stAct = $pdo->prepare("UPDATE users SET last_active_at = NOW() WHERE id = ?");
+                    $stAct->execute([(int)$_SESSION['user_id']]);
+                } catch (Throwable $e) {
+                    $_SESSION['last_activity_update'] = $prevTime;
+                }
+            }
         } catch (Throwable $e) {
             // silently ignore
         }
@@ -155,23 +251,48 @@ if (!function_exists('wp_auth_detect_device_meta')) {
     }
 }
 
+if (!function_exists('wp_auth_normalize_session_source')) {
+    function wp_auth_normalize_session_source(?string $source = null): string {
+        $source = strtolower(trim((string)$source));
+        if (in_array($source, ['pwa', 'admin-app', 'web'], true)) {
+            return $source;
+        }
+
+        $querySource = strtolower(trim((string)($_GET['source'] ?? '')));
+        if (in_array($querySource, ['pwa', 'admin-app', 'web'], true)) {
+            return $querySource;
+        }
+
+        $postSource = strtolower(trim((string)($_POST['source'] ?? '')));
+        if (in_array($postSource, ['pwa', 'admin-app', 'web'], true)) {
+            return $postSource;
+        }
+
+        return 'web';
+    }
+}
+
+if (!function_exists('wp_auth_session_origin_key')) {
+    function wp_auth_session_origin_key(?string $source = null): string {
+        $source = wp_auth_normalize_session_source($source);
+        if ($source === 'pwa') return 'app';
+        if ($source === 'admin-app') return 'admin-app';
+        return 'web';
+    }
+}
+
+if (!function_exists('wp_auth_compose_session_device_name')) {
+    function wp_auth_compose_session_device_name(string $deviceName, ?string $source = null): string {
+        return wp_auth_merge_device_name_with_origin($deviceName, wp_auth_session_origin_key($source));
+    }
+}
+
 if (!function_exists('wp_auth_remember_context_matches')) {
     function wp_auth_remember_context_matches(array $row, array $currentMeta): bool {
-        $storedBrowser = trim((string)($row['browser'] ?? ''));
-        $storedPlatform = trim((string)($row['platform'] ?? ''));
-        $currentBrowser = trim((string)($currentMeta['browser'] ?? ''));
-        $currentPlatform = trim((string)($currentMeta['platform'] ?? ''));
-        $storedUserAgent = trim((string)($row['user_agent'] ?? ''));
-        $currentUserAgent = trim((string)($_SERVER['HTTP_USER_AGENT'] ?? ''));
-
-        if ($storedBrowser !== '' && $currentBrowser !== '' && strcasecmp($storedBrowser, $currentBrowser) !== 0) {
-            return false;
-        }
-
-        if ($storedPlatform !== '' && $currentPlatform !== '' && strcasecmp($storedPlatform, $currentPlatform) !== 0) {
-            return false;
-        }
-
+        // The selector + validator pair is the actual credential. iOS PWA/Safari
+        // can report browser/platform metadata slightly differently after app
+        // relaunches or OS updates, so metadata must not invalidate a remembered
+        // login by itself.
         return true;
     }
 }
@@ -407,7 +528,127 @@ if (!function_exists('wp_auth_force_local_logout')) {
     }
 }
 
+if (!function_exists('wp_auth_restore_from_remember_cookie')) {
+    function wp_auth_restore_from_remember_cookie(?PDO $pdo = null): bool {
+        if (!empty($_SESSION['user_id'])) {
+            return true;
+        }
+
+        if (empty($_COOKIE['remember_me'])) {
+            return false;
+        }
+
+        $pdo = $pdo ?: wp_auth_open_pdo();
+        if (!$pdo) {
+            return false;
+        }
+
+        $parts = explode(':', (string)$_COOKIE['remember_me'], 2);
+        if (count($parts) !== 2) {
+            wp_auth_clear_remember_cookie();
+            return false;
+        }
+
+        [$selector, $validator] = $parts;
+
+        if ($selector === '' || $validator === '') {
+            wp_auth_clear_remember_cookie();
+            return false;
+        }
+
+        try {
+            $st = $pdo->prepare("
+                SELECT
+                    s.id AS session_row_id,
+                    s.user_id,
+                    s.selector,
+                    s.token_hash,
+                    s.remembered,
+                    s.expires_at,
+                    s.device_name,
+                    s.browser,
+                    s.platform,
+                    s.user_agent,
+                    u.id,
+                    u.name,
+                    u.username,
+                    u.email
+                FROM user_sessions s
+                INNER JOIN users u ON u.id = s.user_id
+                WHERE s.selector = ?
+                  AND COALESCE(u.is_blocked, 0) = 0
+                  AND s.remembered = 1
+                  AND (s.expires_at IS NULL OR s.expires_at > NOW())
+                LIMIT 1
+            ");
+            $st->execute([$selector]);
+            $row = $st->fetch(PDO::FETCH_ASSOC);
+
+            if (!$row) {
+                wp_auth_clear_remember_cookie();
+                return false;
+            }
+
+            $expectedHash = (string)($row['token_hash'] ?? '');
+            $actualHash = hash('sha256', $validator);
+
+            if (!hash_equals($expectedHash, $actualHash)) {
+                $del = $pdo->prepare("DELETE FROM user_sessions WHERE selector = ?");
+                $del->execute([$selector]);
+                wp_auth_clear_remember_cookie();
+                return false;
+            }
+
+            $currentMeta = wp_auth_detect_device_meta((string)($_SERVER['HTTP_USER_AGENT'] ?? ''));
+            if (!wp_auth_remember_context_matches($row, $currentMeta)) {
+                wp_auth_clear_remember_cookie();
+                return false;
+            }
+
+            $sessionOrigin = wp_auth_extract_session_origin_from_device_name((string)($row['device_name'] ?? ''));
+            $sessionDeviceName = wp_auth_merge_device_name_with_origin((string)$currentMeta['device_name'], $sessionOrigin);
+
+            wp_auth_fill_session_user($row);
+            $_SESSION['auth_via_remember'] = 1;
+            $_SESSION['user_session_row_id'] = (int)($row['session_row_id'] ?? 0);
+            wp_auth_issue_session_cookie(wp_auth_remember_cookie_expiry_ts());
+
+            $upd = $pdo->prepare("
+                UPDATE user_sessions
+                SET
+                    last_used_at = NOW(),
+                    session_key = ?,
+                    device_name = ?,
+                    browser = ?,
+                    platform = ?,
+                    ip_address = ?,
+                    user_agent = ?
+                WHERE id = ?
+                LIMIT 1
+            ");
+            $upd->execute([
+                session_id(),
+                $sessionDeviceName,
+                (string)$currentMeta['browser'],
+                (string)$currentMeta['platform'],
+                function_exists('wp_runtime_remote_ip') ? wp_runtime_remote_ip() : (string)($_SERVER['REMOTE_ADDR'] ?? ''),
+                mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255),
+                (int)$row['session_row_id']
+            ]);
+
+            $_SESSION['last_activity_update'] = time();
+            $stAct = $pdo->prepare("UPDATE users SET last_active_at = NOW() WHERE id = ?");
+            $stAct->execute([(int)$row['user_id']]);
+
+            return true;
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+}
+
 $pdo = wp_auth_open_pdo();
+wp_auth_ensure_user_access_columns($pdo);
 
 if (!empty($_SESSION['user_id'])) {
     if ($pdo) {
@@ -431,6 +672,7 @@ if (!empty($_SESSION['user_id'])) {
                     INNER JOIN users u ON u.id = s.user_id
                     WHERE s.id = ?
                       AND s.user_id = ?
+                      AND COALESCE(u.is_blocked, 0) = 0
                       AND s.session_key = ?
                       AND (s.expires_at IS NULL OR s.expires_at > NOW())
                     LIMIT 1
@@ -450,6 +692,7 @@ if (!empty($_SESSION['user_id'])) {
                     FROM user_sessions s
                     INNER JOIN users u ON u.id = s.user_id
                     WHERE s.user_id = ?
+                      AND COALESCE(u.is_blocked, 0) = 0
                       AND s.session_key = ?
                       AND (s.expires_at IS NULL OR s.expires_at > NOW())
                     ORDER BY s.id DESC
@@ -482,104 +725,4 @@ if (empty($_COOKIE['remember_me'])) {
     return;
 }
 
-if (!$pdo) {
-    return;
-}
-
-$parts = explode(':', (string)$_COOKIE['remember_me'], 2);
-if (count($parts) !== 2) {
-    wp_auth_clear_remember_cookie();
-    return;
-}
-
-[$selector, $validator] = $parts;
-
-if ($selector === '' || $validator === '') {
-    wp_auth_clear_remember_cookie();
-    return;
-}
-
-try {
-    $st = $pdo->prepare("
-        SELECT
-            s.id AS session_row_id,
-            s.user_id,
-            s.selector,
-            s.token_hash,
-            s.remembered,
-            s.expires_at,
-            s.device_name,
-            s.browser,
-            s.platform,
-            s.user_agent,
-            u.id,
-            u.name,
-            u.username,
-            u.email
-        FROM user_sessions s
-        INNER JOIN users u ON u.id = s.user_id
-        WHERE s.selector = ?
-          AND s.remembered = 1
-          AND s.expires_at IS NOT NULL
-          AND s.expires_at > NOW()
-        LIMIT 1
-    ");
-    $st->execute([$selector]);
-    $row = $st->fetch(PDO::FETCH_ASSOC);
-
-    if (!$row) {
-        wp_auth_clear_remember_cookie();
-        return;
-    }
-
-    $expectedHash = (string)($row['token_hash'] ?? '');
-    $actualHash   = hash('sha256', $validator);
-
-    if (!hash_equals($expectedHash, $actualHash)) {
-        $del = $pdo->prepare("DELETE FROM user_sessions WHERE selector = ?");
-        $del->execute([$selector]);
-        wp_auth_clear_remember_cookie();
-        return;
-    }
-
-    $currentMeta = wp_auth_detect_device_meta((string)($_SERVER['HTTP_USER_AGENT'] ?? ''));
-    if (!wp_auth_remember_context_matches($row, $currentMeta)) {
-        wp_auth_clear_remember_cookie();
-        return;
-    }
-
-    $sessionOrigin = wp_auth_extract_session_origin_from_device_name((string)($row['device_name'] ?? ''));
-    $sessionDeviceName = wp_auth_merge_device_name_with_origin((string)$currentMeta['device_name'], $sessionOrigin);
-
-   
-    wp_auth_fill_session_user($row);
-    $_SESSION['auth_via_remember'] = 1;
-    $_SESSION['user_session_row_id'] = (int)($row['session_row_id'] ?? 0);
-
-    $upd = $pdo->prepare("
-        UPDATE user_sessions
-        SET
-            last_used_at = NOW(),
-            session_key = ?,
-            device_name = ?,
-            browser = ?,
-            platform = ?,
-            ip_address = ?,
-            user_agent = ?
-        WHERE id = ?
-        LIMIT 1
-    ");
-    $upd->execute([
-        session_id(),
-        $sessionDeviceName,
-        (string)$currentMeta['browser'],
-        (string)$currentMeta['platform'],
-        function_exists('wp_runtime_remote_ip') ? wp_runtime_remote_ip() : (string)($_SERVER['REMOTE_ADDR'] ?? ''),
-        mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255),
-        (int)$row['session_row_id']
-    ]);
-
-} catch (Throwable $e) {
-    // silently fail
-    return;
-}
+wp_auth_restore_from_remember_cookie($pdo);

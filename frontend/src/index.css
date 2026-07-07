@@ -30,6 +30,9 @@
 
   --nav-height: 60px;
   --bottom-nav-height: 90px;
+  --bottom-nav-safe-gap: max(24px, env(safe-area-inset-bottom, 24px));
+  --bottom-nav-actual-height: 64px;
+  --bottom-nav-total-offset: calc(var(--bottom-nav-safe-gap) + var(--bottom-nav-actual-height));
   --transition-smooth: all 0.2s ease-out;
 
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -68,6 +71,17 @@ body {
 }
 
 body.is-pwa {
+  overscroll-behavior-x: none;
+}
+
+body.is-pwa main {
+  overscroll-behavior-x: none;
+}
+
+/* Optional: we removed position: fixed from chat-active here to prevent desktop layout bugs. 
+   Mobile specific fixes are handled in Chat.css */
+html.chat-active, body.chat-active {
+  overscroll-behavior: none !important;
 }
 
 * {
@@ -119,6 +133,7 @@ h3 { font-size: 1.2rem; }
 .app-container {
   display: flex;
   flex-direction: column;
+  width: 100%;
   min-height: 100vh;
 }
 
@@ -148,6 +163,26 @@ main { flex: 1; }
   body:not(.website-theme) main { padding-bottom: calc(var(--bottom-nav-height) + 20px); }
   /* Website Mobile uses top Navbar, needs top padding */
   body.website-theme main { padding-top: var(--nav-height); }
+
+  /* Let every PWA page continue its own background behind the iOS status bar. */
+  body.is-pwa.mobile-theme main > *:not(.login-page-container):not(.register-page-container):not(.chat-page-container):not(.seq-nav):not(.sv-edit-action):not(.toast-message) {
+    position: relative;
+    isolation: isolate;
+  }
+
+  body.is-pwa.mobile-theme main > *:not(.login-page-container):not(.register-page-container):not(.chat-page-container):not(.seq-nav):not(.sv-edit-action):not(.toast-message)::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(env(safe-area-inset-top, 0px) * -1);
+    height: calc(env(safe-area-inset-top, 0px) + 1px);
+    background: inherit;
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+    pointer-events: none;
+    z-index: -1;
+  }
   
   .desktop-only { display: none !important; }
   .hide-mobile { display: none !important; }
@@ -564,4 +599,36 @@ html, body, #root, .app-container, .login-page-container {
   color: #fff !important;
   box-shadow: 0 4px 15px var(--glow-color-2) !important;
   transform: translateY(-2px);
+}
+
+/* ─── APP SETTINGS OVERRIDES ─── */
+body.reduce-motion * {
+  animation-duration: 0.001s !important;
+  transition-duration: 0.001s !important;
+  scroll-behavior: auto !important;
+}
+
+body.oled-mode {
+  --color-bg: #000000;
+  --color-surface: #0A0A0E;
+  --color-surface-hover: #121218;
+  --glass-bg: rgba(10, 10, 14, 0.8);
+}
+
+/* ─── CHORD CUSTOMIZATION ─── */
+body.chord-color-blue .chord { color: #00D4FF !important; }
+body.chord-color-green .chord { color: #4ADE80 !important; }
+body.chord-color-red .chord { color: #FF4A4A !important; }
+
+body.outlined-chords .chord {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin: 0 2px;
+  font-weight: 600;
+}
+body.oled-mode.outlined-chords .chord {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
 }

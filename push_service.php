@@ -170,6 +170,10 @@ function wp_push_subscription_id(string $endpoint): string {
     return hash('sha256', trim($endpoint));
 }
 
+function wp_push_device_placeholder_id(string $deviceId, string $deviceScope = 'main'): string {
+    return 'device:' . hash('sha256', trim($deviceScope) . '|' . trim($deviceId));
+}
+
 function wp_push_normalize_ip(string $ip): string {
     $ip = trim($ip);
     if ($ip === '') {
@@ -186,10 +190,12 @@ function wp_push_load_subscriptions(): array {
         $result = $conn->query("SELECT * FROM push_subscriptions");
         while ($row = $result->fetch_assoc()) {
             $endpoint = trim((string)($row['endpoint'] ?? ''));
-            if ($endpoint === '') continue;
+            $deviceId = mb_substr(trim((string)($row['device_id'] ?? '')), 0, 120);
+            $deviceScope = in_array((string)($row['device_scope'] ?? 'main'), ['main', 'admin'], true) ? (string)$row['device_scope'] : 'main';
+            if ($endpoint === '' && $deviceId === '') continue;
 
             $normalized[] = [
-                'id' => (string)($row['id'] ?? wp_push_subscription_id($endpoint)),
+                'id' => (string)($row['id'] ?? ($endpoint !== '' ? wp_push_subscription_id($endpoint) : wp_push_device_placeholder_id($deviceId, $deviceScope))),
                 'endpoint' => $endpoint,
                 'public_key' => (string)($row['public_key'] ?? ''),
                 'auth_key' => (string)($row['auth_key'] ?? ''),
@@ -198,6 +204,10 @@ function wp_push_load_subscriptions(): array {
                 'user_name' => mb_substr(trim((string)($row['user_name'] ?? '')), 0, 190),
                 'user_email' => mb_substr(trim((string)($row['user_email'] ?? '')), 0, 190),
                 'ip_address' => wp_push_normalize_ip((string)($row['ip_address'] ?? '')),
+                'device_id' => $deviceId,
+                'device_scope' => $deviceScope,
+                'permission_state' => in_array((string)($row['permission_state'] ?? 'granted'), ['granted', 'default', 'denied'], true) ? (string)$row['permission_state'] : 'granted',
+                'is_active' => (int)($row['is_active'] ?? 1) === 1,
                 'created_at' => wp_version_normalize_datetime($row['created_at'] ?? '') ?: wp_version_now_iso(),
                 'updated_at' => wp_version_normalize_datetime($row['updated_at'] ?? '') ?: wp_version_now_iso(),
                 'last_seen_at' => wp_version_normalize_datetime($row['last_seen_at'] ?? '') ?: '',
@@ -214,11 +224,15 @@ function wp_push_save_subscriptions(array $subscriptions): bool {
         $conn->begin_transaction();
         
         $conn->query("TRUNCATE TABLE push_subscriptions");
-        $stmt = $conn->prepare("INSERT INTO push_subscriptions (id, endpoint, public_key, auth_key, user_agent, user_id, user_name, user_email, ip_address, created_at, updated_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO push_subscriptions (id, endpoint, public_key, auth_key, user_agent, user_id, user_name, user_email, ip_address, device_id, device_scope, permission_state, is_active, created_at, updated_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
         foreach ($subscriptions as $sub) {
-            $id = $sub['id'] ?? wp_push_subscription_id($sub['endpoint'] ?? '');
-            $endpoint = $sub['endpoint'] ?? '';
+            $endpoint = trim((string)($sub['endpoint'] ?? ''));
+            $device_id = $sub['device_id'] ?? '';
+            if ($endpoint === '' && trim((string)$device_id) === '') {
+                continue;
+            }
+            $id = $sub['id'] ?? ($endpoint !== '' ? wp_push_subscription_id($endpoint) : wp_push_device_placeholder_id((string)$device_id, (string)($sub['device_scope'] ?? 'main')));
             $public_key = $sub['public_key'] ?? '';
             $auth_key = $sub['auth_key'] ?? '';
             $user_agent = $sub['user_agent'] ?? '';
@@ -226,12 +240,15 @@ function wp_push_save_subscriptions(array $subscriptions): bool {
             $user_name = $sub['user_name'] ?? '';
             $user_email = $sub['user_email'] ?? '';
             $ip_address = $sub['ip_address'] ?? '';
+            $device_scope = in_array((string)($sub['device_scope'] ?? 'main'), ['main', 'admin'], true) ? (string)$sub['device_scope'] : 'main';
+            $permission_state = in_array((string)($sub['permission_state'] ?? 'granted'), ['granted', 'default', 'denied'], true) ? (string)$sub['permission_state'] : 'granted';
+            $is_active = !array_key_exists('is_active', $sub) || !empty($sub['is_active']) ? 1 : 0;
             $created_at = $sub['created_at'] ?? '';
             $updated_at = $sub['updated_at'] ?? '';
             $last_seen_at = $sub['last_seen_at'] ?? null;
             if ($last_seen_at === '') $last_seen_at = null;
             
-            $stmt->bind_param('sssssissssss', $id, $endpoint, $public_key, $auth_key, $user_agent, $user_id, $user_name, $user_email, $ip_address, $created_at, $updated_at, $last_seen_at);
+            $stmt->bind_param('sssssissssssisss', $id, $endpoint, $public_key, $auth_key, $user_agent, $user_id, $user_name, $user_email, $ip_address, $device_id, $device_scope, $permission_state, $is_active, $created_at, $updated_at, $last_seen_at);
             $stmt->execute();
         }
         
@@ -361,19 +378,35 @@ function wp_push_upsert_subscription(array $subscription, array $meta = []): arr
     $id = wp_push_subscription_id($endpoint);
     $now = wp_version_now_iso();
     $found = false;
+    $incomingDeviceId = mb_substr(trim((string)($meta['device_id'] ?? '')), 0, 120);
+    $incomingDeviceScope = in_array((string)($meta['device_scope'] ?? 'main'), ['main', 'admin'], true) ? (string)$meta['device_scope'] : 'main';
+    $clearUser = array_key_exists('clear_user', $meta) ? !empty($meta['clear_user']) : ((int)($meta['user_id'] ?? 0) <= 0);
 
     foreach ($subscriptions as &$row) {
-        if ((string)$row['id'] !== $id) {
+        $matchesEndpoint = (string)$row['id'] === $id;
+        $matchesDevice = !$matchesEndpoint
+            && $incomingDeviceId !== ''
+            && (string)($row['device_id'] ?? '') === $incomingDeviceId
+            && (string)($row['device_scope'] ?? 'main') === $incomingDeviceScope;
+        if (!$matchesEndpoint && !$matchesDevice) {
             continue;
         }
 
+        $row['id'] = $id;
+        $row['endpoint'] = $endpoint;
         $row['public_key'] = $publicKey;
         $row['auth_key'] = $authKey;
         $row['user_agent'] = mb_substr(trim((string)($meta['user_agent'] ?? $row['user_agent'] ?? '')), 0, 255);
-        $row['user_id'] = !empty($meta['user_id']) ? (int)$meta['user_id'] : (int)($row['user_id'] ?? 0);
-        $row['user_name'] = mb_substr(trim((string)($meta['user_name'] ?? $row['user_name'] ?? '')), 0, 190);
-        $row['user_email'] = mb_substr(trim((string)($meta['user_email'] ?? $row['user_email'] ?? '')), 0, 190);
+        $row['user_id'] = $clearUser ? 0 : (!empty($meta['user_id']) ? (int)$meta['user_id'] : (int)($row['user_id'] ?? 0));
+        $row['user_name'] = $clearUser ? '' : mb_substr(trim((string)($meta['user_name'] ?? $row['user_name'] ?? '')), 0, 190);
+        $row['user_email'] = $clearUser ? '' : mb_substr(trim((string)($meta['user_email'] ?? $row['user_email'] ?? '')), 0, 190);
         $row['ip_address'] = wp_push_normalize_ip((string)($meta['ip_address'] ?? $row['ip_address'] ?? ''));
+        $row['device_id'] = $incomingDeviceId !== '' ? $incomingDeviceId : mb_substr(trim((string)($row['device_id'] ?? '')), 0, 120);
+        $nextDeviceScope = (string)($meta['device_scope'] ?? $row['device_scope'] ?? 'main');
+        $nextPermissionState = (string)($meta['permission_state'] ?? 'granted');
+        $row['device_scope'] = in_array($nextDeviceScope, ['main', 'admin'], true) ? $nextDeviceScope : 'main';
+        $row['permission_state'] = in_array($nextPermissionState, ['granted', 'default', 'denied'], true) ? $nextPermissionState : 'granted';
+        $row['is_active'] = $row['permission_state'] === 'granted';
         $row['updated_at'] = $now;
         $row['last_seen_at'] = $now;
         $found = true;
@@ -382,16 +415,23 @@ function wp_push_upsert_subscription(array $subscription, array $meta = []): arr
     unset($row);
 
     if (!$found) {
+        $newDeviceScope = (string)($meta['device_scope'] ?? 'main');
+        $newPermissionState = (string)($meta['permission_state'] ?? 'granted');
+        $newPermissionState = in_array($newPermissionState, ['granted', 'default', 'denied'], true) ? $newPermissionState : 'granted';
         $subscriptions[] = [
             'id' => $id,
             'endpoint' => $endpoint,
             'public_key' => $publicKey,
             'auth_key' => $authKey,
             'user_agent' => mb_substr(trim((string)($meta['user_agent'] ?? '')), 0, 255),
-            'user_id' => !empty($meta['user_id']) ? (int)$meta['user_id'] : 0,
-            'user_name' => mb_substr(trim((string)($meta['user_name'] ?? '')), 0, 190),
-            'user_email' => mb_substr(trim((string)($meta['user_email'] ?? '')), 0, 190),
+            'user_id' => $clearUser ? 0 : (!empty($meta['user_id']) ? (int)$meta['user_id'] : 0),
+            'user_name' => $clearUser ? '' : mb_substr(trim((string)($meta['user_name'] ?? '')), 0, 190),
+            'user_email' => $clearUser ? '' : mb_substr(trim((string)($meta['user_email'] ?? '')), 0, 190),
             'ip_address' => wp_push_normalize_ip((string)($meta['ip_address'] ?? '')),
+            'device_id' => mb_substr(trim((string)($meta['device_id'] ?? '')), 0, 120),
+            'device_scope' => in_array($newDeviceScope, ['main', 'admin'], true) ? $newDeviceScope : 'main',
+            'permission_state' => $newPermissionState,
+            'is_active' => $newPermissionState === 'granted',
             'created_at' => $now,
             'updated_at' => $now,
             'last_seen_at' => $now,
@@ -419,6 +459,86 @@ function wp_push_remove_subscription_by_endpoint(string $endpoint): bool {
 
     wp_push_remove_queued_for_subscription($id);
     return wp_push_save_subscriptions($subscriptions);
+}
+
+function wp_push_sync_client_status(array $payload, array $meta = []): array {
+    $endpoint = trim((string)($payload['endpoint'] ?? ''));
+    $permission = (string)($payload['permission'] ?? 'default');
+    $permission = in_array($permission, ['granted', 'default', 'denied'], true) ? $permission : 'default';
+    $subscribed = !empty($payload['subscribed']) && $endpoint !== '' && $permission === 'granted';
+    $id = $endpoint !== '' ? wp_push_subscription_id($endpoint) : '';
+    $deviceId = mb_substr(trim((string)($payload['device_id'] ?? '')), 0, 120);
+    $deviceScope = in_array((string)($payload['device_scope'] ?? 'main'), ['main', 'admin'], true) ? (string)$payload['device_scope'] : 'main';
+    $now = wp_version_now_iso();
+    $subscriptions = wp_push_load_subscriptions();
+    $changed = false;
+    $found = false;
+    $clearUser = array_key_exists('clear_user', $meta) ? !empty($meta['clear_user']) : ((int)($meta['user_id'] ?? 0) <= 0);
+
+    foreach ($subscriptions as &$row) {
+        $matchesEndpoint = $id !== '' && (string)($row['id'] ?? '') === $id;
+        $matchesDevice = !$matchesEndpoint
+            && $deviceId !== ''
+            && (string)($row['device_id'] ?? '') === $deviceId
+            && (string)($row['device_scope'] ?? 'main') === $deviceScope;
+
+        if (!$matchesEndpoint && !$matchesDevice) {
+            continue;
+        }
+
+        $found = true;
+        $row['permission_state'] = $permission;
+        $row['is_active'] = $subscribed;
+        $row['last_seen_at'] = $now;
+        $row['updated_at'] = $now;
+        if ($deviceId !== '') $row['device_id'] = $deviceId;
+        $row['device_scope'] = $deviceScope;
+        if ($endpoint !== '') {
+            $row['id'] = $id;
+            $row['endpoint'] = $endpoint;
+        }
+        if ($clearUser) {
+            $row['user_id'] = 0;
+            $row['user_name'] = '';
+            $row['user_email'] = '';
+            wp_push_remove_queued_for_subscription((string)($row['id'] ?? ''));
+        } else {
+            if (!empty($meta['user_id'])) $row['user_id'] = (int)$meta['user_id'];
+            if (!empty($meta['user_name'])) $row['user_name'] = mb_substr(trim((string)$meta['user_name']), 0, 190);
+            if (!empty($meta['user_email'])) $row['user_email'] = mb_substr(trim((string)$meta['user_email']), 0, 190);
+        }
+        if (!empty($meta['ip_address'])) $row['ip_address'] = wp_push_normalize_ip((string)$meta['ip_address']);
+        $changed = true;
+    }
+    unset($row);
+
+    if (!$found && $deviceId !== '') {
+        $subscriptions[] = [
+            'id' => $id !== '' ? $id : wp_push_device_placeholder_id($deviceId, $deviceScope),
+            'endpoint' => $endpoint,
+            'public_key' => '',
+            'auth_key' => '',
+            'user_agent' => mb_substr(trim((string)($meta['user_agent'] ?? '')), 0, 255),
+            'user_id' => $clearUser ? 0 : (!empty($meta['user_id']) ? (int)$meta['user_id'] : 0),
+            'user_name' => $clearUser ? '' : mb_substr(trim((string)($meta['user_name'] ?? '')), 0, 190),
+            'user_email' => $clearUser ? '' : mb_substr(trim((string)($meta['user_email'] ?? '')), 0, 190),
+            'ip_address' => wp_push_normalize_ip((string)($meta['ip_address'] ?? '')),
+            'device_id' => $deviceId,
+            'device_scope' => $deviceScope,
+            'permission_state' => $permission,
+            'is_active' => $subscribed,
+            'created_at' => $now,
+            'updated_at' => $now,
+            'last_seen_at' => $now,
+        ];
+        $changed = true;
+    }
+
+    if ($changed) {
+        wp_push_save_subscriptions($subscriptions);
+    }
+
+    return ['ok' => true, 'synced' => $changed, 'permission' => $permission, 'subscribed' => $subscribed];
 }
 
 function wp_push_find_subscription_by_id(string $id): ?array {
@@ -485,6 +605,61 @@ function wp_push_remove_queued_for_subscription(string $subscriptionId): void {
     wp_push_save_queue($queue);
 }
 
+function wp_push_detach_user_from_device(string $deviceId = '', string $deviceScope = 'main', int $userId = 0, string $userAgent = '', string $ipAddress = ''): int {
+    $deviceId = mb_substr(trim($deviceId), 0, 120);
+    $deviceScope = in_array($deviceScope, ['main', 'admin'], true) ? $deviceScope : 'main';
+    $userAgent = mb_substr(trim($userAgent), 0, 255);
+    $ipAddress = wp_push_normalize_ip($ipAddress);
+
+    $subscriptions = wp_push_load_subscriptions();
+    if (!$subscriptions) {
+        return 0;
+    }
+
+    $changed = false;
+    $detachedCount = 0;
+
+    foreach ($subscriptions as &$row) {
+        $matchesDevice = $deviceId !== ''
+            && (string)($row['device_id'] ?? '') === $deviceId
+            && (string)($row['device_scope'] ?? 'main') === $deviceScope;
+
+        $matchesFallback = !$matchesDevice
+            && $deviceId === ''
+            && $userId > 0
+            && (int)($row['user_id'] ?? 0) === $userId
+            && $userAgent !== ''
+            && strcasecmp((string)($row['user_agent'] ?? ''), $userAgent) === 0
+            && $ipAddress !== ''
+            && (string)($row['ip_address'] ?? '') === $ipAddress;
+
+        if (!$matchesDevice && !$matchesFallback) {
+            continue;
+        }
+
+        if ((int)($row['user_id'] ?? 0) <= 0
+            && trim((string)($row['user_name'] ?? '')) === ''
+            && trim((string)($row['user_email'] ?? '')) === '') {
+            continue;
+        }
+
+        $row['user_id'] = 0;
+        $row['user_name'] = '';
+        $row['user_email'] = '';
+        $row['updated_at'] = wp_version_now_iso();
+        wp_push_remove_queued_for_subscription((string)($row['id'] ?? ''));
+        $changed = true;
+        $detachedCount++;
+    }
+    unset($row);
+
+    if ($changed) {
+        wp_push_save_subscriptions($subscriptions);
+    }
+
+    return $detachedCount;
+}
+
 function wp_push_enqueue(array $subscriptionIds, array $payload): int {
     $queue = wp_push_load_queue();
     $now = wp_version_now_iso();
@@ -525,30 +700,41 @@ function wp_push_pull_for_endpoint(string $endpoint): ?array {
 
     $subscriptionId = wp_push_subscription_id($endpoint);
     $queue = wp_push_load_queue();
-    $next = null;
+    $latest = null;
     $remaining = [];
 
     foreach ($queue as $item) {
-        if ($next === null && (string)($item['subscription_id'] ?? '') === $subscriptionId) {
-            $next = $item;
+        if ((string)($item['subscription_id'] ?? '') === $subscriptionId) {
+            $latest = $item;
             continue;
         }
         $remaining[] = $item;
     }
 
-    if ($next !== null) {
+    if ($latest !== null) {
         wp_push_save_queue($remaining);
     }
 
-    return $next;
+    return $latest;
 }
 
 function wp_push_stats(): array {
     $config = wp_push_bootstrap_config();
+    $subscriptions = wp_push_load_subscriptions();
+    $active = array_values(array_filter($subscriptions, static function (array $row): bool {
+        return !empty($row['is_active'])
+            && (string)($row['permission_state'] ?? '') === 'granted'
+            && trim((string)($row['device_id'] ?? '')) !== '';
+    }));
+    $activeMain = array_values(array_filter($active, static fn(array $row): bool => (string)($row['device_scope'] ?? 'main') === 'main'));
+    $activeAdmin = array_values(array_filter($active, static fn(array $row): bool => (string)($row['device_scope'] ?? 'main') === 'admin'));
     return [
         'enabled' => !empty($config['enabled']),
         'supported' => !empty($config['supported']),
-        'subscriptions' => count(wp_push_load_subscriptions()),
+        'subscriptions' => count($subscriptions),
+        'active_subscriptions' => count($active),
+        'active_main_subscriptions' => count($activeMain),
+        'active_admin_subscriptions' => count($activeAdmin),
         'queued' => count(wp_push_load_queue()),
         'last_sent_at' => (string)($config['last_sent_at'] ?? ''),
         'last_sent_title' => (string)($config['last_sent_title'] ?? ''),
@@ -680,7 +866,7 @@ function wp_push_build_vapid_jwt(string $audience, string $subject, string $priv
     return $data . '.' . wp_push_base64url_encode($jose);
 }
 
-function wp_push_post_signal(string $endpoint, array $headers): array {
+function wp_push_post_signal(string $endpoint, array $headers, string $payload = ''): array {
     $status = 0;
     $error = '';
 
@@ -688,7 +874,7 @@ function wp_push_post_signal(string $endpoint, array $headers): array {
         $ch = curl_init($endpoint);
         curl_setopt_array($ch, [
             CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => '',
+            CURLOPT_POSTFIELDS => $payload,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HEADER => false,
@@ -706,11 +892,12 @@ function wp_push_post_signal(string $endpoint, array $headers): array {
                 'ignore_errors' => true,
                 'timeout' => 20,
                 'header' => implode("\r\n", $headers),
-                'content' => '',
+                'content' => $payload,
             ],
         ]);
         @file_get_contents($endpoint, false, $context);
-        if (!empty($http_response_header[0]) && preg_match('/\s(\d{3})\s/', (string)$http_response_header[0], $match)) {
+        $responseHeaders = function_exists('http_get_last_response_headers') ? http_get_last_response_headers() : ($http_response_header ?? []);
+        if (!empty($responseHeaders[0]) && preg_match('/\s(\d{3})\s/', (string)$responseHeaders[0], $match)) {
             $status = (int)$match[1];
         }
     }
@@ -742,7 +929,7 @@ function wp_push_send_signal(array $subscription, array $config): array {
 
     $modernHeaders = [
         'TTL: 60',
-        'Urgency: normal',
+        'Urgency: high',
         'Content-Length: 0',
         'Authorization: vapid t=' . $jwt . ', k=' . (string)$config['vapid_public_key'],
     ];
@@ -755,7 +942,7 @@ function wp_push_send_signal(array $subscription, array $config): array {
 
     $legacyHeaders = [
         'TTL: 60',
-        'Urgency: normal',
+        'Urgency: high',
         'Content-Length: 0',
         'Authorization: WebPush ' . $jwt,
         'Crypto-Key: p256ecdsa=' . (string)$config['vapid_public_key'],
@@ -855,4 +1042,64 @@ function wp_push_send_notification(array $payload): array {
     ]);
 
     return $result;
+}
+
+function wp_push_send_to_user($pdo, int $user_id, string $title, string $body, string $url = '/main.html'): array {
+    $config = wp_push_bootstrap_config();
+    if (empty($config['supported']) || empty($config['enabled'])) {
+        return ['ok' => false, 'message' => 'Push disabled.'];
+    }
+
+    $st = $pdo->prepare("SELECT * FROM push_subscriptions WHERE user_id = ? AND is_active = 1 AND permission_state = 'granted'");
+    $st->execute([$user_id]);
+    $subs = $st->fetchAll(\PDO::FETCH_ASSOC);
+    if (!$subs) {
+        return ['ok' => false, 'message' => 'No subscriptions found for user.'];
+    }
+
+    $payload = [
+        'title' => $title,
+        'body' => $body,
+        'url' => $url,
+        'icon' => '/wolarm_youth.png',
+        'tag' => 'worship-direct'
+    ];
+
+    $subscriptionIds = array_map(static fn(array $row): string => (string)$row['id'], $subs);
+    wp_push_enqueue($subscriptionIds, $payload);
+
+    $success = 0;
+    $failed = 0;
+    $removed = 0;
+    $errorSamples = [];
+    foreach ($subs as $sub) {
+        $result = wp_push_send_signal($sub, $config);
+        if (!empty($result['ok'])) {
+            $success++;
+        } else {
+            $failed++;
+            $status = (int)($result['status'] ?? 0);
+            if (count($errorSamples) < 3) {
+                $errorSamples[] = trim((string)($result['error'] ?? '')) !== ''
+                    ? ('#' . $status . ' ' . trim((string)$result['error']))
+                    : ('#' . $status . ' signal failed');
+            }
+        }
+
+        if (($result['status'] ?? 0) === 404 || ($result['status'] ?? 0) === 410) {
+            $removed++;
+            wp_push_remove_subscription_by_endpoint((string)($sub['endpoint'] ?? ''));
+        }
+    }
+
+    return [
+        'ok' => $success > 0,
+        'success_count' => $success,
+        'failed' => $failed,
+        'removed' => $removed,
+        'errors' => $errorSamples,
+        'message' => $success > 0
+            ? 'Push sent to ' . $success . ' subscription(s).'
+            : 'Push signal failed for all subscriptions.',
+    ];
 }

@@ -1,11 +1,9 @@
-const CACHE_VERSION = "worship-v66";
+const CACHE_VERSION = "worship-v174";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
 const OFFLINE_FALLBACK = "/offline.html";
 const SONGS_SNAPSHOT_KEY = "/__offline__/songs";
-const AUTH_STATUS_CACHE_KEY = "/__offline__/account_auth_status";
-const AUTH_ME_CACHE_KEY = "/__offline__/account_me";
 let offlineSyncPromise = null;
 const APP_CLIENT_IDS = new Set();
 
@@ -241,6 +239,9 @@ async function handleNavigateRequest(event) {
         const cached = await caches.match(key);
         if (cached) return cached;
       }
+
+      const shellCached = await caches.match("/") || await caches.match("/index.html");
+      if (shellCached) return shellCached;
     }
 
     return caches.match(OFFLINE_FALLBACK);
@@ -253,9 +254,17 @@ async function handlePushEvent(event) {
   if (event.data) {
     try {
       payload = event.data.json();
+      if (!payload || (!payload.title && !payload.body)) {
+        payload = null;
+      }
     } catch (err) {
       try {
-        payload = { title: "Worship Platform", body: event.data.text() };
+        const text = event.data.text();
+        if (text && text.trim() !== "" && !text.includes('"ping":')) {
+          payload = { title: "Worship Platform", body: text };
+        } else {
+          payload = null;
+        }
       } catch (innerErr) {
         payload = null;
       }
@@ -373,27 +382,9 @@ async function handleAccountRequest(request, url) {
   const action = url.searchParams.get("action") || "";
 
   try {
-    const response = await fetch(new Request(request, { cache: "no-store" }));
-    const cache = await caches.open(DATA_CACHE);
-
-    if (action === "auth_status") {
-      await cache.put(request.url, response.clone());
-      await cache.put(AUTH_STATUS_CACHE_KEY, response.clone());
-    } else if (action === "me") {
-      await cache.put(request.url, response.clone());
-      await cache.put(AUTH_ME_CACHE_KEY, response.clone());
-    }
-
-    return response;
+    return await fetch(new Request(request, { cache: "no-store" }));
   } catch (err) {
-    const cache = await caches.open(DATA_CACHE);
-
     if (action === "auth_status") {
-      const cached = await cache.match(AUTH_STATUS_CACHE_KEY) || await cache.match(request.url);
-      if (cached) {
-        return cached;
-      }
-
       return new Response(
         JSON.stringify({
           ok: true,
@@ -412,11 +403,6 @@ async function handleAccountRequest(request, url) {
     }
 
     if (action === "me") {
-      const cached = await cache.match(AUTH_ME_CACHE_KEY) || await cache.match(request.url);
-      if (cached) {
-        return cached;
-      }
-
       return new Response(
         JSON.stringify({
           error: "Unauthorized",

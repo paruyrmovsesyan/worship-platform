@@ -1,6 +1,6 @@
 .mobile-bottom-nav {
   position: fixed;
-  bottom: max(24px, env(safe-area-inset-bottom, 24px));
+  bottom: var(--bottom-nav-safe-gap, max(24px, env(safe-area-inset-bottom, 24px)));
   left: 50%;
   transform: translateX(-50%);
   width: min(400px, calc(100vw - 48px));
@@ -39,7 +39,7 @@
   transition: color 0.2s;
 }
 
-.mobile-bottom-nav .nav-item span {
+.mobile-bottom-nav .nav-item > span:not(.nav-icon-wrap) {
   font-size: 0.9rem;
   font-weight: 600;
   white-space: nowrap;
@@ -59,9 +59,37 @@
   padding: 0 20px;
 }
 
-.mobile-bottom-nav .nav-item.active span {
+.mobile-bottom-nav .nav-item.active > span:not(.nav-icon-wrap) {
   opacity: 1;
   max-width: 100px;
+}
+
+.mobile-bottom-nav .nav-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mobile-bottom-nav .nav-count-badge {
+  position: absolute;
+  top: -7px;
+  right: -10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ff453a;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  box-shadow: 0 0 0 2px #1c1c1e;
 }
 
 .nav-transition-veil {

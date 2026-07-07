@@ -3,11 +3,13 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from './LanguageSwitcher';
+import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
 import './Sidebar.css';
 
 export default function Sidebar() {
   const { t, language, setLanguage } = useLanguage();
   const { user, logout } = useAuth();
+  const { guardPath } = usePwaOfflineGuard();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -15,25 +17,25 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-header" onClick={() => navigate('/')}>
+      <div className="sidebar-header" onClick={() => guardPath('/', () => navigate('/'))}>
         <img src="/user_uploaded_logo.png" alt="Worship Logo" className="brand-logo-img" />
         <span>Worship</span>
       </div>
 
       <nav className="sidebar-nav">
-        <Link to="/" className={`sidebar-link ${isActive('/') && location.pathname === '/' ? 'active' : ''}`}>
+        <Link to="/" onClick={(e) => { if (!guardPath('/')) e.preventDefault(); }} className={`sidebar-link ${isActive('/') && location.pathname === '/' ? 'active' : ''}`}>
           <span className="icon">⌂</span> {t('nav.home')}
         </Link>
-        <Link to="/songs" className={`sidebar-link ${isActive('/songs') ? 'active' : ''}`}>
+        <Link to="/songs" onClick={(e) => { if (!guardPath('/songs')) e.preventDefault(); }} className={`sidebar-link ${isActive('/songs') ? 'active' : ''}`}>
           <span className="icon">♪</span> {t('nav.songs')}
         </Link>
-        <Link to="/setlists" className={`sidebar-link ${isActive('/setlists') ? 'active' : ''}`}>
+        <Link to="/setlists" onClick={(e) => { if (!guardPath('/setlists')) e.preventDefault(); }} className={`sidebar-link ${isActive('/setlists') ? 'active' : ''}`}>
           <span className="icon">📋</span> {t('nav.sets')}
         </Link>
-        <Link to="/friends" className={`sidebar-link ${isActive('/friends') ? 'active' : ''}`}>
+        <Link to="/friends" onClick={(e) => { if (!guardPath('/friends')) e.preventDefault(); }} className={`sidebar-link ${isActive('/friends') ? 'active' : ''}`}>
           <span className="icon">💬</span> {t('nav.friends', 'Ընկերներ / Չաթ')}
         </Link>
-        <Link to="/community" className={`sidebar-link ${isActive('/community') ? 'active' : ''}`}>
+        <Link to="/community" onClick={(e) => { if (!guardPath('/community')) e.preventDefault(); }} className={`sidebar-link ${isActive('/community') ? 'active' : ''}`}>
           <span className="icon">🌐</span> {t('nav.community')}
         </Link>
       </nav>
@@ -44,7 +46,7 @@ export default function Sidebar() {
         </div>
         {user ? (
           <div className="sidebar-user">
-            <Link to="/profile" className="user-name">
+            <Link to="/profile" onClick={(e) => { if (!guardPath('/profile')) e.preventDefault(); }} className="user-name">
               <div className="avatar">{user.name ? user.name.charAt(0) : 'U'}</div>
               <span>{user.name || user.email}</span>
             </Link>

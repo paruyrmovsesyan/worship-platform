@@ -3,16 +3,76 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { usePageReady } from '../hooks/usePageReady';
+import { useIsPWA } from '../hooks/useIsPWA';
+import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
 import './Profile.css';
 
 export default function Profile() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { t, language, setLanguage } = useLanguage();
+  const isPWA = useIsPWA();
+  const { guardPath } = usePwaOfflineGuard();
   const [planType, setPlanType] = useState('free');
   const [loading, setLoading] = useState(true);
   usePageReady(loading);
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushSupported, setPushSupported] = useState(false);
+
+  useEffect(() => {
+    let interval;
+    const checkPush = () => {
+      if (!window.WPPushManager) return;
+      window.WPPushManager.getStatus().then(status => {
+        setPushEnabled(
+          !!status &&
+          status.supported &&
+          status.enabledBySite &&
+          status.permission === 'granted' &&
+          status.subscribed &&
+          !status.userDisabled &&
+          !status.accountDisabled &&
+          !status.adminRemoved
+        );
+        setPushSupported(!!status && status.supported && status.enabledBySite && !status.adminRemoved);
+      }).catch(console.error);
+    };
+    interval = setInterval(checkPush, 2000);
+    checkPush();
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  const togglePush = async () => {
+    if (!window.WPPushManager) {
+      alert(t('profile.pushMissingManager'));
+      return;
+    }
+    try {
+      if (pushEnabled) {
+        const shouldDisable = window.confirm(t('profile.pushDisableConfirm'));
+        if (!shouldDisable) {
+          return;
+        }
+        await window.WPPushManager.disable();
+        setPushEnabled(false);
+      } else {
+        const res = await window.WPPushManager.enable();
+        if (res && res.ok) {
+          setPushEnabled(true);
+        } else {
+          if (res && res.error === 'not_supported') {
+            alert(t('profile.pushNotSupported'));
+          } else {
+            alert(t('profile.pushEnableError'));
+          }
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const languageLabels = {
     'am': 'Հայերեն',
@@ -64,27 +124,52 @@ export default function Profile() {
       </div>
 
       <div className="profile-links">
-        <button className="profile-link-btn" onClick={() => navigate('/favorites')}>
+        <button className="profile-link-btn" onClick={() => guardPath('/favorites', () => navigate('/favorites'))}>
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
           </svg>
           {t('profile.savedSongs')}
         </button>
         
-        <button className="profile-link-btn" onClick={() => navigate('/friends')}>
+        <button className="profile-link-btn" onClick={() => guardPath('/friends', () => navigate('/friends'))}>
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
           {t('nav.friends', 'Ընկերներ / Չաթ')}
         </button>
 
-        <button className="profile-link-btn" onClick={() => navigate('/settings')}>
+        <button className="profile-link-btn" onClick={() => guardPath('/settings', () => navigate('/settings'))}>
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-1.41 3.41h-.1a2 2 0 0 1-1.41-.59l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82V22a2 2 0 0 1-4 0v-.1a1.65 1.65 0 0 0-.33-1.82 1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 0 1 2 18.59v-.1a2 2 0 0 1 .59-1.41l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33H2a2 2 0 0 1 0-4h.1a1.65 1.65 0 0 0 1.82-.33 1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 0 1 5.41 2h.1a2 2 0 0 1 1.41.59l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.82V2a2 2 0 0 1 4 0v.1a1.65 1.65 0 0 0 .33 1.82 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06A2 2 0 0 1 22 5.41v.1a2 2 0 0 1-.59 1.41l-.06.06A1.65 1.65 0 0 0 19.4 9c.23.31.39.66.6 1a1.65 1.65 0 0 0 1.82.33H22a2 2 0 0 1 0 4h-.1a1.65 1.65 0 0 0-1.82.33c-.21.34-.37.69-.6 1z"></path>
           </svg>
           {t('profile.accountSettings')}
         </button>
+
+        {isPWA && (
+          <div className="profile-link-btn profile-push-card" style={{ cursor: 'default' }}>
+            <div className="profile-push-top">
+              <div className="profile-push-copy">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <div className="profile-push-text">
+                  <span>{t('notifications.title', 'Ծանուցումներ')}</span>
+                  <small>{pushEnabled ? t('profile.pushOn') : t('profile.pushOff')}</small>
+                </div>
+              </div>
+              <label className="toggle-switch profile-push-toggle">
+                <input type="checkbox" checked={pushEnabled} onChange={togglePush} />
+                <span className="slider"></span>
+              </label>
+            </div>
+            <div className="profile-push-note">
+              {t('profile.pushNote')}
+            </div>
+          </div>
+        )}
+
         <button className="profile-link-btn" onClick={() => setIsLangModalOpen(true)}>
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"></circle>

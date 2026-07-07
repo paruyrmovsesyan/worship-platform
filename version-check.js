@@ -72,9 +72,10 @@
       style.textContent =
         ".wp-version-modal{position:fixed!important;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(3,7,14,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:2147483000;isolation:isolate}" +
         ".wp-version-modal.show{display:flex}" +
-        ".wp-version-card{width:min(94vw,520px);position:relative;overflow:hidden;background:linear-gradient(180deg,rgba(10,16,30,.98),rgba(10,16,30,.94));color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:28px;padding:24px;box-shadow:0 28px 80px rgba(0,0,0,.42);font-family:Inter,system-ui,sans-serif}" +
-        ".wp-version-card::before{content:'';position:absolute;inset:auto auto -40px -20px;width:180px;height:180px;background:radial-gradient(circle,rgba(122,162,255,.25),transparent 70%)}" +
-        ".wp-version-card::after{content:'';position:absolute;inset:-50px -10px auto auto;width:220px;height:220px;background:radial-gradient(circle,rgba(255,184,77,.14),transparent 72%)}" +
+        ".wp-version-card{width:min(94vw,520px);max-height:90vh;overflow-y:auto;position:relative;background:linear-gradient(180deg,rgba(10,16,30,.98),rgba(10,16,30,.94));color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:28px;padding:24px;box-shadow:0 28px 80px rgba(0,0,0,.42);font-family:Inter,system-ui,sans-serif}" +
+        ".wp-version-card::-webkit-scrollbar{display:none}" +
+        ".wp-version-card::before{content:'';position:absolute;inset:auto auto -40px -20px;width:180px;height:180px;background:radial-gradient(circle,rgba(122,162,255,.25),transparent 70%);pointer-events:none}" +
+        ".wp-version-card::after{content:'';position:absolute;inset:-50px -10px auto auto;width:220px;height:220px;background:radial-gradient(circle,rgba(255,184,77,.14),transparent 72%);pointer-events:none}" +
         ".wp-version-head{position:relative;display:flex;gap:14px;align-items:flex-start}" +
         ".wp-version-icon{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;font-size:26px;background:linear-gradient(135deg,#4f7cff,#7aa2ff);box-shadow:0 14px 28px rgba(79,124,255,.3);flex:0 0 auto}" +
         ".wp-version-card.mode-web .wp-version-icon{background:linear-gradient(135deg,#ff9d4d,#ffd25e);box-shadow:0 14px 28px rgba(255,157,77,.26)}" +
@@ -96,8 +97,8 @@
         ".wp-version-update{background:linear-gradient(135deg,#4f7cff,#7aa2ff);color:#fff;box-shadow:0 14px 30px rgba(79,124,255,.28)}" +
         ".wp-version-card.mode-web .wp-version-update{background:linear-gradient(135deg,#ff9d4d,#ffd25e);box-shadow:0 14px 30px rgba(255,157,77,.24);color:#1b1400}" +
         ".wp-version-foot{position:relative;margin-top:14px;color:rgba(255,255,255,.52);font-size:12px;line-height:1.5}" +
-        "body.wp-main-app .wp-version-modal{align-items:flex-end!important;justify-content:center!important;padding:16px 12px max(16px,env(safe-area-inset-bottom))}" +
-        "body.wp-main-app .wp-version-card{width:min(100%,560px);border-radius:30px 30px 24px 24px;padding:22px 20px 20px;box-shadow:0 30px 80px rgba(0,0,0,.52),inset 0 1px 0 rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(13,19,36,.98),rgba(9,14,28,.96))}" +
+        "body.wp-main-app .wp-version-modal{align-items:center!important;flex-direction:column;justify-content:center!important;padding:16px 12px max(16px,env(safe-area-inset-bottom))}" +
+        "body.wp-main-app .wp-version-card{width:min(100%,560px);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px);border-radius:24px;padding:22px 20px 20px;box-shadow:0 30px 80px rgba(0,0,0,.52),inset 0 1px 0 rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(13,19,36,.98),rgba(9,14,28,.96))}" +
         "body.wp-main-app .wp-version-card.mode-app{border-color:rgba(130,149,255,.2)}" +
         "body.wp-main-app .wp-version-card.mode-app::before{width:220px;height:220px;background:radial-gradient(circle,rgba(122,162,255,.3),transparent 70%)}" +
         "body.wp-main-app .wp-version-card.mode-app::after{width:260px;height:260px;background:radial-gradient(circle,rgba(255,255,255,.08),transparent 72%)}" +
@@ -106,7 +107,7 @@
         "body.wp-main-app .wp-version-card.mode-app .wp-version-summary{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.09)}" +
         "body.wp-main-app .wp-version-card.mode-app .wp-version-update{background:linear-gradient(135deg,#7a95ff,#5b73ff);box-shadow:0 16px 32px rgba(91,115,255,.32)}" +
         "body.wp-main-app .wp-version-card.mode-app .wp-version-later{background:rgba(255,255,255,.08)}" +
-        "@media (max-width:560px){.wp-version-card{padding:20px;border-radius:24px}.wp-version-meta{grid-template-columns:1fr}.wp-version-title{font-size:22px}.wp-version-head{align-items:center}body.wp-main-app .wp-version-modal{padding:10px 8px max(8px,env(safe-area-inset-bottom))}body.wp-main-app .wp-version-card{width:100%;border-radius:28px 28px 20px 20px;padding:18px 16px 16px}body.wp-main-app .wp-version-title{font-size:20px}body.wp-main-app .wp-version-text{font-size:14px;line-height:1.5}body.wp-main-app .wp-version-actions{flex-direction:column}body.wp-main-app .wp-version-actions button{width:100%}}";
+        "@media (max-width:560px){.wp-version-card{padding:20px;border-radius:24px}.wp-version-meta{grid-template-columns:1fr}.wp-version-title{font-size:22px}.wp-version-head{align-items:center}body.wp-main-app .wp-version-modal{padding:10px 8px max(10px,env(safe-area-inset-bottom))}body.wp-main-app .wp-version-card{width:100%;border-radius:24px;padding:18px 16px 16px;max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px)}body.wp-main-app .wp-version-title{font-size:20px}body.wp-main-app .wp-version-text{font-size:14px;line-height:1.5}body.wp-main-app .wp-version-actions{flex-direction:column}body.wp-main-app .wp-version-actions button{width:100%}}";
       document.head.appendChild(style);
     }
 
@@ -391,4 +392,9 @@
   }
 
   window.addEventListener("online", checkVersionManifest);
+  document.addEventListener("visibilitychange", function() {
+    if (document.visibilityState === "visible") {
+      checkVersionManifest();
+    }
+  });
 })();

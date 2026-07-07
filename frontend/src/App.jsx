@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { usePageLoading } from './context/PageLoadingContext';
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 
 const LegacySongRedirect = () => {
   const params = new URLSearchParams(window.location.search);
@@ -25,6 +25,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import { useAuth } from './context/AuthContext';
 import News from './pages/News';
+import NewsArticle from './pages/NewsArticle';
 import Friends from './pages/Friends';
 import Chat from './pages/Chat';
 import Community from './pages/Community';
@@ -43,14 +44,43 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import SongRequest from './pages/SongRequest';
 import Notifications from './pages/Notifications';
+import ChatsList from './pages/ChatsList';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useIsPWA } from './hooks/useIsPWA';
 import ScrollToTop from './components/ScrollToTop';
 import TopLoader from './components/TopLoader';
+import PullToRefresh from './components/PullToRefresh';
+import { usePwaOfflineGuard } from './hooks/usePwaOfflineGuard';
+import { usePwaSwipeNavigation } from './hooks/usePwaSwipeNavigation';
+import { showPwaOfflineBlockedNotice } from './utils/pwaOfflineGuard';
+import { useLanguage } from './context/LanguageContext';
 
 function App() {
-  const isMobile = useMediaQuery('(max-width: 900px)');
+  const mediaQueryMatch = useMediaQuery('(max-width: 900px)');
+  const isIOSMobile = /iPhone|iPod/.test(navigator.userAgent);
+  
+  // Apply Global App Settings
+  useEffect(() => {
+    if (localStorage.getItem('reduceMotion') === 'true') document.body.classList.add('reduce-motion');
+    if (localStorage.getItem('oledMode') === 'true') document.body.classList.add('oled-mode');
+    if (localStorage.getItem('outlinedChords') === 'true') document.body.classList.add('outlined-chords');
+    
+    const cColor = localStorage.getItem('chordColor');
+    if (cColor && cColor !== 'gold') {
+      document.body.classList.add(`chord-color-${cColor}`);
+    }
+  }, []);
+  const isMobile = mediaQueryMatch || isIOSMobile;
   const isPWA = useIsPWA();
+  const { isOffline, canAccessPath } = usePwaOfflineGuard();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [refreshKey, setRefreshKey] = React.useState(0);
+  const [rememberPromptOpen, setRememberPromptOpen] = React.useState(false);
+  const [rememberPromptSaving, setRememberPromptSaving] = React.useState(false);
+  const [rememberPromptError, setRememberPromptError] = React.useState('');
+  const { user, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     document.body.classList.remove('mobile-theme', 'app-desktop-theme', 'website-theme', 'is-pwa');
@@ -70,16 +100,110 @@ function App() {
     }
   }, [isMobile, isPWA]);
 
+  // Listen for push notification navigation from service worker
+  useEffect(() => {
+    const handleSWMessage = (event) => {
+      if (event.data && event.data.type === 'PUSH_NAVIGATE' && event.data.path) {
+        navigate(event.data.path);
+      }
+    };
+    navigator.serviceWorker?.addEventListener('message', handleSWMessage);
+    return () => navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!isPWA || !isOffline) return;
+    if (canAccessPath(location.pathname)) return;
+
+    showPwaOfflineBlockedNotice();
+    navigate('/', { replace: true });
+  }, [isPWA, isOffline, location.pathname, canAccessPath, navigate]);
+
+  const clearSessionLoginPromptParam = React.useCallback(() => {
+    const params = new URLSearchParams(location.search);
+    if (!params.has('session_login')) return;
+    params.delete('session_login');
+    const nextUrl = `${location.pathname}${params.toString() ? `?${params.toString()}` : ''}${location.hash || ''}`;
+    navigate(nextUrl, { replace: true });
+  }, [location.hash, location.pathname, location.search, navigate]);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    const params = new URLSearchParams(location.search);
+    const shouldPromptRemember = params.get('session_login') === '1';
+
+    if (!shouldPromptRemember) {
+      if (rememberPromptOpen) {
+        setRememberPromptOpen(false);
+      }
+      return;
+    }
+
+    if (user) {
+      setRememberPromptError('');
+      setRememberPromptOpen(true);
+    }
+  }, [authLoading, location.search, rememberPromptOpen, user]);
+
+  const handleRememberPromptClose = React.useCallback(() => {
+    setRememberPromptError('');
+    setRememberPromptSaving(false);
+    setRememberPromptOpen(false);
+    clearSessionLoginPromptParam();
+  }, [clearSessionLoginPromptParam]);
+
+  const handleRememberPromptConfirm = React.useCallback(async () => {
+    setRememberPromptSaving(true);
+    setRememberPromptError('');
+    try {
+      const source = isPWA ? 'pwa' : 'web';
+      const response = await fetch('/account_api.php?action=enable_remember_me', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ remember_me: true, source }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || t('auth.saveLoginError'));
+      }
+
+      handleRememberPromptClose();
+    } catch (error) {
+      setRememberPromptSaving(false);
+      setRememberPromptError(error?.message || t('auth.saveLoginError'));
+    }
+  }, [handleRememberPromptClose, isPWA, t]);
+
+  const handleSoftRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
   const renderNav = () => {
+    const isChatPage = location.pathname.startsWith('/chat/');
     if (isPWA) {
-      return isMobile ? <MobileNav /> : <Sidebar />;
+      return isMobile ? (isChatPage ? null : <MobileNav />) : <Sidebar />;
     }
     return <Navbar />;
   };
 
   const { isLoading } = usePageLoading() || {};
+  const isChatPage = location.pathname.startsWith('/chat/');
+
+  usePwaSwipeNavigation({
+    enabled: isPWA && isMobile && !isChatPage,
+    pathname: location.pathname,
+    navigate,
+    canAccessPath,
+    onBlocked: showPwaOfflineBlockedNotice,
+    user,
+  });
 
   return (
+    <PullToRefresh onRefresh={handleSoftRefresh} disabled={isChatPage}>
     <div className={`app-container ${isPWA && !isMobile ? 'with-sidebar' : ''}`}>
       <TopLoader />
       <ScrollToTop />
@@ -88,12 +212,11 @@ function App() {
         className={isPWA && !isMobile ? 'main-with-sidebar' : ''}
         style={{
           opacity: isLoading ? 0 : 1,
-          transform: isLoading ? 'translateY(8px)' : 'translateY(0)',
-          transition: 'opacity 0.4s ease, transform 0.4s ease',
+          transition: 'opacity 0.4s ease',
           pointerEvents: isLoading ? 'none' : 'auto',
         }}
       >
-        <Routes>
+        <Routes key={refreshKey}>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -103,7 +226,9 @@ function App() {
           <Route path="/setlists/:id" element={<SetlistEditor />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/news" element={<News />} />
+          <Route path="/news/:slug" element={<NewsArticle />} />
           <Route path="/friends" element={<Friends />} />
+          <Route path="/chats" element={<ChatsList />} />
           <Route path="/chat/:id" element={<Chat />} />
           <Route path="/community" element={<Community />} />
           <Route path="/resources" element={<Resources />} />
@@ -131,8 +256,91 @@ function App() {
           <Route path="/song_view.html" element={<LegacySongRedirect />} />
         </Routes>
       </main>
+      {rememberPromptOpen && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 3000,
+          background: 'rgba(5, 8, 18, 0.74)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px',
+        }}>
+          <div style={{
+            width: 'min(100%, 420px)',
+            background: '#151622',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '24px',
+            boxShadow: '0 28px 70px rgba(0,0,0,0.4)',
+            padding: '24px',
+            color: '#fff',
+          }}>
+            <h3 style={{ margin: 0, fontSize: '1.25rem', lineHeight: 1.25 }}>{t('auth.saveLoginTitle')}</h3>
+            <p style={{ margin: '12px 0 0', color: 'rgba(255,255,255,0.72)', lineHeight: 1.5 }}>
+              {t('auth.saveLoginDesc')}
+            </p>
+            {rememberPromptError ? (
+              <div style={{
+                marginTop: '14px',
+                padding: '12px 14px',
+                borderRadius: '14px',
+                background: 'rgba(255, 82, 82, 0.12)',
+                color: '#ff9d9d',
+                fontSize: '0.95rem',
+              }}>
+                {rememberPromptError}
+              </div>
+            ) : null}
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'flex-end',
+              marginTop: '22px',
+              flexWrap: 'wrap',
+            }}>
+              <button
+                type="button"
+                onClick={handleRememberPromptClose}
+                disabled={rememberPromptSaving}
+                style={{
+                  minWidth: '112px',
+                  height: '46px',
+                  borderRadius: '14px',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  background: 'transparent',
+                  color: '#fff',
+                  padding: '0 18px',
+                  cursor: rememberPromptSaving ? 'default' : 'pointer',
+                }}
+              >
+                {t('auth.saveLoginSkip')}
+              </button>
+              <button
+                type="button"
+                onClick={handleRememberPromptConfirm}
+                disabled={rememberPromptSaving}
+                style={{
+                  minWidth: '148px',
+                  height: '46px',
+                  borderRadius: '14px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #4c4cff 0%, #23c8ff 100%)',
+                  color: '#fff',
+                  fontWeight: 700,
+                  padding: '0 18px',
+                  cursor: rememberPromptSaving ? 'default' : 'pointer',
+                }}
+              >
+                {rememberPromptSaving ? t('auth.pleaseWait') : t('auth.saveLoginConfirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {isPWA && isMobile ? null : <Footer />}
     </div>
+    </PullToRefresh>
   );
 }
 

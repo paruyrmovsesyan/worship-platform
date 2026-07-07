@@ -3,11 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
+import { getSongCoverStyle } from '../utils/songCover';
 import { usePageReady } from '../hooks/usePageReady';
 import './Setlists.css';
 import './SongsApp.css'; // ensure track-list styles are loaded
-
-const GRADS = ['bg-purple', 'bg-blue', 'bg-cyan', 'bg-gold', 'bg-orange'];
 
 export default function SetlistEditor() {
   const { t, language } = useLanguage();
@@ -93,7 +92,7 @@ export default function SetlistEditor() {
   
   const removeItem = async (itemId, e) => {
     if (e) e.stopPropagation();
-    if (!window.confirm(t('setlists.confirmRemove', 'Հեռացնե՞լ երգը ցանկից:'))) return;
+    if (!window.confirm(t('setlists.confirmRemove'))) return;
     try {
       const res = await fetch('/setlists_api.php?action=remove_setlist_item', {
         method: 'POST',
@@ -232,7 +231,10 @@ export default function SetlistEditor() {
           <h4 style={{ margin: '0 0 12px 0', color: 'var(--color-text-secondary)' }}>{t('setlists.searchResults')}</h4>
           {searchResults.map((song, idx) => (
             <div key={song.id} className="track-item" style={{ background: 'var(--color-surface-hover)' }}>
-              <div className={`track-cover ${GRADS[(song.id || idx) % GRADS.length]}`}>
+              <div
+                className="track-cover"
+                style={getSongCoverStyle(song.id || idx, song.title || song.song_key || '')}
+              >
                 {song.title?.charAt(0)?.toUpperCase()}
               </div>
               <div className="track-info">
@@ -263,7 +265,10 @@ export default function SetlistEditor() {
                 {(idx + 1).toString().padStart(2, '0')}
               </div>
 
-              <div className={`track-cover ${GRADS[(item.song_id || idx) % GRADS.length]}`}>
+              <div
+                className="track-cover"
+                style={getSongCoverStyle(item.song_id || idx, item.title || item.song_title || item.song_key || '')}
+              >
                 {(item.title || item.song_title || '')?.charAt(0)?.toUpperCase()}
               </div>
 

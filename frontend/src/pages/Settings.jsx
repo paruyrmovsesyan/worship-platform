@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
@@ -7,15 +7,24 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import { getLocalizedTitle } from '../utils/titleParser';
 import './Settings.css';
 
+const hasWhitespace = (value) => /\s/u.test(String(value));
+
 export default function Settings() {
   const { user, logout } = useAuth();
-  const { t, language } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
   const isPWA = useIsPWA();
   const isMobile = useMediaQuery('(max-width: 900px)');
 
   const [activeTab, setActiveTab] = useState(isMobile ? null : 'profile');
   const [msg, setMsg] = useState({ text: '', type: '' });
+
+  // App Settings States
+  const [keepAwake, setKeepAwake] = useState(localStorage.getItem('keepAwake') === 'true');
+  const [reduceMotion, setReduceMotion] = useState(localStorage.getItem('reduceMotion') === 'true');
+  const [oledMode, setOledMode] = useState(localStorage.getItem('oledMode') === 'true');
+  const [chordColor, setChordColor] = useState(localStorage.getItem('chordColor') || 'gold');
+  const [outlinedChords, setOutlinedChords] = useState(localStorage.getItem('outlinedChords') === 'true');
 
   // Profile States
   const [name, setName] = useState(user?.name || '');
@@ -36,6 +45,7 @@ export default function Settings() {
 
   // Sessions States
   const [sessions, setSessions] = useState([]);
+  const [rememberBusy, setRememberBusy] = useState(false);
 
   // Requests States
   const [requests, setRequests] = useState([]);
@@ -44,33 +54,13 @@ export default function Settings() {
   const [delPass, setDelPass] = useState('');
   const [showDelModal, setShowDelModal] = useState(false);
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/');
-      return;
-    }
-    fetchEmailStatus();
-  }, [user, navigate]);
-
-  useEffect(() => {
-    if (activeTab === 'sessions') fetchSessions();
-    if (activeTab === 'requests') fetchRequests();
-  }, [activeTab]);
-
-  // Adjust active tab when switching between mobile/desktop resize
-  useEffect(() => {
-    if (!isMobile && !activeTab) {
-      setActiveTab('profile');
-    }
-  }, [isMobile]);
-
-  const showMsg = (text, type = 'ok') => {
+  const showMsg = useCallback((text, type = 'ok') => {
     setMsg({ text, type });
     setTimeout(() => setMsg({ text: '', type: '' }), 4000);
-  };
+  }, []);
 
   // --- API Calls ---
-  const fetchEmailStatus = async () => {
+  const fetchEmailStatus = useCallback(async () => {
     try {
       const res = await fetch('/account_api.php?action=email_status');
       const data = await res.json();
@@ -78,11 +68,12 @@ export default function Settings() {
     } catch (e) {
       console.error(e);
     }
-  };
+  }, []);
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     try {
-      const res = await fetch('/account_api.php?action=get_active_sessions');
+      const source = isPWA ? 'pwa' : 'web';
+      const res = await fetch(`/account_api.php?action=get_active_sessions&source=${encodeURIComponent(source)}`);
       const data = await res.json();
       if (Array.isArray(data)) {
         setSessions(data);
@@ -92,9 +83,9 @@ export default function Settings() {
     } catch (e) {
       console.error(e);
     }
-  };
+  }, [isPWA]);
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     try {
       const res = await fetch('/account_api.php?action=get_my_song_requests');
       const data = await res.json();
@@ -106,10 +97,35 @@ export default function Settings() {
     } catch (e) {
       console.error(e);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/');
+      return;
+    }
+    fetchEmailStatus();
+  }, [user, navigate, fetchEmailStatus]);
+
+  useEffect(() => {
+    if (activeTab === 'sessions') fetchSessions();
+    if (activeTab === 'requests') fetchRequests();
+  }, [activeTab, fetchSessions, fetchRequests]);
+
+  // Adjust active tab when switching between mobile/desktop resize
+  useEffect(() => {
+    if (!isMobile && !activeTab) {
+      setActiveTab('profile');
+    }
+  }, [isMobile, activeTab]);
 
   // --- Handlers ---
   const handleSaveProfile = async () => {
+    if (username.trim() && hasWhitespace(username)) {
+      showMsg(t('auth.invalidUsernameSpaces'), 'err');
+      return;
+    }
+
     try {
       const res = await fetch('/account_api.php?action=update_profile', {
         method: 'POST',
@@ -136,7 +152,7 @@ export default function Settings() {
 
   const handleUpdateEmail = async () => {
     try {
-      const res = await fetch('/account_api.php?action=update_email', {
+      const res = await fetch('/account_api.php?action=update_email_only', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ email: newEmail })
@@ -156,7 +172,7 @@ export default function Settings() {
 
   const handleSendVerify = async () => {
     try {
-      const res = await fetch('/account_api.php?action=send_verify', { method: 'POST' });
+      const res = await fetch('/account_api.php?action=send_verify_email', { method: 'POST' });
       const data = await res.json();
       if (data.ok) {
         showMsg(t('settings.security.emailSent'));
@@ -170,7 +186,7 @@ export default function Settings() {
 
   const handleChangePass = async () => {
     try {
-      const res = await fetch('/account_api.php?action=update_password', {
+      const res = await fetch('/account_api.php?action=change_password', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ current_password: curPass, new_password: newPass })
@@ -219,6 +235,32 @@ export default function Settings() {
     }
   };
 
+  const currentSession = sessions.find(s => s.is_current) || null;
+  const rememberEnabled = Boolean(currentSession?.remembered);
+
+  const handleToggleRemember = async () => {
+    setRememberBusy(true);
+    try {
+      const action = rememberEnabled ? 'disable_remember_me' : 'enable_remember_me';
+      const res = await fetch(`/account_api.php?action=${action}`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ source: isPWA ? 'pwa' : 'web' })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showMsg(rememberEnabled ? t('settings.sessions.rememberUpdatedOff') : t('settings.sessions.rememberUpdatedOn'));
+        fetchSessions();
+      } else {
+        showMsg(data.error || 'Error', 'err');
+      }
+    } catch (e) {
+      showMsg('Network error', 'err');
+    } finally {
+      setRememberBusy(false);
+    }
+  };
+
   const handleDeleteAccount = async () => {
     if (!delPass) return showMsg('Password required', 'err');
     try {
@@ -245,6 +287,7 @@ export default function Settings() {
   const renderSidebar = () => {
     const menuItems = [
       { id: 'profile', label: t('settings.tabs.profile'), icon: <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> },
+      ...(isPWA ? [{ id: 'app', label: t('settings.tabs.app', 'Ծրագիր'), icon: <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg> }] : []),
       { id: 'security', label: t('settings.tabs.security'), icon: <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> },
       { id: 'sessions', label: t('settings.tabs.sessions'), icon: <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg> },
       { id: 'requests', label: t('settings.tabs.requests'), icon: <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg> },
@@ -295,7 +338,7 @@ export default function Settings() {
 
               <div className="form-group">
                 <label>{t('auth.username') || 'Username'}</label>
-                <input type="text" value={username} onChange={e => setUsername(e.target.value)} placeholder="" />
+                <input type="text" value={username} onChange={e => setUsername(e.target.value)} placeholder="" pattern="[^\s]+" />
               </div>
 
             <div className="form-group">
@@ -359,6 +402,155 @@ export default function Settings() {
           </div>
         )}
 
+        {/* APP TAB */}
+        {activeTab === 'app' && isPWA && (
+          <div className="settings-sections fade-in">
+            <div className="settings-card">
+              <div className="card-header-flex" style={{ marginBottom: '1rem' }}>
+                <h3>{t('settings.tabs.app', 'Ծրագրի կարգավորումներ')}</h3>
+                <span className="menu-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg></span>
+              </div>
+              <p className="text-muted" style={{ marginBottom: '1.5rem' }}>
+                {t('settings.app.desc', 'Կարգավորեք ծրագրի արտաքին տեսքը և աշխատանքի պարամետրերը:')}
+              </p>
+
+              <div className="remember-device-card" style={{ marginBottom: '1.5rem' }}>
+                <div className="remember-device-copy">
+                  <div className="remember-device-title-row">
+                    <strong>{t('settings.app.keepAwake', 'Միշտ արթուն էկրան')}</strong>
+                    <span className={`badge ${keepAwake ? 'badge-success' : 'badge-warning'}`}>
+                      {keepAwake ? t('settings.app.enabled', 'Միացված է') : t('settings.app.disabled', 'Անջատված է')}
+                    </span>
+                  </div>
+                  <p className="text-muted">
+                    {t('settings.app.keepAwakeDesc', 'Երգերի բառերը կարդալիս էկրանը չի անջատվի։')}
+                  </p>
+                </div>
+                <button
+                  className="settings-btn secondary small"
+                  onClick={() => {
+                    const newVal = !keepAwake;
+                    setKeepAwake(newVal);
+                    localStorage.setItem('keepAwake', newVal ? 'true' : 'false');
+                    showMsg(t('settings.app.saved', 'Պահպանված է'));
+                  }}
+                >
+                  {keepAwake ? t('settings.app.disable', 'Անջատել') : t('settings.app.enable', 'Միացնել')}
+                </button>
+              </div>
+
+              <div className="remember-device-card" style={{ marginBottom: '1.5rem' }}>
+                <div className="remember-device-copy">
+                  <div className="remember-device-title-row">
+                    <strong>{t('settings.app.reduceMotion', 'Պարզեցված անիմացիաներ')}</strong>
+                    <span className={`badge ${reduceMotion ? 'badge-success' : 'badge-warning'}`}>
+                      {reduceMotion ? t('settings.app.enabled', 'Միացված է') : t('settings.app.disabled', 'Անջատված է')}
+                    </span>
+                  </div>
+                  <p className="text-muted">
+                    {t('settings.app.reduceMotionDesc', 'Անջատում է էջերի անցումների էֆեկտները ավելի արագ աշխատանքի համար։')}
+                  </p>
+                </div>
+                <button
+                  className="settings-btn secondary small"
+                  onClick={() => {
+                    const newVal = !reduceMotion;
+                    setReduceMotion(newVal);
+                    localStorage.setItem('reduceMotion', newVal ? 'true' : 'false');
+                    document.body.classList.toggle('reduce-motion', newVal);
+                    showMsg(t('settings.app.saved', 'Պահպանված է'));
+                  }}
+                >
+                  {reduceMotion ? t('settings.app.disable', 'Անջատել') : t('settings.app.enable', 'Միացնել')}
+                </button>
+              </div>
+
+              <div className="remember-device-card" style={{ marginBottom: '1.5rem' }}>
+                <div className="remember-device-copy">
+                  <div className="remember-device-title-row">
+                    <strong>{t('settings.app.oledMode', 'OLED Մութ ռեժիմ (Իրական սև)')}</strong>
+                    <span className={`badge ${oledMode ? 'badge-success' : 'badge-warning'}`}>
+                      {oledMode ? t('settings.app.enabled', 'Միացված է') : t('settings.app.disabled', 'Անջատված է')}
+                    </span>
+                  </div>
+                  <p className="text-muted">
+                    {t('settings.app.oledModeDesc', 'Օգտագործում է բացարձակ սև գույնը (OLED էկրանների համար՝ մարտկոց խնայելու նպատակով)։')}
+                  </p>
+                </div>
+                <button
+                  className="settings-btn secondary small"
+                  onClick={() => {
+                    const newVal = !oledMode;
+                    setOledMode(newVal);
+                    localStorage.setItem('oledMode', newVal ? 'true' : 'false');
+                    document.body.classList.toggle('oled-mode', newVal);
+                    showMsg(t('settings.app.saved', 'Պահպանված է'));
+                  }}
+                >
+                  {oledMode ? t('settings.app.disable', 'Անջատել') : t('settings.app.enable', 'Միացնել')}
+                </button>
+              </div>
+
+              <div className="remember-device-card" style={{ marginBottom: '1.5rem' }}>
+                <div className="remember-device-copy">
+                  <div className="remember-device-title-row">
+                    <strong>{t('settings.app.outlinedChords', 'Շրջանակված ակորդներ')}</strong>
+                    <span className={`badge ${outlinedChords ? 'badge-success' : 'badge-warning'}`}>
+                      {outlinedChords ? t('settings.app.enabled', 'Միացված է') : t('settings.app.disabled', 'Անջատված է')}
+                    </span>
+                  </div>
+                  <p className="text-muted">
+                    {t('settings.app.outlinedChordsDesc', 'Ակորդները ցուցադրվում են որպես առանձին կոճակներ՝ ավելի հեշտ կարդալու համար։')}
+                  </p>
+                </div>
+                <button
+                  className="settings-btn secondary small"
+                  onClick={() => {
+                    const newVal = !outlinedChords;
+                    setOutlinedChords(newVal);
+                    localStorage.setItem('outlinedChords', newVal ? 'true' : 'false');
+                    document.body.classList.toggle('outlined-chords', newVal);
+                    showMsg(t('settings.app.saved', 'Պահպանված է'));
+                  }}
+                >
+                  {outlinedChords ? t('settings.app.disable', 'Անջատել') : t('settings.app.enable', 'Միացնել')}
+                </button>
+              </div>
+
+              <div className="form-group" style={{ padding: '0 10px', marginBottom: '20px' }}>
+                <label style={{ fontWeight: '600', marginBottom: '10px', display: 'block' }}>{t('settings.app.chordColor', 'Ակորդների գույն')}</label>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {[
+                    { id: 'gold', label: t('settings.app.colorGold', 'Ոսկեգույն'), color: '#3A2DFF' }, // the default is actually accent-gold which is #3A2DFF? no wait, it's just yellow normally but let's just use CSS classes
+                    { id: 'blue', label: t('settings.app.colorBlue', 'Կապույտ'), color: '#00D4FF' },
+                    { id: 'green', label: t('settings.app.colorGreen', 'Կանաչ'), color: '#4ADE80' },
+                    { id: 'red', label: t('settings.app.colorRed', 'Կարմիր'), color: '#FF4A4A' }
+                  ].map(c => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className={`settings-btn ${chordColor === c.id ? '' : 'secondary'}`}
+                      style={{ padding: '6px 12px' }}
+                      onClick={() => {
+                        const oldC = chordColor;
+                        setChordColor(c.id);
+                        localStorage.setItem('chordColor', c.id);
+                        if (oldC && oldC !== 'gold') document.body.classList.remove(`chord-color-${oldC}`);
+                        if (c.id !== 'gold') document.body.classList.add(`chord-color-${c.id}`);
+                        showMsg(t('settings.app.saved', 'Պահպանված է'));
+                      }}
+                    >
+                      <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', backgroundColor: c.color, marginRight: '6px', verticalAlign: 'middle' }}></span>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
         {/* SECURITY TAB */}
         {activeTab === 'security' && (
           <div className="settings-sections fade-in">
@@ -409,6 +601,29 @@ export default function Settings() {
               <p className="text-muted" style={{ marginBottom: '1.5rem' }}>
                 {t('settings.sessions.desc')}
               </p>
+
+              <div className="remember-device-card">
+                <div className="remember-device-copy">
+                  <div className="remember-device-title-row">
+                    <strong>{t('settings.sessions.rememberTitle')}</strong>
+                    <span className={`badge ${rememberEnabled ? 'badge-success' : 'badge-warning'}`}>
+                      {rememberEnabled ? t('settings.sessions.rememberEnabled') : t('settings.sessions.rememberDisabled')}
+                    </span>
+                  </div>
+                  <p className="text-muted">
+                    {rememberEnabled ? t('settings.sessions.rememberDescOn') : t('settings.sessions.rememberDescOff')}
+                  </p>
+                </div>
+                <button
+                  className={`settings-btn ${rememberEnabled ? 'secondary' : ''}`}
+                  onClick={handleToggleRemember}
+                  disabled={rememberBusy}
+                >
+                  {rememberBusy
+                    ? t('auth.pleaseWait')
+                    : (rememberEnabled ? t('settings.sessions.rememberDisableBtn') : t('settings.sessions.rememberEnableBtn'))}
+                </button>
+              </div>
               
               <div className="sessions-list mt-3">
                 {sessions.map(s => (
@@ -502,8 +717,14 @@ export default function Settings() {
     );
   };
 
+  const pageClasses = [
+    'settings-page',
+    isPWA ? 'pwa-mode' : '',
+    !activeTab ? 'settings-menu-screen' : '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <div className={`settings-page ${isPWA ? 'pwa-mode' : ''}`}>
+    <div className={pageClasses}>
       
       {msg.text && (
         <div className={`settings-msg ${msg.type === 'err' ? 'msg-error' : 'msg-success'}`}>

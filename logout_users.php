@@ -7,6 +7,7 @@ header("Expires: 0");
 
 require_once __DIR__ . '/auth_bootstrap.php';
 require_once __DIR__ . '/install_service.php';
+require_once __DIR__ . '/push_service.php';
 require_once __DIR__ . '/runtime_config.php';
 
 $https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
@@ -45,11 +46,17 @@ try {
     if ($mainDeviceId !== '' || $mainDeviceSignature !== '' || $logoutUserId > 0) {
         wp_install_clear_identity_match('main', $mainDeviceId, $mainDeviceSignature, $logoutUserId, $logoutUserAgent, $logoutIpAddress);
     }
+    if ($mainDeviceId !== '' || $logoutUserId > 0) {
+        wp_push_detach_user_from_device($mainDeviceId, 'main', $logoutUserId, $logoutUserAgent, $logoutIpAddress);
+    }
 
     $adminDeviceId = wp_install_sanitize_device_id((string)($_COOKIE['wp_admin_install_device_id'] ?? ''));
     $adminDeviceSignature = wp_install_sanitize_signature((string)($_COOKIE['wp_admin_install_device_sig'] ?? ''));
     if ($adminDeviceId !== '' || $adminDeviceSignature !== '' || $logoutUserId > 0) {
         wp_install_clear_identity_match('admin', $adminDeviceId, $adminDeviceSignature, $logoutUserId, $logoutUserAgent, $logoutIpAddress);
+    }
+    if ($adminDeviceId !== '' || $logoutUserId > 0) {
+        wp_push_detach_user_from_device($adminDeviceId, 'admin', $logoutUserId, $logoutUserAgent, $logoutIpAddress);
     }
 } catch (Throwable $e) {
     // եթե install store sync-ը fail լինի, logout-ը միևնույն է շարունակում ենք

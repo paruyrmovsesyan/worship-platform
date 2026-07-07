@@ -5,6 +5,9 @@ import { useLanguage } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import './Register.css';
 
+const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
+const hasWhitespace = (value) => /\s/u.test(String(value));
+
 const Register = () => {
   const navigate = useNavigate();
   const isPWA = useIsPWA();
@@ -20,6 +23,7 @@ const Register = () => {
   const [error, setError] = useState('');
   const { t, language, setLanguage } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
+  const [googleEnabled, setGoogleEnabled] = useState(false);
 
   // Apply visual viewport fix for iOS PWA keyboard
   useEffect(() => {
@@ -42,6 +46,32 @@ const Register = () => {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadSocialStatus = async () => {
+      try {
+        const response = await fetch('/social_auth.php?action=status', {
+          headers: { Accept: 'application/json' },
+          cache: 'no-store',
+        });
+        const data = await response.json();
+        if (!cancelled) {
+          setGoogleEnabled(Boolean(data?.providers?.google?.enabled));
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setGoogleEnabled(false);
+        }
+      }
+    };
+
+    loadSocialStatus();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleFocus = (e) => {
     setTimeout(() => {
       e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -50,8 +80,18 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!login.trim() || !password) {
+    if (!name.trim() || !username.trim() || !email.trim() || !password) {
       setError(t('auth.fillAllFields'));
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setError(t('auth.invalidEmail'));
+      return;
+    }
+
+    if (hasWhitespace(username)) {
+      setError(t('auth.invalidUsernameSpaces'));
       return;
     }
 
@@ -96,7 +136,13 @@ const Register = () => {
     }
   };
 
-  const googleAuthUrl = `/social_auth.php?provider=google&action=register&next=${encodeURIComponent(next)}&source=${encodeURIComponent(source)}`;
+  const googleAuthUrl = `/social_auth.php?provider=google&mode=register&next=${encodeURIComponent(next)}&source=${encodeURIComponent(source)}&remember=${rememberMe ? '1' : '0'}`;
+  const handleGoogleClick = (event) => {
+    if (!googleEnabled || isLoading) {
+      event.preventDefault();
+      setError(t('auth.googleDisabled'));
+    }
+  };
 
   return (
     <div className="register-page-container animate-fade-in">
@@ -107,9 +153,11 @@ const Register = () => {
           <h1 className="register-hero-title">{t('auth.registerTitle')}</h1>
           <p className="register-hero-lead">{t('auth.registerSubtitle')}</p>
         </div>
-        <LanguageSwitcher 
-          style={{ position: 'absolute', top: '20px', right: '20px' }} 
-        />
+        {isPWA && (
+          <LanguageSwitcher 
+            style={{ position: 'absolute', top: '20px', right: '20px' }} 
+          />
+        )}
       </div>
 
       {/* Form Section */}
@@ -151,6 +199,7 @@ const Register = () => {
                 required 
                 placeholder=" "
                 autoComplete="username"
+                pattern="[^\s]+"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onFocus={handleFocus}
@@ -209,7 +258,12 @@ const Register = () => {
 
           <div className="register-social-sep">{t('auth.orContinue')}</div>
           <div className="register-social-btns">
-            <a className="register-social-btn" href={googleAuthUrl}>
+            <a
+              className={`register-social-btn ${!googleEnabled ? 'is-disabled' : ''}`}
+              href={googleEnabled ? googleAuthUrl : '#'}
+              onClick={handleGoogleClick}
+              aria-disabled={!googleEnabled}
+            >
               <span className="register-social-icon">
                 <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -221,7 +275,9 @@ const Register = () => {
               </span>
               <span>
                 {t('auth.googleLogin')}
-                <small className="register-social-note">{t('auth.googleReady')}</small>
+                <small className="register-social-note">
+                  {googleEnabled ? t('auth.googleReady') : t('auth.googleDisabledShort')}
+                </small>
               </span>
             </a>
           </div>

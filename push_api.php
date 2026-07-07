@@ -43,17 +43,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'subscribe') {
         wp_push_api_response(['ok' => false, 'error' => 'Push notifications are not supported on this server.'], 503);
     }
 
+    $deviceScope = (string)($body['device_scope'] ?? 'main');
+    $permissionState = (string)($body['permission'] ?? 'granted');
     $result = wp_push_upsert_subscription((array)($body['subscription'] ?? []), [
         'user_agent' => (string)($_SERVER['HTTP_USER_AGENT'] ?? ''),
         'user_id' => (int)($_SESSION['user_id'] ?? 0),
         'user_name' => (string)($_SESSION['name'] ?? $_SESSION['username'] ?? ''),
         'user_email' => (string)($_SESSION['email'] ?? ''),
         'ip_address' => wp_runtime_remote_ip(),
+        'device_id' => (string)($body['device_id'] ?? ''),
+        'device_scope' => in_array($deviceScope, ['main', 'admin'], true) ? $deviceScope : 'main',
+        'permission_state' => in_array($permissionState, ['granted', 'default', 'denied'], true) ? $permissionState : 'granted',
         'force_enable' => !empty($body['force_enable']),
     ]);
 
     $status = !empty($result['ok']) ? 200 : (!empty($result['disabled_by_admin']) ? 409 : 422);
     wp_push_api_response($result, $status);
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'status') {
+    $result = wp_push_sync_client_status($body, [
+        'user_id' => (int)($_SESSION['user_id'] ?? 0),
+        'user_name' => (string)($_SESSION['name'] ?? $_SESSION['username'] ?? ''),
+        'user_email' => (string)($_SESSION['email'] ?? ''),
+        'user_agent' => (string)($_SERVER['HTTP_USER_AGENT'] ?? ''),
+        'ip_address' => wp_runtime_remote_ip(),
+    ]);
+    wp_push_api_response($result);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'unsubscribe') {

@@ -26,6 +26,52 @@ export const AuthProvider = ({ children }) => {
       });
   }, []);
 
+  // Global automatic Push Subscription Sync
+  useEffect(() => {
+    if (!user || !window.Notification || Notification.permission !== 'granted') {
+      return undefined;
+    }
+
+    let cancelled = false;
+    let retryTimer = null;
+    let attempts = 0;
+
+    const syncPushForLoggedInUser = () => {
+      if (cancelled) {
+        return;
+      }
+
+      const manager = window.WPPushManager;
+      if (!manager || typeof manager.getStatus !== 'function' || typeof manager.registerSubscription !== 'function') {
+        if (attempts < 8) {
+          attempts += 1;
+          retryTimer = setTimeout(syncPushForLoggedInUser, 900);
+        }
+        return;
+      }
+
+      manager.getStatus()
+        .then(status => {
+          if (!status || status.userDisabled || status.accountDisabled || status.adminRemoved) {
+            return;
+          }
+          return manager.registerSubscription(true);
+        })
+        .catch(err => console.error('Auto push sync failed', err));
+    };
+
+    retryTimer = setTimeout(syncPushForLoggedInUser, 900);
+    window.addEventListener('wp-push-manager-ready', syncPushForLoggedInUser);
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+      }
+      window.removeEventListener('wp-push-manager-ready', syncPushForLoggedInUser);
+    };
+  }, [user]);
+
   const login = () => {
     var url = '/login?next=/';
     if (window.WP && typeof window.WP.navigate === 'function') {

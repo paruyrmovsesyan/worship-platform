@@ -18,19 +18,27 @@ export function transposeRoot(root, semi, useFlats) {
   return flat ? FLATS[idx] : SHARPS[idx];
 }
 
+function escapeHtml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export function renderWithChords(text = '', semi = 0, useFlats = false) {
   if (!text) return '';
+  const safeText = escapeHtml(text);
+  const chordRegex = /(^|[\s([])((?:[A-G](?:#|b)?)(?:maj7|maj9|maj|min7|min9|min|m7b5|m7|m9|m|dim7|dim|aug|sus2|sus4|sus7|sus|add9|add2|add4|add|no5|no3|2|4|5|6|7|9|11|13)?(?:\([#b0-9+\-]+\))?(?:\/[A-G](?:#|b)?)?)(?=[\s)\],:;]|$)/g;
+
   if (semi === 0) {
-    // Just wrap chords in spans without transposing
-    const chordRegex = /(^|[\s([])((?:[A-G](?:#|b)?)(?:maj7|maj9|maj|min7|min9|min|m7b5|m7|m9|m|dim7|dim|aug|sus2|sus4|sus7|sus|add9|add2|add4|add|no5|no3|2|4|5|6|7|9|11|13)?(?:\([#b0-9+\-]+\))?(?:\/[A-G](?:#|b)?)?)(?=[\s)\],:;]|$)/g;
-    return text.replace(chordRegex, (m, prefix, chordToken) => {
+    return safeText.replace(chordRegex, (m, prefix, chordToken) => {
       return `${prefix}<span class="chord">${chordToken}</span>`;
     });
   }
 
-  const chordRegex = /(^|[\s([])((?:[A-G](?:#|b)?)(?:maj7|maj9|maj|min7|min9|min|m7b5|m7|m9|m|dim7|dim|aug|sus2|sus4|sus7|sus|add9|add2|add4|add|no5|no3|2|4|5|6|7|9|11|13)?(?:\([#b0-9+\-]+\))?(?:\/[A-G](?:#|b)?)?)(?=[\s)\],:;]|$)/g;
-
-  return text.split('\n').map(line =>
+  return safeText.split('\n').map(line =>
     line.replace(chordRegex, (m, prefix, chordToken) => {
       let main = chordToken;
       let bass = '';
