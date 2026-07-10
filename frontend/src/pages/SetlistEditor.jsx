@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { createPortal } from 'react-dom';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { getSongCoverStyle } from '../utils/songCover';
 import { usePageReady } from '../hooks/usePageReady';
@@ -23,6 +24,10 @@ export default function SetlistEditor() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareChats, setShareChats] = useState([]);
+  const [shareLoading, setShareLoading] = useState(false);
   
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [editName, setEditName] = useState('');
@@ -67,6 +72,39 @@ export default function SetlistEditor() {
         setSearchResults(Array.isArray(data) ? data : []);
       })
       .catch(err => console.error(err));
+  };
+
+  const openShareModal = async () => {
+    if (!user) return;
+    setIsShareModalOpen(true);
+    setShareLoading(true);
+    try {
+      const res = await fetch('/chat_api.php?action=list_chats');
+      const data = await res.json();
+      if (data.ok) setShareChats(data.chats || []);
+    } catch (e) {
+      console.error(e);
+    }
+    setShareLoading(false);
+  };
+
+  const handleShareToChat = async (chatId) => {
+    try {
+      const res = await fetch('/chat_api.php?action=send_message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, message: '', setlist_id: id }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setIsShareModalOpen(false);
+        alert(t('chat.sent', 'Ուղարկված է'));
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } catch (e) {
+      alert('Network error');
+    }
   };
 
   const addSong = async (songId) => {
@@ -180,6 +218,9 @@ export default function SetlistEditor() {
                   </svg>
                 </button>
               )}
+              <button className="icon-btn" onClick={openShareModal} title={t('chat.send', 'Ուղարկել Չաթով')} style={{ color: 'var(--color-text-secondary)' }}>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              </button>
             </div>
             {setlistData.service_date && (
               <span style={{ fontSize: '0.85rem', color: 'var(--color-text-tertiary)', fontWeight: '500', marginTop: '4px' }}>
@@ -348,6 +389,107 @@ export default function SetlistEditor() {
             </form>
           </div>
         </div>
+      )}
+
+      {isShareModalOpen && createPortal(
+        <div className="share-modal-overlay" onClick={() => setIsShareModalOpen(false)}>
+          <style>{`
+            .share-modal-overlay {
+              position: fixed;
+              top: 0; left: 0; right: 0; bottom: 0;
+              background: rgba(0,0,0,0.6);
+              backdrop-filter: blur(4px);
+              -webkit-backdrop-filter: blur(4px);
+              z-index: 2147483647;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 16px;
+            }
+            .share-modal-content {
+              background: var(--bg-body, #111);
+              width: 100%;
+              max-width: 500px;
+              border-radius: 24px;
+              padding: 24px;
+              box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+              display: flex;
+              flex-direction: column;
+              max-height: 80vh;
+            }
+            .share-modal-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 16px;
+              border-bottom: 1px solid rgba(255,255,255,0.1);
+              padding-bottom: 12px;
+            }
+            .share-modal-title {
+              margin: 0;
+              font-size: 1.25rem;
+              font-weight: 600;
+              color: #fff;
+            }
+            .share-chat-list {
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              margin-top: 10px;
+            }
+            .share-chat-item {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              padding: 10px;
+              border-radius: 12px;
+              background: rgba(255,255,255,0.05);
+              cursor: pointer;
+            }
+            .share-chat-avatar {
+              width: 40px; height: 40px;
+              border-radius: 50%;
+              background: rgba(255,255,255,0.1);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: 600;
+              color: #fff;
+            }
+            .share-chat-name {
+              font-weight: 600;
+              color: #fff;
+            }
+          `}</style>
+          <div className="share-modal-content fade-in" onClick={e => e.stopPropagation()}>
+            <div className="share-modal-header">
+              <h3 className="share-modal-title">{t('chat.send', 'Ուղարկել Չաթով')}</h3>
+              <button className="icon-btn" onClick={() => setIsShareModalOpen(false)}>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            
+            <div className="share-chat-list" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              {shareLoading ? (
+                <div style={{ textAlign: 'center', padding: '20px' }}>Loading...</div>
+              ) : shareChats.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>{t('chat.emptySubtitle', 'Չաթեր չկան')}</div>
+              ) : (
+                shareChats.map(chat => (
+                  <div key={chat.id} className="share-chat-item" onClick={() => handleShareToChat(chat.id)}>
+                    <div className="share-chat-avatar">
+                      {chat.type === 'group' ? '👥' : (chat.participant_names ? chat.participant_names.charAt(0).toUpperCase() : '👤')}
+                    </div>
+                    <div className="share-chat-name">
+                      {chat.type === 'group' ? chat.name : chat.participant_names}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
 
     </div>

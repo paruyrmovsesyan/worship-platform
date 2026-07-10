@@ -33,6 +33,10 @@ export default function SongView() {
   const [setlistNavData, setSetlistNavData] = useState(null);
   const [touchStartX, setTouchStartX] = useState(null);
 
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareChats, setShareChats] = useState([]);
+  const [shareLoading, setShareLoading] = useState(false);
+
   useEffect(() => {
     document.body.classList.add('song-view-active');
     
@@ -110,6 +114,46 @@ export default function SongView() {
     } catch (err) {
       setFavMsg(t('songView.copyError', 'Սխալ պատճենման ժամանակ'));
       setTimeout(() => setFavMsg(''), 2000);
+    }
+  };
+
+  const openShareModal = async () => {
+    if (!user) {
+      navigate('/login?next=' + window.location.pathname);
+      return;
+    }
+    setIsShareModalOpen(true);
+    setShareLoading(true);
+    try {
+      const res = await fetch('/chat_api.php?action=list_chats');
+      const data = await res.json();
+      if (data.ok) setShareChats(data.chats || []);
+    } catch (e) {
+      console.error(e);
+    }
+    setShareLoading(false);
+  };
+
+  const handleShareToChat = async (chatId) => {
+    const title = song.title.replace(/[\[\]\|]/g, ''); // strip reserved chars
+    const msg = `[SONG|id:${id}|key:${semi}|capo:${capo}|title:${title}]`;
+    
+    try {
+      const res = await fetch('/chat_api.php?action=send_message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, message: msg }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setIsShareModalOpen(false);
+        setFavMsg(t('chat.sent', 'Ուղարկված է'));
+        setTimeout(() => setFavMsg(''), 2000);
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } catch (e) {
+      alert('Network error');
     }
   };
 
@@ -415,6 +459,9 @@ export default function SongView() {
             <button className="icon-btn" onClick={copySongContent} title={t('songView.copyContent', 'Copy Song')}>
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
             </button>
+            <button className="icon-btn" onClick={openShareModal} title={t('chat.send', 'Ուղարկել Չաթով')}>
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
             <button className="icon-btn" onClick={copyShareLink} title={t('songView.copyLink')}>
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
             </button>
@@ -574,6 +621,8 @@ export default function SongView() {
             {t('songView.saveKey')}
           </button>
         )}
+
+      </div>
       </div>
 
     {/* Setlist Navigation */}
@@ -603,8 +652,82 @@ export default function SongView() {
       </button>
     </div>
 
-    {favMsg && createPortal(<div className="toast-message">{favMsg}</div>, document.body)}
-    </div>
+    {favMsg && createPortal(
+      <div style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        background: 'rgba(28, 28, 30, 0.98)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        color: '#fff',
+        padding: '16px 32px',
+        borderRadius: '100px',
+        fontWeight: '600',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+        zIndex: 2147483647,
+        fontSize: '1.05rem',
+        textAlign: 'center',
+        whiteSpace: 'nowrap'
+      }}>{favMsg}</div>, 
+      document.body
+    )}
+
+    {isShareModalOpen && createPortal(
+      <div style={{
+        position: 'fixed',
+        top: 0, left: 0, right: 0, bottom: 0,
+        background: 'rgba(0,0,0,0.7)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        zIndex: 2147483647,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+      }} onClick={() => setIsShareModalOpen(false)}>
+        <div style={{
+          background: '#1a1a2e',
+          width: '100%',
+          maxWidth: '480px',
+          borderRadius: '24px',
+          padding: '24px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
+          display: 'flex',
+          flexDirection: 'column',
+          maxHeight: '70vh',
+        }} onClick={e => e.stopPropagation()}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600, color: '#fff' }}>{t('chat.send', 'Ուղարկել Չաթով')}</h3>
+            <button onClick={() => setIsShareModalOpen(false)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {shareLoading ? (
+              <div style={{ textAlign: 'center', padding: '24px', color: '#aaa' }}>Loading...</div>
+            ) : shareChats.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '24px', color: '#aaa' }}>{t('chat.emptySubtitle', 'Չաթեր չկան')}</div>
+            ) : (
+              shareChats.map(chat => (
+                <div key={chat.id} onClick={() => handleShareToChat(chat.id)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '14px', background: 'rgba(255,255,255,0.06)', cursor: 'pointer' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: '1rem', flexShrink: 0 }}>
+                    {chat.type === 'group' ? '👥' : (chat.participant_names ? chat.participant_names.charAt(0).toUpperCase() : '👤')}
+                  </div>
+                  <div style={{ fontWeight: 600, color: '#fff', fontSize: '0.95rem' }}>
+                    {chat.type === 'group' ? chat.name : chat.participant_names}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>,
+      document.body
+    )}
+
     </>
   );
 }

@@ -191,7 +191,13 @@ export default function ChatsList({ isEmbedded = false }) {
                       </div>
                     </div>
                     <div className={`chat-list-preview ${hasUnread ? 'unread' : 'dim'}`}>
-                      {chat.last_message || t('chat.emptySubtitle')}
+                      {chat.last_message
+                        ? (chat.last_message.match(/^\[SONG\|id:\d+\|key:[+-]?\d+\|capo:\d+\|title:([^\]]*)/) 
+                            ? `🎵 ${chat.last_message.match(/^\[SONG\|id:\d+\|key:[+-]?\d+\|capo:\d+\|title:([^\]]*)/)[1].replace(/\.\.\.$/, '')}...` 
+                            : chat.last_message)
+                        : chat.type === 'group'
+                          ? '✉️ ' + t('chat.emptyTitle', 'Սկսեք զրույցը')
+                          : t('chat.emptySubtitle', 'Գրեք առաջին հաղորդագրությունը...')}
                     </div>
                   </div>
                 </div>

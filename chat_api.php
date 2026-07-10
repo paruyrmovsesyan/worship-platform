@@ -173,18 +173,16 @@ if ($action === 'badge_summary' && $method === 'GET') {
 // 1. List chats the user is in
 if ($action === 'list_chats' && $method === 'GET') {
     $st = $pdo->prepare("
-        SELECT * FROM (
-            SELECT c.id, c.type, c.name,
-                   (SELECT message FROM chat_messages m WHERE m.chat_id = c.id AND (cp.cleared_at IS NULL OR m.created_at > cp.cleared_at) ORDER BY created_at DESC LIMIT 1) as last_message,
-                   (SELECT created_at FROM chat_messages m WHERE m.chat_id = c.id AND (cp.cleared_at IS NULL OR m.created_at > cp.cleared_at) ORDER BY created_at DESC LIMIT 1) as last_message_at,
-                   (SELECT COUNT(*) FROM chat_messages m WHERE m.chat_id = c.id AND m.user_id != ? AND (cp.cleared_at IS NULL OR m.created_at > cp.cleared_at) AND m.id > COALESCE(cp.last_read_message_id, 0)) as unread_count,
-                   (SELECT GROUP_CONCAT(COALESCE(NULLIF(u.name, ''), SUBSTRING_INDEX(u.email, '@', 1)) SEPARATOR ', ') FROM chat_participants cp2 JOIN users u ON cp2.user_id = u.id WHERE cp2.chat_id = c.id AND u.id != ?) as participant_names
-            FROM chats c
-            JOIN chat_participants cp ON cp.chat_id = c.id
-            WHERE cp.user_id = ?
-        ) as sub
-        WHERE last_message_at IS NOT NULL
-        ORDER BY last_message_at DESC
+        SELECT c.id, c.type, c.name,
+               (SELECT message FROM chat_messages m WHERE m.chat_id = c.id AND (cp.cleared_at IS NULL OR m.created_at > cp.cleared_at) ORDER BY created_at DESC LIMIT 1) as last_message,
+               (SELECT created_at FROM chat_messages m WHERE m.chat_id = c.id AND (cp.cleared_at IS NULL OR m.created_at > cp.cleared_at) ORDER BY created_at DESC LIMIT 1) as last_message_at,
+               c.created_at as chat_created_at,
+               (SELECT COUNT(*) FROM chat_messages m WHERE m.chat_id = c.id AND m.user_id != ? AND (cp.cleared_at IS NULL OR m.created_at > cp.cleared_at) AND m.id > COALESCE(cp.last_read_message_id, 0)) as unread_count,
+               (SELECT GROUP_CONCAT(COALESCE(NULLIF(u.name, ''), SUBSTRING_INDEX(u.email, '@', 1)) SEPARATOR ', ') FROM chat_participants cp2 JOIN users u ON cp2.user_id = u.id WHERE cp2.chat_id = c.id AND u.id != ?) as participant_names
+        FROM chats c
+        JOIN chat_participants cp ON cp.chat_id = c.id
+        WHERE cp.user_id = ?
+        ORDER BY COALESCE(last_message_at, c.created_at) DESC
     ");
     $st->execute([$uid, $uid, $uid]);
     out(["ok" => true, "chats" => $st->fetchAll(PDO::FETCH_ASSOC)]);
@@ -279,7 +277,7 @@ if ($action === 'get_messages' && $method === 'GET') {
     }
     
     // Get chat info for header
-    $st = $pdo->prepare("SELECT type, name FROM chats WHERE id = ?");
+    $st = $pdo->prepare("SELECT type, name, created_by FROM chats WHERE id = ?");
     $st->execute([$chat_id]);
     $chat_info = $st->fetch(PDO::FETCH_ASSOC);
 
@@ -465,6 +463,115 @@ if ($action === 'create_group' && $method === 'POST') {
     }
     $pdo->commit();
     out(["ok" => true, "chat_id" => (int)$chat_id]);
+}
+
+// Get group members
+if ($action === 'get_group_members' && $method === 'GET') {
+    $chat_id = (int)($_GET['chat_id'] ?? 0);
+    // verify participant
+    $st = $pdo->prepare("SELECT 1 FROM chat_participants WHERE chat_id = ? AND user_id = ?");
+    $st->execute([$chat_id, $uid]);
+    if (!$st->fetch()) out(["error" => "Access denied"], 403);
+
+    // get type
+    $st = $pdo->prepare("SELECT type, created_by FROM chats WHERE id = ?");
+    $st->execute([$chat_id]);
+    $chat = $st->fetch(PDO::FETCH_ASSOC);
+    if (!$chat || $chat['type'] !== 'group') out(["error" => "Not a group"], 400);
+
+    $st = $pdo->prepare("
+        SELECT u.id, COALESCE(NULLIF(u.name,''), SUBSTRING_INDEX(u.email,'@',1)) as name, u.email,
+               IF(u.id = ?, 1, 0) as is_creator
+        FROM chat_participants cp
+        JOIN users u ON u.id = cp.user_id
+        WHERE cp.chat_id = ?
+        ORDER BY is_creator DESC, u.name ASC
+    ");
+    $st->execute([(int)$chat['created_by'], $chat_id]);
+    out(["ok" => true, "members" => $st->fetchAll(PDO::FETCH_ASSOC)]);
+}
+
+// Add member to group
+if ($action === 'add_group_member' && $method === 'POST') {
+    $d = readJson();
+    $chat_id = (int)($d['chat_id'] ?? 0);
+    $new_user_id = (int)($d['user_id'] ?? 0);
+
+    // Verify requester is creator
+    $st = $pdo->prepare("SELECT created_by, type FROM chats WHERE id = ?");
+    $st->execute([$chat_id]);
+    $chat = $st->fetch(PDO::FETCH_ASSOC);
+    if (!$chat || $chat['type'] !== 'group') out(["error" => "Not a group"], 400);
+    if ((int)$chat['created_by'] !== $uid) out(["error" => "Only group creator can add members"], 403);
+
+    // Verify friendship
+    $st = $pdo->prepare("SELECT 1 FROM friends WHERE ((user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)) AND status = 'accepted'");
+    $st->execute([$uid, $new_user_id, $new_user_id, $uid]);
+    if (!$st->fetch()) out(["error" => "Not friends"], 403);
+
+    // Already in group?
+    $st = $pdo->prepare("SELECT 1 FROM chat_participants WHERE chat_id = ? AND user_id = ?");
+    $st->execute([$chat_id, $new_user_id]);
+    if ($st->fetch()) out(["ok" => true, "already_member" => true]);
+
+    $pdo->prepare("INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?)")->execute([$chat_id, $new_user_id]);
+    out(["ok" => true]);
+}
+
+// Remove member from group
+if ($action === 'remove_group_member' && $method === 'POST') {
+    $d = readJson();
+    $chat_id = (int)($d['chat_id'] ?? 0);
+    $remove_user_id = (int)($d['user_id'] ?? 0);
+
+    // Verify requester is creator
+    $st = $pdo->prepare("SELECT created_by, type FROM chats WHERE id = ?");
+    $st->execute([$chat_id]);
+    $chat = $st->fetch(PDO::FETCH_ASSOC);
+    if (!$chat || $chat['type'] !== 'group') out(["error" => "Not a group"], 400);
+    if ((int)$chat['created_by'] !== $uid) out(["error" => "Only group creator can remove members"], 403);
+    if ($remove_user_id === $uid) out(["error" => "Cannot remove yourself"], 400);
+
+    $pdo->prepare("DELETE FROM chat_participants WHERE chat_id = ? AND user_id = ?")->execute([$chat_id, $remove_user_id]);
+    out(["ok" => true]);
+}
+
+// Leave group (non-creator)
+if ($action === 'leave_group' && $method === 'POST') {
+    $d = readJson();
+    $chat_id = (int)($d['chat_id'] ?? 0);
+
+    $st = $pdo->prepare("SELECT created_by, type FROM chats WHERE id = ?");
+    $st->execute([$chat_id]);
+    $chat = $st->fetch(PDO::FETCH_ASSOC);
+    if (!$chat || $chat['type'] !== 'group') out(["error" => "Not a group"], 400);
+    if ((int)$chat['created_by'] === $uid) out(["error" => "Creator cannot leave. Transfer ownership or delete the group."], 403);
+
+    // Verify participant
+    $st = $pdo->prepare("SELECT 1 FROM chat_participants WHERE chat_id = ? AND user_id = ?");
+    $st->execute([$chat_id, $uid]);
+    if (!$st->fetch()) out(["error" => "Not a member"], 403);
+
+    $pdo->prepare("DELETE FROM chat_participants WHERE chat_id = ? AND user_id = ?")->execute([$chat_id, $uid]);
+    out(["ok" => true]);
+}
+
+// Rename group (creator only)
+if ($action === 'rename_group' && $method === 'POST') {
+    $d = readJson();
+    $chat_id = (int)($d['chat_id'] ?? 0);
+    $new_name = trim($d['name'] ?? '');
+
+    if (empty($new_name)) out(["error" => "Name required"], 400);
+
+    $st = $pdo->prepare("SELECT created_by, type FROM chats WHERE id = ?");
+    $st->execute([$chat_id]);
+    $chat = $st->fetch(PDO::FETCH_ASSOC);
+    if (!$chat || $chat['type'] !== 'group') out(["error" => "Not a group"], 400);
+    if ((int)$chat['created_by'] !== $uid) out(["error" => "Only group creator can rename"], 403);
+
+    $pdo->prepare("UPDATE chats SET name = ? WHERE id = ?")->execute([$new_name, $chat_id]);
+    out(["ok" => true]);
 }
 
 out(["error" => "Invalid action"], 400);

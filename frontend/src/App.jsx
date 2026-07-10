@@ -75,6 +75,7 @@ function App() {
   const { isOffline, canAccessPath } = usePwaOfflineGuard();
   const location = useLocation();
   const navigate = useNavigate();
+  const transitionRef = React.useRef(null);
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [rememberPromptOpen, setRememberPromptOpen] = React.useState(false);
   const [rememberPromptSaving, setRememberPromptSaving] = React.useState(false);
@@ -126,6 +127,14 @@ function App() {
     const nextUrl = `${location.pathname}${params.toString() ? `?${params.toString()}` : ''}${location.hash || ''}`;
     navigate(nextUrl, { replace: true });
   }, [location.hash, location.pathname, location.search, navigate]);
+
+  useEffect(() => {
+    if (transitionRef.current) {
+      transitionRef.current.classList.remove('route-animate');
+      void transitionRef.current.offsetWidth;
+      transitionRef.current.classList.add('route-animate');
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -216,45 +225,47 @@ function App() {
           pointerEvents: isLoading ? 'none' : 'auto',
         }}
       >
-        <Routes key={refreshKey}>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/songs" element={<Songs />} />
-          <Route path="/song/:id" element={<SongView />} />
-          <Route path="/setlists" element={<Setlists />} />
-          <Route path="/setlists/:id" element={<SetlistEditor />} />
-          <Route path="/favorites" element={<Favorites />} />
-          <Route path="/news" element={<News />} />
-          <Route path="/news/:slug" element={<NewsArticle />} />
-          <Route path="/friends" element={<Friends />} />
-          <Route path="/chats" element={<ChatsList />} />
-          <Route path="/chat/:id" element={<Chat />} />
-          <Route path="/community" element={<Community />} />
-          <Route path="/resources" element={<Resources />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/careers" element={<Careers />} />
-          <Route path="/documentation" element={<Documentation />} />
-          <Route path="/tutorials" element={<Tutorials />} />
-          <Route path="/support" element={<Support />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/cookies" element={<Cookies />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/song-request" element={<SongRequest />} />
-          <Route path="/notifications" element={<Notifications />} />
+        <div ref={transitionRef} className="route-animate">
+          <Routes key={refreshKey}>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/songs" element={<Songs />} />
+            <Route path="/song/:id" element={<SongView />} />
+            <Route path="/setlists" element={<Setlists />} />
+            <Route path="/setlists/:id" element={<SetlistEditor />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/news" element={<News />} />
+            <Route path="/news/:slug" element={<NewsArticle />} />
+            <Route path="/friends" element={<Friends />} />
+            <Route path="/chats" element={<ChatsList />} />
+            <Route path="/chat/:id" element={<Chat />} />
+            <Route path="/community" element={<Community />} />
+            <Route path="/resources" element={<Resources />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/careers" element={<Careers />} />
+            <Route path="/documentation" element={<Documentation />} />
+            <Route path="/tutorials" element={<Tutorials />} />
+            <Route path="/support" element={<Support />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/cookies" element={<Cookies />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/song-request" element={<SongRequest />} />
+            <Route path="/notifications" element={<Notifications />} />
 
-          {/* Legacy URL Redirects */}
-          <Route path="/main.html" element={<Navigate to="/songs" replace />} />
-          <Route path="/favorites.html" element={<Navigate to="/favorites" replace />} />
-          <Route path="/news.html" element={<Navigate to="/news" replace />} />
-          <Route path="/setlists.html" element={<Navigate to="/setlists" replace />} />
-          <Route path="/account.html" element={<Navigate to="/profile" replace />} />
-          <Route path="/song_view.html" element={<LegacySongRedirect />} />
-        </Routes>
+            {/* Legacy URL Redirects */}
+            <Route path="/main.html" element={<Navigate to="/songs" replace />} />
+            <Route path="/favorites.html" element={<Navigate to="/favorites" replace />} />
+            <Route path="/news.html" element={<Navigate to="/news" replace />} />
+            <Route path="/setlists.html" element={<Navigate to="/setlists" replace />} />
+            <Route path="/account.html" element={<Navigate to="/profile" replace />} />
+            <Route path="/song_view.html" element={<LegacySongRedirect />} />
+          </Routes>
+        </div>
       </main>
       {rememberPromptOpen && (
         <div style={{

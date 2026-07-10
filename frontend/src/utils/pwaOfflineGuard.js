@@ -1,7 +1,7 @@
 export function isPwaOfflineRouteAllowed(pathname = '/') {
   const path = String(pathname || '/').split('?')[0].split('#')[0] || '/';
 
-  if (path === '/' || path === '/songs' || path === '/favorites' || path === '/news') {
+  if (path === '/' || path === '/songs' || path === '/favorites' || path === '/news' || path === '/setlists') {
     return true;
   }
 

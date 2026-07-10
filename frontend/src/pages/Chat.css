@@ -470,6 +470,10 @@ body.mobile-theme .chat-input-area {
   margin-bottom: 0 !important;
 }
 
+body.mobile-theme .chat-input-area.hidden {
+  display: none !important;
+}
+
 /* Optional iOS Pull-to-refresh blocker for the body */
 body.mobile-theme.chat-active,
 body.wp-standalone-app.chat-active {
@@ -498,4 +502,46 @@ body.wp-standalone-app.chat-active {
   font-weight: 600;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+/* ============================================================
+   Group Info Panel Animations
+   ============================================================ */
+@keyframes groupOverlayIn {
+  from { opacity: 0; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); }
+  to   { opacity: 1; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+}
+
+@keyframes groupOverlayOut {
+  from { opacity: 1; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  to   { opacity: 0; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); }
+}
+
+@keyframes groupPanelIn {
+  from { transform: translate3d(0, 100%, 0); opacity: 0.8; }
+  to   { transform: translate3d(0, 0, 0);    opacity: 1; }
+}
+
+@keyframes groupPanelOut {
+  from { transform: translate3d(0, 0, 0);    opacity: 1; }
+  to   { transform: translate3d(0, 100%, 0); opacity: 0.8; }
+}
+
+.group-info-overlay {
+  animation: groupOverlayIn 0.3s ease-out forwards;
+  will-change: opacity;
+}
+
+.group-info-overlay.closing {
+  animation: groupOverlayOut 0.25s ease-in forwards;
+}
+
+.group-info-panel {
+  animation: groupPanelIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transition: transform 0.05s linear; /* For smooth drag */
+  will-change: transform;
+}
+
+.group-info-overlay.closing .group-info-panel {
+  animation: groupPanelOut 0.25s ease-in forwards;
 }
