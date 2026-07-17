@@ -343,8 +343,8 @@ function wp_version_sanitize_page_web_modes($value): array {
 
 function wp_version_defaults(): array {
     return [
-        'app_version' => '2.5.0',
-        'web_version' => '2.5.0',
+        'app_version' => '2.5.2',
+        'web_version' => '2.5.2',
         'app_release_stamp' => '',
         'web_release_stamp' => '',
         'app_release_type' => 'feature',

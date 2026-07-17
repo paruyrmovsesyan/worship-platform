@@ -67,12 +67,12 @@ export default function Setlists() {
         fetchSetlists();
         navigate(`/setlists/${data.id}`);
       } else if (data.error === 'limit_reached') {
-        alert(data.message || 'Setlist limit reached.');
+        alert(data.message || t('setlists.limitReached', 'Setlist limit reached.'));
       } else {
-        alert(data.error || 'Failed to create setlist');
+        alert(data.error || t('setlists.createFailed', 'Failed to create setlist'));
       }
     } catch (err) {
-      alert('Network error');
+      alert(t('setlists.networkError', 'Network error'));
     } finally {
       setIsCreating(false);
     }
@@ -160,22 +160,22 @@ export default function Setlists() {
             </div>
             
             <div className="sl-form-group">
-              <label>Setlist Name</label>
+              <label>{t('setlists.nameField', 'Setlist Name')}</label>
               <input 
                 type="text" 
                 className="sl-input" 
                 value={newSetName} 
                 onChange={e => setNewSetName(e.target.value)} 
-                placeholder="e.g. Sunday Service" 
+                placeholder={t('setlists.namePlaceholder', 'e.g. Sunday Service')}
                 autoFocus 
               />
             </div>
 
             <div className="sl-form-group">
-              <label>Assign to Team (Optional)</label>
+              <label>{t('setlists.assignTeam', 'Assign to Team (Optional)')}</label>
               <div className="sl-select-wrapper">
                 <select className="sl-select" value={newSetTeamId} onChange={e => setNewSetTeamId(e.target.value)}>
-                  <option value="">-- Personal --</option>
+                  <option value="">{t('setlists.personalTeam', '-- Personal --')}</option>
                   {teams.map(t => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
@@ -185,9 +185,9 @@ export default function Setlists() {
             </div>
 
             <div className="sl-modal-actions">
-              <button className="btn btn-ghost" onClick={() => setShowCreateModal(false)}>Cancel</button>
+              <button className="btn btn-ghost" onClick={() => setShowCreateModal(false)}>{t('setlists.cancelBtn', 'Cancel')}</button>
               <button className="btn btn-primary" onClick={handleCreateSetlist} disabled={!newSetName.trim() || isCreating}>
-                {isCreating ? 'Creating...' : 'Create'}
+                {isCreating ? t('setlists.creatingBtn', 'Creating...') : t('setlists.createBtn', 'Create')}
               </button>
             </div>
           </div>

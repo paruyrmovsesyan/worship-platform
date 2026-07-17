@@ -4,6 +4,7 @@ require_once __DIR__ . '/admin_access.php';
 require_once __DIR__ . '/runtime_config.php';
 require_once __DIR__ . '/install_service.php';
 require_once __DIR__ . '/version_config.php';
+require_once __DIR__ . '/admin_pwa_bootstrap.php';
 
 $access = wp_admin_require_access('/admin_stats.php');
 $adminUser = $access['user'];
@@ -184,10 +185,7 @@ $searchPlaceholder = 'Search stats...';
 <!doctype html>
 <html lang="hy">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Statistics — Worship Platform Admin</title>
-  <link rel="icon" href="/wolarm_developers.png" type="image/png">
+  <?php wp_admin_render_pwa_head('Statistics — Worship Platform Admin'); ?>
   <?php include __DIR__ . '/admin_shared_css.php'; ?>
 </head>
 <body>

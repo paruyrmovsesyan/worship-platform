@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/admin_access.php';
+require_once __DIR__ . '/admin_pwa_bootstrap.php';
 
 require_once __DIR__ . '/translation_runtime.php';
 if (isset($_GET['lang']) && in_array($_GET['lang'], ['hy', 'ru', 'en'])) {
@@ -65,24 +66,18 @@ if (empty($adminPermissions['songs_editor'])):
 <?php
 exit;
 endif;
+
+$songsSearchPlaceholders = [
+    'hy' => 'Որոնել երգ, հեղինակ կամ ID...',
+    'ru' => 'Найти песню, автора или ID...',
+    'en' => 'Search song, artist or ID...',
+];
+$songsSearchPlaceholder = $songsSearchPlaceholders[$adminLang] ?? $songsSearchPlaceholders['en'];
 ?>
 <!doctype html>
 <html lang="hy">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="manifest" href="/songs-manifest.php">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Worship Admin">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="wp-app-scope" content="admin">
-  <meta name="theme-color" content="#070910">
-  <script src="/pwa-init.js" defer></script>
-  <title>Songs — Worship Platform Admin</title>
-  <link rel="apple-touch-icon" href="wolarm_developers.png" type="image/png" />
-  <link rel="icon" href="wolarm_developers.png" type="image/png" />
-  
-
+  <?php wp_admin_render_pwa_head('Songs — Worship Platform Admin', ['icon' => '/wolarm_developers.png', 'manifest' => '/songs-manifest.php', 'viewport' => 'width=device-width, initial-scale=1, viewport-fit=cover']); ?>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
@@ -146,6 +141,36 @@ tbody tr:hover { background:#f8faff; }
 /* Toolbar */
 .toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
 .toolbar-left { display:flex; gap:12px; align-items:center; }
+
+/* Songs search */
+.songs-search-panel {
+  position:relative; display:flex; align-items:center;
+  width:min(100%, 680px); margin-bottom:20px;
+}
+.songs-search-panel > svg {
+  position:absolute; left:17px; width:20px; height:20px;
+  color:var(--muted); pointer-events:none;
+}
+.songs-search-input {
+  width:100%; height:52px; padding:0 52px 0 50px;
+  border:1.5px solid var(--line); border-radius:14px;
+  background:var(--surface); color:var(--text);
+  font-family:inherit; font-size:14px; font-weight:600; line-height:1.2; outline:none;
+  box-shadow:var(--shadow-sm); transition:border-color .15s, box-shadow .15s;
+}
+.songs-search-input:focus {
+  border-color:var(--primary); box-shadow:0 0 0 4px rgba(58,45,255,.09);
+}
+.songs-search-input::-webkit-search-cancel-button {
+  -webkit-appearance:none; appearance:none;
+}
+.songs-search-clear {
+  position:absolute; right:8px; width:36px; height:36px;
+  display:flex; align-items:center; justify-content:center;
+  border:0; border-radius:10px; background:#f1f5f9;
+  color:var(--muted); font-family:inherit; font-size:18px; font-weight:700; line-height:1; cursor:pointer;
+}
+.songs-search-clear:hover { color:var(--text); background:#e7ecf5; }
 
 /* Page header */
 .page-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px; }
@@ -310,6 +335,12 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
               <span id="statCurrentMode" style="color:var(--muted);font-weight:600;">—</span>
             </div>
           </div>
+        </div>
+
+        <div class="songs-search-panel" role="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input id="songsSearch" class="songs-search-input" type="search" autocomplete="off" placeholder="<?= htmlspecialchars($songsSearchPlaceholder) ?>" aria-label="<?= htmlspecialchars($songsSearchPlaceholder) ?>">
+          <button id="songsSearchClear" class="songs-search-clear" type="button" aria-label="<?= htmlspecialchars(__('Մաքրել որոնումը')) ?>" hidden>&times;</button>
         </div>
 
         <div class="toolbar" style="margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center;">
@@ -580,7 +611,9 @@ const clearBtn = $('clearForm');
 const downloadTxtBtn = $('downloadTxt');
 const exportPdfBtn = $('exportPdf');
 const exportAllPdfBtn = $('exportAllPdf');
-const searchI = $('topbarSearch');
+const searchI = $('songsSearch') || $('topbarSearch');
+const topbarSearchI = $('topbarSearch');
+const songsSearchClearBtn = $('songsSearchClear');
 const tableBody = $('songsTable');
 const previewTitle = $('previewTitle');
 const previewMeta = $('previewMeta');
@@ -1302,7 +1335,7 @@ function getFilteredSongs() {
   const tagFilter = tagFilterI.value.trim().toLowerCase();
 
   const filtered = ALL_SONGS.filter(song => {
-    const haystack = [song.title, song.artist, song.tags, song.lyrics, song.chords, song.song_key, song.bpm].filter(Boolean).join(' ').toLowerCase();
+    const haystack = [song.id, song.title, song.title_hy, song.title_lat, song.title_ru, song.title_en, song.artist, song.tags, song.lyrics, song.chords, song.song_key, song.bpm].filter(Boolean).join(' ').toLowerCase();
     if (q && !haystack.includes(q)) return false;
     const hasLyrics = !!(song.lyrics && song.lyrics.trim());
     if (lyricsMode === 'with' && !hasLyrics) return false;
@@ -1576,7 +1609,27 @@ exportAllPdfBtn?.addEventListener(\'click\', async () => {
 [keyI, chordsI, useFlatsI, titleI, titleLatI, titleRuI, titleEnI, artistI].forEach(el => el?.addEventListener(\'input\', renderPreview));
 tagsI?.addEventListener(\'input\', updateWorkspaceState);
 lyricsI?.addEventListener(\'input\', updateWorkspaceState);
-searchI?.addEventListener(\'input\', rerenderList);
+function updateSongsSearchState() {
+  if (songsSearchClearBtn) songsSearchClearBtn.hidden = !searchI?.value.trim();
+}
+
+searchI?.addEventListener(\'input\', () => {
+  if (topbarSearchI && topbarSearchI !== searchI) topbarSearchI.value = searchI.value;
+  updateSongsSearchState();
+  rerenderList();
+});
+topbarSearchI?.addEventListener(\'input\', () => {
+  if (searchI && topbarSearchI !== searchI) searchI.value = topbarSearchI.value;
+  updateSongsSearchState();
+  rerenderList();
+});
+songsSearchClearBtn?.addEventListener(\'click\', () => {
+  searchI.value = \'\';
+  if (topbarSearchI && topbarSearchI !== searchI) topbarSearchI.value = \'\';
+  updateSongsSearchState();
+  rerenderList();
+  searchI.focus();
+});
 sortByI?.addEventListener(\'change\', rerenderList);
 lyricsFilterI?.addEventListener(\'change\', rerenderList);
 keyFilterI?.addEventListener(\'input\', rerenderList);
@@ -1593,6 +1646,8 @@ clearFiltersBtn?.addEventListener(\'click\', () => {
   keyFilterI.value = \'\';
   tagFilterI.value = \'\';
   searchI.value = \'\';
+  if (topbarSearchI && topbarSearchI !== searchI) topbarSearchI.value = \'\';
+  updateSongsSearchState();
   rerenderList();
   filtersPanel.hidden = true;
   updateFiltersButtonState();

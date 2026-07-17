@@ -1,0 +1,664 @@
+html[data-theme='light'] {
+  --color-bg: #f4f7fb;
+  --color-surface: #ffffff;
+  --color-surface-hover: #edf2f7;
+  --color-text-primary: #111827;
+  --color-text-secondary: #5b6677;
+  --color-text-tertiary: #7d899a;
+  --glass-bg: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(15, 23, 42, 0.1);
+  --glass-border-hover: rgba(15, 23, 42, 0.18);
+  --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.1);
+  --glow-color-1: rgba(58, 45, 255, 0.08);
+  --glow-color-2: rgba(0, 212, 255, 0.06);
+  color-scheme: light;
+  background: #f4f7fb;
+}
+
+body.light-mode {
+  --color-bg: #f4f7fb;
+  --color-surface: #ffffff;
+  --color-surface-hover: #edf2f7;
+  --color-text-primary: #111827;
+  --color-text-secondary: #5b6677;
+  --color-text-tertiary: #7d899a;
+  --glass-bg: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(15, 23, 42, 0.1);
+  --glass-border-hover: rgba(15, 23, 42, 0.18);
+  --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.1);
+  --glow-color-1: rgba(58, 45, 255, 0.08);
+  --glow-color-2: rgba(0, 212, 255, 0.06);
+  --bg-body: #ffffff;
+  --bg-hover: #edf2f7;
+  --border: rgba(15, 23, 42, 0.1);
+  --border-color: rgba(15, 23, 42, 0.1);
+  --surface-bg: #f4f7fb;
+  --text-primary: #111827;
+  --text-secondary: #647084;
+  --color-bg-primary: #f4f7fb;
+  --color-text-dim: #7d899a;
+  --color-text-muted: #647084;
+  --primary-light: rgba(58, 45, 255, 0.08);
+  --social-bg: #f8fafc;
+  background: #f4f7fb;
+  color: #111827;
+}
+
+html[data-theme='light'] body,
+body.light-mode #root,
+body.light-mode .app-container,
+body.light-mode main {
+  background-color: #f4f7fb !important;
+}
+
+body.light-mode::before {
+  background: radial-gradient(ellipse at 50% 0%, rgba(58, 45, 255, 0.08) 0%, rgba(0, 212, 255, 0.04) 24%, transparent 62%);
+}
+
+body.light-mode .mobile-bottom-nav {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.16), 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+body.light-mode .mobile-bottom-nav .nav-item {
+  color: #738094;
+}
+
+body.light-mode .mobile-bottom-nav .nav-item:hover {
+  color: #374151;
+}
+
+body.light-mode .mobile-bottom-nav .nav-item.active {
+  color: #111827;
+  background: #edf2f7;
+}
+
+body.light-mode .mobile-bottom-nav .nav-count-badge {
+  box-shadow: 0 0 0 2px #ffffff;
+}
+
+body.light-mode .nav-transition-veil {
+  background: #f4f7fb;
+}
+
+body.light-mode .nav-spinner {
+  border-color: rgba(15, 23, 42, 0.12);
+  border-top-color: #3a2dff;
+}
+
+body.light-mode .lang-switcher-pill,
+body.light-mode .lang-toggle {
+  background: rgba(255, 255, 255, 0.86);
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+body.light-mode .lang-pill-btn:not(.active),
+body.light-mode .lang-btn:not(.active) {
+  color: #647084;
+}
+
+body.light-mode .navbar {
+  background: rgba(255, 255, 255, 0.9);
+  border-bottom-color: rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode .navbar.scrolled {
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.09);
+}
+
+body.light-mode .navbar-logo,
+body.light-mode .navbar .nav-item.active,
+body.light-mode .navbar .nav-item:hover {
+  color: #111827;
+}
+
+body.light-mode .mobile-menu-portal .menu-overlay {
+  background: rgba(15, 23, 42, 0.36);
+}
+
+body.light-mode .menu-drawer {
+  background: #ffffff;
+  border-left-color: rgba(15, 23, 42, 0.1);
+}
+
+body.light-mode :is(.menu-drawer-header, .menu-auth-section, .menu-user-section, .menu-drawer-footer) {
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode :is(.menu-drawer-logo, .menu-user-name, .menu-nav-link.active) {
+  color: #111827;
+}
+
+body.light-mode .menu-nav-link:hover {
+  color: #374151;
+  background: #f4f7fb;
+}
+
+body.light-mode .settings-menu-list,
+body.light-mode .settings-card,
+body.light-mode .profile-card,
+body.light-mode .profile-menu-item {
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+}
+
+/* Home */
+body.light-mode :is(.hub-offline-head, .section-title h3, .cat-text, .fav-info h4, .recent-song-info h4, .recent-info h4, .hub-news-card h4) {
+  color: #111827;
+}
+
+body.light-mode :is(.hub-offline-meta, .hub-cat-arrow, .section-subtitle, .fav-info p, .hub-fav-meta, .recent-song-info p, .recent-info p, .recent-time, .hub-news-card p, .hub-news-card .news-date) {
+  color: #647084;
+}
+
+body.light-mode :is(.hub-search-box, .hub-cat-card, .section-link-btn, .recent-item) {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+}
+
+body.light-mode :is(.hub-search-box, .hub-cat-card):hover,
+body.light-mode .hub-search-box:focus-within {
+  background: #ffffff;
+  border-color: rgba(58, 45, 255, 0.2);
+}
+
+body.light-mode .hub-search-box input {
+  color: #111827;
+}
+
+body.light-mode .hub-search-box input::placeholder {
+  color: #7d899a;
+}
+
+
+/* Song library */
+body.light-mode :is(.songs-title, .track-title) {
+  color: #111827;
+}
+
+body.light-mode :is(.count-badge, .track-artist, .list-placeholder) {
+  color: #647084;
+}
+
+body.light-mode :is(.search-box, .modern-select, .track-item) {
+  background-color: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 7px 20px rgba(15, 23, 42, 0.055);
+}
+
+body.light-mode .search-box input,
+body.light-mode .modern-select {
+  color: #111827;
+}
+
+body.light-mode .search-box input::placeholder,
+body.light-mode .search-box svg {
+  color: #7d899a;
+}
+
+body.light-mode .search-x {
+  color: #475569;
+  background: #e8edf4;
+}
+
+body.light-mode .songs-tabs {
+  border-bottom-color: rgba(15, 23, 42, 0.09);
+}
+
+body.light-mode .songs-tab {
+  color: #718096;
+}
+
+body.light-mode .kp {
+  color: #4b5563;
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+body.light-mode :is(.kp.active, .songs-tab.active) {
+  color: #8d2caf;
+}
+
+body.light-mode .kp.active {
+  color: #ffffff;
+}
+
+body.light-mode .track-key-badge {
+  color: #374151;
+  background: #edf2f7;
+}
+
+body.light-mode .heart-btn:not(.active),
+body.light-mode .songs-web-view .fav-btn:not(.is-fav) {
+  color: #94a3b8;
+}
+
+body.light-mode .heart-btn.active,
+body.light-mode .songs-web-view .fav-btn.is-fav {
+  color: #FF4A4A;
+  fill: #FF4A4A;
+}
+
+body.light-mode .songs-back-to-top {
+  color: #111827;
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+}
+
+/* Song view */
+body.light-mode :is(.sv-meta-pill:not(.key-pill):not(.capo-pill), .sv-inline-controls, .sv-key-btn:not(.active), .sv-capo-select, .sv-font-item, .sv-stepper, .sv-toggle-btn:not(.active)) {
+  background-color: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+body.light-mode .sv-capo-select {
+  color: #111827;
+}
+
+body.light-mode :is(.sv-keys-scroll, .sv-step-val, .sv-divider) {
+  border-color: rgba(15, 23, 42, 0.09);
+}
+
+body.light-mode .sv-divider {
+  background: rgba(15, 23, 42, 0.09);
+}
+
+body.light-mode .sv-segment.active {
+  color: #111827;
+  background: #edf2f7;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode .seq-nav {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
+}
+
+body.light-mode .seq-btn {
+  color: #111827;
+  background: #edf2f7;
+}
+
+/* Saved songs */
+body.light-mode .favorites-page {
+  background:
+    radial-gradient(circle at top left, rgba(255, 89, 122, 0.14), transparent 36%),
+    radial-gradient(circle at top center, rgba(58, 45, 255, 0.055), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(244, 247, 251, 0) 30%);
+}
+
+body.light-mode :is(.fav-hero-type, .fav-hero-meta, .fav-filter-trigger-copy small, .fav-track-num, .fav-track-artist, .fav-empty) {
+  color: #647084;
+}
+
+body.light-mode :is(.fav-hero-title, .fav-hero-meta span, .fav-filter-trigger, .fav-track-title, .fav-empty h3) {
+  color: #111827;
+}
+
+body.light-mode :is(.fav-filter-trigger, .fav-action-pill.secondary, .fav-empty) {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+body.light-mode .fav-filter-chevron {
+  color: #7d899a;
+}
+
+body.light-mode .fav-track-item:hover {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+body.light-mode .fav-track-badge {
+  color: #475569;
+  background: #e9eef5;
+}
+
+body.light-mode .fav-filter-backdrop {
+  background: rgba(15, 23, 42, 0.38);
+}
+
+body.light-mode .fav-filter-sheet {
+  color: #111827;
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 -20px 60px rgba(15, 23, 42, 0.2);
+}
+
+body.light-mode :is(.fav-filter-sheet-header, .fav-filter-sheet-actions) {
+  border-color: rgba(15, 23, 42, 0.09);
+}
+
+body.light-mode .fav-filter-sheet-actions {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+body.light-mode :is(.fav-filter-close, .fav-filter-reset, .fav-filter-key-grid button, .fav-filter-select-wrap select) {
+  color: #475569;
+  background: #f4f7fb;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+body.light-mode :is(.fav-filter-section > label, .fav-filter-section-label, .fav-filter-select-wrap svg) {
+  color: #647084;
+}
+
+body.light-mode .fav-filter-sheet-handle {
+  background: rgba(15, 23, 42, 0.18);
+}
+
+/* Friends and chat list */
+body.is-pwa.light-mode :is(.friends-icon-btn, .friends-search-pill, .friends-view-btn, .friends-inline-back, .friends-panel, .friend-list-row, .chat-group-builder, .chat-group-builder-option),
+body.light-mode :is(.friends-summary-card, .friends-shell-panel) {
+  color: #475569;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(15, 23, 42, 0.09);
+}
+
+body.light-mode :is(.friends-search-pill input, .friends-section-title, .friend-main strong, .friends-summary-card strong, .chat-list-title, .chat-group-builder h3) {
+  color: #111827;
+}
+
+body.light-mode .page-title,
+body.is-pwa.light-mode .friends-page .page-title {
+  color: #111827;
+}
+
+body.light-mode :is(.friends-search-pill input::placeholder, .friends-avatar-chip small, .friends-summary-card span, .friends-section-head p, .friends-muted-message, .friend-main span, .empty-state p, .chat-list-preview, .chat-list-time, .chat-group-builder-copy) {
+  color: #647084;
+}
+
+body.light-mode .friends-search-clear {
+  color: #475569;
+  background: #e9eef5;
+}
+
+body.light-mode .friends-icon-badge {
+  border-color: #ffffff;
+}
+
+body.is-pwa.light-mode .friend-list-row {
+  border-bottom-color: rgba(15, 23, 42, 0.075);
+}
+
+body.is-pwa.light-mode .chat-list-card {
+  background: transparent !important;
+  border-bottom-color: rgba(15, 23, 42, 0.075) !important;
+}
+
+body.is-pwa.light-mode .chat-list-card:hover {
+  background: rgba(255, 255, 255, 0.72) !important;
+}
+
+body.is-pwa.light-mode .chat-list-card.unread {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(58, 45, 255, 0.065)) !important;
+}
+
+body.light-mode .chat-list-dot {
+  border-color: #ffffff;
+}
+
+body.light-mode .chat-list-time.unread {
+  color: #334155;
+}
+
+/* Conversation */
+body.light-mode .chat-page-container {
+  background: #f4f7fb !important;
+}
+
+body.light-mode :is(.chat-header, .chat-input-area) {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode :is(.chat-btn-back, .chat-header-name, .chat-empty-title) {
+  color: #111827;
+}
+
+body.light-mode :is(.chat-btn-icon, .chat-empty-subtitle, .chat-seen-state, .chat-date-separator span) {
+  color: #647084;
+}
+
+body.light-mode .chat-btn-icon:hover {
+  color: #111827;
+  background: #edf2f7;
+}
+
+body.light-mode .chat-message-row.other .chat-bubble {
+  color: #111827;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.055);
+}
+
+body.light-mode .chat-input-form {
+  background: #f4f7fb;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+body.light-mode .chat-input-field {
+  color: #111827;
+}
+
+body.light-mode .chat-input-field::placeholder {
+  color: #7d899a;
+}
+
+body.light-mode .chat-date-separator span {
+  background: #e9eef5;
+}
+
+body.light-mode :is(.chat-modal-content, .group-info-panel) {
+  color: #111827;
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+body.light-mode :is(.chat-modal-title, .chat-modal-btn.cancel) {
+  color: #111827;
+}
+
+body.light-mode :is(.chat-modal-text, .chat-modal-btn.cancel) {
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+body.light-mode .chat-modal-btn.cancel {
+  background: #f4f7fb;
+}
+
+/* Setlists, transpose, news and shared content */
+body.light-mode :is(.sl-card, .sl-modal, .login-prompt, .transpose-controls, .transpose-panel, .news-list-card, .news-article-content, .post-card, .sidebar-widget, .resource-item, .resources-search, .info-content, .contact-container, .info-card) {
+  color: #111827;
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.09);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.055);
+}
+
+body.light-mode :is(.sl-title, .sl-info h3, .sl-modal-header h2, .login-prompt h2, .transpose-header h1, .transpose-panel-header span, .news-hero h1, .news-card-body h2, .news-article-content, .post-user, .post-title, .sidebar-widget h3, .resource-item h3, .info-content h2, .info-card h3) {
+  color: #111827;
+}
+
+body.light-mode :is(.sl-date, .transpose-header p, .transpose-panel-header small, .transpose-output, .news-card-body p, .news-card-meta, .post-card p, .resource-item p, .info-content p) {
+  color: #647084;
+}
+
+body.light-mode :is(.sl-input, .sl-select, .transpose-input, .resources-search input, .form-group textarea) {
+  color: #111827;
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.11);
+}
+
+body.light-mode :is(.sl-modal-close, .btn-ghost, .transpose-copy, .transpose-notation, .post-action-btn, .resource-time, .news-back-btn) {
+  color: #475569;
+  background: #f4f7fb;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+body.light-mode .transpose-notation > button + button,
+body.light-mode .transpose-key-preview,
+body.light-mode .transpose-panel-header {
+  border-color: rgba(15, 23, 42, 0.09);
+}
+
+body.light-mode .transpose-notation button,
+body.light-mode .transpose-output {
+  color: #475569;
+}
+
+body.light-mode :is(.community-page, .resources-page, .info-page, .contact-page) {
+  color: #111827;
+  background: #f4f7fb;
+}
+
+body.light-mode :is(.community-header, .community-tabs, .resources-header) {
+  border-color: rgba(15, 23, 42, 0.09);
+}
+
+/* Profile, settings and shared modals */
+body.light-mode .profile-avatar {
+  background: linear-gradient(135deg, #eef2f7, #dde5ef);
+}
+
+body.light-mode .profile-username {
+  background: #edf2f7;
+}
+
+body.light-mode :is(.profile-link-btn:hover, .lang-option-btn:hover, .settings-btn.secondary, .req-note) {
+  background: #edf2f7;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+body.light-mode .settings-btn.secondary {
+  color: #334155;
+}
+
+body.light-mode :is(.modal-content, .modal-card) {
+  color: #111827;
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+body.light-mode .modal-overlay {
+  background: rgba(15, 23, 42, 0.38);
+}
+
+/* Authentication surfaces shown inside the installed app */
+body.light-mode :is(.login-page-container, .register-page-container, .login-form-section, .register-form-section) {
+  color: #111827;
+  background: #f4f7fb;
+}
+
+body.light-mode :is(.login-input-group input, .register-input-group input, .login-social-btn, .register-social-btn) {
+  color: #111827;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(15, 23, 42, 0.11);
+}
+
+body.light-mode :is(.login-input-group label, .register-input-group label) {
+  color: #647084;
+}
+
+body.light-mode :is(.login-chk-box, .register-chk-box) {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.2);
+}
+
+body.light-mode :is(.login-social-sep::before, .login-social-sep::after, .register-social-sep::before, .register-social-sep::after) {
+  background: rgba(15, 23, 42, 0.09);
+}
+
+/* Loading and skeletons */
+body.light-mode .skeleton-overlay {
+  background: #f4f7fb;
+}
+
+body.light-mode :is(.skeleton-pulse, .skeleton-box, .skeleton-line) {
+  background: linear-gradient(90deg, #e7ecf3 0%, #f8fafc 50%, #e7ecf3 100%);
+  background-size: 200% 100%;
+}
+
+body.light-mode .settings-menu-item {
+  border-bottom-color: rgba(15, 23, 42, 0.07);
+}
+
+body.light-mode .settings-menu-item:hover,
+body.light-mode .settings-menu-item.active,
+body.light-mode .menu-icon,
+body.light-mode .profile-menu-icon {
+  background: rgba(15, 23, 42, 0.055);
+}
+
+body.light-mode .menu-chevron {
+  stroke: rgba(15, 23, 42, 0.38);
+}
+
+body.light-mode .remember-device-card,
+body.light-mode .session-item,
+body.light-mode .request-item,
+body.light-mode .email-status-box,
+body.light-mode .app-theme-setting {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.09);
+}
+
+body.light-mode .app-theme-segmented {
+  background: #e9eef5;
+}
+
+body.light-mode .app-theme-segmented button.active {
+  background: #ffffff;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.12);
+}
+
+body.light-mode .form-group input,
+body.light-mode .form-group select,
+body.light-mode .full-width-inp {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+body.light-mode .form-group input:focus,
+body.light-mode .full-width-inp:focus {
+  background: #ffffff;
+}
+
+body.light-mode :is(.hub-search-box, .hub-cat-card, .songs-search, .songs-filter-btn, .friends-icon-btn, .friends-search-pill, .friends-tab, .friends-list-row, .song-content-card, .transpose-controls, .song-tabs) {
+  background-color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+body.light-mode :is(.hub-search-box, .songs-search, .friends-search-pill) input {
+  color: #111827;
+}
+
+body.light-mode :is(.hub-search-box, .songs-search, .friends-search-pill) input::placeholder {
+  color: #7d899a;
+}
+
+body.light-mode :is(.song-view-container, .songs-app-page, .mobile-hub, .friends-page, .profile-page, .settings-page) {
+  color: #111827;
+}
+
+body.light-mode .load-more-btn {
+  color: #5b6677 !important;
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+body.light-mode.outlined-chords .chord {
+  background: rgba(58, 45, 255, 0.07);
+  border-color: rgba(58, 45, 255, 0.18);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  body.light-mode .mobile-bottom-nav {
+    background: #ffffff;
+  }
+}

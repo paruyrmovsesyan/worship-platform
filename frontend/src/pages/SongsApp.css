@@ -10,6 +10,45 @@
   margin: 0 auto;
 }
 
+.songs-back-to-top {
+  position: fixed;
+  right: max(18px, env(safe-area-inset-right, 0px));
+  bottom: calc(var(--bottom-nav-total-offset, 88px) + 16px);
+  z-index: 950;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(28, 28, 30, 0.96);
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: songsBackToTopIn 0.18s ease-out;
+}
+
+body.wp-standalone-app > .songs-back-to-top,
+body.is-pwa > .songs-back-to-top {
+  position: fixed;
+  z-index: 1000;
+}
+
+body.website-theme > .songs-back-to-top {
+  bottom: 24px;
+}
+
+.songs-back-to-top:active {
+  transform: scale(0.94);
+}
+
+@keyframes songsBackToTopIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ── Header ── */
 .songs-header {
   display: flex;

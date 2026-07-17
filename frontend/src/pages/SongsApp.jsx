@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -8,11 +9,29 @@ import { usePageReady } from '../hooks/usePageReady';
 import './SongsApp.css';
 
 const KEYS = ['All','C','Cm','D','Dm','E','Em','F','G','Gm','A','Am','B','Bm','Eb','Bb','F#'];
+const SONGS_VIEW_STATE_KEY = 'songs_app_view_state_v1';
+const SONGS_RESTORE_PENDING_KEY = 'songs_app_restore_pending';
+
+function readSongsRestoreState() {
+  try {
+    if (sessionStorage.getItem(SONGS_RESTORE_PENDING_KEY) !== '1') return null;
+    const saved = JSON.parse(sessionStorage.getItem(SONGS_VIEW_STATE_KEY) || 'null');
+    if (!saved || Date.now() - Number(saved.savedAt || 0) > 30 * 60 * 1000) {
+      sessionStorage.removeItem(SONGS_RESTORE_PENDING_KEY);
+      return null;
+    }
+    return saved;
+  } catch {
+    return null;
+  }
+}
 
 export default function SongsApp() {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
+  const [restoreState] = useState(readSongsRestoreState);
+  const initialQuery = new URLSearchParams(location.search).get('q') || '';
 
   const timeText = {
     am: { today: 'Այսօր', yesterday: 'Երեկ', days: 'օր առաջ', weeks: 'շաբ. առաջ', months: 'ամիս առաջ', years: 'տարի առաջ' },
@@ -39,22 +58,36 @@ export default function SongsApp() {
   
   usePageReady(isLoading);
   
-  const [selectedKey, setSelectedKey] = useState('All');
-  const [activeTab, setActiveTab] = useState('all'); // 'all' or 'favorites'
-  const [sortBy, setSortBy]       = useState('recent');
+  const [selectedKey, setSelectedKey] = useState(restoreState?.selectedKey || 'All');
+  const [sortBy, setSortBy]       = useState(restoreState?.sortBy || 'recent');
   const [searchQuery, setSearchQuery] = useState(
-    new URLSearchParams(location.search).get('q') || ''
+    restoreState?.searchQuery ?? initialQuery
   );
-  const [visibleCount, setVisibleCount] = useState(15);
+  const [visibleCount, setVisibleCount] = useState(Math.max(15, Number(restoreState?.visibleCount) || 15));
+  const [showBackToTop, setShowBackToTop] = useState(() => window.scrollY > 520);
+  const filterEffectReady = useRef(false);
+  const scrollRestored = useRef(false);
 
   useEffect(() => {
+    if (!filterEffectReady.current) {
+      filterEffectReady.current = true;
+      return;
+    }
     setVisibleCount(15);
-  }, [searchQuery, selectedKey, sortBy, activeTab]);
+  }, [searchQuery, selectedKey, sortBy]);
 
   useEffect(() => {
+    if (restoreState) return;
     const q = new URLSearchParams(location.search).get('q') || '';
     setSearchQuery(q);
-  }, [location.search]);
+  }, [location.search, restoreState]);
+
+  useEffect(() => {
+    const handleScroll = () => setShowBackToTop(window.scrollY > 520);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     fetch('/api.php')
@@ -89,21 +122,34 @@ export default function SongsApp() {
     setFavorites(newFavs);
 
     try {
-      await fetch('/user_favorites_api.php', {
+      const response = await fetch('/user_favorites_api.php?action=toggle_favorite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ song_id: songId, action: isFav ? 'remove' : 'add' })
+        body: JSON.stringify({ song_id: songId })
       });
-    } catch {}
+      const data = await response.json();
+      if (!response.ok || typeof data.favorite !== 'boolean') {
+        throw new Error(data.error || 'Favorite update failed');
+      }
+
+      setFavorites(current => {
+        const synced = new Set(current);
+        if (data.favorite) synced.add(songId);
+        else synced.delete(songId);
+        return synced;
+      });
+    } catch {
+      setFavorites(current => {
+        const rolledBack = new Set(current);
+        if (isFav) rolledBack.add(songId);
+        else rolledBack.delete(songId);
+        return rolledBack;
+      });
+    }
   };
 
   const filtered = songs
     .filter(s => {
-      // Tab filter
-      if (activeTab === 'favorites' && !favorites.has(parseInt(s.id))) {
-        return false;
-      }
-
       // Search filter
       const q = searchQuery.toLowerCase();
       const matchQ = !q 
@@ -127,6 +173,44 @@ export default function SongsApp() {
     });
 
   const visibleSongs = filtered.slice(0, visibleCount);
+
+  useEffect(() => {
+    if (isLoading || !restoreState || scrollRestored.current) return undefined;
+
+    let secondFrame = 0;
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+        window.scrollTo({
+          top: Math.min(Math.max(0, Number(restoreState.scrollY) || 0), maxScroll),
+          left: 0,
+          behavior: 'auto'
+        });
+        scrollRestored.current = true;
+        sessionStorage.removeItem(SONGS_RESTORE_PENDING_KEY);
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      if (secondFrame) window.cancelAnimationFrame(secondFrame);
+    };
+  }, [isLoading, restoreState, visibleSongs.length]);
+
+  const openSong = (songId) => {
+    try {
+      sessionStorage.setItem(SONGS_VIEW_STATE_KEY, JSON.stringify({
+        scrollY: window.scrollY,
+        searchQuery,
+        selectedKey,
+        sortBy,
+        visibleCount,
+        savedAt: Date.now()
+      }));
+      sessionStorage.setItem(SONGS_RESTORE_PENDING_KEY, '1');
+    } catch {}
+    navigate(`/song/${songId}`);
+  };
 
   return (
     <div className="songs-page animate-fade-in">
@@ -160,19 +244,27 @@ export default function SongsApp() {
       {/* Tabs */}
       <div className="songs-tabs">
         <button 
-          className={`songs-tab ${activeTab === 'all' ? 'active' : ''}`}
-          onClick={() => setActiveTab('all')}
+          className="songs-tab active"
+          type="button"
         >
           {t('hub.categories.songs', 'Բոլորը')}
         </button>
         {user && (
           <button 
-            className={`songs-tab ${activeTab === 'favorites' ? 'active' : ''}`}
-            onClick={() => setActiveTab('favorites')}
+            className="songs-tab"
+            type="button"
+            onClick={() => navigate('/favorites')}
           >
-            {t('hub.myFavorites', 'Իմ Սիրվածները')}
+            {t('favorites.title', 'Պահպանված երգեր')}
           </button>
         )}
+        <button
+          className="songs-tab"
+          type="button"
+          onClick={() => navigate('/transpose')}
+        >
+          {t('nav.transposer')}
+        </button>
       </div>
 
       {/* Filters & Sorting */}
@@ -219,7 +311,7 @@ export default function SongsApp() {
         ) : (
           <>
             {visibleSongs.map((song, idx) => (
-              <div key={song.id} className="track-item animate-fade-in" style={{ animationDelay: `${Math.min(idx * 0.03, 0.5)}s` }} onClick={() => navigate(`/song/${song.id}`)}>
+              <div key={song.id} className="track-item animate-fade-in" style={{ animationDelay: `${Math.min(idx * 0.03, 0.5)}s` }} onClick={() => openSong(song.id)}>
             
             <div className="track-number desk-only dim">
               {(idx + 1).toString().padStart(2, '0')}
@@ -273,6 +365,21 @@ export default function SongsApp() {
           </>
         )}
       </div>
+
+      {showBackToTop && createPortal(
+        <button
+          type="button"
+          className="songs-back-to-top"
+          aria-label={t('songs.backToTop')}
+          title={t('songs.backToTop')}
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="m6 15 6-6 6 6" />
+          </svg>
+        </button>,
+        document.body
+      )}
     </div>
   );
 }

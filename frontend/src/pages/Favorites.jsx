@@ -1,15 +1,19 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { getSongCoverStyle } from '../utils/songCover';
+import { DEFAULT_SAVED_SONG_SORT, normalizeSavedSongSort, sortSavedSongs } from '../utils/savedSongs';
 import { usePageReady } from '../hooks/usePageReady';
 import './Favorites.css';
 
 export default function Favorites() {
   const [songs, setSongs] = useState([]);
   const [activeKeyFilter, setActiveKeyFilter] = useState('all');
+  const [sortBy, setSortBy] = useState(() => normalizeSavedSongSort(localStorage.getItem('favorites_sort') || DEFAULT_SAVED_SONG_SORT));
+  const [filterOpen, setFilterOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   usePageReady(loading);
   const [error, setError] = useState(null);
@@ -64,9 +68,55 @@ export default function Favorites() {
   }, [songs]);
 
   const filteredSongs = useMemo(() => {
-    if (activeKeyFilter === 'all') return songs;
-    return songs.filter(song => (song.target_key || song.song_key) === activeKeyFilter);
-  }, [activeKeyFilter, songs]);
+    const keyFiltered = activeKeyFilter === 'all'
+      ? songs
+      : songs.filter(song => (song.target_key || song.song_key) === activeKeyFilter);
+
+    return sortSavedSongs(
+      keyFiltered,
+      sortBy,
+      song => getLocalizedTitle(song, language),
+      language
+    );
+  }, [activeKeyFilter, language, songs, sortBy]);
+
+  const handleSortChange = (event) => {
+    const nextSort = normalizeSavedSongSort(event.target.value);
+    setSortBy(nextSort);
+    localStorage.setItem('favorites_sort', nextSort);
+  };
+
+  const sortOptions = [
+    ['saved_newest', t('favorites.sortSavedNewest')],
+    ['saved_oldest', t('favorites.sortSavedOldest')],
+    ['title_asc', t('favorites.sortTitle')],
+    ['artist_asc', t('favorites.sortArtist')],
+    ['key_asc', t('favorites.sortKey')],
+    ['bpm_asc', t('favorites.sortBpmAsc')],
+    ['bpm_desc', t('favorites.sortBpmDesc')],
+  ];
+  const activeSortLabel = sortOptions.find(([value]) => value === sortBy)?.[1] || sortOptions[0][1];
+
+  useEffect(() => {
+    if (!filterOpen) return undefined;
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') setFilterOpen(false);
+    };
+    document.body.classList.add('favorites-filter-open');
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.body.classList.remove('favorites-filter-open');
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [filterOpen]);
+
+  const openSavedSong = (songId) => {
+    const params = new URLSearchParams({ list: 'favorites', sort: sortBy });
+    if (activeKeyFilter !== 'all') params.set('key', activeKeyFilter);
+    navigate(`/song/${songId}?${params.toString()}`);
+  };
 
   useEffect(() => {
     if (activeKeyFilter === 'all') return;
@@ -84,11 +134,15 @@ export default function Favorites() {
         body: JSON.stringify({ song_id: songId })
       });
       const data = await res.json();
-      if (!data.favorite) {
-        setSongs(prev => prev.filter(s => s.id !== songId));
+      if (!res.ok || typeof data.favorite !== 'boolean') {
+        throw new Error(data.error || 'Favorite update failed');
+      }
+      if (data.favorite === false) {
+        setSongs(prev => prev.filter(s => String(s.id) !== String(songId)));
       }
     } catch (err) {
       console.error(err);
+      setError(t('favorites.errorLoad'));
     }
   };
 
@@ -131,7 +185,7 @@ export default function Favorites() {
           <div className="fav-action-row animate-fade-in">
             <button
               className="fav-action-pill primary"
-              onClick={() => filteredSongs[0] && navigate(`/song/${filteredSongs[0].id}?list=favorites`)}
+              onClick={() => filteredSongs[0] && openSavedSong(filteredSongs[0].id)}
               disabled={filteredSongs.length === 0}
             >
               <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -143,26 +197,22 @@ export default function Favorites() {
           </div>
         )}
 
-        {availableKeys.length > 0 && !loading && (
-          <div className="fav-filter-row animate-fade-in">
-            <button
-              type="button"
-              className={`fav-filter-chip ${activeKeyFilter === 'all' ? 'active' : ''}`}
-              onClick={() => setActiveKeyFilter('all')}
-            >
-              {t('favorites.filterAll')}
-            </button>
-            {availableKeys.map(key => (
-              <button
-                key={key}
-                type="button"
-                className={`fav-filter-chip ${activeKeyFilter === key ? 'active' : ''}`}
-                onClick={() => setActiveKeyFilter(key)}
-              >
-                {key}
-              </button>
-            ))}
-          </div>
+        {songs.length > 0 && !loading && (
+          <button className="fav-filter-trigger animate-fade-in" type="button" onClick={() => setFilterOpen(true)}>
+            <span className="fav-filter-trigger-icon">
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M4 6h16M7 12h10M10 18h4" />
+              </svg>
+            </span>
+            <span className="fav-filter-trigger-copy">
+              <strong>{t('favorites.filterAndSort')}</strong>
+              <small>{activeSortLabel}{activeKeyFilter !== 'all' ? ` · ${activeKeyFilter}` : ''}</small>
+            </span>
+            {activeKeyFilter !== 'all' && <span className="fav-filter-count">1</span>}
+            <svg className="fav-filter-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
         )}
 
         {loading ? (
@@ -194,7 +244,7 @@ export default function Favorites() {
                 key={song.id} 
                 className="fav-track-item animate-fade-in"
                 style={{ animationDelay: `${Math.min(idx * 0.03, 0.5)}s` }}
-                onClick={() => navigate(`/song/${song.id}?list=favorites`)}
+                onClick={() => openSavedSong(song.id)}
               >
                 <div className="fav-track-num">{idx + 1}</div>
 
@@ -212,6 +262,7 @@ export default function Favorites() {
                 
                 <div className="fav-track-meta">
                   {(song.target_key || song.song_key) && <span className="fav-track-badge">{song.target_key || song.song_key}</span>}
+                  {Number.parseInt(song.bpm, 10) > 0 && <span className="fav-track-badge fav-track-bpm">BPM {song.bpm}</span>}
                   
                   <button 
                     className="fav-remove-btn"
@@ -255,6 +306,50 @@ export default function Favorites() {
           </div>
         )}
       </div>
+
+      {filterOpen && createPortal(
+        <div className="fav-filter-backdrop" role="presentation" onMouseDown={() => setFilterOpen(false)}>
+          <section className="fav-filter-sheet" role="dialog" aria-modal="true" aria-labelledby="fav-filter-title" onMouseDown={event => event.stopPropagation()}>
+            <div className="fav-filter-sheet-handle" aria-hidden="true" />
+            <header className="fav-filter-sheet-header">
+              <h2 id="fav-filter-title">{t('favorites.filterAndSort')}</h2>
+              <button type="button" className="fav-filter-close" onClick={() => setFilterOpen(false)} aria-label={t('common.close', 'Փակել')}>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              </button>
+            </header>
+
+            <div className="fav-filter-section">
+              <label htmlFor="favorites-sort">{t('favorites.sortLabel')}</label>
+              <div className="fav-filter-select-wrap">
+                <select id="favorites-sort" value={sortBy} onChange={handleSortChange}>
+                  {sortOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><polyline points="6 9 12 15 18 9" /></svg>
+              </div>
+            </div>
+
+            <div className="fav-filter-section">
+              <span className="fav-filter-section-label">{t('favorites.keyFilter')}</span>
+              <div className="fav-filter-key-grid">
+                <button type="button" className={activeKeyFilter === 'all' ? 'active' : ''} onClick={() => setActiveKeyFilter('all')}>{t('favorites.filterAll')}</button>
+                {availableKeys.map(key => (
+                  <button key={key} type="button" className={activeKeyFilter === key ? 'active' : ''} onClick={() => setActiveKeyFilter(key)}>{key}</button>
+                ))}
+              </div>
+            </div>
+
+            <footer className="fav-filter-sheet-actions">
+              <button type="button" className="fav-filter-reset" onClick={() => {
+                setActiveKeyFilter('all');
+                setSortBy(DEFAULT_SAVED_SONG_SORT);
+                localStorage.setItem('favorites_sort', DEFAULT_SAVED_SONG_SORT);
+              }}>{t('favorites.resetFilters')}</button>
+              <button type="button" className="fav-filter-apply" onClick={() => setFilterOpen(false)}>{t('favorites.applyFilters')}</button>
+            </footer>
+          </section>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

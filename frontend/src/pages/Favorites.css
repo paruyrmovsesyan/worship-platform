@@ -87,35 +87,260 @@
   margin-bottom: 18px;
 }
 
-.fav-filter-row {
-  display: flex;
-  gap: 10px;
+.fav-filter-trigger {
+  width: 100%;
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto 18px;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 13px 9px 10px;
   margin-bottom: 18px;
-  overflow-x: auto;
-  padding-bottom: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
 }
 
-.fav-filter-chip {
-  min-height: 40px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.74);
+.fav-filter-trigger:hover {
+  background: rgba(255, 255, 255, 0.065);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.fav-filter-trigger-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff7187;
+  background: rgba(255, 74, 106, 0.11);
+}
+
+.fav-filter-trigger-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.fav-filter-trigger-copy strong {
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.fav-filter-trigger-copy small {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.54);
+  font-size: 0.76rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fav-filter-count {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  font-size: 0.86rem;
-  font-weight: 700;
-  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  background: #ff536f;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
 }
 
-.fav-filter-chip.active {
-  background: linear-gradient(135deg, rgba(255, 74, 106, 0.95) 0%, rgba(255, 127, 150, 0.95) 100%);
-  border-color: transparent;
+.fav-filter-chevron {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+body.favorites-filter-open {
+  overflow: hidden;
+}
+
+.fav-filter-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2400;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-top: max(24px, env(safe-area-inset-top, 0px));
+  background: rgba(2, 3, 8, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: favBackdropIn 0.18s ease-out;
+}
+
+/* pwa-init gives every direct body child position: relative. The filter is
+   portalled to body, so restore viewport positioning above the app dock. */
+body.wp-standalone-app > .fav-filter-backdrop,
+body.is-pwa > .fav-filter-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100100;
+}
+
+.fav-filter-sheet {
+  width: min(100%, 560px);
+  max-height: calc(100dvh - max(24px, env(safe-area-inset-top, 0px)));
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 0;
+  border-radius: 24px 24px 0 0;
+  background: #15151f;
   color: #fff;
-  box-shadow: 0 10px 24px rgba(255, 74, 106, 0.18);
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.46);
+  animation: favSheetIn 0.22s ease-out;
+}
+
+.fav-filter-sheet-handle {
+  width: 38px;
+  height: 4px;
+  margin: 9px auto 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.19);
+}
+
+.fav-filter-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.fav-filter-sheet-header h2 {
+  margin: 0;
+  font-size: 1.08rem;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+.fav-filter-close {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.fav-filter-section {
+  padding: 16px 18px 2px;
+}
+
+.fav-filter-section > label,
+.fav-filter-section-label {
+  display: block;
+  margin-bottom: 9px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.fav-filter-select-wrap {
+  position: relative;
+}
+
+.fav-filter-select-wrap select {
+  width: 100%;
+  height: 48px;
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0 42px 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.055);
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.fav-filter-select-wrap svg {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.46);
+  pointer-events: none;
+}
+
+.fav-filter-key-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 8px;
+}
+
+.fav-filter-key-grid button {
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.fav-filter-key-grid button.active {
+  border-color: rgba(255, 99, 126, 0.7);
+  background: rgba(255, 74, 106, 0.16);
+  color: #ff8799;
+}
+
+.fav-filter-sheet-actions {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 10px;
+  margin-top: 18px;
+  padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(21, 21, 31, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.fav-filter-sheet-actions button {
+  min-height: 46px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.fav-filter-reset {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.fav-filter-apply {
+  border: 0;
+  background: #ff536f;
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(255, 74, 106, 0.2);
+}
+
+@keyframes favBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes favSheetIn {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .fav-action-pill {
@@ -366,6 +591,27 @@
   }
 
   .fav-track-badge {
+    display: none;
+  }
+
+  .fav-filter-sheet {
+    width: 100%;
+  }
+}
+
+@media (min-width: 700px) {
+  .fav-filter-backdrop {
+    align-items: center;
+    padding: 24px;
+  }
+
+  .fav-filter-sheet {
+    max-height: min(720px, calc(100dvh - 48px));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+  }
+
+  .fav-filter-sheet-handle {
     display: none;
   }
 }

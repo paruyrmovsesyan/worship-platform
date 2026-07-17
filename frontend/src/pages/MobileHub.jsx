@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { getSongCoverStyle } from '../utils/songCover';
+import { sortSavedSongs } from '../utils/savedSongs';
 import { fallbackNews, fetchNewsList, formatNewsDate } from '../utils/news';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
@@ -101,13 +102,19 @@ export default function MobileHub() {
 
       // Fetch favorites
       fetch('/user_favorites_api.php?action=get_favorites')
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error('Saved songs request failed');
+          return res.json();
+        })
         .then(data => {
           if (Array.isArray(data)) {
-            setFavorites(data.slice(0, 6));
+            setFavorites(data);
           }
         })
         .catch(err => console.error(err));
+    } else {
+      setFavorites([]);
+      setUpcomingSetlist(null);
     }
   }, [user]);
 
@@ -144,6 +151,13 @@ export default function MobileHub() {
   const openFavorites = () => {
     guardPath('/favorites', () => navigate('/favorites'));
   };
+
+  const visibleFavorites = useMemo(() => sortSavedSongs(
+    favorites,
+    'saved_newest',
+    song => getLocalizedTitle(song, language),
+    language
+  ).slice(0, 6), [favorites, language]);
 
   return (
     <div className="mobile-hub animate-fade-in">
@@ -225,6 +239,11 @@ export default function MobileHub() {
               <div className="cat-icon bg-orange"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></div>
               <span className="cat-text">{t('songRequest.title', 'Խնդրել Երգ')}</span>
             </button>
+            <button className="hub-cat-card hub-cat-card-wide" onClick={() => guardPath('/transpose', () => navigate('/transpose'))}>
+              <div className="cat-icon bg-transpose"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M7 4 4 7l3 3M20 17H4m13-3 3 3-3 3" /></svg></div>
+              <span className="cat-text">{t('hub.categories.transposer')}</span>
+              <svg className="hub-cat-arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+            </button>
           </div>
         </div>
 
@@ -259,29 +278,43 @@ export default function MobileHub() {
                 <p className="section-subtitle">{favorites.length} {t('favorites.savedSongs')}</p>
               </div>
               <button className="section-link-btn" type="button" onClick={openFavorites}>
-                {t('favorites.title')}
+                {t('favorites.viewAll')}
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
               </button>
             </div>
             
-            <div className="horizontal-scroll hub-horizontal">
-              {favorites.map((song, i) => {
+            <div className="hub-horizontal">
+              {visibleFavorites.map((song, i) => {
                 const songId = song.song_id || song.id;
+                const savedKey = song.target_key || song.song_key || '?';
+                const songTitle = getLocalizedTitle(song, language);
                 return (
-                <div key={song.id || songId} className="hub-fav-card" onClick={() => guardPath(`/song/${songId}?list=favorites`, () => navigate(`/song/${songId}?list=favorites`))}>
+                <button
+                  key={song.id || songId}
+                  type="button"
+                  className="hub-fav-card"
+                  aria-label={songTitle}
+                  onClick={() => guardPath(`/song/${songId}?list=favorites&sort=saved_newest`, () => navigate(`/song/${songId}?list=favorites&sort=saved_newest`))}
+                >
                   <div
                     className="hub-fav-cover"
-                    style={getSongCoverStyle(songId || i, song.song_title || song.artist || '')}
+                    style={getSongCoverStyle(songId || i, song.title || songTitle || savedKey)}
                   >
-                    <div className="hub-fav-cover-badge">♥</div>
-                    <span className="hub-fav-cover-key">{song.song_key || t('favorites.favoriteTag')}</span>
+                    <div className="hub-fav-cover-badge" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+                    </div>
+                    <span className="hub-fav-cover-key">{savedKey}</span>
                   </div>
                   <div className="fav-info">
-                    <h4>{getLocalizedTitle(song, language)}</h4>
+                    <h4>{songTitle}</h4>
+                    <p className="hub-fav-meta">
+                      <span>{t('favorites.keyTag')} {savedKey}</span>
+                      {Number.parseInt(song.bpm, 10) > 0 && <span>BPM {song.bpm}</span>}
+                    </p>
                   </div>
-                </div>
+                </button>
               )})}
             </div>
           </div>

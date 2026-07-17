@@ -11,6 +11,7 @@
   })();
 
   var PAGE_APP_MODES_CACHE_KEY = "wp_page_app_modes_v1";
+  var APP_SOURCE_SESSION_KEY = "wp_active_app_source";
   var pageAppModesCache = null;
 
   function getCurrentPath() {
@@ -43,6 +44,7 @@
     try {
       var source = (new URL(window.location.href).searchParams.get("source") || "").toLowerCase();
       if (source === "pwa" || source === "admin-app") {
+        window.sessionStorage.setItem(APP_SOURCE_SESSION_KEY, source);
         return source;
       }
     } catch (err) {
@@ -50,7 +52,22 @@
     }
 
     if (hasNativeStandaloneDisplayMode()) {
-      return getExpectedAppSource();
+      var expectedSource = getExpectedAppSource();
+      try {
+        window.sessionStorage.setItem(APP_SOURCE_SESSION_KEY, expectedSource);
+      } catch (err) {
+        // ignore storage issues
+      }
+      return expectedSource;
+    }
+
+    try {
+      var storedSource = (window.sessionStorage.getItem(APP_SOURCE_SESSION_KEY) || "").toLowerCase();
+      if (storedSource === "pwa" || storedSource === "admin-app") {
+        return storedSource;
+      }
+    } catch (err) {
+      // ignore storage issues
     }
 
     return "";
@@ -244,38 +261,40 @@
       var scope = getAppScope();
       var isAdmin = scope === "admin";
       document.documentElement.classList.add("wp-standalone-app");
+      document.documentElement.classList.toggle("wp-admin-standalone", isAdmin);
       document.body.classList.add("wp-standalone-app", isAdmin ? "wp-admin-app" : "wp-main-app");
       document.body.dataset.wpAppScope = scope;
 
       if (!document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')) {
         var statusMeta = document.createElement("meta");
         statusMeta.name = "apple-mobile-web-app-status-bar-style";
-        statusMeta.content = "black-translucent";
+        statusMeta.content = isAdmin ? "default" : "black-translucent";
         document.head.appendChild(statusMeta);
       }
 
       var themeMeta = document.querySelector('meta[name="theme-color"]');
       if (themeMeta) {
-        themeMeta.setAttribute("content", isAdmin ? "#0f1730" : "#0b1020");
+        themeMeta.setAttribute("content", isAdmin ? "#f4f7fe" : "#0b1020");
       }
 
       if (document.getElementById("wpStandaloneChromeStyles")) return;
       var style = document.createElement("style");
       style.id = "wpStandaloneChromeStyles";
-      style.textContent =
-        "html.wp-standalone-app{background:#0b1020;color-scheme:dark}" +
-        "body.wp-standalone-app{min-height:100svh;padding-top:max(10px,env(safe-area-inset-top));padding-right:env(safe-area-inset-right, 0px);padding-bottom:max(18px,env(safe-area-inset-bottom));padding-left:env(safe-area-inset-left, 0px);overscroll-behavior-y:contain}" +
-        "body.wp-main-app{background:radial-gradient(circle at top left,rgba(107,124,255,.18),transparent 28%),radial-gradient(circle at top right,rgba(87,214,195,.14),transparent 24%),linear-gradient(180deg,#0b1020 0%,#10182f 100%)}" +
-        "body.wp-admin-app{background:radial-gradient(circle at top left,rgba(107,124,255,.2),transparent 26%),radial-gradient(circle at top right,rgba(87,214,195,.1),transparent 20%),linear-gradient(180deg,#0f1730 0%,#14203f 100%)}" +
-        "body.wp-standalone-app::before{content:'';position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 22%),radial-gradient(circle at 20% 0%,rgba(255,255,255,.05),transparent 24%);z-index:0}" +
-        "body.wp-standalone-app>*{position:relative;z-index:1}" +
-        "body.wp-standalone-app .container,body.wp-standalone-app .shell,body.wp-standalone-app:not(.wp-main-app) main{max-width:min(1480px,calc(100vw - 2px));margin-inline:auto}" +
-        "body.wp-standalone-app .topbar,body.wp-standalone-app .toolbar,body.wp-standalone-app .header,body.wp-standalone-app .search-card,body.wp-standalone-app .table-card,body.wp-standalone-app .panel,body.wp-standalone-app .card{backdrop-filter:blur(20px) saturate(140%)}" +
-        "body.wp-standalone-app .topbar,body.wp-standalone-app .toolbar,body.wp-standalone-app .header{border:1px solid rgba(255,255,255,.07);box-shadow:0 20px 44px rgba(0,0,0,.28)}" +
-        "body.wp-admin-app .topbar{background:rgba(10,16,32,.52)}" +
-        "body.wp-standalone-app .section{padding-bottom:max(28px,env(safe-area-inset-bottom))}" +
-        "body.wp-standalone-app #wpInstallBanner,body.wp-standalone-app .wp-install{display:none!important}" +
-        "@media (max-width:720px){body.wp-standalone-app{padding-top:max(8px,env(safe-area-inset-top));padding-right:env(safe-area-inset-right, 0px);padding-bottom:max(16px,env(safe-area-inset-bottom));padding-left:env(safe-area-inset-left, 0px)}}";
+      style.textContent = isAdmin
+        ? "html.wp-admin-standalone{background:#f4f7fe;color-scheme:light}" +
+          "body.wp-admin-app{min-height:100dvh;margin:0;padding:0;overflow:hidden;overscroll-behavior:none}" +
+          "body.wp-admin-app #wpInstallBanner,body.wp-admin-app .wp-install{display:none!important}"
+        : "html.wp-standalone-app{background:#0b1020;color-scheme:dark}" +
+          "body.wp-standalone-app{min-height:100svh;padding-top:max(10px,env(safe-area-inset-top));padding-right:env(safe-area-inset-right, 0px);padding-bottom:max(18px,env(safe-area-inset-bottom));padding-left:env(safe-area-inset-left, 0px);overscroll-behavior-y:contain}" +
+          "body.wp-main-app{background:radial-gradient(circle at top left,rgba(107,124,255,.18),transparent 28%),radial-gradient(circle at top right,rgba(87,214,195,.14),transparent 24%),linear-gradient(180deg,#0b1020 0%,#10182f 100%)}" +
+          "body.wp-standalone-app::before{content:'';position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 22%),radial-gradient(circle at 20% 0%,rgba(255,255,255,.05),transparent 24%);z-index:0}" +
+          "body.wp-standalone-app>*{position:relative;z-index:1}" +
+          "body.wp-standalone-app .container,body.wp-standalone-app .shell{max-width:min(1480px,calc(100vw - 2px));margin-inline:auto}" +
+          "body.wp-standalone-app .topbar,body.wp-standalone-app .toolbar,body.wp-standalone-app .header,body.wp-standalone-app .search-card,body.wp-standalone-app .table-card,body.wp-standalone-app .panel,body.wp-standalone-app .card{backdrop-filter:blur(20px) saturate(140%)}" +
+          "body.wp-standalone-app .topbar,body.wp-standalone-app .toolbar,body.wp-standalone-app .header{border:1px solid rgba(255,255,255,.07);box-shadow:0 20px 44px rgba(0,0,0,.28)}" +
+          "body.wp-standalone-app .section{padding-bottom:max(28px,env(safe-area-inset-bottom))}" +
+          "body.wp-standalone-app #wpInstallBanner,body.wp-standalone-app .wp-install{display:none!important}" +
+          "@media (max-width:720px){body.wp-standalone-app{padding-top:max(8px,env(safe-area-inset-top));padding-right:env(safe-area-inset-right, 0px);padding-bottom:max(16px,env(safe-area-inset-bottom));padding-left:env(safe-area-inset-left, 0px)}}";
       document.head.appendChild(style);
     };
 

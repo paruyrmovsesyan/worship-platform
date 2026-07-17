@@ -45,6 +45,7 @@ import Settings from './pages/Settings';
 import SongRequest from './pages/SongRequest';
 import Notifications from './pages/Notifications';
 import ChatsList from './pages/ChatsList';
+import TransposeTool from './pages/TransposeTool';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useIsPWA } from './hooks/useIsPWA';
 import ScrollToTop from './components/ScrollToTop';
@@ -54,6 +55,7 @@ import { usePwaOfflineGuard } from './hooks/usePwaOfflineGuard';
 import { usePwaSwipeNavigation } from './hooks/usePwaSwipeNavigation';
 import { showPwaOfflineBlockedNotice } from './utils/pwaOfflineGuard';
 import { useLanguage } from './context/LanguageContext';
+import { applyAppTheme, getStoredAppTheme } from './utils/appTheme';
 
 function App() {
   const mediaQueryMatch = useMediaQuery('(max-width: 900px)');
@@ -61,8 +63,9 @@ function App() {
   
   // Apply Global App Settings
   useEffect(() => {
+    const theme = applyAppTheme(getStoredAppTheme(), { persist: false });
     if (localStorage.getItem('reduceMotion') === 'true') document.body.classList.add('reduce-motion');
-    if (localStorage.getItem('oledMode') === 'true') document.body.classList.add('oled-mode');
+    if (theme === 'dark' && localStorage.getItem('oledMode') === 'true') document.body.classList.add('oled-mode');
     if (localStorage.getItem('outlinedChords') === 'true') document.body.classList.add('outlined-chords');
     
     const cColor = localStorage.getItem('chordColor');
@@ -100,6 +103,36 @@ function App() {
       }
     }
   }, [isMobile, isPWA]);
+
+  useEffect(() => {
+    const syncThemeColor = () => {
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (!meta) return;
+
+      const storedTheme = localStorage.getItem('theme');
+      const isLight = document.documentElement.dataset.theme === 'light' ||
+        document.body.classList.contains('light-mode') ||
+        storedTheme === 'light';
+      const isOled = document.body.classList.contains('oled-mode') || localStorage.getItem('oledMode') === 'true';
+      const color = isLight ? '#F7F8FC' : (isOled ? '#000000' : '#05050A');
+
+      meta.setAttribute('content', color);
+      document.documentElement.style.colorScheme = isLight ? 'light' : 'dark';
+    };
+
+    syncThemeColor();
+    const observer = new MutationObserver(syncThemeColor);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    window.addEventListener('storage', syncThemeColor);
+    window.addEventListener('wp-theme-change', syncThemeColor);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('storage', syncThemeColor);
+      window.removeEventListener('wp-theme-change', syncThemeColor);
+    };
+  }, []);
 
   // Listen for push notification navigation from service worker
   useEffect(() => {
@@ -231,6 +264,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/songs" element={<Songs />} />
+            <Route path="/transpose" element={<TransposeTool />} />
             <Route path="/song/:id" element={<SongView />} />
             <Route path="/setlists" element={<Setlists />} />
             <Route path="/setlists/:id" element={<SetlistEditor />} />
@@ -349,7 +383,7 @@ function App() {
           </div>
         </div>
       )}
-      {isPWA && isMobile ? null : <Footer />}
+      {isPWA ? null : <Footer />}
     </div>
     </PullToRefresh>
   );

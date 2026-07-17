@@ -16,6 +16,14 @@ $navItems = [
     'settings'   => ['label' => __('Settings'),     'href' => '/admin_updates.php',     'icon' => '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>'],
     'faq'        => ['label' => __('FAQ'),          'href' => '/admin_faq.php',         'icon' => '<circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line>'],
 ];
+
+$mobileNavKeys = ['dashboard', 'songs', 'statistics', 'settings'];
+$mobileNavLabels = [
+    'hy' => ['dashboard' => 'Գլխավոր', 'songs' => 'Երգեր', 'statistics' => 'Վիճակ.', 'settings' => 'Կարգ.'],
+    'ru' => ['dashboard' => 'Главная', 'songs' => 'Песни', 'statistics' => 'Стат.', 'settings' => 'Настр.'],
+    'en' => ['dashboard' => 'Home', 'songs' => 'Songs', 'statistics' => 'Stats', 'settings' => 'Settings'],
+];
+$mobileLabels = $mobileNavLabels[$adminLang] ?? $mobileNavLabels['en'];
 ?>
 <!-- Global Page Loader -->
 <div id="globalAdminLoader" aria-hidden="true">
@@ -45,7 +53,7 @@ $navItems = [
     <div class="sidebar-heading"><?= __('Menu') ?></div>
 
     <?php foreach ($navItems as $key => $item): ?>
-    <a class="nav-item <?= $activePage === $key ? 'active' : '' ?>" href="<?= $item['href'] ?>">
+    <a class="nav-item <?= $activePage === $key ? 'active' : '' ?>" href="<?= $item['href'] ?>"<?= $activePage === $key ? ' aria-current="page"' : '' ?>>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><?= $item['icon'] ?></svg>
       <span><?= htmlspecialchars($item['label']) ?></span>
     </a>
@@ -68,3 +76,12 @@ $navItems = [
 
 
 </aside>
+
+<nav class="app-bottom-nav" aria-label="Admin mobile navigation">
+  <?php foreach ($mobileNavKeys as $key): $item = $navItems[$key]; ?>
+    <a class="<?= $activePage === $key ? 'active' : '' ?>" href="<?= $item['href'] ?>"<?= $activePage === $key ? ' aria-current="page"' : '' ?>>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><?= $item['icon'] ?></svg>
+      <span><?= htmlspecialchars($mobileLabels[$key] ?? $item['label']) ?></span>
+    </a>
+  <?php endforeach; ?>
+</nav>

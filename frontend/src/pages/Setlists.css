@@ -117,17 +117,18 @@
 .sl-meta {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 4px;
 }
 
 .sl-songs-count {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--color-surface-hover);
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--color-text-secondary);
 }
 
 .sl-badge {

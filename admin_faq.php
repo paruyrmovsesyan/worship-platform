@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/admin_access.php';
 require_once __DIR__ . '/runtime_config.php';
+require_once __DIR__ . '/admin_pwa_bootstrap.php';
 
 $access = wp_admin_require_access('/admin_faq.php');
 $adminUser = $access['user'];
@@ -101,10 +102,7 @@ $searchPlaceholder = 'Search FAQ...';
 <!doctype html>
 <html lang="hy">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FAQ — Worship Platform Admin</title>
-  <link rel="icon" href="/wolarm_developers.png" type="image/png">
+  <?php wp_admin_render_pwa_head('FAQ — Worship Platform Admin'); ?>
   <?php include __DIR__ . '/admin_shared_css.php'; ?>
   <style>
     .faq-form { background: var(--surface); border-radius: var(--radius-lg); padding: 28px; box-shadow: var(--shadow-sm); margin-bottom: 32px; }

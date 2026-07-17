@@ -146,6 +146,49 @@ export default function SetlistEditor() {
     }
   };
 
+  const moveItem = async (index, direction, e) => {
+    if (e) e.stopPropagation();
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === items.length - 1) return;
+
+    const newItems = [...items];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    
+    [newItems[index], newItems[targetIndex]] = [newItems[targetIndex], newItems[index]];
+    setItems(newItems);
+
+    const payload = newItems.map((item, idx) => ({ id: item.id, position: idx + 1 }));
+    try {
+      await fetch('/setlists_api.php?action=reorder_setlist_items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ setlist_id: id, items: payload })
+      });
+    } catch (err) {
+      console.error(err);
+      fetchSetlist(); // revert on error
+    }
+  };
+
+  const handleDeleteSetlist = async () => {
+    if (!window.confirm(t('setlists.confirmDelete', 'Are you sure you want to delete this setlist? This action cannot be undone.'))) return;
+    try {
+      const res = await fetch('/setlists_api.php?action=delete_setlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ setlist_id: id })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        navigate('/setlists');
+      } else {
+        alert(data.error || t('setlists.errorOccurred'));
+      }
+    } catch (err) {
+      alert(t('setlists.networkError', 'Network error'));
+    }
+  };
+
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     if (!editName.trim()) return;
@@ -323,7 +366,13 @@ export default function SetlistEditor() {
               </div>
 
               {setlistData.can_edit === 1 && (
-                <div className="track-actions">
+                <div className="track-actions" style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  <button className="icon-btn" style={{ padding: '4px', opacity: idx === 0 ? 0.3 : 1, color: 'var(--color-text-secondary)' }} onClick={(e) => moveItem(idx, 'up', e)} disabled={idx === 0}>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                  </button>
+                  <button className="icon-btn" style={{ padding: '4px', opacity: idx === items.length - 1 ? 0.3 : 1, color: 'var(--color-text-secondary)' }} onClick={(e) => moveItem(idx, 'down', e)} disabled={idx === items.length - 1}>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </button>
                   <button 
                     className="heart-btn" 
                     onClick={(e) => removeItem(item.id, e)}
@@ -382,9 +431,14 @@ export default function SetlistEditor() {
                 ></textarea>
               </div>
 
-              <div className="sl-modal-actions">
-                <button type="button" className="btn btn-ghost" onClick={() => setIsEditingSettings(false)}>{t('setlists.cancelBtn')}</button>
-                <button type="submit" className="btn btn-primary">{t('setlists.saveBtn')}</button>
+              <div className="sl-modal-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <button type="button" className="btn btn-ghost" onClick={handleDeleteSetlist} style={{ color: 'var(--color-accent-red)' }}>
+                  {t('setlists.deleteBtn', 'Delete')}
+                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button type="button" className="btn btn-ghost" onClick={() => setIsEditingSettings(false)}>{t('setlists.cancelBtn')}</button>
+                  <button type="submit" className="btn btn-primary">{t('setlists.saveBtn')}</button>
+                </div>
               </div>
             </form>
           </div>

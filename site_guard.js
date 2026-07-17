@@ -7,7 +7,7 @@
     try{
       const path = ((window.location && window.location.pathname) || "/").toLowerCase();
       if(path === "/" || path === "/index.html") return "landing";
-      if(path === "/songs" || path.startsWith("/songs")) return "main";
+      if(path === "/songs" || path.startsWith("/songs") || path === "/transpose") return "main";
       if(path.startsWith("/song/")) return "song";
       if(path === "/favorites") return "favorites";
       if(path === "/setlists" || path.startsWith("/setlists/")) return "setlists";
@@ -45,7 +45,7 @@
     if(!modesObj || typeof modesObj !== "object") return;
     const keyToHrefs = {
       "landing": ["/", "/index.html"],
-      "main": ["/songs", "/songs.php"],
+      "main": ["/songs", "/songs.php", "/transpose"],
       "favorites": ["/favorites"],
       "setlists": ["/setlists"],
       "account": ["/profile", "/settings"],

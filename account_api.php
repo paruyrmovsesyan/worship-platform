@@ -833,6 +833,9 @@ if(!empty($row["pending_email"])){
     try{
       $pdo->prepare("DELETE FROM favorites WHERE user_id=?")->execute([$uid]);
     }catch(Exception $e){ /* եթե չունես այս table-ը՝ թող անտեսի */ }
+    try{
+      $pdo->prepare("DELETE FROM user_favorites WHERE user_id=?")->execute([$uid]);
+    }catch(Exception $e){}
     // recent_views մաքրումը (եթե կա)
     try{
       $pdo->prepare("DELETE FROM recent_views WHERE user_id=?")->execute([$uid]);

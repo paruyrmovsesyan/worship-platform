@@ -7,6 +7,7 @@ require_once __DIR__ . '/push_service.php';
 require_once __DIR__ . '/install_service.php';
 require_once __DIR__ . '/song_request_service.php';
 require_once __DIR__ . '/translation_runtime.php';
+require_once __DIR__ . '/admin_pwa_bootstrap.php';
 
 $access = wp_admin_require_access('/admin_updates.php');
 if (isset($_GET['lang']) && in_array($_GET['lang'], ['hy', 'ru', 'en'])) {
@@ -1424,9 +1425,7 @@ $csrfToken = wp_admin_updates_csrf_token();
 <!doctype html>
 <html lang="hy">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Settings — Worship Platform Admin</title>
+  <?php wp_admin_render_pwa_head('Settings — Worship Platform Admin', ['viewport' => 'width=device-width, initial-scale=1, viewport-fit=cover']); ?>
   <?php include __DIR__ . '/admin_shared_css.php'; ?>
   <?php include __DIR__ . '/admin_updates_css.php'; ?>
 

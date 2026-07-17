@@ -625,9 +625,29 @@ body.oled-mode {
 }
 
 /* ─── CHORD CUSTOMIZATION ─── */
+:root {
+  --sv-accent: var(--color-accent-gold);
+  --sv-accent-glow: var(--color-accent-gold-glow);
+}
+
+body.chord-color-gold { --sv-accent: #3A2DFF; --sv-accent-glow: rgba(58, 45, 255, 0.15); }
+body.chord-color-gold .chord { color: #3A2DFF !important; }
+
+body.chord-color-blue { --sv-accent: #00D4FF; --sv-accent-glow: rgba(0, 212, 255, 0.15); }
 body.chord-color-blue .chord { color: #00D4FF !important; }
+
+body.chord-color-green { --sv-accent: #4ADE80; --sv-accent-glow: rgba(74, 222, 128, 0.15); }
 body.chord-color-green .chord { color: #4ADE80 !important; }
+
+body.chord-color-red { --sv-accent: #FF4A4A; --sv-accent-glow: rgba(255, 74, 74, 0.15); }
 body.chord-color-red .chord { color: #FF4A4A !important; }
+
+body.chord-color-white { --sv-accent: #FFFFFF; --sv-accent-glow: rgba(255, 255, 255, 0.15); }
+body.chord-color-white .chord { color: #FFFFFF !important; }
+
+body.chord-color-black { --sv-accent: #000000; --sv-accent-glow: rgba(0, 0, 0, 0.15); }
+body.chord-color-black .chord { color: #000000 !important; }
+
 
 body.outlined-chords .chord {
   background: rgba(255, 255, 255, 0.1);

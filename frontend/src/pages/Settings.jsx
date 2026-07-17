@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useIsPWA } from '../hooks/useIsPWA';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { getLocalizedTitle } from '../utils/titleParser';
+import { APP_THEMES, applyAppTheme, getStoredAppTheme } from '../utils/appTheme';
 import './Settings.css';
 
 const hasWhitespace = (value) => /\s/u.test(String(value));
@@ -20,6 +21,7 @@ export default function Settings() {
   const [msg, setMsg] = useState({ text: '', type: '' });
 
   // App Settings States
+  const [appTheme, setAppTheme] = useState(getStoredAppTheme);
   const [keepAwake, setKeepAwake] = useState(localStorage.getItem('keepAwake') === 'true');
   const [reduceMotion, setReduceMotion] = useState(localStorage.getItem('reduceMotion') === 'true');
   const [oledMode, setOledMode] = useState(localStorage.getItem('oledMode') === 'true');
@@ -120,6 +122,18 @@ export default function Settings() {
   }, [isMobile, activeTab]);
 
   // --- Handlers ---
+  const handleAppThemeChange = (nextTheme) => {
+    if (nextTheme === appTheme) return;
+
+    setAppTheme(nextTheme);
+    if (nextTheme === APP_THEMES.LIGHT) {
+      setOledMode(false);
+      localStorage.setItem('oledMode', 'false');
+    }
+    applyAppTheme(nextTheme);
+    showMsg(t('settings.app.saved', 'Պահպանված է'));
+  };
+
   const handleSaveProfile = async () => {
     if (username.trim() && hasWhitespace(username)) {
       showMsg(t('auth.invalidUsernameSpaces'), 'err');
@@ -414,6 +428,37 @@ export default function Settings() {
                 {t('settings.app.desc', 'Կարգավորեք ծրագրի արտաքին տեսքը և աշխատանքի պարամետրերը:')}
               </p>
 
+              <div className="app-theme-setting" style={{ marginBottom: '1.5rem' }}>
+                <div className="app-theme-copy">
+                  <strong>{t('settings.app.themeMode', 'Գունային ռեժիմ')}</strong>
+                  <p className="text-muted">
+                    {t('settings.app.themeModeDesc', 'Ընտրեք ծրագրի բաց կամ մութ տեսքը։')}
+                  </p>
+                </div>
+                <div className="app-theme-segmented" role="radiogroup" aria-label={t('settings.app.themeMode', 'Գունային ռեժիմ')}>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={appTheme === APP_THEMES.DARK}
+                    className={appTheme === APP_THEMES.DARK ? 'active' : ''}
+                    onClick={() => handleAppThemeChange(APP_THEMES.DARK)}
+                  >
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.8 6.8 0 0 0 21 12.8Z" /></svg>
+                    <span>{t('settings.app.darkTheme', 'Մութ')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={appTheme === APP_THEMES.LIGHT}
+                    className={appTheme === APP_THEMES.LIGHT ? 'active' : ''}
+                    onClick={() => handleAppThemeChange(APP_THEMES.LIGHT)}
+                  >
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41" /></svg>
+                    <span>{t('settings.app.lightTheme', 'Բաց')}</span>
+                  </button>
+                </div>
+              </div>
+
               <div className="remember-device-card" style={{ marginBottom: '1.5rem' }}>
                 <div className="remember-device-copy">
                   <div className="remember-device-title-row">
@@ -476,14 +521,19 @@ export default function Settings() {
                   <p className="text-muted">
                     {t('settings.app.oledModeDesc', 'Օգտագործում է բացարձակ սև գույնը (OLED էկրանների համար՝ մարտկոց խնայելու նպատակով)։')}
                   </p>
+                  {appTheme === APP_THEMES.LIGHT && (
+                    <p className="oled-theme-note">{t('settings.app.oledDarkOnly', 'Հասանելի է միայն մութ ռեժիմում։')}</p>
+                  )}
                 </div>
                 <button
                   className="settings-btn secondary small"
+                  disabled={appTheme === APP_THEMES.LIGHT}
                   onClick={() => {
                     const newVal = !oledMode;
                     setOledMode(newVal);
                     localStorage.setItem('oledMode', newVal ? 'true' : 'false');
                     document.body.classList.toggle('oled-mode', newVal);
+                    window.dispatchEvent(new CustomEvent('wp-theme-change'));
                     showMsg(t('settings.app.saved', 'Պահպանված է'));
                   }}
                 >
@@ -524,7 +574,9 @@ export default function Settings() {
                     { id: 'gold', label: t('settings.app.colorGold', 'Ոսկեգույն'), color: '#3A2DFF' }, // the default is actually accent-gold which is #3A2DFF? no wait, it's just yellow normally but let's just use CSS classes
                     { id: 'blue', label: t('settings.app.colorBlue', 'Կապույտ'), color: '#00D4FF' },
                     { id: 'green', label: t('settings.app.colorGreen', 'Կանաչ'), color: '#4ADE80' },
-                    { id: 'red', label: t('settings.app.colorRed', 'Կարմիր'), color: '#FF4A4A' }
+                    { id: 'red', label: t('settings.app.colorRed', 'Կարմիր'), color: '#FF4A4A' },
+                    { id: 'white', label: t('settings.app.colorWhite', 'Սպիտակ'), color: '#FFFFFF', border: '1px solid #d1d5db' },
+                    { id: 'black', label: t('settings.app.colorBlack', 'Սև'), color: '#000000', border: '1px solid #4b5563' }
                   ].map(c => (
                     <button
                       key={c.id}
@@ -540,7 +592,7 @@ export default function Settings() {
                         showMsg(t('settings.app.saved', 'Պահպանված է'));
                       }}
                     >
-                      <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', backgroundColor: c.color, marginRight: '6px', verticalAlign: 'middle' }}></span>
+                      <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', backgroundColor: c.color, marginRight: '6px', verticalAlign: 'middle', border: c.border || 'none' }}></span>
                       {c.label}
                     </button>
                   ))}

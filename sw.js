@@ -1,11 +1,25 @@
-const CACHE_VERSION = "worship-v175";
+const CACHE_VERSION = "worship-v194";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
 const OFFLINE_FALLBACK = "/offline.html";
 const SONGS_SNAPSHOT_KEY = "/__offline__/songs";
+const NAVIGATION_TIMEOUT_MS = 3000;
+const USER_DATA_TIMEOUT_MS = 2500;
+const USER_CACHE_PREFIX = `${CACHE_VERSION}-user-`;
 let offlineSyncPromise = null;
 const APP_CLIENT_IDS = new Set();
+const CLIENT_USER_SCOPES = new Map();
+const STATIC_ASSET_PATTERN = /\.(?:css|js|mjs|png|jpe?g|webp|gif|svg|ico|woff2?|ttf|otf)$/i;
+const FAVORITE_READ_ACTIONS = new Set(["get_favorites", "get_favorite"]);
+const SETLIST_READ_ACTIONS = new Set([
+  "get_setlists",
+  "get_setlist",
+  "get_setlist_items",
+  "get_setlist_song_nav",
+  "get_setlist_songs",
+  "get_share_status"
+]);
 
 const APP_SHELL = [
   "/",
@@ -18,7 +32,15 @@ const APP_SHELL = [
   "/app.js",
   "/site_guard.js",
   "/fav_bridge.js",
+  "/assets/index.css",
+  "/assets/index.js",
   "/manifest.json",
+  "/favicon.png?v=2",
+  "/apple-touch-icon-v7.png",
+  "/icon-192-v7.png",
+  "/icon-512-v7.png",
+  "/icon-192-v5.png",
+  "/icon-512-v5.png",
   "/songs-manifest.php",
   "/app-screenshot-home.svg",
   "/app-screenshot-song.svg",
@@ -42,18 +64,14 @@ const OFFLINE_PAGES = [
   "/forgot_password_sent.php",
   "/reset_password.php",
   "/verify_email_confirm.php",
-  "/songs.php"
-];
-
-const OPTIONAL_SYNC_ENDPOINTS = [
-  "/auth_me.php",
-  "/account_api.php?action=auth_status",
-  "/account_api.php?action=me",
-  "/favorites_api.php?action=get_favorites",
-  "/user_favorites_api.php?action=get_favorites",
-  "/setlists_api.php?action=get_setlists",
-  "/setlists_api.php?action=get_setlists&status=active",
-  "/setlists_api.php?action=get_setlists&status=archived"
+  "/songs.php",
+  "/admin_dashboard.php",
+  "/admin_updates.php",
+  "/admin_stats.php",
+  "/admin_clients.php",
+  "/admin_news.php",
+  "/admin_messages.php",
+  "/admin_faq.php"
 ];
 
 self.addEventListener("install", function(event) {
@@ -70,7 +88,8 @@ self.addEventListener("activate", function(event) {
     caches.keys().then(function(cacheNames) {
       return Promise.all(
         cacheNames.map(function(cacheName) {
-          if (![STATIC_CACHE, RUNTIME_CACHE, DATA_CACHE].includes(cacheName)) {
+          const isCurrentUserCache = cacheName.startsWith(USER_CACHE_PREFIX);
+          if (![STATIC_CACHE, RUNTIME_CACHE, DATA_CACHE].includes(cacheName) && !isCurrentUserCache) {
             return caches.delete(cacheName);
           }
         })
@@ -93,6 +112,24 @@ self.addEventListener("message", function(event) {
     if (clientId) {
       APP_CLIENT_IDS.add(clientId);
     }
+    return;
+  }
+
+  if (event.data.type === "SET_USER_CACHE_SCOPE") {
+    const clientId = event.source && event.source.id ? String(event.source.id) : "";
+    const userId = normalizeUserId(event.data.userId);
+    if (clientId && userId) {
+      CLIENT_USER_SCOPES.set(clientId, userId);
+    }
+    return;
+  }
+
+  if (event.data.type === "CLEAR_USER_CACHE") {
+    event.waitUntil(clearUserCache(event.data.userId).then(function() {
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage({ ok: true });
+      }
+    }));
     return;
   }
 
@@ -124,7 +161,7 @@ self.addEventListener("fetch", function(event) {
   }
 
   if (url.pathname === "/api.php") {
-    event.respondWith(handleApiRequest(request, url));
+    event.respondWith(handleApiRequest(event, url));
     return;
   }
 
@@ -133,29 +170,127 @@ self.addEventListener("fetch", function(event) {
     return;
   }
 
+  if (url.pathname === "/logout_users.php") {
+    event.respondWith(handleLogoutRequest(event));
+    return;
+  }
+
+  if (isUserCacheableRequest(url)) {
+    event.respondWith(handleUserDataRequest(event, url));
+    return;
+  }
+
   if (request.mode === "navigate") {
     event.respondWith(handleNavigateRequest(event));
     return;
   }
 
-  event.respondWith(
-    fetch(new Request(request, { cache: "no-store" }))
-      .then(function(networkResponse) {
-        if (networkResponse && networkResponse.status === 200) {
-          const copy = networkResponse.clone();
-          caches.open(RUNTIME_CACHE).then(function(cache) {
-            cache.put(request, copy);
-          });
-        }
-        return networkResponse;
-      })
-      .catch(function() {
-        return caches.match(request).then(function(cachedResponse) {
-          return cachedResponse || caches.match(OFFLINE_FALLBACK);
-        });
-      })
-  );
+  if (isStaticAssetRequest(url)) {
+    event.respondWith(handleStaticAssetRequest(event));
+    return;
+  }
+
+  event.respondWith(handleNetworkOnlyRequest(request, url));
 });
+
+function normalizeUserId(value) {
+  const normalized = String(value || "").trim();
+  return /^\d+$/.test(normalized) && normalized !== "0" ? normalized : "";
+}
+
+function getUserCacheName(userId) {
+  const normalized = normalizeUserId(userId);
+  return normalized ? `${USER_CACHE_PREFIX}${normalized}` : "";
+}
+
+function getClientUserId(clientId) {
+  return clientId ? (CLIENT_USER_SCOPES.get(String(clientId)) || "") : "";
+}
+
+async function clearUserCache(userId) {
+  const normalized = normalizeUserId(userId);
+  if (normalized) {
+    await caches.delete(getUserCacheName(normalized));
+  } else {
+    const names = await caches.keys();
+    await Promise.all(names.filter(function(name) {
+      return name.startsWith(USER_CACHE_PREFIX);
+    }).map(function(name) {
+      return caches.delete(name);
+    }));
+  }
+
+  CLIENT_USER_SCOPES.forEach(function(mappedUserId, clientId) {
+    if (!normalized || mappedUserId === normalized) {
+      CLIENT_USER_SCOPES.delete(clientId);
+    }
+  });
+}
+
+function isStaticAssetRequest(url) {
+  return STATIC_ASSET_PATTERN.test(url.pathname) || url.pathname === "/manifest.json";
+}
+
+function isUserCacheableRequest(url) {
+  const action = url.searchParams.get("action") || "";
+  if (url.pathname === "/user_favorites_api.php") {
+    return FAVORITE_READ_ACTIONS.has(action);
+  }
+  if (url.pathname === "/setlists_api.php") {
+    return SETLIST_READ_ACTIONS.has(action);
+  }
+  return false;
+}
+
+function fetchWithTimeout(request, timeoutMs) {
+  const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+  let timer = null;
+  if (controller) {
+    timer = setTimeout(function() {
+      controller.abort();
+    }, timeoutMs);
+  }
+
+  return fetch(new Request(request, {
+    cache: "no-store",
+    signal: controller ? controller.signal : undefined
+  })).finally(function() {
+    if (timer) clearTimeout(timer);
+  });
+}
+
+async function handleStaticAssetRequest(event) {
+  const request = event.request;
+  const cached = await caches.match(request);
+  const refreshPromise = fetch(new Request(request, { cache: "no-store" })).then(async function(response) {
+    if (response && response.status === 200) {
+      const cache = await caches.open(RUNTIME_CACHE);
+      await cache.put(request, response.clone());
+    }
+    return response;
+  });
+
+  if (cached) {
+    event.waitUntil(refreshPromise.catch(function() {}));
+    return cached;
+  }
+
+  return refreshPromise.catch(function() {
+    return new Response("Offline", { status: 503, statusText: "Offline" });
+  });
+}
+
+async function handleNetworkOnlyRequest(request, url) {
+  try {
+    return await fetch(new Request(request, { cache: "no-store" }));
+  } catch (err) {
+    const isApi = url.pathname.endsWith(".php");
+    return new Response(isApi ? JSON.stringify({ error: "Offline", offline: true }) : "Offline", {
+      status: 503,
+      headers: isApi ? { "Content-Type": "application/json; charset=UTF-8" } : undefined
+    });
+  }
+}
 
 function isAppSourceUrl(url) {
   const source = (url.searchParams.get("source") || "").toLowerCase();
@@ -224,7 +359,7 @@ async function handleNavigateRequest(event) {
   }
 
   try {
-    const networkResponse = await fetch(new Request(request, { cache: "no-store" }));
+    const networkResponse = await fetchWithTimeout(request, NAVIGATION_TIMEOUT_MS);
     if (networkResponse && networkResponse.status === 200) {
       const copy = networkResponse.clone();
       const cache = await caches.open(RUNTIME_CACHE);
@@ -245,6 +380,20 @@ async function handleNavigateRequest(event) {
     }
 
     return caches.match(OFFLINE_FALLBACK);
+  }
+}
+
+async function handleLogoutRequest(event) {
+  const clientUserId = getClientUserId(event.clientId);
+  const clearPromise = clearUserCache(clientUserId);
+
+  try {
+    const response = await fetch(new Request(event.request, { cache: "no-store" }));
+    await clearPromise;
+    return response;
+  } catch (err) {
+    await clearPromise;
+    return Response.redirect(new URL("/login?logged_out=1", self.location.origin).href, 302);
   }
 }
 
@@ -428,17 +577,16 @@ async function handleAccountRequest(request, url) {
   }
 }
 
-async function handleApiRequest(request, url) {
+async function handleApiRequest(event, url) {
+  const request = event.request;
   const hasId = url.searchParams.has("id");
   const action = url.searchParams.get("action");
   const mode = url.searchParams.get("mode");
   const query = (url.searchParams.get("q") || "").toLowerCase();
+  const cache = await caches.open(DATA_CACHE);
 
-  try {
-    const networkResponse = await fetch(new Request(request, { cache: "no-store" }));
-
+  const networkPromise = fetch(new Request(request, { cache: "no-store" })).then(async function(networkResponse) {
     if (networkResponse && networkResponse.status === 200) {
-      const cache = await caches.open(DATA_CACHE);
       await cache.put(request.url, networkResponse.clone());
 
       if (!hasId && !action) {
@@ -448,59 +596,84 @@ async function handleApiRequest(request, url) {
     }
 
     return networkResponse;
+  });
+
+  const exactCached = await cache.match(request.url);
+  if (exactCached) {
+    event.waitUntil(networkPromise.catch(function() {}));
+    return exactCached;
+  }
+
+  const allSongsResponse = await cache.match(SONGS_SNAPSHOT_KEY);
+  if (allSongsResponse) {
+    event.waitUntil(networkPromise.catch(function() {}));
+    return buildSongsFallbackResponse(allSongsResponse, { hasId, action, mode, query, url });
+  }
+
+  try {
+    return await networkPromise;
   } catch (err) {
-    const cache = await caches.open(DATA_CACHE);
-
-    const exactCached = await cache.match(request.url);
-    if (exactCached) return exactCached;
-
-    const allSongsResponse = await cache.match(SONGS_SNAPSHOT_KEY);
-    if (!allSongsResponse) {
-      return new Response(JSON.stringify([]), {
-        status: 200,
-        headers: { "Content-Type": "application/json; charset=UTF-8" }
-      });
-    }
-
-    const allSongs = await allSongsResponse.clone().json().catch(function() {
-      return [];
-    });
-
-    if (hasId) {
-      const id = String(url.searchParams.get("id"));
-      const oneSong = (allSongs || []).find(function(song) {
-        return String(song.id) === id;
-      });
-      return new Response(JSON.stringify(oneSong || null), {
-        status: 200,
-        headers: { "Content-Type": "application/json; charset=UTF-8" }
-      });
-    }
-
-    if (action === "search" && mode === "lyrics") {
-      const filtered = (allSongs || []).filter(function(song) {
-        const lyrics = String(song.lyrics || "").toLowerCase();
-        const title = String(song.title || "").toLowerCase();
-        const artist = String(song.artist || "").toLowerCase();
-        const tags = String(song.tags || "").toLowerCase();
-        return (
-          lyrics.includes(query) ||
-          title.includes(query) ||
-          artist.includes(query) ||
-          tags.includes(query)
-        );
-      }).slice(0, 200);
-
-      return new Response(JSON.stringify(filtered), {
-        status: 200,
-        headers: { "Content-Type": "application/json; charset=UTF-8" }
-      });
-    }
-
-    return new Response(JSON.stringify(allSongs || []), {
+    return new Response(JSON.stringify([]), {
       status: 200,
       headers: { "Content-Type": "application/json; charset=UTF-8" }
     });
+  }
+}
+
+async function buildSongsFallbackResponse(snapshotResponse, options) {
+  const allSongs = await snapshotResponse.clone().json().catch(function() {
+    return [];
+  });
+
+  if (options.hasId) {
+    const id = String(options.url.searchParams.get("id"));
+    const oneSong = (allSongs || []).find(function(song) {
+      return String(song.id) === id;
+    });
+    return jsonResponse(oneSong || null);
+  }
+
+  if (options.action === "search" && options.mode === "lyrics") {
+    const filtered = (allSongs || []).filter(function(song) {
+      const lyrics = String(song.lyrics || "").toLowerCase();
+      const title = String(song.title || "").toLowerCase();
+      const artist = String(song.artist || "").toLowerCase();
+      const tags = String(song.tags || "").toLowerCase();
+      return lyrics.includes(options.query) ||
+        title.includes(options.query) ||
+        artist.includes(options.query) ||
+        tags.includes(options.query);
+    }).slice(0, 200);
+    return jsonResponse(filtered);
+  }
+
+  return jsonResponse(allSongs || []);
+}
+
+function jsonResponse(payload, status) {
+  return new Response(JSON.stringify(payload), {
+    status: status || 200,
+    headers: { "Content-Type": "application/json; charset=UTF-8" }
+  });
+}
+
+async function handleUserDataRequest(event, url) {
+  const userId = getClientUserId(event.clientId);
+  if (!userId) {
+    return handleNetworkOnlyRequest(event.request, url);
+  }
+
+  const cache = await caches.open(getUserCacheName(userId));
+  try {
+    const response = await fetchWithTimeout(event.request, USER_DATA_TIMEOUT_MS);
+    if (response && response.status === 200) {
+      await cache.put(event.request.url, response.clone());
+    }
+    return response;
+  } catch (err) {
+    const cached = await cache.match(event.request.url);
+    if (cached) return cached;
+    return jsonResponse({ error: "Offline", offline: true }, 503);
   }
 }
 
@@ -511,8 +684,7 @@ async function syncOfflineLibrary() {
     try {
       await Promise.all([
         syncAppShell(),
-        syncSongsSnapshot(),
-        syncOptionalEndpoints()
+        syncSongsSnapshot()
       ]);
 
       broadcastSyncTime(new Date().toISOString(), { full_library: true });
@@ -573,26 +745,6 @@ async function syncSongsSnapshot() {
   const cache = await caches.open(DATA_CACHE);
   await cache.put("/api.php", response.clone());
   await cache.put(SONGS_SNAPSHOT_KEY, response.clone());
-}
-
-async function syncOptionalEndpoints() {
-  const cache = await caches.open(RUNTIME_CACHE);
-
-  await Promise.all(
-    OPTIONAL_SYNC_ENDPOINTS.map(function(url) {
-      return refreshOptionalEndpoint(cache, url);
-    })
-  );
-}
-
-async function refreshOptionalEndpoint(cache, url) {
-  try {
-    const response = await fetch(url, { cache: "no-store" });
-    if (!response || response.status !== 200) return;
-    await cache.put(url, response.clone());
-  } catch (err) {
-    // ignore per-endpoint failures during bulk sync
-  }
 }
 
 function broadcastSyncTime(syncedAt, extraData) {

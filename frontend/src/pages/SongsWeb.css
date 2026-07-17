@@ -282,6 +282,10 @@
 /* Favorite button styling and animation */
 .songs-web-view .fav-btn {
   transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  color: rgba(255, 255, 255, 0.4);
+}
+.songs-web-view .fav-btn.is-fav {
+  color: #FF4A6A;
 }
 .songs-web-view .fav-btn:hover {
   transform: scale(1.15);

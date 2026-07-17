@@ -1,8 +1,45 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
+
+const getUserId = (user) => {
+  const value = user?.id ?? user?.user_id;
+  return /^\d+$/.test(String(value || '')) ? String(value) : '';
+};
+
+const getServiceWorkerTarget = async () => {
+  if (!('serviceWorker' in navigator)) return null;
+  if (navigator.serviceWorker.controller) return navigator.serviceWorker.controller;
+  const registration = await Promise.race([
+    navigator.serviceWorker.ready.catch(() => null),
+    new Promise((resolve) => window.setTimeout(() => resolve(null), 500)),
+  ]);
+  return registration?.active || null;
+};
+
+const setUserCacheScope = async (userId) => {
+  if (!userId) return;
+  const target = await getServiceWorkerTarget();
+  target?.postMessage({ type: 'SET_USER_CACHE_SCOPE', userId });
+};
+
+const clearUserCacheScope = async (userId) => {
+  if (!userId || typeof MessageChannel === 'undefined') return;
+  const target = await getServiceWorkerTarget();
+  if (!target) return;
+
+  await new Promise((resolve) => {
+    const channel = new MessageChannel();
+    const timer = window.setTimeout(resolve, 900);
+    channel.port1.onmessage = () => {
+      window.clearTimeout(timer);
+      resolve();
+    };
+    target.postMessage({ type: 'CLEAR_USER_CACHE', userId }, [channel.port2]);
+  });
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -25,6 +62,17 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    const userId = getUserId(user);
+    if (!userId || !('serviceWorker' in navigator)) return undefined;
+
+    const syncScope = () => setUserCacheScope(userId).catch(() => {});
+    syncScope();
+    navigator.serviceWorker.addEventListener('controllerchange', syncScope);
+
+    return () => navigator.serviceWorker.removeEventListener('controllerchange', syncScope);
+  }, [user]);
 
   // Global automatic Push Subscription Sync
   useEffect(() => {
@@ -81,7 +129,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await clearUserCacheScope(getUserId(user)).catch(() => {});
     var url = '/logout_users.php?next=/';
     if (window.WP && typeof window.WP.navigate === 'function') {
       window.WP.navigate(url, { loaderDelay: 50, navigationDelay: 70 });

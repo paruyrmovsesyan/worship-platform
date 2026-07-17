@@ -1,26 +1,29 @@
 import { useEffect } from 'react';
 
 const EDGE_ZONE = 42;
-const SWIPE_THRESHOLD = 72;
+const SWIPE_THRESHOLD = 56;
 const VERTICAL_TOLERANCE = 1.35;
+let homeGuardInstalledForDocument = false;
 
-const isInteractiveTarget = (target) => {
+const isTextEntryTarget = (target) => {
+  if (!target || typeof target.closest !== 'function') return false;
+  return Boolean(target.closest('input, textarea, select, [contenteditable="true"], .no-swipe-nav'));
+};
+
+const isDetailInteractiveTarget = (target) => {
   if (!target || typeof target.closest !== 'function') return false;
   return Boolean(target.closest('input, textarea, select, button, a, [role="button"], [contenteditable="true"], .no-swipe-nav'));
 };
 
-const getNavIndex = (pathname, routes) => {
-  if (pathname === '/') return 0;
-  if (pathname.startsWith('/song/') || pathname.startsWith('/songs') || pathname.startsWith('/favorites')) {
-    return routes.findIndex((route) => route.key === 'songs');
-  }
-  if (pathname.startsWith('/friends') || pathname.startsWith('/chats') || pathname.startsWith('/chat/')) {
-    return routes.findIndex((route) => route.key === 'friends');
-  }
-  if (pathname.startsWith('/profile') || pathname.startsWith('/settings')) {
-    return routes.findIndex((route) => route.key === 'profile');
-  }
-  return routes.findIndex((route) => route.path === pathname);
+const getNavIndex = (pathname, routes) => routes.findIndex((route) => route.path === pathname);
+
+const getFallbackBackPath = (pathname) => {
+  if (pathname.startsWith('/song/') || pathname === '/favorites' || pathname === '/transpose') return '/songs';
+  if (pathname.startsWith('/chat/') || pathname === '/chats') return '/friends';
+  if (pathname.startsWith('/settings') || pathname === '/notifications') return '/profile';
+  if (pathname.startsWith('/setlists/')) return '/setlists';
+  if (pathname.startsWith('/news/')) return '/news';
+  return '/';
 };
 
 export function usePwaSwipeNavigation({
@@ -36,21 +39,29 @@ export function usePwaSwipeNavigation({
 
     const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     const state = window.history.state || {};
-    if (!state.wpHomeBackGuard) {
+    const hasCurrentHomeGuard = state.wpHomeBackGuard && state.wpHomeBackGuardUrl === currentUrl;
+    if (!homeGuardInstalledForDocument || !hasCurrentHomeGuard) {
       window.history.replaceState({ ...state, wpHomeBackGuardBase: true }, '', currentUrl);
-      window.history.pushState({ wpHomeBackGuard: true }, '', currentUrl);
+      window.history.pushState({ ...state, wpHomeBackGuard: true, wpHomeBackGuardUrl: currentUrl }, '', currentUrl);
+      homeGuardInstalledForDocument = true;
     }
 
     const onPopState = () => {
-      if (window.location.pathname !== '/') return;
-      window.history.pushState({ wpHomeBackGuard: true }, '', currentUrl);
+      if (window.location.pathname !== '/') {
+        navigate('/', { replace: true });
+      }
+      window.history.pushState({
+        ...(window.history.state || state),
+        wpHomeBackGuard: true,
+        wpHomeBackGuardUrl: currentUrl,
+      }, '', currentUrl);
     };
 
     window.addEventListener('popstate', onPopState);
     return () => {
       window.removeEventListener('popstate', onPopState);
     };
-  }, [enabled, pathname]);
+  }, [enabled, navigate, pathname]);
 
   useEffect(() => {
     if (!enabled) return undefined;
@@ -67,6 +78,8 @@ export function usePwaSwipeNavigation({
     let startY = 0;
     let tracking = false;
     let horizontalIntent = false;
+    let isPrimaryRoute = false;
+    let navigationLocked = false;
 
     const getTargetRoute = (direction) => {
       const currentIndex = getNavIndex(pathname, routes);
@@ -77,26 +90,51 @@ export function usePwaSwipeNavigation({
     };
 
     const goToRoute = (route) => {
-      if (!route) return;
+      if (!route) return false;
       if (typeof canAccessPath === 'function' && !canAccessPath(route.path)) {
         if (typeof onBlocked === 'function') onBlocked();
-        return;
+        return false;
       }
       navigate(route.path, { replace: true });
+      return true;
+    };
+
+    const goBack = () => {
+      const historyIndex = Number(window.history.state?.idx);
+      if (Number.isFinite(historyIndex) && historyIndex > 0) {
+        navigate(-1);
+        return true;
+      }
+
+      const fallbackPath = getFallbackBackPath(pathname);
+      if (typeof canAccessPath === 'function' && !canAccessPath(fallbackPath)) {
+        if (typeof onBlocked === 'function') onBlocked();
+        return false;
+      }
+      navigate(fallbackPath, { replace: true });
+      return true;
     };
 
     const onTouchStart = (event) => {
       if (event.touches.length !== 1) return;
-      if (isInteractiveTarget(event.target)) return;
 
       const touch = event.touches[0];
       const width = window.innerWidth || document.documentElement.clientWidth || 0;
-      const nearEdge = touch.clientX <= EDGE_ZONE || touch.clientX >= width - EDGE_ZONE;
+      const nearLeftEdge = touch.clientX <= EDGE_ZONE;
+      const nearRightEdge = touch.clientX >= width - EDGE_ZONE;
+      isPrimaryRoute = getNavIndex(pathname, routes) >= 0;
 
-      tracking = nearEdge;
+      if (isTextEntryTarget(event.target)) return;
+      if (!isPrimaryRoute && isDetailInteractiveTarget(event.target)) return;
+
+      tracking = isPrimaryRoute || nearLeftEdge;
       horizontalIntent = false;
       startX = touch.clientX;
       startY = touch.clientY;
+
+      if (tracking && (nearLeftEdge || nearRightEdge) && event.cancelable) {
+        event.preventDefault();
+      }
     };
 
     const onTouchMove = (event) => {
@@ -116,7 +154,7 @@ export function usePwaSwipeNavigation({
     };
 
     const onTouchEnd = (event) => {
-      if (!tracking) return;
+      if (!tracking || navigationLocked) return;
       const touch = event.changedTouches[0];
       const dx = touch.clientX - startX;
       const dy = touch.clientY - startY;
@@ -126,19 +164,33 @@ export function usePwaSwipeNavigation({
         return;
       }
 
-      goToRoute(getTargetRoute(dx < 0 ? 1 : -1));
+      if (!isPrimaryRoute) {
+        if (dx > 0) {
+          navigationLocked = goBack();
+        }
+        return;
+      }
+
+      const targetRoute = getTargetRoute(dx < 0 ? 1 : -1);
+      if (!targetRoute) return;
+      navigationLocked = goToRoute(targetRoute);
     };
 
-    document.addEventListener('touchstart', onTouchStart, { passive: true });
-    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    const onTouchCancel = () => {
+      tracking = false;
+      horizontalIntent = false;
+    };
+
+    document.addEventListener('touchstart', onTouchStart, { passive: false, capture: true });
+    document.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
     document.addEventListener('touchend', onTouchEnd, { passive: true });
-    document.addEventListener('touchcancel', onTouchEnd, { passive: true });
+    document.addEventListener('touchcancel', onTouchCancel, { passive: true });
 
     return () => {
-      document.removeEventListener('touchstart', onTouchStart);
-      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchstart', onTouchStart, true);
+      document.removeEventListener('touchmove', onTouchMove, true);
       document.removeEventListener('touchend', onTouchEnd);
-      document.removeEventListener('touchcancel', onTouchEnd);
+      document.removeEventListener('touchcancel', onTouchCancel);
     };
   }, [canAccessPath, enabled, navigate, onBlocked, pathname, user]);
 }

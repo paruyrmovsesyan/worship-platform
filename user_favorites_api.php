@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 error_reporting(E_ALL);
-ini_set('display_errors', '1');
+ini_set('display_errors', '0');
 
 header("Content-Type: application/json; charset=UTF-8");
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
@@ -24,6 +24,69 @@ try {
 } catch (Throwable $e) {
   http_response_code(500);
   echo json_encode(["error" => "DB connection failed"], JSON_UNESCAPED_UNICODE);
+  exit;
+}
+
+function wp_favorites_table_columns(mysqli $conn, string $table): array {
+  $columns = [];
+  $result = $conn->query("SHOW COLUMNS FROM `{$table}`");
+  while ($result && ($row = $result->fetch_assoc())) {
+    $field = (string)($row['Field'] ?? '');
+    if ($field !== '') $columns[$field] = true;
+  }
+  return $columns;
+}
+
+function wp_ensure_unified_favorites(mysqli $conn, int $userId): void {
+  $conn->query("
+    CREATE TABLE IF NOT EXISTS user_favorites (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      user_id INT UNSIGNED NOT NULL,
+      song_id INT UNSIGNED NOT NULL,
+      target_key VARCHAR(24) NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY uniq_user_favorite_song (user_id, song_id),
+      KEY idx_user_favorites_user (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+
+  $userColumns = wp_favorites_table_columns($conn, 'user_favorites');
+  if (empty($userColumns['target_key'])) {
+    $conn->query("ALTER TABLE user_favorites ADD COLUMN target_key VARCHAR(24) NULL AFTER song_id");
+  }
+  if (empty($userColumns['created_at'])) {
+    $conn->query("ALTER TABLE user_favorites ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP");
+  }
+
+  $legacyTable = $conn->query("SHOW TABLES LIKE 'favorites'");
+  if (!$legacyTable || $legacyTable->num_rows === 0) return;
+
+  $legacyColumns = wp_favorites_table_columns($conn, 'favorites');
+  if (empty($legacyColumns['user_id']) || empty($legacyColumns['song_id'])) return;
+
+  $legacyKey = empty($legacyColumns['target_key']) ? 'NULL' : 'legacy.target_key';
+  $legacyCreated = empty($legacyColumns['created_at']) ? 'NOW()' : 'COALESCE(legacy.created_at, NOW())';
+
+  $conn->query("
+    INSERT INTO user_favorites (user_id, song_id, target_key, created_at)
+    SELECT legacy.user_id, legacy.song_id, {$legacyKey}, {$legacyCreated}
+    FROM favorites legacy
+    WHERE legacy.user_id = {$userId}
+      AND NOT EXISTS (
+      SELECT 1
+      FROM user_favorites current_favorite
+      WHERE current_favorite.user_id = legacy.user_id
+        AND current_favorite.song_id = legacy.song_id
+    )
+  ");
+}
+
+try {
+  wp_ensure_unified_favorites($conn, (int)$_SESSION['user_id']);
+} catch (Throwable $e) {
+  http_response_code(500);
+  echo json_encode(["error" => "Favorites storage unavailable"], JSON_UNESCAPED_UNICODE);
   exit;
 }
 
@@ -100,11 +163,11 @@ switch($action){
 
   // ✅ list favorites: վերադարձնել երգի ամբողջ տվյալները + target_key
   case 'get_favorites':
-    $sql = "SELECT s.*, f.target_key
+    $sql = "SELECT s.*, f.target_key, f.created_at AS favorite_created_at
             FROM {$TABLE} f
             JOIN songs s ON f.song_id = s.id
             WHERE f.user_id = ?
-            ORDER BY f.created_at ASC, f.id ASC";
+            ORDER BY f.created_at DESC, f.id DESC";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $user_id);
     $stmt->execute();

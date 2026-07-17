@@ -85,8 +85,8 @@ export async function getAuthFresh(options = {}){
 }
 
 export async function favApiBase(){
-  const a = await getAuthFresh();
-  return a.loggedIn ? '/user_favorites_api.php' : '/favorites_api.php';
+  await getAuthFresh();
+  return '/user_favorites_api.php';
 }
 
 async function renderNavbarAuthUI(force = false){

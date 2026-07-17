@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
@@ -9,6 +9,7 @@ export default function MobileNav() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const { guardPath } = usePwaOfflineGuard();
+  const location = useLocation();
   const [chatBadgeCount, setChatBadgeCount] = useState(0);
 
   useEffect(() => {
@@ -73,7 +74,7 @@ export default function MobileNav() {
         <span>{t('nav.home')}</span>
       </NavLink>
 
-      <NavLink to="/songs" onClick={(e) => { if (!guardPath('/songs')) e.preventDefault(); }} className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+      <NavLink to="/songs" onClick={(e) => { if (!guardPath('/songs')) e.preventDefault(); }} className={({isActive}) => isActive || location.pathname === '/transpose' ? 'nav-item active' : 'nav-item'}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>

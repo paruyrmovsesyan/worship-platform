@@ -5,12 +5,14 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { renderWithChords, transposeRoot, noteIndex } from '../utils/chordTransposer';
 import { getLocalizedTitle } from '../utils/titleParser';
+import { normalizeSavedSongSort, sortSavedSongs } from '../utils/savedSongs';
 import { usePageReady } from '../hooks/usePageReady';
 import './SongView.css';
 
 export default function SongView() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const { t, language } = useLanguage();
   
@@ -163,17 +165,27 @@ export default function SongView() {
       navigate('/login?next=' + window.location.pathname);
       return;
     }
-    const newState = !isFavorite;
+    const previousState = isFavorite;
+    const newState = !previousState;
     setIsFavorite(newState);
-    setFavMsg(newState ? t('songView.added') : t('songView.removed'));
-    setTimeout(() => setFavMsg(''), 2000);
     try {
-      await fetch('/user_favorites_api.php?action=toggle_favorite', {
+      const response = await fetch('/user_favorites_api.php?action=toggle_favorite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ song_id: id }),
       });
-    } catch {}
+      const data = await response.json();
+      if (!response.ok || typeof data.favorite !== 'boolean') {
+        throw new Error(data.error || 'Favorite update failed');
+      }
+
+      setIsFavorite(data.favorite);
+      setFavMsg(data.favorite ? t('songView.added') : t('songView.removed'));
+    } catch {
+      setIsFavorite(previousState);
+      setFavMsg(t('songView.favoriteError', 'Չհաջողվեց պահպանել երգը'));
+    }
+    setTimeout(() => setFavMsg(''), 2000);
   };
 
   useEffect(() => {
@@ -199,9 +211,12 @@ export default function SongView() {
               if (initialTargetKey) {
                 setTargetKey(initialTargetKey);
                 if (data.song_key) {
-                  const KEYS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-                  let fromIdx = KEYS.indexOf(data.song_key);
-                  let toIdx = KEYS.indexOf(initialTargetKey);
+                  const fromMatch = data.song_key.match(/^([A-G](?:#|b)?)/i);
+                  const toMatch = initialTargetKey.match(/^([A-G](?:#|b)?)/i);
+                  let fromRoot = fromMatch ? fromMatch[1] : data.song_key;
+                  let toRoot = toMatch ? toMatch[1] : initialTargetKey;
+                  let fromIdx = noteIndex(fromRoot);
+                  let toIdx = noteIndex(toRoot);
                   if (fromIdx !== -1 && toIdx !== -1) {
                     let diff = toIdx - fromIdx;
                     if (diff > 6) diff -= 12;
@@ -214,9 +229,12 @@ export default function SongView() {
         } else if (urlTkey) {
           setTargetKey(urlTkey);
           if (data.song_key) {
-            const KEYS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-            let fromIdx = KEYS.indexOf(data.song_key);
-            let toIdx = KEYS.indexOf(urlTkey);
+            const fromMatch = data.song_key.match(/^([A-G](?:#|b)?)/i);
+            const toMatch = urlTkey.match(/^([A-G](?:#|b)?)/i);
+            let fromRoot = fromMatch ? fromMatch[1] : data.song_key;
+            let toRoot = toMatch ? toMatch[1] : urlTkey;
+            let fromIdx = noteIndex(fromRoot);
+            let toIdx = noteIndex(toRoot);
             if (fromIdx !== -1 && toIdx !== -1) {
               let diff = toIdx - fromIdx;
               if (diff > 6) diff -= 12;
@@ -250,10 +268,11 @@ export default function SongView() {
         setError(t('songView.error'));
         setLoading(false);
       });
-  }, [id, user]);
+  }, [id, language, user]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    setSetlistNavData(null);
     const setlistId = params.get('setlist_id');
     const setlistToken = params.get('setlist_token');
     const setlistItemId = params.get('setlist_item_id');
@@ -279,13 +298,24 @@ export default function SongView() {
         .then(r => r.json())
         .then(data => {
           if (Array.isArray(data)) {
-            const idx = data.findIndex(s => String(s.id) === String(id));
+            const savedSort = normalizeSavedSongSort(params.get('sort'));
+            const keyFilter = params.get('key');
+            const filteredData = keyFilter
+              ? data.filter(item => (item.target_key || item.song_key) === keyFilter)
+              : data;
+            const orderedData = sortSavedSongs(
+              filteredData,
+              savedSort,
+              item => getLocalizedTitle(item, language),
+              language
+            );
+            const idx = orderedData.findIndex(s => String(s.id) === String(id));
             if (idx !== -1) {
               setSetlistNavData({
                 current: { id, index: idx + 1 },
-                total: data.length,
-                prev: idx > 0 ? data[idx - 1] : null,
-                next: idx < data.length - 1 ? data[idx + 1] : null,
+                total: orderedData.length,
+                prev: idx > 0 ? orderedData[idx - 1] : null,
+                next: idx < orderedData.length - 1 ? orderedData[idx + 1] : null,
               });
             }
           }
@@ -300,7 +330,7 @@ export default function SongView() {
           }
         });
     }
-  }, [id, user]);
+  }, [id, language, location.search, user]);
 
   const increaseFontSize = () => { 
     setFontSize(prev => {
@@ -336,7 +366,10 @@ export default function SongView() {
   const playingKey = getTransposedFullKey(song?.song_key, semi - capo);
   const isKeySaved = isFavorite && targetKey === playingKey;
   
-  const KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const KEYS_BASE = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const rootMatchForKeys = song?.song_key?.match(/^([A-G](?:#|b)?)(.*)$/i);
+  const keySuffix = rootMatchForKeys ? rootMatchForKeys[2] : '';
+  const KEYS = KEYS_BASE.map(k => k + keySuffix);
   
   const handleKeyClick = (targetKeyStr) => {
     if (!song?.song_key) return;
@@ -378,11 +411,33 @@ export default function SongView() {
     
     const params = new URLSearchParams(window.location.search);
     if (params.get('list')) url += `list=${params.get('list')}&`;
+    if (params.get('sort')) url += `sort=${encodeURIComponent(params.get('sort'))}&`;
+    if (params.get('key')) url += `key=${encodeURIComponent(params.get('key'))}&`;
     if (params.get('setlist_id')) url += `setlist_id=${params.get('setlist_id')}&`;
     if (params.get('setlist_token')) url += `setlist_token=${params.get('setlist_token')}&`;
     if (item.item_id) url += `setlist_item_id=${item.item_id}&`;
     
-    navigate(url);
+    // Paging changes the current song, but should not create a back-history
+    // entry for every song in the saved list or setlist.
+    navigate(url, { replace: true });
+  };
+
+  const handleSongBack = () => {
+    const params = new URLSearchParams(location.search);
+    const list = params.get('list') || '';
+
+    if (list === 'favorites') {
+      navigate('/favorites', { replace: true });
+      return;
+    }
+
+    const setlistId = params.get('setlist_id') || (list.startsWith('setlist_') ? list.slice(8) : '');
+    if (setlistId) {
+      navigate(`/setlists/${setlistId}`, { replace: true });
+      return;
+    }
+
+    navigate(-1);
   };
 
   const currentChords = song?.chords ? renderWithChords(song.chords, semi - capo, useFlats) : '';
@@ -397,7 +452,7 @@ export default function SongView() {
       <div className="song-view-page">
         <div className="sl-placeholder empty-state animate-fade-in">
           <p style={{color: 'var(--color-accent-red)'}}>{error}</p>
-          <button className="btn btn-secondary" onClick={() => navigate(-1)} style={{marginTop: '16px'}}>{t('songView.back')}</button>
+          <button className="btn btn-secondary" onClick={handleSongBack} style={{marginTop: '16px'}}>{t('songView.back')}</button>
         </div>
       </div>
     );
@@ -430,7 +485,7 @@ export default function SongView() {
       {/* Top Header */}
       <div className="sv-header">
         <div className="sv-header-left">
-          <button className="icon-btn" onClick={() => navigate(-1)} style={{ background: 'rgba(255,255,255,0.05)', padding: '8px', borderRadius: '12px' }}>
+          <button className="icon-btn" onClick={handleSongBack} style={{ background: 'rgba(255,255,255,0.05)', padding: '8px', borderRadius: '12px' }}>
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
           <div className="sv-title-area">
@@ -553,7 +608,7 @@ export default function SongView() {
                 className="sv-step-val" 
                 value={soundingKey ? getTransposedFullKey(soundingKey, 0) : ''}
                 onChange={(e) => handleKeyClick(e.target.value)}
-                style={{ appearance: 'none', WebkitAppearance: 'none', background: 'transparent', border: 'none', borderLeft: '1px solid rgba(255,255,255,0.08)', borderRight: '1px solid rgba(255,255,255,0.08)', outline: 'none', color: 'var(--color-accent-cyan)', textAlign: 'center', textAlignLast: 'center', cursor: 'pointer', fontFamily: 'inherit' }}
+                style={{ appearance: 'none', WebkitAppearance: 'none', background: 'transparent', border: 'none', borderLeft: '1px solid rgba(255,255,255,0.08)', borderRight: '1px solid rgba(255,255,255,0.08)', outline: 'none', color: 'var(--sv-accent)', textAlign: 'center', textAlignLast: 'center', cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 <option value="" disabled>{song?.song_key || t('songView.originalKey', 'Սկզբնական')}</option>
                 {KEYS.map(k => {
@@ -582,7 +637,7 @@ export default function SongView() {
                   localStorage.setItem(`capo_${id}`, v);
                   localStorage.setItem(`song_capo_pref:${id}`, JSON.stringify({ capo: v, capo_mode: v > 0 ? 1 : 0 }));
                 }}
-                style={{ appearance: 'none', WebkitAppearance: 'none', background: 'transparent', border: 'none', borderLeft: '1px solid rgba(255,255,255,0.08)', borderRight: '1px solid rgba(255,255,255,0.08)', outline: 'none', color: 'var(--color-accent-cyan)', textAlign: 'center', textAlignLast: 'center', cursor: 'pointer', fontFamily: 'inherit' }}
+                style={{ appearance: 'none', WebkitAppearance: 'none', background: 'transparent', border: 'none', borderLeft: '1px solid rgba(255,255,255,0.08)', borderRight: '1px solid rgba(255,255,255,0.08)', outline: 'none', color: 'var(--sv-accent)', textAlign: 'center', textAlignLast: 'center', cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 <option value="0" style={{background: 'var(--color-surface)', color: 'var(--color-text-primary)'}}>{t('songView.noCapo')}</option>
                 {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => <option key={n} value={n} style={{background: 'var(--color-surface)', color: 'var(--color-text-primary)'}}>Capo {n}</option>)}

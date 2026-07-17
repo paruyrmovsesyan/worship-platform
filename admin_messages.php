@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/admin_access.php';
 require_once __DIR__ . '/runtime_config.php';
 require_once __DIR__ . '/lib/PHPMailer/inc/mailer.php';
+require_once __DIR__ . '/admin_pwa_bootstrap.php';
 
 $access = wp_admin_require_access('/admin_messages.php');
 $adminUser = $access['user'];
@@ -101,9 +102,7 @@ $searchPlaceholder = 'Search messages...';
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Messages - Admin Panel</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <?php wp_admin_render_pwa_head('Messages - Admin Panel'); ?>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <?php include __DIR__ . '/admin_shared_css.php'; ?>
   <style>

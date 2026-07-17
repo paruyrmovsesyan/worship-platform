@@ -4,12 +4,12 @@ declare(strict_types=1);
 header('Content-Type: application/manifest+json; charset=utf-8');
 
 echo json_encode([
-    'name' => 'Worship Admin Songs',
-    'short_name' => 'Admin Songs',
+    'name' => 'Worship Platform Admin',
+    'short_name' => 'Worship Admin',
     'id' => '/songs.php?source=admin-app',
-    'start_url' => '/songs.php?source=admin-app',
+    'start_url' => '/admin_dashboard.php?source=admin-app',
     'scope' => '/',
-    'display_override' => ['window-controls-overlay', 'standalone', 'minimal-ui'],
+    'display_override' => ['standalone', 'minimal-ui'],
     'display' => 'standalone',
     'description' => 'Երգերի կառավարման առանձին ծրագիր Worship Platform-ի ադմինների համար։',
     'categories' => ['productivity', 'utilities', 'music'],
@@ -17,9 +17,8 @@ echo json_encode([
         'client_mode' => ['focus-existing', 'auto'],
     ],
     'prefer_related_applications' => false,
-    'background_color' => '#070910',
-    'theme_color' => '#070910',
-    'orientation' => 'portrait',
+    'background_color' => '#f4f7fe',
+    'theme_color' => '#f4f7fe',
     'shortcuts' => [
         [
             'name' => 'Երգերի ցանկ',

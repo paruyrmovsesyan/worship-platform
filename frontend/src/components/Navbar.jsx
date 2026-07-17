@@ -133,6 +133,10 @@ export default function Navbar() {
       icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
     },
     {
+      to: '/transpose', label: t('nav.transposer'),
+      icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M7 4 4 7l3 3M20 17H4m13-3 3 3-3 3"/></svg>
+    },
+    {
       to: '/setlists', label: t('nav.sets'),
       icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
     },
@@ -253,7 +257,7 @@ export default function Navbar() {
             </Link>
             
             <div 
-              className={`nav-item has-dropdown ${activeDropdown === 'solutions' ? 'active-dropdown' : ''} ${isActive('/songs') || isActive('/setlists') || isActive('/friends') ? 'active' : ''}`}
+              className={`nav-item has-dropdown ${activeDropdown === 'solutions' ? 'active-dropdown' : ''} ${isActive('/songs') || isActive('/transpose') || isActive('/setlists') || isActive('/friends') ? 'active' : ''}`}
               onMouseEnter={(e) => handleMenuEnter(e, 'solutions')}
               onMouseLeave={onMenuLeave}
             >
@@ -267,6 +271,7 @@ export default function Navbar() {
                       <h4>{t('megaMenu.music')}</h4>
                       <div className="mega-col-links">
                         <Link to="/songs">{t('nav.songs')}</Link>
+                        <Link to="/transpose">{t('nav.transposer')}</Link>
                         <Link to="/setlists">{t('nav.sets')}</Link>
                       </div>
                     </div>
