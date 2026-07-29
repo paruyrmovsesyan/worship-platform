@@ -178,6 +178,9 @@ export default function MobileHub() {
           <div style={{ marginRight: '8px' }}>
             <LanguageSwitcher />
           </div>
+          <button className="icon-btn" style={{ border: 'none' }} onClick={() => navigate('/settings')} title={t('settings.title', 'Կարգավորումներ')}>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </button>
           <button className="icon-btn" style={{ border: 'none' }} onClick={() => guardPath('/notifications', () => navigate('/notifications'))}>
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
           </button>
@@ -248,24 +251,33 @@ export default function MobileHub() {
         </div>
 
         {/* Dashboard: Upcoming Service */}
-        {user && (
+        {user && upcomingSetlist && (
           <div className="upcoming-card">
-            <div className="card-bg-glow"></div>
-            <div className="card-content">
-              <h2 className="card-label">{t('hub.upcomingService')}:<br/>{upcomingSetlist ? upcomingSetlist.name : 'Sunday AM'}</h2>
-              <p>{getFormattedDate()}</p>
-              
-              <button 
-                className="btn btn-primary" 
-                style={{ width: '100%', marginTop: '16px' }}
-                onClick={() => guardPath(upcomingSetlist ? `/setlists/${upcomingSetlist.id}` : '/setlists', () => {
-                  if (upcomingSetlist) navigate(`/setlists/${upcomingSetlist.id}`);
-                  else navigate('/setlists');
-                })}
-              >
-                {t('hub.startRehearsal')}
-              </button>
+            <div className="upcoming-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="5" width="18" height="16" rx="2" />
+                <path d="M16 3v4M8 3v4M3 10h18" />
+                <path d="m9.5 15 1.7 1.7 3.6-3.7" />
+              </svg>
             </div>
+            <div className="upcoming-card-content">
+              <span className="upcoming-card-label">{t('hub.upcomingService')}</span>
+              <h2>{upcomingSetlist.name}</h2>
+              <p>{getFormattedDate()}</p>
+            </div>
+            <button
+              type="button"
+              className="upcoming-card-action"
+              aria-label={t('hub.startRehearsal')}
+              onClick={() => guardPath(`/setlists/${upcomingSetlist.id}`, () => {
+                navigate(`/setlists/${upcomingSetlist.id}`);
+              })}
+            >
+              <span>{t('hub.startRehearsal')}</span>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </button>
           </div>
         )}
 

@@ -368,40 +368,49 @@ if (!function_exists('wp_auth_find_existing_device_session_id')) {
             return 0;
         }
 
-        $deviceName = trim($deviceName);
-        $browser = trim((string)($meta['browser'] ?? ''));
-        $platform = trim((string)($meta['platform'] ?? ''));
+        $sessionKey = session_id();
+        $selector = function_exists('wp_auth_current_remember_selector') ? wp_auth_current_remember_selector() : '';
+        $ip = function_exists('wp_runtime_remote_ip') ? wp_runtime_remote_ip() : (string)($_SERVER['REMOTE_ADDR'] ?? '');
         $userAgent = mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
-
-        if ($deviceName === '' || $browser === '' || $platform === '' || $userAgent === '') {
-            return 0;
-        }
+        $deviceName = trim($deviceName);
 
         try {
-            $stmt = $pdo->prepare("
-                SELECT id
-                FROM user_sessions
-                WHERE user_id = ?
-                  AND device_name = ?
-                  AND browser = ?
-                  AND platform = ?
-                  AND user_agent = ?
-                ORDER BY
-                  CASE WHEN session_key = ? THEN 0 ELSE 1 END,
-                  COALESCE(last_used_at, created_at) DESC,
-                  id DESC
-                LIMIT 1
-            ");
-            $stmt->execute([
-                $userId,
-                $deviceName,
-                $browser,
-                $platform,
-                $userAgent,
-                session_id(),
-            ]);
+            // 1. Match exact current session_key or remember selector
+            if ($sessionKey !== '' || $selector !== '') {
+                $stmt = $pdo->prepare("
+                    SELECT id FROM user_sessions
+                    WHERE user_id = ?
+                      AND (
+                        (? <> '' AND session_key = ?)
+                        OR (? <> '' AND selector = ?)
+                      )
+                    ORDER BY id DESC LIMIT 1
+                ");
+                $stmt->execute([$userId, $sessionKey, $sessionKey, $selector, $selector]);
+                $id = (int)$stmt->fetchColumn();
+                if ($id > 0) {
+                    return $id;
+                }
+            }
 
-            return (int)$stmt->fetchColumn();
+            // 2. Match same exact device & browser on the same IP address
+            if ($deviceName !== '' && $userAgent !== '' && $ip !== '') {
+                $stmt = $pdo->prepare("
+                    SELECT id FROM user_sessions
+                    WHERE user_id = ?
+                      AND device_name = ?
+                      AND user_agent = ?
+                      AND ip_address = ?
+                    ORDER BY COALESCE(last_used_at, created_at) DESC, id DESC LIMIT 1
+                ");
+                $stmt->execute([$userId, $deviceName, $userAgent, $ip]);
+                $id = (int)$stmt->fetchColumn();
+                if ($id > 0) {
+                    return $id;
+                }
+            }
+
+            return 0;
         } catch (Throwable $e) {
             return 0;
         }
@@ -414,36 +423,73 @@ if (!function_exists('wp_auth_prune_duplicate_device_sessions')) {
             return;
         }
 
-        $deviceName = trim($deviceName);
-        $browser = trim((string)($meta['browser'] ?? ''));
-        $platform = trim((string)($meta['platform'] ?? ''));
-        $userAgent = mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
-
-        if ($deviceName === '' || $browser === '' || $platform === '' || $userAgent === '') {
-            return;
-        }
-
-        $sql = "
-            DELETE FROM user_sessions
-            WHERE user_id = ?
-              AND device_name = ?
-              AND browser = ?
-              AND platform = ?
-              AND user_agent = ?
-        ";
-        $params = [$userId, $deviceName, $browser, $platform, $userAgent];
-
-        if ($keepSessionId > 0) {
-            $sql .= " AND id <> ?";
-            $params[] = $keepSessionId;
-        }
-
         try {
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
+            // 1. Remove expired sessions
+            $pdo->prepare("DELETE FROM user_sessions WHERE user_id = ? AND (expires_at IS NOT NULL AND expires_at < NOW())")->execute([$userId]);
+
+            // 2. Remove older duplicate sessions from the EXACT SAME IP + user_agent + device_name
+            $ip = function_exists('wp_runtime_remote_ip') ? wp_runtime_remote_ip() : (string)($_SERVER['REMOTE_ADDR'] ?? '');
+            $userAgent = mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
+            $deviceName = trim($deviceName);
+
+            if ($deviceName !== '' && $userAgent !== '' && $ip !== '') {
+                $sql = "DELETE FROM user_sessions WHERE user_id = ? AND device_name = ? AND user_agent = ? AND ip_address = ?";
+                $params = [$userId, $deviceName, $userAgent, $ip];
+                if ($keepSessionId > 0) {
+                    $sql .= " AND id <> ?";
+                    $params[] = $keepSessionId;
+                }
+                $pdo->prepare($sql)->execute($params);
+            }
+
+            // 3. Limit total active sessions per user to 20
+            $stmt = $pdo->prepare("SELECT id FROM user_sessions WHERE user_id = ? ORDER BY COALESCE(last_used_at, created_at) DESC LIMIT 20, 100");
+            $stmt->execute([$userId]);
+            $oldIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!empty($oldIds)) {
+                $placeholders = implode(',', array_fill(0, count($oldIds), '?'));
+                $pdo->prepare("DELETE FROM user_sessions WHERE id IN ($placeholders)")->execute($oldIds);
+            }
         } catch (Throwable $e) {
-            // Duplicate cleanup should never block login.
+            // Cleanup should never block login.
         }
+    }
+}
+
+if (!function_exists('wp_auth_cleanup_inactive_records')) {
+    function wp_auth_cleanup_inactive_records(PDO $pdo, bool $force = false): int {
+        static $cleaned = false;
+        if ($cleaned && !$force) return 0;
+        $cleaned = true;
+
+        if (!$force && random_int(1, 30) !== 1) {
+            return 0;
+        }
+
+        $deletedCount = 0;
+        try {
+            // 1. Delete user_sessions inactive for 30+ days or expired
+            $stmt1 = $pdo->prepare("
+                DELETE FROM user_sessions 
+                WHERE (expires_at IS NOT NULL AND expires_at < NOW())
+                   OR (COALESCE(last_used_at, created_at) < DATE_SUB(NOW(), INTERVAL 30 DAY))
+            ");
+            $stmt1->execute();
+            $deletedCount += $stmt1->rowCount();
+
+            // 2. Delete web_activity records inactive for 30+ days
+            $stmt2 = $pdo->prepare("
+                DELETE FROM web_activity 
+                WHERE last_seen < DATE_SUB(NOW(), INTERVAL 30 DAY)
+            ");
+            $stmt2->execute();
+            $deletedCount += $stmt2->rowCount();
+        } catch (Throwable $e) {
+            // Cleanup failure should never interrupt request execution
+        }
+
+        return $deletedCount;
     }
 }
 
@@ -721,8 +767,18 @@ if (!empty($_SESSION['user_id'])) {
     }
 }
 
-if (empty($_COOKIE['remember_me'])) {
-    return;
+if (!empty($_SESSION['user_id'])) {
+    // If the user is already logged in, update their last active timestamp
+    $pdoForAuth = wp_auth_open_pdo();
+    if ($pdoForAuth) {
+        wp_auth_touch_current_session($pdoForAuth);
+        wp_auth_cleanup_inactive_records($pdoForAuth);
+    }
+} elseif (!empty($_COOKIE['remember_me'])) {
+    // Otherwise, if they have a remember cookie, restore the session
+    $pdoForAuth = wp_auth_open_pdo();
+    if ($pdoForAuth) {
+        wp_auth_restore_from_remember_cookie($pdoForAuth);
+        wp_auth_cleanup_inactive_records($pdoForAuth);
+    }
 }
-
-wp_auth_restore_from_remember_cookie($pdo);

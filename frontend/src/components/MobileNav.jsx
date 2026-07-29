@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -31,7 +32,7 @@ export default function MobileNav() {
         if (!cancelled && data.ok) {
           setChatBadgeCount(Number(data.total || 0));
         }
-      } catch (error) {
+      } catch {
         if (!cancelled) {
           setChatBadgeCount(0);
         }
@@ -64,7 +65,7 @@ export default function MobileNav() {
     };
   }, [user]);
 
-  return (
+  return createPortal(
     <nav id="wpAppDock" className="mobile-bottom-nav">
       <NavLink to="/" end onClick={(e) => { if (!guardPath('/')) e.preventDefault(); }} className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -114,6 +115,7 @@ export default function MobileNav() {
           <span>{t('nav.login')}</span>
         </NavLink>
       )}
-    </nav>
+    </nav>,
+    document.body
   );
 }

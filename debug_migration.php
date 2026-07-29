@@ -34,7 +34,7 @@ try {
          echo "4. Create Table Error: " . $conn->error . "\n";
     }
     
-    $stmt = $conn->prepare("INSERT INTO sys_settings (setting_key, setting_value) VALUES ('test_key', 'test_val') ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+    $stmt = $conn->prepare("INSERT INTO sys_settings (setting_key, setting_value) VALUES ('test_key', 'test_val') ON DUPLICATE KEY UPDATE setting_value = 'test_val'");
     if (!$stmt) {
         echo "5. Prepare Error: " . $conn->error . "\n";
     } else {

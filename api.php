@@ -6,6 +6,9 @@ error_reporting(E_ALL);
 
 require_once __DIR__ . '/runtime_config.php';
 require_once __DIR__ . '/translation_runtime.php';
+require_once __DIR__ . '/auth_bootstrap.php';
+session_write_close();
+$pdo = wp_runtime_open_pdo();
 
 header("Content-Type: application/json; charset=UTF-8");
 
@@ -215,6 +218,20 @@ if ($method === "GET") {
             $song = wp_translation_localize_row_fields([$song], [
                 'title' => 'api.song.title',
             ], $lang)[0] ?? $song;
+            
+            $attStmt = $conn->prepare("SELECT id, title, url, type FROM song_attachments WHERE song_id=?");
+            if ($attStmt) {
+                $attStmt->bind_param("i", $id);
+                $attStmt->execute();
+                $attRes = $attStmt->get_result();
+                $attachments = [];
+                while ($att = $attRes->fetch_assoc()) {
+                    $attachments[] = $att;
+                }
+                $song['attachments'] = $attachments;
+            } else {
+                $song['attachments'] = [];
+            }
         }
         echo json_encode($song, JSON_UNESCAPED_UNICODE);
         exit;

@@ -1,9 +1,9 @@
 <?php
 return array (
-  'app_version' => '3.2.0',
-  'web_version' => '3.2.0',
-  'app_release_stamp' => '2026-05-08T21:25:21+04:00',
-  'web_release_stamp' => '2026-05-08T21:25:21+04:00',
+  'app_version' => '3.2.1',
+  'web_version' => '3.2.1',
+  'app_release_stamp' => '2026-07-27T13:35:00+04:00',
+  'web_release_stamp' => '2026-07-27T13:35:00+04:00',
   'app_release_type' => 'feature',
   'web_release_type' => 'feature',
   'app_release_summary' => '',

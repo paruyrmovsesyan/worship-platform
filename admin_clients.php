@@ -55,6 +55,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['ac
     exit;
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'close_user_sessions') {
+    header('Content-Type: application/json');
+    try {
+        $conn = wp_runtime_open_mysqli();
+        $uid = (int)($_POST['id'] ?? 0);
+        if ($uid <= 0) {
+            throw new RuntimeException('Invalid user id');
+        }
+        
+        $stmt = $conn->prepare("DELETE FROM user_sessions WHERE user_id = ?");
+        $stmt->bind_param('i', $uid);
+        $stmt->execute();
+        
+        echo json_encode(['ok' => true]);
+    } catch (Throwable $e) {
+        echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'toggle_block_user') {
     header('Content-Type: application/json');
     try {
@@ -283,7 +303,7 @@ $searchPlaceholder = 'Search users...';
     <div class="app-content">
       <div class="page-heading page-heading-row">
         <div>
-          <h1>Clients 👥</h1>
+          <h1>Clients</h1>
           <p><?= number_format($totalUsers) ?> <?= __('registered users') ?></p>
         </div>
         <form method="get" style="display:flex; gap:12px; align-items:center;">
@@ -398,6 +418,7 @@ $searchPlaceholder = 'Search users...';
 
     <div style="display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;">
       <button id="umBlockBtn" onclick="toggleUserBlock()" class="btn" style="background:rgba(220,38,38,0.1); color:#dc2626; border:1px solid rgba(220,38,38,0.2);">Արգելափակել</button>
+      <button onclick="closeUserSessions()" class="btn" style="background:rgba(245,158,11,0.1); color:#d97706; border:1px solid rgba(245,158,11,0.2);">Փակել սեսիաները</button>
       <button id="umDeleteBtn" onclick="deleteUserAccount()" class="btn" style="background:#dc2626; color:#fff; border:1px solid #dc2626;">Ջնջել հաշիվը</button>
     </div>
     
@@ -654,6 +675,28 @@ function toggleUserBlock() {
     .then(res => {
         if (res.ok) {
             location.reload();
+        } else {
+            alert('Սխալ առաջացավ: ' + (res.error || ''));
+        }
+    })
+    .catch(err => alert('Սխալ: ' + err.message));
+}
+
+function closeUserSessions() {
+    if (!currentUserData.id) return;
+    if (!window.confirm('Վստա՞հ եք, որ ուզում եք փակել այս օգտատիրոջ բոլոր ակտիվ սեսիաները։ Նա ստիպված կլինի կրկին մուտք գործել։')) return;
+
+    const data = new FormData();
+    data.append('id', String(currentUserData.id));
+
+    fetch('?action=close_user_sessions', {
+        method: 'POST',
+        body: data
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.ok) {
+            alert('Բոլոր սեսիաները փակվեցին։');
         } else {
             alert('Սխալ առաջացավ: ' + (res.error || ''));
         }

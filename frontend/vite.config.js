@@ -1,9 +1,22 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+const assetVersion = '246'
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'version-production-entry-assets',
+      enforce: 'post',
+      transformIndexHtml(html) {
+        return html
+          .replace('/assets/index.js"', `/assets/index.js?v=${assetVersion}"`)
+          .replace('/assets/index.css"', `/assets/index.css?v=${assetVersion}"`)
+      },
+    },
+  ],
   build: {
     rollupOptions: {
       output: {

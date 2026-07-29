@@ -15,6 +15,28 @@
         document.documentElement.style.colorScheme = appTheme;
       } catch (_) {}
     </script>
+    <script>
+      try {
+        const browserMode = window.matchMedia('(display-mode: browser)').matches;
+        const installedApp = !browserMode && (
+          window.matchMedia('(display-mode: standalone)').matches ||
+          window.navigator.standalone === true ||
+          document.referrer.includes('android-app://')
+        );
+        const url = new URL(window.location.href);
+        const source = (url.searchParams.get('source') || '').toLowerCase();
+
+        if (!installedApp && (source === 'pwa' || source === 'admin-app')) {
+          url.searchParams.delete('source');
+          window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+          window.sessionStorage.removeItem('wp_active_app_source');
+          document.cookie = 'wp_app_context=; path=/; max-age=0; SameSite=Lax';
+          if (window.navigator.serviceWorker?.controller) {
+            window.navigator.serviceWorker.controller.postMessage({ type: 'REGISTER_WEB_CLIENT' });
+          }
+        }
+      } catch (_) {}
+    </script>
 
     <!-- Anti-Cache Meta Tags to force PWA refresh -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -37,9 +59,9 @@
     <meta name="twitter:title" content="Worship Platform">
     <meta name="twitter:description" content="Equip your worship team with chord charts, setlists, and collaboration tools.">
     <meta name="twitter:image" content="https://worship.pmstudio.am/og-image.png">
-    <script src="/site_guard.js?v=11" defer=""></script>
-    <script src="/version-check.js?v=3" defer></script>
-    <script src="/pwa-init.js" defer></script>
+    <script src="/site_guard.js?v=16" defer=""></script>
+    <script src="/version-check.js?v=5" defer></script>
+    <script src="/pwa-init.js?v=220" defer></script>
     <style>
       html, body {
         margin: 0;

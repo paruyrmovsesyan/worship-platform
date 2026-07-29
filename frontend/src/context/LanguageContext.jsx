@@ -31,6 +31,14 @@ const translations = {
       googleDisabledShort: 'Դեռ կարգավորված չէ',
       noAccount: 'Չունե՞ս հաշիվ։',
       createNow: 'Ստեղծել հիմա',
+      guestEyebrow: 'Քո երաժշտական աշխատանքային տարածքը',
+      guestDescription: 'Բացիր երգերը, փոխիր տոնայնությունը և պահիր ամեն ինչ մեկ անվտանգ հաշվում։',
+      guestPreviewLabel: 'Ակորդների նախադիտում',
+      guestPreviewTitle: 'Պատրաստ է փորձին',
+      guestKey: 'Տոն՝',
+      guestOpenTransposer: 'Բացել տրանսպոզը',
+      guestLogin: 'Մուտք գործել',
+      guestBrowseSongs: 'Դիտել երգարանը որպես հյուր',
       registerTitle: 'Ստեղծել հաշիվ',
       registerSubtitle: 'Միացիր պաշտամունքային թիմերին ամբողջ աշխարհից։ Պահպանիր քո երգերը և սեթլիստները բոլոր սարքերում։',
       joinCommunity: 'Միացիր մեր համայնքին',
@@ -53,6 +61,7 @@ const translations = {
         security: 'Անվտանգություն',
         sessions: 'Սեսիաներ',
         requests: 'Հարցումներ',
+        about: 'Ծրագրի մասին',
         danger: 'Վտանգավոր'
       },
       app: {
@@ -71,6 +80,8 @@ const translations = {
         outlinedChords: 'Շրջանակված ակորդներ',
         outlinedChordsDesc: 'Ակորդները ցուցադրվում են որպես առանձին կոճակներ՝ ավելի հեշտ կարդալու համար։',
         chordColor: 'Ակորդների գույն',
+        chordStyle: 'Ակորդների ոճ',
+        standardChords: 'Ստանդարտ',
         colorGold: 'Ոսկեգույն',
         colorBlue: 'Կապույտ',
         colorGreen: 'Կանաչ',
@@ -82,6 +93,33 @@ const translations = {
         enable: 'Միացնել',
         disable: 'Անջատել',
         saved: 'Պահպանված է'
+      },
+      about: {
+        tagline: 'Երգեր, ակորդներ և թիմային համագործակցություն մեկ ծրագրում։',
+        version: 'Ծրագրի տարբերակ',
+        status: 'Ծրագրի կարգավիճակ',
+        statusActive: 'Ակտիվ (Անխափան)',
+        statusMaintenance: 'Տեխնիկական սպասարկում',
+        statusScheduled: 'Պլանավորված սպասարկում',
+        platform: 'Տեղադրման տեսակ',
+        offline: 'Օֆֆլայն աշխատանք',
+        available: 'Հասանելի է',
+        releaseType: 'Թողարկման տեսակ',
+        releaseTypes: {
+          major: 'Մեծ թարմացում',
+          feature: 'Նոր հնարավորություն',
+          patch: 'Փոքր ուղղում',
+          hotfix: 'Արագ շտկում',
+          maintenance: 'Տեխնիկական թարմացում',
+          content: 'Բովանդակության թարմացում'
+        },
+        updated: 'Վերջին թարմացում',
+        licenseTitle: 'Լիցենզիաներ',
+        licenseText: 'Worship Platform-ը PM Studio-ի սեփական ծրագրային ապահովումն է։ Օգտագործված բաց կոդով գրադարանները տարածվում են իրենց համապատասխան լիցենզիաներով։',
+        privacy: 'Գաղտնիություն',
+        terms: 'Պայմաններ',
+        support: 'Աջակցություն',
+        rights: 'Բոլոր իրավունքները պաշտպանված են։'
       },
       profile: {
         title: 'Անձնական տվյալներ',
@@ -291,7 +329,7 @@ const translations = {
       playAs: 'Նվագել որպես:',
       keySavedAlert: 'Տոնայնությունը պահպանվեց',
       keyIsSaved: '✓ Պահպանված է',
-      saveKey: '💾 Պահպանել',
+      saveKey: 'Պահպանել նոր տոնայնությունը',
       semitones: 'կիսատոն',
       reset: 'Reset',
       flats: '♭ Flats',
@@ -338,6 +376,39 @@ const translations = {
       networkError: 'Կապի խնդիր'
     },
     setlists: {
+      heroTitle: 'Պաշտամունքի Ծրագրեր',
+      heroSubtitle: 'Կառավարեք ձեր երգացանկերը, պլանավորեք ծառայությունները և կիսվեք թիմի հետ:',
+      statTotalSets: 'Երգացանկեր',
+      statTotalSongs: 'Ընդհանուր երգեր',
+      statTeamSets: 'Թիմային',
+      tabAll: 'Բոլորը',
+      tabPersonal: 'Անձնական',
+      tabTeam: 'Թիմային',
+      tabShared: 'Կիսված',
+      sortNewest: 'Նորերը սկզբում',
+      sortOldest: 'Հիները սկզբում',
+      sortName: 'Ըստ անվան',
+      sortItems: 'Ըստ երգերի քանակի',
+      noDate: 'Առանց ամսաթվի',
+      backToSetlists: 'Երգացանկեր',
+      publicBadge: 'Հանրային Երգացանկ',
+      liveMode: 'Live Ռեժիմ',
+      saveToAccount: 'Պահպանել իմ հաշվում',
+      copyLink: 'Պատճենել հղումը',
+      copied: 'Պատճենված է!',
+      saving: 'Պահպանվում է...',
+      statItems: 'Տարրեր',
+      statSongs: 'Երգեր',
+      statSections: 'Բաժիններ',
+      statRequired: 'Պարտադիր',
+      itemsTitle: 'Երգացանկի Երգեր',
+      keyLabel: 'Տոն',
+      required: 'Պարտադիր',
+      section: 'Բաժին',
+      errorTitle: 'Երգացանկը հասանելի չէ',
+      invalidToken: 'Անվավեր կամ բացակայող հղում։',
+      allSetlists: 'Դիտել Երգացանկերը',
+      importedTag: 'Պատճեն',
       loginPrompt: 'Խնդրում ենք մուտք գործել՝ երգացանկեր կազմելու համար։',
       newSetlist: 'Նոր Երգացանկ',
       errorLoad: 'Չհաջողվեց բեռնել երգացանկերը',
@@ -371,6 +442,7 @@ const translations = {
       descField: 'Նկարագրություն',
       cancelBtn: 'Չեղարկել',
       saveBtn: 'Պահպանել',
+      savingBtn: 'Պահպանվում է...',
       namePlaceholder: 'օր․ Կիրակնօրյա Պաշտամունք',
       assignTeam: 'Կցել թիմին (ոչ պարտադիր)',
       personalTeam: '-- Անձնական --',
@@ -662,6 +734,14 @@ const translations = {
       googleDisabledShort: 'Not configured yet',
       noAccount: 'Don\'t have an account?',
       createNow: 'Create now',
+      guestEyebrow: 'Your music workspace',
+      guestDescription: 'Open songs, change keys, and keep everything together in one secure account.',
+      guestPreviewLabel: 'Chord preview',
+      guestPreviewTitle: 'Ready for rehearsal',
+      guestKey: 'Key:',
+      guestOpenTransposer: 'Open transposer',
+      guestLogin: 'Log in',
+      guestBrowseSongs: 'Browse songs as guest',
       registerTitle: 'Create an account',
       registerSubtitle: 'Join worship teams from around the world. Save your songs and setlists on all devices.',
       joinCommunity: 'Join our community',
@@ -684,6 +764,7 @@ const translations = {
         security: 'Security',
         sessions: 'Sessions',
         requests: 'Requests',
+        about: 'About the App',
         danger: 'Danger Zone'
       },
       app: {
@@ -702,6 +783,8 @@ const translations = {
         outlinedChords: 'Outlined Chords',
         outlinedChordsDesc: 'Chords are displayed as individual buttons for easier reading.',
         chordColor: 'Chord Color',
+        chordStyle: 'Chord style',
+        standardChords: 'Standard',
         colorGold: 'Gold',
         colorBlue: 'Blue',
         colorGreen: 'Green',
@@ -713,6 +796,33 @@ const translations = {
         enable: 'Enable',
         disable: 'Disable',
         saved: 'Saved'
+      },
+      about: {
+        tagline: 'Songs, chords, and team collaboration in one app.',
+        version: 'App version',
+        status: 'App status',
+        statusActive: 'Active (Operational)',
+        statusMaintenance: 'Maintenance',
+        statusScheduled: 'Scheduled maintenance',
+        platform: 'Installation type',
+        offline: 'Offline access',
+        available: 'Available',
+        releaseType: 'Release type',
+        releaseTypes: {
+          major: 'Major release',
+          feature: 'Feature update',
+          patch: 'Patch update',
+          hotfix: 'Hotfix',
+          maintenance: 'Maintenance update',
+          content: 'Content update'
+        },
+        updated: 'Last updated',
+        licenseTitle: 'Licenses',
+        licenseText: 'Worship Platform is proprietary software of PM Studio. Open-source libraries are distributed under their respective licenses.',
+        privacy: 'Privacy',
+        terms: 'Terms',
+        support: 'Support',
+        rights: 'All rights reserved.'
       },
       profile: {
         title: 'Personal Information',
@@ -922,7 +1032,7 @@ const translations = {
       playAs: 'Play as:',
       keySavedAlert: 'Key saved',
       keyIsSaved: '✓ Saved',
-      saveKey: '💾 Save',
+      saveKey: 'Save new key',
       semitones: 'semitones',
       reset: 'Reset',
       flats: '♭ Flats',
@@ -968,6 +1078,39 @@ const translations = {
       networkError: 'Network error'
     },
     setlists: {
+      heroTitle: 'Worship Setlists',
+      heroSubtitle: 'Manage your setlists, plan services, and collaborate with your team.',
+      statTotalSets: 'Setlists',
+      statTotalSongs: 'Total Songs',
+      statTeamSets: 'Team Sets',
+      tabAll: 'All',
+      tabPersonal: 'Personal',
+      tabTeam: 'Team',
+      tabShared: 'Shared',
+      sortNewest: 'Newest first',
+      sortOldest: 'Oldest first',
+      sortName: 'By name',
+      sortItems: 'By song count',
+      noDate: 'No date',
+      backToSetlists: 'Setlists',
+      publicBadge: 'Public Setlist',
+      liveMode: 'Live Mode',
+      saveToAccount: 'Save to My Setlists',
+      copyLink: 'Copy Link',
+      copied: 'Copied!',
+      saving: 'Saving...',
+      statItems: 'Items',
+      statSongs: 'Songs',
+      statSections: 'Sections',
+      statRequired: 'Required',
+      itemsTitle: 'Setlist Songs',
+      keyLabel: 'Key',
+      required: 'Required',
+      section: 'Section',
+      errorTitle: 'Setlist Unavailable',
+      invalidToken: 'Invalid or missing share link.',
+      allSetlists: 'View Setlists',
+      importedTag: 'Copy',
       loginPrompt: 'Please log in to create and manage setlists.',
       newSetlist: 'New Setlist',
       errorLoad: 'Failed to load setlists',
@@ -1001,6 +1144,7 @@ const translations = {
       descField: 'Description',
       cancelBtn: 'Cancel',
       saveBtn: 'Save',
+      savingBtn: 'Saving...',
       namePlaceholder: 'e.g. Sunday Service',
       assignTeam: 'Assign to Team (Optional)',
       personalTeam: '-- Personal --',
@@ -1289,6 +1433,14 @@ const translations = {
       googleDisabledShort: 'Еще не настроено',
       noAccount: 'Нет аккаунта?',
       createNow: 'Создать сейчас',
+      guestEyebrow: 'Ваше музыкальное пространство',
+      guestDescription: 'Открывайте песни, меняйте тональность и храните всё в одном защищённом аккаунте.',
+      guestPreviewLabel: 'Предпросмотр аккордов',
+      guestPreviewTitle: 'Готово к репетиции',
+      guestKey: 'Тон:',
+      guestOpenTransposer: 'Открыть транспозер',
+      guestLogin: 'Войти',
+      guestBrowseSongs: 'Открыть песни как гость',
       registerTitle: 'Создать аккаунт',
       registerSubtitle: 'Присоединяйтесь к командам прославления со всего мира. Сохраняйте песни на всех устройствах.',
       joinCommunity: 'Присоединяйтесь к сообществу',
@@ -1311,6 +1463,7 @@ const translations = {
         security: 'Безопасность',
         sessions: 'Сессии',
         requests: 'Запросы',
+        about: 'О приложении',
         danger: 'Опасная зона'
       },
       app: {
@@ -1329,6 +1482,8 @@ const translations = {
         outlinedChords: 'Обведенные аккорды',
         outlinedChordsDesc: 'Аккорды отображаются в виде отдельных кнопок для удобства чтения.',
         chordColor: 'Цвет аккордов',
+        chordStyle: 'Стиль аккордов',
+        standardChords: 'Стандартный',
         colorGold: 'Золотой',
         colorBlue: 'Синий',
         colorGreen: 'Зеленый',
@@ -1340,6 +1495,33 @@ const translations = {
         enable: 'Включить',
         disable: 'Отключить',
         saved: 'Сохранено'
+      },
+      about: {
+        tagline: 'Песни, аккорды и командная работа в одном приложении.',
+        version: 'Версия приложения',
+        status: 'Статус приложения',
+        statusActive: 'Активный (Работает)',
+        statusMaintenance: 'Техническое обслуживание',
+        statusScheduled: 'Запланированное обслуживание',
+        platform: 'Тип установки',
+        offline: 'Работа офлайн',
+        available: 'Доступна',
+        releaseType: 'Тип выпуска',
+        releaseTypes: {
+          major: 'Крупное обновление',
+          feature: 'Новая функция',
+          patch: 'Исправление',
+          hotfix: 'Срочное исправление',
+          maintenance: 'Техническое обновление',
+          content: 'Обновление контента'
+        },
+        updated: 'Последнее обновление',
+        licenseTitle: 'Лицензии',
+        licenseText: 'Worship Platform является проприетарным программным обеспечением PM Studio. Библиотеки с открытым исходным кодом распространяются по соответствующим лицензиям.',
+        privacy: 'Конфиденциальность',
+        terms: 'Условия',
+        support: 'Поддержка',
+        rights: 'Все права защищены.'
       },
       profile: {
         title: 'Личные данные',
@@ -1549,7 +1731,7 @@ const translations = {
       playAs: 'Играть как:',
       keySavedAlert: 'Тональность сохранена',
       keyIsSaved: '✓ Сохранено',
-      saveKey: '💾 Сохранить',
+      saveKey: 'Сохранить новую тональность',
       semitones: 'полутонов',
       reset: 'Сброс',
       flats: '♭ Бемоли',
@@ -1595,6 +1777,39 @@ const translations = {
       networkError: 'Ошибка сети'
     },
     setlists: {
+      heroTitle: 'Планы поклонения',
+      heroSubtitle: 'Управляйте сет-листами, планируйте служения и делитесь с командой.',
+      statTotalSets: 'Сет-листы',
+      statTotalSongs: 'Всего песен',
+      statTeamSets: 'Командные',
+      tabAll: 'Все',
+      tabPersonal: 'Личные',
+      tabTeam: 'Командные',
+      tabShared: 'Общие',
+      sortNewest: 'Сначала новые',
+      sortOldest: 'Сначала старые',
+      sortName: 'По названию',
+      sortItems: 'По кол-ву песен',
+      noDate: 'Без даты',
+      backToSetlists: 'Сет-листы',
+      publicBadge: 'Публичный Сет-лист',
+      liveMode: 'Режим Live',
+      saveToAccount: 'Сохранить в мои сет-листы',
+      copyLink: 'Скопировать ссылку',
+      copied: 'Скопировано!',
+      saving: 'Сохранение...',
+      statItems: 'Элементы',
+      statSongs: 'Песни',
+      statSections: 'Разделы',
+      statRequired: 'Обязательные',
+      itemsTitle: 'Песни сет-листа',
+      keyLabel: 'Тональность',
+      required: 'Обязательно',
+      section: 'Раздел',
+      errorTitle: 'Сет-лист недоступен',
+      invalidToken: 'Недействительная или отсутствующая ссылка.',
+      allSetlists: 'Смотреть сет-листы',
+      importedTag: 'Копия',
       loginPrompt: 'Пожалуйста, войдите, чтобы создавать сет-листы.',
       newSetlist: 'Новый Сет-лист',
       errorLoad: 'Не удалось загрузить сет-листы',
@@ -1628,6 +1843,7 @@ const translations = {
       descField: 'Описание',
       cancelBtn: 'Отмена',
       saveBtn: 'Сохранить',
+      savingBtn: 'Сохранение...',
       namePlaceholder: 'напр. Воскресное Богослужение',
       assignTeam: 'Привязать к команде (необязательно)',
       personalTeam: '-- Личный --',
@@ -1906,23 +2122,23 @@ export function LanguageProvider({ children }) {
     }).catch(console.error);
   }, [language]);
 
-  const t = (key) => {
+  const t = (key, fallbackText = null) => {
     const keys = key.split('.');
     let value = translations[language];
     for (const k of keys) {
       if (value && value[k] !== undefined) {
         value = value[k];
       } else {
-        // Fallback: try English, then return key
+        // Fallback: try English, then return fallbackText or key
         let fallback = translations['en'];
         for (const fk of keys) {
           if (fallback && fallback[fk] !== undefined) fallback = fallback[fk];
-          else return key;
+          else return fallbackText !== null ? fallbackText : key;
         }
-        return typeof fallback === 'string' || typeof fallback === 'object' ? fallback : key;
+        return typeof fallback === 'string' || typeof fallback === 'object' ? fallback : (fallbackText !== null ? fallbackText : key);
       }
     }
-    return typeof value === 'string' || typeof value === 'object' ? value : key;
+    return typeof value === 'string' || typeof value === 'object' ? value : (fallbackText !== null ? fallbackText : key);
   };
 
   return (

@@ -30,9 +30,9 @@ try {
         $data = include $path;
         if (is_array($data)) {
             $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            $stmt = $conn->prepare("INSERT INTO sys_settings (setting_key, setting_value) VALUES ('version_config', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+            $stmt = $conn->prepare("INSERT INTO sys_settings (setting_key, setting_value) VALUES ('version_config', ?) ON DUPLICATE KEY UPDATE setting_value = ?");
             if (!$stmt) throw new Exception("Prepare failed for version_config: " . $conn->error);
-            $stmt->bind_param('s', $json);
+            $stmt->bind_param('ss', $json, $json);
             if (!$stmt->execute()) throw new Exception("Execute failed for version_config: " . $stmt->error);
             echo "- Migrated version_config_store.php\n";
         }
@@ -44,9 +44,9 @@ try {
         $data = include $path;
         if (is_array($data)) {
             $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            $stmt = $conn->prepare("INSERT INTO sys_settings (setting_key, setting_value) VALUES ('push_config', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+            $stmt = $conn->prepare("INSERT INTO sys_settings (setting_key, setting_value) VALUES ('push_config', ?) ON DUPLICATE KEY UPDATE setting_value = ?");
             if (!$stmt) throw new Exception("Prepare failed for push_config: " . $conn->error);
-            $stmt->bind_param('s', $json);
+            $stmt->bind_param('ss', $json, $json);
             if (!$stmt->execute()) throw new Exception("Execute failed for push_config: " . $stmt->error);
             echo "- Migrated push_config_store.php\n";
         }
@@ -126,9 +126,9 @@ try {
         $data = json_decode($json, true);
         if (is_array($data)) {
             $jsonVal = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            $stmt = $conn->prepare("INSERT INTO sys_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+            $stmt = $conn->prepare("INSERT INTO sys_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?");
             $key = WP_PUSH_BLOCKED_KEY;
-            $stmt->bind_param('ss', $key, $jsonVal);
+            $stmt->bind_param('sss', $key, $jsonVal, $jsonVal);
             if (!$stmt->execute()) throw new Exception("Execute failed for push_blocked: " . $stmt->error);
             echo "- Migrated push_blocked_store.json (" . count($data) . " records)\n";
         }
@@ -141,9 +141,9 @@ try {
         $data = json_decode($json, true);
         if (is_array($data)) {
             $jsonVal = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            $stmt = $conn->prepare("INSERT INTO sys_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+            $stmt = $conn->prepare("INSERT INTO sys_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?");
             $key = WP_PUSH_QUEUE_KEY;
-            $stmt->bind_param('ss', $key, $jsonVal);
+            $stmt->bind_param('sss', $key, $jsonVal, $jsonVal);
             if (!$stmt->execute()) throw new Exception("Execute failed for push_queue: " . $stmt->error);
             echo "- Migrated push_queue_store.json (" . count($data) . " records)\n";
         }

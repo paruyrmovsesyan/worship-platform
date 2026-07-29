@@ -3,9 +3,10 @@ import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { renderWithChords, transposeRoot, noteIndex } from '../utils/chordTransposer';
+import { renderWithChords, transposeRoot } from '../utils/chordTransposer';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { normalizeSavedSongSort, sortSavedSongs } from '../utils/savedSongs';
+import { normalizeSongKey, semitoneOffset, songKeysEqual } from '../utils/songKey';
 import { usePageReady } from '../hooks/usePageReady';
 import './SongView.css';
 
@@ -38,6 +39,10 @@ export default function SongView() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareChats, setShareChats] = useState([]);
   const [shareLoading, setShareLoading] = useState(false);
+
+  const [isSetlistModalOpen, setIsSetlistModalOpen] = useState(false);
+  const [userSetlists, setUserSetlists] = useState([]);
+  const [setlistsLoading, setSetlistsLoading] = useState(false);
 
   useEffect(() => {
     document.body.classList.add('song-view-active');
@@ -119,6 +124,53 @@ export default function SongView() {
     }
   };
 
+  const openSetlistModal = async () => {
+    if (!user) {
+      navigate('/login?next=' + window.location.pathname);
+      return;
+    }
+    setIsSetlistModalOpen(true);
+    setSetlistsLoading(true);
+    try {
+      const res = await fetch('/setlists_api.php?action=get_setlists');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setUserSetlists(data);
+      } else if (data.ok) {
+        setUserSetlists(data.setlists || []);
+      } else {
+        setFavMsg(data.error || 'Error loading setlists');
+        setTimeout(() => setFavMsg(''), 3000);
+      }
+    } catch (err) {
+      setFavMsg('Error loading setlists');
+      setTimeout(() => setFavMsg(''), 3000);
+    } finally {
+      setSetlistsLoading(false);
+    }
+  };
+
+  const addToSetlist = async (setId) => {
+    try {
+      const res = await fetch('/setlists_api.php?action=add_song_to_setlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ setlist_id: setId, song_id: id })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setFavMsg(t('songView.addedToSetlist', 'Ավելացվել է երգացանկում'));
+        setIsSetlistModalOpen(false);
+      } else {
+        setFavMsg(data.error || 'Error adding to setlist');
+      }
+      setTimeout(() => setFavMsg(''), 3000);
+    } catch (err) {
+      setFavMsg('Error adding to setlist');
+      setTimeout(() => setFavMsg(''), 3000);
+    }
+  };
+
   const openShareModal = async () => {
     if (!user) {
       navigate('/login?next=' + window.location.pathname);
@@ -159,6 +211,41 @@ export default function SongView() {
     }
   };
 
+  const addAttachment = async (title, url) => {
+    try {
+      const res = await fetch('/song_attachments_api.php?action=add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ song_id: id, title, url })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setSong(prev => ({ ...prev, attachments: [...(prev.attachments || []), { id: data.id, title, url, type: 'link' }] }));
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const removeAttachment = async (attId) => {
+    if (!window.confirm("Հեռացնե՞լ այս հղումը։")) return;
+    try {
+      const res = await fetch('/song_attachments_api.php?action=remove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: attId })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setSong(prev => ({ ...prev, attachments: prev.attachments.filter(a => a.id !== attId) }));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const toggleFavorite = async (e) => {
     e.stopPropagation();
     if (!user) {
@@ -172,7 +259,7 @@ export default function SongView() {
       const response = await fetch('/user_favorites_api.php?action=toggle_favorite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ song_id: id }),
+        body: JSON.stringify({ song_id: id, target_key: newState ? playingKey : null }),
       });
       const data = await response.json();
       if (!response.ok || typeof data.favorite !== 'boolean') {
@@ -180,6 +267,7 @@ export default function SongView() {
       }
 
       setIsFavorite(data.favorite);
+      setTargetKey(data.favorite ? (data.target_key || playingKey) : null);
       setFavMsg(data.favorite ? t('songView.added') : t('songView.removed'));
     } catch {
       setIsFavorite(previousState);
@@ -189,71 +277,62 @@ export default function SongView() {
   };
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setSong(null);
+    setSemi(0);
+    setTargetKey(null);
+    setIsFavorite(false);
+
     fetch(`/api.php?id=${id}`)
       .then(res => res.json())
       .then(data => {
         if (!data || !data.id) throw new Error('Song not found');
+        if (cancelled) return;
         setSong(data);
         setLoading(false);
         
-        const params = new URLSearchParams(window.location.search);
+        const params = new URLSearchParams(location.search);
         const urlTkey = params.get('tkey');
         const urlCapo = params.get('capo');
-        
-        let initialTargetKey = null;
+
+        let preferredCapo = 0;
+        if (urlCapo !== null) {
+          preferredCapo = Number.parseInt(urlCapo, 10) || 0;
+        } else {
+          preferredCapo = Number.parseInt(localStorage.getItem(`capo_${id}`) || '0', 10) || 0;
+          if (!preferredCapo) {
+            try {
+              const legacyCapoPref = localStorage.getItem(`song_capo_pref:${id}`);
+              if (legacyCapoPref) preferredCapo = Number.parseInt(JSON.parse(legacyCapoPref).capo, 10) || 0;
+            } catch {}
+          }
+        }
+        preferredCapo = Math.max(0, Math.min(12, preferredCapo));
+        setCapo(preferredCapo);
+
+        const applyTargetKey = (value) => {
+          const normalized = normalizeSongKey(value);
+          if (!normalized) return;
+          const difference = semitoneOffset(data.song_key, normalized);
+          if (difference === null) return;
+          setTargetKey(normalized);
+          // target_key represents the displayed chord key. Compensate for capo
+          // because rendering uses (semi - capo).
+          setSemi(difference + preferredCapo);
+        };
 
         if (user) {
           fetch(`/user_favorites_api.php?action=get_favorite&song_id=${id}`)
             .then(r => r.json())
             .then(favData => {
-              setIsFavorite(favData.favorite);
-              initialTargetKey = urlTkey || favData.target_key;
-              if (initialTargetKey) {
-                setTargetKey(initialTargetKey);
-                if (data.song_key) {
-                  const fromMatch = data.song_key.match(/^([A-G](?:#|b)?)/i);
-                  const toMatch = initialTargetKey.match(/^([A-G](?:#|b)?)/i);
-                  let fromRoot = fromMatch ? fromMatch[1] : data.song_key;
-                  let toRoot = toMatch ? toMatch[1] : initialTargetKey;
-                  let fromIdx = noteIndex(fromRoot);
-                  let toIdx = noteIndex(toRoot);
-                  if (fromIdx !== -1 && toIdx !== -1) {
-                    let diff = toIdx - fromIdx;
-                    if (diff > 6) diff -= 12;
-                    if (diff < -5) diff += 12;
-                    setSemi(diff);
-                  }
-                }
-              }
+              if (cancelled) return;
+              setIsFavorite(Boolean(favData.favorite));
+              applyTargetKey(urlTkey || favData.target_key);
             }).catch(() => {});
         } else if (urlTkey) {
-          setTargetKey(urlTkey);
-          if (data.song_key) {
-            const fromMatch = data.song_key.match(/^([A-G](?:#|b)?)/i);
-            const toMatch = urlTkey.match(/^([A-G](?:#|b)?)/i);
-            let fromRoot = fromMatch ? fromMatch[1] : data.song_key;
-            let toRoot = toMatch ? toMatch[1] : urlTkey;
-            let fromIdx = noteIndex(fromRoot);
-            let toIdx = noteIndex(toRoot);
-            if (fromIdx !== -1 && toIdx !== -1) {
-              let diff = toIdx - fromIdx;
-              if (diff > 6) diff -= 12;
-              if (diff < -5) diff += 12;
-              setSemi(diff);
-            }
-          }
-        }
-        
-        if (urlCapo) {
-          setCapo(parseInt(urlCapo, 10) || 0);
-        } else {
-          try {
-            const legacyCapoPref = localStorage.getItem(`song_capo_pref:${id}`);
-            if (legacyCapoPref) {
-              const parsed = JSON.parse(legacyCapoPref);
-              setCapo(parsed.capo || 0);
-            }
-          } catch(e) {}
+          applyTargetKey(urlTkey);
         }
         
         if (user) {
@@ -265,10 +344,15 @@ export default function SongView() {
         }
       })
       .catch(err => {
+        if (cancelled) return;
         setError(t('songView.error'));
         setLoading(false);
       });
-  }, [id, language, user]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, language, location.search, user]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -364,7 +448,13 @@ export default function SongView() {
 
   const soundingKey = getTransposedFullKey(song?.song_key, semi);
   const playingKey = getTransposedFullKey(song?.song_key, semi - capo);
-  const isKeySaved = isFavorite && targetKey === playingKey;
+  // Older favorites may not have target_key. In that case the song's original
+  // key is the saved baseline and must not look like an unsaved key change.
+  const savedKey = normalizeSongKey(targetKey || song?.song_key);
+  const hasUnsavedKeyChange = isFavorite
+    && Boolean(savedKey)
+    && Boolean(playingKey)
+    && !songKeysEqual(savedKey, playingKey);
   
   const KEYS_BASE = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   const rootMatchForKeys = song?.song_key?.match(/^([A-G](?:#|b)?)(.*)$/i);
@@ -373,17 +463,8 @@ export default function SongView() {
   
   const handleKeyClick = (targetKeyStr) => {
     if (!song?.song_key) return;
-    const trimmed = song.song_key.trim();
-    const rootMatch = trimmed.match(/^([A-G](?:#|b)?)/i);
-    let fromRoot = rootMatch ? rootMatch[1] : trimmed;
-    let fromIdx = noteIndex(fromRoot);
-    let toIdx = noteIndex(targetKeyStr);
-    if (fromIdx !== -1 && toIdx !== -1) {
-      let diff = toIdx - fromIdx;
-      if (diff > 6) diff -= 12;
-      if (diff < -5) diff += 12;
-      setSemi(diff);
-    }
+    const difference = semitoneOffset(song.song_key, targetKeyStr);
+    if (difference !== null) setSemi(difference);
   };
 
   const saveFavoriteKey = async (currentPlayKey) => {
@@ -395,12 +476,17 @@ export default function SongView() {
         body: JSON.stringify({ song_id: id, target_key: currentPlayKey })
       });
       const data = await res.json();
-      if (data.ok) {
-        setTargetKey(currentPlayKey);
+      if (res.ok && data.ok) {
+        setTargetKey(data.target_key || normalizeSongKey(currentPlayKey));
         setFavMsg(t('songView.keySavedAlert'));
         setTimeout(() => setFavMsg(''), 2000);
+      } else {
+        throw new Error(data.error || 'Key save failed');
       }
-    } catch {}
+    } catch {
+      setFavMsg(t('songView.favoriteError', 'Չհաջողվեց պահպանել երգը'));
+      setTimeout(() => setFavMsg(''), 2000);
+    }
   };
 
   const navigateToSetlistSong = (item) => {
@@ -499,7 +585,7 @@ export default function SongView() {
       {/* Meta Bar */}
       <div className="sv-meta-row">
         <div className="sv-meta-pill key-pill">{t('songView.keyPrefix')} {soundingKey || song.song_key || '?'}</div>
-        {song.bpm && <div className="sv-meta-pill">BPM: {song.bpm}</div>}
+        {Number.parseInt(song.bpm, 10) > 0 && <div className="sv-meta-pill">BPM: {song.bpm}</div>}
         
         <div className="sv-header-actions" style={{ marginLeft: 'auto' }}>
             {setlistNavData?.current?.id && (
@@ -513,6 +599,9 @@ export default function SongView() {
             )}
             <button className="icon-btn" onClick={copySongContent} title={t('songView.copyContent', 'Copy Song')}>
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+            <button className="icon-btn" onClick={openSetlistModal} title={t('songView.addToSetlist', 'Ավելացնել երգացանկում')}>
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="16" y1="16" x2="16" y2="22"></line><line x1="13" y1="19" x2="19" y2="19"></line></svg>
             </button>
             <button className="icon-btn" onClick={openShareModal} title={t('chat.send', 'Ուղարկել Չաթով')}>
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
@@ -548,15 +637,56 @@ export default function SongView() {
         )}
       </div>
 
+      {/* Attachments UI */}
+      {(song.attachments?.length > 0 || user?.role === 'admin' || user?.role === 'owner') && (
+        <div style={{ padding: '24px', background: 'var(--color-surface)', borderTop: '1px solid var(--color-surface-hover)' }}>
+          <h3 style={{ marginBottom: '16px', fontSize: '1.2rem', color: 'var(--color-text-primary)' }}>🔗 Հղումներ և Նյութեր</h3>
+          {song.attachments?.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {song.attachments.map(att => (
+                <div key={att.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: 'var(--color-surface-hover)', borderRadius: '8px' }}>
+                  <a href={att.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', fontWeight: '500', textDecoration: 'none' }}>
+                    {att.title || 'Հղում'}
+                  </a>
+                  {(user?.role === 'admin' || user?.role === 'owner') && (
+                    <button onClick={() => removeAttachment(att.id)} style={{ color: 'var(--color-danger)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Դեռ նյութեր չկան:</div>
+          )}
+
+          {(user?.role === 'admin' || user?.role === 'owner') && (
+            <div style={{ marginTop: '16px' }}>
+              <button
+                onClick={() => {
+                  const title = window.prompt("Մուտքագրեք հղման անվանումը (օր.՝ YouTube Track)");
+                  if (!title) return;
+                  const url = window.prompt("Մուտքագրեք հղումը (URL)");
+                  if (!url) return;
+                  addAttachment(title, url);
+                }}
+                className="sl-btn sl-btn-secondary"
+                style={{ fontSize: '0.85rem', padding: '6px 12px', borderRadius: '8px', background: 'var(--color-surface-hover)', color: 'var(--color-text-primary)', border: 'none', cursor: 'pointer' }}
+              >
+                + Ավելացնել Հղում
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Web Controls (Hidden in PWA) */}
       <div className="sv-inline-controls">
         <div className="sv-keys-scroll">
           {KEYS.map(k => {
             let isActive = false;
             if (soundingKey) {
-              const rootMatch = soundingKey.match(/^([A-G](?:#|b)?)/i);
-              const activeRoot = rootMatch ? rootMatch[1] : soundingKey;
-              isActive = noteIndex(activeRoot) === noteIndex(k);
+              isActive = songKeysEqual(soundingKey, k);
             }
             return (
               <button key={k} className={`sv-key-btn ${isActive ? 'active' : ''}`} onClick={() => handleKeyClick(k)}>
@@ -671,7 +801,7 @@ export default function SongView() {
           </div>
         </div>
         
-        {isFavorite && targetKey !== playingKey && (
+        {hasUnsavedKeyChange && (
           <button className="btn btn-primary btn-sm w-100" style={{ marginTop: '12px' }} onClick={() => saveFavoriteKey(playingKey)}>
             {t('songView.saveKey')}
           </button>
@@ -727,6 +857,47 @@ export default function SongView() {
         textAlign: 'center',
         whiteSpace: 'nowrap'
       }}>{favMsg}</div>, 
+      document.body
+    )}
+
+    {isSetlistModalOpen && createPortal(
+      <div className="sv-modal-overlay" onClick={() => setIsSetlistModalOpen(false)}>
+        <div className="sv-modal-content animate-pop-in" onClick={e => e.stopPropagation()}>
+          <div className="sv-modal-header">
+            <h2>{t('songView.addToSetlist', 'Ավելացնել երգացանկում')}</h2>
+            <button className="icon-btn" onClick={() => setIsSetlistModalOpen(false)}>
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+
+          <div className="sv-modal-body">
+            {setlistsLoading ? (
+              <div className="sv-modal-loading">
+                <div className="loading-spinner" />
+              </div>
+            ) : userSetlists.length > 0 ? (
+              userSetlists.map(sl => (
+                <button
+                  key={sl.id}
+                  className="sv-setlist-row"
+                  onClick={() => addToSetlist(sl.id)}
+                >
+                  <span className="sv-setlist-row__name">{sl.name}</span>
+                  {sl.event_date && (
+                    <span className="sv-setlist-row__date">
+                      {new Date(sl.event_date).toLocaleDateString()}
+                    </span>
+                  )}
+                </button>
+              ))
+            ) : (
+              <div className="sv-modal-empty">
+                Երգացանկեր չեն գտնվել
+              </div>
+            )}
+          </div>
+        </div>
+      </div>,
       document.body
     )}
 

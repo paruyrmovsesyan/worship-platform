@@ -26,6 +26,7 @@ echo json_encode([
     'app_message' => $config['app_message'],
     'web_title' => $config['web_title'],
     'web_message' => $config['web_message'],
+    'app_about' => $config['app_about'] ?? wp_version_default_app_about(),
     'maintenance_enabled' => !empty($config['maintenance_enabled']),
     'maintenance_active' => $maintenanceActive,
     'scheduled_maintenance_active' => $scheduledMaintenanceActive,
@@ -34,6 +35,7 @@ echo json_encode([
     'maintenance_end_at' => $config['maintenance_end_at'],
     'meta_note' => $config['meta_note'],
     'page_app_modes' => $config['page_app_modes'] ?? wp_version_default_page_app_modes(),
+    'page_web_modes' => $config['page_web_modes'] ?? wp_version_default_page_web_modes(),
     'blocked_os_list' => $config['blocked_os_list'] ?? [],
     'updated_at' => $config['updated_at'],
 ], JSON_UNESCAPED_UNICODE);

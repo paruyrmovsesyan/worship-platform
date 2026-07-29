@@ -134,7 +134,7 @@ $searchPlaceholder = 'Search FAQ...';
     <div class="app-content">
       <div class="page-heading page-heading-row">
         <div>
-          <h1>FAQ ❓</h1>
+          <h1>FAQ</h1>
           <p><?= count($faqs) ?> FAQ items</p>
         </div>
       </div>

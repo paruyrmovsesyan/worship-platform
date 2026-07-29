@@ -1,5 +1,5 @@
 <?php
-require 'runtime_config.php';
+require_once 'runtime_config.php';
 $pdo = wp_runtime_open_pdo();
-$stmt = $pdo->query('DESCRIBE users');
-print_r($stmt->fetchAll(PDO::FETCH_ASSOC));
+$st = $pdo->query("SHOW COLUMNS FROM setlists LIKE 'share_token'");
+print_r($st->fetchAll(PDO::FETCH_ASSOC));

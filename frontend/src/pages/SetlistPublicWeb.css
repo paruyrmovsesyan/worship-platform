@@ -1,0 +1,407 @@
+/* ============================================================
+   SetlistPublicWeb — Modern Public Setlist Viewer Styling
+   ============================================================ */
+
+.pub-setlist-page {
+  min-height: 100vh;
+  padding: 30px 20px 80px;
+  color: var(--color-text-primary, #ffffff);
+}
+
+.pub-setlist-container {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+/* ── Breadcrumb ─────────────────────────────────────────── */
+.pub-breadcrumb {
+  margin-bottom: 20px;
+}
+
+.pub-breadcrumb .back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.65));
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.pub-breadcrumb .back-link:hover {
+  color: var(--color-accent-cyan, #00d4ff);
+}
+
+/* ── Hero Section ────────────────────────────────────────── */
+.pub-hero {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 36px;
+  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.pub-hero::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.15) 0%, rgba(58, 45, 255, 0) 70%);
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.pub-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  border-radius: 20px;
+  color: var(--color-accent-cyan, #00d4ff);
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.pub-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 0 0 10px 0;
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.pub-description {
+  font-size: 1.05rem;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.7));
+  margin: 0 0 16px 0;
+  max-width: 700px;
+  line-height: 1.5;
+}
+
+.pub-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pub-meta-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Actions */
+.pub-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pub-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: none;
+  text-decoration: none;
+}
+
+.pub-btn.primary {
+  background: linear-gradient(135deg, #3A2DFF 0%, #00D4FF 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 212, 255, 0.25);
+}
+
+.pub-btn.primary.glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 212, 255, 0.4);
+}
+
+.pub-btn.secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.pub-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Stats Bar */
+.pub-stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pub-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.pub-stat .val {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #00d4ff;
+}
+
+.pub-stat .val.text-gold {
+  color: #ffb800;
+}
+
+.pub-stat .lbl {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.pub-stats-bar .divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Items Container ─────────────────────────────────────── */
+.pub-items-container {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.pub-items-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pub-items-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.pub-count-badge {
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #00d4ff;
+}
+
+.pub-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Section Header Row */
+.pub-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  background: linear-gradient(90deg, rgba(58, 45, 255, 0.15), rgba(0, 212, 255, 0.08));
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 14px;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  margin-top: 10px;
+}
+
+/* Song Item Card */
+.pub-song-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pub-song-card:hover {
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(0, 212, 255, 0.3);
+  transform: translateX(4px);
+}
+
+.song-card-num {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.35);
+  width: 24px;
+  text-align: center;
+}
+
+.song-card-cover {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.song-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.song-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.required-star-badge {
+  padding: 2px 8px;
+  background: rgba(255, 184, 0, 0.15);
+  border: 1px solid rgba(255, 184, 0, 0.3);
+  border-radius: 10px;
+  color: #ffb800;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.song-artist {
+  margin: 0;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.chips-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.key-chip, .capo-chip {
+  padding: 2px 9px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.key-chip strong {
+  color: #00d4ff;
+}
+
+.song-note-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.65);
+  margin-top: 6px;
+}
+
+.song-card-arrow {
+  color: rgba(255, 255, 255, 0.3);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.pub-song-card:hover .song-card-arrow {
+  color: #00d4ff;
+  transform: translateX(3px);
+}
+
+/* Error Card */
+.pub-error-card {
+  max-width: 480px;
+  margin: 60px auto;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 48px 32px;
+}
+
+.error-icon-glow {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255, 69, 58, 0.1);
+  color: #ff453a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.error-actions {
+  margin-top: 24px;
+}
+
+@media (max-width: 768px) {
+  .pub-hero {
+    padding: 24px;
+  }
+  .pub-title {
+    font-size: 1.7rem;
+  }
+  .pub-song-card {
+    padding: 12px;
+  }
+}

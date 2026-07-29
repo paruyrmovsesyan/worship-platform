@@ -16,3 +16,4 @@ Disallow: /registeruser.php
 Disallow: /logout_users.php
 
 Sitemap: https://worship.pmstudio.am/sitemap.xml
+Sitemap: https://worship.pmstudio.am/news-sitemap.xml

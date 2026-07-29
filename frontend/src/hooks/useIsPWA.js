@@ -1,21 +1,10 @@
 import { useState, useEffect } from 'react';
 
-const PWA_SESSION_KEY = 'wp_active_app_source';
+const LEGACY_PWA_SESSION_KEY = 'wp_active_app_source';
 
-function getStoredAppSource() {
+function clearLegacyAppSource() {
   try {
-    const source = window.sessionStorage.getItem(PWA_SESSION_KEY);
-    return source === 'pwa' || source === 'admin-app' ? source : '';
-  } catch {
-    return '';
-  }
-}
-
-function storeAppSource(source) {
-  try {
-    if (source === 'pwa' || source === 'admin-app') {
-      window.sessionStorage.setItem(PWA_SESSION_KEY, source);
-    }
+    window.sessionStorage.removeItem(LEGACY_PWA_SESSION_KEY);
   } catch {
     // Storage may be unavailable in private browsing.
   }
@@ -24,24 +13,19 @@ function storeAppSource(source) {
 function detectPwaMode() {
   if (typeof window === 'undefined') return false;
 
-  const source = new URLSearchParams(window.location.search).get('source');
-  const displayMode = ['standalone', 'fullscreen', 'minimal-ui', 'window-controls-overlay']
-    .some((mode) => window.matchMedia(`(display-mode: ${mode})`).matches);
-  const nativeApp = displayMode || window.navigator.standalone === true || document.referrer.includes('android-app://');
-
-  if (source === 'pwa' || source === 'admin-app') {
-    storeAppSource(source);
-    return true;
-  }
+  const browserMode = window.matchMedia('(display-mode: browser)').matches;
+  const nativeApp = !browserMode && (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true ||
+    document.referrer.includes('android-app://')
+  );
 
   if (nativeApp) {
-    storeAppSource('pwa');
     return true;
   }
 
-  return getStoredAppSource() !== '' ||
-    document.documentElement.classList.contains('wp-standalone-app') ||
-    document.body?.classList.contains('wp-standalone-app');
+  clearLegacyAppSource();
+  return false;
 }
 
 export function useIsPWA() {

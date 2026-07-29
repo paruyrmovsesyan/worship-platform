@@ -20,6 +20,8 @@ import Songs from './pages/Songs';
 import SongView from './pages/SongView';
 import Setlists from './pages/Setlists';
 import SetlistEditor from './pages/SetlistEditor';
+import SetlistLive from './pages/SetlistLive';
+import SetlistPublicWeb from './pages/SetlistPublicWeb';
 import Favorites from './pages/Favorites';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -267,6 +269,10 @@ function App() {
             <Route path="/transpose" element={<TransposeTool />} />
             <Route path="/song/:id" element={<SongView />} />
             <Route path="/setlists" element={<Setlists />} />
+            <Route path="/setlists/public" element={<SetlistPublicWeb />} />
+            <Route path="/setlist_public.html" element={<SetlistPublicWeb />} />
+            <Route path="/setlists/:id/edit" element={<SetlistEditor />} />
+            <Route path="/setlists/:id/live" element={<SetlistLive />} />
             <Route path="/setlists/:id" element={<SetlistEditor />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/news" element={<News />} />

@@ -9,6 +9,29 @@ import { APP_THEMES, applyAppTheme, getStoredAppTheme } from '../utils/appTheme'
 import './Settings.css';
 
 const hasWhitespace = (value) => /\s/u.test(String(value));
+const APP_INFO_CACHE_KEY = 'wp_cached_app_info';
+const APP_VERSION_FALLBACK = '2.6.9';
+const DEFAULT_ABOUT_LICENSES = [
+  { name: 'React / React DOM', license: 'MIT License' },
+  { name: 'React Router', license: 'MIT License' },
+];
+
+function getCachedAppInfo() {
+  const fallback = {
+    version: localStorage.getItem('wp_seen_app_version') || APP_VERSION_FALLBACK,
+    releaseType: '',
+    summary: '',
+    updatedAt: '',
+    about: null,
+  };
+
+  try {
+    const cached = JSON.parse(localStorage.getItem(APP_INFO_CACHE_KEY) || 'null');
+    return cached && typeof cached === 'object' ? { ...fallback, ...cached } : fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 export default function Settings() {
   const { user, logout } = useAuth();
@@ -17,7 +40,10 @@ export default function Settings() {
   const isPWA = useIsPWA();
   const isMobile = useMediaQuery('(max-width: 900px)');
 
-  const [activeTab, setActiveTab] = useState(isMobile ? null : 'profile');
+  const [activeTab, setActiveTab] = useState(() => {
+    if (!user) return 'app';
+    return isMobile ? null : 'profile';
+  });
   const [msg, setMsg] = useState({ text: '', type: '' });
 
   // App Settings States
@@ -27,6 +53,7 @@ export default function Settings() {
   const [oledMode, setOledMode] = useState(localStorage.getItem('oledMode') === 'true');
   const [chordColor, setChordColor] = useState(localStorage.getItem('chordColor') || 'gold');
   const [outlinedChords, setOutlinedChords] = useState(localStorage.getItem('outlinedChords') === 'true');
+  const [appInfo, setAppInfo] = useState(getCachedAppInfo);
 
   // Profile States
   const [name, setName] = useState(user?.name || '');
@@ -102,17 +129,45 @@ export default function Settings() {
   }, []);
 
   useEffect(() => {
-    if (!user) {
-      navigate('/');
-      return;
+    if (user) {
+      fetchEmailStatus();
     }
-    fetchEmailStatus();
-  }, [user, navigate, fetchEmailStatus]);
+  }, [user, fetchEmailStatus]);
 
   useEffect(() => {
     if (activeTab === 'sessions') fetchSessions();
     if (activeTab === 'requests') fetchRequests();
   }, [activeTab, fetchSessions, fetchRequests]);
+
+  useEffect(() => {
+    if (!isPWA || activeTab !== 'about') return;
+
+    let cancelled = false;
+    fetch('/version_manifest.php', { cache: 'no-store', credentials: 'same-origin' })
+      .then((response) => {
+        if (!response.ok) throw new Error('version_manifest');
+        return response.json();
+      })
+      .then((data) => {
+        if (cancelled || !data?.ok) return;
+        const nextInfo = {
+          version: data.app_version || APP_VERSION_FALLBACK,
+          releaseType: data.app_release_type || '',
+          summary: data.app_release_summary || '',
+          updatedAt: data.updated_at || '',
+          about: data.app_about && typeof data.app_about === 'object' ? data.app_about : null,
+        };
+        setAppInfo(nextInfo);
+        localStorage.setItem(APP_INFO_CACHE_KEY, JSON.stringify(nextInfo));
+      })
+      .catch(() => {
+        // Keep the last cached app information available offline.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, isPWA]);
 
   // Adjust active tab when switching between mobile/desktop resize
   useEffect(() => {
@@ -129,9 +184,40 @@ export default function Settings() {
     if (nextTheme === APP_THEMES.LIGHT) {
       setOledMode(false);
       localStorage.setItem('oledMode', 'false');
+      if (chordColor === 'white') {
+        setChordColor('gold');
+        localStorage.setItem('chordColor', 'gold');
+        document.body.classList.remove('chord-color-white');
+      }
+    } else {
+      if (chordColor === 'black') {
+        setChordColor('gold');
+        localStorage.setItem('chordColor', 'gold');
+        document.body.classList.remove('chord-color-black');
+      }
     }
     applyAppTheme(nextTheme);
     showMsg(t('settings.app.saved', 'Պահպանված է'));
+  };
+
+  const aboutLanguage = language === 'am' ? 'hy' : language;
+  const aboutConfig = appInfo.about && typeof appInfo.about === 'object' ? appInfo.about : {};
+  const aboutTagline = aboutConfig.tagline?.[aboutLanguage]
+    || aboutConfig.tagline?.hy
+    || t('settings.about.tagline');
+  const aboutLicenseText = aboutConfig.license_text?.[aboutLanguage]
+    || aboutConfig.license_text?.hy
+    || t('settings.about.licenseText');
+  const aboutLicenses = Array.isArray(aboutConfig.licenses) && aboutConfig.licenses.length
+    ? aboutConfig.licenses
+    : DEFAULT_ABOUT_LICENSES;
+  const openAboutLink = (url, fallback) => {
+    const destination = typeof url === 'string' && url.trim() ? url.trim() : fallback;
+    if (destination.startsWith('/') && !destination.startsWith('//')) {
+      navigate(destination);
+      return;
+    }
+    window.location.assign(destination);
   };
 
   const handleSaveProfile = async () => {
@@ -295,17 +381,20 @@ export default function Settings() {
     }
   };
 
-  if (!user) return null;
-
   // Render Functions
   const renderSidebar = () => {
     const menuItems = [
-      { id: 'profile', label: t('settings.tabs.profile'), icon: <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> },
-      ...(isPWA ? [{ id: 'app', label: t('settings.tabs.app', 'Ծրագիր'), icon: <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg> }] : []),
-      { id: 'security', label: t('settings.tabs.security'), icon: <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> },
-      { id: 'sessions', label: t('settings.tabs.sessions'), icon: <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg> },
-      { id: 'requests', label: t('settings.tabs.requests'), icon: <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg> },
-      { id: 'danger', label: t('settings.tabs.danger'), icon: <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>, isDanger: true }
+      { id: 'app', label: t('settings.tabs.app', 'Ծրագրի կարգավորումներ'), icon: <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg> },
+      ...(isPWA ? [
+        { id: 'about', label: t('settings.tabs.about'), icon: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> }
+      ] : []),
+      ...(user ? [
+        { id: 'profile', label: t('settings.tabs.profile'), icon: <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> },
+        { id: 'security', label: t('settings.tabs.security'), icon: <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> },
+        { id: 'sessions', label: t('settings.tabs.sessions'), icon: <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> },
+        { id: 'requests', label: t('settings.tabs.requests'), icon: <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg> },
+        { id: 'danger', label: t('settings.tabs.danger'), icon: <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>, isDanger: true }
+      ] : [])
     ];
 
     return (
@@ -340,6 +429,20 @@ export default function Settings() {
           </button>
         )}
 
+        {!user && (
+          <div className="settings-card mb-4" style={{ background: 'linear-gradient(135deg, rgba(58, 45, 255, 0.12), rgba(0, 212, 255, 0.08))', border: '1px solid rgba(58, 45, 255, 0.25)', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: 700, color: '#fff' }}>{t('auth.notLoggedInTitle', 'Դուք մուտք չեք գործել')}</h4>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)' }}>{t('auth.notLoggedInDesc', 'Մուտք գործեք՝ պրոֆիլը, երգացանկերը և ֆավորիտները կառավարելու համար:')}</p>
+              </div>
+              <button className="btn btn-primary" style={{ padding: '8px 18px', borderRadius: '12px', fontSize: '0.9rem' }} onClick={() => navigate('/loginuser.php')}>
+                {t('auth.login', 'Մուտք')}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* PROFILE TAB */}
         {activeTab === 'profile' && (
           <div className="settings-sections fade-in">
@@ -364,10 +467,8 @@ export default function Settings() {
               <label>{t('settings.profile.gender')}</label>
               <select className="full-width-inp" value={gender} onChange={e => setGender(e.target.value)}>
                 <option value="">...</option>
-                <option value="male">{t('settings.profile.genderMale')}</option>
-                <option value="female">{t('settings.profile.genderFemale')}</option>
-                <option value="other">{t('settings.profile.genderOther')}</option>
-                <option value="prefer_not_to_say">...</option>
+                <option value="male">{t('settings.profile.genderMale', 'Արական')}</option>
+                <option value="female">{t('settings.profile.genderFemale', 'Իգական')}</option>
               </select>
             </div>
 
@@ -417,7 +518,7 @@ export default function Settings() {
         )}
 
         {/* APP TAB */}
-        {activeTab === 'app' && isPWA && (
+        {activeTab === 'app' && (
           <div className="settings-sections fade-in">
             <div className="settings-card">
               <div className="card-header-flex" style={{ marginBottom: '1rem' }}>
@@ -570,14 +671,17 @@ export default function Settings() {
               <div className="form-group" style={{ padding: '0 10px', marginBottom: '20px' }}>
                 <label style={{ fontWeight: '600', marginBottom: '10px', display: 'block' }}>{t('settings.app.chordColor', 'Ակորդների գույն')}</label>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                  {[
-                    { id: 'gold', label: t('settings.app.colorGold', 'Ոսկեգույն'), color: '#3A2DFF' }, // the default is actually accent-gold which is #3A2DFF? no wait, it's just yellow normally but let's just use CSS classes
-                    { id: 'blue', label: t('settings.app.colorBlue', 'Կապույտ'), color: '#00D4FF' },
-                    { id: 'green', label: t('settings.app.colorGreen', 'Կանաչ'), color: '#4ADE80' },
-                    { id: 'red', label: t('settings.app.colorRed', 'Կարմիր'), color: '#FF4A4A' },
-                    { id: 'white', label: t('settings.app.colorWhite', 'Սպիտակ'), color: '#FFFFFF', border: '1px solid #d1d5db' },
-                    { id: 'black', label: t('settings.app.colorBlack', 'Սև'), color: '#000000', border: '1px solid #4b5563' }
-                  ].map(c => (
+                  {(() => {
+                    const isLightMode = document.body.classList.contains('light-mode') || appTheme === APP_THEMES.LIGHT;
+                    return [
+                      { id: 'gold', label: t('settings.app.colorGold', 'Ոսկեգույն'), color: '#3A2DFF' },
+                      { id: 'blue', label: t('settings.app.colorBlue', 'Կապույտ'), color: '#00D4FF' },
+                      { id: 'green', label: t('settings.app.colorGreen', 'Կանաչ'), color: '#4ADE80' },
+                      { id: 'red', label: t('settings.app.colorRed', 'Կարմիր'), color: '#FF4A4A' },
+                      !isLightMode && { id: 'white', label: t('settings.app.colorWhite', 'Սպիտակ'), color: '#FFFFFF', border: '1px solid #d1d5db' },
+                      isLightMode && { id: 'black', label: t('settings.app.colorBlack', 'Սև'), color: '#000000', border: '1px solid #4b5563' }
+                    ].filter(Boolean);
+                  })().map(c => (
                     <button
                       key={c.id}
                       type="button"
@@ -599,6 +703,85 @@ export default function Settings() {
                 </div>
               </div>
 
+            </div>
+          </div>
+        )}
+
+        {/* ABOUT APP TAB — PWA only */}
+        {isPWA && activeTab === 'about' && (
+          <div className="settings-sections fade-in about-app-section">
+            <div className="settings-card about-app-card">
+              <div className="about-app-identity">
+                <img src="/user_uploaded_logo.png" alt="" className="about-app-logo" />
+                <div>
+                  <h3>Worship Platform</h3>
+                  <p>{aboutTagline}</p>
+                </div>
+              </div>
+
+              <div className="about-version-block">
+                <span>{t('settings.about.version')}</span>
+                <strong>{appInfo.version || APP_VERSION_FALLBACK}</strong>
+              </div>
+
+              <div className="about-info-list">
+                <div className="about-info-row">
+                  <span>{t('settings.about.status')}</span>
+                  <strong style={{ color: appInfo.maintenanceActive ? '#ff453a' : appInfo.scheduledMaintenanceActive ? '#ff9500' : '#4ade80', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: appInfo.maintenanceActive ? '#ff453a' : appInfo.scheduledMaintenanceActive ? '#ff9500' : '#4ade80', boxShadow: appInfo.maintenanceActive ? '0 0 8px rgba(255, 69, 58, 0.6)' : appInfo.scheduledMaintenanceActive ? '0 0 8px rgba(255, 149, 0, 0.6)' : '0 0 8px rgba(74, 222, 128, 0.6)' }}></span>
+                    {appInfo.maintenanceActive
+                      ? t('settings.about.statusMaintenance')
+                      : appInfo.scheduledMaintenanceActive
+                        ? t('settings.about.statusScheduled')
+                        : t('settings.about.statusActive')}
+                  </strong>
+                </div>
+                <div className="about-info-row">
+                  <span>{t('settings.about.platform')}</span>
+                  <strong>PWA</strong>
+                </div>
+                <div className="about-info-row">
+                  <span>{t('settings.about.offline')}</span>
+                  <strong>{t('settings.about.available')}</strong>
+                </div>
+                {appInfo.releaseType && (
+                  <div className="about-info-row">
+                    <span>{t('settings.about.releaseType')}</span>
+                    <strong>{t(`settings.about.releaseTypes.${appInfo.releaseType}`)}</strong>
+                  </div>
+                )}
+                {appInfo.updatedAt && (
+                  <div className="about-info-row">
+                    <span>{t('settings.about.updated')}</span>
+                    <strong>{new Date(appInfo.updatedAt).toLocaleDateString(language === 'am' ? 'hy-AM' : language === 'ru' ? 'ru-RU' : 'en-US')}</strong>
+                  </div>
+                )}
+              </div>
+
+              {appInfo.summary && <p className="about-release-summary">{appInfo.summary}</p>}
+
+              <div className="about-legal-section">
+                <h4>{t('settings.about.licenseTitle')}</h4>
+                <p>{aboutLicenseText}</p>
+                <div className="about-license-list">
+                  {aboutLicenses.map((item, index) => (
+                    <div key={`${item.name || 'license'}-${index}`}>
+                      <strong>{item.name}</strong>
+                      <span>{item.license}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="about-link-row">
+                <button type="button" onClick={() => openAboutLink(aboutConfig.privacy_url, '/privacy')}>{t('settings.about.privacy')}</button>
+                <button type="button" onClick={() => openAboutLink(aboutConfig.terms_url, '/terms')}>{t('settings.about.terms')}</button>
+                <button type="button" onClick={() => openAboutLink(aboutConfig.support_url, '/support')}>{t('settings.about.support')}</button>
+              </div>
+
+              <p className="about-copyright">
+                © {aboutConfig.copyright_year || '2026'} {aboutConfig.owner || 'PM Studio'}. {t('settings.about.rights')}
+              </p>
             </div>
           </div>
         )}

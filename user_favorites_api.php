@@ -99,8 +99,9 @@ function norm_key($k){
   if ($k === null) return null;
   $k = trim((string)$k);
   if ($k === '') return null;
-  $k = str_replace("♭", "b", $k);
-  return $k;
+  $k = str_replace(["♭", "♯"], ["b", "#"], $k);
+  if (!preg_match('/^([A-Ga-g])([#b]?)(.*)$/u', $k, $matches)) return null;
+  return strtoupper($matches[1]) . $matches[2] . trim($matches[3]);
 }
 
 // ✅ այստեղ ենք պահում user-ի անձնական պահվածները
@@ -108,12 +109,13 @@ $TABLE = "user_favorites";
 
 switch($action){
 
-  // ✅ Heart: պահել/հանել favorite-ը (միշտ հիմնական տոն)
+  // Heart: add/remove favorite and preserve the currently displayed key.
   case 'toggle_favorite':
     if($method !== "POST"){ http_response_code(405); exit; }
 
     $data = json_decode(file_get_contents("php://input"), true) ?: [];
     $song_id = intval($data['song_id'] ?? 0);
+    $target_key = norm_key($data['target_key'] ?? null);
     if(!$song_id){
       http_response_code(400);
       echo json_encode(["error"=>"song_id required"]);
@@ -131,11 +133,10 @@ switch($action){
       $del->execute();
       echo json_encode(["favorite"=>false]);
     } else {
-      // target_key = NULL => հիմնական տոն
-      $ins = $conn->prepare("INSERT INTO {$TABLE} (user_id, song_id, target_key) VALUES (?,?,NULL)");
-      $ins->bind_param("ii", $user_id, $song_id);
+      $ins = $conn->prepare("INSERT INTO {$TABLE} (user_id, song_id, target_key) VALUES (?,?,?)");
+      $ins->bind_param("iis", $user_id, $song_id, $target_key);
       $ins->execute();
-      echo json_encode(["favorite"=>true]);
+      echo json_encode(["favorite"=>true, "target_key"=>$target_key]);
     }
     break;
 
@@ -153,7 +154,15 @@ switch($action){
       exit;
     }
 
-    // update only existing favorite
+    $existing = $conn->prepare("SELECT id FROM {$TABLE} WHERE user_id=? AND song_id=? LIMIT 1");
+    $existing->bind_param("ii", $user_id, $song_id);
+    $existing->execute();
+    if (!$existing->get_result()->fetch_assoc()) {
+      http_response_code(404);
+      echo json_encode(["error"=>"Favorite not found"]);
+      exit;
+    }
+
     $upd = $conn->prepare("UPDATE {$TABLE} SET target_key=? WHERE user_id=? AND song_id=?");
     $upd->bind_param("sii", $target_key, $user_id, $song_id);
     $upd->execute();
@@ -174,7 +183,10 @@ switch($action){
     $res = $stmt->get_result();
 
     $out = [];
-    while($r = $res->fetch_assoc()) $out[] = $r;
+    while($r = $res->fetch_assoc()) {
+      $r['target_key'] = norm_key($r['target_key'] ?? null);
+      $out[] = $r;
+    }
     $out = wp_translation_translate_rows($out, [
       'title' => 'api.song.title',
       'artist' => 'api.song.artist',
@@ -196,7 +208,7 @@ switch($action){
     $stmt->execute();
     $res = $stmt->get_result();
     if($row = $res->fetch_assoc()){
-      echo json_encode(["favorite"=>true, "target_key"=>$row["target_key"]]);
+      echo json_encode(["favorite"=>true, "target_key"=>norm_key($row["target_key"])]);
     } else {
       echo json_encode(["favorite"=>false, "target_key"=>null]);
     }
@@ -222,7 +234,7 @@ switch($action){
     $res = $stmt->get_result();
 
     if($row = $res->fetch_assoc()){
-      echo json_encode(["favorite"=>true, "target_key"=>$row["target_key"]]);
+      echo json_encode(["favorite"=>true, "target_key"=>norm_key($row["target_key"])]);
     } else {
       $ins = $conn->prepare("INSERT INTO {$TABLE} (user_id, song_id, target_key) VALUES (?,?,NULL)");
       $ins->bind_param("ii", $user_id, $song_id);

@@ -64,7 +64,7 @@ export default function SongsApp() {
     restoreState?.searchQuery ?? initialQuery
   );
   const [visibleCount, setVisibleCount] = useState(Math.max(15, Number(restoreState?.visibleCount) || 15));
-  const [showBackToTop, setShowBackToTop] = useState(() => window.scrollY > 520);
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const filterEffectReady = useRef(false);
   const scrollRestored = useRef(false);
 
@@ -82,11 +82,59 @@ export default function SongsApp() {
     setSearchQuery(q);
   }, [location.search, restoreState]);
 
+  const scrollToTop = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const targets = [
+      window,
+      document.documentElement,
+      document.body,
+      document.querySelector('#root'),
+      document.querySelector('.app-container'),
+      document.querySelector('main'),
+      document.querySelector('.songs-page'),
+      document.querySelector('.app-main')
+    ].filter(Boolean);
+
+    targets.forEach(target => {
+      try {
+        if (typeof target.scrollTo === 'function') {
+          target.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+        }
+        target.scrollTop = 0;
+      } catch (err) {
+        target.scrollTop = 0;
+      }
+    });
+  };
+
   useEffect(() => {
-    const handleScroll = () => setShowBackToTop(window.scrollY > 520);
+    const handleScroll = () => {
+      const pageEl = document.querySelector('.songs-page');
+      const mainEl = document.querySelector('main');
+      const rootEl = document.querySelector('#root');
+      const scrollTop = Math.max(
+        window.scrollY || 0,
+        window.pageYOffset || 0,
+        document.documentElement?.scrollTop || 0,
+        document.body?.scrollTop || 0,
+        pageEl?.scrollTop || 0,
+        mainEl?.scrollTop || 0,
+        rootEl?.scrollTop || 0
+      );
+      setShowBackToTop(scrollTop > 200);
+    };
+
     handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    document.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, { capture: true });
+      document.removeEventListener('scroll', handleScroll, { capture: true });
+    };
   }, []);
 
   useEffect(() => {
@@ -332,7 +380,7 @@ export default function SongsApp() {
             <div className="track-meta">
               {song.song_key && <span className="track-key-badge">{song.song_key}</span>}
               <span className="track-date desk-only">{getTimeAgo(song.created_at)}</span>
-              {song.bpm && <span className="track-bpm desk-only dim">{song.bpm} BPM</span>}
+              {Number.parseInt(song.bpm, 10) > 0 && <span className="track-bpm desk-only dim">{song.bpm} BPM</span>}
             </div>
 
             <div className="track-actions">
@@ -372,7 +420,7 @@ export default function SongsApp() {
           className="songs-back-to-top"
           aria-label={t('songs.backToTop')}
           title={t('songs.backToTop')}
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          onClick={scrollToTop}
         >
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="m6 15 6-6 6 6" />

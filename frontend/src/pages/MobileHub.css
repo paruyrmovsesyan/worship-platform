@@ -173,48 +173,144 @@
 /* ── Upcoming Card ── */
 .upcoming-card {
   position: relative;
-  padding: 24px;
-  border-radius: 20px;
+  min-height: 92px;
+  padding: 14px;
+  border-radius: 16px;
   overflow: hidden;
-  margin-bottom: 32px;
-  background: linear-gradient(135deg, #1C2B4B 0%, #0F172A 100%);
-  border: 1px solid rgba(255,255,255,0.05);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  margin-bottom: 26px;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(28, 43, 75, 0.96) 0%, rgba(14, 24, 43, 0.98) 100%);
+  border: 1px solid rgba(71, 169, 255, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
 }
 
-.card-content {
+.upcoming-card::after {
+  content: "";
+  position: absolute;
+  top: -36px;
+  right: 48px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(0, 212, 255, 0.1);
+  filter: blur(28px);
+  pointer-events: none;
+}
+
+.upcoming-card-icon {
   position: relative;
   z-index: 1;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #73ddff;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.2);
 }
 
-.card-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #FFFFFF;
-  opacity: 0.9;
-  margin-bottom: 8px;
+.upcoming-card-content {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.upcoming-card-label {
+  display: block;
+  margin-bottom: 3px;
+  color: #73ddff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
 }
 
 .upcoming-card h2 {
-  font-size: 1.5rem;
-  margin: 0 0 6px 0;
-  line-height: 1.2;
+  margin: 0 0 4px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .upcoming-card p {
-  color: rgba(255,255,255,0.7);
-  font-size: 0.9rem;
+  color: rgba(255,255,255,0.62);
+  font-size: 0.76rem;
+  line-height: 1.25;
   margin: 0;
 }
 
-.upcoming-card .btn-primary {
-  background: var(--color-accent-cyan);
-  color: white;
-  border: none;
-  font-weight: 600;
-  padding: 14px;
-  border-radius: 14px !important;
-  box-shadow: 0 4px 15px rgba(10, 132, 255, 0.4);
+.upcoming-card-action {
+  position: relative;
+  z-index: 1;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid rgba(115, 221, 255, 0.22);
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: rgba(0, 212, 255, 0.1);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.upcoming-card-action:active {
+  transform: scale(0.97);
+}
+
+body.light-mode .upcoming-card {
+  background: #f5f9ff;
+  border-color: rgba(20, 115, 180, 0.16);
+  box-shadow: 0 7px 20px rgba(30, 74, 110, 0.1);
+}
+
+body.light-mode .upcoming-card h2,
+body.light-mode .upcoming-card-action {
+  color: #10243b;
+}
+
+body.light-mode .upcoming-card p {
+  color: rgba(16, 36, 59, 0.62);
+}
+
+body.light-mode .upcoming-card-label,
+body.light-mode .upcoming-card-icon {
+  color: #087fa7;
+}
+
+@media (max-width: 390px) {
+  .upcoming-card {
+    grid-template-columns: 40px minmax(0, 1fr) 42px;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .upcoming-card-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .upcoming-card-action {
+    width: 42px;
+    padding: 0;
+  }
+
+  .upcoming-card-action span {
+    display: none;
+  }
 }
 
 /* ── Section Blocks ── */
@@ -272,7 +368,7 @@
 /* ── Horizontal Scroll (Favorites) ── */
 .hub-horizontal {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   overflow-x: auto;
   scroll-snap-type: x proximity;
   scroll-padding-inline: 0;
@@ -286,11 +382,11 @@
 }
 
 .hub-fav-card {
-  min-width: 140px;
-  width: 140px;
+  min-width: 112px;
+  width: 112px;
   padding: 0;
   border: 0;
-  border-radius: 16px;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   overflow: visible;
@@ -306,7 +402,7 @@
   position: relative;
   width: 100%;
   aspect-ratio: 1;
-  border-radius: 16px;
+  border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.08);
   display: flex;
   align-items: flex-end;
@@ -330,14 +426,14 @@
 
 .hub-fav-cover-badge {
   position: absolute;
-  top: 9px;
-  right: 9px;
+  top: 7px;
+  right: 7px;
   z-index: 1;
   background: rgba(18, 20, 29, 0.5);
   color: #ff6b82;
-  width: 27px;
-  height: 27px;
-  border-radius: 8px;
+  width: 25px;
+  height: 25px;
+  border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -348,8 +444,8 @@
 .hub-fav-cover-key {
   position: relative;
   z-index: 1;
-  margin: 0 0 9px 9px;
-  padding: 4px 8px;
+  margin: 0 0 7px 7px;
+  padding: 3px 7px;
   border-radius: 7px;
   background: rgba(10, 16, 28, 0.44);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -372,7 +468,7 @@
 }
 
 .fav-info h4 {
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   font-weight: 700;
   margin: 0;
   line-height: 1.3;
@@ -393,7 +489,7 @@
 
 .fav-info {
   min-width: 0;
-  padding: 9px 2px 0;
+  padding: 7px 2px 0;
 }
 
 .hub-fav-meta {
@@ -411,7 +507,7 @@
 /* ── Recent Songs Scroll (Apple Music style) ── */
 .recent-songs-scroll {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   overflow-x: auto;
   padding-bottom: 16px;
   margin: 0 -20px;
@@ -425,11 +521,11 @@
 }
 
 .recent-song-card {
-  min-width: 140px;
-  width: 140px;
+  min-width: 112px;
+  width: 112px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   cursor: pointer;
 }
 
@@ -443,9 +539,9 @@
 }
 
 .recent-song-cover {
-  width: 140px;
-  height: 140px;
-  border-radius: 16px;
+  width: 112px;
+  height: 112px;
+  border-radius: 12px;
   background: linear-gradient(135deg, #2C2C2E, #1A1A1C);
   border: 1px solid rgba(255,255,255,0.08);
   position: relative;
@@ -472,14 +568,14 @@
 }
 
 .recent-song-key {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 800;
   color: rgba(255, 255, 255, 0.1);
   position: absolute;
 }
 
 .recent-song-info h4 {
-  font-size: 0.95rem;
+  font-size: 0.84rem;
   font-weight: 600;
   margin: 0 0 4px 0;
   line-height: 1.3;
@@ -490,7 +586,7 @@
 }
 
 .recent-song-info p {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   color: var(--color-text-tertiary);
   margin: 0;
   white-space: nowrap;

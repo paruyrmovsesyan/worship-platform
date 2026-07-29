@@ -284,7 +284,7 @@ $notifCount        = count($notifications);
       <!-- PAGE HEADING with working period toggle -->
       <div class="page-heading page-heading-row">
         <div>
-          <h1><?= __('Dashboard') ?> 😍</h1>
+          <h1><?= __('Dashboard') ?></h1>
           <p><?= __('Overview of your Worship platform') ?> · <strong><?= $periodLabel ?></strong></p>
         </div>
         <div class="period-toggle">

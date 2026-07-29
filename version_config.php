@@ -135,6 +135,14 @@ function wp_version_admin_section_registry(): array {
             'label' => 'Թարմացում և տեղադրում',
             'description' => 'Տարբերակներ, ZIP փաթեթ, կիրառման եղանակ և հրապարակում։',
         ],
+        'about' => [
+            'label' => 'Ծրագրի մասին',
+            'description' => 'PWA ծրագրում ցուցադրվող նկարագրություն, իրավական տվյալներ և օգտակար հղումներ։',
+        ],
+        'site_info' => [
+            'label' => 'Ընդհանուր տվյալներ և SEO',
+            'description' => 'Կայքի գլխավոր վերնագիր, SEO նկարագրություն, կապի և սոցիալական էջերի տվյալներ։',
+        ],
         'maintenance' => [
             'label' => 'Տեխնիկական աշխատանքներ',
             'description' => 'Տեխնիկական սպասարկում և ծրագրային էջերի միացում/անջատում։',
@@ -341,10 +349,107 @@ function wp_version_sanitize_page_web_modes($value): array {
     return $normalized;
 }
 
+function wp_version_default_app_about(): array {
+    return [
+        'tagline' => [
+            'hy' => 'Երգեր, ակորդներ և թիմային համագործակցություն մեկ ծրագրում։',
+            'en' => 'Songs, chords, and team collaboration in one app.',
+            'ru' => 'Песни, аккорды и командная работа в одном приложении.',
+        ],
+        'license_text' => [
+            'hy' => 'Worship Platform-ը PM Studio-ի սեփական ծրագրային ապահովումն է։ Օգտագործված բաց կոդով գրադարանները տարածվում են իրենց համապատասխան լիցենզիաներով։',
+            'en' => 'Worship Platform is proprietary software of PM Studio. Open-source libraries are distributed under their respective licenses.',
+            'ru' => 'Worship Platform является проприетарным программным обеспечением PM Studio. Библиотеки с открытым исходным кодом распространяются по соответствующим лицензиям.',
+        ],
+        'owner' => 'PM Studio',
+        'copyright_year' => '2026',
+        'privacy_url' => '/privacy',
+        'terms_url' => '/terms',
+        'support_url' => '/support',
+        'licenses' => [
+            ['name' => 'React / React DOM', 'license' => 'MIT License'],
+            ['name' => 'React Router', 'license' => 'MIT License'],
+        ],
+    ];
+}
+
+function wp_version_sanitize_public_url($value, string $fallback): string {
+    $url = mb_substr(trim((string)$value), 0, 500);
+    if ($url === '') return $fallback;
+    if (str_starts_with($url, '/') && !str_starts_with($url, '//')) return $url;
+    if (filter_var($url, FILTER_VALIDATE_URL) && preg_match('/^https?:\/\//i', $url)) return $url;
+    return $fallback;
+}
+
+function wp_version_sanitize_app_about($value): array {
+    $defaults = wp_version_default_app_about();
+    $value = is_array($value) ? $value : [];
+    $tagline = is_array($value['tagline'] ?? null) ? $value['tagline'] : [];
+    $licenseText = is_array($value['license_text'] ?? null) ? $value['license_text'] : [];
+    $legacyTagline = [
+        'hy' => 'Երգեր, ակորդներ և ծառայության գործիքներ՝ մեկ հարմար հարթակում։',
+        'en' => 'Songs, chords, and ministry tools in one convenient platform.',
+        'ru' => 'Песни, аккорды и инструменты служения на одной удобной платформе.',
+    ];
+    $legacyLicenseText = [
+        'hy' => 'Worship Platform-ը պաշտպանված ծրագրային արտադրանք է։ Երրորդ կողմի բաղադրիչները տարածվում են իրենց համապատասխան լիցենզիաներով։',
+        'en' => 'Worship Platform is protected software. Third-party components are distributed under their respective licenses.',
+        'ru' => 'Worship Platform является защищенным программным продуктом. Сторонние компоненты распространяются по своим лицензиям.',
+    ];
+    $languages = ['hy', 'en', 'ru'];
+    $normalizedTagline = [];
+    $normalizedLicenseText = [];
+    foreach ($languages as $language) {
+        $taglineValue = trim((string)($tagline[$language] ?? $defaults['tagline'][$language]));
+        $licenseValue = trim((string)($licenseText[$language] ?? $defaults['license_text'][$language]));
+        if ($taglineValue === $legacyTagline[$language]) {
+            $taglineValue = $defaults['tagline'][$language];
+        }
+        if ($licenseValue === $legacyLicenseText[$language]) {
+            $licenseValue = $defaults['license_text'][$language];
+        }
+        $normalizedTagline[$language] = mb_substr($taglineValue, 0, 300);
+        $normalizedLicenseText[$language] = mb_substr($licenseValue, 0, 1500);
+    }
+
+    $rawLicenses = $value['licenses'] ?? $defaults['licenses'];
+    if (is_string($rawLicenses)) {
+        $rawLicenses = preg_split('/\R/u', $rawLicenses) ?: [];
+        $rawLicenses = array_map(static function ($line): array {
+            $parts = array_map('trim', explode('|', (string)$line, 2));
+            return ['name' => $parts[0] ?? '', 'license' => $parts[1] ?? ''];
+        }, $rawLicenses);
+    }
+    $licenses = [];
+    foreach (is_array($rawLicenses) ? $rawLicenses : [] as $item) {
+        if (!is_array($item)) continue;
+        $name = mb_substr(trim((string)($item['name'] ?? '')), 0, 120);
+        $license = mb_substr(trim((string)($item['license'] ?? '')), 0, 120);
+        if ($name === '') continue;
+        $licenses[] = ['name' => $name, 'license' => $license];
+        if (count($licenses) >= 20) break;
+    }
+    if (!$licenses) $licenses = $defaults['licenses'];
+
+    $year = trim((string)($value['copyright_year'] ?? $defaults['copyright_year']));
+    if (!preg_match('/^\d{4}$/', $year)) $year = $defaults['copyright_year'];
+
+    return [
+        'tagline' => $normalizedTagline,
+        'license_text' => $normalizedLicenseText,
+        'owner' => mb_substr(trim((string)($value['owner'] ?? $defaults['owner'])) ?: $defaults['owner'], 0, 120),
+        'copyright_year' => $year,
+        'privacy_url' => wp_version_sanitize_public_url($value['privacy_url'] ?? '', $defaults['privacy_url']),
+        'terms_url' => wp_version_sanitize_public_url($value['terms_url'] ?? '', $defaults['terms_url']),
+        'support_url' => wp_version_sanitize_public_url($value['support_url'] ?? '', $defaults['support_url']),
+        'licenses' => $licenses,
+    ];
+}
+
 function wp_version_defaults(): array {
     return [
-        'app_version' => '2.5.2',
-        'web_version' => '2.5.2',
+        'app_version' => '2.6.9',
+        'web_version' => '2.6.9',
         'app_release_stamp' => '',
         'web_release_stamp' => '',
         'app_release_type' => 'feature',
@@ -355,6 +460,7 @@ function wp_version_defaults(): array {
         'app_message' => 'Ծրագիրը թարմացվել է։ Սեղմեք թարմացնել, որպեսզի օֆֆլայն և օնլայն բովանդակությունը նորացվի։',
         'web_title' => 'Կայքի նոր տարբերակ',
         'web_message' => 'Կայքը թարմացվել է։ Սեղմեք թարմացնել, որպեսզի բացվի նոր տարբերակը։',
+        'app_about' => wp_version_default_app_about(),
         'maintenance_enabled' => false,
         'maintenance_message' => 'Կայքում ընթացքի մեջ են տեխնիկական աշխատանքներ։ Խնդրում ենք փորձել մի փոքր հետո։',
         'maintenance_start_at' => '',
@@ -376,6 +482,29 @@ function wp_version_defaults(): array {
         'social_auth_google_redirect_uri' => '',
         'page_app_modes' => wp_version_default_page_app_modes(),
         'page_web_modes' => wp_version_default_page_web_modes(),
+        'site_seo_title' => 'Worship Platform',
+        'site_seo_description' => 'Երգեր, ակորդներ և թիմային համագործակցություն մեկ ծրագրում։',
+        'site_seo_keywords' => '',
+        'site_seo_name' => 'Worship Platform',
+        'site_seo_logo' => 'https://worship.pmstudio.am/user_uploaded_logo.png',
+        'site_seo_image' => 'https://worship.pmstudio.am/og-image.png',
+        'site_seo_google_verification' => '',
+        'site_seo_bing_verification' => '',
+        'site_seo_yandex_verification' => 'af423fbb5786a5d1',
+        'site_seo_default_author' => 'Worship Platform',
+        'site_seo_news_publisher' => 'Worship Platform',
+        'site_seo_news_logo' => 'https://worship.pmstudio.am/user_uploaded_logo.png',
+        'site_seo_index_home' => true,
+        'site_seo_index_songs' => true,
+        'site_seo_index_song_pages' => false,
+        'site_seo_index_news' => true,
+        'site_seo_index_news_articles' => true,
+        'site_contact_email' => '',
+        'site_contact_phone' => '',
+        'site_contact_address' => '',
+        'site_social_facebook' => '',
+        'site_social_instagram' => '',
+        'site_social_youtube' => '',
         'blocked_os_list' => [],
         'meta_note' => '',
         'updated_at' => wp_version_now_iso(),
@@ -459,6 +588,7 @@ function wp_version_sanitize(array $raw): array {
     $config['web_title'] = mb_substr(trim((string)($config['web_title'] ?? $defaults['web_title'])) ?: $defaults['web_title'], 0, 120);
     $config['app_message'] = mb_substr(trim((string)($config['app_message'] ?? $defaults['app_message'])) ?: $defaults['app_message'], 0, 600);
     $config['web_message'] = mb_substr(trim((string)($config['web_message'] ?? $defaults['web_message'])) ?: $defaults['web_message'], 0, 600);
+    $config['app_about'] = wp_version_sanitize_app_about($config['app_about'] ?? []);
     $config['maintenance_enabled'] = !empty($config['maintenance_enabled']);
     $config['maintenance_message'] = mb_substr(trim((string)($config['maintenance_message'] ?? $defaults['maintenance_message'])) ?: $defaults['maintenance_message'], 0, 600);
     $config['maintenance_start_at'] = wp_version_normalize_datetime($config['maintenance_start_at'] ?? '');
@@ -485,6 +615,32 @@ function wp_version_sanitize(array $raw): array {
     $config['social_auth_google_client_id'] = mb_substr(trim((string)($config['social_auth_google_client_id'] ?? '')), 0, 255);
     $config['social_auth_google_redirect_uri'] = mb_substr(trim((string)($config['social_auth_google_redirect_uri'] ?? '')), 0, 255);
     $config['meta_note'] = mb_substr(trim((string)($config['meta_note'] ?? '')), 0, 1200);
+
+    $config['site_seo_title'] = mb_substr(trim((string)($config['site_seo_title'] ?? $defaults['site_seo_title'])), 0, 120);
+    $config['site_seo_description'] = mb_substr(trim((string)($config['site_seo_description'] ?? $defaults['site_seo_description'])), 0, 300);
+    $config['site_seo_keywords'] = mb_substr(trim((string)($config['site_seo_keywords'] ?? $defaults['site_seo_keywords'])), 0, 255);
+    $config['site_seo_name'] = mb_substr(trim((string)($config['site_seo_name'] ?? $defaults['site_seo_name'])), 0, 120);
+    $config['site_seo_logo'] = mb_substr(trim((string)($config['site_seo_logo'] ?? $defaults['site_seo_logo'])), 0, 500);
+    $config['site_seo_image'] = mb_substr(trim((string)($config['site_seo_image'] ?? $defaults['site_seo_image'])), 0, 500);
+    $config['site_seo_google_verification'] = mb_substr(trim((string)($config['site_seo_google_verification'] ?? '')), 0, 255);
+    $config['site_seo_bing_verification'] = mb_substr(trim((string)($config['site_seo_bing_verification'] ?? '')), 0, 255);
+    $config['site_seo_yandex_verification'] = mb_substr(
+        trim((string)($config['site_seo_yandex_verification'] ?? '')) ?: $defaults['site_seo_yandex_verification'],
+        0,
+        255
+    );
+    $config['site_seo_default_author'] = mb_substr(trim((string)($config['site_seo_default_author'] ?? $defaults['site_seo_default_author'])), 0, 120);
+    $config['site_seo_news_publisher'] = mb_substr(trim((string)($config['site_seo_news_publisher'] ?? $defaults['site_seo_news_publisher'])), 0, 120);
+    $config['site_seo_news_logo'] = mb_substr(trim((string)($config['site_seo_news_logo'] ?? $defaults['site_seo_news_logo'])), 0, 500);
+    foreach (['site_seo_index_home', 'site_seo_index_songs', 'site_seo_index_song_pages', 'site_seo_index_news', 'site_seo_index_news_articles'] as $indexSetting) {
+        $config[$indexSetting] = !empty($config[$indexSetting]);
+    }
+    $config['site_contact_email'] = mb_substr(trim((string)($config['site_contact_email'] ?? $defaults['site_contact_email'])), 0, 120);
+    $config['site_contact_phone'] = mb_substr(trim((string)($config['site_contact_phone'] ?? $defaults['site_contact_phone'])), 0, 50);
+    $config['site_contact_address'] = mb_substr(trim((string)($config['site_contact_address'] ?? $defaults['site_contact_address'])), 0, 200);
+    $config['site_social_facebook'] = mb_substr(trim((string)($config['site_social_facebook'] ?? $defaults['site_social_facebook'])), 0, 255);
+    $config['site_social_instagram'] = mb_substr(trim((string)($config['site_social_instagram'] ?? $defaults['site_social_instagram'])), 0, 255);
+    $config['site_social_youtube'] = mb_substr(trim((string)($config['site_social_youtube'] ?? $defaults['site_social_youtube'])), 0, 255);
     $config['updated_at'] = wp_version_normalize_datetime($config['updated_at'] ?? '') ?: wp_version_now_iso();
 
     return $config;
@@ -493,17 +649,30 @@ function wp_version_sanitize(array $raw): array {
 function wp_version_load(): array {
     $defaults = wp_version_defaults();
     try {
-        $conn = wp_runtime_open_mysqli();
-        $stmt = $conn->prepare("SELECT setting_value FROM sys_settings WHERE setting_key = 'version_config'");
+        $pdo = wp_runtime_open_pdo();
+        $stmt = $pdo->prepare("SELECT setting_value FROM sys_settings WHERE setting_key = 'version_config'");
         $stmt->execute();
-        $result = $stmt->get_result();
-        if ($row = $result->fetch_assoc()) {
-            $decoded = json_decode($row['setting_value'] ?? '', true);
+        $val = $stmt->fetchColumn();
+        if ($val !== false && $val !== null) {
+            $decoded = json_decode((string)$val, true);
             if (is_array($decoded)) {
                 return wp_version_sanitize($decoded);
             }
         }
-    } catch (Throwable $e) {}
+    } catch (Throwable $e) {
+        try {
+            $conn = wp_runtime_open_mysqli();
+            $stmt = $conn->prepare("SELECT setting_value FROM sys_settings WHERE setting_key = 'version_config'");
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($row = $result->fetch_assoc()) {
+                $decoded = json_decode($row['setting_value'] ?? '', true);
+                if (is_array($decoded)) {
+                    return wp_version_sanitize($decoded);
+                }
+            }
+        } catch (Throwable $e2) {}
+    }
 
     return $defaults;
 }
@@ -573,18 +742,28 @@ function wp_version_diff(array $before, array $after): array {
 }
 
 function wp_version_history_append(array $entry): void {
+    $id = $entry['id'] ?? bin2hex(random_bytes(8));
+    $at = wp_version_normalize_datetime($entry['at'] ?? '') ?: wp_version_now_iso();
+    $actor = mb_substr(trim((string)($entry['actor'] ?? '')), 0, 190);
+    $ip = mb_substr(trim((string)($entry['ip'] ?? '')), 0, 80);
+    $action = mb_substr(trim((string)($entry['action'] ?? '')), 0, 100);
+    $changed_fields = json_encode($entry['changed_fields'] ?? [], JSON_UNESCAPED_UNICODE);
+    $snapshot = json_encode($entry['snapshot'] ?? [], JSON_UNESCAPED_UNICODE);
+    $note = (string)($entry['note'] ?? '');
+
+    try {
+        $pdo = wp_runtime_open_pdo();
+        $stmt = $pdo->prepare("INSERT INTO version_history (id, at, actor, ip, action, changed_fields, snapshot, note) VALUES (:id, :at, :actor, :ip, :action, :cf, :snap, :note)");
+        $stmt->execute([
+            ':id' => $id, ':at' => $at, ':actor' => $actor, ':ip' => $ip,
+            ':action' => $action, ':cf' => $changed_fields, ':snap' => $snapshot, ':note' => $note
+        ]);
+        return;
+    } catch (Throwable $e) {}
+
     try {
         $conn = wp_runtime_open_mysqli();
         $stmt = $conn->prepare("INSERT INTO version_history (id, at, actor, ip, action, changed_fields, snapshot, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $id = $entry['id'] ?? bin2hex(random_bytes(8));
-        $at = wp_version_normalize_datetime($entry['at'] ?? '') ?: wp_version_now_iso();
-        $actor = mb_substr(trim((string)($entry['actor'] ?? '')), 0, 190);
-        $ip = mb_substr(trim((string)($entry['ip'] ?? '')), 0, 80);
-        $action = mb_substr(trim((string)($entry['action'] ?? '')), 0, 100);
-        $changed_fields = json_encode($entry['changed_fields'] ?? [], JSON_UNESCAPED_UNICODE);
-        $snapshot = json_encode($entry['snapshot'] ?? [], JSON_UNESCAPED_UNICODE);
-        $note = (string)($entry['note'] ?? '');
-        
         $stmt->bind_param('ssssssss', $id, $at, $actor, $ip, $action, $changed_fields, $snapshot, $note);
         $stmt->execute();
     } catch (Throwable $e) {}
@@ -667,13 +846,19 @@ function wp_version_save(array $input, array $meta = []): bool {
     $config = wp_version_sanitize($candidate);
     
     $saved = false;
+    $json = json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     try {
-        $conn = wp_runtime_open_mysqli();
-        $stmt = $conn->prepare("INSERT INTO sys_settings (setting_key, setting_value) VALUES ('version_config', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
-        $json = json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        $stmt->bind_param('s', $json);
-        $saved = $stmt->execute();
-    } catch (Throwable $e) {}
+        $pdo = wp_runtime_open_pdo();
+        $stmt = $pdo->prepare("INSERT INTO sys_settings (setting_key, setting_value) VALUES ('version_config', :json) ON DUPLICATE KEY UPDATE setting_value = :json2");
+        $saved = $stmt->execute([':json' => $json, ':json2' => $json]);
+    } catch (Throwable $e) {
+        try {
+            $conn = wp_runtime_open_mysqli();
+            $stmt = $conn->prepare("INSERT INTO sys_settings (setting_key, setting_value) VALUES ('version_config', ?) ON DUPLICATE KEY UPDATE setting_value = ?");
+            $stmt->bind_param('ss', $json, $json);
+            $saved = $stmt->execute();
+        } catch (Throwable $e2) {}
+    }
 
     if (!$saved) {
         wp_version_store_last_save_result([

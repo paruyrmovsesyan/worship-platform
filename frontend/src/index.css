@@ -642,11 +642,17 @@ body.chord-color-green .chord { color: #4ADE80 !important; }
 body.chord-color-red { --sv-accent: #FF4A4A; --sv-accent-glow: rgba(255, 74, 74, 0.15); }
 body.chord-color-red .chord { color: #FF4A4A !important; }
 
-body.chord-color-white { --sv-accent: #FFFFFF; --sv-accent-glow: rgba(255, 255, 255, 0.15); }
-body.chord-color-white .chord { color: #FFFFFF !important; }
+/* White chord color */
+body.chord-color-white:not(.light-mode) { --sv-accent: #FFFFFF; --sv-accent-glow: rgba(255, 255, 255, 0.15); }
+body.chord-color-white:not(.light-mode) .chord { color: #FFFFFF !important; }
+body.chord-color-white.light-mode { --sv-accent: #111827; --sv-accent-glow: rgba(17, 24, 39, 0.15); }
+body.chord-color-white.light-mode .chord { color: #111827 !important; }
 
-body.chord-color-black { --sv-accent: #000000; --sv-accent-glow: rgba(0, 0, 0, 0.15); }
-body.chord-color-black .chord { color: #000000 !important; }
+/* Black chord color */
+body.chord-color-black:not(.light-mode) { --sv-accent: #FFFFFF; --sv-accent-glow: rgba(255, 255, 255, 0.15); }
+body.chord-color-black:not(.light-mode) .chord { color: #FFFFFF !important; }
+body.chord-color-black.light-mode { --sv-accent: #000000; --sv-accent-glow: rgba(0, 0, 0, 0.15); }
+body.chord-color-black.light-mode .chord { color: #000000 !important; }
 
 
 body.outlined-chords .chord {
@@ -822,4 +828,48 @@ body.oled-mode.outlined-chords .chord {
 .route-animate {
   animation: routeFadeIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   will-change: opacity, transform;
+}
+
+/* ─── PRINT STYLES ─── */
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .app-sidebar, .app-header, .sl-actions-wrap, .btn-new-set, .search-box, .sl-actions-header, .icon-btn, .bottom-nav {
+    display: none !important;
+  }
+  .app-main {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+  .track-item {
+    background: transparent !important;
+    border-bottom: 1px solid #ccc !important;
+    break-inside: avoid;
+  }
+  .track-cover {
+    display: none !important;
+  }
+  .sl-header {
+    flex-direction: row !important;
+  }
+  .sl-header .sl-actions-header {
+    display: none !important;
+  }
+  .track-title {
+    color: #000 !important;
+  }
+  .track-artist {
+    color: #666 !important;
+  }
+  .sl-modal-overlay {
+    display: none !important;
+  }
+  .track-meta span {
+    border: 1px solid #ccc;
+    background: #fff;
+    color: #000;
+  }
 }

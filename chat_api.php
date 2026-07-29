@@ -225,6 +225,68 @@ if ($action === 'get_direct_chat' && $method === 'POST') {
     out(["ok" => true, "chat_id" => (int)$chat_id]);
 }
 
+if ($action === 'import_shared_setlist' && $method === 'POST') {
+    try {
+        $d = readJson();
+        $setlist_id = (int)($d['setlist_id'] ?? 0);
+        if ($setlist_id <= 0) out(["error" => "Invalid setlist"], 400);
+
+        // Fetch original setlist
+        $st = $pdo->prepare("SELECT * FROM setlists WHERE id = ? LIMIT 1");
+        $st->execute([$setlist_id]);
+        $orig = $st->fetch(PDO::FETCH_ASSOC);
+        if (!$orig) out(["error" => "Setlist not found"], 404);
+
+        $newName = $orig['name'] . ' (' . __('Պատճեն') . ')';
+
+        // Check if already reached limit
+        $stPlan = $pdo->prepare("SELECT plan_type FROM users WHERE id=? LIMIT 1");
+        $stPlan->execute([$uid]);
+        $plan = $stPlan->fetchColumn() ?: 'free';
+        if ($plan === 'free') {
+            $stCount = $pdo->prepare("SELECT COUNT(*) FROM setlists WHERE user_id=? AND status='active'");
+            $stCount->execute([$uid]);
+            $count = (int)$stCount->fetchColumn();
+            if ($count >= 3) {
+                out(["error" => "limit_reached", "message" => "Free plan allows up to 3 active setlists. Please upgrade to Pro."], 403);
+            }
+        }
+
+        $pdo->beginTransaction();
+
+        $stInsert = $pdo->prepare("INSERT INTO setlists (user_id, team_id, name, service_date, service_type, description) VALUES (?, NULL, ?, ?, ?, ?)");
+        $stInsert->execute([$uid, $newName, $orig['service_date'], $orig['service_type'], $orig['description']]);
+        $newId = (int)$pdo->lastInsertId();
+
+        $stItems = $pdo->prepare("SELECT * FROM setlist_items WHERE setlist_id = ? ORDER BY position ASC, id ASC");
+        $stItems->execute([$setlist_id]);
+        $items = $stItems->fetchAll(PDO::FETCH_ASSOC);
+
+        if ($items) {
+            $stInsertItem = $pdo->prepare("INSERT INTO setlist_items (setlist_id, item_type, song_id, target_key, capo, is_required, title, position, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            foreach ($items as $it) {
+                $stInsertItem->execute([
+                    $newId,
+                    $it['item_type'],
+                    $it['song_id'],
+                    $it['target_key'],
+                    $it['capo'],
+                    $it['is_required'],
+                    $it['title'],
+                    $it['position'],
+                    $it['notes']
+                ]);
+            }
+        }
+
+        $pdo->commit();
+        out(["ok" => true, "new_id" => $newId]);
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        out(["error" => $e->getMessage()], 500);
+    }
+}
+
 // 3. Delete/Clear a chat
 if ($action === 'delete_chat' && $method === 'POST') {
     $d = readJson();
@@ -374,14 +436,20 @@ if ($action === 'send_message' && $method === 'POST') {
     $d = readJson();
     $chat_id = (int)($d['chat_id'] ?? 0);
     $message = trim($d['message'] ?? '');
-    $setlist_id = (int)($d['setlist_id'] ?? 0);
     
     // Check access
     $st = $pdo->prepare("SELECT 1 FROM chat_participants WHERE chat_id = ? AND user_id = ?");
     $st->execute([$chat_id, $uid]);
     if (!$st->fetch()) out(["error" => "Access denied"], 403);
     
-    if ($message === '' && $setlist_id === 0) out(["error" => "Empty message"], 400);
+    $setlist_id = isset($d['setlist_id']) ? (int)$d['setlist_id'] : 0;
+    $can_edit = !empty($d['can_edit']) ? 1 : 0;
+    
+    if (trim($message) === '' && $setlist_id <= 0) {
+        out(["error" => "Empty message"], 400);
+    }
+    
+    // Check permission to send this setlist
     if ($setlist_id > 0 && !wp_chat_user_can_read_setlist($pdo, $setlist_id, $uid)) {
         out(["error" => "Setlist access denied"], 403);
     }
@@ -390,44 +458,41 @@ if ($action === 'send_message' && $method === 'POST') {
     $st->execute([$chat_id, $uid, $message, $setlist_id > 0 ? $setlist_id : null]);
     $msg_id = $pdo->lastInsertId();
     
-    $st = $pdo->prepare("SELECT user_id FROM chat_participants WHERE chat_id = ? AND user_id != ?");
+    $st = $pdo->prepare("SELECT cp.user_id, u.email FROM chat_participants cp JOIN users u ON u.id = cp.user_id WHERE cp.chat_id = ? AND cp.user_id != ?");
     $st->execute([$chat_id, $uid]);
-    $others = $st->fetchAll(PDO::FETCH_COLUMN);
+    $others = $st->fetchAll(PDO::FETCH_ASSOC);
 
     if ($setlist_id > 0) {
-        // Copy setlist for each other participant
-        $st_set = $pdo->prepare("SELECT * FROM setlists WHERE id = ?");
-        $st_set->execute([$setlist_id]);
-        $setlist = $st_set->fetch(PDO::FETCH_ASSOC);
-        
-        if ($setlist) {
-            foreach ($others as $oid) {
-                $st_ins = $pdo->prepare("INSERT INTO setlists (user_id, name, description, service_date, service_type, status) VALUES (?, ?, ?, ?, ?, ?)");
-                $st_ins->execute([$oid, $setlist['name'] . " (Shared)", $setlist['description'], $setlist['service_date'], $setlist['service_type'], $setlist['status']]);
-                $new_setlist_id = $pdo->lastInsertId();
-                
-                // Copy items
-                $st_items = $pdo->prepare("SELECT * FROM setlist_items WHERE setlist_id = ?");
-                $st_items->execute([$setlist_id]);
-                $items = $st_items->fetchAll(PDO::FETCH_ASSOC);
-                foreach ($items as $item) {
-                    $st_item_ins = $pdo->prepare("INSERT INTO setlist_items (setlist_id, song_id, item_order, song_key, notes, custom_title, is_divider, duration_seconds) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                    $st_item_ins->execute([$new_setlist_id, $item['song_id'], $item['item_order'], $item['song_key'], $item['notes'], $item['custom_title'], $item['is_divider'], $item['duration_seconds']]);
-                }
-            }
+        // Grant read access to the setlist for each other participant
+        foreach ($others as $other) {
+            $oid = (int)$other['user_id'];
+            $oemail = $other['email'];
+            
+            $st_access = $pdo->prepare("
+                INSERT INTO setlist_user_access 
+                  (setlist_id, owner_user_id, grantee_user_id, grantee_email, expires_at, revoked_at, can_edit) 
+                VALUES (?, ?, ?, ?, NULL, NULL, ?)
+                ON DUPLICATE KEY UPDATE 
+                  revoked_at = NULL, 
+                  expires_at = NULL,
+                  can_edit = VALUES(can_edit),
+                  updated_at = NOW()
+            ");
+            $st_access->execute([$setlist_id, $uid, $oid, $oemail, $can_edit]);
         }
     }
     
     // Send pushes
     require_once __DIR__ . '/push_service.php';
     $senderName = $_SESSION['name'] ?? $_SESSION['username'] ?? 'Someone';
-    foreach ($others as $oid) {
+    foreach ($others as $other) {
+        $oid = (int)$other['user_id'];
         // Re-enable their chat if they cleared it
         $pdo->prepare("UPDATE chat_participants SET cleared_at = NULL WHERE chat_id = ? AND user_id = ?")->execute([$chat_id, $oid]);
         
         $push_title = wp_chat_compact_push_title((string)$senderName);
         $push_msg = wp_chat_compact_push_body((string)$message, $setlist_id > 0);
-        wp_push_send_to_user($pdo, (int)$oid, $push_title, $push_msg, "/chat/$chat_id");
+        wp_push_send_to_user($pdo, $oid, $push_title, $push_msg, "/chat/$chat_id");
     }
     
     $st = $pdo->prepare("SELECT u.name as user_name, m.created_at FROM chat_messages m JOIN users u ON u.id = m.user_id WHERE m.id = ?");

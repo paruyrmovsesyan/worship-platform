@@ -769,6 +769,241 @@ body {
   .hero-section { display: flex; }
 }
 
+/* --- Minimal Welcome Landing --- */
+.welcome-landing-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px 0;
+  width: 100%;
+  position: relative;
+}
+.welcome-settings-floating-btn {
+  position: absolute;
+  top: -20px;
+  right: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 10;
+}
+.welcome-settings-floating-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: rotate(30deg);
+}
+body.light-mode .welcome-settings-floating-btn {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #111827;
+}
+
+.welcome-logo-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #3A2DFF 0%, #00F0FF 100%);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  color: #fff;
+  box-shadow: 0 12px 30px rgba(58, 45, 255, 0.3);
+}
+
+.welcome-heading {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0 0 10px 0;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+body.light-mode .welcome-heading { color: #111827; }
+
+.welcome-sub {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.5;
+  margin: 0 0 40px 0;
+  max-width: 280px;
+}
+body.light-mode .welcome-sub { color: rgba(0, 0, 0, 0.6); }
+
+.welcome-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.btn-welcome-primary {
+  background: #3A2DFF;
+  color: #fff;
+  border: none;
+  padding: 16px;
+  border-radius: 16px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(58, 45, 255, 0.25);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-welcome-primary:active { transform: scale(0.98); }
+
+.btn-welcome-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 15px;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+body.light-mode .btn-welcome-secondary {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #111827;
+}
+
+.btn-welcome-text-link {
+  color: #A0A0C0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: 10px;
+  transition: color 0.2s;
+}
+.btn-welcome-text-link:hover { color: #fff; }
+body.light-mode .btn-welcome-text-link { color: #6B7280; }
+body.light-mode .btn-welcome-text-link:hover { color: #111827; }
+
+/* Quick Settings Modal Additions */
+.qs-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.qs-modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.qs-modal-card {
+  background: #161622;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  width: 100%;
+  max-width: 440px;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  transform: scale(0.95);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #fff;
+}
+body.light-mode .qs-modal-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #111827;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+.qs-modal-overlay.active .qs-modal-card {
+  transform: scale(1);
+}
+
+.qs-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.qs-modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.qs-close-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: inherit;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.qs-group {
+  margin-bottom: 20px;
+}
+.qs-group-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 10px;
+  display: block;
+}
+body.light-mode .qs-group-title { color: rgba(0, 0, 0, 0.6); }
+
+.qs-options-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.qs-opt-btn {
+  flex: 1;
+  min-width: 80px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+body.light-mode .qs-opt-btn {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.03);
+}
+.qs-opt-btn.active {
+  background: #3A2DFF;
+  border-color: #3A2DFF;
+  color: #ffffff;
+}
+
 /* React SPA equivalent animation for Login */
 .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
 @keyframes fadeIn {
@@ -787,7 +1022,50 @@ body {
 </style>
 </head>
 <body class="<?= htmlspecialchars($authBodyClass, ENT_QUOTES) ?>">
-  <div class="split-layout animate-fade-in">
+
+  <!-- QUICK SETTINGS MODAL OVERLAY -->
+  <div class="qs-modal-overlay" id="qsModalOverlay" onclick="if(event.target===this) closeQsModal()">
+    <div class="qs-modal-card">
+      <div class="qs-modal-header">
+        <h3>Ծրագրի կարգավորումներ</h3>
+        <button type="button" class="qs-close-btn" onclick="closeQsModal()">✕</button>
+      </div>
+
+      <!-- Theme Mode -->
+      <div class="qs-group">
+        <span class="qs-group-title">Գունային ռեժիմ</span>
+        <div class="qs-options-row">
+          <button type="button" class="qs-opt-btn" id="qsThemeLight" onclick="setQsTheme('light')">☀️ Բաց</button>
+          <button type="button" class="qs-opt-btn" id="qsThemeDark" onclick="setQsTheme('dark')">🌙 Մութ</button>
+          <button type="button" class="qs-opt-btn" id="qsThemeOled" onclick="setQsTheme('oled')">⬛ OLED</button>
+        </div>
+      </div>
+
+      <!-- Chord Color -->
+      <div class="qs-group">
+        <span class="qs-group-title">Ակորդների գույն</span>
+        <div class="qs-options-row">
+          <button type="button" class="qs-opt-btn" id="qsColorGold" onclick="setQsColor('gold')"><span style="width:10px;height:10px;border-radius:50%;background:#3A2DFF;display:inline-block"></span> Ոսկեգույն</button>
+          <button type="button" class="qs-opt-btn" id="qsColorBlue" onclick="setQsColor('blue')"><span style="width:10px;height:10px;border-radius:50%;background:#00D4FF;display:inline-block"></span> Կապույտ</button>
+          <button type="button" class="qs-opt-btn" id="qsColorGreen" onclick="setQsColor('green')"><span style="width:10px;height:10px;border-radius:50%;background:#4ADE80;display:inline-block"></span> Կանաչ</button>
+          <button type="button" class="qs-opt-btn" id="qsColorRed" onclick="setQsColor('red')"><span style="width:10px;height:10px;border-radius:50%;background:#FF4A4A;display:inline-block"></span> Կարմիր</button>
+          <button type="button" class="qs-opt-btn" id="qsColorWhite" onclick="setQsColor('white')"><span style="width:10px;height:10px;border-radius:50%;background:#FFFFFF;border:1px solid #ccc;display:inline-block"></span> Սպիտակ</button>
+          <button type="button" class="qs-opt-btn" id="qsColorBlack" onclick="setQsColor('black')"><span style="width:10px;height:10px;border-radius:50%;background:#000000;border:1px solid #555;display:inline-block"></span> Սև</button>
+        </div>
+      </div>
+
+      <!-- Outlined Chords -->
+      <div class="qs-group">
+        <span class="qs-group-title">Ակորդների ոճ</span>
+        <div class="qs-options-row">
+          <button type="button" class="qs-opt-btn" id="qsOutlineOff" onclick="setQsOutline(false)">Ստանդարտ</button>
+          <button type="button" class="qs-opt-btn" id="qsOutlineOn" onclick="setQsOutline(true)">🔲 Շրջանակով</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="split-layout animate-fade-in" style="padding-top: 60px;">
     
     <!-- Hero Section -->
     <div class="hero-section">
@@ -802,33 +1080,91 @@ body {
     <div class="form-section">
       <div class="form-container">
         
-        <?php if(!$isProgramAuth): ?>
-          <a href="<?= htmlspecialchars($source !== '' ? '/?source=' . rawurlencode($source) : '/', ENT_QUOTES) ?>" class="back-link">
-            &larr; Վերադառնալ
-          </a>
+        <?php if(!empty($error) || isset($_GET['mode']) && $_GET['mode'] === 'login'): ?>
+          <!-- Direct Login Mode if errors present -->
+          <div id="loginFormCard">
+            <?php if(!$isProgramAuth): ?>
+              <a href="<?= htmlspecialchars($source !== '' ? '/?source=' . rawurlencode($source) : '/', ENT_QUOTES) ?>" class="back-link">
+                &larr; Վերադառնալ
+              </a>
+            <?php endif; ?>
+
+            <div id="wpLangContainer"></div>
+            <div class="form-header">
+              <h2>Բարի վերադարձ</h2>
+              <p><?= htmlspecialchars($authNote, ENT_QUOTES) ?></p>
+            </div>
+
+            <?php if(!empty($error)) echo "<div class='error-msg'>".htmlspecialchars($error)."</div>"; ?>
+
+            <form method="POST" action="/loginuser.php">
+              <input type="hidden" name="next" value="<?= htmlspecialchars($next, ENT_QUOTES) ?>">
+              <input type="hidden" name="source" value="<?= htmlspecialchars($source, ENT_QUOTES) ?>">
+
+              <div class="input-group">
+                <input type="text" name="login" id="login" required placeholder=" ">
+                <label for="login">Մուտքանուն կամ Էլ. փոստ</label>
+              </div>
+
+              <div class="input-group">
+                <input type="password" name="password" id="password" required placeholder=" ">
+                <label for="password">Գաղտնաբառ</label>
+              </div>
+        <?php else: ?>
+          <!-- Welcome Landing Screen Mode -->
+          <div id="welcomeLandingCard">
+            <div class="welcome-landing-wrap">
+              <button type="button" class="welcome-settings-floating-btn" onclick="openQsModal()" aria-label="Settings" title="Կարգավորումներ">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              </button>
+
+              <div class="welcome-logo-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+              </div>
+
+              <h2 class="welcome-heading">Worship App</h2>
+              <p class="welcome-sub">Քո հոգևոր երգացանկը, ակորդներն ու պլանավորումը՝ մեկ վայրում։</p>
+
+              <div class="welcome-actions-stack">
+                <button type="button" class="btn-welcome-primary" onclick="showLoginForm()">
+                  Մուտք գործել
+                </button>
+                <a href="/registeruser.php?next=<?= htmlspecialchars($next, ENT_QUOTES) ?><?= htmlspecialchars($sourceQuery, ENT_QUOTES) ?>" class="btn-welcome-secondary">
+                  Ստեղծել հաշիվ
+                </a>
+                <a href="/songs" class="btn-welcome-text-link">
+                  Շարունակել առանց մուտքի &rarr;
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hidden Login Form Card -->
+          <div id="loginFormCard" style="display: none;">
+            <button type="button" class="back-link" style="background:none;border:none;cursor:pointer;font-size:0.9rem;padding:0;margin-bottom:16px;" onclick="hideLoginForm()">
+              &larr; Վերադառնալ
+            </button>
+
+            <div id="wpLangContainer"></div>
+            <div class="form-header">
+              <h2>Բարի վերադարձ</h2>
+              <p><?= htmlspecialchars($authNote, ENT_QUOTES) ?></p>
+            </div>
+
+            <form method="POST" action="/loginuser.php">
+              <input type="hidden" name="next" value="<?= htmlspecialchars($next, ENT_QUOTES) ?>">
+              <input type="hidden" name="source" value="<?= htmlspecialchars($source, ENT_QUOTES) ?>">
+
+              <div class="input-group">
+                <input type="text" name="login" id="login" required placeholder=" ">
+                <label for="login">Մուտքանուն կամ Էլ. փոստ</label>
+              </div>
+
+              <div class="input-group">
+                <input type="password" name="password" id="password" required placeholder=" ">
+                <label for="password">Գաղտնաբառ</label>
+              </div>
         <?php endif; ?>
-
-        <div id="wpLangContainer"></div>
-        <div class="form-header">
-          <h2>Բարի վերադարձ</h2>
-          <p><?= htmlspecialchars($authNote, ENT_QUOTES) ?></p>
-        </div>
-
-        <?php if(!empty($error)) echo "<div class='error-msg'>".htmlspecialchars($error)."</div>"; ?>
-
-        <form method="POST" action="/loginuser.php">
-          <input type="hidden" name="next" value="<?= htmlspecialchars($next, ENT_QUOTES) ?>">
-          <input type="hidden" name="source" value="<?= htmlspecialchars($source, ENT_QUOTES) ?>">
-
-          <div class="input-group">
-            <input type="text" name="login" id="login" required placeholder=" ">
-            <label for="login">Մուտքանուն կամ Էլ. փոստ</label>
-          </div>
-
-          <div class="input-group">
-            <input type="password" name="password" id="password" required placeholder=" ">
-            <label for="password">Գաղտնաբառ</label>
-          </div>
 
           <div class="options-row">
             <label class="chk">
@@ -877,7 +1213,116 @@ body {
   </div>
 
 <script>
+function showLoginForm() {
+  var welcomeCard = document.getElementById('welcomeLandingCard');
+  var loginCard = document.getElementById('loginFormCard');
+  if (welcomeCard) welcomeCard.style.display = 'none';
+  if (loginCard) loginCard.style.display = 'block';
+}
+
+function hideLoginForm() {
+  var welcomeCard = document.getElementById('welcomeLandingCard');
+  var loginCard = document.getElementById('loginFormCard');
+  if (welcomeCard) welcomeCard.style.display = 'block';
+  if (loginCard) loginCard.style.display = 'none';
+}
+
+function openQsModal() {
+  var modal = document.getElementById('qsModalOverlay');
+  if (modal) modal.classList.add('active');
+  syncQsState();
+}
+
+function closeQsModal() {
+  var modal = document.getElementById('qsModalOverlay');
+  if (modal) modal.classList.remove('active');
+}
+
+function syncQsState() {
+  var isLight = document.body.classList.contains('light-mode');
+  var isOled = document.body.classList.contains('oled-mode');
+  
+  var btnLight = document.getElementById('qsThemeLight');
+  var btnDark = document.getElementById('qsThemeDark');
+  var btnOled = document.getElementById('qsThemeOled');
+
+  if (btnLight) btnLight.classList.toggle('active', isLight);
+  if (btnDark) btnDark.classList.toggle('active', !isLight && !isOled);
+  if (btnOled) btnOled.classList.toggle('active', !isLight && isOled);
+
+  var cColor = localStorage.getItem('chordColor') || 'gold';
+  ['gold', 'blue', 'green', 'red', 'white', 'black'].forEach(function(c) {
+    var btn = document.getElementById('qsColor' + c.charAt(0).toUpperCase() + c.slice(1));
+    if (btn) {
+      btn.classList.toggle('active', cColor === c);
+      if ((c === 'white' && isLight) || (c === 'black' && !isLight)) {
+        btn.style.display = 'none';
+      } else {
+        btn.style.display = 'inline-flex';
+      }
+    }
+  });
+
+  var isOutline = document.body.classList.contains('outlined-chords');
+  var btnOutOff = document.getElementById('qsOutlineOff');
+  var btnOutOn = document.getElementById('qsOutlineOn');
+  if (btnOutOff) btnOutOff.classList.toggle('active', !isOutline);
+  if (btnOutOn) btnOutOn.classList.toggle('active', isOutline);
+}
+
+function setQsTheme(mode) {
+  if (mode === 'light') {
+    document.body.classList.add('light-mode');
+    document.body.classList.remove('oled-mode');
+    localStorage.setItem('theme', 'light');
+    localStorage.setItem('oledMode', 'false');
+    if (localStorage.getItem('chordColor') === 'white') {
+      localStorage.setItem('chordColor', 'gold');
+    }
+  } else if (mode === 'oled') {
+    document.body.classList.remove('light-mode');
+    document.body.classList.add('oled-mode');
+    localStorage.setItem('theme', 'dark');
+    localStorage.setItem('oledMode', 'true');
+    if (localStorage.getItem('chordColor') === 'black') {
+      localStorage.setItem('chordColor', 'gold');
+    }
+  } else {
+    document.body.classList.remove('light-mode');
+    document.body.classList.remove('oled-mode');
+    localStorage.setItem('theme', 'dark');
+    localStorage.setItem('oledMode', 'false');
+    if (localStorage.getItem('chordColor') === 'black') {
+      localStorage.setItem('chordColor', 'gold');
+    }
+  }
+  syncQsState();
+}
+
+function setQsColor(color) {
+  ['gold', 'blue', 'green', 'red', 'white', 'black'].forEach(function(c) {
+    document.body.classList.remove('chord-color-' + c);
+  });
+  if (color !== 'gold') {
+    document.body.classList.add('chord-color-' + color);
+  }
+  localStorage.setItem('chordColor', color);
+  syncQsState();
+}
+
+function setQsOutline(enable) {
+  if (enable) {
+    document.body.classList.add('outlined-chords');
+    localStorage.setItem('outlinedChords', 'true');
+  } else {
+    document.body.classList.remove('outlined-chords');
+    localStorage.setItem('outlinedChords', 'false');
+  }
+  syncQsState();
+}
+
 document.addEventListener('DOMContentLoaded', function(){
+  syncQsState();
   var rememberInput = document.querySelector('input[name="remember_me"]');
   document.querySelectorAll('.social-btn').forEach(function(link){
     link.addEventListener('click', function(event){
@@ -896,17 +1341,6 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   });
 
-  /*
-   * Bug 3 fix: iOS PWA keyboard avoidance.
-   *
-   * On iOS Safari (PWA mode), the soft keyboard does NOT resize window.innerHeight —
-   * it only resizes the visualViewport. We listen to that resize and set a CSS custom
-   * property (--vv-height) on the body so the form-section can shrink accordingly,
-   * which causes the form content to scroll above the keyboard.
-   *
-   * We also scroll the focused input into view with a slight delay so it clears
-   * the keyboard toolbar.
-   */
   function applyViewportHeight() {
     var vvh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     document.body.style.setProperty('--vv-height', vvh + 'px');
@@ -918,7 +1352,6 @@ document.addEventListener('DOMContentLoaded', function(){
     applyViewportHeight();
   }
 
-  /* Scroll focused input into view above keyboard toolbar */
   document.querySelectorAll('input').forEach(function(input) {
     input.addEventListener('focus', function() {
       setTimeout(function() {

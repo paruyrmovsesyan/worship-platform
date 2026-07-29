@@ -301,6 +301,151 @@ input[type="date"] {
   font-size: 0.9rem;
 }
 
+/* About app */
+.about-app-card {
+  padding: 1.5rem;
+}
+
+.about-app-identity {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.about-app-logo {
+  width: 68px;
+  height: 68px;
+  flex: 0 0 68px;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
+.about-app-identity h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.35rem;
+}
+
+.about-app-identity p,
+.about-legal-section p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+.about-version-block {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.about-version-block span,
+.about-info-row span {
+  color: var(--color-text-secondary);
+}
+
+.about-version-block strong {
+  color: var(--color-accent-cyan);
+  font-size: 1.15rem;
+}
+
+.about-version-block small {
+  grid-column: 1 / -1;
+  color: var(--color-text-secondary);
+}
+
+.about-info-list {
+  padding: 0.5rem 0;
+}
+
+.about-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  min-height: 48px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.about-info-row strong {
+  text-align: right;
+  color: var(--color-text-primary);
+}
+
+.about-release-summary {
+  margin: 1rem 0 0;
+  padding: 0.9rem 1rem;
+  border-left: 3px solid var(--color-accent-cyan);
+  background: var(--glass-bg);
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+.about-legal-section {
+  padding-top: 1.5rem;
+}
+
+.about-legal-section h4 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  color: var(--color-text-primary);
+}
+
+.about-license-list {
+  margin-top: 1rem;
+  border-top: 1px solid var(--glass-border);
+}
+
+.about-license-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.about-license-list span {
+  color: var(--color-text-secondary);
+}
+
+.about-link-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.about-link-row button {
+  min-height: 44px;
+  padding: 0.6rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: var(--glass-bg);
+  color: var(--color-text-primary);
+  font-weight: 650;
+}
+
+.about-copyright {
+  margin: 1.25rem 0 0;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 520px) {
+  .about-app-card {
+    padding: 1.25rem;
+  }
+
+  .about-link-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Badges */
 .badge {
   display: inline-block;

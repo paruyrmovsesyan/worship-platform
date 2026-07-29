@@ -1,6 +1,10 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/runtime_config.php';
+require_once __DIR__ . '/version_config.php';
+require_once __DIR__ . '/news_repository.php';
+
+$config = wp_version_load();
 
 $htmlPath = __DIR__ . '/index.html';
 if (!file_exists($htmlPath)) {
@@ -18,10 +22,15 @@ if (!empty($parsedUrl['query'])) {
 }
 
 // Default Meta
-$title = "Worship Platform";
-$description = "Worship Platform - Equip your worship team with chord charts, setlists, and collaboration tools.";
-$ogImage = "https://worship.pmstudio.am/user_uploaded_logo.png"; // Using the new logo
+$siteName = $config['site_seo_name'] ?: 'Worship Platform';
+$title = $config['site_seo_title'] ?: "Worship Platform";
+$description = $config['site_seo_description'] ?: "Worship Platform - Equip your worship team with chord charts, setlists, and collaboration tools.";
+$keywords = (string)($config['site_seo_keywords'] ?? '');
+$logo = $config['site_seo_logo'] ?: "https://worship.pmstudio.am/user_uploaded_logo.png";
+$ogImage = $config['site_seo_image'] ?: "https://worship.pmstudio.am/og-image.png";
 $canonical = "https://worship.pmstudio.am" . $path;
+$ogType = 'website';
+$article = null;
 
 $schemas = [];
 
@@ -29,10 +38,14 @@ $schemas = [];
 $schemas[] = [
     "@context" => "https://schema.org",
     "@type" => "Organization",
-    "name" => "Word of Life Worship",
+    "name" => $siteName,
     "url" => "https://worship.pmstudio.am/",
-    "logo" => "https://worship.pmstudio.am/user_uploaded_logo.png",
-    "sameAs" => [],
+    "logo" => $logo,
+    "sameAs" => array_values(array_filter([
+        $config['site_social_facebook'] ?? '',
+        $config['site_social_instagram'] ?? '',
+        $config['site_social_youtube'] ?? '',
+    ])),
     "location" => [
         "@type" => "Place",
         "name" => "Word of Life Armenia",
@@ -44,11 +57,21 @@ $schemas[] = [
     ]
 ];
 
+// Explicit site-name signal for search result title generation.
+$schemas[] = [
+    "@context" => "https://schema.org",
+    "@type" => "WebSite",
+    "@id" => "https://worship.pmstudio.am/#website",
+    "url" => "https://worship.pmstudio.am/",
+    "name" => $siteName,
+    "alternateName" => $siteName,
+];
+
 // Base WebApplication Schema
 $schemas[] = [
     "@context" => "https://schema.org",
     "@type" => "WebApplication",
-    "name" => "Worship Platform",
+    "name" => $siteName,
     "url" => "https://worship.pmstudio.am/",
     "applicationCategory" => "MusicApplication",
     "operatingSystem" => "Any",
@@ -63,6 +86,59 @@ $schemas[] = [
         "ratingCount" => "24"
     ]
 ];
+
+// Server-rendered metadata for public news articles. This is what crawlers see
+// before the React application starts.
+if (preg_match('#^/news/([^/]+)/?$#', $path, $newsMatch)) {
+    try {
+        $pdo = wp_news_pdo();
+        $stmt = $pdo->prepare("
+            SELECT * FROM news_articles
+            WHERE slug = ? AND status = 'published'
+              AND (published_at IS NULL OR published_at <= NOW())
+            LIMIT 1
+        ");
+        $stmt->execute([rawurldecode($newsMatch[1])]);
+        $newsRow = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($newsRow) {
+            $lang = wp_news_lang((string)($query['lang'] ?? 'hy'));
+            $article = wp_news_localized($newsRow, $lang);
+            $title = $article['title'] . ' | ' . $siteName;
+            $description = $article['excerpt'] ?: mb_substr(trim(strip_tags($article['content'])), 0, 160);
+            $ogImage = $article['image_url'] ?: $ogImage;
+            $ogType = 'article';
+            $publishedIso = !empty($article['published_at']) ? date(DATE_ATOM, strtotime($article['published_at'])) : '';
+            $modifiedIso = !empty($newsRow['updated_at']) ? date(DATE_ATOM, strtotime((string)$newsRow['updated_at'])) : $publishedIso;
+            $schemas[] = [
+                '@context' => 'https://schema.org',
+                '@type' => 'NewsArticle',
+                'mainEntityOfPage' => ['@type' => 'WebPage', '@id' => $canonical],
+                'headline' => $article['title'],
+                'description' => $description,
+                'image' => [$ogImage],
+                'datePublished' => $publishedIso,
+                'dateModified' => $modifiedIso,
+                'author' => [
+                    '@type' => 'Organization',
+                    'name' => $config['site_seo_default_author'] ?: $siteName,
+                ],
+                'publisher' => [
+                    '@type' => 'Organization',
+                    'name' => $config['site_seo_news_publisher'] ?: $siteName,
+                    'logo' => [
+                        '@type' => 'ImageObject',
+                        'url' => $config['site_seo_news_logo'] ?: $logo,
+                    ],
+                ],
+            ];
+        }
+    } catch (Throwable $e) {
+        // Keep the application available with the global metadata.
+    }
+} elseif ($path === '/news' || $path === '/news/' || $path === '/news.html') {
+    $title = 'Նորություններ | ' . $siteName;
+    $description = 'Worship Platform-ի վերջին նորությունները, թարմացումները և օգտակար նյութերը։';
+}
 
 // Check if it's a song view
 $songId = null;
@@ -83,13 +159,13 @@ if ($songId) {
             $songTitle = $song['title'] ?: $song['title_hy'] ?: $song['title_en'] ?: 'Unknown Song';
             $artist = $song['artist'] ?: 'Unknown Artist';
             $cleanTitle = strip_tags($songTitle . ' - ' . $artist . ' | Worship Platform');
-            $title = htmlspecialchars($cleanTitle);
+            $title = $cleanTitle;
             
             $snippet = mb_substr(trim(strip_tags($song['lyrics'] ?? '')), 0, 150);
             if ($snippet) {
-                $description = htmlspecialchars($snippet . '...');
+                $description = $snippet . '...';
             } else {
-                $description = htmlspecialchars("Chords and lyrics for " . strip_tags($songTitle) . " by " . strip_tags($artist) . " on the Worship Platform.");
+                $description = "Chords and lyrics for " . strip_tags($songTitle) . " by " . strip_tags($artist) . " on the Worship Platform.";
             }
             
             // MusicComposition Schema (AEO)
@@ -112,21 +188,61 @@ if ($songId) {
     }
 }
 
-// Generate Meta Tags
+$shouldIndex = true;
+if ($path === '/' || $path === '') {
+    $shouldIndex = !empty($config['site_seo_index_home']);
+} elseif ($songId || preg_match('#^/song(?:/|$)#', $path)) {
+    $shouldIndex = !empty($config['site_seo_index_song_pages']);
+} elseif (in_array($path, ['/songs', '/songs/', '/songs.html', '/main.html'], true)) {
+    $shouldIndex = !empty($config['site_seo_index_songs']);
+} elseif (preg_match('#^/news/[^/]+/?$#', $path)) {
+    $shouldIndex = !empty($config['site_seo_index_news_articles']);
+} elseif (in_array($path, ['/news', '/news/', '/news.html'], true)) {
+    $shouldIndex = !empty($config['site_seo_index_news']);
+}
+$robotsContent = $shouldIndex
+    ? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'
+    : 'noindex,follow';
+
+$metaEscape = static fn(string $value): string => htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$safeTitle = $metaEscape((string)$title);
+$safeDescription = $metaEscape((string)$description);
+$safeKeywords = $metaEscape($keywords);
+$safeCanonical = $metaEscape($canonical);
+$safeOgImage = $metaEscape((string)$ogImage);
+
+// Generate standards-based tags used by Google, Bing, Yandex and social crawlers.
 $metaTags = "
-    <title>{$title}</title>
-    <meta name=\"description\" content=\"{$description}\" />
-    <link rel=\"canonical\" href=\"{$canonical}\" />
-    <meta property=\"og:title\" content=\"{$title}\" />
-    <meta property=\"og:description\" content=\"{$description}\" />
-    <meta property=\"og:image\" content=\"{$ogImage}\" />
-    <meta property=\"og:url\" content=\"{$canonical}\" />
-    <meta property=\"og:type\" content=\"website\" />
+    <title>{$safeTitle}</title>
+    <meta name=\"application-name\" content=\"" . $metaEscape($siteName) . "\" />
+    <meta name=\"description\" content=\"{$safeDescription}\" />
+    <meta name=\"keywords\" content=\"{$safeKeywords}\" />
+    <meta name=\"robots\" content=\"{$robotsContent}\" />
+    <link rel=\"canonical\" href=\"{$safeCanonical}\" />
+    <meta property=\"og:site_name\" content=\"" . $metaEscape($siteName) . "\" />
+    <meta property=\"og:title\" content=\"{$safeTitle}\" />
+    <meta property=\"og:description\" content=\"{$safeDescription}\" />
+    <meta property=\"og:image\" content=\"{$safeOgImage}\" />
+    <meta property=\"og:url\" content=\"{$safeCanonical}\" />
+    <meta property=\"og:type\" content=\"{$ogType}\" />
     <meta name=\"twitter:card\" content=\"summary_large_image\" />
-    <meta name=\"twitter:title\" content=\"{$title}\" />
-    <meta name=\"twitter:description\" content=\"{$description}\" />
-    <meta name=\"twitter:image\" content=\"{$ogImage}\" />
+    <meta name=\"twitter:title\" content=\"{$safeTitle}\" />
+    <meta name=\"twitter:description\" content=\"{$safeDescription}\" />
+    <meta name=\"twitter:image\" content=\"{$safeOgImage}\" />
 ";
+if (!empty($config['site_seo_google_verification'])) {
+    $metaTags .= '<meta name="google-site-verification" content="' . $metaEscape((string)$config['site_seo_google_verification']) . "\" />\n";
+}
+if (!empty($config['site_seo_bing_verification'])) {
+    $metaTags .= '<meta name="msvalidate.01" content="' . $metaEscape((string)$config['site_seo_bing_verification']) . "\" />\n";
+}
+if (!empty($config['site_seo_yandex_verification'])) {
+    $metaTags .= '<meta name="yandex-verification" content="' . $metaEscape((string)$config['site_seo_yandex_verification']) . "\" />\n";
+}
+if ($article) {
+    $metaTags .= '<meta property="article:published_time" content="' . $metaEscape($publishedIso) . "\" />\n";
+    $metaTags .= '<meta property="article:modified_time" content="' . $metaEscape($modifiedIso) . "\" />\n";
+}
 
 // Inject Schemas
 $schemaTags = '';
@@ -137,13 +253,24 @@ if (!empty($schemas)) {
     }
 }
 
+$siteConfig = [
+    'contactEmail' => $config['site_contact_email'] ?? 'info@worship.pmstudio.am',
+    'contactPhone' => $config['site_contact_phone'] ?? '+374 00 000000',
+    'contactAddress' => $config['site_contact_address'] ?? 'Երևան, Հայաստան',
+    'socialFacebook' => $config['site_social_facebook'] ?? '',
+    'socialInstagram' => $config['site_social_instagram'] ?? '',
+    'socialYoutube' => $config['site_social_youtube'] ?? '',
+];
+$configScript = "<script>window.SITE_CONFIG = " . json_encode($siteConfig, JSON_UNESCAPED_UNICODE) . ";</script>";
+
 // Replace in HTML
-// Remove original title and description to prevent duplicates
+// Remove build-time SEO tags to prevent duplicates.
 $htmlContent = preg_replace('/<title>.*?<\/title>/is', '', $htmlContent);
-$htmlContent = preg_replace('/<meta name="description".*?>/is', '', $htmlContent);
+$htmlContent = preg_replace('/\s*<meta\s+(?:name|property)="(?:application-name|description|keywords|robots|google-site-verification|msvalidate\.01|yandex-verification|og:[^"]+|twitter:[^"]+)"[^>]*>/i', '', $htmlContent);
+$htmlContent = preg_replace('/\s*<link\s+rel="canonical"[^>]*>/i', '', $htmlContent);
 
 // Inject right before </head>
-$injection = $metaTags . "\n" . $schemaTags . "\n</head>";
+$injection = $configScript . "\n" . $metaTags . "\n" . $schemaTags . "\n</head>";
 $htmlContent = str_ireplace('</head>', $injection, $htmlContent);
 
 echo $htmlContent;

@@ -91,6 +91,11 @@ body.wp-admin-app .app-main {
   font-family: inherit; text-align: left;
 }
 .nav-item:hover { background: rgba(67,24,255,0.05); color: var(--text); }
+.nav-item svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
 .nav-item.active {
   background: var(--primary); color: #fff;
   box-shadow: 0 4px 15px rgba(67,24,255,0.3);

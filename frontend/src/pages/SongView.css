@@ -49,45 +49,65 @@
 }
 
 .sv-title {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 800;
-  margin: 0 0 4px 0;
+  margin: 0;
+  line-height: 1.25;
   color: var(--color-text-primary);
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
 .sv-artist {
-  font-size: 1rem;
+  font-size: 0.92rem;
   color: var(--color-text-secondary);
-  margin: 0;
+  margin: 4px 0 0 0;
+  line-height: 1.3;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
 .sv-header-actions {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   align-items: center;
+  flex-shrink: 0;
+}
+
+.sv-header-actions .icon-btn {
+  padding: 6px;
+  border-radius: 10px;
+  flex-shrink: 0;
 }
 
 /* Meta Row (Key, BPM) */
 .sv-meta-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: nowrap;
+  gap: 6px;
   margin-bottom: 16px;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sv-meta-row::-webkit-scrollbar {
+  display: none;
 }
 
 .sv-meta-pill {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: 99px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--color-text-secondary);
   font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .sv-meta-pill.key-pill {
@@ -632,4 +652,143 @@ body.is-pwa .song-view-page.has-seq-nav .sv-control-panel {
     padding-right: 0 !important;
     overflow-x: hidden;
   }
+}
+
+/* ═══════════════════════════════════════
+   Add-to-Setlist Modal  (sv-modal-*)
+═══════════════════════════════════════ */
+
+.sv-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 2147483640;
+  display: flex;
+  align-items: flex-end;       /* bottom sheet on mobile */
+  justify-content: center;
+}
+
+.sv-modal-content {
+  background: #1a1a26;
+  width: 100%;
+  max-width: 540px;
+  border-radius: 24px 24px 0 0;
+  display: flex;
+  flex-direction: column;
+  /* Minimum height so the list is always visible */
+  min-height: 40dvh;
+  max-height: 80dvh;
+  box-shadow: 0 -12px 50px rgba(0, 0, 0, 0.7);
+  /* Pad bottom for home indicator / bottom nav */
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
+}
+
+@keyframes sv-slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.animate-pop-in {
+  animation: sv-slide-up 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Header ── */
+.sv-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.sv-modal-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.sv-modal-header .icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.sv-modal-header .icon-btn:hover {
+  background: rgba(255, 255, 255, 0.13);
+}
+
+/* ── Body ── */
+.sv-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Loading inside modal */
+.sv-modal-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0;
+}
+
+/* Setlist row */
+.sv-setlist-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 15px 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  color: #f0f0f5;
+  font-size: 1rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.sv-setlist-row:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.sv-setlist-row:active {
+  transform: scale(0.98);
+  background: rgba(229, 49, 74, 0.1);
+  border-color: rgba(229, 49, 74, 0.3);
+}
+
+.sv-setlist-row__name {
+  font-weight: 600;
+  color: #fff;
+}
+
+.sv-setlist-row__date {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+/* Empty state */
+.sv-modal-empty {
+  text-align: center;
+  padding: 50px 20px;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.9rem;
 }

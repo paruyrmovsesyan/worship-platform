@@ -86,17 +86,15 @@ $showAdminDeviceSection = $deviceFilters['scope'] !== 'main';
 $allPushSubscriptions = wp_push_load_subscriptions();
 $pushSubscriptions = array_values(array_filter(
     $allPushSubscriptions,
-    static fn(array $row): bool => !empty($row['is_active'])
-        && (string)($row['permission_state'] ?? '') === 'granted'
-        && trim((string)($row['device_id'] ?? '')) !== ''
+    'wp_push_has_subscription_endpoint'
 ));
+$pushLegacyBackupCount = count(wp_push_legacy_backup_rows());
 $accessMode = (string)($adminUser['access_mode'] ?? 'modern');
 $visibleAdminSections = array_values(array_keys(array_filter(
     $adminSectionPermissions,
     static fn($enabled): bool => !empty($enabled)
 )));
 $hasAnyAdminSectionAccess = !empty($visibleAdminSections);
-$defaultAdminSection = $visibleAdminSections[0] ?? 'release';
 $message = '';
 $messageType = 'success';
 
@@ -146,11 +144,13 @@ function wp_admin_updates_has_section_access(array $permissions, string $section
 function wp_admin_updates_action_section(string $action): ?string {
     return match ($action) {
         'apply_release', 'save_general', 'save', 'rollback', 'save_release_draft' => 'release',
+        'save_app_about' => 'about',
         'save_maintenance', 'save_page_modes' => 'maintenance',
-        'save_push_settings', 'send_push', 'remove_push_subscription', 'clear_push_history' => 'push',
+        'save_push_settings', 'restore_push_subscriptions', 'send_push', 'remove_push_subscription', 'clear_push_history' => 'push',
         'remove_install_device' => 'devices',
         'clear_history' => 'history',
         'save_access', 'save_access_permissions', 'save_access_draft' => 'access',
+        'save_site_info', 'save_site_info_draft' => 'site_info',
         'approve_song_request', 'reject_song_request' => 'moderation',
         'update_translation_cache_entry', 'delete_translation_cache_entry', 'clear_translation_cache', 'save_song_title_translations' => 'translations',
         default => null,
@@ -829,6 +829,27 @@ function wp_admin_updates_prepare_release_stamps(array $currentConfig, array $ne
 }
 
 function wp_admin_updates_collect_input(array $config): array {
+    $about = is_array($config['app_about'] ?? null) ? $config['app_about'] : wp_version_default_app_about();
+    if (array_key_exists('app_about_present', $_POST)) {
+        $about = [
+            'tagline' => [
+                'hy' => $_POST['app_about_tagline_hy'] ?? '',
+                'en' => $_POST['app_about_tagline_en'] ?? '',
+                'ru' => $_POST['app_about_tagline_ru'] ?? '',
+            ],
+            'license_text' => [
+                'hy' => $_POST['app_about_license_hy'] ?? '',
+                'en' => $_POST['app_about_license_en'] ?? '',
+                'ru' => $_POST['app_about_license_ru'] ?? '',
+            ],
+            'owner' => $_POST['app_about_owner'] ?? '',
+            'copyright_year' => $_POST['app_about_copyright_year'] ?? '',
+            'privacy_url' => $_POST['app_about_privacy_url'] ?? '',
+            'terms_url' => $_POST['app_about_terms_url'] ?? '',
+            'support_url' => $_POST['app_about_support_url'] ?? '',
+            'licenses' => $_POST['app_about_licenses'] ?? '',
+        ];
+    }
     return [
         'app_version' => array_key_exists('app_version', $_POST) ? $_POST['app_version'] : ($config['app_version'] ?? ''),
         'web_version' => array_key_exists('web_version', $_POST) ? $_POST['web_version'] : ($config['web_version'] ?? ''),
@@ -840,6 +861,7 @@ function wp_admin_updates_collect_input(array $config): array {
         'app_message' => array_key_exists('app_message', $_POST) ? $_POST['app_message'] : ($config['app_message'] ?? ''),
         'web_title' => array_key_exists('web_title', $_POST) ? $_POST['web_title'] : ($config['web_title'] ?? ''),
         'web_message' => array_key_exists('web_message', $_POST) ? $_POST['web_message'] : ($config['web_message'] ?? ''),
+        'app_about' => $about,
         'maintenance_enabled' => array_key_exists('maintenance_enabled', $_POST) ? !empty($_POST['maintenance_enabled']) : !empty($config['maintenance_enabled']),
         'maintenance_message' => array_key_exists('maintenance_message', $_POST) ? $_POST['maintenance_message'] : ($config['maintenance_message'] ?? ''),
         'maintenance_start_at' => array_key_exists('maintenance_start_at', $_POST) ? $_POST['maintenance_start_at'] : ($config['maintenance_start_at'] ?? ''),
@@ -853,9 +875,46 @@ function wp_admin_updates_collect_input(array $config): array {
         'page_app_modes' => array_key_exists('page_app_modes_present', $_POST) ? ($_POST['page_app_modes'] ?? []) : ($config['page_app_modes'] ?? []),
         'page_web_modes' => array_key_exists('page_web_modes_present', $_POST) ? ($_POST['page_web_modes'] ?? []) : ($config['page_web_modes'] ?? []),
         'meta_note' => array_key_exists('meta_note', $_POST) ? $_POST['meta_note'] : ($config['meta_note'] ?? ''),
+        'site_seo_title' => array_key_exists('site_seo_title', $_POST) ? $_POST['site_seo_title'] : ($config['site_seo_title'] ?? ''),
+        'site_seo_description' => array_key_exists('site_seo_description', $_POST) ? $_POST['site_seo_description'] : ($config['site_seo_description'] ?? ''),
+        'site_seo_keywords' => array_key_exists('site_seo_keywords', $_POST) ? $_POST['site_seo_keywords'] : ($config['site_seo_keywords'] ?? ''),
+        'site_contact_email' => array_key_exists('site_contact_email', $_POST) ? $_POST['site_contact_email'] : ($config['site_contact_email'] ?? ''),
+        'site_contact_phone' => array_key_exists('site_contact_phone', $_POST) ? $_POST['site_contact_phone'] : ($config['site_contact_phone'] ?? ''),
+        'site_contact_address' => array_key_exists('site_contact_address', $_POST) ? $_POST['site_contact_address'] : ($config['site_contact_address'] ?? ''),
+        'site_social_facebook' => array_key_exists('site_social_facebook', $_POST) ? $_POST['site_social_facebook'] : ($config['site_social_facebook'] ?? ''),
+        'site_social_instagram' => array_key_exists('site_social_instagram', $_POST) ? $_POST['site_social_instagram'] : ($config['site_social_instagram'] ?? ''),
+        'site_social_youtube' => array_key_exists('site_social_youtube', $_POST) ? $_POST['site_social_youtube'] : ($config['site_social_youtube'] ?? ''),
         'release_apply_mode' => array_key_exists('release_apply_mode', $_POST) ? $_POST['release_apply_mode'] : 'without_file',
         'server_package_mode' => array_key_exists('server_package_mode', $_POST) ? $_POST['server_package_mode'] : ($config['server_package_mode'] ?? 'partial'),
     ];
+}
+
+function wp_admin_updates_release_draft_fields(): array {
+    return [
+        'app_version',
+        'web_version',
+        'app_release_type',
+        'web_release_type',
+        'app_release_summary',
+        'web_release_summary',
+        'app_title',
+        'app_message',
+        'web_title',
+        'web_message',
+        'server_package_mode',
+    ];
+}
+
+function wp_admin_updates_collect_release_draft(array $config): array {
+    $candidate = wp_version_sanitize(wp_admin_updates_collect_input($config));
+    $draft = [];
+    foreach (wp_admin_updates_release_draft_fields() as $field) {
+        if (array_key_exists($field, $candidate)) {
+            $draft[$field] = $candidate[$field];
+        }
+    }
+
+    return $draft;
 }
 
 function wp_admin_updates_has_package_upload(array $file): bool {
@@ -891,7 +950,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $action = (string)($_POST['form_action'] ?? 'apply_release');
+    $action = (string)($_POST['form_action'] ?? $_GET['action'] ?? $_POST['action'] ?? 'view');
     $removeSubscriptionId = '';
     if (strpos($action, 'remove_push_subscription:') === 0) {
         $removeSubscriptionId = trim((string)substr($action, strlen('remove_push_subscription:')));
@@ -924,12 +983,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'vapid_subject' => $_POST['push_subject'] ?? ($pushConfig['vapid_subject'] ?? ''),
         ]);
 
-        if ($ok) {
-            $message = 'Push ծանուցումների կարգավորումները պահպանվեցին։';
-        } else {
-            $message = 'Չհաջողվեց պահպանել push ծանուցումների կարգավորումները։';
-            $messageType = 'error';
+        $uploadedFiles = [];
+        $uploadErrors = [];
+        foreach ([
+            'apns_p8_file' => 'apns',
+            'firebase_json_file' => 'firebase',
+        ] as $field => $credentialType) {
+            if (!isset($_FILES[$field])) continue;
+            $uploadResult = wp_push_store_credential_upload((array)$_FILES[$field], $credentialType);
+            if (empty($uploadResult['ok'])) {
+                $uploadErrors[] = (string)($uploadResult['message'] ?? 'Ֆայլի պահպանումը չհաջողվեց։');
+            } elseif (!empty($uploadResult['uploaded'])) {
+                $uploadedFiles[] = (string)($uploadResult['message'] ?? 'Ֆայլը պահպանվեց։');
+            }
         }
+
+        if (!empty($uploadErrors)) {
+            $savedMessage = !empty($uploadedFiles) ? implode(' ', $uploadedFiles) . ' ' : '';
+            $message = $savedMessage . implode(' | ', $uploadErrors);
+            $messageType = 'error';
+        } elseif (!$ok) {
+            $savedMessage = !empty($uploadedFiles) ? implode(' ', $uploadedFiles) . ' ' : '';
+            $message = $savedMessage . 'Push-ի հիմնական կարգավորումները DB-ում պահպանել չհաջողվեց։';
+            $messageType = 'error';
+        } elseif (!empty($uploadedFiles)) {
+            $message = implode(' ', $uploadedFiles);
+        } else {
+            $message = 'Push ծանուցումների կարգավորումները պահպանվեցին։';
+        }
+    } elseif ($action === 'restore_push_subscriptions') {
+        $restoreResult = wp_push_restore_legacy_subscriptions();
+        $message = (string)($restoreResult['message'] ?? 'Push subscription-ների վերականգնումն ավարտվեց։');
+        $messageType = !empty($restoreResult['ok']) ? 'success' : 'error';
     } elseif ($action === 'send_push') {
         $payload = [
             'title' => trim((string)($_POST['push_title'] ?? '')),
@@ -1238,6 +1323,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
+        if ($messageType !== 'error') {
+            unset($_SESSION['admin_updates_release_draft']);
+        }
     } elseif ($action === 'clear_history') {
         $ok = wp_version_history_clear();
 
@@ -1282,24 +1370,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $messageType = 'error';
             }
         }
-    } elseif (in_array($action, ['save_release_draft', 'save_maintenance', 'save_page_modes', 'save_access', 'save_access_permissions', 'save_access_draft'], true)) {
+    } elseif ($action === 'save_release_draft') {
+        $_SESSION['admin_updates_release_draft'] = wp_admin_updates_collect_release_draft($config);
+        $message = 'Սևագիրը պահպանվեց միայն այս admin session-ում և դեռ չի կիրառվել ծրագրում։';
+    } elseif (in_array($action, ['save_app_about', 'save_maintenance', 'save_page_modes', 'save_access', 'save_access_permissions', 'save_access_draft', 'save_site_info', 'save_site_info_draft'], true)) {
         if ($action === 'save_access_permissions') {
             $input = $config;
             $input['admin_user_permissions'] = array_key_exists('admin_permission_rows_present', $_POST)
                 ? ($_POST['admin_permission_rows'] ?? [])
                 : ($config['admin_user_permissions'] ?? []);
             $input = wp_admin_updates_preserve_actor_access($input, $adminUser);
-        } elseif ($action === 'save_release_draft' || $action === 'save_access_draft') {
-            $input = wp_admin_updates_collect_input($config);
-            $input = wp_admin_updates_preserve_actor_access($input, $adminUser);
-            unset($input['release_apply_mode']);
         } else {
-            $input = wp_admin_updates_collect_input($config);
-            $input = wp_admin_updates_preserve_actor_access($input, $adminUser);
-            unset($input['release_apply_mode']);
-            if ($action === 'save_page_modes' && array_key_exists('page_app_modes_present', $_POST)) {
-                $input['page_app_modes'] = $_POST['page_app_modes'] ?? [];
+            $collectedInput = wp_admin_updates_collect_input($config);
+            $input = $config;
+            $actionFields = match ($action) {
+                'save_app_about' => ['app_about'],
+                'save_maintenance' => ['maintenance_enabled', 'maintenance_message', 'maintenance_start_at', 'maintenance_end_at', 'maintenance_allowed_ips', 'blocked_os_list'],
+                'save_page_modes' => ['page_app_modes', 'page_web_modes'],
+                'save_access', 'save_access_draft' => ['admin_emails', 'social_auth_google_client_id', 'social_auth_google_redirect_uri', 'meta_note'],
+                'save_site_info', 'save_site_info_draft' => ['site_seo_title', 'site_seo_description', 'site_seo_keywords', 'site_contact_email', 'site_contact_phone', 'site_contact_address', 'site_social_facebook', 'site_social_instagram', 'site_social_youtube'],
+                default => [],
+            };
+            foreach ($actionFields as $field) {
+                if (array_key_exists($field, $collectedInput)) {
+                    $input[$field] = $collectedInput[$field];
+                }
             }
+            $input = wp_admin_updates_preserve_actor_access($input, $adminUser);
         }
 
         $secretSave = ['ok' => true, 'messages' => [], 'errors' => []];
@@ -1315,9 +1412,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'actor' => $actorLabel,
                 'ip' => $actorIp,
                 'action' => match ($action) {
-                    'save_release_draft' => 'save_release_draft',
+                    'save_app_about' => 'save_app_about',
                     'save_maintenance' => 'save_maintenance',
                     'save_page_modes' => 'save_page_modes',
+                    'save_site_info' => 'save_site_info',
+                    'save_site_info_draft' => 'save_site_info_draft',
                     'save_access' => 'save_access',
                     'save_access_permissions' => 'save_access_permissions',
                     'save_access_draft' => 'save_access_draft',
@@ -1328,8 +1427,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($ok) {
             $saveResult = wp_version_last_save_result();
             $changed = !empty($saveResult['changed']);
-            if ($action === 'save_release_draft') {
-                $message = $changed ? 'Թարմացման դաշտերը պահպանվեցին։' : 'Թարմացման բաժնում նոր փոփոխություն չկար։';
+            if ($action === 'save_app_about') {
+                $message = $changed ? '«Ծրագրի մասին» էջի տվյալները պահպանվեցին։' : '«Ծրագրի մասին» էջում նոր փոփոխություն չկար։';
             } elseif ($action === 'save_maintenance') {
                 $message = $changed ? 'Տեխնիկական սպասարկման տվյալները պահպանվեցին։' : 'Տեխնիկական սպասարկման բաժնում նոր փոփոխություն չկար։';
             } elseif ($action === 'save_page_modes') {
@@ -1338,11 +1437,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = $changed ? 'Օգտատիրոջ բաժինների թույլտվությունները պահպանվեցին։' : 'Թույլտվությունների բաժնում նոր փոփոխություն չկար։';
             } elseif ($action === 'save_access_draft') {
                 $message = $changed ? 'Մուտքերի հիմնական դաշտերը պահպանվեցին։' : 'Մուտքերի բաժնում նոր փոփոխություն չկար։';
-            } else {
+            } elseif ($action === 'save_site_info_draft') {
+                $message = 'Սևագիրը պահպանվեց։';
+            } elseif ($action === 'save_site_info') {
+                $message = $changed ? 'Ընդհանուր տվյալներն ու SEO կարգավորումները պահպանվեցին։' : 'Ընդհանուր տվյալներում նոր փոփոխություն չկար։';
+            } elseif ($action === 'save_access') {
                 $message = $changed ? 'Մուտքերի և նշումների տվյալները պահպանվեցին։' : 'Մուտքերի և նշումների բաժնում նոր փոփոխություն չկար։';
                 if (!empty($secretSave['messages'])) {
                     $message .= ' ' . implode(' ', $secretSave['messages']);
                 }
+            } else {
+                $message = $changed ? 'Կարգավորումները պահպանվեցին։' : 'Նոր փոփոխություն չկար։';
             }
         } else {
             if ($messageType !== 'error') {
@@ -1395,21 +1500,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'type' => $messageType,
     ];
 
-    header('Location: /admin_updates.php');
+    $redirectUrl = in_array($action, ['save_push_settings', 'restore_push_subscriptions'], true)
+        ? '/admin_updates.php?section=push'
+        : '/admin_updates.php';
+    header('Location: ' . $redirectUrl);
     exit;
 }
 
 $history = wp_version_history_load(25);
+$releaseFormConfig = $config;
+$releaseDraft = $_SESSION['admin_updates_release_draft'] ?? [];
+if (is_array($releaseDraft)) {
+    foreach (wp_admin_updates_release_draft_fields() as $field) {
+        if (array_key_exists($field, $releaseDraft)) {
+            $releaseFormConfig[$field] = $releaseDraft[$field];
+        }
+    }
+}
+$hasReleaseDraft = !empty($releaseDraft);
 $isScheduledActive = wp_version_is_scheduled_maintenance_active($config);
 $isMaintenanceActive = wp_version_is_maintenance_active($config);
 $adminEmailsText = implode("\n", (array)($config['admin_emails'] ?? []));
+$appAbout = wp_version_sanitize_app_about($config['app_about'] ?? []);
+$appAboutLicensesText = implode("\n", array_map(
+    static fn(array $item): string => trim((string)($item['name'] ?? '')) . ' | ' . trim((string)($item['license'] ?? '')),
+    $appAbout['licenses'] ?? []
+));
 $adminEmailCount = count(array_filter((array)($config['admin_emails'] ?? []), static fn($email): bool => trim((string)$email) !== ''));
 $adminPermissionRows = wp_admin_updates_permission_rows($config, $adminUser);
 $googleClientSecretStatus = wp_admin_updates_social_secret_status(wp_admin_updates_social_secret_value('social_auth_google_client_secret'));
 $packageUploadedAt = wp_version_format_datetime_admin((string)($config['server_package_uploaded_at'] ?? ''));
 $packageAppliedAt = wp_version_format_datetime_admin((string)($config['server_package_applied_at'] ?? ''));
 $packageSyncedAt = wp_version_format_datetime_admin((string)($config['server_package_release_synced_at'] ?? ''));
-$packageMode = (string)($config['server_package_mode'] ?? 'partial');
+$packageMode = (string)($releaseFormConfig['server_package_mode'] ?? 'partial');
 $packageLinkedAppVersion = trim((string)($config['server_package_linked_app_version'] ?? ''));
 $packageLinkedWebVersion = trim((string)($config['server_package_linked_web_version'] ?? ''));
 $isPackageSyncedToCurrentRelease =
@@ -1420,6 +1543,8 @@ $isPackageSyncedToCurrentRelease =
     $packageLinkedWebVersion === (string)($config['web_version'] ?? '');
 $pushLastSentAt = wp_version_format_datetime_admin((string)($pushConfig['last_sent_at'] ?? ''));
 $pushHistory = wp_push_history_load(50);
+$apnsCredentialAvailable = wp_push_credential_is_available('apns');
+$firebaseCredentialAvailable = wp_push_credential_is_available('firebase');
 $csrfToken = wp_admin_updates_csrf_token();
 ?>
 <!doctype html>
@@ -1448,13 +1573,15 @@ $csrfToken = wp_admin_updates_csrf_token();
       \'Ընտրիր կիրառման տարբերակը` առանց ֆայլի կամ ֆայլով։\': {ru: \'Выберите вариант применения: с файлом или без.\', en: \'Choose deployment mode: with or without file.\'},
       \'Սեղմիր `Կիրառել թարմացումը` ու ավարտիր գործընթացը։\': {ru: \'Нажмите «Применить обновление» для завершения.\', en: \'Click \"Apply Update\" to finish.\'},
       \'1. Թարմացում և տեղադրում\': {ru: \'1. Обновление и установка\', en: \'1. Update & Deploy\'},
-      \'2. Տեխնիկական աշխատանքներ\': {ru: \'2. Тех. работы\', en: \'2. Maintenance\'},
-      \'3. Push ծանուցումներ\': {ru: \'3. Push-уведомления\', en: \'3. Push Notifications\'},
-      \'4. Սարքեր\': {ru: \'4. Устройства\', en: \'4. Devices\'},
-      \'5. Պատմություն\': {ru: \'5. История\', en: \'5. History\'},
-      \'6. Մուտքեր\': {ru: \'6. Доступы\', en: \'6. Access\'},
-      \'7. Մոդերացիա\': {ru: \'7. Модерация\', en: \'7. Moderation\'},
-      \'8. Թարգմանություններ\': {ru: \'8. Переводы\', en: \'8. Translations\'},
+      \'2. Ծրագրի մասին\': {ru: \'2. О программе\', en: \'2. About the App\'},
+      \'3. Ընդհանուր տվյալներ և SEO\': {ru: \'3. Общие данные и SEO\', en: \'3. General Info & SEO\'},
+      \'4. Տեխնիկական աշխատանքներ\': {ru: \'4. Тех. работы\', en: \'4. Maintenance\'},
+      \'5. Push ծանուցումներ\': {ru: \'5. Push-уведомления\', en: \'5. Push Notifications\'},
+      \'6. Սարքեր\': {ru: \'6. Устройства\', en: \'6. Devices\'},
+      \'7. Պատմություն\': {ru: \'7. История\', en: \'7. History\'},
+      \'8. Մուտքեր\': {ru: \'8. Доступы\', en: \'8. Access\'},
+      \'9. Մոդերացիա\': {ru: \'9. Модерация\', en: \'9. Moderation\'},
+      \'10. Թարգմանություններ\': {ru: \'10. Переводы\', en: \'10. Translations\'},
       \'Թողարկման գլխավոր հոսք\': {ru: \'Главный поток релиза\', en: \'Main Release Flow\'},
       \'Այստեղ լրացնում ես տարբերակները, հաղորդագրությունները և ընտրում ես ինչպես կիրառել թարմացումը։\': {ru: \'Здесь вы заполняете версии, сообщения и выбираете способ применения обновления.\', en: \'Here you fill in versions, messages, and choose how to apply the update.\'},
       \'Ծրագիր\': {ru: \'Программа\', en: \'App\'},
@@ -1516,7 +1643,7 @@ $csrfToken = wp_admin_updates_csrf_token();
     <div class="app-content">
       <div class="page-header" style="padding-bottom: 0; border: none; align-items: flex-start; margin-bottom: 32px; display: flex; justify-content: space-between;">
         <div>
-          <h2 style="font-size: 34px; margin-bottom: 8px; font-weight:800; color:var(--text); letter-spacing:-0.5px;"><?= __('Համակարգի կարգավորումներ') ?> 😍</h2>
+          <h2 style="font-size: 34px; margin-bottom: 8px; font-weight:800; color:var(--text); letter-spacing:-0.5px;"><?= __('Համակարգի կարգավորումներ') ?></h2>
           <p style="margin:0; font-size:15px; color:var(--muted); font-weight: 500;"><?= __('Կառավարեք ծրագրի տարբերակները, սարքերը, մուտքերը և այլն։') ?></p>
         </div>
         
@@ -1526,7 +1653,7 @@ $csrfToken = wp_admin_updates_csrf_token();
       <div class="settings-dashboard" id="settingsDashboard">
         <div class="section-switcher grid-view" role="tablist">
         <?php if (!empty($adminSectionPermissions["release"])): ?>
-        <button class="section-tab active" type="button" data-section-tab="release">
+        <button class="section-tab" type="button" data-section-tab="release" aria-selected="false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
           <div class="tab-text">
             <span><?= __('1. Թարմացում և տեղադրում') ?></span>
@@ -1534,11 +1661,29 @@ $csrfToken = wp_admin_updates_csrf_token();
                   </div>
         </button>
         <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["about"])): ?>
+        <button class="section-tab" type="button" data-section-tab="about">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          <div class="tab-text">
+            <span><?= __('2. Ծրագրի մասին') ?></span>
+            <small><?= __('Նկարագրություն, լիցենզիաներ, իրավական տվյալներ և հղումներ') ?></small>
+          </div>
+        </button>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["site_info"])): ?>
+        <button class="section-tab" type="button" data-section-tab="site_info">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          <div class="tab-text">
+            <span><?= __('3. Ընդհանուր տվյալներ և SEO') ?></span>
+            <small><?= __('Կայքի գլխավոր վերնագիր, SEO նկարագրություն, կապի տվյալներ') ?></small>
+          </div>
+        </button>
+        <?php endif; ?>
         <?php if (!empty($adminSectionPermissions["maintenance"])): ?>
         <button class="section-tab" type="button" data-section-tab="maintenance">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
           <div class="tab-text">
-            <span><?= __('2. Տեխնիկական աշխատանքներ') ?></span>
+            <span><?= __('4. Տեխնիկական աշխատանքներ') ?></span>
           <small><?= __('Կայքի և ծրագրի անհասանելիության պլանավորում') ?></small>
                   </div>
         </button>
@@ -1547,7 +1692,7 @@ $csrfToken = wp_admin_updates_csrf_token();
         <button class="section-tab" type="button" data-section-tab="push">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
           <div class="tab-text">
-            <span><?= __('3. Push ծանուցումներ') ?></span>
+            <span><?= __('5. Push ծանուցումներ') ?></span>
           <small><?= __('Ուղարկել ծանուցումներ բոլորին կամ կոնկրետ սարքերին') ?></small>
                   </div>
         </button>
@@ -1556,7 +1701,7 @@ $csrfToken = wp_admin_updates_csrf_token();
         <button class="section-tab" type="button" data-section-tab="devices">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
           <div class="tab-text">
-            <span><?= __('4. Սարքեր') ?></span>
+            <span><?= __('6. Սարքեր') ?></span>
           <small><?= __('Գրանցված սարքերի, տեսակների և ակտիվության կառավարում') ?></small>
                   </div>
         </button>
@@ -1565,7 +1710,7 @@ $csrfToken = wp_admin_updates_csrf_token();
         <button class="section-tab" type="button" data-section-tab="history">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
           <div class="tab-text">
-            <span><?= __('5. Պատմություն') ?></span>
+            <span><?= __('7. Պատմություն') ?></span>
           <small><?= __('Նախկին թողարկումների և թարմացումների արխիվ') ?></small>
                   </div>
         </button>
@@ -1574,7 +1719,7 @@ $csrfToken = wp_admin_updates_csrf_token();
         <button class="section-tab" type="button" data-section-tab="access">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
           <div class="tab-text">
-            <span><?= __('6. Մուտքեր') ?></span>
+            <span><?= __('8. Մուտքեր') ?></span>
           <small><?= __('Ադմինների և համակարգի թույլտվությունների կառավարում') ?></small>
                   </div>
         </button>
@@ -1583,7 +1728,7 @@ $csrfToken = wp_admin_updates_csrf_token();
         <button class="section-tab" type="button" data-section-tab="moderation">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
           <div class="tab-text">
-            <span><?= __('7. Մոդերացիա') ?></span>
+            <span><?= __('9. Մոդերացիա') ?></span>
           <small><?= __('Օգտատերերի գործողությունների վերահսկում') ?></small>
                   </div>
         </button>
@@ -1592,7 +1737,7 @@ $csrfToken = wp_admin_updates_csrf_token();
         <button class="section-tab" type="button" data-section-tab="translations">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
           <div class="tab-text">
-            <span><?= __('8. Թարգմանություններ') ?></span>
+            <span><?= __('10. Թարգմանություններ') ?></span>
           <small><?= __('Համակարգի բառարանների և տեքստերի կառավարում') ?></small>
                   </div>
         </button>
@@ -1689,19 +1834,19 @@ $csrfToken = wp_admin_updates_csrf_token();
               <div style="display:flex; flex-direction:column; gap:12px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(67,24,255,0.04); padding: 10px 12px; border-radius: 8px;">
                   <strong style="font-size:13px; color:var(--primary); margin:0;"><span style="margin-right:6px;">📱</span><?= __('Ծրագիր / App') ?></strong>
-                  <span id="releaseAppTypeChip" class="chip primary" style="margin:0; padding: 2px 8px; font-size: 11px;"><?= htmlspecialchars(wp_version_release_label((string)$config['app_release_type']), ENT_QUOTES) ?></span>
+                  <span id="releaseAppTypeChip" class="chip primary" style="margin:0; padding: 2px 8px; font-size: 11px;"><?= htmlspecialchars(wp_version_release_label((string)$releaseFormConfig['app_release_type']), ENT_QUOTES) ?></span>
                 </div>
                 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                   <div class="form-field" style="margin-bottom:0;">
                     <label for="app_version"><?= __('Տարբերակ') ?></label>
-                    <input id="app_version" name="app_version" value="<?= htmlspecialchars((string)$config['app_version'], ENT_QUOTES) ?>" required>
+                    <input id="app_version" name="app_version" value="<?= htmlspecialchars((string)$releaseFormConfig['app_version'], ENT_QUOTES) ?>" required>
                   </div>
                   <div class="form-field" style="margin-bottom:0;">
                     <label for="app_release_type"><?= __('Տեսակ') ?></label>
                     <select id="app_release_type" name="app_release_type">
                       <?php foreach ($releaseTypes as $releaseTypeValue => $releaseTypeLabel): ?>
-                        <option value="<?= htmlspecialchars($releaseTypeValue, ENT_QUOTES) ?>" <?= (string)$config['app_release_type'] === $releaseTypeValue ? 'selected' : '' ?>><?= htmlspecialchars($releaseTypeLabel, ENT_QUOTES) ?></option>
+                        <option value="<?= htmlspecialchars($releaseTypeValue, ENT_QUOTES) ?>" <?= (string)$releaseFormConfig['app_release_type'] === $releaseTypeValue ? 'selected' : '' ?>><?= htmlspecialchars($releaseTypeLabel, ENT_QUOTES) ?></option>
                       <?php endforeach; ?>
                     </select>
                   </div>
@@ -1709,15 +1854,15 @@ $csrfToken = wp_admin_updates_csrf_token();
 
                 <div class="form-field" style="margin-bottom:0;">
                   <label for="app_release_summary"><?= __('Կարճ նկարագրություն') ?></label>
-                  <input id="app_release_summary" name="app_release_summary" maxlength="240" value="<?= htmlspecialchars((string)$config['app_release_summary'], ENT_QUOTES) ?>" placeholder="<?= __('Օր.` Տեխնիկական բարելավումներ') ?>">
+                  <input id="app_release_summary" name="app_release_summary" maxlength="240" value="<?= htmlspecialchars((string)$releaseFormConfig['app_release_summary'], ENT_QUOTES) ?>" placeholder="<?= __('Օր.` Տեխնիկական բարելավումներ') ?>">
                 </div>
                 <div class="form-field" style="margin-bottom:0;">
                   <label for="app_title"><?= __('Վերնագիր') ?></label>
-                  <input id="app_title" name="app_title" value="<?= htmlspecialchars((string)$config['app_title'], ENT_QUOTES) ?>" required>
+                  <input id="app_title" name="app_title" value="<?= htmlspecialchars((string)$releaseFormConfig['app_title'], ENT_QUOTES) ?>" required>
                 </div>
                 <div class="form-field" style="margin-bottom:0; flex-grow: 1;">
                   <label for="app_message"><?= __('Հաղորդագրություն (Ամբողջական)') ?></label>
-                  <textarea id="app_message" name="app_message" style="height: 100%; min-height: 80px;" required><?= htmlspecialchars((string)$config['app_message'], ENT_QUOTES) ?></textarea>
+                  <textarea id="app_message" name="app_message" style="height: 100%; min-height: 80px;" required><?= htmlspecialchars((string)$releaseFormConfig['app_message'], ENT_QUOTES) ?></textarea>
                 </div>
               </div>
 
@@ -1725,19 +1870,19 @@ $csrfToken = wp_admin_updates_csrf_token();
               <div style="display:flex; flex-direction:column; gap:12px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(67,24,255,0.04); padding: 10px 12px; border-radius: 8px;">
                   <strong style="font-size:13px; color:var(--primary); margin:0;"><span style="margin-right:6px;">💻</span><?= __('Կայք / Web') ?></strong>
-                  <span id="releaseWebTypeChip" class="chip primary" style="margin:0; padding: 2px 8px; font-size: 11px;"><?= htmlspecialchars(wp_version_release_label((string)$config['web_release_type']), ENT_QUOTES) ?></span>
+                  <span id="releaseWebTypeChip" class="chip primary" style="margin:0; padding: 2px 8px; font-size: 11px;"><?= htmlspecialchars(wp_version_release_label((string)$releaseFormConfig['web_release_type']), ENT_QUOTES) ?></span>
                 </div>
                 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                   <div class="form-field" style="margin-bottom:0;">
                     <label for="web_version"><?= __('Տարբերակ') ?></label>
-                    <input id="web_version" name="web_version" value="<?= htmlspecialchars((string)$config['web_version'], ENT_QUOTES) ?>" required>
+                    <input id="web_version" name="web_version" value="<?= htmlspecialchars((string)$releaseFormConfig['web_version'], ENT_QUOTES) ?>" required>
                   </div>
                   <div class="form-field" style="margin-bottom:0;">
                     <label for="web_release_type"><?= __('Տեսակ') ?></label>
                     <select id="web_release_type" name="web_release_type">
                       <?php foreach ($releaseTypes as $releaseTypeValue => $releaseTypeLabel): ?>
-                        <option value="<?= htmlspecialchars($releaseTypeValue, ENT_QUOTES) ?>" <?= (string)$config['web_release_type'] === $releaseTypeValue ? 'selected' : '' ?>><?= htmlspecialchars($releaseTypeLabel, ENT_QUOTES) ?></option>
+                        <option value="<?= htmlspecialchars($releaseTypeValue, ENT_QUOTES) ?>" <?= (string)$releaseFormConfig['web_release_type'] === $releaseTypeValue ? 'selected' : '' ?>><?= htmlspecialchars($releaseTypeLabel, ENT_QUOTES) ?></option>
                       <?php endforeach; ?>
                     </select>
                   </div>
@@ -1745,15 +1890,15 @@ $csrfToken = wp_admin_updates_csrf_token();
 
                 <div class="form-field" style="margin-bottom:0;">
                   <label for="web_release_summary"><?= __('Կարճ նկարագրություն') ?></label>
-                  <input id="web_release_summary" name="web_release_summary" maxlength="240" value="<?= htmlspecialchars((string)$config['web_release_summary'], ENT_QUOTES) ?>" placeholder="<?= __('Օր.` Վիզուալ փոփոխություններ') ?>">
+                  <input id="web_release_summary" name="web_release_summary" maxlength="240" value="<?= htmlspecialchars((string)$releaseFormConfig['web_release_summary'], ENT_QUOTES) ?>" placeholder="<?= __('Օր.` Վիզուալ փոփոխություններ') ?>">
                 </div>
                 <div class="form-field" style="margin-bottom:0;">
                   <label for="web_title"><?= __('Վերնագիր') ?></label>
-                  <input id="web_title" name="web_title" value="<?= htmlspecialchars((string)$config['web_title'], ENT_QUOTES) ?>" required>
+                  <input id="web_title" name="web_title" value="<?= htmlspecialchars((string)$releaseFormConfig['web_title'], ENT_QUOTES) ?>" required>
                 </div>
                 <div class="form-field" style="margin-bottom:0; flex-grow: 1;">
                   <label for="web_message"><?= __('Հաղորդագրություն (Ամբողջական)') ?></label>
-                  <textarea id="web_message" name="web_message" style="height: 100%; min-height: 80px;" required><?= htmlspecialchars((string)$config['web_message'], ENT_QUOTES) ?></textarea>
+                  <textarea id="web_message" name="web_message" style="height: 100%; min-height: 80px;" required><?= htmlspecialchars((string)$releaseFormConfig['web_message'], ENT_QUOTES) ?></textarea>
                 </div>
               </div>
 
@@ -1812,12 +1957,132 @@ $csrfToken = wp_admin_updates_csrf_token();
                 </div>
               </div>
               <div class="chips" style="margin-top:16px;">
-                <div class="autosave-status chip" id="releaseAutosaveStatus" data-state="idle" style="width:100%;justify-content:center;"><?= __('Ավտոմատ պահպանում') ?></div>
+                <div class="autosave-status chip" id="releaseAutosaveStatus" data-state="<?= $hasReleaseDraft ? 'saved' : 'idle' ?>" style="width:100%;justify-content:center;"><?= $hasReleaseDraft ? __('Սևագիրը պահպանված է, դեռ կիրառված չէ') : __('Փոփոխությունները կպահվեն որպես չկիրառված սևագիր') ?></div>
               </div>
             </div>
 
           </div>
         </div>
+
+        <section class="bento-card" id="appAboutPanel" data-admin-section="about" data-admin-permission="about">
+          <input type="hidden" name="app_about_present" value="1">
+          <div class="bento-header">
+            <h3><?= __('Ծրագրի մասին էջ') ?></h3>
+            <p><?= __('Կառավարեք PWA ծրագրում ցուցադրվող նկարագրությունը, իրավական տվյալները և օգտակար հղումները։') ?></p>
+          </div>
+
+          <div class="bento-grid cols-3">
+            <?php foreach (['hy' => 'Հայերեն', 'en' => 'English', 'ru' => 'Русский'] as $langCode => $langLabel): ?>
+              <div class="form-field">
+                <label for="app_about_tagline_<?= $langCode ?>"><?= __('Կարճ նկարագրություն') ?> · <?= $langLabel ?></label>
+                <textarea id="app_about_tagline_<?= $langCode ?>" name="app_about_tagline_<?= $langCode ?>" maxlength="300" rows="3"><?= htmlspecialchars((string)($appAbout['tagline'][$langCode] ?? ''), ENT_QUOTES) ?></textarea>
+              </div>
+            <?php endforeach; ?>
+          </div>
+
+          <div class="bento-grid cols-3">
+            <?php foreach (['hy' => 'Հայերեն', 'en' => 'English', 'ru' => 'Русский'] as $langCode => $langLabel): ?>
+              <div class="form-field">
+                <label for="app_about_license_<?= $langCode ?>"><?= __('Լիցենզիայի նկարագրություն') ?> · <?= $langLabel ?></label>
+                <textarea id="app_about_license_<?= $langCode ?>" name="app_about_license_<?= $langCode ?>" maxlength="1500" rows="5"><?= htmlspecialchars((string)($appAbout['license_text'][$langCode] ?? ''), ENT_QUOTES) ?></textarea>
+              </div>
+            <?php endforeach; ?>
+          </div>
+
+          <div class="bento-grid cols-2">
+            <div class="form-field">
+              <label for="app_about_owner"><?= __('Իրավատեր / կազմակերպություն') ?></label>
+              <input id="app_about_owner" name="app_about_owner" maxlength="120" value="<?= htmlspecialchars((string)($appAbout['owner'] ?? ''), ENT_QUOTES) ?>">
+            </div>
+            <div class="form-field">
+              <label for="app_about_copyright_year"><?= __('Հեղինակային իրավունքի տարի') ?></label>
+              <input id="app_about_copyright_year" name="app_about_copyright_year" inputmode="numeric" pattern="\d{4}" maxlength="4" value="<?= htmlspecialchars((string)($appAbout['copyright_year'] ?? ''), ENT_QUOTES) ?>">
+            </div>
+          </div>
+
+          <div class="bento-grid cols-3">
+            <div class="form-field">
+              <label for="app_about_privacy_url"><?= __('Գաղտնիության հղում') ?></label>
+              <input id="app_about_privacy_url" name="app_about_privacy_url" maxlength="500" value="<?= htmlspecialchars((string)($appAbout['privacy_url'] ?? ''), ENT_QUOTES) ?>" placeholder="/privacy">
+            </div>
+            <div class="form-field">
+              <label for="app_about_terms_url"><?= __('Պայմանների հղում') ?></label>
+              <input id="app_about_terms_url" name="app_about_terms_url" maxlength="500" value="<?= htmlspecialchars((string)($appAbout['terms_url'] ?? ''), ENT_QUOTES) ?>" placeholder="/terms">
+            </div>
+            <div class="form-field">
+              <label for="app_about_support_url"><?= __('Աջակցության հղում') ?></label>
+              <input id="app_about_support_url" name="app_about_support_url" maxlength="500" value="<?= htmlspecialchars((string)($appAbout['support_url'] ?? ''), ENT_QUOTES) ?>" placeholder="/support">
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="app_about_licenses"><?= __('Օգտագործված գրադարաններ և լիցենզիաներ') ?></label>
+            <textarea id="app_about_licenses" name="app_about_licenses" rows="5" placeholder="React / React DOM | MIT License"><?= htmlspecialchars($appAboutLicensesText, ENT_QUOTES) ?></textarea>
+            <small><?= __('Յուրաքանչյուր գրադարանը գրեք նոր տողում՝ Անուն | Լիցենզիա ձևաչափով։') ?></small>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+            <button class="btn btn-primary" type="submit" name="form_action" value="save_app_about"><?= __('Պահպանել «Ծրագրի մասին» էջը') ?></button>
+          </div>
+        </section>
+
+        <section class="bento-card" id="siteInfoPanel" data-admin-section="site_info" data-admin-permission="site_info">
+          <div class="bento-header">
+            <h3><?= __('Ընդհանուր տվյալներ և SEO') ?></h3>
+            <p><?= __('Կայքի գլխավոր վերնագիր, SEO նկարագրություն, կապի և սոցիալական էջերի տվյալներ։') ?></p>
+          </div>
+
+          <div class="bento-grid cols-2">
+            <div class="form-field">
+              <label for="site_seo_title"><?= __('Կայքի գլխավոր վերնագիր (Title)') ?></label>
+              <input id="site_seo_title" name="site_seo_title" maxlength="120" value="<?= htmlspecialchars((string)($config['site_seo_title'] ?? ''), ENT_QUOTES) ?>">
+            </div>
+            <div class="form-field">
+              <label for="site_seo_keywords"><?= __('SEO Բանալի բառեր (Keywords)') ?></label>
+              <input id="site_seo_keywords" name="site_seo_keywords" maxlength="255" value="<?= htmlspecialchars((string)($config['site_seo_keywords'] ?? ''), ENT_QUOTES) ?>">
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="site_seo_description"><?= __('SEO Նկարագրություն (Description)') ?></label>
+            <textarea id="site_seo_description" name="site_seo_description" rows="2" maxlength="300"><?= htmlspecialchars((string)($config['site_seo_description'] ?? ''), ENT_QUOTES) ?></textarea>
+          </div>
+
+          <div class="bento-grid cols-2">
+            <div class="form-field">
+              <label for="site_contact_email"><?= __('Կապի Էլ. փոստ') ?></label>
+              <input id="site_contact_email" name="site_contact_email" type="email" maxlength="120" value="<?= htmlspecialchars((string)($config['site_contact_email'] ?? ''), ENT_QUOTES) ?>">
+            </div>
+            <div class="form-field">
+              <label for="site_contact_phone"><?= __('Կապի Հեռախոսահամար') ?></label>
+              <input id="site_contact_phone" name="site_contact_phone" type="tel" maxlength="50" value="<?= htmlspecialchars((string)($config['site_contact_phone'] ?? ''), ENT_QUOTES) ?>">
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="site_contact_address"><?= __('Կապի Հասցե (Գրասենյակ)') ?></label>
+            <input id="site_contact_address" name="site_contact_address" type="text" maxlength="200" value="<?= htmlspecialchars((string)($config['site_contact_address'] ?? ''), ENT_QUOTES) ?>" placeholder="<?= __('Երևան, Հայաստան') ?>">
+          </div>
+
+          <div class="bento-grid cols-3">
+            <div class="form-field">
+              <label for="site_social_facebook"><?= __('Facebook հղում') ?></label>
+              <input id="site_social_facebook" name="site_social_facebook" type="url" maxlength="255" value="<?= htmlspecialchars((string)($config['site_social_facebook'] ?? ''), ENT_QUOTES) ?>" placeholder="https://facebook.com/...">
+            </div>
+            <div class="form-field">
+              <label for="site_social_instagram"><?= __('Instagram հղում') ?></label>
+              <input id="site_social_instagram" name="site_social_instagram" type="url" maxlength="255" value="<?= htmlspecialchars((string)($config['site_social_instagram'] ?? ''), ENT_QUOTES) ?>" placeholder="https://instagram.com/...">
+            </div>
+            <div class="form-field">
+              <label for="site_social_youtube"><?= __('YouTube հղում') ?></label>
+              <input id="site_social_youtube" name="site_social_youtube" type="url" maxlength="255" value="<?= htmlspecialchars((string)($config['site_social_youtube'] ?? ''), ENT_QUOTES) ?>" placeholder="https://youtube.com/...">
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+            <button class="btn btn-primary" type="submit" name="form_action" value="save_site_info"><?= __('Պահպանել տվյալները') ?></button>
+          </div>
+        </section>
 
           <div class="bento-split-even" id="maintenancePanel" data-admin-section="maintenance" data-admin-permission="maintenance">
             
@@ -2294,7 +2559,6 @@ $csrfToken = wp_admin_updates_csrf_token();
       </div>
 
       <div class="stack" data-section-container>
-        <form method="get" class="stack">
           <div class="bento-card" id="translationFilterPanel" data-admin-section="translations all" data-admin-permission="translations" style="margin-bottom:24px;">
             <div class="bento-header" style="margin-bottom:16px;">
               <h3 style="margin:0 0 4px;"><?= __('Թարգմանությունների դիտում և զտում') ?></h3>
@@ -2460,8 +2724,7 @@ $csrfToken = wp_admin_updates_csrf_token();
         </form>
       </div>
 
-      <form method="post" class="stack" data-section-container>
-        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
+      <div class="stack" data-section-container>
         <div class="stats" data-admin-section="push devices all" data-admin-permission="push,devices">
           
           <div class="stat">
@@ -2521,7 +2784,10 @@ $csrfToken = wp_admin_updates_csrf_token();
           </div>
         </div>
 
-        <div class="bento-card" data-admin-section="push all" data-admin-permission="push" style="margin-bottom: 16px;">
+        <form id="pushSettingsForm" method="post" action="/admin_updates.php" enctype="multipart/form-data" data-admin-section="push all" data-admin-permission="push" style="margin:0 0 16px;">
+          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
+          <input type="hidden" name="form_action" value="save_push_settings">
+          <div class="bento-card">
           <div class="bento-header">
             <h3><?= __('Push ծանուցումներ') ?></h3>
             <p><?= __('Այս բաժնից կարող եք միացնել browser/app push ծանուցումները:') ?></p>
@@ -2538,20 +2804,67 @@ $csrfToken = wp_admin_updates_csrf_token();
             </label>
           </div>
 
-          <div class="bento-grid cols-2" style="gap:8px;">
-            <div class="form-field" style="margin:0;">
-              <label for="push_subject"><?= __('Կապի հասցե (VAPID subject)') ?></label>
-              <input class="input-field" id="push_subject" name="push_subject" value="<?= htmlspecialchars((string)($pushConfig['vapid_subject'] ?? ''), ENT_QUOTES) ?>" placeholder="mailto:admin@example.com">
+          <div>
+            <div class="bento-grid cols-2" style="gap:12px; margin-bottom: 16px;">
+              <div class="form-field" style="margin:0;">
+                <label for="push_subject"><?= __('Կապի հասցե (VAPID subject)') ?></label>
+                <input class="input-field" id="push_subject" name="push_subject" value="<?= htmlspecialchars((string)($pushConfig['vapid_subject'] ?? ''), ENT_QUOTES) ?>" placeholder="mailto:admin@example.com">
+              </div>
+              <div class="form-field" style="margin:0;">
+                <label for="push_public_key_preview"><?= __('VAPID Public Key') ?></label>
+                <input class="input-field" id="push_public_key_preview" value="<?= htmlspecialchars((string)($pushConfig['vapid_public_key'] ?? ''), ENT_QUOTES) ?>" readonly>
+              </div>
             </div>
-            <div class="form-field" style="margin:0;">
-              <label for="push_public_key_preview"><?= __('Հանրային բանալի') ?></label>
-              <input class="input-field" id="push_public_key_preview" value="<?= htmlspecialchars((string)($pushConfig['vapid_public_key'] ?? ''), ENT_QUOTES) ?>" readonly>
+
+            <!-- APNS .p8 & Firebase JSON Uploads -->
+            <div style="border-top: 1px solid var(--line); padding-top: 16px; margin-top: 16px;">
+              <h4 style="font-weight: 700; margin-bottom: 12px; font-size: 0.95rem;"><?= __(' Push Ֆայլեր և Սերտիֆիկատներ') ?></h4>
+
+              <div class="bento-grid cols-2" style="gap:16px;">
+
+                <!-- iOS APNS .p8 File -->
+                <div style="background: rgba(67,24,255,0.03); border: 1px solid var(--line); border-radius: 12px; padding: 16px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <strong style="font-size: 0.9rem;">🍏 iOS APNS AuthKey (.p8)</strong>
+                    <?php if ($apnsCredentialAvailable): ?>
+                      <span class="badge badge-success">✓ AuthKey_APNS.p8 բեռնված է</span>
+                    <?php else: ?>
+                      <span class="badge badge-warning">⚠ Բացակայում է</span>
+                    <?php endif; ?>
+                  </div>
+                  <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 10px;">
+                    Apple Developer Portal-ից ներբեռնված APNS AuthKey .p8 սերտիֆիկատը:
+                  </p>
+                  <input type="file" name="apns_p8_file" accept=".p8" class="input-field" style="font-size: 0.82rem; padding: 6px;">
+                </div>
+
+                <!-- Firebase Service Account JSON File -->
+                <div style="background: rgba(67,24,255,0.03); border: 1px solid var(--line); border-radius: 12px; padding: 16px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <strong style="font-size: 0.9rem;">🔥 Firebase Service Account (.json)</strong>
+                    <?php if ($firebaseCredentialAvailable): ?>
+                      <span class="badge badge-success">✓ JSON Ֆայլը բեռնված է</span>
+                    <?php else: ?>
+                      <span class="badge badge-warning">⚠ Բացակայում է</span>
+                    <?php endif; ?>
+                  </div>
+                  <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 10px;">
+                    Firebase Console -> Service Accounts-ից ներբեռնված JSON ֆայլը Web / Android Push-ի համար:
+                  </p>
+                  <input type="file" name="firebase_json_file" accept=".json" class="input-field" style="font-size: 0.82rem; padding: 6px;">
+                </div>
+
+              </div>
+            </div>
+
+            <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+              <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700;">
+                💾 <?= __('Պահպանել Push Կարգավորումներն ու Ֆայլերը') ?>
+              </button>
             </div>
           </div>
-          <div class="chips" style="margin-top:12px; justify-content: flex-end;">
-            <div class="autosave-status chip" id="pushAutosaveStatus" data-state="idle"><?= __('Ավտոմատ պահպանվում է') ?></div>
           </div>
-        </div>
+        </form>
 
         <div class="bento-card" id="devicesPanel" data-admin-section="devices all" data-admin-permission="devices">
           <div class="bento-header">
@@ -2827,8 +3140,11 @@ $csrfToken = wp_admin_updates_csrf_token();
           <div class="bento-header">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; width:100%;">
               <div>
-                <h3 style="margin:0;"><?= __('Push միացրած սարքեր') ?></h3>
-                <p style="margin:4px 0 0; font-size:13px; color:var(--muted);"><?= __('Այստեղ երևում են բաժանորդագրված սարքերի տվյալները:') ?></p>
+                <h3 style="margin:0;"><?= __('Push բաժանորդագրություններ') ?></h3>
+                <p style="margin:4px 0 0; font-size:13px; color:var(--muted);">
+                  <?= __('Ակտիվ') ?>՝ <?= (int)($pushStats['active_subscriptions'] ?? 0) ?> ·
+                  <?= __('Պահպանված endpoint-ներ') ?>՝ <?= count($pushSubscriptions) ?>
+                </p>
               </div>
               <div class="form-field" style="margin:0; min-width:250px;">
                 <input class="input-field" id="pushSubscriptionSearch" type="search" placeholder="<?= __('Անուն, email, IP, endpoint, browser') ?>" style="padding:6px; font-size:13px;">
@@ -2839,6 +3155,18 @@ $csrfToken = wp_admin_updates_csrf_token();
           <?php if (!$pushSubscriptions): ?>
             <div class="history-item" style="padding:16px; text-align:center; color:var(--muted);">
               <strong><?= __('Բաժանորդագրված սարքեր դեռ չկան') ?></strong>
+              <?php if ($pushLegacyBackupCount > 0): ?>
+                <p style="margin:8px 0 12px;">
+                  <?= __('Գտնվել է նախկին push ցանկի պահուստային պատճեն՝') ?> <?= $pushLegacyBackupCount ?> <?= __('endpoint') ?>։
+                </p>
+                <form method="post" action="/admin_updates.php" style="margin:0;" onsubmit="return confirm('Վերականգնե՞լ նախկին push subscription-ները պահուստային պատճենից։');">
+                  <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
+                  <input type="hidden" name="form_action" value="restore_push_subscriptions">
+                  <button class="btn btn-primary" type="submit" style="padding:8px 16px;">
+                    <?= __('Վերականգնել նախկին push ցանկը') ?>
+                  </button>
+                </form>
+              <?php endif; ?>
             </div>
           <?php else: ?>
             <div style="overflow-x:auto;">
@@ -2853,6 +3181,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                 </thead>
                 <tbody>
                   <?php foreach ($pushSubscriptions as $subscription): ?>
+                    <?php $isActivePushSubscription = wp_push_is_active_subscription($subscription); ?>
                     <tr data-push-subscription-item data-push-subscription-search="<?= htmlspecialchars(wp_admin_updates_push_search_haystack($subscription), ENT_QUOTES) ?>">
                       <td>
                         <div class="table-primary"><?= htmlspecialchars(wp_admin_updates_push_identity($subscription), ENT_QUOTES) ?></div>
@@ -2872,6 +3201,9 @@ $csrfToken = wp_admin_updates_csrf_token();
                         <?php endif; ?>
                       </td>
                       <td>
+                        <div class="chip <?= $isActivePushSubscription ? 'success' : 'warning' ?>" style="margin-bottom:5px; padding:2px 7px; font-size:10px;">
+                          <?= $isActivePushSubscription ? __('Ակտիվ') : __('Ոչ ակտիվ') ?>
+                        </div>
                         <div class="table-primary"><?= htmlspecialchars(wp_version_format_datetime_admin((string)($subscription['last_seen_at'] ?? '')) ?: '—', ENT_QUOTES) ?></div>
                         <div class="table-meta"><?= __('Վերջին կապ') ?></div>
                       </td>
@@ -2905,7 +3237,11 @@ $csrfToken = wp_admin_updates_csrf_token();
                   <input class="input-field" id="pushHistorySearch" type="search" placeholder="<?= __('Որոնել...') ?>" style="padding:6px; font-size:13px; width:150px;">
                 </div>
                 <?php if ($pushHistory): ?>
-                  <button class="btn danger" style="padding:6px 12px; font-size:12px;" type="submit" name="form_action" value="clear_push_history" onclick="return confirm('Ջնջե՞լ ամբողջ պատմությունը։');"><?= __('Մաքրել') ?></button>
+                  <form method="post" action="/admin_updates.php" style="margin:0;" onsubmit="return confirm('Ջնջե՞լ ամբողջ պատմությունը։');">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
+                    <input type="hidden" name="form_action" value="clear_push_history">
+                    <button class="btn danger" style="padding:6px 12px; font-size:12px;" type="submit"><?= __('Մաքրել') ?></button>
+                  </form>
                 <?php endif; ?>
               </div>
             </div>
@@ -2953,7 +3289,7 @@ $csrfToken = wp_admin_updates_csrf_token();
             <?php endif; ?>
           <?php endif; ?>
         </div>
-      </form>
+      </div>
 
       <aside class="stack" data-section-container>
         <div class="bento-card" id="historyPanel" data-admin-section="history all" data-admin-permission="history">
@@ -3226,10 +3562,8 @@ $csrfToken = wp_admin_updates_csrf_token();
       const metaNoteInput = document.getElementById('meta_note');
       const pushEnabledInput = document.getElementById('push_enabled');
       const pushSubjectInput = document.getElementById('push_subject');
-      const sectionStorageKey = 'worship-admin-updates-section';
       const allowedSections = <?= json_encode(array_values($visibleAdminSections), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
       const allowedSectionSet = new Set(allowedSections);
-      const defaultSection = <?= json_encode($defaultAdminSection, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
       const permissionSections = <?= json_encode($adminSectionRegistry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
       const devicesRefreshDelay = 15000;
       let devicesRefreshTimer = 0;
@@ -3291,6 +3625,18 @@ $csrfToken = wp_admin_updates_csrf_token();
             `Ծրագիր <?= htmlspecialchars((string)$config['app_version'], ENT_QUOTES) ?>`,
             `Կայք <?= htmlspecialchars((string)$config['web_version'], ENT_QUOTES) ?>`,
             `Փաթեթ <?= $isPackageSyncedToCurrentRelease ? 'պատրաստ' : 'սպասման մեջ' ?>`
+          ]
+        },
+        about: {
+          eyebrow: 'Ծրագրի մասին',
+          title: 'PWA ծրագրում ցուցադրվող տվյալներ',
+          description: 'Այստեղ ցուցադրված և խմբագրվող տվյալները նույն app_about աղբյուրից են, որը ծրագիրը օգտագործում է «Ծրագրի մասին» էջում։',
+          actionLabel: 'Գնալ խմբագրման դաշտերին',
+          targetId: 'appAboutPanel',
+          meta: [
+            `Տարբերակ <?= htmlspecialchars((string)$config['app_version'], ENT_QUOTES) ?>`,
+            `Իրավատեր <?= htmlspecialchars((string)($appAbout['owner'] ?? 'PM Studio'), ENT_QUOTES) ?>`,
+            'Լեզուներ 3'
           ]
         },
         maintenance: {
@@ -4121,7 +4467,8 @@ $csrfToken = wp_admin_updates_csrf_token();
           section = 'release';
         }
 
-        const nextSection = section; // 'all' means dashboard view
+        const requestedSection = String(section || '').trim();
+        const nextSection = allowedSectionSet.has(requestedSection) ? requestedSection : 'all';
         
         const dashboardView = document.getElementById('settingsDashboard');
         const contentWrapper = document.getElementById('settingsContentWrapper');
@@ -4144,7 +4491,7 @@ $csrfToken = wp_admin_updates_csrf_token();
           if (dashboardView) dashboardView.hidden = true;
           if (contentWrapper) contentWrapper.hidden = false;
           if (pageHeader) pageHeader.style.display = 'none'; // hide title in detail view for cleaner look
-          if (adminBanner) adminBanner.style.display = 'none'; // optional
+          if (adminBanner) adminBanner.style.display = 'block';
           
           sectionTabs.forEach((tab) => {
             const active = tab.getAttribute('data-section-tab') === nextSection;
@@ -4170,11 +4517,6 @@ $csrfToken = wp_admin_updates_csrf_token();
 
         currentSection = nextSection;
         renderSectionFocus(nextSection);
-
-        try {
-          window.localStorage.setItem(sectionStorageKey, nextSection);
-        } catch (error) {
-        }
 
         scheduleDevicesRefresh(nextSection);
       }
@@ -4961,15 +5303,14 @@ $csrfToken = wp_admin_updates_csrf_token();
         }
       });
 
-      let initialSection = defaultSection || 'all';
-      try {
-        initialSection = window.localStorage.getItem(sectionStorageKey) || defaultSection || 'all';
-      } catch (error) {
-      }
-      // If URL has a specific section, use it.
+      let initialSection = 'all';
+      // Only an explicit, accessible deep link may open a detail section directly.
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('section')) {
-        initialSection = urlParams.get('section');
+        const requestedSection = String(urlParams.get('section') || '').trim();
+        if (allowedSectionSet.has(requestedSection)) {
+          initialSection = requestedSection;
+        }
       }
 
       setActiveSection(initialSection);

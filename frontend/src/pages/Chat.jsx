@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -125,10 +126,11 @@ export default function Chat() {
     const applyChatViewport = () => {
       const viewport = window.visualViewport;
       const height = viewport ? viewport.height : window.innerHeight;
-      const offsetTop = viewport ? viewport.offsetTop : 0;
 
       root.style.setProperty('--chat-vh', `${Math.round(height)}px`);
-      root.style.setProperty('--chat-vv-top', `${Math.round(offsetTop)}px`);
+      if (window.scrollY !== 0) {
+        window.scrollTo(0, 0);
+      }
     };
 
     applyChatViewport();
@@ -136,14 +138,15 @@ export default function Chat() {
     window.visualViewport?.addEventListener('scroll', applyChatViewport);
     window.addEventListener('resize', applyChatViewport);
     window.addEventListener('orientationchange', applyChatViewport);
+    window.addEventListener('scroll', applyChatViewport);
 
     return () => {
       window.visualViewport?.removeEventListener('resize', applyChatViewport);
       window.visualViewport?.removeEventListener('scroll', applyChatViewport);
       window.removeEventListener('resize', applyChatViewport);
       window.removeEventListener('orientationchange', applyChatViewport);
+      window.removeEventListener('scroll', applyChatViewport);
       root.style.removeProperty('--chat-vh');
-      root.style.removeProperty('--chat-vv-top');
     };
   }, []);
 
@@ -485,14 +488,13 @@ export default function Chat() {
     
     return <span className="chat-header-status-text">{t('chat.lastSeen')} {textStr}</span>;
   };
-
   if (loading || authLoading) return null;
 
   const lastOwnMessageId = getLastOwnMessageId();
   const otherLastReadMessageId = Number(chatInfo?.other_last_read_message_id || 0);
-  const canShowSeenState = (chatInfo?.type === 'direct' || !chatInfo?.type) && otherLastReadMessageId >= 0;
+  const canShowSeenState = (chatInfo?.type === 'direct' || !chatInfo?.type);
 
-  return (
+  const chatNode = (
     <div className="chat-page-container">
       {/* HEADER */}
       <div className="chat-header">
@@ -523,9 +525,11 @@ export default function Chat() {
                 </span>
               </>
             ) : (
-              <h2 className="chat-header-name">{chatInfo ? (chatInfo.display_name || t('chat.friendFallback')) : t('chat.chatFallback')}</h2>
+              <>
+                <h2 className="chat-header-name">{chatInfo ? (chatInfo.display_name || t('chat.friendFallback')) : t('chat.chatFallback')}</h2>
+                {renderStatus()}
+              </>
             )}
-            {chatInfo?.type !== 'group' && renderStatus()}
           </div>
         </div>
         <button className="chat-btn-icon" onClick={() => setShowDeleteModal(true)} title={t('chat.deleteTooltip')}>
@@ -567,7 +571,6 @@ export default function Chat() {
               let dateStr = '';
               
               if (m.created_at) {
-                // Fix Safari invalid date parsing by replacing space with T or dashes with slashes
                 const safeDateStr = m.created_at.replace(' ', 'T');
                 const dateObj = new Date(safeDateStr);
                 
@@ -605,10 +608,10 @@ export default function Chat() {
                 }
               }
 
-              const isMe = String(m.user_id) === String(user.id);
-              const isLastOwnMessage = isMe && lastOwnMessageId !== null && String(m.id) === lastOwnMessageId;
-              const isSeen = isLastOwnMessage && !String(m.id).startsWith('temp-') && otherLastReadMessageId >= Number(m.id);
-              
+              const isOwn = String(m.user_id) === String(user?.id);
+              const isLastOwn = canShowSeenState && String(m.id) === String(lastOwnMessageId);
+              const isGroup = chatInfo?.type === 'group';
+
               return (
                 <React.Fragment key={m.id || index}>
                   {showDateSeparator && (
@@ -616,57 +619,62 @@ export default function Chat() {
                       <span>{dateStr}</span>
                     </div>
                   )}
-                  <div className={`chat-message-row ${isMe ? 'me' : 'other'}`}>
+                  <div className={`chat-message-row ${isOwn ? 'me' : 'other'}`}>
                     <div className="chat-message-stack">
                       <div className="chat-bubble">
-                        {!isMe && chatInfo?.type === 'group' && <div className="chat-sender-name">{m.user_name}</div>}
-                        
-                        {/* Custom Rendering for Special Messages */}
-                        {(() => {
-                          const msgText = m.message || '';
-                          
-                          // Handle Song Share
-                          const songMatch = msgText.match(/^\[SONG\|id:(\d+)\|key:([+-]?\d+)\|capo:(\d+)\|title:([^\]]+)\]$/);
-                          if (songMatch) {
-                            const [_, songId, keyStr, capoStr, title] = songMatch;
-                            return (
-                              <div className="chat-song-card" onClick={() => navigate(`/song/${songId}?tkey=${keyStr}&capo=${capoStr}`)}>
-                                <div className="chat-card-icon">🎵</div>
-                                <div className="chat-card-content">
-                                  <strong>{title}</strong>
-                                  <div className="chat-card-meta">
-                                    {t('chat.key')}: {keyStr > 0 ? `+${keyStr}` : keyStr} {capoStr > 0 ? `| Capo: ${capoStr}` : ''}
-                                  </div>
-                                </div>
-                                <div className="chat-card-action">{t('chat.open')}</div>
-                              </div>
-                            );
-                          }
-                          
-                          // Handle Setlist Share
-                          if (m.setlist_id > 0) {
-                            return (
-                              <div className="chat-song-card" onClick={() => navigate(`/setlists/${m.setlist_id}`)}>
-                                <div className="chat-card-icon">📋</div>
-                                <div className="chat-card-content">
-                                  <strong>{msgText || t('chat.sharedSetlist')}</strong>
-                                </div>
-                                <div className="chat-card-action">{t('chat.open')}</div>
-                              </div>
-                            );
-                          }
-                          
-                          // Default Text
-                          return <div className="chat-text">{msgText}</div>;
-                        })()}
-                        
-                        <div className="chat-meta-row">
-                          <div className="chat-time">{new Date(m.created_at.replace(' ', 'T')).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                        {isGroup && !isOwn && (
+                          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#38bdf8', marginBottom: '2px' }}>
+                            {m.user_name || 'Անհայտ'}
+                          </div>
+                        )}
+                        {m.message && <div className="chat-text">{m.message}</div>}
+                        {m.setlist_id > 0 && (
+                          <div 
+                            className="chat-setlist-attachment" 
+                            onClick={async () => {
+                              if (window.confirm(t('chat.importSetlistPrompt', 'Ցանկանու՞մ եք պատճենել այս երգացանկը ձեր հաշվում:'))) {
+                                try {
+                                  const res = await fetch('/chat_api.php?action=import_shared_setlist', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ setlist_id: m.setlist_id })
+                                  });
+                                  const data = await res.json();
+                                  if (data.ok && data.new_id) {
+                                    navigate(`/setlists/${data.new_id}`);
+                                  } else {
+                                    alert(data.error || 'Failed to import');
+                                  }
+                                } catch (err) {
+                                  console.error(err);
+                                }
+                              }
+                            }}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: '10px',
+                              background: 'rgba(0,0,0,0.15)', padding: '10px 12px',
+                              borderRadius: '10px', marginTop: m.message ? '6px' : '0',
+                              cursor: 'pointer', border: '1px solid rgba(255,255,255,0.05)'
+                            }}
+                          >
+                            <div style={{ fontSize: '1.5rem', opacity: 0.8 }}>📋</div>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f0f0f6' }}>{t('chat.sharedSetlist', 'Կիսվել է երգացանկով')}</span>
+                              <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontWeight: 500, marginTop: '2px' }}>{t('chat.openSetlist', 'Բացել երգացանկը')}</span>
+                            </div>
+                          </div>
+                        )}
+                        <div className="chat-time">
+                          {m.created_at ? new Date(m.created_at.replace(' ', 'T')).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                         </div>
                       </div>
-                      {canShowSeenState && isLastOwnMessage && (
-                        <div className={`chat-seen-state ${isSeen ? 'seen' : ''}`}>
-                          {isSeen ? t('chat.seen') : t('chat.sent')}
+                      {isLastOwn && (
+                        <div className="chat-seen-state">
+                          {otherLastReadMessageId >= Number(m.id) ? (
+                            <span style={{ color: '#38bdf8', fontWeight: 600 }}>{t('chat.seen', 'Կարդացված է')}</span>
+                          ) : (
+                            <span>{t('chat.sent', 'Ուղարկված է')}</span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -674,9 +682,9 @@ export default function Chat() {
                 </React.Fragment>
               );
             })}
+            <div ref={messagesEndRef} />
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* INPUT AREA */}
@@ -695,9 +703,11 @@ export default function Chat() {
               }
             }}
             onFocus={() => {
+              window.scrollTo(0, 0);
               setTimeout(() => {
+                window.scrollTo(0, 0);
                 messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-              }, 250);
+              }, 200);
             }}
             autoComplete="off"
             autoCorrect="off"
@@ -758,148 +768,118 @@ export default function Chat() {
               <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.15)' }} />
             </div>
 
-            {/* Group avatar + name */}
-            <div className="group-info-header-drag" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-              {/* Big group avatar */}
-              <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'linear-gradient(135deg,#667eea,#764ba2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', marginBottom: '12px', boxShadow: '0 4px 20px rgba(102,126,234,0.4)' }}>
-                👥
-              </div>
-
-              {/* Editable group name */}
+            {/* Header / Group Name */}
+            <div style={{ padding: '0 20px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
               {editingGroupName ? (
-                <div style={{ display: 'flex', gap: '8px', width: '100%', maxWidth: '320px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '8px', flex: 1, marginRight: '8px' }}>
                   <input
-                    autoFocus
+                    type="text"
                     value={newGroupName}
                     onChange={e => setNewGroupName(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') renameGroup(); if (e.key === 'Escape') setEditingGroupName(false); }}
-                    style={{ flex: 1, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(139,92,246,0.5)', borderRadius: '12px', padding: '8px 14px', color: '#fff', fontSize: '1rem', outline: 'none', textAlign: 'center' }}
+                    style={{ flex: 1, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', color: '#fff', padding: '6px 12px', fontSize: '0.95rem' }}
+                    autoFocus
                   />
-                  <button onClick={renameGroup} style={{ background: '#8b5cf6', border: 'none', borderRadius: '10px', padding: '8px 14px', color: '#fff', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem' }}>✓</button>
-                  <button onClick={() => setEditingGroupName(false)} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: '10px', padding: '8px 12px', color: '#aaa', cursor: 'pointer', fontSize: '0.9rem' }}>✕</button>
+                  <button onClick={saveGroupName} style={{ background: '#38bdf8', border: 'none', borderRadius: '10px', color: '#fff', padding: '6px 12px', cursor: 'pointer', fontWeight: 600 }}>
+                    Պահպանել
+                  </button>
                 </div>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ fontWeight: 700, fontSize: '1.2rem', color: '#fff' }}>
-                    {chatInfo?.display_name || chatInfo?.name}
-                  </div>
-                  {String(chatInfo?.created_by) === String(user?.id) && (
-                    <button onClick={() => { setNewGroupName(chatInfo?.display_name || chatInfo?.name || ''); setEditingGroupName(true); }}
-                      style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: '8px', padding: '4px 8px', color: '#a78bfa', cursor: 'pointer', fontSize: '0.8rem' }}>
-                      ✎
-                    </button>
-                  )}
+                <div>
+                  <h3 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: 700 }}>
+                    {chatInfo?.display_name || chatInfo?.name || t('chat.group')}
+                  </h3>
+                  <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
+                    {groupMembers.length} անդամ
+                  </span>
                 </div>
               )}
-              <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>
-                {groupMembers.length} անդամ
-              </div>
+
+              {!editingGroupName && String(chatInfo?.created_by) === String(user?.id) && (
+                <button onClick={() => { setEditingGroupName(true); setNewGroupName(chatInfo?.display_name || chatInfo?.name || ''); }} style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: '0.85rem' }}>
+                  ✏️ Խմբագրել
+                </button>
+              )}
             </div>
 
-            <div className="group-info-scroll" style={{ overflowY: 'auto', flex: 1, padding: '16px' }}>
+            {/* Members List Scroll */}
+            <div className="group-info-scroll" style={{ overflowY: 'auto', flex: 1, padding: '16px 20px' }}>
               {groupInfoLoading ? (
-                <div style={{ textAlign: 'center', padding: '32px', color: 'rgba(255,255,255,0.4)' }}>
-                  <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⏳</div>
-                  <div style={{ fontSize: '0.9rem' }}>Բեռնվում է...</div>
-                </div>
+                <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', padding: '20px' }}>Բեռնվում է...</div>
               ) : (<>
-
-                {/* MEMBERS SECTION */}
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px', paddingLeft: '4px' }}>
-                  Անդամներ ({groupMembers.length})
-                </div>
-                {groupMembers.map(member => (
-                  <div key={member.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '16px', background: 'rgba(255,255,255,0.04)', marginBottom: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                    <div style={{
-                      width: '42px', height: '42px', borderRadius: '50%',
-                      background: String(member.id) === String(user?.id)
-                        ? 'linear-gradient(135deg,#10b981,#059669)'
-                        : 'linear-gradient(135deg,#667eea,#764ba2)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontWeight: 700, color: '#fff', fontSize: '1.1rem', flexShrink: 0
-                    }}>
-                      {(member.name || member.email || '?').charAt(0).toUpperCase()}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, color: '#fff', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        {member.name || member.email}
-                        {String(member.id) === String(user?.id) && (
-                          <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: 400 }}>(Ես)</span>
-                        )}
-                      </div>
-                      {member.is_creator == 1 && (
-                        <div style={{ fontSize: '0.72rem', color: '#a78bfa', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                          ⭐ Ստեղծող
+                {/* Current Members */}
+                <div style={{ marginBottom: '20px' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
+                    Անդամներ
+                  </div>
+                  {groupMembers.map(member => (
+                    <div key={member.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #38bdf8, #818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: '0.9rem' }}>
+                          {(member.name || member.email || '?').charAt(0).toUpperCase()}
                         </div>
+                        <div>
+                          <div style={{ color: '#fff', fontWeight: 600, fontSize: '0.95rem' }}>
+                            {member.name || member.email} {String(member.id) === String(user?.id) ? '(Դուք)' : ''}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>
+                            {member.role === 'admin' ? '👑 Ադմինիստրատոր' : 'Անդամ'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Remove Member button (Admin only, cannot remove self) */}
+                      {String(chatInfo?.created_by) === String(user?.id) && String(member.id) !== String(user?.id) && (
+                        <button onClick={() => removeGroupMember(member.id)} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', borderRadius: '8px', padding: '4px 10px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                          Հեռացնել
+                        </button>
                       )}
                     </div>
-                    {/* Remove button — only creator can remove non-creators */}
-                    {String(member.id) !== String(user?.id) && String(chatInfo?.created_by) === String(user?.id) && (
-                      <button onClick={() => removeMember(member.id)} style={{
-                        background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
-                        borderRadius: '10px', padding: '5px 10px', color: '#f87171',
-                        fontSize: '0.8rem', cursor: 'pointer', flexShrink: 0, fontWeight: 500
-                      }}>
-                        Հեռացնել
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
 
-                {/* ADD MEMBERS — creator only */}
+                {/* Add Friends Section (Admin only) */}
                 {String(chatInfo?.created_by) === String(user?.id) && groupFriends.length > 0 && (
-                  <div style={{ marginTop: '20px' }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px', paddingLeft: '4px' }}>
-                      ➕ Ավելացնել անդամ
+                  <div style={{ marginBottom: '20px' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '10px' }}>
+                      Ավելացնել ընկերների
                     </div>
                     {groupFriends.map(friend => (
-                      <div key={friend.friend_id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '16px', background: 'rgba(255,255,255,0.03)', marginBottom: '6px', border: '1px solid rgba(139,92,246,0.1)' }}>
-                        <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'linear-gradient(135deg,#06b6d4,#0ea5e9)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: '1.1rem', flexShrink: 0 }}>
-                          {(friend.name || friend.email || '?').charAt(0).toUpperCase()}
+                      <div key={friend.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, color: '#fff', fontSize: '0.9rem' }}>
+                            {(friend.name || friend.email || '?').charAt(0).toUpperCase()}
+                          </div>
+                          <span style={{ color: '#fff', fontWeight: 500, fontSize: '0.95rem' }}>
+                            {friend.name || friend.email}
+                          </span>
                         </div>
-                        <div style={{ flex: 1, fontWeight: 500, color: 'rgba(255,255,255,0.85)', fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {friend.name || friend.email}
-                        </div>
-                        <button onClick={() => addMember(friend.friend_id)} style={{
-                          background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.4)',
-                          borderRadius: '10px', padding: '6px 14px', color: '#c4b5fd',
-                          fontSize: '0.82rem', cursor: 'pointer', flexShrink: 0, fontWeight: 600
-                        }}>
-                          Ավելացնել
+                        <button onClick={() => addGroupMember(friend.id)} style={{ background: 'rgba(56,189,248,0.15)', border: '1px solid rgba(56,189,248,0.4)', color: '#38bdf8', borderRadius: '8px', padding: '4px 12px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}>
+                          + Ավելացնել
                         </button>
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* No friends to add message */}
-                {String(chatInfo?.created_by) === String(user?.id) && groupFriends.length === 0 && (
-                  <div style={{ marginTop: '16px', textAlign: 'center', padding: '12px', color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>
-                    Բոլոր ընկերներն արդեն խմբում են
-                  </div>
-                )}
-
-                {/* DANGER ZONE */}
-                <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                  {/* Leave group — any non-creator member */}
+                {/* Danger zone actions */}
+                <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {/* Leave group — non-creator only */}
                   {String(chatInfo?.created_by) !== String(user?.id) && (
                     <button onClick={leaveGroup} style={{
                       width: '100%', padding: '12px', borderRadius: '14px',
-                      background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-                      color: '#f87171', fontWeight: 600, fontSize: '0.95rem',
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                      marginBottom: '10px'
+                      background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+                      color: '#f87171', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer',
                     }}>
                       🚪 Դուրս գալ խմբից
                     </button>
                   )}
+
                   {/* Delete group — creator only */}
                   {String(chatInfo?.created_by) === String(user?.id) && (
                     <button onClick={() => { closeGroupInfo(); setShowDeleteModal(true); }} style={{
                       width: '100%', padding: '12px', borderRadius: '14px',
                       background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-                      color: '#f87171', fontWeight: 600, fontSize: '0.95rem',
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                      color: '#f87171', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer',
                     }}>
                       🗑️ Ջնջել խումբը
                     </button>
@@ -915,4 +895,11 @@ export default function Chat() {
 
     </div>
   );
+
+  const isMobile = window.innerWidth <= 900 || document.body.classList.contains('mobile-theme');
+  if (isMobile) {
+    return createPortal(chatNode, document.body);
+  }
+
+  return chatNode;
 }

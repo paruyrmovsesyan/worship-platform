@@ -57,7 +57,7 @@ export function getLocalizedTitle(songOrTitle, language) {
       if (songOrTitle.title_lat) return songOrTitle.title_lat;
     }
     // Fallback if the specific language field is missing
-    titleString = songOrTitle.title || songOrTitle.title_hy || songOrTitle.title_ru || songOrTitle.title_en || songOrTitle.title_lat || '';
+    titleString = songOrTitle.title || songOrTitle.song_title || songOrTitle.title_hy || songOrTitle.title_ru || songOrTitle.title_en || songOrTitle.title_lat || '';
   }
 
   if (!titleString) return '';

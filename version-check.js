@@ -20,15 +20,10 @@
   };
 
   function isStandaloneMode() {
-    try {
-      var source = (new URL(window.location.href).searchParams.get("source") || "").toLowerCase();
-      if (source === "pwa" || source === "admin-app") {
-        return true;
-      }
-    } catch (err) {}
-    if (document.documentElement.classList.contains("wp-standalone-app")) return true;
-    if (document.body && document.body.classList.contains("wp-standalone-app")) return true;
-    return !!(window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+    if (window.matchMedia && window.matchMedia("(display-mode: browser)").matches) return false;
+    return !!(window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+      window.navigator.standalone === true ||
+      document.referrer.indexOf("android-app://") !== -1;
   }
 
   function refreshPage(version) {

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+date_default_timezone_set('Asia/Yerevan');
+
 const WP_RUNTIME_SECRET_STORE_PATH = __DIR__ . '/runtime_secret_store.php';
 const WP_RUNTIME_LOCAL_CONFIG_PATH = __DIR__ . '/runtime_local_config.php';
 
@@ -71,24 +73,196 @@ if (!function_exists('wp_runtime_db_config')) {
     }
 }
 
+if (!function_exists('wp_runtime_slow_query_log_path')) {
+    function wp_runtime_slow_query_log_path(): string {
+        $configured = trim((string)wp_runtime_env('WORSHIP_SLOW_QUERY_LOG', ''));
+        return $configured !== '' ? $configured : __DIR__ . '/slow_queries.log';
+    }
+}
+
+if (!function_exists('wp_runtime_slow_query_count_path')) {
+    function wp_runtime_slow_query_count_path(): string {
+        return wp_runtime_slow_query_log_path() . '.count';
+    }
+}
+
+if (!function_exists('wp_runtime_count_existing_slow_queries')) {
+    function wp_runtime_count_existing_slow_queries(): int {
+        $logFile = wp_runtime_slow_query_log_path();
+        if (!is_file($logFile) || !is_readable($logFile)) {
+            return 0;
+        }
+
+        $count = 0;
+        $handle = @fopen($logFile, 'rb');
+        if (!is_resource($handle)) {
+            return 0;
+        }
+
+        while (($line = fgets($handle)) !== false) {
+            if (preg_match('/^\[\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\]/', $line)) {
+                $count++;
+            }
+        }
+        fclose($handle);
+        return $count;
+    }
+}
+
+if (!function_exists('wp_runtime_read_slow_query_count')) {
+    function wp_runtime_read_slow_query_count(): int {
+        $countFile = wp_runtime_slow_query_count_path();
+        if (is_file($countFile) && is_readable($countFile)) {
+            $value = trim((string)@file_get_contents($countFile));
+            if (preg_match('/^\d+$/', $value)) {
+                return (int)$value;
+            }
+        }
+
+        $count = wp_runtime_count_existing_slow_queries();
+        $directory = dirname($countFile);
+        if (is_dir($directory) && is_writable($directory)) {
+            @file_put_contents($countFile, (string)$count, LOCK_EX);
+        }
+        return $count;
+    }
+}
+
+if (!function_exists('wp_runtime_slow_query_threshold')) {
+    function wp_runtime_slow_query_threshold(): float {
+        $configured = (float)wp_runtime_env('WORSHIP_SLOW_QUERY_SECONDS', '1.0');
+        return $configured > 0 ? $configured : 1.0;
+    }
+}
+
+if (!function_exists('wp_runtime_append_slow_query')) {
+    function wp_runtime_append_slow_query(string $query, ?array $params, float $duration): bool {
+        try {
+            $logFile = wp_runtime_slow_query_log_path();
+            $directory = dirname($logFile);
+            if (!is_dir($directory) || !is_writable($directory)) {
+                return false;
+            }
+
+            $time = date('Y-m-d H:i:s');
+            $paramStr = $params ? json_encode($params, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : 'None';
+            $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
+            $caller = 'Unknown';
+            foreach ($trace as $item) {
+                if (isset($item['file']) && basename((string)$item['file']) !== 'runtime_config.php') {
+                    $caller = basename((string)$item['file']) . ':' . (int)($item['line'] ?? 0);
+                    break;
+                }
+            }
+
+            $entry = sprintf(
+                "[%s] Duration: %.3fs | File: %s\nParams: %s\nQuery: %s\n---------------------------\n",
+                $time,
+                $duration,
+                $caller,
+                $paramStr ?: 'None',
+                trim($query)
+            );
+
+            $countHandle = @fopen(wp_runtime_slow_query_count_path(), 'c+');
+            if (is_resource($countHandle) && @flock($countHandle, LOCK_EX)) {
+                rewind($countHandle);
+                $storedCount = trim((string)stream_get_contents($countHandle));
+                $count = preg_match('/^\d+$/', $storedCount)
+                    ? (int)$storedCount
+                    : wp_runtime_count_existing_slow_queries();
+
+                $written = file_put_contents($logFile, $entry, FILE_APPEND | LOCK_EX) !== false;
+                if ($written) {
+                    ftruncate($countHandle, 0);
+                    rewind($countHandle);
+                    fwrite($countHandle, (string)($count + 1));
+                    fflush($countHandle);
+                }
+                flock($countHandle, LOCK_UN);
+                fclose($countHandle);
+                return $written;
+            }
+
+            if (is_resource($countHandle)) {
+                fclose($countHandle);
+            }
+            return file_put_contents($logFile, $entry, FILE_APPEND | LOCK_EX) !== false;
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+}
+
 if (!function_exists('wp_runtime_open_pdo')) {
     function wp_runtime_open_pdo(): PDO {
         $db = wp_runtime_db_config();
-        
-        // Ensure migrations run even if using PDO
-        $tmpConn = new mysqli($db['host'], $db['user'], $db['pass'], $db['name']);
-        if (!$tmpConn->connect_error) {
-            $tmpConn->set_charset($db['charset']);
-            if (function_exists('wp_runtime_ensure_pricing_tables_mysqli')) {
-                wp_runtime_ensure_pricing_tables_mysqli($tmpConn);
+
+        try {
+            // Use the logged mysqli wrapper so schema checks cannot increment
+            // MySQL's slow counter without leaving an application log entry.
+            if (function_exists('wp_runtime_open_mysqli')) {
+                $tmpConn = wp_runtime_open_mysqli();
+                $tmpConn->close();
             }
-            if (function_exists('wp_runtime_ensure_admin_tables_mysqli')) {
-                wp_runtime_ensure_admin_tables_mysqli($tmpConn);
+        } catch (Throwable $e) {}
+
+        if (!class_exists('WpLoggedPDOStatement')) {
+            class WpLoggedPDOStatement extends PDOStatement {
+                protected $pdo;
+                protected function __construct($pdo) {
+                    $this->pdo = $pdo;
+                }
+                public function execute(?array $params = null): bool {
+                    $start = microtime(true);
+                    $res = parent::execute($params);
+                    $duration = microtime(true) - $start;
+                    if ($duration >= wp_runtime_slow_query_threshold()) {
+                        $this->pdo->logSlowQuery($this->queryString, $params, $duration);
+                    }
+                    return $res;
+                }
             }
-            $tmpConn->close();
+
+            class WpLoggedPDO extends PDO {
+                public function __construct($dsn, $user, $pass, $opts) {
+                    parent::__construct($dsn, $user, $pass, $opts);
+                    $this->setAttribute(PDO::ATTR_STATEMENT_CLASS, ['WpLoggedPDOStatement', [$this]]);
+                }
+
+                #[\ReturnTypeWillChange]
+                public function query(string $query, ?int $fetchMode = null, ...$fetchModeArgs) {
+                    $start = microtime(true);
+                    if ($fetchMode !== null) {
+                        $res = parent::query($query, $fetchMode, ...$fetchModeArgs);
+                    } else {
+                        $res = parent::query($query);
+                    }
+                    $duration = microtime(true) - $start;
+                    if ($duration >= wp_runtime_slow_query_threshold()) {
+                        $this->logSlowQuery($query, null, $duration);
+                    }
+                    return $res;
+                }
+
+                #[\ReturnTypeWillChange]
+                public function exec(string $statement): int|false {
+                    $start = microtime(true);
+                    $res = parent::exec($statement);
+                    $duration = microtime(true) - $start;
+                    if ($duration >= wp_runtime_slow_query_threshold()) {
+                        $this->logSlowQuery($statement, null, $duration);
+                    }
+                    return $res;
+                }
+
+                public function logSlowQuery($query, $params, $duration) {
+                    wp_runtime_append_slow_query((string)$query, is_array($params) ? $params : null, (float)$duration);
+                }
+            }
         }
 
-        return new PDO(
+        return new WpLoggedPDO(
             sprintf('mysql:host=%s;dbname=%s;charset=%s', $db['host'], $db['name'], $db['charset']),
             $db['user'],
             $db['pass'],
@@ -100,7 +274,87 @@ if (!function_exists('wp_runtime_open_pdo')) {
 if (!function_exists('wp_runtime_open_mysqli')) {
     function wp_runtime_open_mysqli(): mysqli {
         $db = wp_runtime_db_config();
-        $conn = new mysqli($db['host'], $db['user'], $db['pass'], $db['name']);
+
+        if (!class_exists('WpLoggedMysqliStatement')) {
+            class WpLoggedMysqliStatement extends mysqli_stmt {
+                private string $loggedQuery;
+
+                public function __construct(mysqli $mysql, string $query) {
+                    $this->loggedQuery = $query;
+                    parent::__construct($mysql, $query);
+                }
+
+                public function execute(?array $params = null): bool {
+                    $start = microtime(true);
+                    $result = parent::execute($params);
+                    $duration = microtime(true) - $start;
+                    if ($duration >= wp_runtime_slow_query_threshold()) {
+                        wp_runtime_append_slow_query($this->loggedQuery, $params, $duration);
+                    }
+                    return $result;
+                }
+            }
+        }
+
+        if (!class_exists('WpLoggedMysqli')) {
+            class WpLoggedMysqli extends mysqli {
+                public function query(string $query, int $result_mode = MYSQLI_STORE_RESULT): mysqli_result|bool {
+                    $start = microtime(true);
+                    $result = parent::query($query, $result_mode);
+                    $duration = microtime(true) - $start;
+                    if ($duration >= wp_runtime_slow_query_threshold()) {
+                        wp_runtime_append_slow_query($query, null, $duration);
+                    }
+                    return $result;
+                }
+
+                public function prepare(string $query): mysqli_stmt|false {
+                    $start = microtime(true);
+                    $statement = new WpLoggedMysqliStatement($this, $query);
+                    $duration = microtime(true) - $start;
+                    if ($duration >= wp_runtime_slow_query_threshold()) {
+                        wp_runtime_append_slow_query('[PREPARE] ' . $query, null, $duration);
+                    }
+                    if ($statement->errno !== 0) {
+                        $statement->close();
+                        return false;
+                    }
+                    return $statement;
+                }
+
+                public function execute_query(string $query, ?array $params = null): mysqli_result|bool {
+                    $start = microtime(true);
+                    $result = parent::execute_query($query, $params);
+                    $duration = microtime(true) - $start;
+                    if ($duration >= wp_runtime_slow_query_threshold()) {
+                        wp_runtime_append_slow_query($query, $params, $duration);
+                    }
+                    return $result;
+                }
+
+                public function real_query(string $query): bool {
+                    $start = microtime(true);
+                    $result = parent::real_query($query);
+                    $duration = microtime(true) - $start;
+                    if ($duration >= wp_runtime_slow_query_threshold()) {
+                        wp_runtime_append_slow_query($query, null, $duration);
+                    }
+                    return $result;
+                }
+
+                public function multi_query(string $query): bool {
+                    $start = microtime(true);
+                    $result = parent::multi_query($query);
+                    $duration = microtime(true) - $start;
+                    if ($duration >= wp_runtime_slow_query_threshold()) {
+                        wp_runtime_append_slow_query($query, null, $duration);
+                    }
+                    return $result;
+                }
+            }
+        }
+
+        $conn = new WpLoggedMysqli($db['host'], $db['user'], $db['pass'], $db['name']);
         if ($conn->connect_error) {
             throw new RuntimeException('DB connection failed: ' . $conn->connect_error);
         }
@@ -275,6 +529,78 @@ if (!function_exists('wp_runtime_ensure_pricing_tables_mysqli')) {
                 KEY idx_user (user_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
+        $sessionIndexes = [];
+        $sessionIndexResult = $conn->query("SHOW INDEX FROM user_sessions");
+        if ($sessionIndexResult instanceof mysqli_result) {
+            while ($indexRow = $sessionIndexResult->fetch_assoc()) {
+                $sessionIndexes[(string)($indexRow['Key_name'] ?? '')] = true;
+            }
+            $sessionIndexResult->free();
+        }
+        if (empty($sessionIndexes['idx_last_used'])) {
+            $conn->query("ALTER TABLE user_sessions ADD KEY idx_last_used (last_used_at)");
+        }
+        if (empty($sessionIndexes['idx_user_last_used'])) {
+            $conn->query("ALTER TABLE user_sessions ADD KEY idx_user_last_used (user_id, last_used_at)");
+        }
+
+        // Track browser visitors separately because anonymous website visits do not
+        // create authenticated user_sessions rows.
+        $conn->query("
+            CREATE TABLE IF NOT EXISTS web_activity (
+                visitor_key CHAR(64) NOT NULL,
+                device_key CHAR(64) NULL,
+                user_id INT UNSIGNED NULL,
+                source VARCHAR(20) NOT NULL DEFAULT 'web',
+                is_active TINYINT(1) NOT NULL DEFAULT 1,
+                presence_version TINYINT UNSIGNED NOT NULL DEFAULT 0,
+                platform VARCHAR(40) NOT NULL DEFAULT 'Web',
+                browser VARCHAR(40) NOT NULL DEFAULT 'Unknown',
+                last_path VARCHAR(255) NULL,
+                last_seen DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (visitor_key),
+                KEY idx_last_seen (last_seen),
+                KEY idx_user_last_seen (user_id, last_seen),
+                KEY idx_source_last_seen (source, last_seen),
+                KEY idx_device_key (device_key)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        $webActivityColumns = [];
+        $webActivityColumnResult = $conn->query("SHOW COLUMNS FROM web_activity");
+        if ($webActivityColumnResult instanceof mysqli_result) {
+            while ($columnRow = $webActivityColumnResult->fetch_assoc()) {
+                $webActivityColumns[(string)($columnRow['Field'] ?? '')] = true;
+            }
+            $webActivityColumnResult->free();
+        }
+        if (empty($webActivityColumns['device_key'])) {
+            $conn->query("ALTER TABLE web_activity ADD COLUMN device_key CHAR(64) NULL AFTER visitor_key");
+        }
+        if (empty($webActivityColumns['source'])) {
+            $conn->query("ALTER TABLE web_activity ADD COLUMN source VARCHAR(20) NOT NULL DEFAULT 'web' AFTER user_id");
+        }
+        if (empty($webActivityColumns['is_active'])) {
+            $conn->query("ALTER TABLE web_activity ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER source");
+        }
+        if (empty($webActivityColumns['presence_version'])) {
+            $conn->query("ALTER TABLE web_activity ADD COLUMN presence_version TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER is_active");
+        }
+
+        $webActivityIndexes = [];
+        $webActivityIndexResult = $conn->query("SHOW INDEX FROM web_activity");
+        if ($webActivityIndexResult instanceof mysqli_result) {
+            while ($indexRow = $webActivityIndexResult->fetch_assoc()) {
+                $webActivityIndexes[(string)($indexRow['Key_name'] ?? '')] = true;
+            }
+            $webActivityIndexResult->free();
+        }
+        if (empty($webActivityIndexes['idx_source_last_seen'])) {
+            $conn->query("ALTER TABLE web_activity ADD KEY idx_source_last_seen (source, last_seen)");
+        }
+        if (empty($webActivityIndexes['idx_device_key'])) {
+            $conn->query("ALTER TABLE web_activity ADD KEY idx_device_key (device_key)");
+        }
 
         // 5. Create password_resets table
         $conn->query("

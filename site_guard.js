@@ -7,24 +7,26 @@
     try{
       const path = ((window.location && window.location.pathname) || "/").toLowerCase();
       if(path === "/" || path === "/index.html") return "landing";
-      if(path === "/songs" || path.startsWith("/songs") || path === "/transpose") return "main";
-      if(path.startsWith("/song/")) return "song";
-      if(path === "/favorites") return "favorites";
-      if(path === "/setlists" || path.startsWith("/setlists/")) return "setlists";
-      if(path === "/news") return "news";
-      if(path === "/teams" || path.startsWith("/teams/")) return "teams";
+      if(path === "/songs" || path.startsWith("/songs") || path === "/transpose" || path === "/main.html") return "main";
+      if(path.startsWith("/song/") || path === "/song_view.html") return "song";
+      if(path === "/favorites" || path === "/favorites.html") return "favorites";
+      if(path === "/setlists" || path.startsWith("/setlists") || path === "/setlists.html" || path === "/setlist_view.html" || path === "/setlist_public.html") return "setlists";
+      if(path === "/news" || path.startsWith("/news") || path === "/news.html") return "news";
+      if(path === "/teams" || path.startsWith("/teams")) return "teams";
       if(path === "/community") return "community";
       if(path === "/pricing") return "pricing";
       if(path === "/resources") return "resources";
       if(path === "/song-request") return "song_request";
-      if(path === "/profile" || path === "/settings") return "account";
+      if(path === "/profile" || path === "/settings" || path === "/account" || path === "/account.html") return "account";
       if(
         path === "/loginuser.php" ||
         path === "/registeruser.php" ||
         path === "/forgot_password.php" ||
         path === "/forgot_password_sent.php" ||
         path === "/reset_password.php" ||
-        path === "/verify_email_confirm.php"
+        path === "/verify_email_confirm.php" ||
+        path === "/login" ||
+        path === "/register"
       ) return "auth";
     }catch(e){}
     return "";
@@ -33,12 +35,27 @@
   function isPageDisabledByAdmin(data){
     if(!data) return false;
     const isApp = isStandaloneAppContext();
-    const modesObj = isApp ? data.page_app_modes : data.page_web_modes;
-    
-    if(!modesObj || typeof modesObj !== "object") return false;
     const key = getCurrentPageKey();
-    if(!key || !Object.prototype.hasOwnProperty.call(modesObj, key)) return false;
-    return modesObj[key] === false;
+    if(!key) return false;
+
+    const appModes = data.page_app_modes || {};
+    const webModes = data.page_web_modes || {};
+
+    if (isApp) {
+      if (Object.prototype.hasOwnProperty.call(appModes, key) && appModes[key] === false) {
+        return true;
+      }
+    } else {
+      if (Object.prototype.hasOwnProperty.call(webModes, key) && webModes[key] === false) {
+        return true;
+      }
+    }
+
+    if (appModes[key] === false && webModes[key] === false) {
+      return true;
+    }
+
+    return false;
   }
 
   function applyDynamicMenuHiding(modesObj){
@@ -79,21 +96,12 @@
   }
 
   function isStandaloneAppContext(){
-    try{
-      const source = (new URL(window.location.href).searchParams.get("source") || "").toLowerCase();
-      if(source === "pwa" || source === "admin-app") return true;
-    }catch(e){}
-
-    try{
-      if(document.body && (document.body.classList.contains("wp-main-app") || document.body.classList.contains("wp-admin-app"))){
-        return true;
-      }
-    }catch(e){}
-
-    return (
-      window.matchMedia("(display-mode: standalone)").matches ||
-      window.navigator.standalone === true
-    );
+    if(window.matchMedia("(display-mode: browser)").matches){
+      return false;
+    }
+    return window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true ||
+      document.referrer.indexOf("android-app://") !== -1;
   }
 
   function getDockBottomInset(){
@@ -223,9 +231,19 @@
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       window.navigator.standalone === true;
+    const activitySurface = isStandaloneAppContext() ? "app" : "web";
+    const activityPath = (window.location && window.location.pathname) || "/";
   
     try{
-      const r = await fetch(ENDPOINT + "?_=" + Date.now(), { cache:"no-store" });
+      const params = new URLSearchParams({
+        surface: activitySurface,
+        path: activityPath,
+        _: String(Date.now())
+      });
+      const r = await fetch(ENDPOINT + "?" + params.toString(), {
+        cache:"no-store",
+        credentials:"same-origin"
+      });
       const ct = (r.headers.get("content-type") || "").toLowerCase();
       const isJson = ct.includes("application/json");
 
@@ -327,11 +345,32 @@
     checkStatus();
   }
 
+  // Intercept SPA navigation so route changes re-trigger maintenance check
+  window.addEventListener("popstate", checkStatus);
+
+  const _pushState = history.pushState;
+  if (typeof _pushState === "function") {
+    history.pushState = function() {
+      const res = _pushState.apply(this, arguments);
+      setTimeout(checkStatus, 10);
+      return res;
+    };
+  }
+
+  const _replaceState = history.replaceState;
+  if (typeof _replaceState === "function") {
+    history.replaceState = function() {
+      const res = _replaceState.apply(this, arguments);
+      setTimeout(checkStatus, 10);
+      return res;
+    };
+  }
+
   // optional՝ պարբերաբար ստուգել
   setInterval(function(){
     if (!navigator.onLine) return;
     checkStatus();
-  }, 30000);
+  }, 5000);
 
   // common JSON error fallback (օր. html է գալիս)
   window.addEventListener("unhandledrejection", (e)=>{

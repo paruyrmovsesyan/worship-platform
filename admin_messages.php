@@ -133,7 +133,7 @@ $searchPlaceholder = 'Search messages...';
     <div class="app-content">
       <div class="page-heading">
         <div>
-          <h1>Նամակներ 💬</h1>
+          <h1>Նամակներ</h1>
           <p style="color:var(--muted); margin-top:4px;">Messages from the Contact page</p>
         </div>
       </div>

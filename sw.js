@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v194";
+const CACHE_VERSION = "worship-v240";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -29,12 +29,13 @@ const APP_SHELL = [
   "/nav.css",
   "/loader.js",
   "/pwa-init.js",
+  "/web-activity.js",
   "/app.js",
   "/site_guard.js",
   "/fav_bridge.js",
-  "/assets/index.css",
-  "/assets/index.js",
-  "/manifest.json",
+  "/assets/index.css?v=248",
+  "/assets/index.js?v=248",
+  "/manifest.json?v=10",
   "/favicon.png?v=2",
   "/apple-touch-icon-v7.png",
   "/icon-192-v7.png",
@@ -111,6 +112,15 @@ self.addEventListener("message", function(event) {
     const clientId = event.source && event.source.id ? String(event.source.id) : "";
     if (clientId) {
       APP_CLIENT_IDS.add(clientId);
+    }
+    return;
+  }
+
+  if (event.data.type === "REGISTER_WEB_CLIENT") {
+    const clientId = event.source && event.source.id ? String(event.source.id) : "";
+    if (clientId) {
+      APP_CLIENT_IDS.delete(clientId);
+      CLIENT_USER_SCOPES.delete(clientId);
     }
     return;
   }

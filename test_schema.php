@@ -1,5 +1,7 @@
 <?php
-require_once __DIR__ . '/runtime_config.php';
+require_once 'runtime_config.php';
 $pdo = wp_runtime_open_pdo();
-$stmt = $pdo->query("DESCRIBE users");
-print_r($stmt->fetchAll(PDO::FETCH_ASSOC));
+$stmt = $pdo->query("SHOW CREATE TABLE setlists");
+print_r($stmt->fetch(PDO::FETCH_ASSOC));
+$stmt = $pdo->query("SHOW CREATE TABLE songs");
+print_r($stmt->fetch(PDO::FETCH_ASSOC));

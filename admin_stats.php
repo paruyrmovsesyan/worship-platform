@@ -133,8 +133,9 @@ try {
 
     // Push Subscriptions
     $pushSubCount = 0;
-    $pushWhereCreated = trim($whereCreated) !== '' ? $whereCreated . " AND is_active = 1 AND permission_state = 'granted' AND device_id <> ''" : "WHERE is_active = 1 AND permission_state = 'granted' AND device_id <> ''";
-    $pushWherePrevCreated = trim($wherePrevCreated) !== '' ? $wherePrevCreated . " AND is_active = 1 AND permission_state = 'granted' AND device_id <> ''" : "WHERE is_active = 1 AND permission_state = 'granted' AND device_id <> ''";
+    $pushFilter = "is_active = 1 AND permission_state = 'granted' AND TRIM(endpoint) <> '' AND TRIM(public_key) <> '' AND TRIM(auth_key) <> ''";
+    $pushWhereCreated = trim($whereCreated) !== '' ? $whereCreated . " AND $pushFilter" : "WHERE $pushFilter";
+    $pushWherePrevCreated = trim($wherePrevCreated) !== '' ? $wherePrevCreated . " AND $pushFilter" : "WHERE $pushFilter";
     $r = $conn->query("SELECT COUNT(*) FROM push_subscriptions $pushWhereCreated"); if($r){ $row=$r->fetch_row(); $pushSubCount=(int)($row[0]??0); }
     if ($period !== 'all') { $r = $conn->query("SELECT COUNT(*) FROM push_subscriptions $pushWherePrevCreated"); if($r){ $row=$r->fetch_row(); $prevPushSubCount=(int)($row[0]??0); } }
 
@@ -198,7 +199,7 @@ $searchPlaceholder = 'Search stats...';
     <div class="app-content">
       <div class="page-heading page-heading-row" style="display: flex; justify-content: space-between; align-items: center;">
         <div>
-          <h1><?= __('Statistics') ?> 📊</h1>
+          <h1><?= __('Statistics') ?></h1>
           <p><?= __('Platform analytics and insights') ?></p>
         </div>
         <div>

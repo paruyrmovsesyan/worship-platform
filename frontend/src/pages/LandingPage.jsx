@@ -81,175 +81,175 @@ export default function LandingPage() {
     contentRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const setFilter = (event, filter) => {
+    event.preventDefault();
+    setActiveFilter(filter);
+    setSongPage(0);
+  };
+
+  const ArrowIcon = () => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 12h14M14 7l5 5-5 5" />
+    </svg>
+  );
+
   return (
     <div className="landing-page">
-      {/* Ambient BG */}
-      <div className="rich-ambient-bg">
-        <div className="glow-orb purple" />
-        <div className="glow-orb cyan" />
-      </div>
-
-      {/* ── HERO ── */}
-      <div className="hero-section">
+      <section className="hero-section">
+        <div className="hero-stage-light" aria-hidden="true" />
         <div className="hero-content">
           <h1 className="hero-title">
-            {t('landing.heroTitle1')}<br/>
-            <span className="text-gradient-cyan">{t('landing.heroTitle2')}</span>
+            {t('landing.heroTitle1')}<br />
+            <span>{t('landing.heroTitle2')}</span>
           </h1>
           <p className="hero-subtitle">{t('landing.heroSubtitle')}</p>
           <div className="hero-actions">
-            <button className="btn-start" onClick={() => navigate('/register')} style={{ minWidth: '160px' }}>
-              {t('landing.startBtn')}
+            <button className="btn-start" onClick={() => navigate('/register')}>
+              {t('landing.startBtn')} <ArrowIcon />
             </button>
-            <button className="btn-demo" onClick={() => setShowVideo(true)}>  
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                <path d="M8 5v14l11-7z"/>
-              </svg>
+            <button className="btn-demo" onClick={() => setShowVideo(true)}>
+              <span className="demo-play">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+              </span>
               {t('landing.watchDemo')}
             </button>
           </div>
+          <button className="hero-scroll-link" onClick={scrollToContent}>
+            <span>{t('landing.popularSongs')}</span>
+            <span aria-hidden="true">↓</span>
+          </button>
         </div>
 
-        {/* 3D Mockup */}
-        <div className="hero-mockup-wrapper">
-          <div className="mockup-3d">
-            <div className="mockup-inner">
-              <div className="mockup-header">
-                <span className="dot red" />
-                <span className="dot yellow" />
-                <span className="dot green" />
-              </div>
-              <div className="mockup-body">
-                <div className="m-left">
-                  <div className="m-bar long" />
-                  <div className="m-bar short" />
-                  <div className="m-bar med" />
-                  <div className="m-bar long" />
-                  <div className="m-bar short" />
+        <div className="hero-mockup-wrapper" aria-label="Worship Platform workspace preview">
+          <div className="workspace-preview">
+            <div className="workspace-topbar">
+              <div className="workspace-brand-mark"><i /><i /><i /></div>
+              <span>Sunday Worship</span>
+              <div className="workspace-actions"><i /><i /></div>
+            </div>
+            <div className="workspace-body">
+              <aside className="workspace-sidebar">
+                <span className="workspace-nav-active" />
+                <span /><span /><span /><span />
+              </aside>
+              <div className="workspace-setlist">
+                <div className="workspace-heading">
+                  <div><strong>Sunday Worship</strong><small>9 songs · 42 min</small></div>
+                  <button type="button">Live</button>
                 </div>
-                <div className="m-right">
-                  <div className="m-top-panel" />
-                  <div className="m-bottom-panel" />
-                </div>
+                {[['1', 'Քո սիրով', 'D', '6:30'], ['2', 'Դու մոտ ես', 'G', '5:45'], ['3', 'Բարձր եմ Տեր', 'A', '5:20'], ['4', 'Քո լույսը', 'E', '4:40'], ['5', 'Սուրբ ես', 'C', '6:10']].map((row, index) => (
+                  <div className={`workspace-song ${index === 0 ? 'selected' : ''}`} key={row[0]}>
+                    <span className="workspace-index">{row[0]}</span>
+                    <span className="workspace-song-name"><strong>{row[1]}</strong><small>{row[2]} · {68 + index * 2} BPM</small></span>
+                    <span>{row[3]}</span>
+                    <span className="workspace-more">•••</span>
+                  </div>
+                ))}
               </div>
+              <aside className="workspace-inspector">
+                <small>SONG DETAILS</small>
+                <strong>Քո սիրով</strong>
+                <div className="inspector-rule" />
+                <span>Key <b>D</b></span>
+                <span>Tempo <b>72 BPM</b></span>
+                <span>Time <b>4/4</b></span>
+                <div className="inspector-note" />
+              </aside>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* ── MAIN GRID: Left = Songs, Right = Sidebar ── */}
-      <div className="main-grid" ref={contentRef}>
-
-        {/* LEFT: Popular Songs */}
-        <div>
-          <div className="section-header">
-            <h2>{t('landing.popularSongs')} <span style={{ fontSize: '0.75rem', color: '#5A5A70', fontWeight: 400 }}>page {songPage + 1}/{Math.max(1, Math.ceil(allSongs.length / SONGS_PER_PAGE))}</span></h2>
-            <div className="nav-arrows">
-              <button className="arrow-btn" onClick={() => goToPage(-1)} title="Previous">‹</button>
-              <button className="arrow-btn" onClick={() => goToPage(1)} title="Next">›</button>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="loading-songs">Loading songs…</div>
-          ) : (
-            <div className="popular-grid">
-              {popularSongs.map(song => (
-                <div
-                  key={song.id}
-                  className="song-card"
-                  onClick={() => navigate(`/song/${song.id}`)}
-                >
-                  <div className={`song-cover ${song.img}`}>
-                    {song.title}
-                  </div>
-                  <div className="song-info">
-                    <h4>{song.title}</h4>
-                    <p>{song.artist}</p>
-                    <div className="song-meta">
-                      <span>Key {song.key}</span>
-                      {song.bpm && song.bpm !== '0' && <span>BPM {song.bpm}</span>}
-                    </div>
-                    <div className="song-tags">
-                      {song.tags.map((tag, i) => (
-                        <span key={i} className="tag">{tag}</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT: Filter Nav + Community Picks */}
-        <div className="col-sidebar">
-
-          {/* Filter nav */}
+      <section className="songs-section" ref={contentRef}>
+        <div className="section-heading-row">
           <div>
-            <div className="section-header">
-              <h2>{t('landing.browse')}</h2>
-            </div>
-            <nav className="sidebar-filter-nav">
-              <Link to="#" className={activeFilter === 'songs' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveFilter('songs'); setSongPage(0); }}>{t('landing.browseSongs')}</Link>
-              <Link to="#" className={activeFilter === 'artists' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveFilter('artists'); setSongPage(0); }}>{t('landing.browseArtists')}</Link>
-              <Link to="#" className={activeFilter === 'collections' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveFilter('collections'); setSongPage(0); }}>{t('landing.browseCollections')}</Link>
-              <Link to="#" className={activeFilter === 'key' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveFilter('key'); setSongPage(0); }}>{t('landing.browseByKey')}</Link>
-              <Link to="#" className={activeFilter === 'bpm' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveFilter('bpm'); setSongPage(0); }}>{t('landing.browseByBPM')}</Link>
-            </nav>
+            <h2>{t('landing.popularSongs')}</h2>
+            <p>{t('landing.heroSubtitle')}</p>
           </div>
-
-          {/* Community Picks */}
-          <div>
-            <div className="section-header">
-              <h2>{t('landing.communityPicks')}</h2>
-              <div className="nav-arrows">
-                <button className="arrow-btn">‹</button>
-                <button className="arrow-btn">›</button>
-              </div>
-            </div>
-            <div className="picks-list">
-              {(t('landing.picks', { returnObjects: true }) || []).map((pick, i) => (
-                <div key={i} className="pick-card" onClick={() => navigate('/songs')}>
-                  <div className={`pick-img bg-gradient-${(i * 2) + 1}`} />
-                  <div className="pick-info">
-                    <h4>{pick.title}</h4>
-                    <p>{pick.artist}</p>
-                    <div className="pick-meta">{pick.meta}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
+          <Link className="section-link" to="/songs">{t('landing.browseSongs')} <ArrowIcon /></Link>
         </div>
-      </div>
 
-      {/* ── LATEST NEWS ── */}
-      <div className="latest-news-section">
-        <div className="section-header">
-        <h2>{t('landing.latestNews')}</h2>
-          <div className="nav-arrows">
-            <button className="arrow-btn">‹</button>
-            <button className="arrow-btn">›</button>
+        <nav className="song-filter-nav" aria-label={t('landing.browse')}>
+          {[
+            ['songs', t('landing.browseSongs')],
+            ['artists', t('landing.browseArtists')],
+            ['collections', t('landing.browseCollections')],
+            ['key', t('landing.browseByKey')],
+            ['bpm', t('landing.browseByBPM')],
+          ].map(([filter, label]) => (
+            <Link key={filter} to="#" className={activeFilter === filter ? 'active' : ''} onClick={(event) => setFilter(event, filter)}>
+              {label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="song-table-head" aria-hidden="true">
+          <span>#</span><span>{t('landing.popularSongs')}</span><span>Key</span><span>BPM</span><span />
+        </div>
+        {loading ? (
+          <div className="loading-songs">Loading songs…</div>
+        ) : (
+          <div className="popular-list">
+            {popularSongs.slice(0, 6).map((song, index) => (
+              <button key={song.id} className="song-row" onClick={() => navigate(`/song/${song.id}`)}>
+                <span className="song-number">{String(index + 1 + songPage * SONGS_PER_PAGE).padStart(2, '0')}</span>
+                <span className={`song-art ${song.img}`}><i /></span>
+                <span className="song-copy"><strong>{song.title}</strong><small>{song.artist}</small></span>
+                <span className="song-key">{song.key}</span>
+                <span className="song-bpm">{Number.parseInt(song.bpm, 10) > 0 ? song.bpm : '—'}</span>
+                <span className="song-open"><ArrowIcon /></span>
+              </button>
+            ))}
           </div>
+        )}
+        <div className="list-pagination">
+          <button onClick={() => goToPage(-1)} aria-label="Previous page">←</button>
+          <span>{songPage + 1} / {Math.max(1, Math.ceil(allSongs.length / SONGS_PER_PAGE))}</span>
+          <button onClick={() => goToPage(1)} aria-label="Next page">→</button>
+        </div>
+      </section>
+
+      <section className="community-section">
+        <div className="section-heading-row">
+          <div>
+            <h2>{t('landing.communityPicks')}</h2>
+          </div>
+          <Link className="section-link" to="/community">{t('nav.community')} <ArrowIcon /></Link>
+        </div>
+        <div className="picks-list">
+          {(t('landing.picks', { returnObjects: true }) || []).map((pick, i) => (
+            <button key={i} className="pick-row" onClick={() => navigate('/songs')}>
+              <span className="pick-rank">{String(i + 1).padStart(2, '0')}</span>
+              <span className={`pick-img bg-gradient-${(i * 2) + 1}`} />
+              <span className="pick-info"><strong>{pick.title}</strong><small>{pick.artist}</small></span>
+              <span className="pick-meta">{pick.meta}</span>
+              <span className="pick-arrow"><ArrowIcon /></span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="latest-news-section">
+        <div className="section-heading-row">
+          <div><h2>{t('landing.latestNews')}</h2></div>
+          <Link className="section-link" to="/news">{t('nav.news')} <ArrowIcon /></Link>
         </div>
         <div className="news-row">
           {newsItems.slice(0, 3).map((item, i) => (
-            <div key={item.slug || i} className="news-card" onClick={() => navigate(`/news/${item.slug}`)}>
-              <div
-                className={`news-img img-${i + 1}`}
-                style={item.image_url ? { backgroundImage: `url("${item.image_url}")`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
-              />
+            <article key={item.slug || i} className="news-card" onClick={() => navigate(`/news/${item.slug}`)}>
+              <div className={`news-img img-${i + 1}`} style={item.image_url ? { backgroundImage: `url("${item.image_url}")` } : undefined}>
+                <span>{String(i + 1).padStart(2, '0')}</span>
+              </div>
               <div className="news-content">
                 <span className="news-date">{formatNewsDate(item.published_at || item.date, language)}</span>
-                <h4>{item.title}</h4>
+                <h3>{item.title}</h3>
                 <p>{item.excerpt || item.desc}</p>
+                <span className="news-read"><ArrowIcon /></span>
               </div>
-            </div>
+            </article>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* FOOTER MOVED TO APP.JSX */}
       {/* Video Modal Overlay */}

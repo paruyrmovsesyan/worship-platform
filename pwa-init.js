@@ -23,7 +23,12 @@
   }
 
   function hasNativeStandaloneDisplayMode() {
-    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    if (window.matchMedia("(display-mode: browser)").matches) {
+      return false;
+    }
+    return window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true ||
+      document.referrer.indexOf("android-app://") !== -1;
   }
 
   function getDeclaredAppScope() {
@@ -36,21 +41,22 @@
     }
   }
 
+  function ensureActivityScript() {
+    if (getDeclaredAppScope() === "admin") return;
+    if (document.querySelector('script[data-wp-web-activity="1"]')) return;
+
+    var script = document.createElement("script");
+    script.src = "/web-activity.js?v=10";
+    script.defer = true;
+    script.dataset.wpWebActivity = "1";
+    document.head.appendChild(script);
+  }
+
   function getExpectedAppSource() {
     return getDeclaredAppScope() === "admin" ? "admin-app" : "pwa";
   }
 
   function getActiveAppSource() {
-    try {
-      var source = (new URL(window.location.href).searchParams.get("source") || "").toLowerCase();
-      if (source === "pwa" || source === "admin-app") {
-        window.sessionStorage.setItem(APP_SOURCE_SESSION_KEY, source);
-        return source;
-      }
-    } catch (err) {
-      // ignore URL parsing issues
-    }
-
     if (hasNativeStandaloneDisplayMode()) {
       var expectedSource = getExpectedAppSource();
       try {
@@ -62,33 +68,36 @@
     }
 
     try {
-      var storedSource = (window.sessionStorage.getItem(APP_SOURCE_SESSION_KEY) || "").toLowerCase();
-      if (storedSource === "pwa" || storedSource === "admin-app") {
-        return storedSource;
-      }
+      window.sessionStorage.removeItem(APP_SOURCE_SESSION_KEY);
     } catch (err) {
       // ignore storage issues
     }
-
     return "";
   }
 
   function getCurrentPageAppKey() {
     var path = getCurrentPath().toLowerCase();
     if (path === "/" || path === "/index.html") return "landing";
-    if (path === "/main.html") return "main";
-    if (path === "/song_view.html") return "song";
-    if (path === "/favorites.html") return "favorites";
-    if (path === "/setlists.html" || path === "/setlist_view.html" || path === "/setlist_public.html") return "setlists";
-    if (path === "/account.html") return "account";
-    if (path === "/news.html") return "news";
+    if (path === "/songs" || path.indexOf("/songs") === 0 || path === "/transpose" || path === "/main.html") return "main";
+    if (path.indexOf("/song/") === 0 || path === "/song_view.html") return "song";
+    if (path === "/favorites" || path === "/favorites.html") return "favorites";
+    if (path === "/setlists" || path.indexOf("/setlists") === 0 || path === "/setlists.html" || path === "/setlist_view.html" || path === "/setlist_public.html") return "setlists";
+    if (path === "/account" || path === "/profile" || path === "/settings" || path === "/account.html") return "account";
+    if (path === "/news" || path.indexOf("/news") === 0 || path === "/news.html") return "news";
+    if (path === "/teams" || path.indexOf("/teams") === 0) return "teams";
+    if (path === "/community") return "community";
+    if (path === "/pricing") return "pricing";
+    if (path === "/resources") return "resources";
+    if (path === "/song-request") return "song_request";
     if (
       path === "/loginuser.php" ||
       path === "/registeruser.php" ||
       path === "/forgot_password.php" ||
       path === "/forgot_password_sent.php" ||
       path === "/reset_password.php" ||
-      path === "/verify_email_confirm.php"
+      path === "/verify_email_confirm.php" ||
+      path === "/login" ||
+      path === "/register"
     ) {
       return "auth";
     }
@@ -309,6 +318,7 @@
   refreshPageAppModesFromManifest();
   ensureStandaloneAppChrome();
   syncAppContextCookie();
+  ensureActivityScript();
   if (isStandaloneMode()) {
     writeAppContextCookie(getActiveAppSource());
   }

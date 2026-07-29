@@ -1,5 +1,10 @@
 RewriteEngine On
 
+# Keep a single canonical origin for search engines.
+RewriteCond %{HTTP_HOST} ^(?:www\.)?worship\.pmstudio\.am$ [NC]
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://worship.pmstudio.am%{REQUEST_URI} [R=301,L,NE]
+
 # =========================
 # MAINTENANCE MODE (global)
 # =========================
@@ -10,6 +15,28 @@ ErrorDocument 500 /maintenance.html
 # Default index
 # =========================
 DirectoryIndex index.php index.html
+
+# Slow-query logs may contain SQL and parameter values.
+<FilesMatch "^slow_queries\.log(?:\.count)?$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# Push credentials must never be served over HTTP.
+<FilesMatch "^(?:AuthKey_APNS\.p8|firebase_service_account\.json)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
 
 <IfModule mod_headers.c>
   Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
@@ -41,8 +68,10 @@ RewriteRule ^setlist_view\.html$ /index.php [L]
 RewriteRule ^setlist_edit\.html$ /index.php [L]
 RewriteRule ^song_view\.html$ /index.php [L]
 RewriteRule ^song_request\.html$ /index.php [L]
+RewriteRule ^setlist_public\.html$ /index.php [L]
 RewriteRule ^account\.html$ /index.php [L]
 RewriteRule ^transpose\.html$ /index.php [L]
+RewriteRule ^news-sitemap\.xml$ /news_sitemap.php [L]
 
 # =========================
 # React Router Fallback

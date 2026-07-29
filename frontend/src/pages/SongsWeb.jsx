@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -42,6 +43,7 @@ export default function SongsWeb() {
     new URLSearchParams(location.search).get('q') || ''
   );
   const [visibleCount, setVisibleCount] = useState(15);
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   useEffect(() => {
     setVisibleCount(15);
@@ -51,6 +53,59 @@ export default function SongsWeb() {
     const q = new URLSearchParams(location.search).get('q') || '';
     setSearchQuery(q);
   }, [location.search]);
+
+  const scrollToTop = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const targets = [
+      window,
+      document.documentElement,
+      document.body,
+      document.querySelector('#root'),
+      document.querySelector('.app-container'),
+      document.querySelector('main'),
+      document.querySelector('.songs-web-page'),
+      document.querySelector('.app-main')
+    ].filter(Boolean);
+
+    targets.forEach(target => {
+      try {
+        if (typeof target.scrollTo === 'function') {
+          target.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+        }
+        target.scrollTop = 0;
+      } catch (err) {
+        target.scrollTop = 0;
+      }
+    });
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const mainEl = document.querySelector('main');
+      const rootEl = document.querySelector('#root');
+      const scrollTop = Math.max(
+        window.scrollY || 0,
+        window.pageYOffset || 0,
+        document.documentElement?.scrollTop || 0,
+        document.body?.scrollTop || 0,
+        mainEl?.scrollTop || 0,
+        rootEl?.scrollTop || 0
+      );
+      setShowBackToTop(scrollTop > 200);
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    document.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, { capture: true });
+      document.removeEventListener('scroll', handleScroll, { capture: true });
+    };
+  }, []);
 
   useEffect(() => {
     fetch('/api.php')
@@ -222,7 +277,7 @@ export default function SongsWeb() {
                 : <span className="dim">—</span>}
             </div>
 
-            <div className="col-bpm sw-desk-only dim">{song.bpm || '—'}</div>
+            <div className="col-bpm sw-desk-only dim">{Number.parseInt(song.bpm, 10) > 0 ? song.bpm : '—'}</div>
             <div className="col-artist sw-desk-only dim">{song.artist || ''}</div>
             <div className="col-date sw-desk-only dim">{getTimeAgo(song.created_at)}</div>
 
@@ -257,6 +312,21 @@ export default function SongsWeb() {
           </>
         )}
       </div>
+
+      {showBackToTop && createPortal(
+        <button
+          type="button"
+          className="songs-back-to-top"
+          aria-label={t('songs.backToTop')}
+          title={t('songs.backToTop')}
+          onClick={scrollToTop}
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="m6 15 6-6 6 6" />
+          </svg>
+        </button>,
+        document.body
+      )}
     </div>
   );
 }

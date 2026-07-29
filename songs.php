@@ -271,7 +271,7 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
       <div id="libraryPane" class="workspace-pane is-active">
         <div class="page-header" style="padding-bottom: 0; border: none; align-items: flex-start;">
           <div>
-            <h2 style="font-size: 34px; margin-bottom: 8px; font-weight:800; color:var(--text); letter-spacing:-0.5px;"><?= __('Songs') ?> 😍</h2>
+            <h2 style="font-size: 34px; margin-bottom: 8px; font-weight:800; color:var(--text); letter-spacing:-0.5px;"><?= __('Songs') ?></h2>
             <p id="songsCount" style="margin: 0; font-size:15px; color:var(--muted); font-weight: 500;"><?= __('0 songs in database') ?></p>
           </div>
         </div>
