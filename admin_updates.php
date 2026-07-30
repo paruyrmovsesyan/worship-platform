@@ -1,5 +1,4 @@
 <?php
-// Force sync to server
 declare(strict_types=1);
 
 require_once __DIR__ . '/admin_access.php';
@@ -1551,12 +1550,9 @@ $csrfToken = wp_admin_updates_csrf_token();
 <!doctype html>
 <html lang="hy">
 <head>
-  <?php
-// Force sync to server wp_admin_render_pwa_head('Settings — Worship Platform Admin', ['viewport' => 'width=device-width, initial-scale=1, viewport-fit=cover']); ?>
-  <?php
-// Force sync to server include __DIR__ . '/admin_shared_css.php'; ?>
-  <?php
-// Force sync to server include __DIR__ . '/admin_updates_css.php'; ?>
+  <?php wp_admin_render_pwa_head('Settings — Worship Platform Admin', ['viewport' => 'width=device-width, initial-scale=1, viewport-fit=cover']); ?>
+  <?php include __DIR__ . '/admin_shared_css.php'; ?>
+  <?php include __DIR__ . '/admin_updates_css.php'; ?>
 
 </head>
 <body>
@@ -1634,13 +1630,11 @@ $csrfToken = wp_admin_updates_csrf_token();
 
 <div class="app-layout">
   <?php
-// Force sync to server
     $activePage = "settings";
     include __DIR__ . "/admin_sidebar.php";
   ?>
   <main class="app-main">
     <?php
-// Force sync to server
       $adminDisplayName = trim((string)($adminUser['name'] ?? 'Admin'));
       $adminEmail = trim((string)($adminUser['email'] ?? ''));
       include __DIR__ . '/admin_topbar.php';
@@ -1655,12 +1649,10 @@ $csrfToken = wp_admin_updates_csrf_token();
         
       </div>
 
-      <?php
-// Force sync to server if ($hasAnyAdminSectionAccess): ?>
+      <?php if ($hasAnyAdminSectionAccess): ?>
       <div class="settings-dashboard" id="settingsDashboard">
         <div class="section-switcher grid-view" role="tablist">
-        <?php
-// Force sync to server if (!empty($adminSectionPermissions["release"])): ?>
+        <?php if (!empty($adminSectionPermissions["release"])): ?>
         <button class="section-tab" type="button" data-section-tab="release" aria-selected="false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
           <div class="tab-text">
@@ -1668,10 +1660,8 @@ $csrfToken = wp_admin_updates_csrf_token();
           <small><?= __('Տարբերակներ, հաղորդագրություններ, ZIP փաթեթ և հրապարակում') ?></small>
                   </div>
         </button>
-        <?php
-// Force sync to server endif; ?>
-        <?php
-// Force sync to server if (!empty($adminSectionPermissions["about"])): ?>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["about"])): ?>
         <button class="section-tab" type="button" data-section-tab="about">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
           <div class="tab-text">
@@ -1679,10 +1669,8 @@ $csrfToken = wp_admin_updates_csrf_token();
             <small><?= __('Նկարագրություն, լիցենզիաներ, իրավական տվյալներ և հղումներ') ?></small>
           </div>
         </button>
-        <?php
-// Force sync to server endif; ?>
-        <?php
-// Force sync to server if (!empty($adminSectionPermissions["site_info"])): ?>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["site_info"])): ?>
         <button class="section-tab" type="button" data-section-tab="site_info">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
           <div class="tab-text">
@@ -1690,10 +1678,8 @@ $csrfToken = wp_admin_updates_csrf_token();
             <small><?= __('Կայքի գլխավոր վերնագիր, SEO նկարագրություն, կապի տվյալներ') ?></small>
           </div>
         </button>
-        <?php
-// Force sync to server endif; ?>
-        <?php
-// Force sync to server if (!empty($adminSectionPermissions["maintenance"])): ?>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["maintenance"])): ?>
         <button class="section-tab" type="button" data-section-tab="maintenance">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
           <div class="tab-text">
@@ -1701,10 +1687,8 @@ $csrfToken = wp_admin_updates_csrf_token();
           <small><?= __('Կայքի և ծրագրի անհասանելիության պլանավորում') ?></small>
                   </div>
         </button>
-        <?php
-// Force sync to server endif; ?>
-        <?php
-// Force sync to server if (!empty($adminSectionPermissions["push"])): ?>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["push"])): ?>
         <button class="section-tab" type="button" data-section-tab="push">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
           <div class="tab-text">
@@ -1712,10 +1696,8 @@ $csrfToken = wp_admin_updates_csrf_token();
           <small><?= __('Ուղարկել ծանուցումներ բոլորին կամ կոնկրետ սարքերին') ?></small>
                   </div>
         </button>
-        <?php
-// Force sync to server endif; ?>
-        <?php
-// Force sync to server if (!empty($adminSectionPermissions["devices"])): ?>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["devices"])): ?>
         <button class="section-tab" type="button" data-section-tab="devices">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
           <div class="tab-text">
@@ -1723,10 +1705,8 @@ $csrfToken = wp_admin_updates_csrf_token();
           <small><?= __('Գրանցված սարքերի, տեսակների և ակտիվության կառավարում') ?></small>
                   </div>
         </button>
-        <?php
-// Force sync to server endif; ?>
-        <?php
-// Force sync to server if (!empty($adminSectionPermissions["history"])): ?>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["history"])): ?>
         <button class="section-tab" type="button" data-section-tab="history">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
           <div class="tab-text">
@@ -1734,10 +1714,8 @@ $csrfToken = wp_admin_updates_csrf_token();
           <small><?= __('Նախկին թողարկումների և թարմացումների արխիվ') ?></small>
                   </div>
         </button>
-        <?php
-// Force sync to server endif; ?>
-        <?php
-// Force sync to server if (!empty($adminSectionPermissions["access"])): ?>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["access"])): ?>
         <button class="section-tab" type="button" data-section-tab="access">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
           <div class="tab-text">
@@ -1745,10 +1723,8 @@ $csrfToken = wp_admin_updates_csrf_token();
           <small><?= __('Ադմինների և համակարգի թույլտվությունների կառավարում') ?></small>
                   </div>
         </button>
-        <?php
-// Force sync to server endif; ?>
-        <?php
-// Force sync to server if (!empty($adminSectionPermissions["moderation"])): ?>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["moderation"])): ?>
         <button class="section-tab" type="button" data-section-tab="moderation">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
           <div class="tab-text">
@@ -1756,10 +1732,8 @@ $csrfToken = wp_admin_updates_csrf_token();
           <small><?= __('Օգտատերերի գործողությունների վերահսկում') ?></small>
                   </div>
         </button>
-        <?php
-// Force sync to server endif; ?>
-        <?php
-// Force sync to server if (!empty($adminSectionPermissions["translations"])): ?>
+        <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["translations"])): ?>
         <button class="section-tab" type="button" data-section-tab="translations">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
           <div class="tab-text">
@@ -1767,8 +1741,7 @@ $csrfToken = wp_admin_updates_csrf_token();
           <small><?= __('Համակարգի բառարանների և տեքստերի կառավարում') ?></small>
                   </div>
         </button>
-        <?php
-// Force sync to server endif; ?>
+        <?php endif; ?>
         </div>
       </div>
       
@@ -1779,8 +1752,7 @@ $csrfToken = wp_admin_updates_csrf_token();
             <?= __('Վերադառնալ կարգավորումներին') ?>
           </button>
         </div>
-      <?php
-// Force sync to server endif; ?>
+      <?php endif; ?>
 
       <div
       class="banner <?= htmlspecialchars($messageType, ENT_QUOTES) ?>"
@@ -1788,16 +1760,14 @@ $csrfToken = wp_admin_updates_csrf_token();
       <?= $message !== '' ? '' : 'hidden' ?>
     ><?= htmlspecialchars($message, ENT_QUOTES) ?></div>
 
-    <?php
-// Force sync to server if (!$hasAnyAdminSectionAccess): ?>
+    <?php if (!$hasAnyAdminSectionAccess): ?>
     <section class="settings-group">
       <div class="settings-group-header">
               <h3><?= __('Բաժինների հասանելիություն չկա') ?></h3>
               <p><?= __('Այս օգտահաշվի համար ադմին բաժինների թույլտվություններ դեռ միացված չեն։ Խնդրիր լիազորված ադմինին՝ միացնել անհրաժեշտ բաժինները') ?> <code><?= __('Մուտքեր') ?></code> <?= __('բաժնից։') ?></p>
             </div>
     </section>
-    <?php
-// Force sync to server endif; ?>
+    <?php endif; ?>
 
     <section class="section-focus" id="sectionFocusBar" aria-live="polite"<?= $hasAnyAdminSectionAccess ? '' : ' hidden' ?>>
       <div class="section-focus-copy">
@@ -1875,11 +1845,9 @@ $csrfToken = wp_admin_updates_csrf_token();
                   <div class="form-field" style="margin-bottom:0;">
                     <label for="app_release_type"><?= __('Տեսակ') ?></label>
                     <select id="app_release_type" name="app_release_type">
-                      <?php
-// Force sync to server foreach ($releaseTypes as $releaseTypeValue => $releaseTypeLabel): ?>
+                      <?php foreach ($releaseTypes as $releaseTypeValue => $releaseTypeLabel): ?>
                         <option value="<?= htmlspecialchars($releaseTypeValue, ENT_QUOTES) ?>" <?= (string)$releaseFormConfig['app_release_type'] === $releaseTypeValue ? 'selected' : '' ?>><?= htmlspecialchars($releaseTypeLabel, ENT_QUOTES) ?></option>
-                      <?php
-// Force sync to server endforeach; ?>
+                      <?php endforeach; ?>
                     </select>
                   </div>
                 </div>
@@ -1913,11 +1881,9 @@ $csrfToken = wp_admin_updates_csrf_token();
                   <div class="form-field" style="margin-bottom:0;">
                     <label for="web_release_type"><?= __('Տեսակ') ?></label>
                     <select id="web_release_type" name="web_release_type">
-                      <?php
-// Force sync to server foreach ($releaseTypes as $releaseTypeValue => $releaseTypeLabel): ?>
+                      <?php foreach ($releaseTypes as $releaseTypeValue => $releaseTypeLabel): ?>
                         <option value="<?= htmlspecialchars($releaseTypeValue, ENT_QUOTES) ?>" <?= (string)$releaseFormConfig['web_release_type'] === $releaseTypeValue ? 'selected' : '' ?>><?= htmlspecialchars($releaseTypeLabel, ENT_QUOTES) ?></option>
-                      <?php
-// Force sync to server endforeach; ?>
+                      <?php endforeach; ?>
                     </select>
                   </div>
                 </div>
@@ -1957,11 +1923,9 @@ $csrfToken = wp_admin_updates_csrf_token();
               <div class="form-field">
                 <label for="server_package_mode"><?= __('Ռեժիմ') ?></label>
                 <select id="server_package_mode" name="server_package_mode">
-                  <?php
-// Force sync to server foreach ($packageModes as $packageModeValue => $packageModeLabel): ?>
+                  <?php foreach ($packageModes as $packageModeValue => $packageModeLabel): ?>
                     <option value="<?= htmlspecialchars($packageModeValue, ENT_QUOTES) ?>" <?= $packageMode === $packageModeValue ? 'selected' : '' ?>><?= htmlspecialchars($packageModeLabel, ENT_QUOTES) ?></option>
-                  <?php
-// Force sync to server endforeach; ?>
+                  <?php endforeach; ?>
                 </select>
               </div>
               <div class="form-field" style="margin-bottom:0;">
@@ -2008,25 +1972,21 @@ $csrfToken = wp_admin_updates_csrf_token();
           </div>
 
           <div class="bento-grid cols-3">
-            <?php
-// Force sync to server foreach (['hy' => 'Հայերեն', 'en' => 'English', 'ru' => 'Русский'] as $langCode => $langLabel): ?>
+            <?php foreach (['hy' => 'Հայերեն', 'en' => 'English', 'ru' => 'Русский'] as $langCode => $langLabel): ?>
               <div class="form-field">
                 <label for="app_about_tagline_<?= $langCode ?>"><?= __('Կարճ նկարագրություն') ?> · <?= $langLabel ?></label>
                 <textarea id="app_about_tagline_<?= $langCode ?>" name="app_about_tagline_<?= $langCode ?>" maxlength="300" rows="3"><?= htmlspecialchars((string)($appAbout['tagline'][$langCode] ?? ''), ENT_QUOTES) ?></textarea>
               </div>
-            <?php
-// Force sync to server endforeach; ?>
+            <?php endforeach; ?>
           </div>
 
           <div class="bento-grid cols-3">
-            <?php
-// Force sync to server foreach (['hy' => 'Հայերեն', 'en' => 'English', 'ru' => 'Русский'] as $langCode => $langLabel): ?>
+            <?php foreach (['hy' => 'Հայերեն', 'en' => 'English', 'ru' => 'Русский'] as $langCode => $langLabel): ?>
               <div class="form-field">
                 <label for="app_about_license_<?= $langCode ?>"><?= __('Լիցենզիայի նկարագրություն') ?> · <?= $langLabel ?></label>
                 <textarea id="app_about_license_<?= $langCode ?>" name="app_about_license_<?= $langCode ?>" maxlength="1500" rows="5"><?= htmlspecialchars((string)($appAbout['license_text'][$langCode] ?? ''), ENT_QUOTES) ?></textarea>
               </div>
-            <?php
-// Force sync to server endforeach; ?>
+            <?php endforeach; ?>
           </div>
 
           <div class="bento-grid cols-2">
@@ -2178,8 +2138,7 @@ $csrfToken = wp_admin_updates_csrf_token();
               </div>
               
               <div class="bento-grid cols-2" style="gap:12px;">
-                <?php
-// Force sync to server 
+                <?php 
                 $platforms = ['ios' => 'iOS', 'android' => 'Android', 'windows' => 'Windows', 'macos' => 'macOS', 'linux' => 'Linux'];
                 foreach ($platforms as $pk => $plabel): 
                   $isChecked = in_array($pk, $config['blocked_os_list'] ?? []);
@@ -2194,8 +2153,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                     <span class="toggle-slider"></span>
                   </div>
                 </label>
-                <?php
-// Force sync to server endforeach; ?>
+                <?php endforeach; ?>
               </div>
               <div class="chips" style="margin-top:12px">
                 <div class="autosave-status chip" id="maintenanceAutosaveStatus" data-state="idle" style="width:100%;justify-content:center;"><?= __('Փոփոխությունները կպահպանվեն ավտոմատ') ?></div>
@@ -2212,10 +2170,8 @@ $csrfToken = wp_admin_updates_csrf_token();
                 <div>
                   <div class="eyebrow"><?= __('Ծրագիր (PWA)') ?></div>
                   <input type="hidden" name="page_app_modes_present" value="1">
-                  <?php
-// Force sync to server foreach ($pageAppRegistry as $pageKey => $pageMeta): ?>
-                    <?php
-// Force sync to server $pageEnabled = !empty(($config['page_app_modes'] ?? [])[$pageKey]); ?>
+                  <?php foreach ($pageAppRegistry as $pageKey => $pageMeta): ?>
+                    <?php $pageEnabled = !empty(($config['page_app_modes'] ?? [])[$pageKey]); ?>
                     <div class="form-field row" style="border-bottom: 1px solid #f1f5f9; padding-bottom:6px; margin-bottom:6px;" title="<?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?>">
                       <label style="font-size:12px; font-weight:600; text-transform:none; color:var(--text); cursor:help;"><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></label>
                       <label class="toggle-switch mini">
@@ -2223,17 +2179,14 @@ $csrfToken = wp_admin_updates_csrf_token();
                         <span class="toggle-slider"></span>
                       </label>
                     </div>
-                  <?php
-// Force sync to server endforeach; ?>
+                  <?php endforeach; ?>
                 </div>
 
                 <div>
                   <div class="eyebrow"><?= __('Կայք (Web)') ?></div>
                   <input type="hidden" name="page_web_modes_present" value="1">
-                  <?php
-// Force sync to server foreach ($pageWebRegistry as $pageKey => $pageMeta): ?>
-                    <?php
-// Force sync to server $pageEnabled = !empty(($config['page_web_modes'] ?? [])[$pageKey]); ?>
+                  <?php foreach ($pageWebRegistry as $pageKey => $pageMeta): ?>
+                    <?php $pageEnabled = !empty(($config['page_web_modes'] ?? [])[$pageKey]); ?>
                     <div class="form-field row" style="border-bottom: 1px solid #f1f5f9; padding-bottom:6px; margin-bottom:6px;" title="<?= htmlspecialchars((string)($pageMeta['description'] ?? ''), ENT_QUOTES) ?>">
                       <label style="font-size:12px; font-weight:600; text-transform:none; color:var(--text); cursor:help;"><?= htmlspecialchars((string)($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></label>
                       <label class="toggle-switch mini">
@@ -2241,8 +2194,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                         <span class="toggle-slider"></span>
                       </label>
                     </div>
-                  <?php
-// Force sync to server endforeach; ?>
+                  <?php endforeach; ?>
                 </div>
               </div>
 
@@ -2267,11 +2219,9 @@ $csrfToken = wp_admin_updates_csrf_token();
               <p style="font-size:13px; color:var(--text); line-height:1.4; margin:0 0 12px;"><?= __('Կոնկրետ որ օգտատիրոջ հաշվով ես աշխատում ադմին վահանակում այս պահին։') ?></p>
               <div class="chips">
                 <div class="chip primary"><?= htmlspecialchars((string)($adminUser['name'] ?? 'Օգտատեր'), ENT_QUOTES) ?></div>
-                <?php
-// Force sync to server if (!empty($adminUser['email'])): ?>
+                <?php if (!empty($adminUser['email'])): ?>
                   <div class="chip"><?= htmlspecialchars((string)$adminUser['email'], ENT_QUOTES) ?></div>
-                <?php
-// Force sync to server endif; ?>
+                <?php endif; ?>
               </div>
             </div>
 
@@ -2327,8 +2277,7 @@ $csrfToken = wp_admin_updates_csrf_token();
 
             <div class="permission-list" id="permissionList" style="margin-top:16px; display:flex; flex-direction:column; gap:12px;">
               <input type="hidden" name="admin_permission_rows_present" value="1">
-              <?php
-// Force sync to server foreach ($adminPermissionRows as $index => $row): ?>
+              <?php foreach ($adminPermissionRows as $index => $row): ?>
                 <div class="bento-card" data-permission-row style="padding:16px; background:#f8fafc; border-radius:12px; box-shadow:none;">
                   <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:12px;">
                     <div class="form-field" style="margin:0; flex:1; max-width:300px;">
@@ -2337,20 +2286,17 @@ $csrfToken = wp_admin_updates_csrf_token();
                     <button class="btn btn-ghost danger" type="button" data-remove-permission-row style="padding:4px 8px; font-size:12px;"><?= __('Հեռացնել') ?></button>
                   </div>
                   <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:12px;">
-                    <?php
-// Force sync to server foreach ($adminSectionRegistry as $sectionKey => $sectionMeta): ?>
+                    <?php foreach ($adminSectionRegistry as $sectionKey => $sectionMeta): ?>
                       <label class="permission-check" style="margin:0; background:#fff; padding:8px 12px; border-radius:8px; border:1px solid #e2e8f0; display:flex; align-items:center; gap:8px; cursor:pointer;">
                         <input type="checkbox" name="admin_permission_rows[<?= (int)$index ?>][sections][<?= htmlspecialchars($sectionKey, ENT_QUOTES) ?>]" value="1" <?= !empty($row['permissions'][$sectionKey]) ? 'checked' : '' ?>>
                         <span style="font-size:13px; color:var(--text);">
                           <strong><?= htmlspecialchars((string)($sectionMeta['label'] ?? $sectionKey), ENT_QUOTES) ?></strong>
                         </span>
                       </label>
-                    <?php
-// Force sync to server endforeach; ?>
+                    <?php endforeach; ?>
                   </div>
                 </div>
-              <?php
-// Force sync to server endforeach; ?>
+              <?php endforeach; ?>
             </div>
           </div>
 
@@ -2451,19 +2397,15 @@ $csrfToken = wp_admin_updates_csrf_token();
               </div>
             </form>
 
-            <?php
-// Force sync to server if (!$moderationRequests): ?>
+            <?php if (!$moderationRequests): ?>
               <div class="history-item" style="margin-top:16px">
                 <div class="history-title"><?= __('Հարցումներ չեն գտնվել') ?></div>
                 <div class="note"><?= __('Ընթացիկ զտման պայմաններով մոդերացիայի հերթում գրառում չկա։') ?></div>
               </div>
-            <?php
-// Force sync to server else: ?>
+            <?php else: ?>
               <div class="stack" style="margin-top:16px">
-                <?php
-// Force sync to server foreach ($moderationRequests as $request): ?>
+                <?php foreach ($moderationRequests as $request): ?>
                   <?php
-// Force sync to server
                     $requestId = (int)($request['id'] ?? 0);
                     $requestStatus = (string)($request['status'] ?? 'pending');
                     $requestType = (string)($request['request_type'] ?? 'edit');
@@ -2492,36 +2434,27 @@ $csrfToken = wp_admin_updates_csrf_token();
                         <h4 style="margin:0; font-size:18px; color:var(--text);"><?= htmlspecialchars($requestTitleValue !== '' ? $requestTitleValue : 'Անվերնագիր հարցում', ENT_QUOTES) ?></h4>
                         <div style="font-size:13px; color:var(--muted); margin-top:4px;">
                           <?= __('Առաջարկող:') ?> <strong><?= htmlspecialchars((string)($request['submitted_by_name'] ?: $request['submitted_by_email'] ?: 'Անանուն'), ENT_QUOTES) ?></strong>
-                          <?php
-// Force sync to server if (!empty($request['submitted_by_email'])): ?>
+                          <?php if (!empty($request['submitted_by_email'])): ?>
                             <span style="color:var(--primary);">(<?= htmlspecialchars((string)$request['submitted_by_email'], ENT_QUOTES) ?>)</span>
-                          <?php
-// Force sync to server endif; ?>
+                          <?php endif; ?>
                         </div>
                       </div>
-                      <?php
-// Force sync to server if (!empty($request['song_id'])): ?>
+                      <?php if (!empty($request['song_id'])): ?>
                         <div class="chip" style="background:var(--primary); color:#fff; border:none;">Song #<?= (int)$request['song_id'] ?></div>
-                      <?php
-// Force sync to server endif; ?>
+                      <?php endif; ?>
                     </div>
 
-                    <?php
-// Force sync to server if ($requestMessageValue !== ''): ?>
+                    <?php if ($requestMessageValue !== ''): ?>
                       <div style="background:#fef3c7; border-left:4px solid #f59e0b; padding:12px; border-radius:4px; font-size:13px; margin-bottom:16px;">
                         <strong><?= __('Մեկնաբանություն:') ?></strong> <?= htmlspecialchars($requestMessageValue, ENT_QUOTES) ?>
                       </div>
-                    <?php
-// Force sync to server endif; ?>
+                    <?php endif; ?>
 
-                    <?php
-// Force sync to server if ($requestType === 'edit' && $requestChanges): ?>
+                    <?php if ($requestType === 'edit' && $requestChanges): ?>
                       <div style="font-size:13px; font-weight:600; margin-bottom:8px; border-bottom:1px solid var(--border); padding-bottom:4px;"><?= __('Խմբագրման տարբերությունները') ?> (<?= count($requestChanges) ?>)</div>
                       <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
-                        <?php
-// Force sync to server foreach ($requestChanges as $change): ?>
+                        <?php foreach ($requestChanges as $change): ?>
                           <?php
-// Force sync to server
                             $changeLabel = (string)($change['label'] ?? 'Դաշտ');
                             $changeKind = (string)($change['kind'] ?? 'changed');
                             $changeKindLabel = match ($changeKind) {
@@ -2541,36 +2474,27 @@ $csrfToken = wp_admin_updates_csrf_token();
                             <div class="bento-split-even" style="gap:0; grid-template-columns:1fr 1fr;">
                               <div style="padding:12px; border-right:1px solid var(--border); background:#fff5f5;">
                                 <div style="font-size:11px; color:#991b1b; font-weight:600; text-transform:uppercase; margin-bottom:4px;"><?= __('Ընթացիկ (Հին)') ?></div>
-                                <?php
-// Force sync to server if ($isLongChange): ?>
+                                <?php if ($isLongChange): ?>
                                   <pre style="margin:0; font-size:12px; white-space:pre-wrap; word-break:break-word; max-height:150px; overflow-y:auto;"><?= htmlspecialchars($beforeValue, ENT_QUOTES) ?></pre>
-                                <?php
-// Force sync to server else: ?>
+                                <?php else: ?>
                                   <div style="font-size:13px; word-break:break-word;"><?= htmlspecialchars($beforeValue, ENT_QUOTES) ?></div>
-                                <?php
-// Force sync to server endif; ?>
+                                <?php endif; ?>
                               </div>
                               <div style="padding:12px; background:#f0fdf4;">
                                 <div style="font-size:11px; color:#166534; font-weight:600; text-transform:uppercase; margin-bottom:4px;"><?= __('Առաջարկված (Նոր)') ?></div>
-                                <?php
-// Force sync to server if ($isLongChange): ?>
+                                <?php if ($isLongChange): ?>
                                   <pre style="margin:0; font-size:12px; white-space:pre-wrap; word-break:break-word; max-height:150px; overflow-y:auto;"><?= htmlspecialchars($afterValue, ENT_QUOTES) ?></pre>
-                                <?php
-// Force sync to server else: ?>
+                                <?php else: ?>
                                   <div style="font-size:13px; word-break:break-word;"><?= htmlspecialchars($afterValue, ENT_QUOTES) ?></div>
-                                <?php
-// Force sync to server endif; ?>
+                                <?php endif; ?>
                               </div>
                             </div>
                           </div>
-                        <?php
-// Force sync to server endforeach; ?>
+                        <?php endforeach; ?>
                       </div>
-                    <?php
-// Force sync to server endif; ?>
+                    <?php endif; ?>
 
-                    <?php
-// Force sync to server if ($requestType === 'new'): ?>
+                    <?php if ($requestType === 'new'): ?>
                       <div style="font-size:13px; font-weight:600; margin-bottom:8px; border-bottom:1px solid var(--border); padding-bottom:4px;"><?= __('Նոր Երգի Տվյալներ') ?></div>
                       <div class="bento-grid cols-2" style="gap:16px; margin-bottom:16px; background:#f8fafc; padding:16px; border-radius:8px; border:1px solid var(--border);">
                         <div>
@@ -2586,29 +2510,23 @@ $csrfToken = wp_admin_updates_csrf_token();
                           </ul>
                         </div>
                         <div style="display:flex; flex-direction:column; gap:12px;">
-                          <?php
-// Force sync to server if (!empty($request['chords'])): ?>
+                          <?php if (!empty($request['chords'])): ?>
                             <div>
                               <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;"><?= __('Ակորդներ') ?></div>
                               <pre style="margin:0; padding:8px; background:#fff; border:1px solid var(--border); border-radius:4px; font-size:11px; max-height:100px; overflow-y:auto;"><?= htmlspecialchars((string)$request['chords'], ENT_QUOTES) ?></pre>
                             </div>
-                          <?php
-// Force sync to server endif; ?>
-                          <?php
-// Force sync to server if (!empty($request['lyrics'])): ?>
+                          <?php endif; ?>
+                          <?php if (!empty($request['lyrics'])): ?>
                             <div>
                               <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;"><?= __('Բառեր') ?></div>
                               <pre style="margin:0; padding:8px; background:#fff; border:1px solid var(--border); border-radius:4px; font-size:11px; max-height:100px; overflow-y:auto;"><?= htmlspecialchars((string)$request['lyrics'], ENT_QUOTES) ?></pre>
                             </div>
-                          <?php
-// Force sync to server endif; ?>
+                          <?php endif; ?>
                         </div>
                       </div>
-                    <?php
-// Force sync to server endif; ?>
+                    <?php endif; ?>
 
-                    <?php
-// Force sync to server if ($requestStatus === 'pending'): ?>
+                    <?php if ($requestStatus === 'pending'): ?>
                       <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
                         <form method="post" data-moderation-decision-form="1" style="margin:0; display:flex; flex-direction:column; gap:12px;">
                           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
@@ -2623,8 +2541,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                           </div>
                         </form>
                       </div>
-                    <?php
-// Force sync to server else: ?>
+                    <?php else: ?>
                       <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px; font-size:13px;">
                         <strong><?= __('Որոշում:') ?></strong> 
                         <span style="color:<?= $requestStatus === 'approved' ? 'var(--success)' : 'var(--danger)' ?>;"><?= htmlspecialchars((string)($request['review_note'] ?? 'Առանց նշումի'), ENT_QUOTES) ?></span>
@@ -2632,14 +2549,11 @@ $csrfToken = wp_admin_updates_csrf_token();
                           <?= __('Ադմին՝') ?> <?= htmlspecialchars((string)($request['reviewed_by_name'] ?? 'admin'), ENT_QUOTES) ?> • <?= htmlspecialchars(wp_version_format_datetime_admin((string)($request['reviewed_at'] ?? '')) ?: '—', ENT_QUOTES) ?>
                         </div>
                       </div>
-                    <?php
-// Force sync to server endif; ?>
+                    <?php endif; ?>
                   </article>
-                <?php
-// Force sync to server endforeach; ?>
+                <?php endforeach; ?>
               </div>
-            <?php
-// Force sync to server endif; ?>
+            <?php endif; ?>
           </section>
         </div>
       </div>
@@ -2699,8 +2613,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                 <label for="translation_song_id" style="font-size:12px;"><?= __('Երգը ցանկից') ?></label>
                 <select class="input-field" id="translation_song_id" name="translation_song_id" style="padding:8px;">
                   <option value=""><?= __('Ընտրիր երգը') ?></option>
-                  <?php
-// Force sync to server foreach ($translationSongOptions as $songOption): ?>
+                  <?php foreach ($translationSongOptions as $songOption): ?>
                     <option
                       value="<?= (int)$songOption['id'] ?>"
                       data-title="<?= htmlspecialchars((string)$songOption['title'], ENT_QUOTES) ?>"
@@ -2711,8 +2624,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                     >
                       #<?= (int)$songOption['id'] ?> — <?= htmlspecialchars((string)$songOption['title'], ENT_QUOTES) ?>
                     </option>
-                  <?php
-// Force sync to server endforeach; ?>
+                  <?php endforeach; ?>
                 </select>
               </div>
               <div class="form-field" style="margin:0;">
@@ -2766,16 +2678,13 @@ $csrfToken = wp_admin_updates_csrf_token();
 
             <div class="autosave-status" id="translationActionStatus" data-state="idle" style="margin-bottom:16px;"><?= __('Պատրաստ է կառավարման համար') ?></div>
 
-            <?php
-// Force sync to server if (!$translationEntries): ?>
+            <?php if (!$translationEntries): ?>
               <div style="padding:32px; text-align:center; color:var(--muted); background:#f8fafc; border-radius:12px;">
                 <?= __('Ընթացիկ զտման պայմաններով cache-ում թարգմանված գրառում չի գտնվել։') ?>
               </div>
-            <?php
-// Force sync to server else: ?>
+            <?php else: ?>
               <div style="display:flex; flex-direction:column; gap:16px;">
-                <?php
-// Force sync to server foreach ($translationEntries as $entry): ?>
+                <?php foreach ($translationEntries as $entry): ?>
                   <article class="bento-card" data-translation-entry style="padding:16px; border:1px solid var(--border); box-shadow:none;">
                     <input type="hidden" data-translation-lang value="<?= htmlspecialchars((string)$entry['lang'], ENT_QUOTES) ?>">
                     <input type="hidden" data-translation-context value="<?= htmlspecialchars((string)$entry['context'], ENT_QUOTES) ?>">
@@ -2808,11 +2717,9 @@ $csrfToken = wp_admin_updates_csrf_token();
                       <button class="btn btn-primary" type="button" data-translation-save-entry style="padding:6px 16px; font-size:12px;"><?= __('Պահպանել') ?></button>
                     </div>
                   </article>
-                <?php
-// Force sync to server endforeach; ?>
+                <?php endforeach; ?>
               </div>
-            <?php
-// Force sync to server endif; ?>
+            <?php endif; ?>
           </div>
         </form>
       </div>
@@ -2919,14 +2826,11 @@ $csrfToken = wp_admin_updates_csrf_token();
                 <div style="background: rgba(67,24,255,0.03); border: 1px solid var(--line); border-radius: 12px; padding: 16px;">
                   <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                     <strong style="font-size: 0.9rem;">🍏 iOS APNS AuthKey (.p8)</strong>
-                    <?php
-// Force sync to server if ($apnsCredentialAvailable): ?>
+                    <?php if ($apnsCredentialAvailable): ?>
                       <span class="badge badge-success">✓ AuthKey_APNS.p8 բեռնված է</span>
-                    <?php
-// Force sync to server else: ?>
+                    <?php else: ?>
                       <span class="badge badge-warning">⚠ Բացակայում է</span>
-                    <?php
-// Force sync to server endif; ?>
+                    <?php endif; ?>
                   </div>
                   <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 10px;">
                     Apple Developer Portal-ից ներբեռնված APNS AuthKey .p8 սերտիֆիկատը:
@@ -2938,14 +2842,11 @@ $csrfToken = wp_admin_updates_csrf_token();
                 <div style="background: rgba(67,24,255,0.03); border: 1px solid var(--line); border-radius: 12px; padding: 16px;">
                   <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                     <strong style="font-size: 0.9rem;">🔥 Firebase Service Account (.json)</strong>
-                    <?php
-// Force sync to server if ($firebaseCredentialAvailable): ?>
+                    <?php if ($firebaseCredentialAvailable): ?>
                       <span class="badge badge-success">✓ JSON Ֆայլը բեռնված է</span>
-                    <?php
-// Force sync to server else: ?>
+                    <?php else: ?>
                       <span class="badge badge-warning">⚠ Բացակայում է</span>
-                    <?php
-// Force sync to server endif; ?>
+                    <?php endif; ?>
                   </div>
                   <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 10px;">
                     Firebase Console -> Service Accounts-ից ներբեռնված JSON ֆայլը Web / Android Push-ի համար:
@@ -2992,11 +2893,9 @@ $csrfToken = wp_admin_updates_csrf_token();
             <div class="form-field" style="margin:0; grid-column: span 1;">
               <select class="input-field" id="device_platform" name="device_platform" style="padding:6px;">
                 <option value="all"><?= __('Բոլոր հարթակներ') ?></option>
-                <?php
-// Force sync to server foreach ($deviceFilterOptions['platforms'] as $platformOption): ?>
+                <?php foreach ($deviceFilterOptions['platforms'] as $platformOption): ?>
                   <option value="<?= htmlspecialchars($platformOption, ENT_QUOTES) ?>" <?= $deviceFilters['platform'] === $platformOption ? 'selected' : '' ?>><?= htmlspecialchars($platformOption, ENT_QUOTES) ?></option>
-                <?php
-// Force sync to server endforeach; ?>
+                <?php endforeach; ?>
               </select>
             </div>
             <div class="form-field" style="margin:0; grid-column: span 1;">
@@ -3037,14 +2936,11 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
           </div>
 
-          <?php
-// Force sync to server if ($showMainDeviceSection): ?>
+          <?php if ($showMainDeviceSection): ?>
             <h4 style="margin:24px 0 12px 0; font-size:15px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;"><?= __('Հիմնական ծրագրի սարքեր (App)') ?></h4>
-            <?php
-// Force sync to server if (!$filteredMainInstallDevices): ?>
+            <?php if (!$filteredMainInstallDevices): ?>
               <div style="padding:16px; text-align:center; color:var(--muted);"><?= __('Հիմնական ծրագրի սարքեր չեն գտնվել') ?></div>
-            <?php
-// Force sync to server else: ?>
+            <?php else: ?>
               <div style="overflow-x:auto;">
                 <table class="bento-table">
                   <thead>
@@ -3057,17 +2953,14 @@ $csrfToken = wp_admin_updates_csrf_token();
                     </tr>
                   </thead>
                   <tbody id="mainDevicesTbody">
-                    <?php
-// Force sync to server $mainIndex = 0; foreach ($filteredMainInstallDevices as $device): $mainIndex++; ?>
+                    <?php $mainIndex = 0; foreach ($filteredMainInstallDevices as $device): $mainIndex++; ?>
                       <tr class="main-device-row" <?= $mainIndex > 10 ? 'style="display:none;"' : '' ?>>
                         <td>
                           <div class="table-primary"><?= htmlspecialchars(wp_admin_updates_install_identity($device), ENT_QUOTES) ?></div>
                           <div class="table-meta"><?= htmlspecialchars(wp_admin_updates_install_secondary($device), ENT_QUOTES) ?></div>
-                          <?php
-// Force sync to server if (!empty($device['user_id'])): ?>
+                          <?php if (!empty($device['user_id'])): ?>
                             <div class="chip success" style="margin-top:4px; padding:2px 6px; font-size:10px;">User #<?= (int)$device['user_id'] ?></div>
-                          <?php
-// Force sync to server endif; ?>
+                          <?php endif; ?>
                         </td>
                         <td>
                           <div class="table-primary"><?= htmlspecialchars(wp_admin_updates_install_ip($device), ENT_QUOTES) ?></div>
@@ -3092,13 +2985,11 @@ $csrfToken = wp_admin_updates_csrf_token();
                           </form>
                         </td>
                       </tr>
-                    <?php
-// Force sync to server endforeach; ?>
+                    <?php endforeach; ?>
                   </tbody>
                 </table>
               </div>
-              <?php
-// Force sync to server if (count($filteredMainInstallDevices) > 10): ?>
+              <?php if (count($filteredMainInstallDevices) > 10): ?>
                 <div style="text-align:center; padding:16px;" id="mainDevicesLoadMoreContainer">
                   <button type="button" class="btn btn-outline" style="padding:6px 16px; font-size:13px;" onclick="
                     let hidden = document.querySelectorAll('.main-device-row[style*=\'none\']');
@@ -3106,21 +2997,15 @@ $csrfToken = wp_admin_updates_csrf_token();
                     if(hidden.length <= 10) this.parentElement.style.display='none';
                   "><?= __('Ցույց տալ ևս 10-ը') ?></button>
                 </div>
-              <?php
-// Force sync to server endif; ?>
-            <?php
-// Force sync to server endif; ?>
-          <?php
-// Force sync to server endif; ?>
+              <?php endif; ?>
+            <?php endif; ?>
+          <?php endif; ?>
 
-          <?php
-// Force sync to server if ($showAdminDeviceSection): ?>
+          <?php if ($showAdminDeviceSection): ?>
             <h4 style="margin:32px 0 12px 0; font-size:15px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;"><?= __('Ադմին ծրագրի սարքեր (Admin Panel)') ?></h4>
-            <?php
-// Force sync to server if (!$filteredAdminInstallDevices): ?>
+            <?php if (!$filteredAdminInstallDevices): ?>
               <div style="padding:16px; text-align:center; color:var(--muted);"><?= __('Ադմին ծրագրի սարքեր չեն գտնվել') ?></div>
-            <?php
-// Force sync to server else: ?>
+            <?php else: ?>
               <div style="overflow-x:auto;">
                 <table class="bento-table">
                   <thead>
@@ -3133,17 +3018,14 @@ $csrfToken = wp_admin_updates_csrf_token();
                     </tr>
                   </thead>
                   <tbody>
-                    <?php
-// Force sync to server foreach ($filteredAdminInstallDevices as $device): ?>
+                    <?php foreach ($filteredAdminInstallDevices as $device): ?>
                       <tr>
                         <td>
                           <div class="table-primary"><?= htmlspecialchars(wp_admin_updates_install_identity($device), ENT_QUOTES) ?></div>
                           <div class="table-meta"><?= htmlspecialchars(wp_admin_updates_install_secondary($device), ENT_QUOTES) ?></div>
-                          <?php
-// Force sync to server if (!empty($device['user_id'])): ?>
+                          <?php if (!empty($device['user_id'])): ?>
                             <div class="chip success" style="margin-top:4px; padding:2px 6px; font-size:10px;">User #<?= (int)$device['user_id'] ?></div>
-                          <?php
-// Force sync to server endif; ?>
+                          <?php endif; ?>
                         </td>
                         <td>
                           <div class="table-primary"><?= htmlspecialchars(wp_admin_updates_install_ip($device), ENT_QUOTES) ?></div>
@@ -3168,15 +3050,12 @@ $csrfToken = wp_admin_updates_csrf_token();
                           </form>
                         </td>
                       </tr>
-                    <?php
-// Force sync to server endforeach; ?>
+                    <?php endforeach; ?>
                   </tbody>
                 </table>
               </div>
-            <?php
-// Force sync to server endif; ?>
-          <?php
-// Force sync to server endif; ?>
+            <?php endif; ?>
+          <?php endif; ?>
         </div>
 
         <div class="bento-split-even" id="pushComposerPanel" data-admin-section="push all" data-admin-permission="push" style="align-items: stretch;">
@@ -3273,12 +3152,10 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
           </div>
 
-          <?php
-// Force sync to server if (!$pushSubscriptions): ?>
+          <?php if (!$pushSubscriptions): ?>
             <div class="history-item" style="padding:16px; text-align:center; color:var(--muted);">
               <strong><?= __('Բաժանորդագրված սարքեր դեռ չկան') ?></strong>
-              <?php
-// Force sync to server if ($pushLegacyBackupCount > 0): ?>
+              <?php if ($pushLegacyBackupCount > 0): ?>
                 <p style="margin:8px 0 12px;">
                   <?= __('Գտնվել է նախկին push ցանկի պահուստային պատճեն՝') ?> <?= $pushLegacyBackupCount ?> <?= __('endpoint') ?>։
                 </p>
@@ -3289,11 +3166,9 @@ $csrfToken = wp_admin_updates_csrf_token();
                     <?= __('Վերականգնել նախկին push ցանկը') ?>
                   </button>
                 </form>
-              <?php
-// Force sync to server endif; ?>
+              <?php endif; ?>
             </div>
-          <?php
-// Force sync to server else: ?>
+          <?php else: ?>
             <div style="overflow-x:auto;">
               <table class="bento-table" id="pushSubscriptionsTable">
                 <thead>
@@ -3305,31 +3180,25 @@ $csrfToken = wp_admin_updates_csrf_token();
                   </tr>
                 </thead>
                 <tbody>
-                  <?php
-// Force sync to server foreach ($pushSubscriptions as $subscription): ?>
-                    <?php
-// Force sync to server $isActivePushSubscription = wp_push_is_active_subscription($subscription); ?>
+                  <?php foreach ($pushSubscriptions as $subscription): ?>
+                    <?php $isActivePushSubscription = wp_push_is_active_subscription($subscription); ?>
                     <tr data-push-subscription-item data-push-subscription-search="<?= htmlspecialchars(wp_admin_updates_push_search_haystack($subscription), ENT_QUOTES) ?>">
                       <td>
                         <div class="table-primary"><?= htmlspecialchars(wp_admin_updates_push_identity($subscription), ENT_QUOTES) ?></div>
                         <div class="table-meta"><?= __('ID:') ?> <?= htmlspecialchars(substr((string)($subscription['id'] ?? ''), 0, 8) ?: '—', ENT_QUOTES) ?></div>
                         <div class="table-meta"><?= htmlspecialchars(strtoupper((string)($subscription['device_scope'] ?? 'main')), ENT_QUOTES) ?> · <?= htmlspecialchars((string)($subscription['permission_state'] ?? 'granted'), ENT_QUOTES) ?></div>
-                        <?php
-// Force sync to server if (!empty($subscription['user_id'])): ?>
+                        <?php if (!empty($subscription['user_id'])): ?>
                           <div class="chip success" style="margin-top:4px; padding:2px 6px; font-size:10px;">User #<?= (int)$subscription['user_id'] ?></div>
-                        <?php
-// Force sync to server endif; ?>
+                        <?php endif; ?>
                       </td>
                       <td>
                         <div class="table-primary"><?= htmlspecialchars(wp_admin_updates_push_ip($subscription), ENT_QUOTES) ?></div>
                         <div class="table-meta" style="font-family:monospace;" title="<?= htmlspecialchars(wp_admin_updates_push_endpoint_host((string)($subscription['endpoint'] ?? '')), ENT_QUOTES) ?>">
                           <?= htmlspecialchars(wp_admin_updates_push_endpoint_host((string)($subscription['endpoint'] ?? '')), ENT_QUOTES) ?>
                         </div>
-                        <?php
-// Force sync to server if (!empty($subscription['device_id'])): ?>
+                        <?php if (!empty($subscription['device_id'])): ?>
                           <div class="table-meta" style="font-family:monospace;"><?= htmlspecialchars(wp_install_mask_device_id((string)$subscription['device_id']), ENT_QUOTES) ?></div>
-                        <?php
-// Force sync to server endif; ?>
+                        <?php endif; ?>
                       </td>
                       <td>
                         <div class="chip <?= $isActivePushSubscription ? 'success' : 'warning' ?>" style="margin-bottom:5px; padding:2px 7px; font-size:10px;">
@@ -3346,16 +3215,14 @@ $csrfToken = wp_admin_updates_csrf_token();
                         </form>
                       </td>
                     </tr>
-                  <?php
-// Force sync to server endforeach; ?>
+                  <?php endforeach; ?>
                 </tbody>
               </table>
             </div>
             <div class="history-item" id="pushSubscriptionEmptyState" hidden style="padding:16px; text-align:center; color:var(--muted);">
               <strong><?= __('Համընկնող push սարք չգտնվեց') ?></strong>
             </div>
-          <?php
-// Force sync to server endif; ?>
+          <?php endif; ?>
         </div>
 
         <div class="bento-card" id="pushHistoryPanel" data-admin-section="push all" data-admin-permission="push">
@@ -3369,29 +3236,24 @@ $csrfToken = wp_admin_updates_csrf_token();
                 <div class="form-field" style="margin:0;">
                   <input class="input-field" id="pushHistorySearch" type="search" placeholder="<?= __('Որոնել...') ?>" style="padding:6px; font-size:13px; width:150px;">
                 </div>
-                <?php
-// Force sync to server if ($pushHistory): ?>
+                <?php if ($pushHistory): ?>
                   <form method="post" action="/admin_updates.php" style="margin:0;" onsubmit="return confirm('Ջնջե՞լ ամբողջ պատմությունը։');">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
                     <input type="hidden" name="form_action" value="clear_push_history">
                     <button class="btn danger" style="padding:6px 12px; font-size:12px;" type="submit"><?= __('Մաքրել') ?></button>
                   </form>
-                <?php
-// Force sync to server endif; ?>
+                <?php endif; ?>
               </div>
             </div>
           </div>
 
-          <?php
-// Force sync to server if (!$pushHistory): ?>
+          <?php if (!$pushHistory): ?>
             <div class="history-item" style="padding:16px; text-align:center; color:var(--muted);">
               <strong><?= __('Push պատմություն դեռ չկա') ?></strong>
             </div>
-          <?php
-// Force sync to server else: ?>
+          <?php else: ?>
             <div class="history-list" id="pushHistoryList">
-              <?php
-// Force sync to server foreach ($pushHistory as $item): ?>
+              <?php foreach ($pushHistory as $item): ?>
                 <div class="history-item bento-row" data-push-history-item data-push-history-search="<?= htmlspecialchars(wp_admin_updates_push_history_search_haystack($item), ENT_QUOTES) ?>" style="padding:12px; border-bottom:1px solid #f1f5f9;">
                   
                   <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
@@ -3404,36 +3266,28 @@ $csrfToken = wp_admin_updates_csrf_token();
                     <div class="chips" style="gap:4px;">
                       <div class="chip" style="background:#e0f2fe; color:#0369a1; border:none;"><?= __('Հերթ.') ?> <?= (int)($item['queued'] ?? 0) ?></div>
                       <div class="chip success" style="border:none;"><?= __('Հասել է') ?> <?= (int)($item['success'] ?? 0) ?></div>
-                      <?php
-// Force sync to server if ((int)($item['failed'] ?? 0) > 0): ?>
+                      <?php if ((int)($item['failed'] ?? 0) > 0): ?>
                         <div class="chip danger" style="border:none;"><?= __('Սխալ') ?> <?= (int)($item['failed'] ?? 0) ?></div>
-                      <?php
-// Force sync to server endif; ?>
+                      <?php endif; ?>
                     </div>
                   </div>
 
-                  <?php
-// Force sync to server if (!empty($item['body'])): ?>
+                  <?php if (!empty($item['body'])): ?>
                     <div style="font-size:13px; color:var(--text); background:#f8fafc; padding:8px 12px; border-radius:6px;"><?= htmlspecialchars((string)$item['body'], ENT_QUOTES) ?></div>
-                  <?php
-// Force sync to server endif; ?>
+                  <?php endif; ?>
 
                 </div>
-              <?php
-// Force sync to server endforeach; ?>
+              <?php endforeach; ?>
             </div>
             <div class="history-item" id="pushHistoryEmptyState" hidden style="padding:16px; text-align:center; color:var(--muted);">
               <strong><?= __('Համընկնում չգտնվեց') ?></strong>
             </div>
-            <?php
-// Force sync to server if (count($pushHistory) > 5): ?>
+            <?php if (count($pushHistory) > 5): ?>
               <div class="history-more" style="padding:12px; text-align:center;">
                 <button class="btn btn-ghost" id="loadMorePushHistoryBtn" type="button" style="font-size:13px;"><?= __('Բեռնել ևս 5-ը') ?></button>
               </div>
-            <?php
-// Force sync to server endif; ?>
-          <?php
-// Force sync to server endif; ?>
+            <?php endif; ?>
+          <?php endif; ?>
         </div>
       </div>
 
@@ -3451,30 +3305,25 @@ $csrfToken = wp_admin_updates_csrf_token();
                 <div class="form-field" style="margin:0;">
                   <input class="input-field" id="historySearch" type="search" placeholder="<?= __('Որոնել (օրինակ՝ ադմինի անուն)') ?>" style="padding:6px; font-size:13px; width:200px;">
                 </div>
-                <?php
-// Force sync to server if ($history): ?>
+                <?php if ($history): ?>
                   <form method="post" onsubmit="if(confirm('Վստա՞հ եք, որ ուզում եք ամբողջությամբ ջնջել պատմությունը։')) { return confirm('Հաստա՞տ ցանկանում եք մաքրել պատմությունը: Այս գործողությունը հնարավոր չէ հետարկել:'); } return false;" style="margin:0;">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
                     <input type="hidden" name="form_action" value="clear_history">
                     <button class="btn danger" type="submit" style="padding:6px 14px; font-size:12px; font-weight:600; background:#ef4444; color:#fff; border:1px solid #dc2626; box-shadow:0 2px 8px rgba(239,68,68,0.3); border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='#dc2626';" onmouseout="this.style.background='#ef4444';"><?= __('Մաքրել պատմությունը') ?></button>
                   </form>
-                <?php
-// Force sync to server endif; ?>
+                <?php endif; ?>
               </div>
             </div>
           </div>
 
-          <?php
-// Force sync to server if (!$history): ?>
+          <?php if (!$history): ?>
             <div style="padding:24px; text-align:center; color:var(--muted);">
               <strong><?= __('Պատմություն դեռ չկա') ?></strong>
               <div style="font-size:13px; margin-top:4px;"><?= __('Առաջին save-ից հետո այստեղ կտեսնեք փոփոխությունները։') ?></div>
             </div>
-          <?php
-// Force sync to server else: ?>
+          <?php else: ?>
             <div class="bento-timeline" id="historyList">
-              <?php
-// Force sync to server 
+              <?php 
               $lastSnapshotJson = null;
               foreach ($history as $item): 
                 $currentSnapshotJson = json_encode($item['snapshot'] ?? []);
@@ -3496,22 +3345,18 @@ $csrfToken = wp_admin_updates_csrf_token();
                           <?= htmlspecialchars(wp_version_format_datetime_admin((string)($item['at'] ?? '')) ?: '—', ENT_QUOTES) ?>
                         </div>
                       </div>
-                      <?php
-// Force sync to server if (!empty($item['snapshot']) && is_array($item['snapshot']) && !empty($adminSectionPermissions['release'])): ?>
+                      <?php if (!empty($item['snapshot']) && is_array($item['snapshot']) && !empty($adminSectionPermissions['release'])): ?>
                         <form method="post" style="margin:0;">
                           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
                           <input type="hidden" name="form_action" value="rollback">
                           <input type="hidden" name="history_id" value="<?= htmlspecialchars((string)($item['id'] ?? ''), ENT_QUOTES) ?>">
                           <button class="btn btn-outline" type="submit" style="font-size:12px; padding:6px 12px; border-color:var(--primary); color:var(--primary);" onmouseover="this.style.background='var(--primary)'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='var(--primary)';"><?= __('↺ Վերականգնել այս վիճակը') ?></button>
                         </form>
-                      <?php
-// Force sync to server endif; ?>
+                      <?php endif; ?>
                     </div>
 
-                    <?php
-// Force sync to server if (!empty($item['changed_fields']) && is_array($item['changed_fields'])): ?>
+                    <?php if (!empty($item['changed_fields']) && is_array($item['changed_fields'])): ?>
                       <?php
-// Force sync to server
                       $fieldNames = [
                         'app_version' => 'Հավելվածի տարբերակ',
                         'web_version' => 'Վեբ տարբերակ',
@@ -3531,8 +3376,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                         <span style="color:var(--primary); font-weight:600;"><?= __('Այս քայլով փոխվել է՝') ?></span> 
                         <?= htmlspecialchars(implode(', ', $readableFields), ENT_QUOTES) ?>
                       </div>
-                    <?php
-// Force sync to server endif; ?>
+                    <?php endif; ?>
 
                     <div style="font-size:11px; color:var(--muted); margin-bottom:6px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;"><?= __('Տվյալ պահի կարգավորումները (Snapshot)') ?></div>
                     <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px;">
@@ -3544,48 +3388,36 @@ $csrfToken = wp_admin_updates_csrf_token();
                         </div>
                       </div>
 
-                      <?php
-// Force sync to server if (!empty($item['snapshot']['app_release_summary']) || !empty($item['snapshot']['web_release_summary'])): ?>
+                      <?php if (!empty($item['snapshot']['app_release_summary']) || !empty($item['snapshot']['web_release_summary'])): ?>
                         <div style="font-size:13px; color:var(--text); margin-top:8px; padding-top:8px; border-top:1px solid #e2e8f0;">
-                          <?php
-// Force sync to server if (!empty($item['snapshot']['app_release_summary'])): ?>
+                          <?php if (!empty($item['snapshot']['app_release_summary'])): ?>
                             <div style="margin-bottom:4px;"><strong><?= __('Հավելվածի նկարագրություն:') ?></strong> <span style="color:var(--muted)"><?= htmlspecialchars((string)($item['snapshot']['app_release_summary']), ENT_QUOTES) ?></span></div>
-                          <?php
-// Force sync to server endif; ?>
-                          <?php
-// Force sync to server if (!empty($item['snapshot']['web_release_summary'])): ?>
+                          <?php endif; ?>
+                          <?php if (!empty($item['snapshot']['web_release_summary'])): ?>
                             <div><strong><?= __('Վեբի նկարագրություն:') ?></strong> <span style="color:var(--muted)"><?= htmlspecialchars((string)($item['snapshot']['web_release_summary']), ENT_QUOTES) ?></span></div>
-                          <?php
-// Force sync to server endif; ?>
+                          <?php endif; ?>
                         </div>
-                      <?php
-// Force sync to server endif; ?>
+                      <?php endif; ?>
                     </div>
 
-                    <?php
-// Force sync to server if (!empty($item['note'])): ?>
+                    <?php if (!empty($item['note'])): ?>
                       <div style="font-size:12px; color:var(--primary); font-style:italic;">
                         "<?= htmlspecialchars((string)$item['note'], ENT_QUOTES) ?>"
                       </div>
-                    <?php
-// Force sync to server endif; ?>
+                    <?php endif; ?>
                   </div>
                 </div>
-              <?php
-// Force sync to server endforeach; ?>
+              <?php endforeach; ?>
             </div>
             <div id="historyEmptyState" hidden style="padding:16px; text-align:center; color:var(--muted);">
               <strong><?= __('Պատմության մեջ համընկնում չգտնվեց') ?></strong>
             </div>
-            <?php
-// Force sync to server if (count($history) > 5): ?>
+            <?php if (count($history) > 5): ?>
               <div style="padding-top:16px; text-align:center;">
                 <button class="btn btn-ghost" id="loadMoreHistoryBtn" type="button" style="font-size:13px;"><?= __('Բեռնել ևս 5-ը') ?></button>
               </div>
-            <?php
-// Force sync to server endif; ?>
-          <?php
-// Force sync to server endif; ?>
+            <?php endif; ?>
+          <?php endif; ?>
         </div>
 
         <section class="settings-group" data-admin-section="access all" data-admin-permission="access">
@@ -3610,14 +3442,12 @@ $csrfToken = wp_admin_updates_csrf_token();
               <strong><?= __('Ադմին ծրագիր') ?></strong>
               <span><?= (int)($installStats['admin']['known_count'] ?? 0) ?> <?= __('ճանաչված,') ?> <?= (int)($installStats['admin']['count'] ?? 0) ?> <?= __('ակտիվ') ?></span>
             </div>
-            <?php
-// Force sync to server if (!empty($adminUser['email'])): ?>
+            <?php if (!empty($adminUser['email'])): ?>
               <div class="access-mini">
                 <strong><?= __('Email') ?></strong>
                 <span><?= htmlspecialchars((string)$adminUser['email'], ENT_QUOTES) ?></span>
               </div>
-            <?php
-// Force sync to server endif; ?>
+            <?php endif; ?>
             <div class="access-mini">
               <strong><?= __('Whitelist email-ներ') ?></strong>
               <span><?= (int)$adminEmailCount ?> <?= __('պահված հասցե') ?></span>
