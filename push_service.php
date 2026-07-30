@@ -39,21 +39,24 @@ function wp_push_is_supported(): bool {
 }
 
 function wp_push_credential_spec(string $type): ?array {
-    return match ($type) {
-        'apns' => [
-            'filename' => 'AuthKey_APNS.p8',
-            'extension' => 'p8',
-            'max_bytes' => 65536,
-            'label' => 'iOS APNS AuthKey',
-        ],
-        'firebase' => [
-            'filename' => 'firebase_service_account.json',
-            'extension' => 'json',
-            'max_bytes' => 2097152,
-            'label' => 'Firebase Service Account',
-        ],
-        default => null,
-    };
+    switch ($type) {
+        case 'apns':
+            return [
+                'filename' => 'AuthKey_APNS.p8',
+                'extension' => 'p8',
+                'max_bytes' => 65536,
+                'label' => 'iOS APNS AuthKey',
+            ];
+        case 'firebase':
+            return [
+                'filename' => 'firebase_service_account.json',
+                'extension' => 'json',
+                'max_bytes' => 2097152,
+                'label' => 'Firebase Service Account',
+            ];
+        default:
+            return null;
+    }
 }
 
 function wp_push_credential_candidates(string $type): array {
@@ -123,14 +126,27 @@ function wp_push_store_credential_upload(array $file, string $type): array {
         return ['ok' => true, 'uploaded' => false, 'message' => ''];
     }
     if ($error !== UPLOAD_ERR_OK) {
-        $errorMessage = match ($error) {
-            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'Ֆայլը գերազանցում է սերվերի թույլատրելի չափը։',
-            UPLOAD_ERR_PARTIAL => 'Ֆայլը բեռնվել է մասամբ։ Փորձեք կրկին։',
-            UPLOAD_ERR_NO_TMP_DIR => 'Սերվերի ժամանակավոր upload պանակը հասանելի չէ։',
-            UPLOAD_ERR_CANT_WRITE => 'Սերվերը չկարողացավ գրել բեռնված ֆայլը։',
-            UPLOAD_ERR_EXTENSION => 'Սերվերի PHP extension-ը կանգնեցրել է upload-ը։',
-            default => 'Ֆայլի բեռնումը չհաջողվեց (կոդ ' . $error . ')։',
-        };
+        switch ($error) {
+            case UPLOAD_ERR_INI_SIZE:
+            case UPLOAD_ERR_FORM_SIZE:
+                $errorMessage = 'Ֆայլը գերազանցում է սերվերի թույլատրելի չափը։';
+                break;
+            case UPLOAD_ERR_PARTIAL:
+                $errorMessage = 'Ֆայլը բեռնվել է մասամբ։ Փորձեք կրկին։';
+                break;
+            case UPLOAD_ERR_NO_TMP_DIR:
+                $errorMessage = 'Սերվերի ժամանակավոր upload պանակը հասանելի չէ։';
+                break;
+            case UPLOAD_ERR_CANT_WRITE:
+                $errorMessage = 'Սերվերը չկարողացավ գրել բեռնված ֆայլը։';
+                break;
+            case UPLOAD_ERR_EXTENSION:
+                $errorMessage = 'Սերվերի PHP extension-ը կանգնեցրել է upload-ը։';
+                break;
+            default:
+                $errorMessage = 'Ֆայլի բեռնումը չհաջողվեց (կոդ ' . $error . ')։';
+                break;
+        }
         return ['ok' => false, 'uploaded' => false, 'message' => $errorMessage];
     }
 
