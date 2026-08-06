@@ -448,8 +448,8 @@ function wp_version_sanitize_app_about($value): array {
 
 function wp_version_defaults(): array {
     return [
-        'app_version' => '2.6.9',
-        'web_version' => '2.6.9',
+        'app_version' => '2.7.0',
+        'web_version' => '2.7.0',
         'app_release_stamp' => '',
         'web_release_stamp' => '',
         'app_release_type' => 'feature',
