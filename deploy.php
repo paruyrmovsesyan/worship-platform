@@ -16,7 +16,7 @@ echo "Starting deployment...\n";
 
 $output = [];
 $returnVar = 0;
-exec('git pull origin main 2>&1', $output, $returnVar);
+exec('git fetch origin main 2>&1 && git reset --hard origin/main 2>&1', $output, $returnVar);
 
 echo implode("\n", $output);
 echo "\nExit code: " . $returnVar . "\n";
