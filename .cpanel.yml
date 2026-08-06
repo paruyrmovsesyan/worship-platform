@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=$(pwd)
+    - /bin/cp -R * $DEPLOYPATH
