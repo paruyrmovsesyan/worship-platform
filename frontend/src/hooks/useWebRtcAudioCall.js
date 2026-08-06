@@ -8,6 +8,81 @@ const ICE_SERVERS = {
   ],
 };
 
+let ringtoneCtx = null;
+let ringtoneInterval = null;
+
+function playPhoneRingtone(type = 'incoming') {
+  stopPhoneRingtone();
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    ringtoneCtx = new AudioCtx();
+
+    const ring = () => {
+      if (!ringtoneCtx || ringtoneCtx.state === 'closed') return;
+      if (ringtoneCtx.state === 'suspended') {
+        ringtoneCtx.resume().catch(() => {});
+      }
+
+      const t = ringtoneCtx.currentTime;
+      const osc1 = ringtoneCtx.createOscillator();
+      const osc2 = ringtoneCtx.createOscillator();
+      const gain = ringtoneCtx.createGain();
+
+      osc1.frequency.setValueAtTime(440, t);
+      osc2.frequency.setValueAtTime(480, t);
+      osc1.type = 'sine';
+      osc2.type = 'sine';
+
+      const dur = type === 'incoming' ? 1.6 : 1.2;
+      const maxGain = type === 'incoming' ? 0.3 : 0.15;
+
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.linearRampToValueAtTime(maxGain, t + 0.05);
+      gain.gain.setValueAtTime(maxGain, t + dur - 0.05);
+      gain.gain.linearRampToValueAtTime(0.001, t + dur);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ringtoneCtx.destination);
+
+      osc1.start(t);
+      osc2.start(t);
+      osc1.stop(t + dur);
+      osc2.stop(t + dur);
+
+      if (type === 'incoming' && navigator.vibrate) {
+        try {
+          navigator.vibrate([500, 250, 500, 250, 500]);
+        } catch (e) {}
+      }
+    };
+
+    ring();
+    ringtoneInterval = setInterval(ring, type === 'incoming' ? 3000 : 3600);
+  } catch (e) {
+    console.error('Failed to play phone ringtone', e);
+  }
+}
+
+function stopPhoneRingtone() {
+  if (ringtoneInterval) {
+    clearInterval(ringtoneInterval);
+    ringtoneInterval = null;
+  }
+  if (ringtoneCtx) {
+    try {
+      ringtoneCtx.close();
+    } catch (e) {}
+    ringtoneCtx = null;
+  }
+  if (navigator.vibrate) {
+    try {
+      navigator.vibrate(0);
+    } catch (e) {}
+  }
+}
+
 export function useWebRtcAudioCall(chatId, currentUserId) {
   const [callState, setCallState] = useState('idle'); // 'idle' | 'calling' | 'ringing' | 'connected' | 'ended'
   const [callInfo, setCallInfo] = useState(null);
@@ -21,6 +96,20 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
   const callPollIntervalRef = useRef(null);
   const durationTimerRef = useRef(null);
   const pendingIceCandidatesRef = useRef([]);
+
+  useEffect(() => {
+    if (callState === 'ringing') {
+      playPhoneRingtone('incoming');
+    } else if (callState === 'calling') {
+      playPhoneRingtone('outgoing');
+    } else {
+      stopPhoneRingtone();
+    }
+
+    return () => {
+      stopPhoneRingtone();
+    };
+  }, [callState]);
 
   // Use refs for stable access in callbacks without triggering re-renders
   const callStateRef = useRef('idle');
