@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { usePageReady } from '../hooks/usePageReady';
+import { useCall } from '../context/CallContext';
 import './Chat.css';
 
 export default function Chat() {
@@ -11,6 +12,7 @@ export default function Chat() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { t, language } = useLanguage();
+  const audioCall = useCall();
   const [messages, setMessages] = useState([]);
   const [chatInfo, setChatInfo] = useState(null);
   const [inputText, setInputText] = useState('');
@@ -225,7 +227,7 @@ export default function Chat() {
         }, 50);
       } else if (data.error === 'Access denied') {
         alert(t('chat.deletedOrUnavailable'));
-        navigate('/friends', { replace: true });
+        navigate('/chats', { replace: true });
         return;
       }
     } catch (e) {
@@ -424,7 +426,7 @@ export default function Chat() {
         body: JSON.stringify({ chat_id: id })
       });
       const data = await res.json();
-      if (data.ok) navigate('/friends', { replace: true });
+      if (data.ok) navigate('/chats', { replace: true });
       else alert(data.error || 'Error');
     } catch (e) { alert('Network error'); }
   };
@@ -453,7 +455,7 @@ export default function Chat() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chat_id: id, for_everyone: forEveryone })
       });
-      navigate('/friends', { replace: true });
+      navigate('/chats', { replace: true });
     } catch (e) {
       console.error(e);
     }
@@ -488,6 +490,70 @@ export default function Chat() {
     
     return <span className="chat-header-status-text">{t('chat.lastSeen')} {textStr}</span>;
   };
+  const renderCallAttachment = (msgText, isOwn) => {
+    const parts = msgText.split(':');
+    const status = parts[1];
+    let label = '';
+    let icon = '📞';
+    let isMissedOrDeclined = false;
+
+    if (status === 'ended') {
+      const sec = parseInt(parts[2], 10) || 0;
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      const durationText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      label = isOwn
+        ? t('chat.outgoingCall', 'Ելքային աուդիոզանգ') + (durationText ? ` (${durationText})` : '')
+        : t('chat.incomingCall', 'Մուտքային աուդիոզանգ') + (durationText ? ` (${durationText})` : '');
+    } else if (status === 'missed') {
+      isMissedOrDeclined = true;
+      label = isOwn
+        ? t('chat.outgoingMissed', 'Ելքային աուդիոզանգ (Անպատասխան)')
+        : t('chat.missedCall', 'Բաց թողնված աուդիոզանգ');
+      icon = '🚫';
+    } else if (status === 'declined') {
+      isMissedOrDeclined = true;
+      label = isOwn
+        ? t('chat.outgoingDeclined', 'Ելքային աուդիոզանգ (Մերժված)')
+        : t('chat.declinedCall', 'Մերժված աուդիոզանգ');
+      icon = '❌';
+    } else {
+      label = isOwn
+        ? t('chat.outgoingCall', 'Ելքային աուդիոզանգ')
+        : t('chat.incomingCall', 'Մուտքային աուդիոզանգ');
+    }
+
+    return (
+      <div
+        className="chat-call-attachment"
+        onClick={() => {
+          audioCall.startCall(chatInfo?.other_user_id || 0, chatInfo?.display_name || chatInfo?.name || '', id);
+        }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          background: isMissedOrDeclined ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+          padding: '10px 14px',
+          borderRadius: '12px',
+          cursor: 'pointer',
+          border: `1px solid ${isMissedOrDeclined ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
+          marginTop: '2px'
+        }}
+      >
+        <div style={{ fontSize: '1.4rem' }}>{icon}</div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: isMissedOrDeclined ? '#fca5a5' : '#6ee7b7' }}>
+            {label}
+          </span>
+          <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.7)', marginTop: '2px' }}>
+            {t('chat.tapToRedial', 'Կրկին զանգահարել')}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
   if (loading || authLoading) return null;
 
   const lastOwnMessageId = getLastOwnMessageId();
@@ -499,7 +565,7 @@ export default function Chat() {
       {/* HEADER */}
       <div className="chat-header">
         <div className="chat-header-left">
-          <button className="chat-btn-back" onClick={() => navigate('/friends')}>
+          <button className="chat-btn-back" onClick={() => navigate('/chats')}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6"/>
             </svg>
@@ -532,12 +598,25 @@ export default function Chat() {
             )}
           </div>
         </div>
-        <button className="chat-btn-icon" onClick={() => setShowDeleteModal(true)} title={t('chat.deleteTooltip')}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-        </button>
+        <div className="chat-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            className="chat-btn-icon"
+            onClick={() => audioCall.startCall(chatInfo?.other_user_id || 0, chatInfo?.display_name || chatInfo?.name || '', id)}
+            title="ԱուդիոԶանգ"
+            style={{ color: '#38bdf8' }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+          </button>
+
+          <button className="chat-btn-icon" onClick={() => setShowDeleteModal(true)} title={t('chat.deleteTooltip')}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* MESSAGES */}
@@ -627,7 +706,11 @@ export default function Chat() {
                             {m.user_name || 'Անհայտ'}
                           </div>
                         )}
-                        {m.message && <div className="chat-text">{m.message}</div>}
+                        {m.message && m.message.startsWith('CALL:') ? (
+                          renderCallAttachment(m.message, isOwn)
+                        ) : (
+                          m.message && <div className="chat-text">{m.message}</div>
+                        )}
                         {m.setlist_id > 0 && (
                           <div 
                             className="chat-setlist-attachment" 
@@ -779,7 +862,7 @@ export default function Chat() {
                     style={{ flex: 1, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', color: '#fff', padding: '6px 12px', fontSize: '0.95rem' }}
                     autoFocus
                   />
-                  <button onClick={saveGroupName} style={{ background: '#38bdf8', border: 'none', borderRadius: '10px', color: '#fff', padding: '6px 12px', cursor: 'pointer', fontWeight: 600 }}>
+                  <button onClick={renameGroup} style={{ background: '#38bdf8', border: 'none', borderRadius: '10px', color: '#fff', padding: '6px 12px', cursor: 'pointer', fontWeight: 600 }}>
                     Պահպանել
                   </button>
                 </div>
@@ -829,7 +912,7 @@ export default function Chat() {
 
                       {/* Remove Member button (Admin only, cannot remove self) */}
                       {String(chatInfo?.created_by) === String(user?.id) && String(member.id) !== String(user?.id) && (
-                        <button onClick={() => removeGroupMember(member.id)} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', borderRadius: '8px', padding: '4px 10px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                        <button onClick={() => removeMember(member.id)} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', borderRadius: '8px', padding: '4px 10px', fontSize: '0.8rem', cursor: 'pointer' }}>
                           Հեռացնել
                         </button>
                       )}
@@ -853,7 +936,7 @@ export default function Chat() {
                             {friend.name || friend.email}
                           </span>
                         </div>
-                        <button onClick={() => addGroupMember(friend.id)} style={{ background: 'rgba(56,189,248,0.15)', border: '1px solid rgba(56,189,248,0.4)', color: '#38bdf8', borderRadius: '8px', padding: '4px 12px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}>
+                        <button onClick={() => addMember(friend.id)} style={{ background: 'rgba(56,189,248,0.15)', border: '1px solid rgba(56,189,248,0.4)', color: '#38bdf8', borderRadius: '8px', padding: '4px 12px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}>
                           + Ավելացնել
                         </button>
                       </div>
@@ -876,7 +959,7 @@ export default function Chat() {
 
                   {/* Delete group — creator only */}
                   {String(chatInfo?.created_by) === String(user?.id) && (
-                    <button onClick={() => { closeGroupInfo(); setShowDeleteModal(true); }} style={{
+                    <button onClick={() => { if (window.confirm('Ջնջե՞լ խումբը բոլորի համար:')) { closeGroupInfo(); handleDelete(true); } }} style={{
                       width: '100%', padding: '12px', borderRadius: '14px',
                       background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
                       color: '#f87171', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer',
@@ -892,6 +975,8 @@ export default function Chat() {
           </div>
         </div>
       )}
+
+      {/* AUDIO CALL MODAL RENDERED GLOBALLY BY CALLPROVIDER */}
 
     </div>
   );

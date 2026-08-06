@@ -343,32 +343,65 @@ function wp_push_load_subscriptions(): array {
     try {
         $conn = wp_runtime_open_mysqli();
         $result = $conn->query("SELECT * FROM push_subscriptions");
-        while ($row = $result->fetch_assoc()) {
-            $endpoint = trim((string)($row['endpoint'] ?? ''));
-            $deviceId = mb_substr(trim((string)($row['device_id'] ?? '')), 0, 120);
-            $deviceScope = in_array((string)($row['device_scope'] ?? 'main'), ['main', 'admin'], true) ? (string)$row['device_scope'] : 'main';
-            if ($endpoint === '' && $deviceId === '') continue;
+        if ($result instanceof mysqli_result) {
+            while ($row = $result->fetch_assoc()) {
+                $endpoint = trim((string)($row['endpoint'] ?? ''));
+                $deviceId = mb_substr(trim((string)($row['device_id'] ?? '')), 0, 120);
+                $deviceScope = in_array((string)($row['device_scope'] ?? 'main'), ['main', 'admin'], true) ? (string)$row['device_scope'] : 'main';
+                if ($endpoint === '' && $deviceId === '') continue;
 
-            $normalized[] = [
-                'id' => (string)($row['id'] ?? ($endpoint !== '' ? wp_push_subscription_id($endpoint) : wp_push_device_placeholder_id($deviceId, $deviceScope))),
-                'endpoint' => $endpoint,
-                'public_key' => (string)($row['public_key'] ?? ''),
-                'auth_key' => (string)($row['auth_key'] ?? ''),
-                'user_agent' => mb_substr(trim((string)($row['user_agent'] ?? '')), 0, 255),
-                'user_id' => (int)($row['user_id'] ?? 0),
-                'user_name' => mb_substr(trim((string)($row['user_name'] ?? '')), 0, 190),
-                'user_email' => mb_substr(trim((string)($row['user_email'] ?? '')), 0, 190),
-                'ip_address' => wp_push_normalize_ip((string)($row['ip_address'] ?? '')),
-                'device_id' => $deviceId,
-                'device_scope' => $deviceScope,
-                'permission_state' => in_array((string)($row['permission_state'] ?? 'granted'), ['granted', 'default', 'denied'], true) ? (string)$row['permission_state'] : 'granted',
-                'is_active' => (int)($row['is_active'] ?? 1) === 1,
-                'created_at' => wp_version_normalize_datetime($row['created_at'] ?? '') ?: wp_version_now_iso(),
-                'updated_at' => wp_version_normalize_datetime($row['updated_at'] ?? '') ?: wp_version_now_iso(),
-                'last_seen_at' => wp_version_normalize_datetime($row['last_seen_at'] ?? '') ?: '',
-            ];
+                $normalized[] = [
+                    'id' => (string)($row['id'] ?? ($endpoint !== '' ? wp_push_subscription_id($endpoint) : wp_push_device_placeholder_id($deviceId, $deviceScope))),
+                    'endpoint' => $endpoint,
+                    'public_key' => (string)($row['public_key'] ?? ''),
+                    'auth_key' => (string)($row['auth_key'] ?? ''),
+                    'user_agent' => mb_substr(trim((string)($row['user_agent'] ?? '')), 0, 255),
+                    'user_id' => (int)($row['user_id'] ?? 0),
+                    'user_name' => mb_substr(trim((string)($row['user_name'] ?? '')), 0, 190),
+                    'user_email' => mb_substr(trim((string)($row['user_email'] ?? '')), 0, 190),
+                    'ip_address' => wp_push_normalize_ip((string)($row['ip_address'] ?? '')),
+                    'device_id' => $deviceId,
+                    'device_scope' => $deviceScope,
+                    'permission_state' => in_array((string)($row['permission_state'] ?? 'granted'), ['granted', 'default', 'denied'], true) ? (string)$row['permission_state'] : 'granted',
+                    'is_active' => (int)($row['is_active'] ?? 1) === 1,
+                    'created_at' => wp_version_normalize_datetime($row['created_at'] ?? '') ?: wp_version_now_iso(),
+                    'updated_at' => wp_version_normalize_datetime($row['updated_at'] ?? '') ?: wp_version_now_iso(),
+                    'last_seen_at' => wp_version_normalize_datetime($row['last_seen_at'] ?? '') ?: '',
+                ];
+            }
+            $result->free();
         }
+        $conn->close();
     } catch (Throwable $e) {}
+
+    if (empty($normalized)) {
+        $legacy = wp_push_legacy_backup_rows();
+        if ($legacy) {
+            foreach ($legacy as $row) {
+                $endpoint = trim((string)($row['endpoint'] ?? ''));
+                if ($endpoint === '') continue;
+                $id = wp_push_subscription_id($endpoint);
+                $normalized[] = [
+                    'id' => $id,
+                    'endpoint' => $endpoint,
+                    'public_key' => (string)($row['public_key'] ?? ''),
+                    'auth_key' => (string)($row['auth_key'] ?? ''),
+                    'user_agent' => mb_substr(trim((string)($row['user_agent'] ?? '')), 0, 255),
+                    'user_id' => (int)($row['user_id'] ?? 0),
+                    'user_name' => mb_substr(trim((string)($row['user_name'] ?? '')), 0, 190),
+                    'user_email' => mb_substr(trim((string)($row['user_email'] ?? '')), 0, 190),
+                    'ip_address' => wp_push_normalize_ip((string)($row['ip_address'] ?? '')),
+                    'device_id' => (string)($row['device_id'] ?? ''),
+                    'device_scope' => (string)($row['device_scope'] ?? 'main'),
+                    'permission_state' => 'granted',
+                    'is_active' => true,
+                    'created_at' => wp_version_normalize_datetime($row['created_at'] ?? '') ?: wp_version_now_iso(),
+                    'updated_at' => wp_version_normalize_datetime($row['updated_at'] ?? '') ?: wp_version_now_iso(),
+                    'last_seen_at' => wp_version_normalize_datetime($row['last_seen_at'] ?? '') ?: '',
+                ];
+            }
+        }
+    }
 
     return $normalized;
 }
@@ -1278,6 +1311,32 @@ function wp_push_send_notification(array $payload): array {
     $subscriptionIds = array_map(static fn(array $row): string => (string)$row['id'], $subscriptions);
     $queued = wp_push_enqueue($subscriptionIds, $payload);
 
+    // Also log system broadcast notification to user_notifications for all users
+    try {
+        $pdo = null;
+        if (function_exists('wp_db_get_pdo')) {
+            $pdo = wp_db_get_pdo();
+        } elseif (isset($GLOBALS['pdo'])) {
+            $pdo = $GLOBALS['pdo'];
+        }
+        if ($pdo) {
+            $title = trim((string)($payload['title'] ?? ''));
+            $body = trim((string)($payload['body'] ?? ''));
+            $url = trim((string)($payload['url'] ?? '/'));
+            $notif_text = $title ? ($body ? "$title: $body" : $title) : $body;
+            if ($notif_text !== '') {
+                $notif_json = json_encode(['text' => $notif_text]);
+                $st_users = $pdo->query("SELECT id FROM users");
+                if ($st_users) {
+                    $st_ins = $pdo->prepare("INSERT INTO user_notifications (user_id, sender_id, type, content, action_link, is_read, created_at) VALUES (?, 0, 'system', ?, ?, 0, NOW())");
+                    while ($u = $st_users->fetch(\PDO::FETCH_ASSOC)) {
+                        $st_ins->execute([(int)$u['id'], $notif_json, $url]);
+                    }
+                }
+            }
+        }
+    } catch (\Throwable $e) {}
+
     $success = 0;
     $failed = 0;
     $removed = 0;
@@ -1341,7 +1400,28 @@ function wp_push_send_notification(array $payload): array {
     return $result;
 }
 
-function wp_push_send_to_user($pdo, int $user_id, string $title, string $body, string $url = '/main.html'): array {
+function wp_push_send_to_user($pdo, int $user_id, string $title, string $body, string $url = '/main.html', array $extra = []): array {
+    if ($user_id > 0 && $pdo) {
+        try {
+            $notif_type = 'system';
+            if (!empty($extra['type'])) {
+                $notif_type = (string)$extra['type'];
+            } elseif (strpos($url, '/chat') !== false) {
+                $notif_type = 'chat_message';
+            } elseif (strpos($url, '/friends') !== false) {
+                $notif_type = 'friend_request';
+            } elseif (strpos($url, '/setlist') !== false) {
+                $notif_type = 'setlist_share';
+            }
+
+            $notif_text = $title ? "$title: $body" : $body;
+            $st_ins = $pdo->prepare("INSERT INTO user_notifications (user_id, sender_id, type, content, action_link, is_read, created_at) VALUES (?, 0, ?, ?, ?, 0, NOW())");
+            $st_ins->execute([$user_id, $notif_type, json_encode(['text' => $notif_text]), $url]);
+        } catch (\Throwable $e) {
+            // ignore if notification insert fails
+        }
+    }
+
     $config = wp_push_bootstrap_config();
     if (empty($config['supported']) || empty($config['enabled'])) {
         return ['ok' => false, 'message' => 'Push disabled.'];
@@ -1357,13 +1437,13 @@ function wp_push_send_to_user($pdo, int $user_id, string $title, string $body, s
         return ['ok' => false, 'message' => 'No subscriptions found for user.'];
     }
 
-    $payload = [
+    $payload = array_merge([
         'title' => $title,
         'body' => $body,
         'url' => $url,
         'icon' => '/wolarm_youth.png',
         'tag' => 'worship-direct'
-    ];
+    ], is_array($extra) ? $extra : []);
 
     $subscriptionIds = array_map(static fn(array $row): string => (string)$row['id'], $subs);
     wp_push_enqueue($subscriptionIds, $payload);

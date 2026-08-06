@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useIsPWA } from '../hooks/useIsPWA';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import './Login.css';
 
@@ -10,17 +11,42 @@ const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).
 const Login = () => {
   const navigate = useNavigate();
   const isPWA = useIsPWA();
+  const { user, setUser, checkAuth } = useAuth();
+  const isSubmittingRef = useRef(false);
   const [searchParams] = useSearchParams();
   const source = searchParams.get('source') || (isPWA ? 'pwa' : 'web');
-  const next = searchParams.get('next') || '/';
+  const rawNext = searchParams.get('next') || '/';
+  const next = (rawNext.startsWith('/login') || rawNext.startsWith('/register') || rawNext.startsWith('/logout')) ? '/' : rawNext;
   
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [googleEnabled, setGoogleEnabled] = useState(false);
+  const [viewMode, setViewMode] = useState(() => {
+    if (searchParams.get('mode') === 'login') return 'login';
+    return isPWA ? 'welcome' : 'login';
+  });
+  const [isQsOpen, setIsQsOpen] = useState(false);
+  const [qsTheme, setQsThemeState] = useState(() => localStorage.getItem('theme') || 'dark');
+  const [qsOled, setQsOledState] = useState(() => localStorage.getItem('oledMode') === 'true');
+  const [qsChordColor, setQsChordColorState] = useState(() => localStorage.getItem('chordColor') || 'gold');
+  const [qsOutlined, setQsOutlinedState] = useState(() => localStorage.getItem('outlinedChords') === 'true');
+
+  useEffect(() => {
+    const socialError = searchParams.get('social_error');
+    if (socialError) {
+      setError(decodeURIComponent(socialError));
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (user) {
+      navigate(next, { replace: true });
+    }
+  }, [user, navigate, next]);
 
   // Apply visual viewport fix for iOS PWA keyboard
   useEffect(() => {
@@ -77,16 +103,15 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (isSubmittingRef.current) return;
+
     if (!login.trim() || !password) {
       setError(t('auth.fillAllFields'));
       return;
     }
 
-    if (!isValidEmail(login)) {
-      setError(t('auth.invalidEmail'));
-      return;
-    }
-
+    isSubmittingRef.current = true;
     setIsLoading(true);
     setError('');
 
@@ -95,7 +120,9 @@ const Login = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
+        cache: 'no-store',
         body: JSON.stringify({
           login: login.trim(),
           password,
@@ -104,39 +131,68 @@ const Login = () => {
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.ok) {
-        const sep = next.includes('?') ? '&' : '?';
-        const nextUrl = `${next}${sep}session_login=${rememberMe ? '0' : '1'}`;
-        window.location.assign(nextUrl);
-      } else {
-        setError(data.error || t('auth.invalidLogin'));
+      const rawText = await response.text();
+      let data = null;
+      try {
+        data = JSON.parse(rawText);
+      } catch (jsonErr) {
+        console.error('Login response JSON parse failed', {
+          status: response.status,
+          contentType: response.headers.get('content-type'),
+          rawText: rawText.slice(0, 200),
+        });
+        if (response.ok) {
+          try {
+            await new Promise((r) => setTimeout(r, 150));
+            const u = await checkAuth();
+            if (u) {
+              navigate(next, { replace: true });
+              return;
+            }
+          } catch (_) {}
+        }
+        setError(t('auth.networkError'));
         setIsLoading(false);
+        return;
       }
-    } catch {
+
+      if (response.ok && data && (data.ok || data.success)) {
+        if (data.user) {
+          setUser(data.user);
+        }
+        navigate(next, { replace: true });
+        checkAuth().catch(() => {});
+        return;
+      }
+
+      if (response.status === 401) {
+        setError(data?.error || data?.message || t('auth.invalidLogin'));
+      } else if (response.status >= 500) {
+        setError(t('auth.networkError'));
+      } else {
+        setError(data?.error || data?.message || t('auth.invalidLogin'));
+      }
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Login fetch error', err);
       setError(t('auth.networkError'));
       setIsLoading(false);
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
   const googleAuthUrl = `/social_auth.php?provider=google&mode=login&next=${encodeURIComponent(next)}&source=${encodeURIComponent(source)}&remember=${rememberMe ? '1' : '0'}`;
   const handleGoogleClick = (event) => {
+    event.preventDefault();
     if (!googleEnabled || isLoading) {
-      event.preventDefault();
       setError(t('auth.googleDisabled'));
+      return;
     }
+    window.location.href = googleAuthUrl;
   };
 
-  const [viewMode, setViewMode] = useState(() => {
-    if (searchParams.get('mode') === 'login') return 'login';
-    return isPWA ? 'welcome' : 'login';
-  });
-  const [isQsOpen, setIsQsOpen] = useState(false);
-  const [qsTheme, setQsThemeState] = useState(() => localStorage.getItem('theme') || 'dark');
-  const [qsOled, setQsOledState] = useState(() => localStorage.getItem('oledMode') === 'true');
-  const [qsChordColor, setQsChordColorState] = useState(() => localStorage.getItem('chordColor') || 'gold');
-  const [qsOutlined, setQsOutlinedState] = useState(() => localStorage.getItem('outlinedChords') === 'true');
+
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0 });

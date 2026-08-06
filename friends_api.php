@@ -88,16 +88,24 @@ if ($action === 'search_users' && $method === 'GET') {
 if (($action === 'list' || $action === 'get_friends') && $method === 'GET') {
     $st = $pdo->prepare("
         SELECT f.user_id_1, f.user_id_2, f.status,
-               IF(f.user_id_1 = ?, u2.id, u1.id) as friend_id,
-               IF(f.user_id_1 = ?, u2.name, u1.name) as name,
-               IF(f.user_id_1 = ?, u2.email, u1.email) as email,
-               f.user_id_1 as requester_id
+               IF(f.user_id_1 = :uid1, u2.id, u1.id) as friend_id,
+               IF(f.user_id_1 = :uid2, u2.name, u1.name) as name,
+               IF(f.user_id_1 = :uid3, u2.email, u1.email) as email,
+               f.user_id_1 as requester_id,
+               IF((SELECT MAX(last_seen) FROM web_activity WHERE user_id = IF(f.user_id_1 = :uid4, u2.id, u1.id)) >= DATE_SUB(NOW(), INTERVAL 5 MINUTE), 1, 0) as is_online
         FROM friends f
         JOIN users u1 ON f.user_id_1 = u1.id
         JOIN users u2 ON f.user_id_2 = u2.id
-        WHERE f.user_id_1 = ? OR f.user_id_2 = ?
+        WHERE f.user_id_1 = :uid5 OR f.user_id_2 = :uid6
     ");
-    $st->execute([$uid, $uid, $uid, $uid, $uid]);
+    $st->execute([
+        'uid1' => $uid,
+        'uid2' => $uid,
+        'uid3' => $uid,
+        'uid4' => $uid,
+        'uid5' => $uid,
+        'uid6' => $uid,
+    ]);
     $list = $st->fetchAll(PDO::FETCH_ASSOC);
 
     if ($action === 'get_friends') {
@@ -170,12 +178,25 @@ if ($action === 'accept' && $method === 'POST') {
     $st->execute([$friend_id, $uid]); 
     
     if ($st->rowCount() > 0) {
-        require_once __DIR__ . '/push_service.php';
-        $senderName = wp_friends_current_user_display_name($pdo, $uid);
-        $st_notif = $pdo->prepare("INSERT INTO user_notifications (user_id, sender_id, type, content, action_link) VALUES (?, ?, 'friend_accepted', ?, '/friends')");
-        $st_notif->execute([$friend_id, $uid, json_encode(['text' => "$senderName accepted your friend request."])]);
+        $lang = strtolower((string)($_GET['lang'] ?? 'am'));
+        $push_title = "Friend Request Accepted";
+        $push_msg = "$senderName accepted your friend request.";
+        $notif_text = "$senderName accepted your friend request.";
 
-        wp_push_send_to_user($pdo, $friend_id, "Friend request accepted", "$senderName accepted your friend request.", "/friends");
+        if ($lang === 'am' || $lang === 'hy') {
+            $push_title = "Ընկերության հայտն ընդունվեց";
+            $push_msg = "$senderName-ն ընդունեց Ձեր ընկերության հայտը:";
+            $notif_text = "$senderName-ն ընդունեց Ձեր ընկերության հայտը:";
+        } elseif ($lang === 'ru') {
+            $push_title = "Запрос в друзья принят";
+            $push_msg = "$senderName принял(ա) ваш запрос в друзья.";
+            $notif_text = "$senderName принял(ա) ваш запрос в друзья.";
+        }
+
+        $st_notif = $pdo->prepare("INSERT INTO user_notifications (user_id, sender_id, type, content, action_link) VALUES (?, ?, 'friend_accepted', ?, '/friends')");
+        $st_notif->execute([$friend_id, $uid, json_encode(['text' => $notif_text, 'sender_name' => $senderName])]);
+
+        wp_push_send_to_user($pdo, $friend_id, $push_title, $push_msg, "/friends");
 
         out(["ok" => true]);
     } else {

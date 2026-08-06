@@ -5,7 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { getSongCoverStyle } from '../utils/songCover';
 import { sortSavedSongs } from '../utils/savedSongs';
-import { fallbackNews, fetchNewsList, formatNewsDate } from '../utils/news';
+import { fallbackNews, getCachedNewsList, fetchNewsList, formatNewsDate, formatNewsVersion, getNewsImageUrl } from '../utils/news';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
 import './MobileHub.css';
@@ -18,7 +18,7 @@ export default function MobileHub() {
   const [recentSongs, setRecentSongs] = useState([]);
   const [upcomingSetlist, setUpcomingSetlist] = useState(null);
   const [favorites, setFavorites] = useState([]);
-  const [newsItems, setNewsItems] = useState(fallbackNews);
+  const [newsItems, setNewsItems] = useState(() => getCachedNewsList(language));
   const [logoSrc, setLogoSrc] = useState('/platform_logo.png');
   const { guardPath } = usePwaOfflineGuard();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -78,12 +78,31 @@ export default function MobileHub() {
   }, []);
   
   useEffect(() => {
-    // Fetch recent songs
+    // 1. Instant hydration from localStorage cache
+    try {
+      const cachedSongs = localStorage.getItem('wp_songs_cache');
+      if (cachedSongs) {
+        const parsed = JSON.parse(cachedSongs);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setRecentSongs(parsed.slice(0, 5));
+        }
+      }
+      const cachedFavs = localStorage.getItem('wp_user_favorites_cache');
+      if (cachedFavs) {
+        const parsed = JSON.parse(cachedFavs);
+        if (Array.isArray(parsed)) setFavorites(parsed);
+      }
+    } catch {}
+
+    // Fetch recent songs from API
     fetch('/api.php')
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
           setRecentSongs(data.slice(0, 5));
+          try {
+            localStorage.setItem('wp_songs_cache', JSON.stringify(data));
+          } catch {}
         }
       })
       .catch(err => console.error(err));
@@ -109,6 +128,9 @@ export default function MobileHub() {
         .then(data => {
           if (Array.isArray(data)) {
             setFavorites(data);
+            try {
+              localStorage.setItem('wp_user_favorites_cache', JSON.stringify(data));
+            } catch {}
           }
         })
         .catch(err => console.error(err));
@@ -120,12 +142,14 @@ export default function MobileHub() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchNewsList({ language, limit: 2, featured: true })
+    fetchNewsList({ language, limit: 10 })
       .then(items => {
-        if (!cancelled) setNewsItems(items.length ? items : fallbackNews);
+        if (!cancelled && Array.isArray(items) && items.length > 0) {
+          setNewsItems(items);
+        }
       })
       .catch(() => {
-        if (!cancelled) setNewsItems(fallbackNews);
+        if (!cancelled) setNewsItems(getCachedNewsList(language));
       });
     return () => {
       cancelled = true;
@@ -181,8 +205,29 @@ export default function MobileHub() {
           <button className="icon-btn" style={{ border: 'none' }} onClick={() => navigate('/settings')} title={t('settings.title', 'Կարգավորումներ')}>
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           </button>
-          <button className="icon-btn" style={{ border: 'none' }} onClick={() => guardPath('/notifications', () => navigate('/notifications'))}>
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <button
+            className="icon-btn"
+            style={{
+              border: 'none',
+              minWidth: '44px',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              touchAction: 'manipulation'
+            }}
+            onClick={() => guardPath('/notifications', () => navigate('/notifications'))}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              guardPath('/notifications', () => navigate('/notifications'));
+            }}
+            title={t('notifications.title', 'Ծանուցումներ')}
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
           </button>
         </div>
       </div>
@@ -369,9 +414,10 @@ export default function MobileHub() {
               <div key={item.slug || i} className="hub-news-card" onClick={() => guardPath(`/news/${item.slug}`, () => navigate(`/news/${item.slug}`))}>
                 <div
                   className={`news-img img-${i + 1}`}
-                  style={item.image_url ? { backgroundImage: `url("${item.image_url}")` } : undefined}
+                  style={item.image_url ? { backgroundImage: `url("${getNewsImageUrl(item)}")` } : undefined}
                 />
                 <div className="news-content">
+                  {item.release_version ? <span className="news-release-version">{formatNewsVersion(item.release_version)}</span> : null}
                   <span className="news-date">{formatNewsDate(item.published_at || item.date, language)}</span>
                   <h4>{item.title}</h4>
                   <p>{item.excerpt || item.desc}</p>

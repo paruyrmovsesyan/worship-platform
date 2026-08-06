@@ -1,0 +1,206 @@
+.error-page-wrapper {
+  width: 100%;
+  min-height: calc(100vh - 180px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  box-sizing: border-box;
+}
+
+.error-card {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  background: linear-gradient(135deg, rgba(14, 14, 26, 0.92) 0%, rgba(22, 20, 48, 0.96) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 28px;
+  padding: 48px 36px;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 60px rgba(0, 240, 255, 0.08);
+  overflow: hidden;
+}
+
+.error-card.danger-theme {
+  border-color: rgba(255, 59, 48, 0.25);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 60px rgba(255, 59, 48, 0.1);
+}
+
+.error-card.warning-theme {
+  border-color: rgba(255, 149, 0, 0.25);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 60px rgba(255, 149, 0, 0.1);
+}
+
+.error-hero-glow {
+  position: absolute;
+  top: -40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.15) 0%, transparent 70%);
+  filter: blur(50px);
+  pointer-events: none;
+}
+
+.error-hero-glow.danger {
+  background: radial-gradient(circle, rgba(255, 59, 48, 0.18) 0%, transparent 70%);
+}
+
+.error-hero-glow.warning {
+  background: radial-gradient(circle, rgba(255, 149, 0, 0.18) 0%, transparent 70%);
+}
+
+.error-badge {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  color: #00F0FF;
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  padding: 6px 16px;
+  border-radius: 999px;
+  margin-bottom: 18px;
+}
+
+.error-badge.danger {
+  color: #ff3b30;
+  background: rgba(255, 59, 48, 0.1);
+  border-color: rgba(255, 59, 48, 0.25);
+}
+
+.error-badge.warning {
+  color: #ff9500;
+  background: rgba(255, 149, 0, 0.1);
+  border-color: rgba(255, 149, 0, 0.25);
+}
+
+.error-title {
+  font-size: 2.2rem;
+  font-weight: 850;
+  color: #ffffff;
+  margin: 0 0 12px 0;
+  letter-spacing: -0.5px;
+}
+
+.error-subtitle {
+  font-size: 1.02rem;
+  color: var(--color-text-secondary, #a0a0ab);
+  line-height: 1.6;
+  margin: 0 0 28px 0;
+}
+
+.error-search-box {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto 28px auto;
+  display: flex;
+  align-items: center;
+}
+
+.error-search-box svg {
+  position: absolute;
+  left: 16px;
+  color: #00F0FF;
+  pointer-events: none;
+}
+
+.error-search-box input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 13px 100px 13px 48px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.error-search-box input:focus {
+  border-color: rgba(0, 240, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+}
+
+.btn-error-search {
+  position: absolute;
+  right: 6px;
+  background: linear-gradient(135deg, #00F0FF, #00a8ff);
+  color: #000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.error-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-error {
+  padding: 12px 22px;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  font-weight: 750;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-error.primary {
+  background: linear-gradient(135deg, #00F0FF, #00a8ff);
+  color: #000;
+  box-shadow: 0 4px 16px rgba(0, 240, 255, 0.25);
+}
+
+.btn-error.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 240, 255, 0.4);
+}
+
+.btn-error.secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-error.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.error-footer-links {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 0.88rem;
+  color: var(--color-text-secondary, #a0a0ab);
+}
+
+.error-footer-links a {
+  color: #00F0FF;
+  text-decoration: none;
+  margin: 0 4px;
+}
+
+.error-footer-links a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .error-card {
+    padding: 32px 20px;
+  }
+  .error-title {
+    font-size: 1.75rem;
+  }
+}

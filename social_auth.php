@@ -25,10 +25,10 @@ function wp_social_auth_status_response(): void {
 function wp_social_auth_safe_next(string $next): string {
     $next = trim($next);
     if ($next === '') {
-        return '/main.html';
+        return '/songs';
     }
     if (!preg_match('~^/[a-zA-Z0-9_./?&=%#\\-]*$~', $next)) {
-        return '/main.html';
+        return '/songs';
     }
     return $next;
 }
@@ -37,11 +37,31 @@ function wp_social_auth_safe_target(string $authTarget): string {
     return strtolower(trim($authTarget)) === 'admin' ? 'admin' : 'user';
 }
 
+function wp_social_auth_encode_state(array $data): string {
+    $json = json_encode($data, JSON_UNESCAPED_SLASHES);
+    $b64 = rtrim(strtr(base64_encode($json), '+/', '-_'), '=');
+    $secret = defined('WP_AUTH_SECRET_KEY') ? WP_AUTH_SECRET_KEY : 'worship_social_auth_secret_2026';
+    $sig = hash_hmac('sha256', $b64, $secret);
+    return $b64 . '.' . $sig;
+}
+
+function wp_social_auth_decode_state(string $state): ?array {
+    $parts = explode('.', $state, 2);
+    if (count($parts) !== 2) return null;
+    [$b64, $sig] = $parts;
+    $secret = defined('WP_AUTH_SECRET_KEY') ? WP_AUTH_SECRET_KEY : 'worship_social_auth_secret_2026';
+    $expectedSig = hash_hmac('sha256', $b64, $secret);
+    if (!hash_equals($expectedSig, $sig)) return null;
+    $json = base64_decode(strtr($b64, '-_', '+/'));
+    $data = json_decode((string)$json, true);
+    return is_array($data) ? $data : null;
+}
+
 function wp_social_auth_redirect_to_auth(string $mode, string $next, string $source, string $message = '', string $authTarget = 'user') {
     $authTarget = wp_social_auth_safe_target($authTarget);
     $target = $authTarget === 'admin'
         ? '/admin_login.php'
-        : ($mode === 'register' ? '/registeruser.php' : '/loginuser.php');
+        : ($mode === 'register' ? '/register' : '/login');
     $query = ['next' => wp_social_auth_safe_next($next)];
     if ($source !== '' && $authTarget !== 'admin') {
         $query['source'] = $source;
@@ -198,7 +218,7 @@ function wp_social_auth_handle_google_callback(PDO $pdo, array $pending) {
     if ($audience !== '' && $audience !== (string)$config['client_id']) {
         wp_social_auth_redirect_to_auth((string)$pending['mode'], (string)$pending['next'], (string)$pending['source'], 'Google մուտքի պատասխանը անվավեր է։', $authTarget);
     }
-    if ($nonce !== '' && !hash_equals((string)($pending['nonce'] ?? ''), $nonce)) {
+    if ($nonce !== '' && !empty($pending['nonce']) && !hash_equals((string)$pending['nonce'], $nonce)) {
         wp_social_auth_redirect_to_auth((string)$pending['mode'], (string)$pending['next'], (string)$pending['source'], 'Google մուտքի պատասխանը անվավեր է։', $authTarget);
     }
 
@@ -213,86 +233,40 @@ function wp_social_auth_handle_google_callback(PDO $pdo, array $pending) {
         wp_social_auth_redirect_to_auth((string)$pending['mode'], (string)$pending['next'], (string)$pending['source'], 'Google մուտքի տվյալները ամբողջական չեն։', $authTarget);
     }
 
-    $mode = strtolower(trim((string)($pending['mode'] ?? 'login'))) === 'register' ? 'register' : 'login';
-    $user = null;
-    $isNewRegistration = false;
+    $existingLink = wp_social_auth_find_link('google', (string)$profile['subject']);
+    $existingEmailUser = !empty($profile['email'])
+        ? wp_social_auth_find_user_by_email($pdo, (string)$profile['email'])
+        : null;
+    $isNewRegistration = !is_array($existingLink) && !$existingEmailUser;
 
-    if ($mode === 'login') {
-        $link = wp_social_auth_find_link('google', (string)$profile['subject']);
-        if (is_array($link) && !empty($link['user_id'])) {
-            $linkedUser = wp_social_auth_find_user_by_id($pdo, (int)$link['user_id']);
-            if ($linkedUser) {
-                $user = $linkedUser;
-            }
-        }
-
-        if (!$user) {
-            $existingEmailUser = !empty($profile['email'])
-                ? wp_social_auth_find_user_by_email($pdo, (string)$profile['email'])
-                : null;
-
-            if ($existingEmailUser) {
-                if (!empty($profile['email_verified'])) {
-                    wp_social_auth_store_link('google', (string)$profile['subject'], [
-                        'user_id' => (int)($existingEmailUser['id'] ?? 0),
-                        'email' => (string)($existingEmailUser['email'] ?? $profile['email']),
-                        'name' => (string)($existingEmailUser['name'] ?? ($profile['name'] ?? '')),
-                        'username' => (string)($existingEmailUser['username'] ?? ''),
-                    ]);
-                    $user = $existingEmailUser;
-                } else {
-                    wp_social_auth_clear_pending();
-                    wp_social_auth_redirect_to_auth(
-                        'login',
-                        (string)$pending['next'],
-                        (string)$pending['source'],
-                        'Google-ը չի հաստատել այս էլ. փոստը, դրա համար չենք կարող այն կապել առկա հաշվին։',
-                        $authTarget
-                    );
-                }
-            }
-
-            if (!$user) {
-                wp_social_auth_clear_pending();
-                wp_social_auth_redirect_to_auth(
-                    'login',
-                    (string)$pending['next'],
-                    (string)$pending['source'],
-                    $authTarget === 'admin'
-                        ? 'Այս Google հաշիվը դեռ կապված չէ Worship-ի օգտահաշվին։ Նախ Google-ով գրանցվիր սովորական էջից, հետո նորից փորձիր admin մուտքը։'
-                        : 'Այս Google հաշիվը դեռ կապված չէ։ Նախ գրանցվիր Google-ով։',
-                    $authTarget
-                );
-            }
-        }
-    } else {
-        $existingLink = wp_social_auth_find_link('google', (string)$profile['subject']);
-        $existingEmailUser = !empty($profile['email'])
-            ? wp_social_auth_find_user_by_email($pdo, (string)$profile['email'])
-            : null;
-        $isNewRegistration = !is_array($existingLink) && !$existingEmailUser;
-
-        $user = wp_social_auth_resolve_user($pdo, 'google', $profile);
-        if ($isNewRegistration && function_exists('wp_social_auth_send_registration_notifications')) {
-            wp_social_auth_send_registration_notifications($pdo, $user, true);
-        }
+    $user = wp_social_auth_resolve_user($pdo, 'google', $profile);
+    if ($isNewRegistration && function_exists('wp_social_auth_send_registration_notifications')) {
+        wp_social_auth_send_registration_notifications($pdo, $user, true);
     }
 
     if ($authTarget === 'admin') {
         wp_social_auth_complete_admin_login($pdo, $pending, $user);
     }
 
-    wp_social_auth_issue_session($pdo, $user, (string)$pending['source'], !empty($pending['remember']));
+    $socialToken = bin2hex(random_bytes(32));
+    $stInsert = $pdo->prepare("INSERT INTO user_sessions (user_id, session_key, selector, device_name, expires_at) VALUES (?, 'social_login_claim', ?, ?, DATE_ADD(NOW(), INTERVAL 5 MINUTE))");
+    $stInsert->execute([(int)$user['id'], $socialToken, (string)($pending['source'] ?? 'pwa')]);
+
+    $remember = isset($pending['remember']) ? !empty($pending['remember']) : true;
+    wp_social_auth_issue_session($pdo, $user, (string)$pending['source'], $remember);
     wp_social_auth_clear_pending();
+    
     $targetNext = wp_social_auth_safe_next((string)$pending['next']);
     $sep = strpos($targetNext, '?') === false ? '?' : '&';
-    $targetNext .= $sep . 'session_login=' . (!empty($pending['remember']) ? '0' : '1');
+    $targetNext .= $sep . 'social_login_token=' . $socialToken;
     if (!empty($isNewRegistration)) {
         $sep = strpos($targetNext, '?') === false ? '?' : '&';
         $targetNext .= $sep . 'social_registered=1&password_hint=1';
     }
 
-    header('Location: ' . $targetNext);
+    echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Redirecting...</title>';
+    echo '<script>window.location.replace(' . json_encode($targetNext) . ');</script>';
+    echo '</head><body>Redirecting to app...</body></html>';
     exit;
 }
 
@@ -301,9 +275,41 @@ if ($endpointAction === 'status') {
     wp_social_auth_status_response();
 }
 
+if ($endpointAction === 'claim_token' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $d = json_decode(file_get_contents('php://input'), true);
+    $token = trim((string)($d['token'] ?? ''));
+    if ($token === '') {
+        header('Content-Type: application/json');
+        echo json_encode(["ok" => false, "error" => "No token provided"]);
+        exit;
+    }
+
+    $st = $pdo->prepare("SELECT user_id, device_name FROM user_sessions WHERE session_key = 'social_login_claim' AND selector = ? AND expires_at > NOW() LIMIT 1");
+    $st->execute([$token]);
+    $claim = $st->fetch(PDO::FETCH_ASSOC);
+    if (!$claim) {
+        header('Content-Type: application/json');
+        echo json_encode(["ok" => false, "error" => "Invalid or expired token"]);
+        exit;
+    }
+
+    // Delete it so it can't be claimed again
+    $pdo->prepare("DELETE FROM user_sessions WHERE session_key = 'social_login_claim' AND selector = ?")->execute([$token]);
+
+    // Issue session
+    $user = wp_social_auth_find_user_by_id($pdo, (int)$claim['user_id']);
+    if ($user) {
+        wp_social_auth_issue_session($pdo, $user, (string)$claim['device_name'], true); // Always issue with remember=true for PWA claim
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode(["ok" => true]);
+    exit;
+}
+
 $provider = strtolower(trim((string)($_GET['provider'] ?? $_POST['provider'] ?? '')));
 if (!in_array($provider, ['google'], true)) {
-    wp_social_auth_redirect_to_auth('login', '/main.html', '', 'Սոցիալական մուտքի provider-ը սխալ է։');
+    wp_social_auth_redirect_to_auth('login', '/songs', '', 'Սոցիալական մուտքի provider-ը սխալ է։');
 }
 
 $pending = wp_social_auth_pending();
@@ -312,7 +318,7 @@ $isCallback = isset($_GET['code'], $_GET['state']) || isset($_POST['code'], $_PO
 
 if (!$isCallback) {
     $authTarget = wp_social_auth_safe_target((string)($_GET['auth_target'] ?? 'user'));
-    $defaultNext = $authTarget === 'admin' ? '/songs.php' : '/main.html';
+    $defaultNext = $authTarget === 'admin' ? '/songs.php' : '/songs';
     $next = wp_social_auth_safe_next((string)($_GET['next'] ?? $defaultNext));
     $source = strtolower(trim((string)($_GET['source'] ?? '')));
     $mode = strtolower(trim((string)($_GET['mode'] ?? 'login'))) === 'register' ? 'register' : 'login';
@@ -320,6 +326,16 @@ if (!$isCallback) {
         $mode = 'login';
     }
     $remember = !empty($_GET['remember']);
+    $stateToken = wp_social_auth_encode_state([
+        'p' => $provider,
+        'm' => $mode,
+        'n' => $next,
+        's' => $source,
+        't' => $authTarget,
+        'r' => $remember ? 1 : 0,
+        'c' => time(),
+        'x' => bin2hex(random_bytes(8)),
+    ]);
     $pending = [
         'provider' => $provider,
         'mode' => $mode,
@@ -327,7 +343,7 @@ if (!$isCallback) {
         'source' => $source,
         'auth_target' => $authTarget,
         'remember' => $remember ? 1 : 0,
-        'state' => bin2hex(random_bytes(16)),
+        'state' => $stateToken,
         'nonce' => bin2hex(random_bytes(16)),
         'created_at' => time(),
     ];
@@ -338,8 +354,27 @@ if (!$isCallback) {
     }
 }
 
+// If session state was lost (e.g. Safari PWA cross-site cookie drop), recover from signed state token
+if ((!$pending || empty($pending['provider'])) && $callbackState !== '') {
+    $decoded = wp_social_auth_decode_state($callbackState);
+    if ($decoded && !empty($decoded['p'])) {
+        $pending = [
+            'provider' => (string)$decoded['p'],
+            'mode' => (string)($decoded['m'] ?? 'login'),
+            'next' => (string)($decoded['n'] ?? '/songs'),
+            'source' => (string)($decoded['s'] ?? ''),
+            'auth_target' => (string)($decoded['t'] ?? 'user'),
+            'remember' => !empty($decoded['r']) ? 1 : 0,
+            'state' => $callbackState,
+            'nonce' => '',
+            'created_at' => (int)($decoded['c'] ?? time()),
+        ];
+        wp_social_auth_set_pending($pending);
+    }
+}
+
 if (!$pending || empty($pending['provider']) || (string)$pending['provider'] !== $provider) {
-    wp_social_auth_redirect_to_auth('login', '/main.html', '', 'Սոցիալական մուտքի վիճակը կորել է։');
+    wp_social_auth_redirect_to_auth('login', '/songs', '', 'Սոցիալական մուտքի վիճակը կորել է։');
 }
 
 if (!empty($pending['created_at']) && (int)$pending['created_at'] < (time() - 900)) {

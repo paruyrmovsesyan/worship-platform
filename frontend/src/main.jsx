@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { LanguageProvider } from './context/LanguageContext.jsx'
 import { PageLoadingProvider } from './context/PageLoadingContext.jsx'
+import { CallProvider } from './context/CallContext.jsx'
 import App from './App.jsx'
 import './index.css'
 import './styles/LightTheme.css'
@@ -13,9 +14,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <LanguageProvider>
       <AuthProvider>
         <BrowserRouter>
-          <PageLoadingProvider>
-            <App />
-          </PageLoadingProvider>
+          <CallProvider>
+            <PageLoadingProvider>
+              <App />
+            </PageLoadingProvider>
+          </CallProvider>
         </BrowserRouter>
       </AuthProvider>
     </LanguageProvider>

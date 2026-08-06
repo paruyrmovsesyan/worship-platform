@@ -199,9 +199,17 @@ if (!function_exists('wp_song_request_create')) {
             ? wp_song_request_fetch_song_snapshot($conn, (int)$data['song_id'])
             : null;
 
-        if ($data['request_type'] === 'edit' && !$snapshot) {
-            $conn->close();
-            return ['ok' => false, 'message' => 'Ընտրված երգը չգտնվեց։'];
+        if ($data['request_type'] === 'edit') {
+            if (!$snapshot) {
+                $conn->close();
+                return ['ok' => false, 'message' => 'Ընտրված երգը չգտնվեց։'];
+            }
+
+            $changes = wp_song_request_build_change_set($data, $snapshot);
+            if (empty($changes)) {
+                $conn->close();
+                return ['ok' => false, 'message' => 'Դուք ոչ մի փոփոխություն չեք կատարել։ Խմբագրման հայտ ուղարկելու համար փոխեք որևէ տվյալ։'];
+            }
         }
 
         $submittedByUserId = max(0, (int)($submitter['id'] ?? 0));
@@ -352,6 +360,12 @@ if (!function_exists('wp_song_request_list')) {
                             $row['source_snapshot_data'] = $decoded;
                         }
                     }
+                    if (empty($row['source_snapshot_data']) && ($row['request_type'] ?? '') === 'edit' && !empty($row['song_id'])) {
+                        $liveSong = wp_song_request_fetch_song_snapshot($conn, (int)$row['song_id']);
+                        if (is_array($liveSong)) {
+                            $row['source_snapshot_data'] = $liveSong;
+                        }
+                    }
                     $row['change_set'] = wp_song_request_build_change_set($row, is_array($row['source_snapshot_data']) ? $row['source_snapshot_data'] : []);
                     $rows[] = $row;
                 }
@@ -456,8 +470,10 @@ if (!function_exists('wp_song_request_change_field_labels')) {
 
 if (!function_exists('wp_song_request_row_payload')) {
     function wp_song_request_row_payload(array $row): array {
+        $titleHy = wp_song_request_trim($row['title_hy'] ?? '');
+        $title = wp_song_request_trim($row['title'] ?? '');
         return [
-            'title_hy' => wp_song_request_trim($row['title_hy'] ?? ''),
+            'title_hy' => $titleHy !== '' ? $titleHy : $title,
             'title_lat' => wp_song_request_trim($row['title_lat'] ?? ''),
             'title_en' => wp_song_request_trim($row['title_en'] ?? ''),
             'title_ru' => wp_song_request_trim($row['title_ru'] ?? ''),

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const AuthContext = createContext();
 
@@ -45,23 +45,48 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch('/auth_me.php')
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.loggedIn) {
-          setUser(data.user);
-        } else {
-          setUser(null);
+  const checkAuth = useCallback(async () => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const socialToken = urlParams.get('social_login_token');
+      if (socialToken) {
+        try {
+          const claimRes = await fetch('/social_auth.php?action=claim_token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: socialToken }),
+          });
+          const claimData = await claimRes.json();
+          if (claimData.ok) {
+            const newUrl = window.location.pathname + window.location.search.replace(new RegExp(`([?&])social_login_token=${socialToken}(&|$)`), '$1').replace(/[?&]$/, '') + window.location.hash;
+            window.history.replaceState(null, '', newUrl);
+          }
+        } catch (e) {
+          console.error('Failed to claim social token', e);
         }
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Auth check failed', err);
+      }
+
+      const res = await fetch('/auth_me.php');
+      const data = await res.json();
+      if (data && data.loggedIn) {
+        setUser(data.user);
+        return data.user;
+      } else {
         setUser(null);
-        setLoading(false);
-      });
+        return null;
+      }
+    } catch (err) {
+      // Network error — do NOT clear user; keep existing state to avoid false logouts
+      console.error('Auth check failed (network)', err);
+      return null;
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   useEffect(() => {
     const userId = getUserId(user);
@@ -131,16 +156,17 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     await clearUserCacheScope(getUserId(user)).catch(() => {});
-    var url = '/logout_users.php?next=/';
-    if (window.WP && typeof window.WP.navigate === 'function') {
-      window.WP.navigate(url, { loaderDelay: 50, navigationDelay: 70 });
-    } else {
-      window.location.href = url;
+    try {
+      await fetch('/logout_users.php?silent=1');
+    } catch (err) {
+      console.error('Logout error:', err);
     }
+    setUser(null);
+    window.location.href = '/login?logged_out=1';
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, setUser, loading, login, logout, checkAuth, refetchUser: checkAuth }}>
       {children}
     </AuthContext.Provider>
   );

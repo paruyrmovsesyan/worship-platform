@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/version_config.php';
 
 const WP_INSTALLS_PATH = __DIR__ . '/install_stats_store.json';
-const WP_INSTALL_ACTIVE_WINDOW_DAYS = 60;
+const WP_INSTALL_ACTIVE_WINDOW_DAYS = 180;
 
 function wp_install_expected_source(string $scope): string {
     $scope = wp_install_normalize_scope($scope);
@@ -40,7 +40,18 @@ function wp_install_sanitize_signature(string $signature): string {
 }
 
 function wp_install_is_verified_source(string $scope, string $source): bool {
-    return trim($source) === wp_install_expected_source($scope);
+    $source = trim($source);
+    if ($source === '') {
+        return true;
+    }
+    $expected = wp_install_expected_source($scope);
+    if ($source === $expected) {
+        return true;
+    }
+    return in_array($source, [
+        'main-app-verified', 'admin-app-verified',
+        'main-app', 'admin-app', 'main', 'admin', 'web', 'pwa', 'app', 'legacy'
+    ], true);
 }
 
 function wp_install_normalize_scope(string $scope): string {
@@ -49,32 +60,87 @@ function wp_install_normalize_scope(string $scope): string {
 }
 
 function wp_install_read_store(): array {
-    $items = [];
+    $rawItems = [];
+
     try {
         $conn = wp_runtime_open_mysqli();
         $result = $conn->query("SELECT * FROM install_stats");
-        while ($row = $result->fetch_assoc()) {
-            $deviceId = trim((string)($row['device_id'] ?? ''));
-            if ($deviceId === '') continue;
+        if ($result instanceof mysqli_result) {
+            while ($row = $result->fetch_assoc()) {
+                $deviceId = trim((string)($row['device_id'] ?? ''));
+                if ($deviceId === '') continue;
 
-            $items[] = [
-                'device_id' => mb_substr($deviceId, 0, 120),
-                'device_signature' => wp_install_sanitize_signature((string)($row['device_signature'] ?? '')),
-                'scope' => wp_install_normalize_scope((string)($row['scope'] ?? 'main')),
-                'source' => mb_substr(trim((string)($row['source'] ?? '')), 0, 80),
-                'user_id' => max(0, (int)($row['user_id'] ?? 0)),
-                'user_name' => mb_substr(trim((string)($row['user_name'] ?? '')), 0, 160),
-                'user_username' => mb_substr(trim((string)($row['user_username'] ?? '')), 0, 160),
-                'user_email' => mb_substr(trim((string)($row['user_email'] ?? '')), 0, 190),
-                'ip_address' => mb_substr(trim((string)($row['ip_address'] ?? '')), 0, 80),
-                'user_agent' => mb_substr(trim((string)($row['user_agent'] ?? '')), 0, 255),
-                'installed_at' => wp_version_normalize_datetime($row['installed_at'] ?? '') ?: wp_version_now_iso(),
-                'last_seen_at' => wp_version_normalize_datetime($row['last_seen_at'] ?? '') ?: wp_version_now_iso(),
-            ];
+                $scope = wp_install_normalize_scope((string)($row['scope'] ?? 'main'));
+                $source = mb_substr(trim((string)($row['source'] ?? '')), 0, 80);
+                if ($source === '') {
+                    $source = wp_install_expected_source($scope);
+                }
+
+                $installedAt = wp_version_normalize_datetime($row['installed_at'] ?? '') ?: wp_version_now_iso();
+                $lastSeenAt = wp_version_normalize_datetime($row['last_seen_at'] ?? '') ?: $installedAt;
+
+                $rawItems[] = [
+                    'device_id' => mb_substr($deviceId, 0, 120),
+                    'device_signature' => wp_install_sanitize_signature((string)($row['device_signature'] ?? '')),
+                    'scope' => $scope,
+                    'source' => $source,
+                    'user_id' => max(0, (int)($row['user_id'] ?? 0)),
+                    'user_name' => mb_substr(trim((string)($row['user_name'] ?? '')), 0, 160),
+                    'user_username' => mb_substr(trim((string)($row['user_username'] ?? '')), 0, 160),
+                    'user_email' => mb_substr(trim((string)($row['user_email'] ?? '')), 0, 190),
+                    'ip_address' => mb_substr(trim((string)($row['ip_address'] ?? '')), 0, 80),
+                    'user_agent' => mb_substr(trim((string)($row['user_agent'] ?? '')), 0, 255),
+                    'installed_at' => $installedAt,
+                    'last_seen_at' => $lastSeenAt,
+                ];
+            }
+            $result->free();
         }
+        $conn->close();
     } catch (Throwable $e) {}
 
-    return $items;
+    $filePaths = [
+        __DIR__ . '/install_stats_store.json',
+        __DIR__ . '/legacy_data/install_stats_store.json',
+    ];
+    foreach ($filePaths as $path) {
+        if (is_file($path) && is_readable($path)) {
+            $decoded = json_decode((string)file_get_contents($path), true);
+            if (is_array($decoded)) {
+                foreach ($decoded as $item) {
+                    if (!is_array($item)) continue;
+                    $deviceId = trim((string)($item['device_id'] ?? ''));
+                    if ($deviceId === '') continue;
+
+                    $scope = wp_install_normalize_scope((string)($item['scope'] ?? 'main'));
+                    $source = mb_substr(trim((string)($item['source'] ?? '')), 0, 80);
+                    if ($source === '') {
+                        $source = wp_install_expected_source($scope);
+                    }
+
+                    $installedAt = wp_version_normalize_datetime($item['installed_at'] ?? '') ?: wp_version_now_iso();
+                    $lastSeenAt = wp_version_normalize_datetime($item['last_seen_at'] ?? '') ?: $installedAt;
+
+                    $rawItems[] = [
+                        'device_id' => mb_substr($deviceId, 0, 120),
+                        'device_signature' => wp_install_sanitize_signature((string)($item['device_signature'] ?? '')),
+                        'scope' => $scope,
+                        'source' => $source,
+                        'user_id' => max(0, (int)($item['user_id'] ?? 0)),
+                        'user_name' => mb_substr(trim((string)($item['user_name'] ?? '')), 0, 160),
+                        'user_username' => mb_substr(trim((string)($item['user_username'] ?? '')), 0, 160),
+                        'user_email' => mb_substr(trim((string)($item['user_email'] ?? '')), 0, 190),
+                        'ip_address' => mb_substr(trim((string)($item['ip_address'] ?? '')), 0, 80),
+                        'user_agent' => mb_substr(trim((string)($item['user_agent'] ?? '')), 0, 255),
+                        'installed_at' => $installedAt,
+                        'last_seen_at' => $lastSeenAt,
+                    ];
+                }
+            }
+        }
+    }
+
+    return wp_install_canonicalize_items($rawItems);
 }
 
 function wp_install_merge_item_rows(array $base, array $row): array {

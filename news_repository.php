@@ -6,6 +6,12 @@ require_once __DIR__ . '/runtime_config.php';
 function wp_news_pdo(): PDO {
     $pdo = wp_runtime_open_pdo();
     $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+    try {
+        // Keep publication scheduling aligned with the timezone used by the admin UI.
+        $pdo->exec('SET SESSION time_zone = ' . $pdo->quote(date('P')));
+    } catch (Throwable $error) {
+        // Some shared hosts restrict session settings; news queries still remain usable.
+    }
     wp_news_ensure_schema($pdo);
     wp_news_seed_defaults($pdo);
     return $pdo;
@@ -21,6 +27,7 @@ function wp_news_ensure_schema(PDO $pdo): void {
             sort_order INT NOT NULL DEFAULT 0,
             image_url VARCHAR(500) NULL,
             published_at DATETIME NULL,
+            release_version VARCHAR(60) NOT NULL DEFAULT '',
             title_hy VARCHAR(255) NOT NULL DEFAULT '',
             title_en VARCHAR(255) NOT NULL DEFAULT '',
             title_ru VARCHAR(255) NOT NULL DEFAULT '',
@@ -39,6 +46,11 @@ function wp_news_ensure_schema(PDO $pdo): void {
             INDEX idx_news_featured (is_featured, sort_order)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
+
+    $versionColumn = $pdo->query("SHOW COLUMNS FROM news_articles LIKE 'release_version'")->fetchColumn();
+    if ($versionColumn === false) {
+        $pdo->exec("ALTER TABLE news_articles ADD COLUMN release_version VARCHAR(60) NOT NULL DEFAULT '' AFTER published_at");
+    }
 }
 
 function wp_news_seed_defaults(PDO $pdo): void {
@@ -141,7 +153,9 @@ function wp_news_localized(array $row, string $lang): array {
         'is_featured' => (int)$row['is_featured'] === 1,
         'image_url' => (string)($row['image_url'] ?? ''),
         'published_at' => (string)($row['published_at'] ?? ''),
+        'updated_at' => (string)($row['updated_at'] ?? ''),
         'date' => (string)($row['published_at'] ?? ''),
+        'release_version' => trim((string)($row['release_version'] ?? '')),
         'tag' => $pick($row, 'tag'),
         'title' => $pick($row, 'title'),
         'excerpt' => $pick($row, 'excerpt'),

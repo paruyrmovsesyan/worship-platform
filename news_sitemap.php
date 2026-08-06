@@ -40,6 +40,15 @@ try {
 
 echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 echo "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\" xmlns:news=\"http://www.google.com/schemas/sitemap-news/0.9\">\n";
+
+if (empty($items)) {
+    // Prevent empty <urlset> error in Google Search Console by providing a fallback URL.
+    echo "  <url>\n";
+    echo '    <loc>' . wp_news_sitemap_escape($baseUrl . '/news') . "</loc>\n";
+    echo '    <lastmod>' . wp_news_sitemap_escape(gmdate('c')) . "</lastmod>\n";
+    echo "  </url>\n";
+}
+
 foreach ($items as $item) {
     $title = trim((string)($item['title_hy'] ?: $item['title_en'] ?: $item['title_ru'] ?: $item['slug']));
     $publishedTimestamp = strtotime((string)$item['published_at']);

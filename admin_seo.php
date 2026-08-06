@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($fields as $field) {
         $input[$field] = trim((string)($_POST[$field] ?? ''));
     }
-    foreach (['site_seo_index_home', 'site_seo_index_songs', 'site_seo_index_song_pages', 'site_seo_index_news', 'site_seo_index_news_articles'] as $field) {
+    foreach (['site_seo_index_home', 'site_seo_index_songs', 'site_seo_index_song_pages', 'site_seo_index_news', 'site_seo_index_news_articles', 'site_seo_index_transpose'] as $field) {
         $input[$field] = !empty($_POST[$field]);
     }
 
@@ -112,6 +112,7 @@ function seo_e(array $config, string $key): string {
                 'site_seo_index_song_pages' => ['Երգի դիտման էջեր', '/song/123'],
                 'site_seo_index_news' => ['Նորությունների ցանկ', '/news'],
                 'site_seo_index_news_articles' => ['Նորությունների հոդվածներ', '/news/article'],
+                'site_seo_index_transpose' => ['Տրանսպոզի գործիք', '/transpose'],
               ] as $key => [$label, $example]): ?>
                 <label style="display:flex;align-items:flex-start;gap:10px;padding:14px;border:1px solid var(--line);border-radius:12px;cursor:pointer">
                   <input type="checkbox" name="<?= $key ?>" value="1" <?= !empty($config[$key]) ? 'checked' : '' ?> style="margin-top:3px">

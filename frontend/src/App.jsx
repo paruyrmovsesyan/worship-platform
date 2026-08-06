@@ -38,6 +38,10 @@ import Blog from './pages/Blog';
 import Careers from './pages/Careers';
 import Documentation from './pages/Documentation';
 import Tutorials from './pages/Tutorials';
+import NotFound from './pages/NotFound';
+import ServerError from './pages/ServerError';
+import Forbidden from './pages/Forbidden';
+import ErrorBoundary from './components/ErrorBoundary';
 import Support from './pages/Support';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
@@ -58,6 +62,7 @@ import { usePwaSwipeNavigation } from './hooks/usePwaSwipeNavigation';
 import { showPwaOfflineBlockedNotice } from './utils/pwaOfflineGuard';
 import { useLanguage } from './context/LanguageContext';
 import { applyAppTheme, getStoredAppTheme } from './utils/appTheme';
+import WebCommandPalette from './components/WebCommandPalette';
 
 function App() {
   const mediaQueryMatch = useMediaQuery('(max-width: 900px)');
@@ -261,50 +266,62 @@ function App() {
         }}
       >
         <div ref={transitionRef} className="route-animate">
-          <Routes key={refreshKey}>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/songs" element={<Songs />} />
-            <Route path="/transpose" element={<TransposeTool />} />
-            <Route path="/song/:id" element={<SongView />} />
-            <Route path="/setlists" element={<Setlists />} />
-            <Route path="/setlists/public" element={<SetlistPublicWeb />} />
-            <Route path="/setlist_public.html" element={<SetlistPublicWeb />} />
-            <Route path="/setlists/:id/edit" element={<SetlistEditor />} />
-            <Route path="/setlists/:id/live" element={<SetlistLive />} />
-            <Route path="/setlists/:id" element={<SetlistEditor />} />
-            <Route path="/favorites" element={<Favorites />} />
-            <Route path="/news" element={<News />} />
-            <Route path="/news/:slug" element={<NewsArticle />} />
-            <Route path="/friends" element={<Friends />} />
-            <Route path="/chats" element={<ChatsList />} />
-            <Route path="/chat/:id" element={<Chat />} />
-            <Route path="/community" element={<Community />} />
-            <Route path="/resources" element={<Resources />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/careers" element={<Careers />} />
-            <Route path="/documentation" element={<Documentation />} />
-            <Route path="/tutorials" element={<Tutorials />} />
-            <Route path="/support" element={<Support />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/cookies" element={<Cookies />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/song-request" element={<SongRequest />} />
-            <Route path="/notifications" element={<Notifications />} />
+          <ErrorBoundary>
+            <Routes key={refreshKey}>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/songs" element={<Songs />} />
+              <Route path="/transpose" element={<TransposeTool />} />
+              <Route path="/song/:id" element={<SongView />} />
+              <Route path="/setlists" element={<Setlists />} />
+              <Route path="/setlists/public" element={<SetlistPublicWeb />} />
+              <Route path="/setlist_public.html" element={<SetlistPublicWeb />} />
+              <Route path="/setlists/:id/edit" element={<SetlistEditor />} />
+              <Route path="/setlists/:id/live" element={<SetlistLive />} />
+              <Route path="/setlists/:id" element={<SetlistEditor />} />
+              <Route path="/favorites" element={<Favorites />} />
+              <Route path="/news" element={<News />} />
+              <Route path="/news/:slug" element={<NewsArticle />} />
+              <Route path="/friends" element={<Friends />} />
+              <Route path="/chats" element={<ChatsList />} />
+              <Route path="/chat/:id" element={<Chat />} />
+              <Route path="/community" element={<Community />} />
+              <Route path="/resources" element={<Resources />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/careers" element={<Careers />} />
+              <Route path="/documentation" element={<Documentation />} />
+              <Route path="/tutorials" element={<Tutorials />} />
+              <Route path="/support" element={<Support />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/cookies" element={<Cookies />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/song-request" element={<SongRequest />} />
+              <Route path="/notifications" element={<Notifications />} />
 
-            {/* Legacy URL Redirects */}
-            <Route path="/main.html" element={<Navigate to="/songs" replace />} />
-            <Route path="/favorites.html" element={<Navigate to="/favorites" replace />} />
-            <Route path="/news.html" element={<Navigate to="/news" replace />} />
-            <Route path="/setlists.html" element={<Navigate to="/setlists" replace />} />
-            <Route path="/account.html" element={<Navigate to="/profile" replace />} />
-            <Route path="/song_view.html" element={<LegacySongRedirect />} />
-          </Routes>
+              {/* Explicit Error Pages */}
+              <Route path="/500" element={<ServerError />} />
+              <Route path="/403" element={<Forbidden />} />
+              <Route path="/404" element={<NotFound />} />
+
+              {/* Legacy URL Redirects */}
+              <Route path="/main.html" element={<Navigate to="/songs" replace />} />
+              <Route path="/favorites.html" element={<Navigate to="/favorites" replace />} />
+              <Route path="/news.html" element={<Navigate to="/news" replace />} />
+              <Route path="/setlists.html" element={<Navigate to="/setlists" replace />} />
+              <Route path="/account.html" element={<Navigate to="/profile" replace />} />
+              <Route path="/loginuser.php" element={<Navigate to="/login" replace />} />
+              <Route path="/registeruser.php" element={<Navigate to="/register" replace />} />
+              <Route path="/song_view.html" element={<LegacySongRedirect />} />
+
+              {/* Catch-all 404 Not Found Route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </ErrorBoundary>
         </div>
       </main>
       {rememberPromptOpen && (
@@ -390,6 +407,7 @@ function App() {
         </div>
       )}
       {isPWA ? null : <Footer />}
+      {isPWA ? null : <WebCommandPalette />}
     </div>
     </PullToRefresh>
   );

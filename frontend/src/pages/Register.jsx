@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useIsPWA } from '../hooks/useIsPWA';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import './Register.css';
 
@@ -11,19 +12,35 @@ const hasWhitespace = (value) => /\s/u.test(String(value));
 const Register = () => {
   const navigate = useNavigate();
   const isPWA = useIsPWA();
+  const { user, setUser, checkAuth } = useAuth();
+  const isSubmittingRef = useRef(false);
   const [searchParams] = useSearchParams();
   const source = searchParams.get('source') || (isPWA ? 'pwa' : 'web');
-  const next = searchParams.get('next') || '/';
-  
+  const rawNext = searchParams.get('next') || '/';
+  const next = (rawNext.startsWith('/login') || rawNext.startsWith('/register') || rawNext.startsWith('/logout')) ? '/' : rawNext;
+
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const { t, language, setLanguage } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [googleEnabled, setGoogleEnabled] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      navigate(next, { replace: true });
+    }
+  }, [user, navigate, next]);
+
+  useEffect(() => {
+    const socialError = searchParams.get('social_error');
+    if (socialError) {
+      setError(decodeURIComponent(socialError));
+    }
+  }, [searchParams]);
 
   // Apply visual viewport fix for iOS PWA keyboard
   useEffect(() => {
@@ -80,6 +97,9 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (isSubmittingRef.current) return;
+
     if (!name.trim() || !username.trim() || !email.trim() || !password) {
       setError(t('auth.fillAllFields'));
       return;
@@ -96,10 +116,11 @@ const Register = () => {
     }
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.'); // TODO: add to translation if needed, or leave generic error
+      setError('Password must be at least 8 characters.');
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsLoading(true);
     setError('');
 
@@ -108,7 +129,9 @@ const Register = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
+        cache: 'no-store',
         body: JSON.stringify({
           name: name.trim(),
           username: username.trim(),
@@ -119,29 +142,58 @@ const Register = () => {
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.ok) {
-        // Successful registration
-        const sep = next.includes('?') ? '&' : '?';
-        const nextUrl = `${next}${sep}session_login=${rememberMe ? '0' : '1'}`;
-        window.location.assign(nextUrl);
-      } else {
-        setError(data.error || t('auth.invalidLogin')); // Generic register error
+      const rawText = await response.text();
+      let data = null;
+      try {
+        data = JSON.parse(rawText);
+      } catch (jsonErr) {
+        console.error('Register response JSON parse failed', {
+          status: response.status,
+          rawText: rawText.slice(0, 200),
+        });
+        if (response.ok) {
+          try {
+            await new Promise((r) => setTimeout(r, 150));
+            const u = await checkAuth();
+            if (u) {
+              navigate(next, { replace: true });
+              return;
+            }
+          } catch (_) {}
+        }
+        setError(t('auth.networkError'));
         setIsLoading(false);
+        return;
       }
+
+      if (response.ok && data && data.ok) {
+        if (data.user) {
+          setUser(data.user);
+        }
+        navigate(next, { replace: true });
+        checkAuth().catch(() => {});
+        return;
+      }
+
+      setError(data?.error || t('auth.invalidLogin'));
+      setIsLoading(false);
     } catch (err) {
+      console.error('Register fetch error', err);
       setError(t('auth.networkError'));
       setIsLoading(false);
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
   const googleAuthUrl = `/social_auth.php?provider=google&mode=register&next=${encodeURIComponent(next)}&source=${encodeURIComponent(source)}&remember=${rememberMe ? '1' : '0'}`;
   const handleGoogleClick = (event) => {
+    event.preventDefault();
     if (!googleEnabled || isLoading) {
-      event.preventDefault();
       setError(t('auth.googleDisabled'));
+      return;
     }
+    window.location.href = googleAuthUrl;
   };
 
   return (

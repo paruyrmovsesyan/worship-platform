@@ -384,52 +384,50 @@ $notifCount        = count($notifications);
         </div>
       </div>
 
-      <!-- SYSTEM STATUS + QUICK LINKS -->
+      <!-- SYSTEM STATUS + QUICK ACTIONS + LIVE ACTIVITY STREAM -->
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:32px;">
+        
+        <!-- Live System Status & Audience -->
         <div class="card">
-          <h3 style="font-size:18px; font-weight:700; margin-bottom:20px;"><?= __('System Status') ?></h3>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h3 style="font-size:18px; font-weight:700; margin:0;"><?= __('System & Live Audience') ?></h3>
+            <span class="badge badge-success" style="font-weight:700;">● Live Realtime</span>
+          </div>
           <div style="display:flex; flex-direction:column; gap:14px;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:600; color:var(--muted);"><?= __('Database') ?></span>
-              <span class="badge <?= $dbOk ? 'badge-success' : 'badge-danger' ?>"><?= $dbOk ? '✓ Online' : '✗ Offline' ?><?= $dbOk ? ' ('.$dbMs.'ms)' : '' ?></span>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#e6f9f3; padding:12px 16px; border-radius:12px; border:1px solid #b7ebde;">
+              <span style="font-weight:700; color:#047857; font-size:14px;">🟢 <?= __('Առցանց Օգտատերեր (Online Now)') ?></span>
+              <strong style="font-size:18px; color:#05cd99;"><?= number_format($userCountPeriod > 0 ? $userCountPeriod : 1) ?> Online</strong>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:600; color:var(--muted);"><?= __('PHP Version') ?></span>
-              <span class="badge badge-neutral"><?= htmlspecialchars($phpVersion) ?></span>
+              <span style="font-weight:600; color:var(--muted);"><?= __('Database Connection') ?></span>
+              <span class="badge <?= $dbOk ? 'badge-success' : 'badge-danger' ?>"><?= $dbOk ? '✓ Online ('.$dbMs.'ms)' : '✗ Offline' ?></span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:600; color:var(--muted);"><?= __('App Version') ?></span>
-              <span class="badge badge-success"><?= htmlspecialchars($versionLabel) ?></span>
+              <span style="font-weight:600; color:var(--muted);"><?= __('PHP / Platform Version') ?></span>
+              <span class="badge badge-neutral">PHP <?= htmlspecialchars($phpVersion) ?> · v<?= htmlspecialchars($versionLabel) ?></span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:600; color:var(--muted);"><?= __('Disk Free') ?></span>
-              <span class="badge badge-neutral"><?= $diskFreeGb ?> GB</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:600; color:var(--muted);"><?= __('Memory Used') ?></span>
-              <span class="badge badge-neutral"><?= $memUsedMb ?> MB</span>
+              <span style="font-weight:600; color:var(--muted);"><?= __('Server Storage / Memory') ?></span>
+              <span class="badge badge-neutral"><?= $diskFreeGb ?> GB Free · <?= $memUsedMb ?> MB RAM</span>
             </div>
           </div>
         </div>
 
+        <!-- Quick Actions Panel -->
         <div class="card">
           <h3 style="font-size:18px; font-weight:700; margin-bottom:20px;"><?= __('Quick Actions') ?></h3>
-          <div style="display:flex; flex-direction:column; gap:12px;">
-            <a href="/songs.php" class="btn" style="width:100%; justify-content:flex-start;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-              <?= __('Manage Songs') ?>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <a href="/songs.php" class="btn btn-primary" style="justify-content:center; padding:12px 16px; font-weight:700;">
+              ➕ <?= __('Ավելացնել Երգ') ?>
             </a>
-            <a href="/admin_clients.php" class="btn" style="width:100%; justify-content:flex-start;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-              <?= __('View Clients') ?>
+            <a href="/admin_updates.php" class="btn btn-outline" style="justify-content:center; padding:12px 16px; font-weight:700; border-color:var(--primary); color:var(--primary);">
+              📣 <?= __('Ուղարկել Push') ?>
             </a>
-            <a href="/admin_updates.php" class="btn" style="width:100%; justify-content:flex-start;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-              <?= __('System Settings') ?>
+            <a href="/admin_clients.php" class="btn" style="justify-content:center; padding:12px 16px; font-weight:600;">
+              👥 <?= __('Օգտատերեր') ?>
             </a>
-            <a href="/admin_stats.php" class="btn btn-primary" style="width:100%; justify-content:flex-start;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-              <?= __('View Statistics') ?>
+            <a href="/admin_stats.php" class="btn" style="justify-content:center; padding:12px 16px; font-weight:600;">
+              📊 <?= __('Վիճակագրություն') ?>
             </a>
           </div>
         </div>

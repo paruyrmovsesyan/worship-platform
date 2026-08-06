@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { getSongCoverStyle } from '../utils/songCover';
 import { usePageReady } from '../hooks/usePageReady';
+import { matchSongSearch } from '../utils/searchMatcher';
 import './SongsApp.css';
 
 const KEYS = ['All','C','Cm','D','Dm','E','Em','F','G','Gm','A','Am','B','Bm','Eb','Bb','F#'];
@@ -84,63 +85,120 @@ export default function SongsApp() {
 
   const scrollToTop = (e) => {
     if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    const targets = [
-      window,
-      document.documentElement,
-      document.body,
-      document.querySelector('#root'),
-      document.querySelector('.app-container'),
-      document.querySelector('main'),
-      document.querySelector('.songs-page'),
-      document.querySelector('.app-main')
-    ].filter(Boolean);
-
-    targets.forEach(target => {
       try {
-        if (typeof target.scrollTo === 'function') {
-          target.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-        }
-        target.scrollTop = 0;
-      } catch (err) {
-        target.scrollTop = 0;
+        e.preventDefault();
+        e.stopPropagation();
+      } catch (err) {}
+    }
+
+    const startPos = Math.max(
+      window.scrollY || 0,
+      window.pageYOffset || 0,
+      document.documentElement?.scrollTop || 0,
+      document.body?.scrollTop || 0
+    );
+
+    const scrolledElements = [];
+    const elements = document.querySelectorAll('div, main, section, article, #root, .app-container, .songs-page, .app-main');
+    elements.forEach(el => {
+      if (el.scrollTop > 0) {
+        scrolledElements.push({ el, start: el.scrollTop });
       }
     });
+
+    const duration = 320; // 320ms smooth animation
+    const startTime = performance.now();
+
+    function animateScroll(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Smooth cubic ease-out curve
+      const ease = 1 - Math.pow(1 - progress, 3);
+
+      if (startPos > 0) {
+        const currentY = Math.round(startPos * (1 - ease));
+        window.scrollTo(0, currentY);
+        if (document.documentElement) document.documentElement.scrollTop = currentY;
+        if (document.body) document.body.scrollTop = currentY;
+      }
+
+      scrolledElements.forEach(({ el, start }) => {
+        el.scrollTop = Math.round(start * (1 - ease));
+      });
+
+      if (progress < 1) {
+        requestAnimationFrame(animateScroll);
+      }
+    }
+
+    requestAnimationFrame(animateScroll);
   };
 
   useEffect(() => {
     const handleScroll = () => {
-      const pageEl = document.querySelector('.songs-page');
-      const mainEl = document.querySelector('main');
-      const rootEl = document.querySelector('#root');
-      const scrollTop = Math.max(
+      let maxScroll = Math.max(
         window.scrollY || 0,
         window.pageYOffset || 0,
         document.documentElement?.scrollTop || 0,
-        document.body?.scrollTop || 0,
-        pageEl?.scrollTop || 0,
-        mainEl?.scrollTop || 0,
-        rootEl?.scrollTop || 0
+        document.body?.scrollTop || 0
       );
-      setShowBackToTop(scrollTop > 200);
+
+      if (maxScroll <= 150) {
+        const divs = document.querySelectorAll('div, main, section, article');
+        for (let i = 0; i < divs.length; i++) {
+          if (divs[i].scrollTop > maxScroll) {
+            maxScroll = divs[i].scrollTop;
+          }
+        }
+      }
+
+      setShowBackToTop(maxScroll > 150);
     };
 
     handleScroll();
+
     window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
     document.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+
+    const observerTargets = document.querySelectorAll('div, main, section, article');
+    observerTargets.forEach(t => {
+      t.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    });
 
     return () => {
       window.removeEventListener('scroll', handleScroll, { capture: true });
       document.removeEventListener('scroll', handleScroll, { capture: true });
+      observerTargets.forEach(t => {
+        t.removeEventListener('scroll', handleScroll, { capture: true });
+      });
     };
   }, []);
 
   useEffect(() => {
+    // 1. Instant hydration from localStorage cache
+    try {
+      const cached = localStorage.getItem('wp_songs_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSongs(parsed);
+          setIsLoading(false);
+        }
+      }
+    } catch {}
+
+    // 2. Fetch fresh data from API
     fetch('/api.php')
       .then(r => r.json())
-      .then(d => { if (Array.isArray(d)) setSongs(d); setIsLoading(false); })
+      .then(d => {
+        if (Array.isArray(d)) {
+          setSongs(d);
+          try {
+            localStorage.setItem('wp_songs_cache', JSON.stringify(d));
+          } catch {}
+        }
+        setIsLoading(false);
+      })
       .catch(() => setIsLoading(false));
 
     if (user) {
@@ -198,17 +256,8 @@ export default function SongsApp() {
 
   const filtered = songs
     .filter(s => {
-      // Search filter
-      const q = searchQuery.toLowerCase();
-      const matchQ = !q 
-        || s.title?.toLowerCase().includes(q) 
-        || s.title_hy?.toLowerCase().includes(q)
-        || s.title_ru?.toLowerCase().includes(q)
-        || s.title_en?.toLowerCase().includes(q)
-        || s.title_lat?.toLowerCase().includes(q)
-        || s.artist?.toLowerCase().includes(q)
-        || s.lyrics?.toLowerCase().includes(q)
-        || s.tags?.toLowerCase().includes(q);
+      // Search filter (multi-language hy/en/ru/lat & transliteration aware)
+      const matchQ = matchSongSearch(s, searchQuery);
       
       // Key filter
       return matchQ && (selectedKey === 'All' || s.song_key === selectedKey);
@@ -272,8 +321,8 @@ export default function SongsApp() {
 
         <div className="songs-controls">
           <div className="search-box">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none"
-              stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+            <svg className="search-box-icon" viewBox="0 0 24 24" width="18" height="18" fill="none"
+              stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
             <input
@@ -281,9 +330,38 @@ export default function SongsApp() {
               placeholder={t('songs.search')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck="false"
             />
             {searchQuery && (
-              <button className="search-x" onClick={() => { setSearchQuery(''); navigate('/songs'); }}>✕</button>
+              <button 
+                type="button"
+                className="search-x" 
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSearchQuery('');
+                  if (location.search) {
+                    navigate('/songs', { replace: true });
+                  }
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSearchQuery('');
+                  if (location.search) {
+                    navigate('/songs', { replace: true });
+                  }
+                }}
+                aria-label="Մաքրել որոնումը"
+                title="Մաքրել"
+              >
+                <svg className="search-x-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             )}
           </div>
         </div>
@@ -421,6 +499,7 @@ export default function SongsApp() {
           aria-label={t('songs.backToTop')}
           title={t('songs.backToTop')}
           onClick={scrollToTop}
+          onTouchEnd={scrollToTop}
         >
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="m6 15 6-6 6 6" />

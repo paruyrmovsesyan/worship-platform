@@ -118,6 +118,58 @@ function wp_chat_ensure_participant_read_column(PDO $pdo): void {
 
 wp_chat_ensure_participant_read_column($pdo);
 
+function wp_chat_ensure_call_tables(PDO $pdo): void {
+  static $ensured = false;
+  if ($ensured) {
+    return;
+  }
+
+  try {
+    $pdo->exec("
+      CREATE TABLE IF NOT EXISTS chat_calls (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        chat_id INT NOT NULL,
+        caller_id INT NOT NULL,
+        target_id INT NOT NULL DEFAULT 0,
+        status ENUM('calling', 'active', 'ended', 'declined', 'missed') NOT NULL DEFAULT 'calling',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        ended_at DATETIME DEFAULT NULL,
+        KEY idx_chat_id (chat_id),
+        KEY idx_status (status),
+        KEY idx_caller (caller_id),
+        KEY idx_target (target_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+
+    $pdo->exec("
+      CREATE TABLE IF NOT EXISTS chat_call_signals (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        call_id INT NOT NULL,
+        sender_id INT NOT NULL,
+        receiver_id INT NOT NULL,
+        type ENUM('offer', 'answer', 'ice') NOT NULL,
+        payload LONGTEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_call_rec (call_id, receiver_id, id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+
+    try {
+      $pdo->exec("ALTER TABLE chat_calls ADD COLUMN message_id INT NOT NULL DEFAULT 0");
+    } catch (Throwable $e) {}
+    try {
+      $pdo->exec("ALTER TABLE chat_calls ADD COLUMN started_at DATETIME DEFAULT NULL");
+    } catch (Throwable $e) {}
+  } catch (Throwable $e) {
+    // Graceful fallback
+  }
+
+  $ensured = true;
+}
+
+wp_chat_ensure_call_tables($pdo);
+
 function wp_chat_compact_push_title(string $senderName): string {
     $senderName = trim(preg_replace('/\s+/u', ' ', $senderName));
     if ($senderName === '') {
@@ -348,15 +400,17 @@ if ($action === 'get_messages' && $method === 'GET') {
     $stCount->execute([$chat_id]);
     $pCount = (int)$stCount->fetchColumn();
 
-    if ($chat_info && ($chat_info['type'] === 'direct' || $pCount <= 2)) {
-        $st = $pdo->prepare("SELECT u.name, u.email, u.last_active_at, TIMESTAMPDIFF(SECOND, u.last_active_at, NOW()) as seconds_since_active FROM chat_participants cp JOIN users u ON cp.user_id = u.id WHERE cp.chat_id = ? AND u.id != ?");
+    if ($chat_info && $chat_info['type'] === 'direct') {
+        $st = $pdo->prepare("SELECT u.id as other_user_id, u.name, u.email, u.last_active_at, TIMESTAMPDIFF(SECOND, u.last_active_at, NOW()) as seconds_since_active FROM chat_participants cp JOIN users u ON cp.user_id = u.id WHERE cp.chat_id = ? AND u.id != ?");
         $st->execute([$chat_id, $uid]);
         $other = $st->fetch(PDO::FETCH_ASSOC);
         if ($other) {
+            $chat_info['other_user_id'] = (int)$other['other_user_id'];
             $chat_info['display_name'] = !empty($other['name']) ? $other['name'] : explode('@', $other['email'])[0];
             $chat_info['last_active_at'] = $other['last_active_at'];
             $chat_info['seconds_since_active'] = $other['seconds_since_active'];
         } else {
+            $chat_info['other_user_id'] = 0;
             $chat_info['display_name'] = 'Ընկեր';
         }
 
@@ -636,6 +690,232 @@ if ($action === 'rename_group' && $method === 'POST') {
     if ((int)$chat['created_by'] !== $uid) out(["error" => "Only group creator can rename"], 403);
 
     $pdo->prepare("UPDATE chats SET name = ? WHERE id = ?")->execute([$new_name, $chat_id]);
+    out(["ok" => true]);
+}
+
+// ==========================================
+// AUDIO CALLING & WEBRTC SIGNALING API
+// ==========================================
+
+// Start call
+if ($action === 'start_call' && $method === 'POST') {
+    $d = readJson();
+    $chat_id = (int)($d['chat_id'] ?? 0);
+    $target_id = (int)($d['target_id'] ?? 0);
+
+    if ($chat_id <= 0 && $target_id > 0) {
+        $st = $pdo->prepare("
+            SELECT c.id FROM chats c
+            JOIN chat_participants cp1 ON cp1.chat_id = c.id AND cp1.user_id = ?
+            JOIN chat_participants cp2 ON cp2.chat_id = c.id AND cp2.user_id = ?
+            WHERE c.type = 'direct'
+            LIMIT 1
+        ");
+        $st->execute([$uid, $target_id]);
+        $chat_id = (int)($st->fetchColumn() ?: 0);
+
+        if (!$chat_id) {
+            $pdo->beginTransaction();
+            $st = $pdo->prepare("INSERT INTO chats (type, created_by) VALUES ('direct', ?)");
+            $st->execute([$uid]);
+            $chat_id = (int)$pdo->lastInsertId();
+            $st = $pdo->prepare("INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?), (?, ?)");
+            $st->execute([$chat_id, $uid, $chat_id, $target_id]);
+            $pdo->commit();
+        }
+    }
+
+    if ($chat_id > 0) {
+        $st = $pdo->prepare("SELECT 1 FROM chat_participants WHERE chat_id = ? AND user_id = ?");
+        $st->execute([$chat_id, $uid]);
+        if (!$st->fetch()) out(["error" => "Access denied"], 403);
+    }
+
+    if ($target_id <= 0 && $chat_id > 0) {
+        $st = $pdo->prepare("SELECT user_id FROM chat_participants WHERE chat_id = ? AND user_id != ? LIMIT 1");
+        $st->execute([$chat_id, $uid]);
+        $target_id = (int)($st->fetchColumn() ?: 0);
+    }
+
+    if ($target_id <= 0) out(["error" => "Invalid target user"], 400);
+
+    $stOldCalls = $pdo->prepare("SELECT id, message_id FROM chat_calls WHERE (caller_id = ? OR chat_id = ?) AND status IN ('calling', 'active')");
+    $stOldCalls->execute([$uid, $chat_id]);
+    while ($oldCall = $stOldCalls->fetch(PDO::FETCH_ASSOC)) {
+        $oldId = (int)$oldCall['id'];
+        $oldMsgId = (int)$oldCall['message_id'];
+        $pdo->prepare("UPDATE chat_calls SET status = 'ended', ended_at = NOW() WHERE id = ?")->execute([$oldId]);
+        if ($oldMsgId > 0) {
+            $pdo->prepare("UPDATE chat_messages SET message = ? WHERE id = ?")->execute(["CALL:ended:0:{$oldId}", $oldMsgId]);
+        }
+    }
+
+    $stMsg = $pdo->prepare("INSERT INTO chat_messages (chat_id, user_id, message, created_at) VALUES (?, ?, ?, NOW())");
+    $stMsg->execute([$chat_id, $uid, 'CALL:calling:0']);
+    $msg_id = (int)$pdo->lastInsertId();
+
+    $st = $pdo->prepare("INSERT INTO chat_calls (chat_id, caller_id, target_id, status, message_id) VALUES (?, ?, ?, 'calling', ?)");
+    $st->execute([$chat_id, $uid, $target_id, $msg_id]);
+    $call_id = (int)$pdo->lastInsertId();
+
+    if ($msg_id > 0 && $call_id > 0) {
+        $pdo->prepare("UPDATE chat_messages SET message = ? WHERE id = ?")->execute(["CALL:calling:{$call_id}", $msg_id]);
+    }
+
+    try {
+        require_once __DIR__ . '/push_service.php';
+        $senderName = $_SESSION['name'] ?? $_SESSION['username'] ?? 'Someone';
+        $pushTitle = "📞 " . wp_chat_compact_push_title((string)$senderName);
+        $pushBody = "Մուտքային աուդիոզանգ...";
+        wp_push_send_to_user($pdo, $target_id, $pushTitle, $pushBody, "/chat/$chat_id?call_id=$call_id", [
+            'type' => 'call',
+            'tag' => "worship-call-$call_id",
+            'call_id' => $call_id
+        ]);
+    } catch (Throwable $pushErr) {
+        error_log('Call push notification failed (non-fatal): ' . $pushErr->getMessage());
+    }
+
+    out(["ok" => true, "call_id" => $call_id, "target_id" => $target_id, "chat_id" => $chat_id]);
+}
+
+// Respond to call (accept / decline)
+if ($action === 'respond_call' && $method === 'POST') {
+    $d = readJson();
+    $call_id = (int)($d['call_id'] ?? 0);
+    $response = trim($d['response'] ?? '');
+
+    $st = $pdo->prepare("SELECT * FROM chat_calls WHERE id = ? LIMIT 1");
+    $st->execute([$call_id]);
+    $call = $st->fetch(PDO::FETCH_ASSOC);
+    if (!$call) out(["error" => "Call not found"], 404);
+
+    $msg_id = (int)($call['message_id'] ?? 0);
+    if ($response === 'accept') {
+        $pdo->prepare("UPDATE chat_calls SET status = 'active', started_at = NOW() WHERE id = ?")->execute([$call_id]);
+        if ($msg_id > 0) {
+            $pdo->prepare("UPDATE chat_messages SET message = ? WHERE id = ?")->execute(["CALL:active:{$call_id}", $msg_id]);
+        }
+    } else {
+        $pdo->prepare("UPDATE chat_calls SET status = 'declined', ended_at = NOW() WHERE id = ?")->execute([$call_id]);
+        if ($msg_id > 0) {
+            $pdo->prepare("UPDATE chat_messages SET message = ? WHERE id = ?")->execute(["CALL:declined:{$call_id}", $msg_id]);
+        }
+    }
+
+    out(["ok" => true, "status" => $response === 'accept' ? 'active' : 'declined']);
+}
+
+// Send WebRTC signal (offer, answer, ice)
+if ($action === 'send_call_signal' && $method === 'POST') {
+    $d = readJson();
+    $call_id = (int)($d['call_id'] ?? 0);
+    $receiver_id = (int)($d['receiver_id'] ?? 0);
+    $type = trim($d['type'] ?? '');
+    $payload = is_string($d['payload'] ?? null) ? $d['payload'] : json_encode($d['payload'] ?? []);
+
+    if ($call_id <= 0 || $receiver_id <= 0 || !in_array($type, ['offer', 'answer', 'ice'])) {
+        out(["error" => "Invalid signal parameters"], 400);
+    }
+
+    $st = $pdo->prepare("INSERT INTO chat_call_signals (call_id, sender_id, receiver_id, type, payload) VALUES (?, ?, ?, ?, ?)");
+    $st->execute([$call_id, $uid, $receiver_id, $type, $payload]);
+
+    out(["ok" => true]);
+}
+
+// Poll call status and incoming signals / incoming calls
+if ($action === 'poll_call_status' && ($method === 'GET' || $method === 'POST')) {
+    $chat_id = (int)($_REQUEST['chat_id'] ?? 0);
+    $call_id = (int)($_REQUEST['call_id'] ?? 0);
+    $last_signal_id = (int)($_REQUEST['last_signal_id'] ?? 0);
+
+    $stMissed = $pdo->query("SELECT id, message_id FROM chat_calls WHERE status = 'calling' AND created_at < DATE_SUB(NOW(), INTERVAL 45 SECOND)");
+    if ($stMissed) {
+        while ($mCall = $stMissed->fetch(PDO::FETCH_ASSOC)) {
+            $cId = (int)$mCall['id'];
+            $mId = (int)$mCall['message_id'];
+            $pdo->prepare("UPDATE chat_calls SET status = 'missed', ended_at = NOW() WHERE id = ?")->execute([$cId]);
+            if ($mId > 0) {
+                $pdo->prepare("UPDATE chat_messages SET message = ? WHERE id = ?")->execute(["CALL:missed:{$cId}", $mId]);
+            }
+        }
+    }
+
+    $callInfo = null;
+    if ($call_id > 0) {
+        $st = $pdo->prepare("
+            SELECT c.*, 
+                   u.name as caller_name, u.email as caller_email,
+                   tu.name as target_name, tu.email as target_email
+            FROM chat_calls c 
+            JOIN users u ON u.id = c.caller_id 
+            LEFT JOIN users tu ON tu.id = c.target_id
+            WHERE c.id = ? LIMIT 1
+        ");
+        $st->execute([$call_id]);
+        $callInfo = $st->fetch(PDO::FETCH_ASSOC);
+    } else {
+        $st = $pdo->prepare("
+            SELECT c.*, 
+                   u.name as caller_name, u.email as caller_email,
+                   tu.name as target_name, tu.email as target_email
+            FROM chat_calls c
+            JOIN users u ON u.id = c.caller_id
+            LEFT JOIN users tu ON tu.id = c.target_id
+            WHERE c.status IN ('calling', 'active')
+              AND (c.caller_id = ? OR c.target_id = ? OR c.target_id = 0)
+              AND (? <= 0 OR c.chat_id = ?)
+            ORDER BY c.id DESC LIMIT 1
+        ");
+        $st->execute([$uid, $uid, $chat_id, $chat_id]);
+        $callInfo = $st->fetch(PDO::FETCH_ASSOC);
+    }
+
+    $signals = [];
+    $activeCallId = $callInfo ? (int)$callInfo['id'] : $call_id;
+    if ($activeCallId > 0) {
+        $stSignals = $pdo->prepare("
+            SELECT id, sender_id, receiver_id, type, payload, created_at
+            FROM chat_call_signals
+            WHERE call_id = ? AND receiver_id = ? AND id > ?
+            ORDER BY id ASC
+        ");
+        $stSignals->execute([$activeCallId, $uid, $last_signal_id]);
+        $signals = $stSignals->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    out([
+        "ok" => true,
+        "call" => $callInfo ?: null,
+        "signals" => $signals
+    ]);
+}
+
+// End call
+if ($action === 'end_call' && $method === 'POST') {
+    $d = readJson();
+    $call_id = (int)($d['call_id'] ?? 0);
+    if ($call_id > 0) {
+        $stCall = $pdo->prepare("SELECT * FROM chat_calls WHERE id = ? LIMIT 1");
+        $stCall->execute([$call_id]);
+        $call = $stCall->fetch(PDO::FETCH_ASSOC);
+        if ($call) {
+            $pdo->prepare("UPDATE chat_calls SET status = 'ended', ended_at = NOW() WHERE id = ?")->execute([$call_id]);
+            $mId = (int)($call['message_id'] ?? 0);
+            if ($mId > 0) {
+                $duration = 0;
+                if (!empty($call['started_at'])) {
+                    $duration = max(1, time() - strtotime($call['started_at']));
+                } elseif (!empty($call['created_at']) && $call['status'] === 'active') {
+                    $duration = max(1, time() - strtotime($call['created_at']));
+                }
+                $wasActive = ($call['status'] === 'active' || !empty($call['started_at']));
+                $finalMessage = $wasActive ? "CALL:ended:{$duration}:{$call_id}" : "CALL:missed:{$call_id}";
+                $pdo->prepare("UPDATE chat_messages SET message = ? WHERE id = ?")->execute([$finalMessage, $mId]);
+            }
+        }
+    }
     out(["ok" => true]);
 }
 

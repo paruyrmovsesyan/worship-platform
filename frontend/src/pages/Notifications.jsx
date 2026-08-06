@@ -1,15 +1,133 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { usePageReady } from '../hooks/usePageReady';
+import './Notifications.css';
 
-const SwipeableNotification = ({ notif, onAction, onDelete, t }) => {
+function formatRelativeTime(dateStr, language) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+
+  const now = new Date();
+  const diffSec = Math.floor((now - date) / 1000);
+
+  if (diffSec < 60) {
+    return language === 'am' ? 'Հենց նոր' : language === 'ru' ? 'Только что' : 'Just now';
+  }
+  if (diffSec < 3600) {
+    const mins = Math.floor(diffSec / 60);
+    return language === 'am' ? `${mins} րոպե առաջ` : language === 'ru' ? `${mins} мин. назад` : `${mins}m ago`;
+  }
+  if (diffSec < 86400) {
+    const hours = Math.floor(diffSec / 3600);
+    return language === 'am' ? `${hours} ժամ առաջ` : language === 'ru' ? `${hours} ч. назад` : `${hours}h ago`;
+  }
+  if (diffSec < 172800) {
+    return language === 'am' ? 'Երեկ' : language === 'ru' ? 'Вчера' : 'Yesterday';
+  }
+
+  return date.toLocaleDateString(language === 'am' ? 'hy-AM' : language === 'ru' ? 'ru-RU' : 'en-US', {
+    day: 'numeric',
+    month: 'short'
+  });
+}
+
+function getLocalizedNotificationText(notif, language) {
+  let rawText = '';
+  try {
+    const parsed = typeof notif.content === 'string' ? JSON.parse(notif.content) : (notif.content || {});
+    rawText = parsed?.text || '';
+  } catch (e) {
+    rawText = String(notif.content || '');
+  }
+
+  // Extract name if available
+  let senderName = notif.sender_name || '';
+  if (!senderName && rawText) {
+    const match = rawText.match(/^([A-Za-z0-9_.-]+)\s+(wants|accepted)/);
+    if (match && match[1] && match[1].toLowerCase() !== 'someone') {
+      senderName = match[1];
+    }
+  }
+
+  if (notif.type === 'friend_request' || rawText.toLowerCase().includes('wants to be your friend')) {
+    if (language === 'am') {
+      return senderName ? `${senderName}-ը ցանկանում է դառնալ Ձեր ընկերը:` : 'Ինչ-որ մեկը ցանկանում է դառնալ Ձեր ընկերը:';
+    }
+    if (language === 'ru') {
+      return senderName ? `${senderName} хочет добавить вас в друзья.` : 'Кто-то хочет добавить вас в друзья.';
+    }
+    return senderName ? `${senderName} wants to be your friend.` : 'Someone wants to be your friend.';
+  }
+
+  if (notif.type === 'friend_accepted' || rawText.toLowerCase().includes('accepted your friend request')) {
+    if (language === 'am') {
+      return senderName ? `${senderName}-ն ընդունեց Ձեր ընկերության հայտը:` : 'Ձեր ընկերության հայտն ընդունվել է:';
+    }
+    if (language === 'ru') {
+      return senderName ? `${senderName} принял(а) ваш запрос в друзья.` : 'Ваш запрос в друзья принят.';
+    }
+    return senderName ? `${senderName} accepted your friend request.` : 'Someone accepted your friend request.';
+  }
+
+  return rawText || (language === 'am' ? 'Նոր ծանուցում' : language === 'ru' ? 'Новое уведомление' : 'New Notification');
+}
+
+function getNotificationCategory(n) {
+  if (!n) return 'system';
+
+  const type = String(n.type || '').toLowerCase();
+  const link = String(n.action_link || '').toLowerCase();
+
+  let fullText = String(n.content || '') + ' ' + String(n.text || '') + ' ' + String(n.title || '') + ' ' + String(n.message || '');
+  try {
+    if (typeof n.content === 'string' && n.content.trim().startsWith('{')) {
+      const parsed = JSON.parse(n.content);
+      fullText += ' ' + String(parsed?.text || '') + ' ' + String(parsed?.message || '');
+    }
+  } catch (e) {}
+
+  fullText = fullText.toLowerCase();
+
+  if (
+    type.includes('friend') ||
+    link.includes('/friends') ||
+    fullText.includes('friend') ||
+    fullText.includes('ընկեր') ||
+    fullText.includes('друг') ||
+    fullText.includes('request') ||
+    fullText.includes('accepted')
+  ) {
+    return 'friends';
+  }
+
+  if (
+    type.includes('setlist') ||
+    type.includes('chat') ||
+    link.includes('/setlist') ||
+    link.includes('/chat') ||
+    fullText.includes('setlist') ||
+    fullText.includes('սեթլիստ') ||
+    fullText.includes('հավաքածու') ||
+    fullText.includes('chat') ||
+    fullText.includes('չաթ')
+  ) {
+    return 'setlists';
+  }
+
+  return 'system';
+}
+
+const NotificationCard = ({ notif, language, onAction, onDelete, onAcceptFriend, t }) => {
   const [translateX, setTranslateX] = useState(0);
   const startX = useRef(0);
   const currentX = useRef(0);
   const isDragging = useRef(false);
-  const itemRef = useRef(null);
 
-  const content = notif.content ? JSON.parse(notif.content) : {};
+  const isUnread = Number(notif.is_read) === 0;
+  const formattedText = getLocalizedNotificationText(notif, language);
+  const relativeTime = formatRelativeTime(notif.created_at, language);
 
   const handleTouchStart = (e) => {
     startX.current = e.touches[0].clientX;
@@ -20,8 +138,7 @@ const SwipeableNotification = ({ notif, onAction, onDelete, t }) => {
     if (!isDragging.current) return;
     currentX.current = e.touches[0].clientX;
     const diff = currentX.current - startX.current;
-    
-    // Only allow swiping left (negative diff)
+
     if (diff < 0 && diff > -100) {
       setTranslateX(diff);
     } else if (diff <= -100) {
@@ -33,95 +150,129 @@ const SwipeableNotification = ({ notif, onAction, onDelete, t }) => {
 
   const handleTouchEnd = () => {
     isDragging.current = false;
-    if (translateX < -50) {
-      // Snap open to show delete button
+    if (translateX < -45) {
       setTranslateX(-80);
     } else {
-      // Snap back
       setTranslateX(0);
     }
   };
 
   return (
-    <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '16px' }}>
-      {/* Background Delete Button */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        bottom: 0,
-        width: '80px',
-        background: 'linear-gradient(135deg, #FF4A4A 0%, #D32F2F 100%)',
-        borderRadius: '0 16px 16px 0',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#fff',
-        zIndex: 0,
-        cursor: 'pointer'
-      }} onClick={(e) => { e.stopPropagation(); onDelete(notif.id); }}>
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+    <div className="notif-card-wrapper">
+      <div className="notif-delete-bg" onClick={(e) => { e.stopPropagation(); onDelete(notif.id); }} title="Delete">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
       </div>
 
-      {/* Swipeable Foreground */}
-      <div 
-        ref={itemRef}
+      <div
+        className={`notif-card ${isUnread ? 'unread' : ''}`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onClick={() => onAction(notif)}
         style={{
-          background: Number(notif.is_read) === 1 ? 'var(--color-surface)' : 'rgba(191, 90, 242, 0.05)',
-          border: `1px solid ${Number(notif.is_read) === 1 ? 'var(--color-surface-hover)' : 'rgba(191, 90, 242, 0.3)'}`,
-          padding: '16px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px',
-          cursor: notif.action_link ? 'pointer' : 'default',
           transform: `translateX(${translateX}px)`,
-          transition: isDragging.current ? 'none' : 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
-          position: 'relative',
-          zIndex: 1
+          transition: isDragging.current ? 'none' : 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)'
         }}
       >
-        <div style={{
-          width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(191, 90, 242, 0.15)',
-          color: 'var(--color-accent-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0
-        }}>
+        <div className={`notif-icon-box ${
+          notif.type === 'friend_request' ? 'icon-friend' :
+          notif.type === 'friend_accepted' ? 'icon-accepted' :
+          notif.type === 'chat_message' ? 'icon-chat' :
+          notif.type === 'setlist_share' ? 'icon-setlist' : 'icon-system'
+        }`}>
           {notif.type === 'friend_request' ? (
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <line x1="20" y1="8" x2="20" y2="14"></line>
+              <line x1="23" y1="11" x2="17" y2="11"></line>
+            </svg>
           ) : notif.type === 'friend_accepted' ? (
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          ) : notif.type === 'chat_message' ? (
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          ) : notif.type === 'setlist_share' ? (
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
           ) : (
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
           )}
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ color: 'var(--color-text-primary)', fontSize: '1rem', fontWeight: Number(notif.is_read) === 1 ? 500 : 700, marginBottom: '4px' }}>
-            {content.text || t('notifications.newNotification')}
-          </div>
-          <div style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
-            {new Date(notif.created_at).toLocaleString()}
-          </div>
+
+        <div className="notif-body">
+          <div className="notif-text">{formattedText}</div>
+          <div className="notif-time">{relativeTime}</div>
+
+          {notif.type === 'friend_request' && (
+            <div className="notif-card-actions" onClick={e => e.stopPropagation()}>
+              <button
+                className="notif-card-btn btn-accept"
+                onClick={() => onAcceptFriend(notif)}
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                {t('friends.accept', 'Ընդունել')}
+              </button>
+              <button
+                className="notif-card-btn btn-view"
+                onClick={() => onAction(notif)}
+              >
+                {t('common.view', 'Դիտել')}
+              </button>
+            </div>
+          )}
+
+          {notif.type !== 'friend_request' && notif.action_link && (
+            <div className="notif-card-actions" onClick={e => e.stopPropagation()}>
+              <button
+                className="notif-card-btn btn-view"
+                onClick={() => onAction(notif)}
+              >
+                {t('common.view', 'Անցնել')}
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
-        {Number(notif.is_read) === 0 && (
-          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--color-accent-cyan)', flexShrink: 0 }}></div>
-        )}
       </div>
     </div>
   );
 };
 
 export default function Notifications() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('all');
+  usePageReady(loading);
 
-  useEffect(() => {
+  const fetchNotifications = () => {
     fetch('/user_notifications_api.php?action=list')
       .then(r => r.json())
       .then(d => {
         if (d.ok) {
-          setNotifications(d.notifications);
+          setNotifications(d.notifications || []);
         }
         setLoading(false);
       })
@@ -129,6 +280,10 @@ export default function Notifications() {
         console.error(err);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchNotifications();
   }, []);
 
   const markAsRead = (id) => {
@@ -155,6 +310,18 @@ export default function Notifications() {
   };
 
   const handleDelete = (id) => {
+    if (id === 'all') {
+      notifications.forEach(n => {
+        fetch('/user_notifications_api.php?action=delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: n.id })
+        });
+      });
+      setNotifications([]);
+      return;
+    }
+
     fetch('/user_notifications_api.php?action=delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -166,85 +333,139 @@ export default function Notifications() {
     });
   };
 
+  const handleAcceptFriend = async (notif) => {
+    markAsRead(notif.id);
+    if (notif.sender_id) {
+      try {
+        const res = await fetch('/friends_api.php?action=accept', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: notif.sender_id })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          fetchNotifications();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    navigate('/friends');
+  };
+
+  const unreadCount = notifications.filter(n => Number(n.is_read) === 0).length;
+  const friendsCount = notifications.filter(n => getNotificationCategory(n) === 'friends').length;
+  const setlistsCount = notifications.filter(n => getNotificationCategory(n) === 'setlists').length;
+  const systemCount = notifications.filter(n => getNotificationCategory(n) === 'system').length;
+
+  const filteredNotifications = notifications.filter(n => {
+    if (activeTab === 'unread') return Number(n.is_read) === 0;
+    if (activeTab === 'friends') return getNotificationCategory(n) === 'friends';
+    if (activeTab === 'setlists') return getNotificationCategory(n) === 'setlists';
+    if (activeTab === 'system') return getNotificationCategory(n) === 'system';
+    return true;
+  });
+
   return (
-    <div className="animate-fade-in" style={{ padding: '1.5rem', maxWidth: '800px', margin: '0 auto', paddingBottom: '120px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button 
-            onClick={() => navigate(-1)}
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: 'none',
-              color: 'var(--color-text-primary)',
-              width: '40px',
-              height: '40px',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer'
-            }}
-          >
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-          </button>
-          <h2 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 800 }}>{t('notifications.title', 'Ծանուցումներ')}</h2>
+    <div className="notif-page animate-fade-in">
+      <div className="notif-header">
+        <div className="notif-header-top">
+          <div className="notif-header-title-group">
+            <button className="notif-back-btn" onClick={() => navigate(-1)} title="Back">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <h1 className="notif-title">{t('notifications.title', 'Ծանուցումներ')}</h1>
+            {unreadCount > 0 && (
+              <span className="notif-unread-badge">
+                {unreadCount} {t('notifications.unread', 'չկարդացված')}
+              </span>
+            )}
+          </div>
+
+          <div className="notif-header-actions">
+            {unreadCount > 0 && (
+              <button className="notif-action-btn primary" onClick={() => markAsRead('all')}>
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                {t('notifications.markAllRead', 'Կարդացված')}
+              </button>
+            )}
+
+            {notifications.length > 0 && (
+              <button className="notif-action-btn danger" onClick={() => handleDelete('all')} title="Delete all">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
-        {notifications.length > 0 && (
-          <button 
-            onClick={() => markAsRead('all')}
-            style={{
-              background: 'rgba(0, 212, 255, 0.1)',
-              border: 'none',
-              color: 'var(--color-accent-cyan)',
-              padding: '8px 16px',
-              borderRadius: '20px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.2s'
-            }}
+
+        <div className="notif-tabs">
+          <button
+            className={`notif-tab ${activeTab === 'all' ? 'active' : ''}`}
+            onClick={() => setActiveTab('all')}
           >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            {t('notifications.markAllRead')}
+            📌 {t('notifications.all', 'Բոլորը')} ({notifications.length})
           </button>
-        )}
+          <button
+            className={`notif-tab ${activeTab === 'unread' ? 'active' : ''}`}
+            onClick={() => setActiveTab('unread')}
+          >
+            ✉️ {t('notifications.unreadTab', 'Չկարդացված')} ({unreadCount})
+          </button>
+          <button
+            className={`notif-tab ${activeTab === 'friends' ? 'active' : ''}`}
+            onClick={() => setActiveTab('friends')}
+          >
+            👥 {t('notifications.friendsTab', 'Ընկերներ')} ({friendsCount})
+          </button>
+          <button
+            className={`notif-tab ${activeTab === 'setlists' ? 'active' : ''}`}
+            onClick={() => setActiveTab('setlists')}
+          >
+            🎼 {t('notifications.setlistsTab', 'Հավաքածուներ')} ({setlistsCount})
+          </button>
+          <button
+            className={`notif-tab ${activeTab === 'system' ? 'active' : ''}`}
+            onClick={() => setActiveTab('system')}
+          >
+            ⚙️ {t('notifications.systemTab', 'Համակարգային')} ({systemCount})
+          </button>
+        </div>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--color-text-secondary)' }}>{t('notifications.loading')}</div>
-      ) : notifications.length === 0 ? (
-        <div style={{ 
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          padding: '60px 20px', background: 'var(--color-surface)', borderRadius: '24px',
-          border: '1px solid var(--color-surface-hover)', textAlign: 'center'
-        }}>
-          <div style={{
-            width: '80px', height: '80px', background: 'rgba(191, 90, 242, 0.1)', borderRadius: '50%',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px'
-          }}>
-            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="var(--color-accent-cyan)" strokeWidth="1.5">
+        <div className="notif-list">
+          <div className="notif-skeleton"></div>
+          <div className="notif-skeleton"></div>
+          <div className="notif-skeleton"></div>
+        </div>
+      ) : filteredNotifications.length === 0 ? (
+        <div className="notif-empty">
+          <div className="notif-empty-icon">
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
             </svg>
           </div>
-          <h3 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', color: 'var(--color-text-primary)' }}>{t('notifications.emptyTitle', 'Ծանուցումներ չկան')}</h3>
-          <p style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '0.95rem', maxWidth: '280px' }}>
-            {t('notifications.emptyDesc', 'Դուք դեռ չունեք նոր ծանուցումներ։')}
-          </p>
+          <h3>{t('notifications.emptyTitle', 'Ծանուցումներ չկան')}</h3>
+          <p>{t('notifications.emptyDesc', 'Դուք դեռ չունեք նոր ծանուցումներ այս բաժնում։')}</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {notifications.map(notif => (
-            <SwipeableNotification 
-              key={notif.id} 
-              notif={notif} 
-              onAction={handleAction} 
+        <div className="notif-list">
+          {filteredNotifications.map(notif => (
+            <NotificationCard
+              key={notif.id}
+              notif={notif}
+              language={language}
+              onAction={handleAction}
               onDelete={handleDelete}
+              onAcceptFriend={handleAcceptFriend}
               t={t}
             />
           ))}

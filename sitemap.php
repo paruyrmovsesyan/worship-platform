@@ -55,6 +55,14 @@ if (!empty($config['site_seo_index_songs'])) {
         'priority' => '0.9',
     ];
 }
+if (!empty($config['site_seo_index_transpose'])) {
+    $staticPages[] = [
+        'loc' => $baseUrl . '/transpose',
+        'lastmod' => gmdate('c'),
+        'changefreq' => 'monthly',
+        'priority' => '0.8',
+    ];
+}
 if (!empty($config['site_seo_index_news'])) {
     $staticPages[] = [
         'loc' => $baseUrl . '/news',

@@ -478,8 +478,8 @@ function wp_version_defaults(): array {
         'server_package_release_synced_at' => '',
         'admin_emails' => [],
         'admin_user_permissions' => [],
-        'social_auth_google_client_id' => '',
-        'social_auth_google_redirect_uri' => '',
+        'social_auth_google_client_id' => '169805085378-f58dpr8rkp993ag9h8fu05idnocn4j6s.apps.googleusercontent.com',
+        'social_auth_google_redirect_uri' => 'https://worship.pmstudio.am/social_auth.php?provider=google',
         'page_app_modes' => wp_version_default_page_app_modes(),
         'page_web_modes' => wp_version_default_page_web_modes(),
         'site_seo_title' => 'Worship Platform',
@@ -499,12 +499,36 @@ function wp_version_defaults(): array {
         'site_seo_index_song_pages' => false,
         'site_seo_index_news' => true,
         'site_seo_index_news_articles' => true,
+        'site_seo_index_transpose' => true,
         'site_contact_email' => '',
         'site_contact_phone' => '',
         'site_contact_address' => '',
         'site_social_facebook' => '',
         'site_social_instagram' => '',
-        'site_social_youtube' => '',
+        'landing_hero_title1' => 'Առաջնորդի՛ր Պաշտամունքը',
+        'landing_hero_title2' => 'Մեկ Միասնական Հարթակում',
+        'landing_hero_subtitle' => 'Ակորդներ, երգացանկեր և թիմային համագործակցություն — ամեն ինչ մեկ հարթակում։',
+        'about_hero_title' => 'Մեր Մասին',
+        'about_hero_subtitle' => 'Worship Platform-ը երաժիշտների, պաշտամունքի թիմերի և առաջնորդների համար ստեղծված միասնական հարթակ է:',
+        'about_mission_title' => 'Մեր Առաքելությունը',
+        'about_mission_text' => 'Մեր նպատակն է ապահովել պաշտամունքի թիմերին ժամանակակից թվային գործիքներով՝ ակորդներ, երգացանկեր, տրանսպոզիցիա և իրական ժամանակում թիմային համագործակցություն:',
+        'about_vision_title' => 'Մեր Տեսլականը',
+        'about_vision_text' => 'Ստեղծել հզոր համայնք, որտեղ յուրաքանչյուր երաժիշտ և թիմ կկարողանա հեշտությամբ կազմակերպել իրենց ծառայությունը:',
+        'about_stat1_number' => '1000+',
+        'about_stat1_label' => 'Ակտիվ Երգեր',
+        'about_stat2_number' => '500+',
+        'about_stat2_label' => 'Պաշտամունքի Թիմեր',
+        'about_stat3_number' => '10,000+',
+        'about_stat3_label' => 'Օգտատերեր',
+        'privacy_title' => 'Գաղտնիության Քաղաքականություն',
+        'privacy_subtitle' => 'Ձեր անձնական տվյալների պաշտպանությունն ու գաղտնիությունը մեր առաջնահերթությունն է:',
+        'privacy_content' => "### 1. Տվյալների Հավաքագրում\nWorship Platform-ում մենք հավաքագրում ենք միայն այն անձնական տվյալները, որոնք անհրաժեշտ են ծառայություններից լիարժեք օգտվելու համար (անուն, էլ․ փոստի հասցե, պահպանված երգացանկեր, ակտիվության տվյալներ):\n\n### 2. Տվյալների Օգտագործում\nՁեր տվյալներն օգտագործվում են միմիայն հարթակի գործառույթներն ապահովելու, թիմային համագործակցությունը կազմակերպելու և կարևոր ծանուցումներ ուղարկելու համար։ Մենք ԵՐԲԵՔ չենք վաճառում կամ փոխանցում Ձեր տվյալները երրորդ անձանց։\n\n### 3. Պաշտպանություն և Անվտանգություն\nԲոլոր տվյալները պահպանվում են վերջին ստանդարտներին համապատասխանող ծածկագրմամբ (SSL/TLS encryption) և պաշտպանված սերվերներում:\n\n### 4. Օգտատիրոջ Իրավունքները\nԴուք ցանկացած պահի կարող եք թարմացնել Ձեր տվյալները, արտահանել դրանք կամ ամբողջությամբ ջնջել Ձեր հաշիվը Կարգավորումներ բաժնից:",
+        'terms_title' => 'Օգտագործման Պայմաններ',
+        'terms_subtitle' => 'Worship Platform-ից օգտվելու կանոնները, իրավունքներն ու պարտականությունները:',
+        'terms_content' => "### 1. Ընդհանուր Դրույթներ\nՕգտվելով Worship Platform հարթակից՝ Դուք համաձայնում եք սույն Օգտագործման Պայմաններին: Հարթակը նախատեսված է պաշտամունքի երգերի, ակորդների և երգացանկերի կազմակերպման համար:\n\n### 2. Հաշվի Գրանցում և Անվտանգություն\nՕգտատերը պատասխանատու է իր հաշվի տվյալների (գաղտնաբառի) անվտանգության համար: Հարթակում արգելվում է իրականացնել ապօրինի գործողություններ կամ չլիազորված մուտքի փորձեր:\n\n### 3. Հեղինակային Իրավունքներ և Բովանդակություն\nԵրգերի տեքստերն ու ակորդները տեղադրվում են հոգևոր ծառայության և ուսուցողական նպատակներով: Օգտատերերի կողմից ստեղծված երգացանկերը պատկանում են տվյալ օգտատերերին կամ թիմերին:\n\n### 4. Պատասխանատվության Սահմանափակում\nWorship Platform-ը ձգտում է ապահովել հարթակի 24/7 անխափան աշխատանքը, սակայն պատասխանատվություն չի կրում տեխնիկական վերանորոգման կամ ինտերնետ կապի ընդհատումներով պայմանավորված ժամանակավոր դադարների համար:",
+        'cookies_title' => 'Cookie-ների Քաղաքականություն',
+        'cookies_subtitle' => 'Ինչպես ենք օգտագործում Cookie ֆայլերն ու տեղային պահոցը (LocalStorage) Ձեր փորձառությունը բարելավելու համար:',
+        'cookies_content' => "### 1. Ի՞նչ են Cookie-ները\nCookie-ները փոքր տեքստային ֆայլեր են, որոնք պահպանվում են Ձեր սարքում (համակարգիչ, հեռախոս), երբ այցելում եք կայք: Դրանք օգնում են կայքին հիշել Ձեր նախընտրությունները և ապահովել անվտանգ մուտք:\n\n### 2. Ինչպե՞ս ենք Օգտագործում Cookie-ները\nWorship Platform-ում Cookie-ները և LocalStorage-ն օգտագործվում են հետևյալ նպատակներով․\n• Ավտորիզացիա և Սեսիա․ Ձեր մուտքն ապահով և ակտիվ պահելու համար:\n• Նախընտրություններ․ Լեզվի ընտրությունը (հայերեն, ռուսերեն, անգլերեն) և դիզայնի թեման (մութ/լուսավոր) հիշելու համար:\n• Անցանց Պահոց (Offline Cache)․ Երգերի տեքստերն ու ակորդները ինտերնետի բացակայության դեպքում արագ ցուցադրելու համար:\n\n### 3. Երրորդ Կողմի Cookie-ներ և Գովազդներ\nՄենք ՉԵՆՔ օգտագործում գովազդային կամ հետևող (tracking) երրորդ կողմի cookie-ներ: Ձեր տվյալներն ու ակտիվությունը չեն փոխանցվում գովազդային գործակալություններին:\n\n### 4. Ինչպե՞ս Կառավարել Cookie-ները\nԴուք կարող եք ցանկացած պահի մաքրել կամ արգելափակել Cookie-ները Ձեր դիտարկիչի (Browser) կարգավորումներից, սակայն որոշ ֆունկցիաներ (օրինակ՝ ավտոմատ մուտքը) կարող են ժամանակավորապես չգործել:",
         'blocked_os_list' => [],
         'meta_note' => '',
         'updated_at' => wp_version_now_iso(),
@@ -632,7 +656,7 @@ function wp_version_sanitize(array $raw): array {
     $config['site_seo_default_author'] = mb_substr(trim((string)($config['site_seo_default_author'] ?? $defaults['site_seo_default_author'])), 0, 120);
     $config['site_seo_news_publisher'] = mb_substr(trim((string)($config['site_seo_news_publisher'] ?? $defaults['site_seo_news_publisher'])), 0, 120);
     $config['site_seo_news_logo'] = mb_substr(trim((string)($config['site_seo_news_logo'] ?? $defaults['site_seo_news_logo'])), 0, 500);
-    foreach (['site_seo_index_home', 'site_seo_index_songs', 'site_seo_index_song_pages', 'site_seo_index_news', 'site_seo_index_news_articles'] as $indexSetting) {
+    foreach (['site_seo_index_home', 'site_seo_index_songs', 'site_seo_index_song_pages', 'site_seo_index_news', 'site_seo_index_news_articles', 'site_seo_index_transpose'] as $indexSetting) {
         $config[$indexSetting] = !empty($config[$indexSetting]);
     }
     $config['site_contact_email'] = mb_substr(trim((string)($config['site_contact_email'] ?? $defaults['site_contact_email'])), 0, 120);
@@ -641,12 +665,40 @@ function wp_version_sanitize(array $raw): array {
     $config['site_social_facebook'] = mb_substr(trim((string)($config['site_social_facebook'] ?? $defaults['site_social_facebook'])), 0, 255);
     $config['site_social_instagram'] = mb_substr(trim((string)($config['site_social_instagram'] ?? $defaults['site_social_instagram'])), 0, 255);
     $config['site_social_youtube'] = mb_substr(trim((string)($config['site_social_youtube'] ?? $defaults['site_social_youtube'])), 0, 255);
+    $config['landing_hero_title1'] = mb_substr(trim((string)($config['landing_hero_title1'] ?? $defaults['landing_hero_title1'])), 0, 150);
+    $config['landing_hero_title2'] = mb_substr(trim((string)($config['landing_hero_title2'] ?? $defaults['landing_hero_title2'])), 0, 150);
+    $config['landing_hero_subtitle'] = mb_substr(trim((string)($config['landing_hero_subtitle'] ?? $defaults['landing_hero_subtitle'])), 0, 400);
+    $config['about_hero_title'] = mb_substr(trim((string)($config['about_hero_title'] ?? $defaults['about_hero_title'])), 0, 150);
+    $config['about_hero_subtitle'] = mb_substr(trim((string)($config['about_hero_subtitle'] ?? $defaults['about_hero_subtitle'])), 0, 500);
+    $config['about_mission_title'] = mb_substr(trim((string)($config['about_mission_title'] ?? $defaults['about_mission_title'])), 0, 150);
+    $config['about_mission_text'] = mb_substr(trim((string)($config['about_mission_text'] ?? $defaults['about_mission_text'])), 0, 2000);
+    $config['about_vision_title'] = mb_substr(trim((string)($config['about_vision_title'] ?? $defaults['about_vision_title'])), 0, 150);
+    $config['about_vision_text'] = mb_substr(trim((string)($config['about_vision_text'] ?? $defaults['about_vision_text'])), 0, 2000);
+    $config['about_stat1_number'] = mb_substr(trim((string)($config['about_stat1_number'] ?? $defaults['about_stat1_number'])), 0, 50);
+    $config['about_stat1_label'] = mb_substr(trim((string)($config['about_stat1_label'] ?? $defaults['about_stat1_label'])), 0, 100);
+    $config['about_stat2_number'] = mb_substr(trim((string)($config['about_stat2_number'] ?? $defaults['about_stat2_number'])), 0, 50);
+    $config['about_stat2_label'] = mb_substr(trim((string)($config['about_stat2_label'] ?? $defaults['about_stat2_label'])), 0, 100);
+    $config['about_stat3_number'] = mb_substr(trim((string)($config['about_stat3_number'] ?? $defaults['about_stat3_number'])), 0, 50);
+    $config['about_stat3_label'] = mb_substr(trim((string)($config['about_stat3_label'] ?? $defaults['about_stat3_label'])), 0, 100);
+    $config['privacy_title'] = mb_substr(trim((string)($config['privacy_title'] ?? $defaults['privacy_title'])), 0, 150);
+    $config['privacy_subtitle'] = mb_substr(trim((string)($config['privacy_subtitle'] ?? $defaults['privacy_subtitle'])), 0, 500);
+    $config['privacy_content'] = mb_substr(trim((string)($config['privacy_content'] ?? $defaults['privacy_content'])), 0, 20000);
+    $config['terms_title'] = mb_substr(trim((string)($config['terms_title'] ?? $defaults['terms_title'])), 0, 150);
+    $config['terms_subtitle'] = mb_substr(trim((string)($config['terms_subtitle'] ?? $defaults['terms_subtitle'])), 0, 500);
+    $config['terms_content'] = mb_substr(trim((string)($config['terms_content'] ?? $defaults['terms_content'])), 0, 20000);
+    $config['cookies_title'] = mb_substr(trim((string)($config['cookies_title'] ?? $defaults['cookies_title'])), 0, 150);
+    $config['cookies_subtitle'] = mb_substr(trim((string)($config['cookies_subtitle'] ?? $defaults['cookies_subtitle'])), 0, 500);
+    $config['cookies_content'] = mb_substr(trim((string)($config['cookies_content'] ?? $defaults['cookies_content'])), 0, 20000);
     $config['updated_at'] = wp_version_normalize_datetime($config['updated_at'] ?? '') ?: wp_version_now_iso();
 
     return $config;
 }
 
 function wp_version_load(): array {
+    static $configCache = null;
+    if ($configCache !== null) {
+        return $configCache;
+    }
     $defaults = wp_version_defaults();
     try {
         $pdo = wp_runtime_open_pdo();
@@ -656,7 +708,8 @@ function wp_version_load(): array {
         if ($val !== false && $val !== null) {
             $decoded = json_decode((string)$val, true);
             if (is_array($decoded)) {
-                return wp_version_sanitize($decoded);
+                $configCache = wp_version_sanitize($decoded);
+                return $configCache;
             }
         }
     } catch (Throwable $e) {
@@ -668,13 +721,15 @@ function wp_version_load(): array {
             if ($row = $result->fetch_assoc()) {
                 $decoded = json_decode($row['setting_value'] ?? '', true);
                 if (is_array($decoded)) {
-                    return wp_version_sanitize($decoded);
+                    $configCache = wp_version_sanitize($decoded);
+                    return $configCache;
                 }
             }
         } catch (Throwable $e2) {}
     }
 
-    return $defaults;
+    $configCache = $defaults;
+    return $configCache;
 }
 
 function wp_version_is_scheduled_maintenance_active(array $config, ?DateTimeImmutable $now = null): bool {

@@ -5,6 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { getSongCoverStyle } from '../utils/songCover';
 import { usePageReady } from '../hooks/usePageReady';
+import { matchSongSearch } from '../utils/searchMatcher';
 import './SongsWeb.css';
 
 const KEYS = ['All','C','Cm','D','Dm','E','Em','F','G','Gm','A','Am','B','Bm','Eb','Bb','F#'];
@@ -56,61 +57,123 @@ export default function SongsWeb() {
 
   const scrollToTop = (e) => {
     if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    const targets = [
-      window,
-      document.documentElement,
-      document.body,
-      document.querySelector('#root'),
-      document.querySelector('.app-container'),
-      document.querySelector('main'),
-      document.querySelector('.songs-web-page'),
-      document.querySelector('.app-main')
-    ].filter(Boolean);
-
-    targets.forEach(target => {
       try {
-        if (typeof target.scrollTo === 'function') {
-          target.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-        }
-        target.scrollTop = 0;
-      } catch (err) {
-        target.scrollTop = 0;
+        e.preventDefault();
+        e.stopPropagation();
+      } catch (err) {}
+    }
+
+    const startPos = Math.max(
+      window.scrollY || 0,
+      window.pageYOffset || 0,
+      document.documentElement?.scrollTop || 0,
+      document.body?.scrollTop || 0
+    );
+
+    const scrolledElements = [];
+    const elements = document.querySelectorAll('div, main, section, article, #root, .app-container, .songs-web-page, .app-main');
+    elements.forEach(el => {
+      if (el.scrollTop > 0) {
+        scrolledElements.push({ el, start: el.scrollTop });
       }
     });
+
+    const duration = 320; // 320ms smooth animation
+    const startTime = performance.now();
+
+    function animateScroll(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Smooth cubic ease-out curve
+      const ease = 1 - Math.pow(1 - progress, 3);
+
+      if (startPos > 0) {
+        const currentY = Math.round(startPos * (1 - ease));
+        window.scrollTo(0, currentY);
+        if (document.documentElement) document.documentElement.scrollTop = currentY;
+        if (document.body) document.body.scrollTop = currentY;
+      }
+
+      scrolledElements.forEach(({ el, start }) => {
+        el.scrollTop = Math.round(start * (1 - ease));
+      });
+
+      if (progress < 1) {
+        requestAnimationFrame(animateScroll);
+      }
+    }
+
+    requestAnimationFrame(animateScroll);
   };
 
   useEffect(() => {
     const handleScroll = () => {
+      const pageEl = document.querySelector('.songs-web-page');
       const mainEl = document.querySelector('main');
       const rootEl = document.querySelector('#root');
+      const containerEl = document.querySelector('.app-container');
       const scrollTop = Math.max(
         window.scrollY || 0,
         window.pageYOffset || 0,
         document.documentElement?.scrollTop || 0,
         document.body?.scrollTop || 0,
+        pageEl?.scrollTop || 0,
         mainEl?.scrollTop || 0,
-        rootEl?.scrollTop || 0
+        rootEl?.scrollTop || 0,
+        containerEl?.scrollTop || 0
       );
       setShowBackToTop(scrollTop > 200);
     };
 
     handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
-    document.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+
+    const targets = [
+      window,
+      document,
+      document.documentElement,
+      document.body,
+      document.querySelector('#root'),
+      document.querySelector('.app-container'),
+      document.querySelector('main'),
+      document.querySelector('.songs-web-page')
+    ].filter(Boolean);
+
+    targets.forEach(t => {
+      t.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    });
 
     return () => {
-      window.removeEventListener('scroll', handleScroll, { capture: true });
-      document.removeEventListener('scroll', handleScroll, { capture: true });
+      targets.forEach(t => {
+        t.removeEventListener('scroll', handleScroll, { capture: true });
+      });
     };
   }, []);
 
   useEffect(() => {
+    // 1. Instant hydration from localStorage cache
+    try {
+      const cached = localStorage.getItem('wp_songs_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSongs(parsed);
+          setIsLoading(false);
+        }
+      }
+    } catch {}
+
+    // 2. Fetch fresh data from API
     fetch('/api.php')
       .then(r => r.json())
-      .then(d => { if (Array.isArray(d)) setSongs(d); setIsLoading(false); })
+      .then(d => {
+        if (Array.isArray(d)) {
+          setSongs(d);
+          try {
+            localStorage.setItem('wp_songs_cache', JSON.stringify(d));
+          } catch {}
+        }
+        setIsLoading(false);
+      })
       .catch(() => setIsLoading(false));
 
     if (user) {
@@ -168,17 +231,7 @@ export default function SongsWeb() {
 
   const filtered = songs
     .filter(s => {
-      const q = searchQuery.toLowerCase();
-      const matchQ = !q 
-        || s.title?.toLowerCase().includes(q) 
-        || s.title_hy?.toLowerCase().includes(q)
-        || s.title_ru?.toLowerCase().includes(q)
-        || s.title_en?.toLowerCase().includes(q)
-        || s.title_lat?.toLowerCase().includes(q)
-        || s.artist?.toLowerCase().includes(q)
-        || s.lyrics?.toLowerCase().includes(q)
-        || s.tags?.toLowerCase().includes(q);
-      
+      const matchQ = matchSongSearch(s, searchQuery);
       return matchQ && (selectedKey === 'All' || s.song_key === selectedKey);
     })
     .sort((a, b) => {

@@ -124,6 +124,140 @@ $hasBpmColumn = wp_api_song_bpm_column_present($conn);
 $method = $_SERVER['REQUEST_METHOD'];
 $lang = wp_translation_requested_lang();
 
+// ---------- POPULAR SONGS (real statistics) ----------
+if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'popular') {
+    $hasRecentViews = false;
+    $hasSetlistItems = false;
+
+    $chk = $conn->query("SHOW TABLES LIKE 'recent_views'");
+    if ($chk && $chk->num_rows > 0) $hasRecentViews = true;
+
+    $chk = $conn->query("SHOW TABLES LIKE 'setlist_items'");
+    if ($chk && $chk->num_rows > 0) $hasSetlistItems = true;
+
+    $existingFavTables = [];
+    foreach (['user_favorites', 'favorites', 'favoritesuser'] as $tbl) {
+        $r = $conn->query("SHOW TABLES LIKE '{$tbl}'");
+        if ($r && $r->num_rows > 0) {
+            $existingFavTables[] = $tbl;
+        }
+    }
+
+    $favUnionParts = [];
+    foreach ($existingFavTables as $tbl) {
+        $favUnionParts[] = "SELECT user_id, song_id FROM `{$tbl}` WHERE song_id > 0";
+    }
+
+    $viewSub = $hasRecentViews ? "(SELECT song_id, COUNT(*) AS view_cnt FROM recent_views WHERE song_id > 0 GROUP BY song_id)" : "(SELECT NULL AS song_id, 0 AS view_cnt)";
+    $favSub = !empty($favUnionParts) ? "(SELECT song_id, COUNT(DISTINCT user_id) AS fav_cnt FROM (" . implode(" UNION ", $favUnionParts) . ") fav_all GROUP BY song_id)" : "(SELECT NULL AS song_id, 0 AS fav_cnt)";
+    $setlistSub = $hasSetlistItems ? "(SELECT song_id, COUNT(*) AS setlist_cnt FROM setlist_items WHERE song_id IS NOT NULL AND song_id > 0 GROUP BY song_id)" : "(SELECT NULL AS song_id, 0 AS setlist_cnt)";
+
+    $sql = "
+        SELECT s.*,
+               (COALESCE(v.view_cnt, 0) * 1 + COALESCE(f.fav_cnt, 0) * 5 + COALESCE(sl.setlist_cnt, 0) * 3) AS popularity_score
+        FROM songs s
+        LEFT JOIN {$viewSub} v ON v.song_id = s.id
+        LEFT JOIN {$favSub} f ON f.song_id = s.id
+        LEFT JOIN {$setlistSub} sl ON sl.song_id = s.id
+        ORDER BY popularity_score DESC, s.id DESC
+        LIMIT 100
+    ";
+
+    $res = $conn->query($sql);
+    $songs = [];
+    if ($res instanceof mysqli_result) {
+        while ($row = $res->fetch_assoc()) {
+            $songs[] = $row;
+        }
+    }
+
+    if (wp_translation_should_translate($lang)) {
+        $songs = wp_translation_translate_rows($songs, [
+            'title' => 'api.song.title',
+            'artist' => 'api.song.artist',
+            'tags' => 'api.song.tags',
+        ], $lang);
+        $songs = wp_translation_localize_row_fields($songs, [
+            'title' => 'api.song.title',
+        ], $lang);
+    }
+
+    echo json_encode($songs, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// ---------- SITE CONFIG (public) ----------
+if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'site_config') {
+    $config = wp_version_load();
+    echo json_encode([
+        'ok' => true,
+        'hero_title1' => $config['landing_hero_title1'] ?? 'Առաջնորդի՛ր Պաշտամունքը',
+        'hero_title2' => $config['landing_hero_title2'] ?? 'Մեկ Միասնական Հարթակում',
+        'hero_subtitle' => $config['landing_hero_subtitle'] ?? 'Ակորդներ, երգացանկեր և թիմային համագործակցություն — ամեն ինչ մեկ հարթակում։',
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// ---------- ABOUT CONFIG (public) ----------
+if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'about_config') {
+    $config = wp_version_load();
+    echo json_encode([
+        'ok' => true,
+        'hero_title' => $config['about_hero_title'] ?? 'Մեր Մասին',
+        'hero_subtitle' => $config['about_hero_subtitle'] ?? 'Worship Platform-ը երաժիշտների, պաշտամունքի թիմերի և առաջնորդների համար ստեղծված միասնական հարթակ է:',
+        'mission_title' => $config['about_mission_title'] ?? 'Մեր Առաքելությունը',
+        'mission_text' => $config['about_mission_text'] ?? 'Մեր նպատակն է ապահովել պաշտամունքի թիմերին ժամանակակից թվային գործիքներով՝ ակորդներ, երգացանկեր, տրանսպոզիցիա և իրական ժամանակում թիմային համագործակցություն:',
+        'vision_title' => $config['about_vision_title'] ?? 'Մեր Տեսլականը',
+        'vision_text' => $config['about_vision_text'] ?? 'Ստեղծել հզոր համայնք, որտեղ յուրաքանչյուր երաժիշտ և թիմ կկարողանա հեշտությամբ կազմակերպել իրենց ծառայությունը:',
+        'stat1_number' => $config['about_stat1_number'] ?? '1000+',
+        'stat1_label' => $config['about_stat1_label'] ?? 'Ակտիվ Երգեր',
+        'stat2_number' => $config['about_stat2_number'] ?? '500+',
+        'stat2_label' => $config['about_stat2_label'] ?? 'Պաշտամունքի Թիմեր',
+        'stat3_number' => $config['about_stat3_number'] ?? '10,000+',
+        'stat3_label' => $config['about_stat3_label'] ?? 'Օգտատերեր',
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// ---------- PRIVACY CONFIG (public) ----------
+if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'privacy_config') {
+    $config = wp_version_load();
+    echo json_encode([
+        'ok' => true,
+        'title' => $config['privacy_title'] ?? 'Գաղտնիության Քաղաքականություն',
+        'subtitle' => $config['privacy_subtitle'] ?? 'Ձեր անձնական տվյալների պաշտպանությունն ու գաղտնիությունը մեր առաջնահերթությունն է:',
+        'content' => $config['privacy_content'] ?? '',
+        'updated_at' => $config['updated_at'] ?? '',
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// ---------- TERMS CONFIG (public) ----------
+if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'terms_config') {
+    $config = wp_version_load();
+    echo json_encode([
+        'ok' => true,
+        'title' => $config['terms_title'] ?? 'Օգտագործման Պայմաններ',
+        'subtitle' => $config['terms_subtitle'] ?? 'Worship Platform-ից օգտվելու կանոնները, իրավունքներն ու պարտականությունները:',
+        'content' => $config['terms_content'] ?? '',
+        'updated_at' => $config['updated_at'] ?? '',
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// ---------- COOKIES CONFIG (public) ----------
+if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'cookies_config') {
+    $config = wp_version_load();
+    echo json_encode([
+        'ok' => true,
+        'title' => $config['cookies_title'] ?? 'Cookie-ների Քաղաքականություն',
+        'subtitle' => $config['cookies_subtitle'] ?? 'Ինչպես ենք օգտագործում Cookie ֆայլերն ու տեղային պահոցը (LocalStorage) Ձեր փորձառությունը բարելավելու համար:',
+        'content' => $config['cookies_content'] ?? '',
+        'updated_at' => $config['updated_at'] ?? '',
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 // ---------- SEARCH (lyrics) ----------
 if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'search') {
     $mode = $_GET['mode'] ?? 'lyrics';
@@ -203,10 +337,10 @@ if ($method === "GET") {
         if (is_array($song)) {
             $sourceTitle = trim((string)($song['title'] ?? ''));
             $song['title_variants'] = [
-                'hy' => trim((string)($song['title_hy'] ?? '')) ?: $sourceTitle,
+                'hy' => trim((string)($song['title_hy'] ?? '')) ?: (strpos($sourceTitle, ' / ') === false ? $sourceTitle : ''),
                 'lat' => trim((string)($song['title_lat'] ?? '')),
-                'ru' => trim((string)($song['title_ru'] ?? '')) ?: ($sourceTitle !== '' ? (wp_translation_cache_get('ru', 'api.song.title', $sourceTitle) ?? '') : ''),
-                'en' => trim((string)($song['title_en'] ?? '')) ?: ($sourceTitle !== '' ? (wp_translation_cache_get('en', 'api.song.title', $sourceTitle) ?? '') : ''),
+                'ru' => trim((string)($song['title_ru'] ?? '')) ?: ($sourceTitle !== '' && strpos($sourceTitle, ' / ') === false ? (wp_translation_cache_get('ru', 'api.song.title', $sourceTitle) ?? '') : ''),
+                'en' => trim((string)($song['title_en'] ?? '')) ?: ($sourceTitle !== '' && strpos($sourceTitle, ' / ') === false ? (wp_translation_cache_get('en', 'api.song.title', $sourceTitle) ?? '') : ''),
             ];
             $song = wp_translation_translate_row($song, [
                 'title' => 'api.song.title',
@@ -225,8 +359,10 @@ if ($method === "GET") {
                 $attStmt->execute();
                 $attRes = $attStmt->get_result();
                 $attachments = [];
-                while ($att = $attRes->fetch_assoc()) {
-                    $attachments[] = $att;
+                if ($attRes) {
+                    while ($att = $attRes->fetch_assoc()) {
+                        $attachments[] = $att;
+                    }
                 }
                 $song['attachments'] = $attachments;
             } else {
@@ -238,16 +374,22 @@ if ($method === "GET") {
     } else {
         $res = $conn->query("SELECT * FROM songs ORDER BY created_at DESC");
         $songs = [];
-        while ($row = $res->fetch_assoc()) $songs[] = $row;
-        $songs = wp_translation_translate_rows($songs, [
-            'title' => 'api.song.title',
-            'artist' => 'api.song.artist',
-            'tags' => 'api.song.tags',
-        ], $lang);
-        $songs = wp_translation_localize_row_fields($songs, [
-            'title' => 'api.song.title',
-        ], $lang);
-        echo json_encode($songs);
+        if ($res instanceof mysqli_result) {
+            while ($row = $res->fetch_assoc()) {
+                $songs[] = $row;
+            }
+        }
+        if (wp_translation_should_translate($lang)) {
+            $songs = wp_translation_translate_rows($songs, [
+                'title' => 'api.song.title',
+                'artist' => 'api.song.artist',
+                'tags' => 'api.song.tags',
+            ], $lang);
+            $songs = wp_translation_localize_row_fields($songs, [
+                'title' => 'api.song.title',
+            ], $lang);
+        }
+        echo json_encode($songs, JSON_UNESCAPED_UNICODE);
         exit;
     }
 }

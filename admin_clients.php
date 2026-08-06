@@ -233,6 +233,8 @@ $users = [];
 $totalUsers = 0;
 $dbError = null;
 
+$filter = in_array($_GET['filter'] ?? '', ['all', 'active', 'blocked', 'new']) ? $_GET['filter'] : 'all';
+
 try {
     $conn = wp_runtime_open_mysqli();
 
@@ -243,36 +245,52 @@ try {
     }
     wp_admin_clients_ensure_user_access_columns($conn);
 
-    // Total count
+    // Build WHERE clauses
+    $whereParts = [];
+    $types = '';
+    $params = [];
+
     if ($search !== '') {
-        $stmt = $conn->prepare("SELECT COUNT(*) FROM users WHERE name LIKE ? OR email LIKE ?");
+        $whereParts[] = "(name LIKE ? OR email LIKE ? OR username LIKE ?)";
         $like = '%' . $search . '%';
-        $stmt->bind_param('ss', $like, $like);
+        $types .= 'sss';
+        $params[] = $like;
+        $params[] = $like;
+        $params[] = $like;
+    }
+
+    if ($filter === 'blocked') {
+        $whereParts[] = "COALESCE(is_blocked, 0) = 1";
+    } elseif ($filter === 'new') {
+        $whereParts[] = "created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+    } elseif ($filter === 'active') {
+        $whereParts[] = "id IN (SELECT DISTINCT user_id FROM user_sessions WHERE last_used_at >= DATE_SUB(NOW(), INTERVAL 30 DAY))";
+    }
+
+    $whereSql = !empty($whereParts) ? 'WHERE ' . implode(' AND ', $whereParts) : '';
+
+    // Total count
+    if (!empty($params)) {
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM users $whereSql");
+        $stmt->bind_param($types, ...$params);
         $stmt->execute();
         $stmt->bind_result($totalUsers);
         $stmt->fetch();
         $stmt->close();
     } else {
-        $r = $conn->query("SELECT COUNT(*) FROM users");
+        $r = $conn->query("SELECT COUNT(*) FROM users $whereSql");
         if ($r) { $row = $r->fetch_row(); $totalUsers = (int)($row[0] ?? 0); }
     }
 
     // Rows
-    if ($search !== '') {
-        $like = '%' . $search . '%';
-        $stmt = $conn->prepare(
-            "SELECT id, username, name, email, created_at, birth_date, gender, phone_number, COALESCE(is_blocked, 0) AS is_blocked, blocked_at
-             FROM users WHERE name LIKE ? OR email LIKE ? OR username LIKE ?
-             ORDER BY id DESC LIMIT ? OFFSET ?"
-        );
-        $stmt->bind_param('sssii', $like, $like, $like, $perPage, $offset);
-    } else {
-        $stmt = $conn->prepare(
-            "SELECT id, username, name, email, created_at, birth_date, gender, phone_number, COALESCE(is_blocked, 0) AS is_blocked, blocked_at
-             FROM users ORDER BY id DESC LIMIT ? OFFSET ?"
-        );
-        $stmt->bind_param('ii', $perPage, $offset);
-    }
+    $typesWithLimit = $types . 'ii';
+    $paramsWithLimit = array_merge($params, [$perPage, $offset]);
+
+    $stmt = $conn->prepare(
+        "SELECT id, username, name, email, created_at, birth_date, gender, phone_number, COALESCE(is_blocked, 0) AS is_blocked, blocked_at
+         FROM users $whereSql ORDER BY id DESC LIMIT ? OFFSET ?"
+    );
+    $stmt->bind_param($typesWithLimit, ...$paramsWithLimit);
     $stmt->execute();
     $result = $stmt->get_result();
     while ($row = $result->fetch_assoc()) { $users[] = $row; }

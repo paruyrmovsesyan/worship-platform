@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useIsPWA } from '../hooks/useIsPWA';
 import { usePageReady } from '../hooks/usePageReady';
 import ChatsList from './ChatsList';
 import './Friends.css';
@@ -10,13 +11,15 @@ export default function Friends() {
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const isPWA = useIsPWA();
+
   const [loading, setLoading] = useState(true);
   const [friends, setFriends] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [activeTab, setActiveTab] = useState('chats'); // 'chats', 'friends', 'requests'
+  const [activeTab, setActiveTab] = useState('friends'); // default to 'friends' in website mode
   const searchInputRef = useRef(null);
-  
+
   usePageReady(loading || authLoading);
 
   useEffect(() => {
@@ -57,7 +60,7 @@ export default function Friends() {
       } catch (e) {
         console.error(e);
       }
-    }, 500);
+    }, 400);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
@@ -92,7 +95,7 @@ export default function Friends() {
   };
 
   const removeFriend = async (userId, isCancel = false) => {
-    if (!isCancel && !window.confirm(t('friends.confirmRemove'))) return;
+    if (!isCancel && !window.confirm(t('friends.confirmRemove', 'Վստա՞հ եք, որ ցանկանում եք ջնջել այս ընկերոջը:'))) return;
     try {
       await fetch('/friends_api.php?action=remove', {
         method: 'POST',
@@ -141,6 +144,239 @@ export default function Friends() {
     return `${parts[0][0] || ''}${parts[1][0] || ''}`.toUpperCase();
   };
 
+  // ════════════════════════════════════════════════════════════════
+  // WEBSITE DESKTOP VIEW (!isPWA)
+  // ════════════════════════════════════════════════════════════════
+  if (!isPWA) {
+    return (
+      <div className="website-friends-wrapper">
+        {/* HERO BANNER */}
+        <div className="website-friends-hero">
+          <div className="hero-glow-bg" />
+          <div className="website-friends-hero-content">
+            <span className="hero-badge">👥 {t('nav.friends', 'ԹԻՄ & ԸՆԿԵՐՆԵՐ')}</span>
+            <h1>{t('friends.title', 'Ընկերներ և Երաժիշտներ')}</h1>
+            <p>{t('friends.subtitle', 'Գտեք Ձեր պաշտամունքի թիմակիցներին, ուղարկեք հարցումներ և կապվեք միմյանց հետ:')}</p>
+            
+            {/* SEARCH INPUT */}
+            <div className="website-friends-search-box">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input 
+                ref={searchInputRef}
+                type="text"
+                placeholder={t('friends.searchPlaceholder', 'Մուտքագրեք անուն կամ էլ. հասցե...')}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button className="search-clear-btn" onClick={() => setSearchQuery('')}>✕</button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* SUMMARY STAT CARDS */}
+        <div className="website-friends-stats">
+          <div className={`stats-card ${activeTab === 'friends' ? 'active' : ''}`} onClick={() => setActiveTab('friends')}>
+            <span className="stats-icon">🤝</span>
+            <div>
+              <strong>{acceptedFriends.length}</strong>
+              <small>{t('friends.tabs.myFriends', 'Իմ Ընկերները')}</small>
+            </div>
+          </div>
+
+          <div className={`stats-card ${activeTab === 'requests' ? 'active' : ''}`} onClick={() => setActiveTab('requests')}>
+            <span className="stats-icon">📩</span>
+            <div>
+              <strong>{incomingRequests.length}</strong>
+              <small>{t('friends.incomingTitle', 'Մուտքային Հայտեր')}</small>
+            </div>
+          </div>
+
+          <div className="stats-card" onClick={() => navigate('/chats')}>
+            <span className="stats-icon">💬</span>
+            <div>
+              <strong>{acceptedFriends.length}</strong>
+              <small>{t('friends.tabs.chats', 'Ակտիվ Զրույցներ')}</small>
+            </div>
+          </div>
+        </div>
+
+        {/* TAB CONTROLS */}
+        <div className="website-friends-tabs">
+          <button 
+            className={`tab-btn ${activeTab === 'friends' && !isSearching ? 'active' : ''}`}
+            onClick={() => { setActiveTab('friends'); setSearchQuery(''); }}
+          >
+            👥 {t('friends.tabs.myFriends', 'Իմ Ընկերները')} ({acceptedFriends.length})
+          </button>
+          
+          <button 
+            className={`tab-btn ${activeTab === 'requests' && !isSearching ? 'active' : ''}`}
+            onClick={() => { setActiveTab('requests'); setSearchQuery(''); }}
+          >
+            📩 {t('friends.tabs.requests', 'Հարցումներ')} {totalRequests > 0 && <span className="tab-badge">{totalRequests}</span>}
+          </button>
+
+          {isSearching && (
+            <button className="tab-btn active">
+              🔍 {t('friends.searchResults', 'Որոնման արդյունքներ')} ({searchResults.length})
+            </button>
+          )}
+        </div>
+
+        {/* TAB CONTENT: SEARCH RESULTS */}
+        {isSearching && (
+          <div className="website-friends-panel">
+            {searchResults.length === 0 ? (
+              <div className="website-empty-panel">
+                <p>🔍 «{searchQuery}» որոնմամբ արդյունք չի գտնվել։</p>
+              </div>
+            ) : (
+              <div className="website-friends-grid">
+                {searchResults.map(u => (
+                  <div key={u.id} className="website-friend-card">
+                    <div className="friend-card-avatar">
+                      {getInitials(u.name, 'U')}
+                    </div>
+                    <div className="friend-card-info">
+                      <strong>{u.name}</strong>
+                      <span>{u.email}</span>
+                    </div>
+                    <div className="friend-card-actions">
+                      {u.friend_status === 'accepted' ? (
+                        <button className="btn-action primary" onClick={() => openChat(u.id)}>
+                          💬 {t('friends.chat', 'Զրուցել')}
+                        </button>
+                      ) : u.friend_status === 'pending' ? (
+                        u.is_requester ? (
+                          <button className="btn-action secondary" onClick={() => removeFriend(u.id, true)}>
+                            ✕ {t('friends.cancelRequest', 'Չեղարկել')}
+                          </button>
+                        ) : (
+                          <button className="btn-action primary" onClick={() => acceptFriend(u.id)}>
+                            ✓ {t('friends.acceptRequest', 'Ընդունել')}
+                          </button>
+                        )
+                      ) : (
+                        <button className="btn-action primary" onClick={() => addFriend(u.id)}>
+                          + {t('friends.addFriend', 'Ավելացնել')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB CONTENT: ACCEPTED FRIENDS */}
+        {!isSearching && activeTab === 'friends' && (
+          <div className="website-friends-panel">
+            {acceptedFriends.length === 0 ? (
+              <div className="website-empty-panel">
+                <span className="empty-icon">🤝</span>
+                <h3>{t('friends.emptyFriends', 'Ընկերներ դեռ չունեք')}</h3>
+                <p>{t('friends.findDesc', 'Օգտագործեք վերևի որոնման դաշտը Ձեր պաշտամունքի թիմակիցներին գտնելու համար:')}</p>
+              </div>
+            ) : (
+              <div className="website-friends-grid">
+                {acceptedFriends.map(f => (
+                  <div key={f.friend_id} className="website-friend-card">
+                    <div className="friend-card-avatar">
+                      {getInitials(f.name, 'U')}
+                      {Number(f.is_online) === 1 && <span className="online-dot" />}
+                    </div>
+                    <div className="friend-card-info">
+                      <strong>{f.name}</strong>
+                      <span>{f.email}</span>
+                    </div>
+                    <div className="friend-card-actions">
+                      <button className="btn-action primary" onClick={() => openChat(f.friend_id)}>
+                        💬 {t('friends.chat', 'Զրուցել')}
+                      </button>
+                      <button className="btn-action secondary danger-hover" onClick={() => removeFriend(f.friend_id)}>
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB CONTENT: REQUESTS */}
+        {!isSearching && activeTab === 'requests' && (
+          <div className="website-requests-split">
+            {/* INCOMING */}
+            <div className="website-friends-panel">
+              <h3 className="panel-title">📩 {t('friends.incomingTitle', 'Մուտքային Հայտեր')} ({incomingRequests.length})</h3>
+              {incomingRequests.length === 0 ? (
+                <div className="website-empty-panel">
+                  <p>{t('friends.noIncoming', 'Մուտքային հայտեր չկան')}</p>
+                </div>
+              ) : (
+                <div className="website-friends-grid single-col">
+                  {incomingRequests.map(f => (
+                    <div key={f.friend_id} className="website-friend-card">
+                      <div className="friend-card-avatar">{getInitials(f.name, 'U')}</div>
+                      <div className="friend-card-info">
+                        <strong>{f.name}</strong>
+                        <span>{f.email}</span>
+                      </div>
+                      <div className="friend-card-actions">
+                        <button className="btn-action primary" onClick={() => acceptFriend(f.friend_id)}>
+                          ✓ {t('friends.accept', 'Ընդունել')}
+                        </button>
+                        <button className="btn-action secondary" onClick={() => removeFriend(f.friend_id, true)}>
+                          ✕ {t('friends.reject', 'Մերժել')}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* OUTGOING */}
+            <div className="website-friends-panel">
+              <h3 className="panel-title">📤 {t('friends.outgoingTitle', 'Ուղարկված Հայտեր')} ({outgoingRequests.length})</h3>
+              {outgoingRequests.length === 0 ? (
+                <div className="website-empty-panel">
+                  <p>{t('friends.noOutgoing', 'Ուղարկված հայտեր չկան')}</p>
+                </div>
+              ) : (
+                <div className="website-friends-grid single-col">
+                  {outgoingRequests.map(f => (
+                    <div key={f.friend_id} className="website-friend-card">
+                      <div className="friend-card-avatar">{getInitials(f.name, 'U')}</div>
+                      <div className="friend-card-info">
+                        <strong>{f.name}</strong>
+                        <span>{f.email}</span>
+                      </div>
+                      <div className="friend-card-actions">
+                        <button className="btn-action secondary" onClick={() => removeFriend(f.friend_id, true)}>
+                          ✕ {t('friends.cancel', 'Չեղարկել')}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // PWA MODE DISPLAY (100% UNTOUCHED ORIGINAL LAYOUT)
+  // ════════════════════════════════════════════════════════════════
   const renderFriendRow = (friend, actions, variant = 'default') => (
     <div key={`${variant}-${friend.friend_id}`} className={`friend-list-row ${variant === 'request' ? 'request-row' : ''}`}>
       <div className="friend-avatar" aria-hidden="true">

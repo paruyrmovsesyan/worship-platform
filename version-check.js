@@ -11,12 +11,12 @@
   var PENDING_APP_STAMP_KEY = "wp_pending_app_release_stamp";
   var CHECK_IN_PROGRESS = false;
   var RELEASE_TYPE_LABELS = {
-    major: "Major Release",
-    feature: "Feature Update",
-    patch: "Patch Update",
-    hotfix: "Hotfix",
-    maintenance: "Maintenance Refresh",
-    content: "Content Update"
+    major: "Մեծ թարմացում",
+    feature: "Նոր հնարավորություններ",
+    patch: "Փոքր ուղղումներ",
+    hotfix: "Արագ շտկում",
+    maintenance: "Տեխնիկական թարմացում",
+    content: "Բովանդակության թարմացում"
   };
 
   function isStandaloneMode() {
@@ -57,6 +57,23 @@
     document.body.style.overflow = "";
   }
 
+  function formatUpdateDate(dateStr) {
+    if (!dateStr) return "Հենց նոր";
+    try {
+      var d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      var months = ["հունվարի", "փետրվարի", "մարտի", "ապրիլի", "մայիսի", "հունիսի", "հուլիսի", "օգոստոսի", "սեպտեմբերի", "հոկտեմբերի", "նոյեմբերի", "դեկտեմբերի"];
+      var day = d.getDate();
+      var month = months[d.getMonth()];
+      var year = d.getFullYear();
+      var hours = String(d.getHours()).padStart(2, '0');
+      var mins = String(d.getMinutes()).padStart(2, '0');
+      return day + " " + month + " " + year + ", " + hours + ":" + mins;
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
   function ensureUpdateModal() {
     var existing = document.getElementById("wpVersionModal");
     if (existing) return existing;
@@ -65,44 +82,34 @@
       var style = document.createElement("style");
       style.id = "wpVersionModalStyles";
       style.textContent =
-        ".wp-version-modal{position:fixed!important;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(3,7,14,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:2147483000;isolation:isolate}" +
+        ".wp-version-modal{position:fixed!important;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(3,7,14,.76);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:2147483000;isolation:isolate}" +
         ".wp-version-modal.show{display:flex}" +
-        ".wp-version-card{width:min(94vw,520px);max-height:90vh;overflow-y:auto;position:relative;background:linear-gradient(180deg,rgba(10,16,30,.98),rgba(10,16,30,.94));color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:28px;padding:24px;box-shadow:0 28px 80px rgba(0,0,0,.42);font-family:Inter,system-ui,sans-serif}" +
+        ".wp-version-card{width:min(94vw,520px);max-height:90vh;overflow-y:auto;position:relative;background:linear-gradient(180deg,rgba(14,20,38,.98),rgba(10,15,30,.96));color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:28px;padding:24px;box-shadow:0 28px 80px rgba(0,0,0,.5);font-family:Inter,system-ui,sans-serif}" +
         ".wp-version-card::-webkit-scrollbar{display:none}" +
-        ".wp-version-card::before{content:'';position:absolute;inset:auto auto -40px -20px;width:180px;height:180px;background:radial-gradient(circle,rgba(122,162,255,.25),transparent 70%);pointer-events:none}" +
-        ".wp-version-card::after{content:'';position:absolute;inset:-50px -10px auto auto;width:220px;height:220px;background:radial-gradient(circle,rgba(255,184,77,.14),transparent 72%);pointer-events:none}" +
-        ".wp-version-head{position:relative;display:flex;gap:14px;align-items:flex-start}" +
-        ".wp-version-icon{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;font-size:26px;background:linear-gradient(135deg,#4f7cff,#7aa2ff);box-shadow:0 14px 28px rgba(79,124,255,.3);flex:0 0 auto}" +
+        ".wp-version-card::before{content:'';position:absolute;inset:auto auto -40px -20px;width:200px;height:200px;background:radial-gradient(circle,rgba(0,212,255,.25),transparent 70%);pointer-events:none}" +
+        ".wp-version-card::after{content:'';position:absolute;inset:-50px -10px auto auto;width:240px;height:240px;background:radial-gradient(circle,rgba(58,45,255,.2),transparent 72%);pointer-events:none}" +
+        ".wp-version-head{position:relative;display:flex;gap:14px;align-items:center}" +
+        ".wp-version-icon{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;font-size:24px;background:linear-gradient(135deg,#3a2dff,#00d4ff);box-shadow:0 14px 28px rgba(0,212,255,.25);flex:0 0 auto;color:#fff}" +
         ".wp-version-card.mode-web .wp-version-icon{background:linear-gradient(135deg,#ff9d4d,#ffd25e);box-shadow:0 14px 28px rgba(255,157,77,.26)}" +
         ".wp-version-copy{min-width:0}" +
-        ".wp-version-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#dbe4ff}" +
-        ".wp-version-title{margin:10px 0 0;font-size:24px;line-height:1.12}" +
-        ".wp-version-text{position:relative;margin:14px 0 0;color:rgba(255,255,255,.84);line-height:1.6;font-size:15px}" +
-        ".wp-version-summary{position:relative;margin-top:14px;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.9);line-height:1.55;font-size:14px}" +
-        ".wp-version-summary strong{display:block;margin-bottom:6px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.6)}" +
-        ".wp-version-meta{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px}" +
-        ".wp-version-stat{padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}" +
-        ".wp-version-stat strong{display:block;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}" +
-        ".wp-version-stat span{display:block;font-weight:700;color:#fff;word-break:break-word}" +
+        ".wp-version-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.25);font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#00d4ff}" +
+        ".wp-version-title{margin:6px 0 0;font-size:22px;font-weight:800;line-height:1.2;color:#ffffff}" +
+        ".wp-version-text{position:relative;margin:12px 0 0;color:rgba(255,255,255,.84);line-height:1.6;font-size:14px}" +
+        ".wp-version-summary{position:relative;margin-top:14px;padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);line-height:1.55;font-size:14px}" +
+        ".wp-version-summary strong{display:block;margin-bottom:6px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.6);font-weight:700}" +
+        ".wp-version-meta{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px}" +
+        ".wp-version-stat{padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}" +
+        ".wp-version-stat strong{display:block;font-size:11px;color:rgba(255,255,255,.55);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;font-weight:700}" +
+        ".wp-version-stat span{display:block;font-weight:700;color:#fff;font-size:13px;word-break:break-word}" +
         ".wp-version-actions{position:relative;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:20px}" +
-        ".wp-version-actions button{min-height:44px;border-radius:14px;border:0;padding:12px 16px;font:700 14px/1.2 Inter,system-ui,sans-serif;cursor:pointer;transition:transform .16s ease,opacity .16s ease}" +
+        ".wp-version-actions button{min-height:46px;border-radius:14px;border:0;padding:12px 18px;font:700 14px/1.2 Inter,system-ui,sans-serif;cursor:pointer;transition:transform .16s ease,opacity .16s ease}" +
         ".wp-version-actions button:hover{transform:translateY(-1px)}" +
         ".wp-version-actions button:disabled{opacity:.7;cursor:default;transform:none}" +
-        ".wp-version-later{background:rgba(255,255,255,.10);color:#fff}" +
-        ".wp-version-update{background:linear-gradient(135deg,#4f7cff,#7aa2ff);color:#fff;box-shadow:0 14px 30px rgba(79,124,255,.28)}" +
+        ".wp-version-later{background:rgba(255,255,255,.08);color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.12)}" +
+        ".wp-version-update{background:linear-gradient(135deg,#3a2dff,#00d4ff);color:#fff;box-shadow:0 12px 28px rgba(0,212,255,.28)}" +
         ".wp-version-card.mode-web .wp-version-update{background:linear-gradient(135deg,#ff9d4d,#ffd25e);box-shadow:0 14px 30px rgba(255,157,77,.24);color:#1b1400}" +
         ".wp-version-foot{position:relative;margin-top:14px;color:rgba(255,255,255,.52);font-size:12px;line-height:1.5}" +
-        "body.wp-main-app .wp-version-modal{align-items:center!important;flex-direction:column;justify-content:center!important;padding:16px 12px max(16px,env(safe-area-inset-bottom))}" +
-        "body.wp-main-app .wp-version-card{width:min(100%,560px);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px);border-radius:24px;padding:22px 20px 20px;box-shadow:0 30px 80px rgba(0,0,0,.52),inset 0 1px 0 rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(13,19,36,.98),rgba(9,14,28,.96))}" +
-        "body.wp-main-app .wp-version-card.mode-app{border-color:rgba(130,149,255,.2)}" +
-        "body.wp-main-app .wp-version-card.mode-app::before{width:220px;height:220px;background:radial-gradient(circle,rgba(122,162,255,.3),transparent 70%)}" +
-        "body.wp-main-app .wp-version-card.mode-app::after{width:260px;height:260px;background:radial-gradient(circle,rgba(255,255,255,.08),transparent 72%)}" +
-        "body.wp-main-app .wp-version-card.mode-app .wp-version-icon{background:linear-gradient(135deg,rgba(121,141,255,.98),rgba(90,113,255,.75));box-shadow:0 20px 34px rgba(91,115,255,.28),inset 0 1px 0 rgba(255,255,255,.26)}" +
-        "body.wp-main-app .wp-version-card.mode-app .wp-version-badge{background:rgba(130,149,255,.12);border-color:rgba(130,149,255,.18);color:#dfe6ff}" +
-        "body.wp-main-app .wp-version-card.mode-app .wp-version-summary{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.09)}" +
-        "body.wp-main-app .wp-version-card.mode-app .wp-version-update{background:linear-gradient(135deg,#7a95ff,#5b73ff);box-shadow:0 16px 32px rgba(91,115,255,.32)}" +
-        "body.wp-main-app .wp-version-card.mode-app .wp-version-later{background:rgba(255,255,255,.08)}" +
-        "@media (max-width:560px){.wp-version-card{padding:20px;border-radius:24px}.wp-version-meta{grid-template-columns:1fr}.wp-version-title{font-size:22px}.wp-version-head{align-items:center}body.wp-main-app .wp-version-modal{padding:10px 8px max(10px,env(safe-area-inset-bottom))}body.wp-main-app .wp-version-card{width:100%;border-radius:24px;padding:18px 16px 16px;max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px)}body.wp-main-app .wp-version-title{font-size:20px}body.wp-main-app .wp-version-text{font-size:14px;line-height:1.5}body.wp-main-app .wp-version-actions{flex-direction:column}body.wp-main-app .wp-version-actions button{width:100%}}";
+        "@media (max-width:560px){.wp-version-card{padding:20px;border-radius:24px}.wp-version-meta{grid-template-columns:1fr}.wp-version-title{font-size:20px}.wp-version-head{align-items:center}.wp-version-actions{flex-direction:column}.wp-version-actions button{width:100%}}";
       document.head.appendChild(style);
     }
 
@@ -112,31 +119,24 @@
     modal.innerHTML =
       '<div class="wp-version-card" role="dialog" aria-modal="true" aria-labelledby="wpVersionTitle">' +
       '  <div class="wp-version-head">' +
-      '    <div id="wpVersionIcon" class="wp-version-icon">⬆</div>' +
+      '    <div id="wpVersionIcon" class="wp-version-icon">⚡</div>' +
       '    <div class="wp-version-copy">' +
-      '      <div id="wpVersionBadge" class="wp-version-badge">Update</div>' +
-      '      <h3 id="wpVersionTitle" class="wp-version-title">Թարմացում</h3>' +
+      '      <div id="wpVersionBadge" class="wp-version-badge">ԾՐԱԳՐԻ ԹԱՐՄԱՑՈՒՄ</div>' +
+      '      <h3 id="wpVersionTitle" class="wp-version-title">Ծրագրի նոր տարբերակ</h3>' +
       '    </div>' +
       '  </div>' +
       '  <p id="wpVersionMessage" class="wp-version-text"></p>' +
-      '  <div id="wpVersionSummary" class="wp-version-summary" hidden><strong>Release Summary</strong><span id="wpVersionSummaryText"></span></div>' +
+      '  <div id="wpVersionSummary" class="wp-version-summary" hidden><strong>ԹԱՐՄԱՑՄԱՆ ԱՄՓՈՓՈՒՄ</strong><span id="wpVersionSummaryText"></span></div>' +
       '  <div class="wp-version-meta">' +
-      '    <div class="wp-version-stat"><strong>Release</strong><span id="wpVersionReleaseType">—</span></div>' +
-      '    <div class="wp-version-stat"><strong>Version</strong><span id="wpVersionNumber">—</span></div>' +
-      '    <div class="wp-version-stat"><strong>Updated</strong><span id="wpVersionUpdated">—</span></div>' +
+      '    <div class="wp-version-stat"><strong>ՏԵՍԱԿԸ</strong><span id="wpVersionReleaseType">—</span></div>' +
+      '    <div class="wp-version-stat"><strong>ՏԱՐԲԵՐԱԿ</strong><span id="wpVersionNumber">—</span></div>' +
+      '    <div class="wp-version-stat"><strong>ԱՄՍԱԹԻՎ</strong><span id="wpVersionUpdated">—</span></div>' +
       '  </div>' +
       '  <div class="wp-version-actions">' +
-      '    <button id="wpVersionLater" class="wp-version-later" type="button">Հետո</button>' +
-      '    <button id="wpVersionUpdate" class="wp-version-update" type="button">Թարմացնել</button>' +
+      '    <button id="wpVersionUpdate" class="wp-version-update" type="button">Թարմացնել ծրագիրը</button>' +
       '  </div>' +
       '  <div id="wpVersionFoot" class="wp-version-foot"></div>' +
       "</div>";
-
-    modal.addEventListener("click", function(event) {
-      if (event.target === modal) {
-        closeModal();
-      }
-    });
 
     document.body.appendChild(modal);
     return modal;
@@ -161,31 +161,34 @@
     var version = modal.querySelector("#wpVersionNumber");
     var updated = modal.querySelector("#wpVersionUpdated");
     var foot = modal.querySelector("#wpVersionFoot");
-    var laterBtn = modal.querySelector("#wpVersionLater");
     var updateBtn = modal.querySelector("#wpVersionUpdate");
 
-    if (!card || !icon || !badge || !title || !message || !summary || !summaryText || !releaseType || !version || !updated || !foot || !laterBtn || !updateBtn) return;
+    if (!card || !icon || !badge || !title || !message || !summary || !summaryText || !releaseType || !version || !updated || !foot || !updateBtn) return;
 
     modal.classList.toggle("mode-app", options.mode === "app");
     modal.classList.toggle("mode-web", options.mode === "web");
     card.classList.toggle("mode-app", options.mode === "app");
     card.classList.toggle("mode-web", options.mode === "web");
-    icon.textContent = options.mode === "app" ? "⌁" : "↻";
-    badge.textContent = options.mode === "app" ? "Ծրագրի թարմացում" : "Կայքի թարմացում";
-    title.textContent = options.title;
-    message.textContent = options.message;
+    icon.textContent = options.mode === "app" ? "⚡" : "🌐";
+    badge.textContent = options.mode === "app" ? "ԾՐԱԳՐԻ ԹԱՐՄԱՑՈՒՄ" : "ԿԱՅՔԻ ԹԱՐՄԱՑՈՒՄ";
+    title.textContent = options.title || "Ծրագրի նոր տարբերակ";
+
+    if (options.message && options.message.trim() !== (options.title || "").trim()) {
+      message.textContent = options.message;
+      message.style.display = "block";
+    } else {
+      message.textContent = "";
+      message.style.display = "none";
+    }
+
     summary.hidden = !options.releaseSummary;
     summaryText.textContent = options.releaseSummary || "";
     releaseType.textContent = options.releaseTypeLabel || "Թարմացում";
-    version.textContent = options.version;
-    updated.textContent = options.updatedAt || "հենց նոր";
+    version.textContent = options.version || "—";
+    updated.textContent = formatUpdateDate(options.updatedAt);
     foot.textContent = options.footnote || "";
     updateBtn.textContent = options.buttonLabel;
     updateBtn.disabled = false;
-
-    laterBtn.onclick = function() {
-      closeModal();
-    };
 
     updateBtn.onclick = function() {
       updateBtn.disabled = true;
@@ -320,13 +323,20 @@
     });
   }
 
+  var _lastVersionCheckAt = 0;
+  var VERSION_CHECK_THROTTLE_MS = 5 * 60 * 1000; // 5 minutes
+
   function checkVersionManifest() {
     if (CHECK_IN_PROGRESS) return;
     if (!navigator.onLine) return;
 
+    var now = Date.now();
+    if (now - _lastVersionCheckAt < VERSION_CHECK_THROTTLE_MS) return; // throttle
+    _lastVersionCheckAt = now;
+
     CHECK_IN_PROGRESS = true;
 
-    fetch(MANIFEST_URL + "?_=" + Date.now(), { cache: "no-store" })
+    fetch(MANIFEST_URL + "?_=" + now, { cache: "no-store" })
       .then(function(res) {
         if (!res.ok) throw new Error("version_manifest failed");
         return res.json();

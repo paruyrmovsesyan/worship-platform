@@ -1,13 +1,15 @@
-const CACHE_VERSION = "worship-v240";
+const CACHE_VERSION = "worship-v360";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
 const OFFLINE_FALLBACK = "/offline.html";
 const SONGS_SNAPSHOT_KEY = "/__offline__/songs";
-const NAVIGATION_TIMEOUT_MS = 3000;
-const USER_DATA_TIMEOUT_MS = 2500;
+const NAVIGATION_TIMEOUT_MS = 8000;
+const USER_DATA_TIMEOUT_MS = 6000;
 const USER_CACHE_PREFIX = `${CACHE_VERSION}-user-`;
 let offlineSyncPromise = null;
+let lastOfflineSyncAt = 0;
+const OFFLINE_SYNC_THROTTLE_MS = 5 * 60 * 1000; // 5 minutes minimum between syncs
 const APP_CLIENT_IDS = new Set();
 const CLIENT_USER_SCOPES = new Map();
 const STATIC_ASSET_PATTERN = /\.(?:css|js|mjs|png|jpe?g|webp|gif|svg|ico|woff2?|ttf|otf)$/i;
@@ -33,8 +35,8 @@ const APP_SHELL = [
   "/app.js",
   "/site_guard.js",
   "/fav_bridge.js",
-  "/assets/index.css?v=248",
-  "/assets/index.js?v=248",
+  "/assets/index.css?v=360",
+  "/assets/index.js?v=360",
   "/manifest.json?v=10",
   "/favicon.png?v=2",
   "/apple-touch-icon-v7.png",
@@ -77,8 +79,14 @@ const OFFLINE_PAGES = [
 
 self.addEventListener("install", function(event) {
   event.waitUntil(
-    caches.open(STATIC_CACHE).then(function(cache) {
-      return cache.addAll(APP_SHELL);
+    caches.open(STATIC_CACHE).then(async function(cache) {
+      for (const item of APP_SHELL) {
+        try {
+          await cache.add(item);
+        } catch (e) {
+          // ignore individual item failure so installation never aborts
+        }
+      }
     })
   );
   self.skipWaiting();
@@ -165,6 +173,19 @@ self.addEventListener("fetch", function(event) {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  // Auth PHP endpoints must bypass all SW caching and interception logic so that
+  // sessions, cookies, and 302 redirects (e.g. Google OAuth, login, logout) are handled natively.
+  if (
+    url.pathname === "/social_auth.php" ||
+    url.pathname === "/auth_me.php" ||
+    url.pathname === "/auth_bootstrap.php" ||
+    url.pathname === "/login_api.php" ||
+    url.pathname === "/register_api.php" ||
+    url.pathname === "/logout_users.php"
+  ) {
+    return; // Let browser handle it natively — no SW interception
+  }
+
   if (url.pathname === "/status.php") {
     event.respondWith(handleStatusRequest(request));
     return;
@@ -177,11 +198,6 @@ self.addEventListener("fetch", function(event) {
 
   if (url.pathname === "/account_api.php") {
     event.respondWith(handleAccountRequest(request, url));
-    return;
-  }
-
-  if (url.pathname === "/logout_users.php") {
-    event.respondWith(handleLogoutRequest(event));
     return;
   }
 
@@ -238,6 +254,7 @@ async function clearUserCache(userId) {
 }
 
 function isStaticAssetRequest(url) {
+  if (url.pathname.startsWith("/uploads/news/")) return false;
   return STATIC_ASSET_PATTERN.test(url.pathname) || url.pathname === "/manifest.json";
 }
 
@@ -252,7 +269,7 @@ function isUserCacheableRequest(url) {
   return false;
 }
 
-function fetchWithTimeout(request, timeoutMs) {
+function fetchWithTimeout(requestOrUrl, timeoutMs) {
   const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
   let timer = null;
   if (controller) {
@@ -261,10 +278,11 @@ function fetchWithTimeout(request, timeoutMs) {
     }, timeoutMs);
   }
 
-  return fetch(new Request(request, {
-    cache: "no-store",
+  const targetUrl = typeof requestOrUrl === "string" ? requestOrUrl : (requestOrUrl && requestOrUrl.url ? requestOrUrl.url : requestOrUrl);
+
+  return fetch(targetUrl, {
     signal: controller ? controller.signal : undefined
-  })).finally(function() {
+  }).finally(function() {
     if (timer) clearTimeout(timer);
   });
 }
@@ -272,7 +290,7 @@ function fetchWithTimeout(request, timeoutMs) {
 async function handleStaticAssetRequest(event) {
   const request = event.request;
   const cached = await caches.match(request);
-  const refreshPromise = fetch(new Request(request, { cache: "no-store" })).then(async function(response) {
+  const refreshPromise = fetch(request.url).then(async function(response) {
     if (response && response.status === 200) {
       const cache = await caches.open(RUNTIME_CACHE);
       await cache.put(request, response.clone());
@@ -292,7 +310,7 @@ async function handleStaticAssetRequest(event) {
 
 async function handleNetworkOnlyRequest(request, url) {
   try {
-    return await fetch(new Request(request, { cache: "no-store" }));
+    return await fetch(request.url);
   } catch (err) {
     const isApi = url.pathname.endsWith(".php");
     return new Response(isApi ? JSON.stringify({ error: "Offline", offline: true }) : "Offline", {
@@ -379,17 +397,18 @@ async function handleNavigateRequest(event) {
     }
     return networkResponse;
   } catch (err) {
-    if (appNavigation) {
-      for (const key of cacheKeys) {
-        const cached = await caches.match(key);
-        if (cached) return cached;
-      }
-
-      const shellCached = await caches.match("/") || await caches.match("/index.html");
-      if (shellCached) return shellCached;
+    for (const key of cacheKeys) {
+      const cached = await caches.match(key);
+      if (cached) return cached;
     }
 
-    return caches.match(OFFLINE_FALLBACK);
+    const shellCached = await caches.match("/") || await caches.match("/index.html");
+    if (shellCached) return shellCached;
+
+    const offlineFallback = await caches.match(OFFLINE_FALLBACK);
+    if (offlineFallback) return offlineFallback;
+
+    return new Response("Offline", { status: 503, statusText: "Offline" });
   }
 }
 
@@ -398,7 +417,7 @@ async function handleLogoutRequest(event) {
   const clearPromise = clearUserCache(clientUserId);
 
   try {
-    const response = await fetch(new Request(event.request, { cache: "no-store" }));
+    const response = await fetch(event.request.url);
     await clearPromise;
     return response;
   } catch (err) {
@@ -444,15 +463,33 @@ async function handlePushEvent(event) {
     };
   }
 
-  return self.registration.showNotification(payload.title || "Worship Platform", {
+  const isCall = payload.type === 'call' ||
+                 (payload.url && payload.url.includes('call_id')) ||
+                 (payload.title && payload.title.includes('📞'));
+
+  const options = {
     body: payload.body || "",
     icon: payload.icon || "/wolarm_youth.png",
     badge: payload.icon || "/wolarm_youth.png",
-    tag: payload.tag || "worship-general",
+    tag: payload.tag || (isCall ? "worship-call-" + Date.now() : "worship-general"),
+    renotify: true,
     data: {
       url: payload.url || "/main.html",
+      call_id: payload.call_id || 0,
+      is_call: isCall
     },
-  });
+  };
+
+  if (isCall) {
+    options.requireInteraction = true;
+    options.vibrate = [500, 250, 500, 250, 500, 250, 500, 250, 500];
+    options.actions = [
+      { action: "accept", title: "📞 Ընդունել" },
+      { action: "decline", title: "❌ Մերժել" }
+    ];
+  }
+
+  return self.registration.showNotification(payload.title || "Worship Platform", options);
 }
 
 async function fetchQueuedPushPayload() {
@@ -487,8 +524,38 @@ async function fetchQueuedPushPayload() {
 }
 
 async function handleNotificationClick(event) {
-  const rawUrl = (event.notification && event.notification.data && event.notification.data.url) || "/";
-  const targetUrl = new URL(rawUrl, self.location.origin);
+  const notification = event.notification;
+  const action = event.action;
+  const data = (notification && notification.data) || {};
+  const isCall = data.is_call;
+  const callId = data.call_id;
+  const rawUrl = data.url || "/";
+
+  notification.close();
+
+  if (action === "decline") {
+    if (callId > 0) {
+      try {
+        await fetch("/chat_api.php?action=respond_call", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ call_id: callId, response: "decline" })
+        });
+      } catch (err) {
+        console.error("Failed to decline call from push notification", err);
+      }
+    }
+    return;
+  }
+
+  let targetUrlString = rawUrl;
+  if (action === "accept" || isCall) {
+    if (!targetUrlString.includes("auto_accept=1")) {
+      targetUrlString += (targetUrlString.includes("?") ? "&" : "?") + "auto_accept=1";
+    }
+  }
+
+  const targetUrl = new URL(targetUrlString, self.location.origin);
   const targetPath = targetUrl.pathname + targetUrl.search + targetUrl.hash;
 
   const windowClients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
@@ -499,7 +566,7 @@ async function handleNotificationClick(event) {
     if (clientUrl.origin === self.location.origin) {
       // Focus the existing window and tell React Router where to go
       await client.focus();
-      client.postMessage({ type: "PUSH_NAVIGATE", path: targetPath });
+      client.postMessage({ type: "PUSH_NAVIGATE", path: targetPath, auto_accept: action === "accept" });
       return;
     }
   }
@@ -524,7 +591,7 @@ function buildNavigationCacheKeys(url) {
 
 async function handleStatusRequest(request) {
   try {
-    const response = await fetch(new Request(request, { cache: "no-store" }));
+    const response = await fetch(request.url);
     return response;
   } catch (err) {
     return new Response(
@@ -541,7 +608,7 @@ async function handleAccountRequest(request, url) {
   const action = url.searchParams.get("action") || "";
 
   try {
-    return await fetch(new Request(request, { cache: "no-store" }));
+    return await fetch(request.url);
   } catch (err) {
     if (action === "auth_status") {
       return new Response(
@@ -595,13 +662,15 @@ async function handleApiRequest(event, url) {
   const query = (url.searchParams.get("q") || "").toLowerCase();
   const cache = await caches.open(DATA_CACHE);
 
-  const networkPromise = fetch(new Request(request, { cache: "no-store" })).then(async function(networkResponse) {
+  const networkPromise = fetch(request.url).then(async function(networkResponse) {
     if (networkResponse && networkResponse.status === 200) {
       await cache.put(request.url, networkResponse.clone());
 
       if (!hasId && !action) {
         await cache.put(SONGS_SNAPSHOT_KEY, networkResponse.clone());
         broadcastSyncTime(new Date().toISOString());
+      } else if (hasId) {
+        broadcastSongDetailUpdated(url.searchParams.get("id"));
       }
     }
 
@@ -690,6 +759,12 @@ async function handleUserDataRequest(event, url) {
 async function syncOfflineLibrary() {
   if (offlineSyncPromise) return offlineSyncPromise;
 
+  const now = Date.now();
+  if (now - lastOfflineSyncAt < OFFLINE_SYNC_THROTTLE_MS) {
+    return; // throttled — too soon since last sync
+  }
+  lastOfflineSyncAt = now;
+
   offlineSyncPromise = (async function() {
     try {
       await Promise.all([
@@ -764,6 +839,17 @@ function broadcastSyncTime(syncedAt, extraData) {
         type: "DATA_SYNC",
         synced_at: syncedAt
       }, extraData || {}));
+    });
+  });
+}
+
+function broadcastSongDetailUpdated(songId) {
+  self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function(clients) {
+    clients.forEach(function(client) {
+      client.postMessage({
+        type: "SONG_DETAIL_UPDATED",
+        song_id: String(songId)
+      });
     });
   });
 }

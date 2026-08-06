@@ -124,19 +124,73 @@ export const formatNewsDate = (value, language = 'hy') => {
   return date.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
+export const formatNewsVersion = (value) => {
+  const version = String(value || '').trim();
+  if (!version) return '';
+  return /^v/i.test(version) ? version : `v${version}`;
+};
+
+export const getWebNewsImageUrl = (value) => {
+  const url = String(value || '').trim();
+  if (!url) return '';
+
+  const looksMalformed = url.includes('](') || url.includes('/Users/') || url.includes('\\');
+  if (looksMalformed) {
+    const filenames = url.match(/[A-Za-z0-9._-]+\.(?:jpe?g|png|webp|gif)/gi);
+    return filenames?.length ? `/uploads/news/${filenames[filenames.length - 1]}` : '';
+  }
+
+  return /^(?:https?:\/\/|\/)/i.test(url) ? url : '';
+};
+
+export const getNewsImageUrl = (article) => {
+  const imageUrl = getWebNewsImageUrl(article?.image_url);
+  if (!imageUrl) return '';
+
+  const version = article.updated_at || article.published_at || article.date || article.id;
+  if (!version) return imageUrl;
+
+  const separator = imageUrl.includes('?') ? '&' : '?';
+  return `${imageUrl}${separator}news_v=${encodeURIComponent(String(version))}`;
+};
+
+export const getCachedNewsList = (language = 'am') => {
+  try {
+    const langKey = apiLanguage(language);
+    const cached = localStorage.getItem(`wp_news_cache_${langKey}`);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {}
+  return getFallbackNews(language);
+};
+
 export const fetchNewsList = async ({ language = 'hy', limit = 20, featured = false } = {}) => {
+  const langKey = apiLanguage(language);
   const params = new URLSearchParams({
     action: 'list',
-    lang: apiLanguage(language),
+    lang: langKey,
     limit: String(limit),
   });
   if (featured) params.set('featured', '1');
+  params.set('_', String(Date.now()));
 
-  const res = await fetch(`/news_api.php?${params.toString()}`);
+  const res = await fetch(`/news_api.php?${params.toString()}`, { cache: 'no-store' });
   const data = await res.json();
   if (!res.ok || !data.ok || !Array.isArray(data.articles)) {
     throw new Error(data.error || 'Failed to load news');
   }
+
+  // Update local cache if fetching full list
+  if (!featured && data.articles.length > 0) {
+    try {
+      localStorage.setItem(`wp_news_cache_${langKey}`, JSON.stringify(data.articles));
+    } catch (e) {}
+  }
+
   return data.articles;
 };
 
@@ -145,8 +199,9 @@ export const fetchNewsDetail = async ({ slug, language = 'hy' }) => {
     action: 'detail',
     lang: apiLanguage(language),
     slug,
+    _: String(Date.now()),
   });
-  const res = await fetch(`/news_api.php?${params.toString()}`);
+  const res = await fetch(`/news_api.php?${params.toString()}`, { cache: 'no-store' });
   const data = await res.json();
   if (!res.ok || !data.ok || !data.article) {
     throw new Error(data.error || 'News article not found');

@@ -28,7 +28,7 @@
   --shadow-glow: 0 0 20px var(--color-accent-cyan-glow);
   --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.5);
 
-  --nav-height: 60px;
+  --nav-height: 70px;
   --bottom-nav-height: 90px;
   --bottom-nav-safe-gap: max(24px, env(safe-area-inset-bottom, 24px));
   --bottom-nav-actual-height: 64px;
@@ -788,6 +788,12 @@ body.oled-mode.outlined-chords .chord {
   align-items: center;
   justify-content: center;
   padding: 16px; /* Add padding so it doesn't touch edges */
+}
+
+.modal-overlay-bottom {
+  align-items: flex-end;
+  justify-content: stretch;
+  padding: 0;
 }
 
 .modal-content {

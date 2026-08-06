@@ -239,9 +239,9 @@ const translations = {
       contacts: 'Կապ'
     },
     landing: {
-      heroTitle1: 'Կազմակերպի՛ր',
-      heroTitle2: 'Քո Պաշտամունքային Թիմը',
-      heroSubtitle: 'Ծառայությունների պլանավորում, ակորդների հասանելիություն, ու թիմային համագործակցություն — մեկ հարթակում:',
+      heroTitle1: 'Առաջնորդի՛ր Պաշտամունքը',
+      heroTitle2: 'Մեկ Միասնական Հարթակում',
+      heroSubtitle: 'Ակորդներ, երգացանկեր և թիմային համագործակցություն — ամեն ինչ մեկ հարթակում։',
       startBtn: 'Սկսել անվճար',
       watchDemo: 'Դիտել Demo',
       popularSongs: 'Հայտնի Երգեր',
@@ -354,26 +354,42 @@ const translations = {
       title: 'Երգի հարցում',
       titleNew: 'Առաջարկել Նոր Երգ',
       titleEdit: 'Խմբագրել երգը',
+      badgeNew: '✨ Նոր Երգի Առաջարկ',
+      badgeEdit: '✏️ Խմբագրման Առաջարկ',
+      modeQuick: '⚡ Արագ Հարցում',
+      modeFull: '🎼 Ամբողջական Տվյալներ',
+      quickHint: 'Գրեք երգի վերնագիրը, հեղինակին կամ YouTube / MP3 հղումը։ Մեր թիմը կգտնի երգը, կտրանսպոզավորի ակորդները և կավելացնի։',
+      quickTitlePlaceholder: 'Օրինակ՝ Օրհնիր Տեր կամ Hillsong - Oceans',
+      quickNotesPlaceholder: 'Տեղադրեք YouTube / MP3 հղում կամ նշումներ (օրինակ՝ "Խնդրում եմ ավելացնել G տոնայնությամբ")...',
       needLogin: 'Հարցում ուղարկելու համար նախ մուտք գործիր։',
-      songDataLoadError: 'Չհաջողվեց բեռնել երգի տվյալները:',
+      songDataLoadError: 'Չհաջողվեց բեռնել երգի տվյալները',
       titleHy: 'Վերնագիր (Հայերեն)',
       titleLat: 'Վերնագիր (Լատինատառ)',
       titleEn: 'Վերնագիր (Անգլերեն)',
       titleRu: 'Վերնագիր (Ռուսերեն)',
       artist: 'Հեղինակ / Խումբ',
-      songKey: 'Տոնայնություն (Օր. C, Dm)',
-      bpm: 'BPM',
+      songKey: 'Տոնայնություն',
+      selectKeyPlaceholder: '-- Ընտրել Տոնայնությունը --',
+      bpm: 'BPM (Տեմպ)',
       tags: 'Թեգեր',
       chords: 'Ակորդներ (ստանդարտ ֆորմատով)',
       lyrics: 'Բառեր (առանց ակորդների)',
+      lyricsAndChordsSection: 'Ակորդներ և Տեքստ',
+      chordsPreview: 'Ակորդների Նախադիտում',
+      preview: '👁️ Նախադիտում',
+      edit: '✏️ Խմբագրել',
       message: 'Նշում մոդերատորին (ոչ պարտադիր)',
+      notesPlaceholder: 'Գրեք լրացուցիչ նշումներ կամ մեկնաբանություններ մոդերատորների համար...',
       basicsSection: 'Հիմնական Տվյալներ',
       musicSection: 'Երաժշտական Մանրամասներ',
       submit: 'Ուղարկել',
+      submitBtnNew: 'Ուղարկել Առաջարկը',
+      submitBtnEdit: 'Պահպանել & Ուղարկել Խմբագրումը',
       submitting: 'Ուղարկվում է...',
       success: 'Հարցումը հաջողությամբ ուղարկվեց:',
       submitError: 'Չհաջողվեց ուղարկել հարցումը',
-      networkError: 'Կապի խնդիր'
+      networkError: 'Կապի խնդիր',
+      backToSong: 'Վերադառնալ երգին'
     },
     setlists: {
       heroTitle: 'Պաշտամունքի Ծրագրեր',
@@ -675,9 +691,7 @@ const translations = {
       recentChords: 'Վերջին Ավելացվածները',
       latestNews: 'Համայնքի Նորություններ'
     },
-    songRequest: {
-      title: 'Առաջարկել Երգ'
-    },
+
     transposer: {
       kicker: 'Երաժշտական գործիք',
       title: 'Ակորդների տրանսպոզ',
@@ -1056,6 +1070,13 @@ const translations = {
       title: 'Song Request',
       titleNew: 'Suggest New Song',
       titleEdit: 'Edit Song',
+      badgeNew: '✨ New Song Suggestion',
+      badgeEdit: '✏️ Edit Suggestion',
+      modeQuick: '⚡ Quick Request',
+      modeFull: '🎼 Full Details',
+      quickHint: 'Enter the song title, artist, or YouTube / MP3 link. Our team will find the song, arrange the chords, and add it!',
+      quickTitlePlaceholder: 'Example: Bless the Lord or Hillsong - Oceans',
+      quickNotesPlaceholder: 'Paste YouTube / MP3 link or notes (e.g., "Please add in key of G")...',
       needLogin: 'Please log in to submit a request.',
       songDataLoadError: 'Failed to load song data.',
       titleHy: 'Title (Armenian)',
@@ -1063,19 +1084,28 @@ const translations = {
       titleEn: 'Title (English)',
       titleRu: 'Title (Russian)',
       artist: 'Artist / Band',
-      songKey: 'Key (e.g. C, Dm)',
-      bpm: 'BPM',
+      songKey: 'Key',
+      selectKeyPlaceholder: '-- Select Key --',
+      bpm: 'BPM (Tempo)',
       tags: 'Tags',
       chords: 'Chords (standard format)',
       lyrics: 'Lyrics (without chords)',
+      lyricsAndChordsSection: 'Chords & Lyrics',
+      chordsPreview: 'Chords Preview',
+      preview: '👁️ Preview',
+      edit: '✏️ Edit',
       message: 'Message to moderator (optional)',
+      notesPlaceholder: 'Write additional notes or comments for moderators...',
       basicsSection: 'Basic Information',
       musicSection: 'Music Details',
       submit: 'Submit Request',
+      submitBtnNew: 'Submit Song',
+      submitBtnEdit: 'Save & Submit Edit',
       submitting: 'Submitting...',
       success: 'Request submitted successfully!',
       submitError: 'Failed to submit request',
-      networkError: 'Network error'
+      networkError: 'Network error',
+      backToSong: 'Back to Song'
     },
     setlists: {
       heroTitle: 'Worship Setlists',
@@ -1755,6 +1785,13 @@ const translations = {
       title: 'Запрос песни',
       titleNew: 'Предложить новую песню',
       titleEdit: 'Редактировать песню',
+      badgeNew: '✨ Предложение новой песни',
+      badgeEdit: '✏️ Предложение изменений',
+      modeQuick: '⚡ Быстрый запрос',
+      modeFull: '🎼 Полные данные',
+      quickHint: 'Укажите название песни, исполнителя или ссылку на YouTube / MP3. Наша команда найдет песню, подберет аккорды и добавит её!',
+      quickTitlePlaceholder: 'Пример: Благослови Господь или Hillsong - Oceans',
+      quickNotesPlaceholder: 'Вставьте ссылку на YouTube / MP3 или примечания (напр. "Просьба добавить в тональности G")...',
       needLogin: 'Пожалуйста, войдите, чтобы отправить запрос.',
       songDataLoadError: 'Не удалось загрузить данные песни.',
       titleHy: 'Название (Армянский)',
@@ -1762,19 +1799,28 @@ const translations = {
       titleEn: 'Название (Английский)',
       titleRu: 'Название (Русский)',
       artist: 'Исполнитель / Группа',
-      songKey: 'Тональность (Напр. C, Dm)',
-      bpm: 'BPM',
+      songKey: 'Тональность',
+      selectKeyPlaceholder: '-- Выберите тональность --',
+      bpm: 'BPM (Темп)',
       tags: 'Теги',
-      chords: 'Аккорды',
-      lyrics: 'Слова',
+      chords: 'Аккорды (в стандартном формате)',
+      lyrics: 'Слова (без аккордов)',
+      lyricsAndChordsSection: 'Аккорды и Слова',
+      chordsPreview: 'Предпросмотр аккордов',
+      preview: '👁️ Предпросмотр',
+      edit: '✏️ Редактировать',
       message: 'Сообщение модератору (необязательно)',
+      notesPlaceholder: 'Напишите дополнительные примечания для модераторов...',
       basicsSection: 'Основные данные',
       musicSection: 'Музыкальные детали',
       submit: 'Отправить',
+      submitBtnNew: 'Отправить предложение',
+      submitBtnEdit: 'Сохранить и отправить изменения',
       submitting: 'Отправка...',
       success: 'Запрос успешно отправлен!',
       submitError: 'Не удалось отправить запрос',
-      networkError: 'Ошибка сети'
+      networkError: 'Ошибка сети',
+      backToSong: 'Вернуться к песни'
     },
     setlists: {
       heroTitle: 'Планы поклонения',
@@ -2133,12 +2179,16 @@ export function LanguageProvider({ children }) {
         let fallback = translations['en'];
         for (const fk of keys) {
           if (fallback && fallback[fk] !== undefined) fallback = fallback[fk];
-          else return fallbackText !== null ? fallbackText : key;
+          else return (fallbackText !== null && typeof fallbackText === 'string') ? fallbackText : key;
         }
-        return typeof fallback === 'string' || typeof fallback === 'object' ? fallback : (fallbackText !== null ? fallbackText : key);
+        return (typeof fallback === 'string' || Array.isArray(fallback) || (fallback && typeof fallback === 'object'))
+          ? fallback
+          : ((fallbackText !== null && typeof fallbackText === 'string') ? fallbackText : key);
       }
     }
-    return typeof value === 'string' || typeof value === 'object' ? value : (fallbackText !== null ? fallbackText : key);
+    return (typeof value === 'string' || Array.isArray(value) || (value && typeof value === 'object'))
+      ? value
+      : ((fallbackText !== null && typeof fallbackText === 'string') ? fallbackText : key);
   };
 
   return (

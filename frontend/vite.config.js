@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-const assetVersion = '246'
+const assetVersion = '360'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -28,7 +28,11 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '^/.*\\.php$': {
+      '/uploads': {
+        target: 'https://worship.pmstudio.am',
+        changeOrigin: true,
+      },
+      '^/.*\\.php(?:\\?.*)?$': {
         target: 'https://worship.pmstudio.am',
         changeOrigin: true,
       },

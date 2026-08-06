@@ -30,6 +30,14 @@ body.wp-standalone-app > #wpAppDock {
   z-index: 2147482000 !important;
 }
 
+.mobile-bottom-nav.keyboard-hidden,
+body.keyboard-open #wpAppDock {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(200px) !important;
+}
+
 .mobile-bottom-nav .nav-item {
   display: flex;
   flex-direction: row;

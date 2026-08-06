@@ -107,16 +107,25 @@ function normalizeSessionDeviceBase(string $deviceName): string {
 
 
 // ✅ GET profile
-if($action === 'me' && $method === 'GET'){
-  $st = $pdo->prepare("SELECT id, name, email, created_at FROM users WHERE id=? LIMIT 1");
+if(($action === 'me' || $action === 'get_profile' || $action === 'profile') && $method === 'GET'){
+  $st = $pdo->prepare("SELECT id, name, username, email, birth_date, gender, phone_number, created_at, email_verified_at FROM users WHERE id=? LIMIT 1");
   $st->execute([$uid]);
   $u = $st->fetch(PDO::FETCH_ASSOC);
   if(!$u) out(["error"=>"User not found"], 404);
 
+  $bDate = !empty($u["birth_date"]) && $u["birth_date"] !== '0000-00-00' ? (string)$u["birth_date"] : '';
+  $gndr = !empty($u["gender"]) ? (string)$u["gender"] : '';
+  $phone = !empty($u["phone_number"]) ? (string)$u["phone_number"] : '';
+
   out([
+    "ok" => true,
     "id" => (int)$u["id"],
     "name" => (string)($u["name"] ?? ''),
+    "username" => (string)($u["username"] ?? ''),
     "email" => (string)($u["email"] ?? ''),
+    "birth_date" => $bDate,
+    "gender" => $gndr,
+    "phone_number" => $phone,
     "created_at" => (string)($u["created_at"] ?? ''),
     "email_verified" => !empty($u["email_verified_at"])
   ]);
@@ -176,6 +185,55 @@ if($action === 'update_profile' && $method === 'POST'){
   out(["ok"=>true, "name"=>$name]);
 }
 
+
+// ✅ POST save worship team role & avatar gradient
+if($action === 'save_worship_role' && $method === 'POST'){
+  $d = readJson();
+  $worship_role = trim((string)($d["worship_role"] ?? ''));
+  $avatar_gradient = trim((string)($d["avatar_gradient"] ?? ''));
+
+  // Validate worship_role
+  $allowed_roles = ['vocalist','leader','guitarist','keyboardist','bassist','drummer','sound_engineer','team_member',''];
+  if(!in_array($worship_role, $allowed_roles)){
+    $worship_role = '';
+  }
+
+  // Auto-create columns if not exist
+  try {
+    $pdo->exec("ALTER TABLE users ADD COLUMN worship_role VARCHAR(30) DEFAULT NULL");
+  } catch(Exception $e) {}
+  try {
+    $pdo->exec("ALTER TABLE users ADD COLUMN avatar_gradient VARCHAR(120) DEFAULT NULL");
+  } catch(Exception $e) {}
+
+  $wr = $worship_role === '' ? null : $worship_role;
+  $ag = $avatar_gradient === '' ? null : $avatar_gradient;
+
+  $pdo->prepare("UPDATE users SET worship_role=?, avatar_gradient=? WHERE id=?")->execute([$wr, $ag, $uid]);
+
+  out(["ok"=>true, "worship_role"=>$wr, "avatar_gradient"=>$ag]);
+}
+
+// ✅ GET worship team role & avatar gradient
+if($action === 'get_worship_role' && $method === 'GET'){
+  // Auto-create columns if not exist
+  try {
+    $pdo->exec("ALTER TABLE users ADD COLUMN worship_role VARCHAR(30) DEFAULT NULL");
+  } catch(Exception $e) {}
+  try {
+    $pdo->exec("ALTER TABLE users ADD COLUMN avatar_gradient VARCHAR(120) DEFAULT NULL");
+  } catch(Exception $e) {}
+
+  $st = $pdo->prepare("SELECT worship_role, avatar_gradient FROM users WHERE id=? LIMIT 1");
+  $st->execute([$uid]);
+  $row = $st->fetch(PDO::FETCH_ASSOC);
+
+  out([
+    "ok"=>true,
+    "worship_role"=> $row ? $row['worship_role'] : null,
+    "avatar_gradient"=> $row ? $row['avatar_gradient'] : null
+  ]);
+}
 
 // ✅ GET auth status
 if($action === 'auth_status' && $method === 'GET'){
@@ -956,9 +1014,53 @@ if($action === 'set_language' && $method === 'POST'){
     
     $st = $pdo->prepare("UPDATE users SET language = ? WHERE id = ?");
     $st->execute([$lang, (int)$_SESSION['user_id']]);
-    out(["ok"=>true]);
   }catch(Throwable $e){
     out(["error"=>"Language save failed: " . $e->getMessage()], 500);
+  }
+}
+
+// ✅ POST send support message (In-App Support Form)
+if ($action === 'send_support_message' && $method === 'POST') {
+  try {
+    $d = readJson();
+    $subject = trim((string)($d['subject'] ?? ''));
+    $message = trim((string)($d['message'] ?? ''));
+    $contactInfo = trim((string)($d['contact'] ?? ''));
+
+    if ($message === '') {
+      out(["error" => "Խնդրում ենք գրել հաղորդագրության տեքստը։"], 400);
+    }
+    if (strlen($message) > 3000) {
+      out(["error" => "Հաղորդագրությունը չափազանց երկար է (առավելագույնը 3000 նիշ)։"], 400);
+    }
+
+    // Auto-create support_messages table if not exists
+    $pdo->exec("CREATE TABLE IF NOT EXISTS support_messages (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NULL,
+      subject VARCHAR(255) NOT NULL,
+      message TEXT NOT NULL,
+      contact VARCHAR(255) NULL,
+      user_email VARCHAR(255) NULL,
+      status VARCHAR(50) DEFAULT 'new',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $userEmail = '';
+    $userId = null;
+    if (!empty($_SESSION['user_id'])) {
+      $userId = (int)$_SESSION['user_id'];
+      $st = $pdo->prepare("SELECT email FROM users WHERE id = ? LIMIT 1");
+      $st->execute([$userId]);
+      $userEmail = (string)($st->fetchColumn() ?: '');
+    }
+
+    $stmt = $pdo->prepare("INSERT INTO support_messages (user_id, subject, message, contact, user_email) VALUES (?, ?, ?, ?, ?)");
+    $stmt->execute([$userId, $subject ?: 'Աջակցության հարցում', $message, $contactInfo, $userEmail]);
+
+    out(["ok" => true, "message" => "Ձեր հաղորդագրությունը հաջողությամբ ուղարկվեց։ Շնորհակալություն։"]);
+  } catch (Throwable $e) {
+    out(["error" => "Հաղորդագրությունն ուղարկել չհաջողվեց: " . $e->getMessage()], 500);
   }
 }
 

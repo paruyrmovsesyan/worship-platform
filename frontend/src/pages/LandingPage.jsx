@@ -4,7 +4,7 @@ import './LandingPage.css';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { usePageReady } from '../hooks/usePageReady';
-import { fallbackNews, fetchNewsList, formatNewsDate } from '../utils/news';
+import { fallbackNews, getCachedNewsList, fetchNewsList, formatNewsDate, formatNewsVersion, getNewsImageUrl } from '../utils/news';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -12,13 +12,27 @@ export default function LandingPage() {
   const [allSongs, setAllSongs] = useState([]);
   const [popularSongs, setPopularSongs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newsItems, setNewsItems] = useState(fallbackNews);
+  const [newsItems, setNewsItems] = useState(() => getCachedNewsList(language));
   usePageReady(loading);
   const [songPage, setSongPage] = useState(0);
   const [activeFilter, setActiveFilter] = useState('songs');
   const [showVideo, setShowVideo] = useState(false);
   const contentRef = useRef(null);
   const SONGS_PER_PAGE = 9;
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchNewsList({ language, limit: 6 })
+      .then(items => {
+        if (!cancelled && Array.isArray(items) && items.length > 0) {
+          setNewsItems(items);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [language]);
 
   const mapSong = (song, index) => {
     let tags = [];
@@ -27,12 +41,53 @@ export default function LandingPage() {
     return { id: song.id, title: getLocalizedTitle(song, language) || t('landing.unknownArtist'), artist: song.artist && song.artist !== 'Unknown' ? song.artist : t('landing.unknownArtist'), key: song.song_key || '?', bpm: song.bpm, tags, img: `bg-gradient-${(index % 9) + 1}` };
   };
 
+  const [customHero, setCustomHero] = useState(null);
+
   useEffect(() => {
+    fetch('/api.php?action=site_config')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.ok) setCustomHero(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  const [realPopularSongs, setRealPopularSongs] = useState([]);
+
+  useEffect(() => {
+    // Fetch real popular songs based on stats (views, favorites, setlists)
+    fetch('/api.php?action=popular')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setRealPopularSongs(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    // 1. Instant hydration from localStorage cache
+    try {
+      const cached = localStorage.getItem('wp_songs_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAllSongs(parsed);
+          setLoading(false);
+        }
+      }
+    } catch {}
+
+    // 2. Fetch fresh data from API
     fetch('/api.php')
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
           setAllSongs(data);
+          try {
+            localStorage.setItem('wp_songs_cache', JSON.stringify(data));
+          } catch {}
         }
         setLoading(false);
       })
@@ -40,36 +95,26 @@ export default function LandingPage() {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    fetchNewsList({ language, limit: 3, featured: true })
-      .then(items => {
-        if (!cancelled) setNewsItems(items.length ? items : fallbackNews);
-      })
-      .catch(() => {
-        if (!cancelled) setNewsItems(fallbackNews);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [language]);
-
-  useEffect(() => {
-    if (allSongs.length === 0) return;
+    if (allSongs.length === 0 && realPopularSongs.length === 0) return;
     
-    let sorted = [...allSongs];
-    if (activeFilter === 'artists') {
-      sorted.sort((a, b) => (a.artist || '').localeCompare(b.artist || ''));
+    let sorted = [];
+    if (activeFilter === 'songs' || activeFilter === 'popular') {
+      sorted = realPopularSongs.length > 0 ? [...realPopularSongs] : [...allSongs];
+    } else if (activeFilter === 'artists') {
+      sorted = [...allSongs].sort((a, b) => (a.artist || '').localeCompare(b.artist || ''));
     } else if (activeFilter === 'key') {
-      sorted.sort((a, b) => (a.song_key || '').localeCompare(b.song_key || ''));
+      sorted = [...allSongs].sort((a, b) => (a.song_key || '').localeCompare(b.song_key || ''));
     } else if (activeFilter === 'bpm') {
-      sorted.sort((a, b) => (parseInt(a.bpm) || 0) - (parseInt(b.bpm) || 0));
+      sorted = [...allSongs].sort((a, b) => (parseInt(a.bpm) || 0) - (parseInt(b.bpm) || 0));
     } else if (activeFilter === 'collections') {
-      sorted.sort((a, b) => (a.tags || '').localeCompare(b.tags || ''));
+      sorted = [...allSongs].sort((a, b) => (a.tags || '').localeCompare(b.tags || ''));
+    } else {
+      sorted = realPopularSongs.length > 0 ? [...realPopularSongs] : [...allSongs];
     }
     
     const start = songPage * SONGS_PER_PAGE;
     setPopularSongs(sorted.slice(start, start + SONGS_PER_PAGE).map((s, i) => mapSong(s, start + i)));
-  }, [activeFilter, allSongs, songPage]);
+  }, [activeFilter, allSongs, realPopularSongs, songPage]);
 
   const goToPage = (dir) => {
     const totalPages = Math.ceil(allSongs.length / SONGS_PER_PAGE);
@@ -99,19 +144,19 @@ export default function LandingPage() {
         <div className="hero-stage-light" aria-hidden="true" />
         <div className="hero-content">
           <h1 className="hero-title">
-            {t('landing.heroTitle1')}<br />
-            <span>{t('landing.heroTitle2')}</span>
+            {customHero?.hero_title1 || t('landing.heroTitle1')}<br />
+            <span>{customHero?.hero_title2 || t('landing.heroTitle2')}</span>
           </h1>
-          <p className="hero-subtitle">{t('landing.heroSubtitle')}</p>
+          <p className="hero-subtitle">{customHero?.hero_subtitle || t('landing.heroSubtitle')}</p>
           <div className="hero-actions">
             <button className="btn-start" onClick={() => navigate('/register')}>
-              {t('landing.startBtn')} <ArrowIcon />
+              <span>{t('landing.startBtn')}</span> <ArrowIcon />
             </button>
             <button className="btn-demo" onClick={() => setShowVideo(true)}>
               <span className="demo-play">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
               </span>
-              {t('landing.watchDemo')}
+              <span>{t('landing.watchDemo')}</span>
             </button>
           </div>
           <button className="hero-scroll-link" onClick={scrollToContent}>
@@ -209,25 +254,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="community-section">
-        <div className="section-heading-row">
-          <div>
-            <h2>{t('landing.communityPicks')}</h2>
-          </div>
-          <Link className="section-link" to="/community">{t('nav.community')} <ArrowIcon /></Link>
-        </div>
-        <div className="picks-list">
-          {(t('landing.picks', { returnObjects: true }) || []).map((pick, i) => (
-            <button key={i} className="pick-row" onClick={() => navigate('/songs')}>
-              <span className="pick-rank">{String(i + 1).padStart(2, '0')}</span>
-              <span className={`pick-img bg-gradient-${(i * 2) + 1}`} />
-              <span className="pick-info"><strong>{pick.title}</strong><small>{pick.artist}</small></span>
-              <span className="pick-meta">{pick.meta}</span>
-              <span className="pick-arrow"><ArrowIcon /></span>
-            </button>
-          ))}
-        </div>
-      </section>
 
       <section className="latest-news-section">
         <div className="section-heading-row">
@@ -237,10 +263,11 @@ export default function LandingPage() {
         <div className="news-row">
           {newsItems.slice(0, 3).map((item, i) => (
             <article key={item.slug || i} className="news-card" onClick={() => navigate(`/news/${item.slug}`)}>
-              <div className={`news-img img-${i + 1}`} style={item.image_url ? { backgroundImage: `url("${item.image_url}")` } : undefined}>
+              <div className={`news-img img-${i + 1}`} style={item.image_url ? { backgroundImage: `url("${getNewsImageUrl(item)}")` } : undefined}>
                 <span>{String(i + 1).padStart(2, '0')}</span>
               </div>
               <div className="news-content">
+                {item.release_version ? <span className="news-release-version">{formatNewsVersion(item.release_version)}</span> : null}
                 <span className="news-date">{formatNewsDate(item.published_at || item.date, language)}</span>
                 <h3>{item.title}</h3>
                 <p>{item.excerpt || item.desc}</p>

@@ -228,6 +228,75 @@ tbody tr:hover { background:#f8faff; }
 }
 .form-field textarea { min-height:140px; resize:vertical; font-family:monospace; }
 
+/* Song media and materials */
+.song-materials {
+  padding:20px; border:1px solid var(--line); border-radius:16px;
+  background:linear-gradient(145deg, rgba(67,24,255,.035), rgba(255,255,255,.92));
+}
+.song-materials-header {
+  display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:16px;
+}
+.song-materials-header h4 { margin:0 0 5px; color:var(--text); font-size:16px; font-weight:800; }
+.song-materials-header p { margin:0; color:var(--muted); font-size:12px; line-height:1.55; }
+.song-materials-count {
+  flex:0 0 auto; padding:5px 10px; border-radius:999px;
+  background:rgba(67,24,255,.1); color:var(--primary); font-size:12px; font-weight:800;
+}
+.song-materials-lock, .song-materials-empty {
+  padding:16px; border:1px dashed var(--line); border-radius:12px;
+  color:var(--muted); background:rgba(255,255,255,.72); font-size:13px; text-align:center;
+}
+.song-materials-lock { color:#9a7200; background:var(--warning-bg); border-color:rgba(181,139,0,.24); }
+.song-materials-list { display:flex; flex-direction:column; gap:9px; margin-bottom:16px; }
+.song-material-item {
+  display:grid; grid-template-columns:38px minmax(0,1fr) auto; align-items:center; gap:11px;
+  padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--surface);
+}
+.song-material-icon {
+  width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center;
+  background:rgba(67,24,255,.08); color:var(--primary); font-size:18px;
+}
+.song-material-copy { min-width:0; }
+.song-material-copy strong, .song-material-copy small {
+  display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.song-material-copy strong { color:var(--text); font-size:13px; }
+.song-material-copy small { margin-top:3px; color:var(--muted); font-size:11px; }
+.song-material-actions { display:flex; align-items:center; gap:6px; }
+.song-material-action {
+  width:34px; height:34px; border:1px solid var(--line); border-radius:9px;
+  background:var(--surface); color:var(--muted); cursor:pointer; font-size:15px;
+}
+.song-material-action:hover { color:var(--primary); border-color:rgba(67,24,255,.35); }
+.song-material-action.is-danger:hover { color:var(--danger); border-color:rgba(239,68,68,.35); }
+.song-material-controls {
+  display:grid; grid-template-columns:1fr 140px; gap:10px; padding-top:16px; border-top:1px solid var(--line);
+}
+.song-material-controls .form-field { min-width:0; }
+.song-material-url-row { grid-column:1 / -1; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; }
+.song-material-upload-row {
+  grid-column:1 / -1; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px;
+  padding-top:2px;
+}
+.song-material-upload-row input[type="file"] {
+  min-width:0; padding:9px; border:1px dashed var(--line); border-radius:10px;
+  background:var(--surface); color:var(--muted); font-family:inherit; font-size:12px;
+}
+.song-material-controls .btn { min-height:42px; justify-content:center; white-space:nowrap; }
+.song-material-note { grid-column:1 / -1; margin:0; color:var(--muted); font-size:11px; line-height:1.5; }
+.song-materials.is-locked .song-material-controls { opacity:.48; pointer-events:none; }
+
+@media (max-width: 640px) {
+  .song-materials { padding:16px; }
+  .song-materials-header { align-items:center; }
+  .song-material-controls { grid-template-columns:1fr; }
+  .song-material-url-row, .song-material-upload-row { grid-column:auto; grid-template-columns:1fr; }
+  .song-material-controls .form-field { grid-column:auto; }
+  .song-material-note { grid-column:auto; }
+  .song-material-item { grid-template-columns:36px minmax(0,1fr); }
+  .song-material-actions { grid-column:1 / -1; justify-content:flex-end; }
+}
+
 /* Section-tab hidden buttons kept for JS */
 button.section-tab.nav-item {
   width:calc(100% - 32px); font-family:inherit; font-size:15px; font-weight:600;
@@ -406,50 +475,109 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
         
         <div class="form-grid">
           <div class="form-field">
-            <label><?= __('Անվանում') ?></label>
+            <label style="display:flex; justify-content:space-between; align-items:center;">
+              <span>🇦🇲 <?= __('Անվանում') ?> (Հայերեն) <strong style="color:var(--danger);">*</strong></span>
+              <button type="button" onclick="autoTransliterateTitle()" class="btn compact-btn" style="font-size:11px; padding:2px 8px; background:#e6f9f3; color:#047857; border:1px solid #b7ebde; font-weight:700;">🪄 Auto Lat</button>
+            </label>
             <input id="title" type="text" placeholder="<?= __('Օր. Մեր սուրբ Աստված') ?>">
           </div>
           <div class="form-field">
-            <label><?= __('Անվանում') ?> (RU)</label>
-            <input id="title_ru" type="text">
+            <label>🌐 <?= __('Անվանում') ?> (Լատինատառ / Translit)</label>
+            <input id="title_lat" type="text" placeholder="<?= __('Օր. Mer surb Astvac') ?>">
           </div>
           <div class="form-field">
-            <label><?= __('Անվանում') ?> (LAT)</label>
-            <input id="title_lat" type="text">
+            <label>🇷🇺 <?= __('Անվանում') ?> (Ռուսերեն / RU)</label>
+            <input id="title_ru" type="text" placeholder="<?= __('Օր. Святый Боже') ?>">
           </div>
           <div class="form-field">
-            <label><?= __('Անվանում') ?> (EN)</label>
-            <input id="title_en" type="text">
+            <label>🇬🇧 <?= __('Անվանում') ?> (Անգլերեն / EN)</label>
+            <input id="title_en" type="text" placeholder="<?= __('Օր. Holy God') ?>">
           </div>
         </div>
         
         <div class="form-grid">
           <div class="form-field">
             <label><?= __('Հեղինակ') ?></label>
-            <input id="artist" type="text">
+            <input id="artist" type="text" placeholder="<?= __('Օր. Hillsong, Bethel...') ?>">
           </div>
           <div class="form-field">
             <label><?= __('Տոնայնություն') ?></label>
-            <input id="key" type="text">
+            <input id="key" type="text" placeholder="<?= __('Օր. C, Am, G...') ?>">
           </div>
           <div class="form-field">
-            <label><?= __('BPM') ?></label>
-            <input id="bpm" type="number">
+            <label><?= __('BPM (Տեմպ)') ?></label>
+            <input id="bpm" type="number" placeholder="<?= __('Օր. 72') ?>">
           </div>
           <div class="form-field">
             <label><?= __('Տեգեր') ?></label>
-            <input id="tags" type="text">
+            <input id="tags" type="text" placeholder="<?= __('Օր. Փառաբանություն, Խաղաղություն') ?>">
           </div>
         </div>
         
         <div class="form-field">
-          <label><?= __('Ակորդներ') ?></label>
-          <textarea id="chords"></textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="margin:0;"><?= __('Ակորդներ') ?></label>
+            <div class="chord-quick-toolbar" style="display:flex; gap:4px; flex-wrap:wrap;">
+              <button type="button" onclick="insertChordToEditor('C')" class="btn compact-btn" style="font-weight:700; padding:2px 8px; font-size:12px;">C</button>
+              <button type="button" onclick="insertChordToEditor('D')" class="btn compact-btn" style="font-weight:700; padding:2px 8px; font-size:12px;">D</button>
+              <button type="button" onclick="insertChordToEditor('Em')" class="btn compact-btn" style="font-weight:700; padding:2px 8px; font-size:12px;">Em</button>
+              <button type="button" onclick="insertChordToEditor('G')" class="btn compact-btn" style="font-weight:700; padding:2px 8px; font-size:12px;">G</button>
+              <button type="button" onclick="insertChordToEditor('Am')" class="btn compact-btn" style="font-weight:700; padding:2px 8px; font-size:12px;">Am</button>
+              <button type="button" onclick="insertChordToEditor('F')" class="btn compact-btn" style="font-weight:700; padding:2px 8px; font-size:12px;">F</button>
+              <button type="button" onclick="insertChordToEditor('Bm')" class="btn compact-btn" style="font-weight:700; padding:2px 8px; font-size:12px;">Bm</button>
+              <button type="button" onclick="insertChordToEditor('D/F#')" class="btn compact-btn" style="font-weight:700; padding:2px 8px; font-size:12px;">D/F#</button>
+            </div>
+          </div>
+          <textarea id="chords" rows="8" placeholder="[C]  [G]  [Am]  [F]"></textarea>
         </div>
         <div class="form-field">
           <label><?= __('Բառեր') ?></label>
-          <textarea id="lyrics"></textarea>
+          <textarea id="lyrics" rows="8" placeholder="<?= __('Երգի տեքստը...') ?>"></textarea>
         </div>
+
+        <section id="songMaterials" class="song-materials is-locked" aria-labelledby="songMaterialsTitle">
+          <div class="song-materials-header">
+            <div>
+              <h4 id="songMaterialsTitle"><?= __('Մեդիա և նյութեր') ?></h4>
+              <p><?= __('Ավելացրեք տեսանյութ, ձայնագրություն, նկար, փաստաթուղթ կամ արտաքին հղում։') ?></p>
+            </div>
+            <span id="songMaterialsCount" class="song-materials-count">0</span>
+          </div>
+
+          <div id="songMaterialsLock" class="song-materials-lock">
+            <?= __('Նախ պահպանեք երգը, ապա կարող եք դրան մեդիա և նյութեր կցել։') ?>
+          </div>
+          <div id="songMaterialsList" class="song-materials-list" hidden></div>
+
+          <div class="song-material-controls">
+            <div class="form-field">
+              <label for="songMaterialTitle"><?= __('Նյութի անվանում') ?></label>
+              <input id="songMaterialTitle" type="text" maxlength="255" placeholder="<?= __('Օր. Ուսուցման տեսանյութ') ?>">
+            </div>
+            <div class="form-field">
+              <label for="songMaterialType"><?= __('Տեսակ') ?></label>
+              <select id="songMaterialType">
+                <option value="link"><?= __('Հղում') ?></option>
+                <option value="video"><?= __('Տեսանյութ') ?></option>
+                <option value="audio"><?= __('Ձայնագրություն') ?></option>
+                <option value="image"><?= __('Նկար') ?></option>
+                <option value="document"><?= __('Փաստաթուղթ') ?></option>
+              </select>
+            </div>
+            <div class="song-material-url-row">
+              <div class="form-field">
+                <label for="songMaterialUrl"><?= __('Նյութի հղում') ?></label>
+                <input id="songMaterialUrl" type="url" inputmode="url" placeholder="https://...">
+              </div>
+              <button id="addSongMaterialLink" type="button" class="btn btn-primary"><?= __('Ավելացնել հղումը') ?></button>
+            </div>
+            <div class="song-material-upload-row">
+              <input id="songMaterialFile" type="file" accept=".jpg,.jpeg,.png,.webp,.gif,.mp3,.m4a,.wav,.ogg,.mp4,.webm,.mov,.pdf,.doc,.docx,.ppt,.pptx,.txt">
+              <button id="uploadSongMaterial" type="button" class="btn"><?= __('Վերբեռնել ֆայլը') ?></button>
+            </div>
+            <p class="song-material-note"><?= __('Ֆայլերը պահպանվում են անմիջապես։ Առավելագույն չափը՝ 40 ՄԲ։') ?></p>
+          </div>
+        </section>
         
         <div class="preview-section" style="margin-top: 24px; padding: 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -647,11 +775,22 @@ const workspacePanel = $('workspacePanel');
 const workspaceTabs = Array.from(document.querySelectorAll('[data-workspace-tab]'));
 const workspacePanes = Array.from(document.querySelectorAll('.workspace-pane'));
 const installAdminAppBtn = $('installAdminAppBtn');
+const songMaterialsSection = $('songMaterials');
+const songMaterialsLock = $('songMaterialsLock');
+const songMaterialsList = $('songMaterialsList');
+const songMaterialsCount = $('songMaterialsCount');
+const songMaterialTitleI = $('songMaterialTitle');
+const songMaterialTypeI = $('songMaterialType');
+const songMaterialUrlI = $('songMaterialUrl');
+const songMaterialFileI = $('songMaterialFile');
+const addSongMaterialLinkBtn = $('addSongMaterialLink');
+const uploadSongMaterialBtn = $('uploadSongMaterial');
 
 const KEY_OPTIONS = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
 let selectedTargetKey = '';
 let ALL_SONGS = [];
 let currentEditId = null;
+let currentSongAttachments = [];
 let visibleSongsCount = 10;
 let lastSavedSnapshot = '';
 const SONGS_PAGE_SIZE = 10;
@@ -731,6 +870,43 @@ function parseSongTitleVariants(text) {
   return { hy, lat, ru, en };
 }
 
+function armToLat(str) {
+  const map = {
+    'ա':'a','բ':'b','գ':'g','դ':'d','ե':'e','զ':'z','է':'e','ը':'y','թ':'t',
+    'ժ':'zh','ի':'i','լ':'l','խ':'kh','ծ':'ts','կ':'k','հ':'h','ձ':'dz','ղ':'gh',
+    'ճ':'ch','մ':'m','յ':'y','ն':'n','շ':'sh','ո':'o','չ':'ch','պ':'p','ջ':'j',
+    'ռ':'r','ս':'s','վ':'v','տ':'t','ր':'r','ց':'ts','ու':'u','փ':'p','ք':'q',
+    'և':'ev','օ':'o','ֆ':'f',
+    'Ա':'A','Բ':'B','Գ':'G','Դ':'D','Ե':'E','Զ':'Z','Է':'E','Ը':'Y','Թ':'T',
+    'Ժ':'Zh','Ի':'I','Լ':'L','Խ':'Kh','Ծ':'Ts','Կ':'K','Հ':'H','Ձ':'Dz','Ղ':'Gh',
+    'Ճ':'Ch','Մ':'M','Յ':'Y','Ն':'N','Շ':'Sh','Ո':'O','Չ':'Ch','Պ':'P','Ջ':'J',
+    'Ռ':'R','Ս':'S','Վ':'V','Տ':'T','Ր':'R','Ց':'Ts','Ու':'U','Փ':'P','Ք':'Q',
+    'Օ':'O','Ֆ':'F'
+  };
+  return String(str || '').replace(/[ա-ֆԱ-Ֆև]/g, m => map[m] || m);
+}
+
+function autoTransliterateTitle() {
+  const hyVal = titleI.value.trim();
+  if (hyVal) {
+    titleLatI.value = armToLat(hyVal);
+    renderPreview();
+    showNotice('Ավտոմատ լատինատառ տրանսլիտը լրացվեց ✨', 'info');
+  }
+}
+
+function insertChordToEditor(chord) {
+  const el = chordsI;
+  const start = el.selectionStart || 0;
+  const end = el.selectionEnd || 0;
+  const text = el.value;
+  const insertText = `[${chord}] `;
+  el.value = text.substring(0, start) + insertText + text.substring(end);
+  el.selectionStart = el.selectionEnd = start + insertText.length;
+  el.focus();
+  renderPreview();
+}
+
 function buildCombinedSongTitle() {
   const hy = titleI.value.trim();
   const lat = titleLatI.value.trim();
@@ -753,6 +929,221 @@ function showNotice(message, type = 'info') {
     notice.textContent = '';
   }, 2800);
 }
+
+function materialTypeMeta(type) {
+  const types = {
+    video: { icon: '▶', label: 'Տեսանյութ' },
+    audio: { icon: '♫', label: 'Ձայնագրություն' },
+    image: { icon: '▧', label: 'Նկար' },
+    document: { icon: '▤', label: 'Փաստաթուղթ' },
+    link: { icon: '↗', label: 'Հղում' }
+  };
+  return types[type] || types.link;
+}
+
+function materialUrlCaption(url) {
+  try {
+    const parsed = new URL(String(url || ''), window.location.origin);
+    return parsed.origin === window.location.origin
+      ? decodeURIComponent(parsed.pathname.split('/').pop() || parsed.pathname)
+      : parsed.hostname;
+  } catch (_) {
+    return String(url || '');
+  }
+}
+
+function renderSongMaterials() {
+  if (!songMaterialsSection) return;
+
+  const editing = currentEditId !== null;
+  songMaterialsSection.classList.toggle('is-locked', !editing);
+  songMaterialsLock.hidden = editing;
+  songMaterialsList.hidden = !editing;
+  songMaterialsCount.textContent = String(currentSongAttachments.length);
+
+  if (!editing) {
+    songMaterialsList.innerHTML = '';
+    return;
+  }
+
+  if (!currentSongAttachments.length) {
+    songMaterialsList.innerHTML = '<div class="song-materials-empty">Այս երգին դեռ նյութ կցված չէ։</div>';
+    return;
+  }
+
+  songMaterialsList.innerHTML = '';
+  currentSongAttachments.forEach((attachment) => {
+    const meta = materialTypeMeta(String(attachment.type || 'link').toLowerCase());
+    const item = document.createElement('div');
+    item.className = 'song-material-item';
+
+    const icon = document.createElement('span');
+    icon.className = 'song-material-icon';
+    icon.textContent = meta.icon;
+
+    const copy = document.createElement('div');
+    copy.className = 'song-material-copy';
+    const title = document.createElement('strong');
+    title.textContent = attachment.title || 'Անանուն նյութ';
+    const caption = document.createElement('small');
+    caption.textContent = `${meta.label} • ${materialUrlCaption(attachment.url)}`;
+    copy.append(title, caption);
+
+    const actions = document.createElement('div');
+    actions.className = 'song-material-actions';
+    const open = document.createElement('a');
+    open.className = 'song-material-action';
+    open.href = attachment.url;
+    open.target = '_blank';
+    open.rel = 'noopener noreferrer';
+    open.title = 'Բացել նյութը';
+    open.setAttribute('aria-label', 'Բացել նյութը');
+    open.textContent = '↗';
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'song-material-action is-danger';
+    remove.dataset.removeMaterial = String(attachment.id);
+    remove.title = 'Հեռացնել նյութը';
+    remove.setAttribute('aria-label', 'Հեռացնել նյութը');
+    remove.textContent = '×';
+    actions.append(open, remove);
+
+    item.append(icon, copy, actions);
+    songMaterialsList.appendChild(item);
+  });
+}
+
+async function parseMaterialResponse(response) {
+  const raw = await response.text();
+  let result = {};
+  try {
+    result = raw ? JSON.parse(raw) : {};
+  } catch (_) {
+    result = {};
+  }
+  if (!response.ok || result.ok === false || result.error) {
+    throw new Error(result.error || raw || 'Նյութը պահպանել չհաջողվեց');
+  }
+  return result;
+}
+
+function setMaterialControlsBusy(busy) {
+  if (addSongMaterialLinkBtn) addSongMaterialLinkBtn.disabled = busy;
+  if (uploadSongMaterialBtn) uploadSongMaterialBtn.disabled = busy;
+}
+
+async function addSongMaterialLink() {
+  if (currentEditId === null) {
+    showNotice('Նախ պահպանեք երգը', 'error');
+    return;
+  }
+  const title = songMaterialTitleI.value.trim();
+  const url = songMaterialUrlI.value.trim();
+  if (!title || !url) {
+    showNotice('Լրացրեք նյութի անվանումը և հղումը', 'error');
+    return;
+  }
+
+  setMaterialControlsBusy(true);
+  try {
+    const response = await fetch('song_attachments_api.php?action=add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        song_id: currentEditId,
+        title,
+        url,
+        type: songMaterialTypeI.value
+      })
+    });
+    const result = await parseMaterialResponse(response);
+    currentSongAttachments.push(result.attachment || {
+      id: result.id,
+      title,
+      url,
+      type: songMaterialTypeI.value
+    });
+    songMaterialTitleI.value = '';
+    songMaterialUrlI.value = '';
+    songMaterialTypeI.value = 'link';
+    renderSongMaterials();
+    showNotice('Նյութի հղումը ավելացված է', 'success');
+  } finally {
+    setMaterialControlsBusy(false);
+  }
+}
+
+async function uploadSongMaterial() {
+  if (currentEditId === null) {
+    showNotice('Նախ պահպանեք երգը', 'error');
+    return;
+  }
+  const file = songMaterialFileI.files?.[0];
+  if (!file) {
+    showNotice('Ընտրեք վերբեռնվող ֆայլը', 'error');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('song_id', String(currentEditId));
+  formData.append('title', songMaterialTitleI.value.trim() || file.name.replace(/\.[^.]+$/, ''));
+  formData.append('type', songMaterialTypeI.value);
+  formData.append('file', file);
+
+  setMaterialControlsBusy(true);
+  try {
+    const response = await fetch('song_attachments_api.php?action=upload', {
+      method: 'POST',
+      body: formData
+    });
+    const result = await parseMaterialResponse(response);
+    currentSongAttachments.push(result.attachment);
+    songMaterialTitleI.value = '';
+    songMaterialFileI.value = '';
+    songMaterialTypeI.value = 'link';
+    renderSongMaterials();
+    showNotice('Ֆայլը վերբեռնված և կցված է երգին', 'success');
+  } finally {
+    setMaterialControlsBusy(false);
+  }
+}
+
+async function removeSongMaterial(id) {
+  if (!confirm('Հեռացնե՞լ այս նյութը երգից։')) return;
+  setMaterialControlsBusy(true);
+  try {
+    const response = await fetch('song_attachments_api.php?action=remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    await parseMaterialResponse(response);
+    currentSongAttachments = currentSongAttachments.filter(item => Number(item.id) !== Number(id));
+    renderSongMaterials();
+    showNotice('Նյութը հեռացված է', 'success');
+  } finally {
+    setMaterialControlsBusy(false);
+  }
+}
+
+addSongMaterialLinkBtn?.addEventListener('click', () => {
+  addSongMaterialLink().catch(err => showNotice(err.message || 'Նյութը ավելացնել չհաջողվեց', 'error'));
+});
+uploadSongMaterialBtn?.addEventListener('click', () => {
+  uploadSongMaterial().catch(err => showNotice(err.message || 'Ֆայլը վերբեռնել չհաջողվեց', 'error'));
+});
+songMaterialFileI?.addEventListener('change', () => {
+  const file = songMaterialFileI.files?.[0];
+  if (file && !songMaterialTitleI.value.trim()) {
+    songMaterialTitleI.value = file.name.replace(/\.[^.]+$/, '');
+  }
+});
+songMaterialsList?.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-remove-material]');
+  if (!button) return;
+  removeSongMaterial(Number(button.dataset.removeMaterial))
+    .catch(err => showNotice(err.message || 'Նյութը հեռացնել չհաջողվեց', 'error'));
+});
 
 function isStandaloneAdminApp() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
@@ -1134,10 +1525,12 @@ function updateStats(totalCount, visibleCount) {
 function setEditMode(song = null) {
   currentEditId = song ? Number(song.id) : null;
   const editing = currentEditId !== null;
+  if (!editing) currentSongAttachments = [];
   saveBtn.textContent = editing ? (window.I18N?.Update || 'Թարմացնել') : (window.I18N?.Save || 'Պահպանել');
   cancelEditBtn.hidden = !editing;
   editingBadge.textContent = editing ? `Խմբագրվում է․ ${displayEditorSongTitle(song.title || '') || 'Անանուն'}` : 'Խմբագրվում է․ ոչինչ';
   statCurrentMode.textContent = editing ? 'Խմբագրում' : 'Նոր երգ';
+  renderSongMaterials();
   updateWorkspaceState();
 }
 
@@ -1207,7 +1600,7 @@ function renderPreview() {
   transposeInfo.textContent = `Տրանսպոզ: ${semi >= 0 ? '+' + semi : semi}`;
 
   if (!raw) {
-    preview.innerHTML = '<span class="empty-preview"><?= __('Այստեղ կերևա ակորդների նախադիտումը') ?></span><?= __('\';
+    preview.innerHTML = '<span class="empty-preview"><?= __('Այստեղ կերևա ակորդների նախադիտումը') ?></span>';
     updateWorkspaceState();
     return;
   }
@@ -1233,8 +1626,8 @@ function getFormData() {
 }
 
 function validateSong(song) {
-  if (!song.title) return \'Լրացրու երգի անունը\';
-  if (song.bpm && (song.bpm') ?> < 20 || song.bpm > 400)) return 'BPM-ը գրիր 20-ից 400 միջակայքում';
+  if (!song.title) return 'Լրացրու երգի անունը';
+  if (song.bpm && (song.bpm < 20 || song.bpm > 400)) return 'BPM-ը գրիր 20-ից 400 միջակայքում';
   if (!song.chords.trim() && !song.lyrics.trim()) return 'Լրացրու գոնե ակորդները կամ բառերը';
   return '';
 }
@@ -1242,16 +1635,17 @@ function validateSong(song) {
 function fillForm(song) {
   const titleVariants = parseSongTitleVariants(song.title || '');
   const apiVariants = song.title_variants && typeof song.title_variants === 'object' ? song.title_variants : {};
-  titleI.value = apiVariants.hy || titleVariants.hy || '';
-  titleLatI.value = apiVariants.lat || titleVariants.lat || '';
-  titleRuI.value = apiVariants.ru || titleVariants.ru || '';
-  titleEnI.value = apiVariants.en || titleVariants.en || '';
+  titleI.value = song.title_hy || (apiVariants.hy && apiVariants.hy !== song.title ? apiVariants.hy : '') || titleVariants.hy || '';
+  titleLatI.value = song.title_lat || apiVariants.lat || titleVariants.lat || '';
+  titleRuI.value = song.title_ru || apiVariants.ru || titleVariants.ru || '';
+  titleEnI.value = song.title_en || apiVariants.en || titleVariants.en || '';
   artistI.value = song.artist || '';
   keyI.value = song.song_key || song.key || '';
   bpmI.value = song.bpm ? String(song.bpm) : '';
   tagsI.value = song.tags || '';
   chordsI.value = song.chords || '';
   lyricsI.value = song.lyrics || '';
+  currentSongAttachments = Array.isArray(song.attachments) ? song.attachments.slice() : [];
   selectedTargetKey = '';
   document.querySelectorAll('#keysGrid button').forEach(b => b.classList.remove('active'));
   renderPreview();
@@ -1271,6 +1665,11 @@ function clearForm() {
   tagsI.value = '';
   chordsI.value = '';
   lyricsI.value = '';
+  currentSongAttachments = [];
+  songMaterialTitleI.value = '';
+  songMaterialUrlI.value = '';
+  songMaterialFileI.value = '';
+  songMaterialTypeI.value = 'link';
   useFlatsI.checked = false;
   selectedTargetKey = '';
   document.querySelectorAll('#keysGrid button').forEach(b => b.classList.remove('active'));
@@ -1374,7 +1773,7 @@ function renderTable(songs = [], totalCount = songs.length) {
   if (!songs.length) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td colspan="3">
+      <td colspan="6">
         <div class="song-meta" style="padding:12px 0;"><?= __('Ոչինչ չի գտնվել') ?></div>
       </td>
     `;
@@ -1418,14 +1817,14 @@ function renderTable(songs = [], totalCount = songs.length) {
           <button class="btn" style="color:var(--danger); border-color:#fca5a5;" type="button" data-action="delete" data-id="${s.id}">${window.I18N?.Delete || 'Ջնջել'}</button>
         </div>
       </td>
-    <?= __('`;
+    `;
     tableBody.appendChild(tr);
   }
 }
 
 async function fetchSongs() {
-  const res = await fetch(\'api.php\');
-  if (!res.ok) throw new Error(\'Չհաջողվեց բեռնել երգերը\');
+  const res = await fetch('api.php');
+  if (!res.ok) throw new Error('Չհաջողվեց բեռնել երգերը');
   const songs = await res.json();
   ALL_SONGS = Array.isArray(songs) ? songs.map(normalizeSong) : [];
   visibleSongsCount = SONGS_PAGE_SIZE;
@@ -1433,20 +1832,20 @@ async function fetchSongs() {
 }
 
 async function startEditSong(id) {
-  const res = await fetch(\'api.php?id=\' + encodeURIComponent(id));
-  if (!res.ok) throw new Error(\'Չհաջողվեց բեռնել երգը\');
+  const res = await fetch('api.php?id=' + encodeURIComponent(id));
+  if (!res.ok) throw new Error('Չհաջողվեց բեռնել երգը');
   const song = normalizeSong(await res.json());
   fillForm(song);
   setEditMode(song);
   markCurrentSnapshotAsSaved();
-  showNotice(\'Խմբագրման ռեժիմը ակտիվացված է\', \'info\');
+  showNotice('Խմբագրման ռեժիմը ակտիվացված է', 'info');
 }
 
 async function saveCurrentSong() {
   const song = getFormData();
   const error = validateSong(song);
   if (error) {
-    showNotice(error, \'error\');
+    showNotice(error, 'error');
     return;
   }
 
@@ -1462,48 +1861,48 @@ async function saveCurrentSong() {
   };
 
   if (currentEditId !== null) {
-    const res = await fetch(\'api.php?id=\' + encodeURIComponent(currentEditId), {
-      method: \'PUT\',
-      headers: { \'Content-Type\': \'application/json\' },
+    const res = await fetch('api.php?id=' + encodeURIComponent(currentEditId), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(song)
     });
     const { raw, json: result } = await parseApiResponse(res);
     if (!res.ok || result.success === false) {
-      const detail = result?.details?.message || result?.error || raw || \'Չհաջողվեց թարմացնել երգը\';
+      const detail = result?.details?.message || result?.error || raw || 'Չհաջողվեց թարմացնել երգը';
       throw new Error(detail);
     }
-    showNotice(window.I18N?.Saved || \'Երգը պահպանված է ✅\', \'success\');
+    showNotice(window.I18N?.Saved || 'Երգը պահպանված է ✅', 'success');
   } else {
-    const res = await fetch(\'api.php\', {
-      method: \'POST\',
-      headers: { \'Content-Type\': \'application/json\' },
+    const res = await fetch('api.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(song)
     });
     const { raw, json: result } = await parseApiResponse(res);
     if (!res.ok || result.success === false) {
-      const detail = result?.details?.message || result?.error || raw || \'Չհաջողվեց պահպանել երգը\';
+      const detail = result?.details?.message || result?.error || raw || 'Չհաջողվեց պահպանել երգը';
       throw new Error(detail);
     }
-    showNotice(window.I18N?.Saved || \'Երգը պահպանված է ✅\', \'success\');
+    showNotice(window.I18N?.Saved || 'Երգը պահպանված է ✅', 'success');
   }
 
   clearForm();
   await fetchSongs();
-  activateWorkspaceTab(\'libraryPane\');
+  activateWorkspaceTab('libraryPane');
   markCurrentSnapshotAsSaved();
 }
 
 async function deleteSong(id) {
-  if (!confirm(window.I18N?.ConfirmDelete || \'Իսկապե՞ս ջնջել այս երգը։\')) return;
-  const res = await fetch(\'api.php?id=\' + encodeURIComponent(id), { method: \'DELETE\' });
-  if (!res.ok) throw new Error(\'Չհաջողվեց ջնջել երգը\');
-  showNotice(\'Երգը ջնջված է\', \'success\');
+  if (!confirm(window.I18N?.ConfirmDelete || 'Իսկապե՞ս ջնջել այս երգը։')) return;
+  const res = await fetch('api.php?id=' + encodeURIComponent(id), { method: 'DELETE' });
+  if (!res.ok) throw new Error('Չհաջողվեց ջնջել երգը');
+  showNotice('Երգը ջնջված է', 'success');
   if (currentEditId === Number(id)) clearForm();
   await fetchSongs();
 }
 
 function openSongInNewTab(id) {
-  window.open(\'song_view.html?id=\' + encodeURIComponent(id), \'_blank\');
+  window.open('song_view.html?id=' + encodeURIComponent(id), '_blank');
 }
 
 function rerenderList() {
@@ -1512,21 +1911,21 @@ function rerenderList() {
   updateFiltersButtonState();
 }
 
-downloadTxtBtn?.addEventListener(\'click\', () => {
-  const blob = new Blob([chordsI.value || \'\'], { type:\'text/plain;charset=utf-8\' });
+downloadTxtBtn?.addEventListener('click', () => {
+  const blob = new Blob([chordsI.value || ''], { type:'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement(\'a\');
+  const a = document.createElement('a');
   a.href = url;
-  a.download = (titleI.value || titleLatI.value || titleRuI.value || titleEnI.value || \'song\') + \'.txt\';
+  a.download = (titleI.value || titleLatI.value || titleRuI.value || titleEnI.value || 'song') + '.txt';
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
 });
 
-exportPdfBtn?.addEventListener(\'click\', () => {
+exportPdfBtn?.addEventListener('click', () => {
   if (!window.jspdf || !window.jspdf.jsPDF) {
-    showNotice(\'jsPDF չի բեռնվել\', \'error\');
+    showNotice('jsPDF չի բեռնվել', 'error');
     return;
   }
 
@@ -1536,21 +1935,21 @@ exportPdfBtn?.addEventListener(\'click\', () => {
   const semi = getCurrentSemi();
 
   doc.setFontSize(16);
-  doc.text(titleI.value || titleLatI.value || titleRuI.value || titleEnI.value || \'Անանուն\', 10, y); y += 10;
+  doc.text(titleI.value || titleLatI.value || titleRuI.value || titleEnI.value || 'Անանուն', 10, y); y += 10;
   doc.setFontSize(12);
-  if (artistI.value) { doc.text(\'Հեղինակ: \' + artistI.value, 10, y); y += 8; }
-  if (keyI.value) { doc.text(\'Տոնայնություն: \' + keyI.value, 10, y); y += 8; }
-  if (bpmI.value) { doc.text(\'BPM: \' + bpmI.value, 10, y); y += 8; }
-  if (selectedTargetKey) { doc.text(\'Թիրախային տոնայնություն: \' + selectedTargetKey, 10, y); y += 8; }
+  if (artistI.value) { doc.text('Հեղինակ: ' + artistI.value, 10, y); y += 8; }
+  if (keyI.value) { doc.text('Տոնայնություն: ' + keyI.value, 10, y); y += 8; }
+  if (bpmI.value) { doc.text('BPM: ' + bpmI.value, 10, y); y += 8; }
+  if (selectedTargetKey) { doc.text('Թիրախային տոնայնություն: ' + selectedTargetKey, 10, y); y += 8; }
 
-  const lines = (chordsI.value || \'\').split(\'\\n\');
+  const lines = (chordsI.value || '').split('\n');
   for (const line of lines) {
-    const plain = line.replace(/\\b([A-G][#b]?)(m|maj|min|dim|aug|sus2|sus4|7|9|11|13)?(\\/[A-G][#b]?)?\\b/g,
+    const plain = line.replace(/\b([A-G][#b]?)(m|maj|min|dim|aug|sus2|sus4|7|9|11|13)?(\/[A-G][#b]?)?\b/g,
       (match, root, type, bass) => {
         const newRoot = transposeRoot(root, semi, useFlatsI.checked);
-        let out = newRoot + (type || \'\');
-        if (bass) out += \'/\' + transposeRoot(bass.slice(1), semi, useFlatsI.checked);
-        return \'(\' + out + \')\';
+        let out = newRoot + (type || '');
+        if (bass) out += '/' + transposeRoot(bass.slice(1), semi, useFlatsI.checked);
+        return '(' + out + ')';
       }
     );
 
@@ -1562,18 +1961,18 @@ exportPdfBtn?.addEventListener(\'click\', () => {
     }
   }
 
-  doc.save((titleI.value || titleLatI.value || titleRuI.value || titleEnI.value || \'song\') + \'.pdf\');
+  doc.save((titleI.value || titleLatI.value || titleRuI.value || titleEnI.value || 'song') + '.pdf');
 });
 
-exportAllPdfBtn?.addEventListener(\'click\', async () => {
+exportAllPdfBtn?.addEventListener('click', async () => {
   if (!window.jspdf || !window.jspdf.jsPDF) {
-    showNotice(\'jsPDF չի բեռնվել\', \'error\');
+    showNotice('jsPDF չի բեռնվել', 'error');
     return;
   }
 
   const songs = getFilteredSongs();
   if (!songs.length) {
-    showNotice(\'Արտահանելու երգեր չկան\', \'error\');
+    showNotice('Արտահանելու երգեր չկան', 'error');
     return;
   }
 
@@ -1584,15 +1983,15 @@ exportAllPdfBtn?.addEventListener(\'click\', async () => {
     if (index > 0) doc.addPage();
     let y = 18;
     doc.setFontSize(16);
-    doc.text(displayEditorSongTitle(song.title || \'\') || \'Անանուն\', 10, y); y += 9;
+    doc.text(displayEditorSongTitle(song.title || '') || 'Անանուն', 10, y); y += 9;
     doc.setFontSize(12);
-    if (song.artist) { doc.text(\'Հեղինակ: \' + song.artist, 10, y); y += 7; }
-    if (song.song_key) { doc.text(\'Տոնայնություն: \' + song.song_key, 10, y); y += 7; }
-    if (song.bpm) { doc.text(\'BPM: \' + song.bpm, 10, y); y += 7; }
-    if (song.tags) { doc.text(\'Տեգեր: \' + song.tags, 10, y); y += 7; }
+    if (song.artist) { doc.text('Հեղինակ: ' + song.artist, 10, y); y += 7; }
+    if (song.song_key) { doc.text('Տոնայնություն: ' + song.song_key, 10, y); y += 7; }
+    if (song.bpm) { doc.text('BPM: ' + song.bpm, 10, y); y += 7; }
+    if (song.tags) { doc.text('Տեգեր: ' + song.tags, 10, y); y += 7; }
     y += 3;
 
-    const lines = (song.chords || \'\').split(\'\\n\');
+    const lines = (song.chords || '').split('\n');
     for (const line of lines) {
       const chunks = doc.splitTextToSize(line, 180);
       for (const chunk of chunks) {
@@ -1603,130 +2002,130 @@ exportAllPdfBtn?.addEventListener(\'click\', async () => {
     }
   });
 
-  doc.save(\'songs-export.pdf\');
+  doc.save('songs-export.pdf');
 });
 
-[keyI, chordsI, useFlatsI, titleI, titleLatI, titleRuI, titleEnI, artistI].forEach(el => el?.addEventListener(\'input\', renderPreview));
-tagsI?.addEventListener(\'input\', updateWorkspaceState);
-lyricsI?.addEventListener(\'input\', updateWorkspaceState);
+[keyI, chordsI, useFlatsI, titleI, titleLatI, titleRuI, titleEnI, artistI].forEach(el => el?.addEventListener('input', renderPreview));
+tagsI?.addEventListener('input', updateWorkspaceState);
+lyricsI?.addEventListener('input', updateWorkspaceState);
 function updateSongsSearchState() {
   if (songsSearchClearBtn) songsSearchClearBtn.hidden = !searchI?.value.trim();
 }
 
-searchI?.addEventListener(\'input\', () => {
+searchI?.addEventListener('input', () => {
   if (topbarSearchI && topbarSearchI !== searchI) topbarSearchI.value = searchI.value;
   updateSongsSearchState();
   rerenderList();
 });
-topbarSearchI?.addEventListener(\'input\', () => {
+topbarSearchI?.addEventListener('input', () => {
   if (searchI && topbarSearchI !== searchI) searchI.value = topbarSearchI.value;
   updateSongsSearchState();
   rerenderList();
 });
-songsSearchClearBtn?.addEventListener(\'click\', () => {
-  searchI.value = \'\';
-  if (topbarSearchI && topbarSearchI !== searchI) topbarSearchI.value = \'\';
+songsSearchClearBtn?.addEventListener('click', () => {
+  searchI.value = '';
+  if (topbarSearchI && topbarSearchI !== searchI) topbarSearchI.value = '';
   updateSongsSearchState();
   rerenderList();
   searchI.focus();
 });
-sortByI?.addEventListener(\'change\', rerenderList);
-lyricsFilterI?.addEventListener(\'change\', rerenderList);
-keyFilterI?.addEventListener(\'input\', rerenderList);
-tagFilterI?.addEventListener(\'input\', rerenderList);
+sortByI?.addEventListener('change', rerenderList);
+lyricsFilterI?.addEventListener('change', rerenderList);
+keyFilterI?.addEventListener('input', rerenderList);
+tagFilterI?.addEventListener('input', rerenderList);
 
-toggleFiltersBtn?.addEventListener(\'click\', () => {
+toggleFiltersBtn?.addEventListener('click', () => {
   filtersPanel.hidden = !filtersPanel.hidden;
   updateFiltersButtonState();
 });
 
-clearFiltersBtn?.addEventListener(\'click\', () => {
-  sortByI.value = \'newest\';
-  lyricsFilterI.value = \'all\';
-  keyFilterI.value = \'\';
-  tagFilterI.value = \'\';
-  searchI.value = \'\';
-  if (topbarSearchI && topbarSearchI !== searchI) topbarSearchI.value = \'\';
+clearFiltersBtn?.addEventListener('click', () => {
+  sortByI.value = 'newest';
+  lyricsFilterI.value = 'all';
+  keyFilterI.value = '';
+  tagFilterI.value = '';
+  searchI.value = '';
+  if (topbarSearchI && topbarSearchI !== searchI) topbarSearchI.value = '';
   updateSongsSearchState();
   rerenderList();
   filtersPanel.hidden = true;
   updateFiltersButtonState();
-  showNotice(\'Ֆիլտրերը մաքրված են\', \'info\');
+  showNotice('Ֆիլտրերը մաքրված են', 'info');
 });
 
-saveBtn?.addEventListener(\'click\', async () => {
+saveBtn?.addEventListener('click', async () => {
   try {
     await saveCurrentSong();
   } catch (err) {
-    showNotice(err.message || \'Սխալ է տեղի ունեցել\', \'error\');
+    showNotice(err.message || 'Սխալ է տեղի ունեցել', 'error');
   }
 });
 
-cancelEditBtn?.addEventListener(\'click\', () => {
+cancelEditBtn?.addEventListener('click', () => {
   clearForm();
-  showNotice(\'Խմբագրումը չեղարկված է\', \'info\');
-  activateWorkspaceTab(\'libraryPane\');
+  showNotice('Խմբագրումը չեղարկված է', 'info');
+  activateWorkspaceTab('libraryPane');
 });
 
-clearBtn?.addEventListener(\'click\', clearForm);
-installAdminAppBtn?.addEventListener(\'click\', async () => {
+clearBtn?.addEventListener('click', clearForm);
+installAdminAppBtn?.addEventListener('click', async () => {
   await handleAdminInstallRequest();
 });
 
-sidebarSearchBtn?.addEventListener(\'click\', () => {
-  activateWorkspaceTab(\'libraryPane\');
+sidebarSearchBtn?.addEventListener('click', () => {
+  activateWorkspaceTab('libraryPane');
   scrollWorkspaceIntoView();
   searchI.focus();
-  searchI.scrollIntoView({ behavior: \'smooth\', block: \'center\' });
+  searchI.scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
-newSongBtn?.addEventListener(\'click\', () => {
+newSongBtn?.addEventListener('click', () => {
   clearForm();
-  activateWorkspaceTab(\'editorPane\');
+  activateWorkspaceTab('editorPane');
   scrollWorkspaceIntoView();
   titleI.focus();
-  showNotice(\'Բացված է նոր երգի ռեժիմը\', \'info\');
+  showNotice('Բացված է նոր երգի ռեժիմը', 'info');
 });
 
-refreshListBtn?.addEventListener(\'click\', async () => {
+refreshListBtn?.addEventListener('click', async () => {
   try {
     await fetchSongs();
-    showNotice(window.I18N?.Loading || \'Բեռնվում է...\', \'info\');
+    showNotice(window.I18N?.Loading || 'Բեռնվում է...', 'info');
   } catch (err) {
-    showNotice(err.message || \'Չհաջողվեց թարմացնել ցանկը\', \'error\');
+    showNotice(err.message || 'Չհաջողվեց թարմացնել ցանկը', 'error');
   }
 });
-sidebarRefreshBtn?.addEventListener(\'click\', () => refreshListBtn.click());
-sidebarClearBtn?.addEventListener(\'click\', () => {
+sidebarRefreshBtn?.addEventListener('click', () => refreshListBtn.click());
+sidebarClearBtn?.addEventListener('click', () => {
   clearForm();
-  showNotice(\'Ձևը մաքրված է\', \'info\');
+  showNotice('Ձևը մաքրված է', 'info');
 });
 
-loadMoreBtn?.addEventListener(\'click\', () => {
+loadMoreBtn?.addEventListener('click', () => {
   visibleSongsCount += SONGS_PAGE_SIZE;
   renderTable(getVisibleSongs(), getFilteredSongs().length);
 });
 
-tableBody?.addEventListener(\'click\', async (e) => {
-  const btn = e.target.closest(\'button[data-action]\');
+tableBody?.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-action]');
   if (btn) {
     const id = btn.dataset.id;
     const action = btn.dataset.action;
     try {
-      if (action === \'edit\') await startEditSong(id);
-      if (action === \'delete\') await deleteSong(id);
+      if (action === 'edit') await startEditSong(id);
+      if (action === 'delete') await deleteSong(id);
     } catch (err) {
-      showNotice(err.message || \'Սխալ է տեղի ունեցել\', \'error\');
+      showNotice(err.message || 'Սխալ է տեղի ունեցել', 'error');
     }
     return;
   }
 
-  const openTarget = e.target.closest(\'[data-open-song]\');
+  const openTarget = e.target.closest('[data-open-song]');
   if (openTarget) {
     openSongInNewTab(openTarget.dataset.openSong);
     return;
   }
 
-  const row = e.target.closest(\'tr.clickable-row\');
+  const row = e.target.closest('tr.clickable-row');
   if (row && row.dataset.songId) {
     openSongInNewTab(row.dataset.songId);
   }
@@ -1735,15 +2134,25 @@ tableBody?.addEventListener(\'click\', async (e) => {
 buildKeysGrid();
 setEditMode(null);
 renderPreview();
-activateWorkspaceTab(\'libraryPane\');
+activateWorkspaceTab('libraryPane');
 markCurrentSnapshotAsSaved();
 updateInstallAdminButton();
 updateAdminInstallBanner();
 
-window?.addEventListener(\'beforeunload\', (e) => {
+window?.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    const editorModal = document.getElementById('editorPane');
+    if (editorModal && editorModal.classList.contains('is-active')) {
+      e.preventDefault();
+      saveCurrentSong().catch(err => showNotice(err.message || 'Սխալ է տեղի ունեցել', 'error'));
+    }
+  }
+});
+
+window?.addEventListener('beforeunload', (e) => {
   if (!hasUnsavedChanges()) return;
   e.preventDefault();
-  e.returnValue = \'\';
+  e.returnValue = '';
 });
 
 (async function init() {
@@ -1753,11 +2162,11 @@ window?.addEventListener(\'beforeunload\', (e) => {
     await fetchSongs();
     updateFiltersButtonState();
   } catch (err) {
-    showNotice(err.message || \'Չհաջողվեց բեռնել տվյալները\', \'error\');
+    showNotice(err.message || 'Չհաջողվեց բեռնել տվյալները', 'error');
   } finally {
     hideAdminPageLoader(120);
   }
-})();') ?>
+})();
 </script>
 </body>
 </html>

@@ -6,6 +6,24 @@ date_default_timezone_set('Asia/Yerevan');
 const WP_RUNTIME_SECRET_STORE_PATH = __DIR__ . '/runtime_secret_store.php';
 const WP_RUNTIME_LOCAL_CONFIG_PATH = __DIR__ . '/runtime_local_config.php';
 
+if (!function_exists('wp_runtime_is_https')) {
+    function wp_runtime_is_https(): bool {
+        if (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off') {
+            return true;
+        }
+        if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') {
+            return true;
+        }
+        if (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower((string)$_SERVER['HTTP_X_FORWARDED_SSL']) === 'on') {
+            return true;
+        }
+        if (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443) {
+            return true;
+        }
+        return false;
+    }
+}
+
 if (!function_exists('wp_runtime_local_config')) {
     function wp_runtime_local_config(): array {
         if (!is_file(WP_RUNTIME_LOCAL_CONFIG_PATH)) {
@@ -42,7 +60,7 @@ if (!function_exists('wp_runtime_db_config')) {
         $localDb = is_array($local['db'] ?? null) ? $local['db'] : [];
 
         $fallback = [
-            'host' => (string)($localDb['host'] ?? 'localhost'),
+            'host' => (string)($localDb['host'] ?? '127.0.0.1'),
             'name' => (string)($localDb['name'] ?? 'pmstudio_wolarm'),
             'user' => (string)($localDb['user'] ?? 'pmstudio_wolarm'),
             'pass' => (string)($localDb['pass'] ?? 'wolarm2026'),
@@ -196,16 +214,12 @@ if (!function_exists('wp_runtime_append_slow_query')) {
 
 if (!function_exists('wp_runtime_open_pdo')) {
     function wp_runtime_open_pdo(): PDO {
-        $db = wp_runtime_db_config();
+        static $pdoInstance = null;
+        if ($pdoInstance !== null) {
+            return $pdoInstance;
+        }
 
-        try {
-            // Use the logged mysqli wrapper so schema checks cannot increment
-            // MySQL's slow counter without leaving an application log entry.
-            if (function_exists('wp_runtime_open_mysqli')) {
-                $tmpConn = wp_runtime_open_mysqli();
-                $tmpConn->close();
-            }
-        } catch (Throwable $e) {}
+        $db = wp_runtime_db_config();
 
         if (!class_exists('WpLoggedPDOStatement')) {
             class WpLoggedPDOStatement extends PDOStatement {
@@ -262,17 +276,23 @@ if (!function_exists('wp_runtime_open_pdo')) {
             }
         }
 
-        return new WpLoggedPDO(
+        $pdoInstance = new WpLoggedPDO(
             sprintf('mysql:host=%s;dbname=%s;charset=%s', $db['host'], $db['name'], $db['charset']),
             $db['user'],
             $db['pass'],
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
         );
+        return $pdoInstance;
     }
 }
 
 if (!function_exists('wp_runtime_open_mysqli')) {
     function wp_runtime_open_mysqli(): mysqli {
+        static $mysqliInstance = null;
+        if ($mysqliInstance !== null) {
+            return $mysqliInstance;
+        }
+
         $db = wp_runtime_db_config();
 
         if (!class_exists('WpLoggedMysqliStatement')) {
@@ -354,20 +374,20 @@ if (!function_exists('wp_runtime_open_mysqli')) {
             }
         }
 
-        $conn = new WpLoggedMysqli($db['host'], $db['user'], $db['pass'], $db['name']);
-        if ($conn->connect_error) {
-            throw new RuntimeException('DB connection failed: ' . $conn->connect_error);
+        $mysqliInstance = new WpLoggedMysqli($db['host'], $db['user'], $db['pass'], $db['name']);
+        if ($mysqliInstance->connect_error) {
+            throw new RuntimeException('MySQLi Connection Error: ' . $mysqliInstance->connect_error);
         }
-        $conn->set_charset($db['charset']);
+        $mysqliInstance->set_charset($db['charset']);
         
         if (function_exists('wp_runtime_ensure_pricing_tables_mysqli')) {
-            wp_runtime_ensure_pricing_tables_mysqli($conn);
+            wp_runtime_ensure_pricing_tables_mysqli($mysqliInstance);
         }
         if (function_exists('wp_runtime_ensure_admin_tables_mysqli')) {
-            wp_runtime_ensure_admin_tables_mysqli($conn);
+            wp_runtime_ensure_admin_tables_mysqli($mysqliInstance);
         }
         
-        return $conn;
+        return $mysqliInstance;
     }
 }
 
@@ -677,7 +697,7 @@ if (!function_exists('wp_runtime_ensure_admin_tables_mysqli')) {
                 KEY idx_at (at)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
-        $conn->query("ALTER TABLE version_history MODIFY COLUMN at VARCHAR(60) NOT NULL");
+        try { $conn->query("ALTER TABLE version_history MODIFY COLUMN at VARCHAR(60) NOT NULL"); } catch (Throwable $e) {}
 
         // 3. install_stats table
         $conn->query("
@@ -698,7 +718,7 @@ if (!function_exists('wp_runtime_ensure_admin_tables_mysqli')) {
                 KEY idx_last_seen (last_seen_at)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
-        $conn->query("ALTER TABLE install_stats MODIFY COLUMN installed_at VARCHAR(60) NOT NULL, MODIFY COLUMN last_seen_at VARCHAR(60) NOT NULL");
+        try { $conn->query("ALTER TABLE install_stats MODIFY COLUMN installed_at VARCHAR(60) NOT NULL, MODIFY COLUMN last_seen_at VARCHAR(60) NOT NULL"); } catch (Throwable $e) {}
 
         // 4. push_subscriptions table
         $conn->query("
@@ -718,7 +738,7 @@ if (!function_exists('wp_runtime_ensure_admin_tables_mysqli')) {
                 PRIMARY KEY (id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
-        $conn->query("ALTER TABLE push_subscriptions MODIFY COLUMN created_at VARCHAR(60) NOT NULL, MODIFY COLUMN updated_at VARCHAR(60) NOT NULL, MODIFY COLUMN last_seen_at VARCHAR(60) NULL");
+        try { $conn->query("ALTER TABLE push_subscriptions MODIFY COLUMN created_at VARCHAR(60) NOT NULL, MODIFY COLUMN updated_at VARCHAR(60) NOT NULL, MODIFY COLUMN last_seen_at VARCHAR(60) NULL"); } catch (Throwable $e) {}
         foreach ([
             "ALTER TABLE push_subscriptions ADD COLUMN device_id VARCHAR(120) NOT NULL DEFAULT '' AFTER ip_address",
             "ALTER TABLE push_subscriptions ADD COLUMN device_scope VARCHAR(20) NOT NULL DEFAULT 'main' AFTER device_id",

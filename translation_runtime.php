@@ -60,37 +60,6 @@ if (!function_exists('wp_translation_cache_get')) {
     function wp_translation_cache_get(string $lang, string $context, string $sourceText): ?string {
         $path = wp_translation_cache_path($lang, $context, $sourceText);
         if (!is_file($path)) {
-            $root = wp_translation_cache_root() . DIRECTORY_SEPARATOR . $lang;
-            if (!is_dir($root)) {
-                return null;
-            }
-
-            $iterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS)
-            );
-
-            foreach ($iterator as $file) {
-                if (!$file instanceof SplFileInfo || !$file->isFile() || strtolower($file->getExtension()) !== 'json') {
-                    continue;
-                }
-
-                $rawFallback = @file_get_contents($file->getPathname());
-                if (!is_string($rawFallback) || trim($rawFallback) === '') {
-                    continue;
-                }
-
-                $decodedFallback = json_decode($rawFallback, true);
-                if (!is_array($decodedFallback)) {
-                    continue;
-                }
-
-                $sourceFallback = trim((string)($decodedFallback['source'] ?? ''));
-                $textFallback = trim((string)($decodedFallback['text'] ?? ''));
-                if ($sourceFallback === trim($sourceText) && $textFallback !== '') {
-                    return $textFallback;
-                }
-            }
-
             return null;
         }
 

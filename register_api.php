@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+ob_start();
 error_reporting(E_ALL);
 ini_set('display_errors', '0');
 
@@ -14,6 +15,9 @@ if (is_file(__DIR__ . '/install_service.php')) {
 }
 
 function out($arr, $code = 200){
+  while (ob_get_level()) {
+    ob_end_clean();
+  }
   http_response_code($code);
   echo json_encode($arr, JSON_UNESCAPED_UNICODE);
   exit;
@@ -159,7 +163,7 @@ if ($username === '') {
 try {
   $conn = wp_runtime_open_pdo();
   $conn->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
-} catch (Exception $e) {
+} catch (Throwable $e) {
   out(["error" => "DB connection failed"], 500);
 }
 
@@ -269,10 +273,11 @@ if($hasUsername){
         setcookie("remember_me", "", [
             "expires"  => time() - 3600,
             "path"     => "/",
-            "secure"   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+            "secure"   => function_exists('wp_auth_is_https') ? wp_auth_is_https() : (function_exists('wp_runtime_is_https') ? wp_runtime_is_https() : (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')),
             "httponly" => true,
             "samesite" => "Lax",
         ]);
+        wp_auth_issue_session_cookie($expiresTs);
     }
 
     $stmt = $conn->prepare("DELETE FROM user_sessions WHERE user_id = ? AND session_key = ?");

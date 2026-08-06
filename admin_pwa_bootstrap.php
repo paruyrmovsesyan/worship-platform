@@ -18,6 +18,7 @@ function wp_admin_render_pwa_head(string $title, array $options = []): void
     echo '<meta name="apple-mobile-web-app-title" content="' . htmlspecialchars($appleTitle, ENT_QUOTES) . '">' . "\n";
     echo '<meta name="mobile-web-app-capable" content="yes">' . "\n";
     echo '<meta name="wp-app-scope" content="' . htmlspecialchars($scope, ENT_QUOTES) . '">' . "\n";
+    echo '<meta name="wp-app-enabled" content="1">' . "\n";
     echo '<meta name="theme-color" content="' . htmlspecialchars($themeColor, ENT_QUOTES) . '">' . "\n";
     echo '<title>' . htmlspecialchars($title, ENT_QUOTES) . '</title>' . "\n";
     echo '<link rel="apple-touch-icon" href="' . htmlspecialchars($icon, ENT_QUOTES) . '" type="image/png">' . "\n";

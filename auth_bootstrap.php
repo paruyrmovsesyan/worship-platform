@@ -9,13 +9,13 @@ require_once __DIR__ . '/runtime_config.php';
 |--------------------------------------------------------------------------
 */
 
-$https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+$https = function_exists('wp_runtime_is_https') ? wp_runtime_is_https() : (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_name('WORSHIPSESSID');
 
     session_set_cookie_params([
-        'lifetime' => 0,
+        'lifetime' => 86400 * 365,
         'path' => '/',
         'domain' => '',
         'secure' => $https,
@@ -78,6 +78,15 @@ if (!function_exists('wp_auth_remember_session_expires_at')) {
     }
 }
 
+if (!function_exists('wp_auth_is_https')) {
+    function wp_auth_is_https(): bool {
+        if (function_exists('wp_runtime_is_https')) {
+            return wp_runtime_is_https();
+        }
+        return !empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off';
+    }
+}
+
 if (!function_exists('wp_auth_issue_session_cookie')) {
     function wp_auth_issue_session_cookie(int $expiresTs): void {
         if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -94,7 +103,7 @@ if (!function_exists('wp_auth_issue_session_cookie')) {
             'expires'  => $expiresTs,
             'path'     => $params['path'] ?? '/',
             'domain'   => $params['domain'] ?? '',
-            'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+            'secure'   => wp_auth_is_https(),
             'httponly' => true,
             'samesite' => 'Lax',
         ]);
@@ -111,7 +120,7 @@ if (!function_exists('wp_auth_issue_remember_cookie')) {
         setcookie('remember_me', $selector . ':' . $validator, [
             'expires'  => $expiresTs,
             'path'     => '/',
-            'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+            'secure'   => wp_auth_is_https(),
             'httponly' => true,
             'samesite' => 'Lax',
         ]);

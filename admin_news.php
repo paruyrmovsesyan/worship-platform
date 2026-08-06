@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/admin_access.php';
 require_once __DIR__ . '/news_repository.php';
+require_once __DIR__ . '/push_service.php';
 require_once __DIR__ . '/admin_pwa_bootstrap.php';
 
 $access = wp_admin_require_access('/admin_news.php');
@@ -23,11 +24,93 @@ function admin_news_value(array $source, string $key): string {
     return trim((string)($source[$key] ?? ''));
 }
 
+function admin_news_push_payload(array $article, string $actor): array {
+    $title = (string)($article['title_hy'] ?: $article['title_en'] ?: $article['title_ru'] ?: 'Նոր հրապարակում');
+    $excerpt = (string)($article['excerpt_hy'] ?: $article['excerpt_en'] ?: $article['excerpt_ru'] ?: 'Կարդացեք նոր հրապարակումը Worship Platform-ում։');
+    $version = trim((string)($article['release_version'] ?? ''));
+    $body = ($version !== '' ? ('v' . ltrim($version, 'vV') . ' • ') : '') . $excerpt;
+
+    return [
+        'title' => mb_substr($title, 0, 120),
+        'body' => mb_substr($body, 0, 240),
+        'url' => '/news/' . rawurlencode((string)$article['slug']),
+        'icon' => '/wolarm_youth.png',
+        'tag' => 'worship-news-' . (string)$article['slug'],
+        'actor' => $actor !== '' ? $actor : 'admin',
+    ];
+}
+
+function admin_news_store_image_upload(array $file): array {
+    $error = (int)($file['error'] ?? UPLOAD_ERR_NO_FILE);
+    if ($error === UPLOAD_ERR_NO_FILE) {
+        return ['ok' => true, 'url' => ''];
+    }
+    if ($error !== UPLOAD_ERR_OK) {
+        return ['ok' => false, 'message' => 'Նկարի բեռնումը չհաջողվեց (կոդ ' . $error . ')։'];
+    }
+
+    $tmpPath = (string)($file['tmp_name'] ?? '');
+    $size = (int)($file['size'] ?? 0);
+    if ($tmpPath === '' || !is_uploaded_file($tmpPath)) {
+        return ['ok' => false, 'message' => 'Բեռնված նկարի ժամանակավոր ֆայլը հասանելի չէ։'];
+    }
+    if ($size <= 0 || $size > 10 * 1024 * 1024) {
+        return ['ok' => false, 'message' => 'Նկարի չափը պետք է լինի առավելագույնը 10 MB։'];
+    }
+
+    $mime = '';
+    if (class_exists('finfo')) {
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime = (string)$finfo->file($tmpPath);
+    }
+    if ($mime === '' && function_exists('getimagesize')) {
+        $imageInfo = @getimagesize($tmpPath);
+        $mime = is_array($imageInfo) ? (string)($imageInfo['mime'] ?? '') : '';
+    }
+
+    $extensions = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+    ];
+    if (!isset($extensions[$mime])) {
+        return ['ok' => false, 'message' => 'Թույլատրվում են միայն JPEG, PNG կամ WebP նկարներ։'];
+    }
+
+    $uploadDir = __DIR__ . '/uploads/news';
+    if (!is_dir($uploadDir) && !@mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
+        return ['ok' => false, 'message' => 'Չհաջողվեց ստեղծել նորությունների նկարների պանակը։'];
+    }
+    if (!is_writable($uploadDir)) {
+        return ['ok' => false, 'message' => 'uploads/news պանակը գրելու թույլտվություն չունի։'];
+    }
+
+    try {
+        $randomPart = bin2hex(random_bytes(5));
+    } catch (Throwable $error) {
+        $randomPart = substr(sha1(uniqid('', true)), 0, 10);
+    }
+    $filename = 'news-' . date('Ymd-His') . '-' . $randomPart . '.' . $extensions[$mime];
+    $destination = $uploadDir . '/' . $filename;
+    if (!move_uploaded_file($tmpPath, $destination)) {
+        return ['ok' => false, 'message' => 'Չհաջողվեց նկարը պահպանել uploads/news պանակում։'];
+    }
+    @chmod($destination, 0644);
+
+    return ['ok' => true, 'url' => '/uploads/news/' . $filename];
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = (string)($_POST['action'] ?? '');
 
     if ($action === 'save') {
         $id = (int)($_POST['id'] ?? 0);
+        $previousStatus = null;
+        if ($id > 0) {
+            $previousStmt = $pdo->prepare('SELECT status FROM news_articles WHERE id = ? LIMIT 1');
+            $previousStmt->execute([$id]);
+            $previousStatus = $previousStmt->fetchColumn();
+        }
         $titleHy = admin_news_value($_POST, 'title_hy');
         $baseSlug = admin_news_value($_POST, 'slug');
         if ($baseSlug === '') {
@@ -48,55 +131,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $publishedAt = date('Y-m-d H:i:s');
             }
 
-            $payload = [
-                'slug' => $slug,
-                'status' => $status,
-                'is_featured' => !empty($_POST['is_featured']) ? 1 : 0,
-                'sort_order' => (int)($_POST['sort_order'] ?? 0),
-                'image_url' => admin_news_value($_POST, 'image_url'),
-                'published_at' => $publishedAt,
-                'title_hy' => admin_news_value($_POST, 'title_hy'),
-                'title_en' => admin_news_value($_POST, 'title_en'),
-                'title_ru' => admin_news_value($_POST, 'title_ru'),
-                'excerpt_hy' => admin_news_value($_POST, 'excerpt_hy'),
-                'excerpt_en' => admin_news_value($_POST, 'excerpt_en'),
-                'excerpt_ru' => admin_news_value($_POST, 'excerpt_ru'),
-                'content_hy' => admin_news_value($_POST, 'content_hy'),
-                'content_en' => admin_news_value($_POST, 'content_en'),
-                'content_ru' => admin_news_value($_POST, 'content_ru'),
-                'tag_hy' => admin_news_value($_POST, 'tag_hy'),
-                'tag_en' => admin_news_value($_POST, 'tag_en'),
-                'tag_ru' => admin_news_value($_POST, 'tag_ru'),
-            ];
-
-            if ($id > 0) {
-                $payload['id'] = $id;
-                $stmt = $pdo->prepare("
-                    UPDATE news_articles SET
-                        slug = :slug, status = :status, is_featured = :is_featured, sort_order = :sort_order,
-                        image_url = :image_url, published_at = :published_at,
-                        title_hy = :title_hy, title_en = :title_en, title_ru = :title_ru,
-                        excerpt_hy = :excerpt_hy, excerpt_en = :excerpt_en, excerpt_ru = :excerpt_ru,
-                        content_hy = :content_hy, content_en = :content_en, content_ru = :content_ru,
-                        tag_hy = :tag_hy, tag_en = :tag_en, tag_ru = :tag_ru
-                    WHERE id = :id
-                ");
-                $stmt->execute($payload);
-                $message = 'Նորությունը թարմացվեց։';
+            $imageUpload = admin_news_store_image_upload($_FILES['news_image_file'] ?? []);
+            if (empty($imageUpload['ok'])) {
+                $message = (string)($imageUpload['message'] ?? 'Նկարի բեռնումը չհաջողվեց։');
+                $messageType = 'error';
             } else {
-                $stmt = $pdo->prepare("
-                    INSERT INTO news_articles (
-                        slug, status, is_featured, sort_order, image_url, published_at,
-                        title_hy, title_en, title_ru, excerpt_hy, excerpt_en, excerpt_ru,
-                        content_hy, content_en, content_ru, tag_hy, tag_en, tag_ru
-                    ) VALUES (
-                        :slug, :status, :is_featured, :sort_order, :image_url, :published_at,
-                        :title_hy, :title_en, :title_ru, :excerpt_hy, :excerpt_en, :excerpt_ru,
-                        :content_hy, :content_en, :content_ru, :tag_hy, :tag_en, :tag_ru
-                    )
-                ");
-                $stmt->execute($payload);
-                $message = 'Նորությունը ավելացվեց։';
+                $imageUrl = trim((string)($imageUpload['url'] ?? '')) ?: admin_news_value($_POST, 'image_url');
+                $payload = [
+                    'slug' => $slug,
+                    'status' => $status,
+                    'is_featured' => !empty($_POST['is_featured']) ? 1 : 0,
+                    'sort_order' => (int)($_POST['sort_order'] ?? 0),
+                    'image_url' => $imageUrl,
+                    'published_at' => $publishedAt,
+                    'release_version' => mb_substr(admin_news_value($_POST, 'release_version'), 0, 60),
+                    'title_hy' => admin_news_value($_POST, 'title_hy'),
+                    'title_en' => admin_news_value($_POST, 'title_en'),
+                    'title_ru' => admin_news_value($_POST, 'title_ru'),
+                    'excerpt_hy' => admin_news_value($_POST, 'excerpt_hy'),
+                    'excerpt_en' => admin_news_value($_POST, 'excerpt_en'),
+                    'excerpt_ru' => admin_news_value($_POST, 'excerpt_ru'),
+                    'content_hy' => admin_news_value($_POST, 'content_hy'),
+                    'content_en' => admin_news_value($_POST, 'content_en'),
+                    'content_ru' => admin_news_value($_POST, 'content_ru'),
+                    'tag_hy' => admin_news_value($_POST, 'tag_hy'),
+                    'tag_en' => admin_news_value($_POST, 'tag_en'),
+                    'tag_ru' => admin_news_value($_POST, 'tag_ru'),
+                ];
+
+                if ($id > 0) {
+                    $payload['id'] = $id;
+                    $stmt = $pdo->prepare("
+                        UPDATE news_articles SET
+                            slug = :slug, status = :status, is_featured = :is_featured, sort_order = :sort_order,
+                            image_url = :image_url, published_at = :published_at, release_version = :release_version,
+                            title_hy = :title_hy, title_en = :title_en, title_ru = :title_ru,
+                            excerpt_hy = :excerpt_hy, excerpt_en = :excerpt_en, excerpt_ru = :excerpt_ru,
+                            content_hy = :content_hy, content_en = :content_en, content_ru = :content_ru,
+                            tag_hy = :tag_hy, tag_en = :tag_en, tag_ru = :tag_ru
+                        WHERE id = :id
+                    ");
+                    $stmt->execute($payload);
+                    $message = 'Նորությունը թարմացվեց։';
+                } else {
+                    $stmt = $pdo->prepare("
+                        INSERT INTO news_articles (
+                            slug, status, is_featured, sort_order, image_url, published_at, release_version,
+                            title_hy, title_en, title_ru, excerpt_hy, excerpt_en, excerpt_ru,
+                            content_hy, content_en, content_ru, tag_hy, tag_en, tag_ru
+                        ) VALUES (
+                            :slug, :status, :is_featured, :sort_order, :image_url, :published_at, :release_version,
+                            :title_hy, :title_en, :title_ru, :excerpt_hy, :excerpt_en, :excerpt_ru,
+                            :content_hy, :content_en, :content_ru, :tag_hy, :tag_en, :tag_ru
+                        )
+                    ");
+                    $stmt->execute($payload);
+                    $message = 'Նորությունը ավելացվեց։';
+                }
+
+                $isFirstPublish = $status === 'published' && ($id === 0 || $previousStatus !== 'published');
+                if ($isFirstPublish) {
+                    $pushResult = wp_push_send_notification(admin_news_push_payload($payload, $adminDisplayName));
+                    if (!empty($pushResult['ok'])) {
+                        $message .= ' Push ծանուցումը ուղարկվեց բոլոր ակտիվ սարքերին։';
+                    } else {
+                        $message .= ' Push ծանուցումը չուղարկվեց․ ' . (string)($pushResult['message'] ?? 'անհայտ սխալ') . '։';
+                        $messageType = 'warning';
+                    }
+                }
             }
         }
     } elseif ($action === 'delete') {
@@ -168,14 +270,14 @@ $publishedValue = $editItem && !empty($editItem['published_at']) ? str_replace('
       </div>
 
       <?php if ($message): ?>
-        <div style="background:<?= $messageType === 'success' ? 'var(--success-bg)' : 'var(--danger-bg)' ?>; color:<?= $messageType === 'success' ? 'var(--success)' : 'var(--danger)' ?>; padding:14px 20px; border-radius:12px; margin-bottom:24px; font-weight:700;">
+        <div style="background:<?= $messageType === 'success' ? 'var(--success-bg)' : ($messageType === 'warning' ? '#fff7d6' : 'var(--danger-bg)') ?>; color:<?= $messageType === 'success' ? 'var(--success)' : ($messageType === 'warning' ? '#8a6500' : 'var(--danger)') ?>; padding:14px 20px; border-radius:12px; margin-bottom:24px; font-weight:700;">
           <?= htmlspecialchars($message, ENT_QUOTES) ?>
         </div>
       <?php endif; ?>
 
       <div class="news-form">
         <h3 style="font-size:18px; font-weight:800; margin-bottom:18px;"><?= $editItem ? 'Խմբագրել նորությունը' : 'Ավելացնել նորություն' ?></h3>
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
           <input type="hidden" name="action" value="save">
           <?php if ($editItem): ?><input type="hidden" name="id" value="<?= (int)$editItem['id'] ?>"><?php endif; ?>
 
@@ -186,9 +288,14 @@ $publishedValue = $editItem && !empty($editItem['published_at']) ? str_replace('
           </div>
 
           <div class="news-grid-form">
+            <div class="field"><label>Բեռնել նկար</label><input type="file" name="news_image_file" accept="image/jpeg,image/png,image/webp"><small style="color:var(--muted);">JPEG, PNG կամ WebP, առավելագույնը 10 MB։ Նոր ֆայլը ավտոմատ կլրացնի Image URL-ը։</small></div>
             <div class="field"><label>Image URL</label><input name="image_url" value="<?= htmlspecialchars((string)($editItem['image_url'] ?? ''), ENT_QUOTES) ?>"></div>
+            <div class="field"><label>Թարմացման տարբերակ</label><input name="release_version" maxlength="60" value="<?= htmlspecialchars((string)($editItem['release_version'] ?? ''), ENT_QUOTES) ?>" placeholder="օր. 5.0.0"><small style="color:var(--muted);">Դաշտը կամավոր է։ Լրացրեք այն տարբերակը, որին վերաբերում է նորությունը։</small></div>
+          </div>
+
+          <div class="news-grid-form">
             <div class="field"><label>Sort order</label><input type="number" name="sort_order" value="<?= htmlspecialchars((string)($editItem['sort_order'] ?? '0'), ENT_QUOTES) ?>"></div>
-            <div class="field"><label>Featured</label><label style="display:flex;align-items:center;gap:8px;padding:11px 0;"><input type="checkbox" name="is_featured" value="1" <?= !empty($editItem['is_featured']) ? 'checked' : '' ?>> Ցույց տալ գլխավորում</label></div>
+            <div class="field"><label>Featured</label><label style="display:flex;align-items:center;gap:8px;padding:11px 0;"><input type="checkbox" name="is_featured" value="1" <?= !empty($editItem['is_featured']) ? 'checked' : '' ?>> Նշել որպես կարևոր նորություն</label></div>
           </div>
 
           <?php foreach (['hy' => 'Հայերեն', 'en' => 'English', 'ru' => 'Русский'] as $lang => $label): ?>
@@ -217,6 +324,7 @@ $publishedValue = $editItem && !empty($editItem['published_at']) ? str_replace('
               <div class="news-meta">
                 <span class="pill <?= $article['status'] === 'published' ? 'pub' : 'draft' ?>"><?= htmlspecialchars((string)$article['status'], ENT_QUOTES) ?></span>
                 <?php if (!empty($article['is_featured'])): ?><span class="pill">Featured</span><?php endif; ?>
+                <?php if (!empty($article['release_version'])): ?><span class="pill">Տարբերակ <?= htmlspecialchars((string)$article['release_version'], ENT_QUOTES) ?></span><?php endif; ?>
                 <span><?= htmlspecialchars((string)($article['published_at'] ?? ''), ENT_QUOTES) ?></span>
                 <span>/news/<?= htmlspecialchars((string)$article['slug'], ENT_QUOTES) ?></span>
               </div>

@@ -293,6 +293,12 @@
       });
       window.addEventListener("offline", updateStatus);
       updateStatus();
+
+      if (navigator.onLine) {
+        window.setTimeout(function () {
+          window.location.href = "/";
+        }, 400);
+      }
     })();
   </script>
 </body>

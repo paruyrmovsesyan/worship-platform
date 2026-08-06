@@ -116,7 +116,7 @@ $adminEmail        = $adminEmail ?? '';
           <div class="notif-loading">Loading…</div>
         </div>
         <div class="notif-footer">
-          <a href="/admin_stats.php"><?= __('View all activity →') ?></a>
+          <a href="/admin_stats.php#push_history"><?= __('Դիտել ողջ պատմությունը →') ?></a>
         </div>
       </div>
     </div>
@@ -236,9 +236,14 @@ $adminEmail        = $adminEmail ?? '';
     items.forEach(function(n) {
       var iconSvg = n.type === 'song'
         ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>'
-        : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
+        : (n.type === 'push'
+          ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>'
+          : (n.type === 'request'
+            ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>'
+            : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>'));
 
-      html += '<div class="notif-item">'
+      var targetUrl = n.link || '/admin_stats.php';
+      html += '<div class="notif-item" style="cursor:pointer;" onclick="window.location.href=\'' + escHtml(targetUrl) + '\'">'
         + '<div class="notif-icon ' + escHtml(n.type) + '">' + iconSvg + '</div>'
         + '<div class="notif-text">'
         + '<div class="notif-msg">' + escHtml(n.message) + '</div>'

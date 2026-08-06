@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -6,8 +6,12 @@ import { createPortal } from 'react-dom';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { getSongCoverStyle } from '../utils/songCover';
 import { usePageReady } from '../hooks/usePageReady';
+import { useIsPWA } from '../hooks/useIsPWA';
+import { renderWithChords } from '../utils/chordTransposer';
+import PrintStudio from '../components/PrintStudio';
 import './Setlists.css';
 import './SongsApp.css'; // ensure track-list styles are loaded
+import './SetlistEditorWebPro.css';
 
 export default function SetlistEditor() {
   const { t, language } = useLanguage();
@@ -15,6 +19,7 @@ export default function SetlistEditor() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
+  const isPWA = useIsPWA();
   
   const [setlistData, setSetlistData] = useState(null);
   const [items, setItems] = useState([]);
@@ -52,6 +57,43 @@ export default function SetlistEditor() {
 
   const [editingItem, setEditingItem] = useState(null);
   const [itemForm, setItemForm] = useState({ duration: '', bpm: '', capo: '', target_key: '', notes: '', title: '', transition_type: '' });
+  const [isPrintOpen, setIsPrintOpen] = useState(false);
+  const [isQuickDrawerOpen, setIsQuickDrawerOpen] = useState(false);
+  const [quickQuery, setQuickQuery] = useState('');
+  const [quickResults, setQuickResults] = useState([]);
+  const [quickLoading, setQuickLoading] = useState(false);
+  const [draggingItemId, setDraggingItemId] = useState(null);
+  const [dropTargetItemId, setDropTargetItemId] = useState(null);
+  const quickSearchTimerRef = useRef(null);
+
+  const printDocuments = useMemo(() => {
+    return items
+      .reduce((state, item, index) => {
+        if (item.item_type === 'section') {
+          return {
+            sectionTitle: item.title || '',
+            documents: state.documents,
+          };
+        }
+        const title = getLocalizedTitle(item, language);
+        return {
+          sectionTitle: state.sectionTitle,
+          documents: [
+            ...state.documents,
+            {
+              id: item.id || `${item.song_id}-${index}`,
+              title: state.sectionTitle ? `${state.sectionTitle} / ${title}` : title,
+              artist: item.artist || item.song_artist,
+              key: item.target_key || item.song_key,
+              bpm: item.bpm || item.original_bpm,
+              chords: item.chords ? renderWithChords(item.chords, 0, false) : '',
+              lyrics: item.lyrics || '',
+            },
+          ],
+        };
+      }, { sectionTitle: '', documents: [] })
+      .documents;
+  }, [items, language]);
   
   const openItemEdit = (item, e) => {
     e.stopPropagation();
@@ -321,6 +363,33 @@ export default function SetlistEditor() {
     }
   };
 
+  const persistReorder = async (nextItems) => {
+    const payload = nextItems.map((item, idx) => ({ id: item.id, position: idx + 1 }));
+    await fetch('/setlists_api.php?action=reorder_setlist_items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setlist_id: id, items: payload })
+    });
+  };
+
+  const reorderByItemId = async (sourceId, targetId) => {
+    if (!canEdit || !sourceId || !targetId || sourceId === targetId) return;
+    const sourceIndex = items.findIndex(item => String(item.id) === String(sourceId));
+    const targetIndex = items.findIndex(item => String(item.id) === String(targetId));
+    if (sourceIndex < 0 || targetIndex < 0) return;
+
+    const nextItems = [...items];
+    const [moved] = nextItems.splice(sourceIndex, 1);
+    nextItems.splice(targetIndex, 0, moved);
+    setItems(nextItems);
+    try {
+      await persistReorder(nextItems);
+    } catch (err) {
+      console.error(err);
+      fetchSetlist();
+    }
+  };
+
   const addSection = async () => {
     const title = window.prompt(t('setlists.sectionTitlePrompt', 'Մուտքագրեք բաժնի անվանումը (օր.՝ Սկիզբ, Քարոզ)'));
     if (!title) return;
@@ -370,13 +439,8 @@ export default function SetlistEditor() {
     [newItems[index], newItems[targetIndex]] = [newItems[targetIndex], newItems[index]];
     setItems(newItems);
 
-    const payload = newItems.map((item, idx) => ({ id: item.id, position: idx + 1 }));
     try {
-      await fetch('/setlists_api.php?action=reorder_setlist_items', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ setlist_id: id, items: payload })
-      });
+      await persistReorder(newItems);
     } catch (err) {
       console.error(err);
       fetchSetlist(); // revert on error
@@ -476,6 +540,33 @@ export default function SetlistEditor() {
     };
   }, [isEditingSettings]);
 
+  useEffect(() => {
+    if (isPWA) return undefined;
+    const openPrintStudio = () => setIsPrintOpen(true);
+    window.addEventListener('worship:open-print-studio', openPrintStudio);
+    return () => window.removeEventListener('worship:open-print-studio', openPrintStudio);
+  }, [isPWA]);
+
+  useEffect(() => {
+    if (isPWA || !isQuickDrawerOpen) return undefined;
+    window.clearTimeout(quickSearchTimerRef.current);
+    const query = quickQuery.trim();
+    if (!query) {
+      return undefined;
+    }
+
+    quickSearchTimerRef.current = window.setTimeout(() => {
+      setQuickLoading(true);
+      fetch(`/setlists_api.php?action=search_songs&q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => setQuickResults(Array.isArray(data) ? data.slice(0, 10) : []))
+        .catch(err => console.error(err))
+        .finally(() => setQuickLoading(false));
+    }, 220);
+
+    return () => window.clearTimeout(quickSearchTimerRef.current);
+  }, [isPWA, isQuickDrawerOpen, quickQuery]);
+
   if (authLoading || loading) {
     return null;
   }
@@ -494,7 +585,7 @@ export default function SetlistEditor() {
   }
 
   return (
-    <div className="setlists-page animate-fade-in">
+    <div className={`setlists-page animate-fade-in ${!isPWA ? 'setlist-editor-pro' : ''}`}>
       {/* Editor Header */}
       <div className="sle-header">
         <div className="sle-top-row">
@@ -522,7 +613,7 @@ export default function SetlistEditor() {
                 <button type="button" className="sle-icon-btn" onClick={openShareModal} title={t('setlists.share', 'Կիսվել երգացանկով')}>
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
                 </button>
-                <button type="button" className="sle-icon-btn" onClick={() => window.print()} title="Տպել (Print)">
+                <button type="button" className="sle-icon-btn" onClick={() => isPWA ? window.print() : setIsPrintOpen(true)} title="Տպել (Print)">
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                 </button>
               </div>
@@ -553,6 +644,12 @@ export default function SetlistEditor() {
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12h16M4 6h16M4 18h16"></path></svg>
               Ավելացնել Բաժին
             </button>
+            {!isPWA && (
+              <button className="btn btn-secondary sle-btn" type="button" onClick={() => setIsQuickDrawerOpen(true)}>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h10M4 18h7"></path><path d="M18 15v6M15 18h6"></path></svg>
+                Արագ ավելացում
+              </button>
+            )}
             <button className="btn btn-primary sle-btn sle-btn--add-song" onClick={() => setIsSearching(!isSearching)}>
               {isSearching ? (
                 <><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> {t('setlists.closeSearch', 'Փակել')}</>
@@ -680,7 +777,7 @@ export default function SetlistEditor() {
       )}
 
       {/* Setlist Items */}
-      <div className="track-list">
+      <div className="track-list sle-pro-list">
         {items.length === 0 ? (
           <div className="list-placeholder empty-state">
             <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
@@ -692,7 +789,18 @@ export default function SetlistEditor() {
             return items.map((item, idx) => {
               if (item.item_type === 'section') {
               return (
-                <div key={item.id} className="track-item section-header" style={{ background: 'var(--color-surface)', marginTop: '16px', borderLeft: '4px solid var(--color-primary)' }}>
+                <div
+                  key={item.id}
+                  className={`track-item section-header sle-pro-item ${draggingItemId === item.id ? 'is-dragging' : ''} ${dropTargetItemId === item.id ? 'is-drop-target' : ''}`}
+                  draggable={!isPWA && canEdit}
+                  onDragStart={() => setDraggingItemId(item.id)}
+                  onDragOver={event => { if (!isPWA && canEdit) { event.preventDefault(); setDropTargetItemId(item.id); } }}
+                  onDragLeave={() => setDropTargetItemId(null)}
+                  onDrop={event => { event.preventDefault(); reorderByItemId(draggingItemId, item.id); setDraggingItemId(null); setDropTargetItemId(null); }}
+                  onDragEnd={() => { setDraggingItemId(null); setDropTargetItemId(null); }}
+                  style={{ background: 'var(--color-surface)', marginTop: '16px', borderLeft: '4px solid var(--color-primary)' }}
+                >
+                  {!isPWA && canEdit && <span className="sle-drag-handle" aria-hidden="true">⋮⋮</span>}
                   <div className="track-info" style={{ width: '100%', paddingLeft: '8px' }}>
                     <span className="track-title" style={{ fontSize: '1.2rem', color: 'var(--color-primary)', fontWeight: 'bold' }}>{item.title}</span>
                   </div>
@@ -727,7 +835,17 @@ export default function SetlistEditor() {
             songCount++;
             return (
               <React.Fragment key={item.id}>
-              <div className="track-item" onClick={() => navigate(`/song/${item.song_id}`)}>
+              <div
+                className={`track-item sle-pro-item ${draggingItemId === item.id ? 'is-dragging' : ''} ${dropTargetItemId === item.id ? 'is-drop-target' : ''}`}
+                draggable={!isPWA && canEdit}
+                onClick={() => navigate(`/song/${item.song_id}`)}
+                onDragStart={() => setDraggingItemId(item.id)}
+                onDragOver={event => { if (!isPWA && canEdit) { event.preventDefault(); setDropTargetItemId(item.id); } }}
+                onDragLeave={() => setDropTargetItemId(null)}
+                onDrop={event => { event.preventDefault(); reorderByItemId(draggingItemId, item.id); setDraggingItemId(null); setDropTargetItemId(null); }}
+                onDragEnd={() => { setDraggingItemId(null); setDropTargetItemId(null); }}
+              >
+                {!isPWA && canEdit && <span className="sle-drag-handle" aria-hidden="true">⋮⋮</span>}
                 <div className="track-number dim">
                   {songCount.toString().padStart(2, '0')}
                 </div>
@@ -1036,6 +1154,72 @@ export default function SetlistEditor() {
               )}
             </div>
           </div>
+        </div>,
+        document.body
+      )}
+
+      {!isPWA && (
+        <PrintStudio
+          isOpen={isPrintOpen}
+          onClose={() => setIsPrintOpen(false)}
+          documents={printDocuments}
+          documentTitle={setlistData.name}
+          defaultShowChords
+        />
+      )}
+
+      {!isPWA && isQuickDrawerOpen && createPortal(
+        <div className="quick-song-drawer-backdrop" onMouseDown={() => setIsQuickDrawerOpen(false)}>
+          <aside className="quick-song-drawer" onMouseDown={event => event.stopPropagation()} aria-label="Արագ երգ ավելացնել">
+            <header>
+              <div>
+                <span>QUICK SONG DRAWER</span>
+                <h2>Արագ ավելացում</h2>
+              </div>
+              <button type="button" onClick={() => setIsQuickDrawerOpen(false)} aria-label="Փակել">×</button>
+            </header>
+            <div className="quick-song-search">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input
+                value={quickQuery}
+                onChange={event => {
+                  setQuickQuery(event.target.value);
+                  if (!event.target.value.trim()) {
+                    setQuickResults([]);
+                    setQuickLoading(false);
+                  }
+                }}
+                placeholder="Որոնել երգ..."
+                autoFocus
+              />
+            </div>
+            <div className="quick-song-results">
+              {quickLoading ? (
+                <div className="quick-song-empty">Որոնվում է...</div>
+              ) : quickResults.length ? (
+                quickResults.map(song => (
+                  <button
+                    type="button"
+                    key={song.id}
+                    className="quick-song-result"
+                    onClick={() => addSong(song.id)}
+                  >
+                    <span className="quick-song-check">+</span>
+                    <span className="quick-song-copy">
+                      <strong>{getLocalizedTitle(song, language)}</strong>
+                      <small>{song.artist || t('songs.unknownArtist')}</small>
+                    </span>
+                    <span className="quick-song-meta">
+                      {song.song_key ? <b>{song.song_key}</b> : null}
+                      {Number(song.bpm) > 0 ? <small>{song.bpm} BPM</small> : null}
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <div className="quick-song-empty">{quickQuery.trim() ? 'Արդյունք չկա' : 'Սկսեք որոնել երգը'}</div>
+              )}
+            </div>
+          </aside>
         </div>,
         document.body
       )}

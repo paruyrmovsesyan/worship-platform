@@ -32,14 +32,17 @@ if ($action === 'list') {
         SELECT *
         FROM news_articles
         WHERE status = 'published'
-          AND (published_at IS NULL OR published_at <= NOW())
+          AND (published_at IS NULL OR published_at <= :published_before)
     ";
     if ($featuredOnly) {
         $sql .= " AND is_featured = 1 ";
     }
-    $sql .= " ORDER BY is_featured DESC, sort_order ASC, COALESCE(published_at, created_at) DESC, id DESC LIMIT :limit";
+    $sql .= $featuredOnly
+        ? " ORDER BY sort_order ASC, COALESCE(published_at, created_at) DESC, id DESC LIMIT :limit"
+        : " ORDER BY COALESCE(published_at, created_at) DESC, is_featured DESC, id DESC LIMIT :limit";
 
     $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(':published_before', date('Y-m-d H:i:s'));
     $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
     $stmt->execute();
     $items = array_map(
@@ -61,10 +64,10 @@ if ($action === 'detail') {
         FROM news_articles
         WHERE slug = ?
           AND status = 'published'
-          AND (published_at IS NULL OR published_at <= NOW())
+          AND (published_at IS NULL OR published_at <= ?)
         LIMIT 1
     ");
-    $stmt->execute([$slug]);
+    $stmt->execute([$slug, date('Y-m-d H:i:s')]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$row) {
         wp_news_out(['ok' => false, 'error' => 'Not found'], 404);

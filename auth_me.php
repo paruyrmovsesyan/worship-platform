@@ -16,6 +16,22 @@ function respond(array $arr): void {
 if (!empty($_SESSION['user_id'])) {
   try {
     $pdo = wp_auth_open_pdo();
+    if (!$pdo) {
+      // DB unavailable — trust the existing session and return user data from session
+      respond([
+        "loggedIn" => true,
+        "session_type" => !empty($_SESSION['auth_via_remember']) ? "remember" : "session",
+        "user" => [
+          "id"           => (int)$_SESSION['user_id'],
+          "name"         => (string)($_SESSION['name'] ?? 'User'),
+          "username"     => (string)($_SESSION['username'] ?? 'User'),
+          "email"        => (string)($_SESSION['email'] ?? ''),
+          "birth_date"   => '',
+          "gender"       => '',
+          "phone_number" => '',
+        ]
+      ]);
+    }
     if (!wp_auth_current_session_backed($pdo)) {
       wp_auth_force_local_logout(false);
       if (wp_auth_restore_from_remember_cookie($pdo) && !empty($_SESSION['user_id'])) {
@@ -28,10 +44,19 @@ if (!empty($_SESSION['user_id'])) {
       }
     }
   } catch (Throwable $e) {
+    // DB error — trust existing session, do NOT force logout
     respond([
-      "loggedIn" => false,
-      "session_type" => null,
-      "error" => "Database connection error: " . $e->getMessage()
+      "loggedIn" => true,
+      "session_type" => !empty($_SESSION['auth_via_remember']) ? "remember" : "session",
+      "user" => [
+        "id"           => (int)$_SESSION['user_id'],
+        "name"         => (string)($_SESSION['name'] ?? 'User'),
+        "username"     => (string)($_SESSION['username'] ?? 'User'),
+        "email"        => (string)($_SESSION['email'] ?? ''),
+        "birth_date"   => '',
+        "gender"       => '',
+        "phone_number" => '',
+      ]
     ]);
   }
 
@@ -58,12 +83,12 @@ if (!empty($_SESSION['user_id'])) {
     ];
 
     if ($u) {
-      $userData["name"] = $u["name"] ?? $userData["name"];
-      $userData["username"] = $u["username"] ?? $userData["username"];
-      $userData["email"] = $u["email"] ?? $userData["email"];
-      $userData["birth_date"] = $u["birth_date"] ?? null;
-      $userData["gender"] = $u["gender"] ?? null;
-      $userData["phone_number"] = $u["phone_number"] ?? null;
+      $userData["name"] = (string)($u["name"] ?? $userData["name"]);
+      $userData["username"] = (string)($u["username"] ?? $userData["username"]);
+      $userData["email"] = (string)($u["email"] ?? $userData["email"]);
+      $userData["birth_date"] = !empty($u["birth_date"]) && $u["birth_date"] !== '0000-00-00' ? (string)$u["birth_date"] : '';
+      $userData["gender"] = !empty($u["gender"]) ? (string)$u["gender"] : '';
+      $userData["phone_number"] = !empty($u["phone_number"]) ? (string)$u["phone_number"] : '';
     } else {
       wp_auth_force_local_logout(true);
       respond([

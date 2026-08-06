@@ -1389,7 +1389,7 @@
         var style = document.createElement("style");
         style.id = styleId;
         style.textContent =
-          "#wpNetNotice{position:fixed!important;left:50%!important;top:16px!important;bottom:auto!important;right:auto!important;transform:translateX(-50%) translateY(-10px)!important;opacity:0;z-index:2147482400!important;background:rgba(18,24,32,.96);color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px 14px;font:700 13px/1.35 Inter,system-ui,sans-serif;box-shadow:0 10px 24px rgba(0,0,0,.32);transition:opacity .2s ease,transform .2s ease;max-width:min(92vw,420px);width:max-content;text-align:center;pointer-events:none}" +
+          "#wpNetNotice{position:fixed!important;left:50%!important;top:calc(env(safe-area-inset-top, 0px) + 16px)!important;bottom:auto!important;right:auto!important;transform:translateX(-50%) translateY(-10px)!important;opacity:0;z-index:2147482400!important;background:rgba(18,24,32,.96);color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px 14px;font:700 13px/1.35 Inter,system-ui,sans-serif;box-shadow:0 10px 24px rgba(0,0,0,.32);transition:opacity .2s ease,transform .2s ease;max-width:min(92vw,420px);width:max-content;text-align:center;pointer-events:none}" +
           "#wpNetNotice.show{opacity:1;transform:translateX(-50%) translateY(0)!important}";
         document.head.appendChild(style);
       }
@@ -1420,7 +1420,7 @@
 
     function showOffline() {
       syncAppStatusChip(false);
-      showNotice("Ինտերնետ կապը բացակայում է։ Աշխատում եք օֆֆլայն ռեժիմում։", true);
+      // Top notice disabled per user request
     }
 
     function showOnline() {

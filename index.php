@@ -21,6 +21,28 @@ if (!empty($parsedUrl['query'])) {
     parse_str($parsedUrl['query'], $query);
 }
 
+// Ensure unknown routes return a 404 status code (fixes search engine Soft 404 errors).
+$validStaticRoutes = [
+    '/', '/login', '/register', '/songs', '/transpose', '/setlists', '/setlists/public', 
+    '/setlist_public.html', '/favorites', '/news', '/friends', '/chats', '/community', 
+    '/resources', '/contact', '/about', '/blog', '/careers', '/documentation', '/tutorials', 
+    '/support', '/privacy', '/terms', '/cookies', '/profile', '/settings', '/song-request', 
+    '/notifications', '/manifest.json', '/robots.txt', '/sitemap.xml', '/news-sitemap.xml',
+    '/offline.html', '/main.html', '/service-worker.js'
+];
+$isValidRoute = in_array($path, $validStaticRoutes, true)
+    || preg_match('#^/song/\d+/?$#', $path)
+    || preg_match('#^/news/[^/]+/?$#', $path)
+    || preg_match('#^/setlists/\d+(?:/(?:edit|live))?/?$#', $path)
+    || preg_match('#^/chat/\d+/?$#', $path)
+    || preg_match('#\.(png|jpg|jpeg|gif|svg|ico|css|js|woff|woff2|ttf|eot|mp4|webm)$#i', $path)
+    || strpos($path, '/api/') === 0
+    || strpos($path, '/admin') === 0; // fallback just in case, though admin should bypass index.php
+
+if (!$isValidRoute) {
+    http_response_code(404);
+}
+
 // Default Meta
 $siteName = $config['site_seo_name'] ?: 'Worship Platform';
 $title = $config['site_seo_title'] ?: "Worship Platform";
@@ -86,6 +108,26 @@ $schemas[] = [
         "ratingCount" => "24"
     ]
 ];
+
+// Server-rendered metadata for transpose tool.
+if (in_array($path, ['/transpose', '/transpose/', '/transpose.html'], true) || preg_match('#^/transpose(?:/|$)#i', $path)) {
+    $title = "Ակորդների Տրանսպոզիցիայի Գործիք | " . $siteName;
+    $description = "Օնլայն ակորդների տրանսպոզիցիայի գործիք պաշտամունքի երաժիշտների և թիմերի համար։ Հեշտությամբ փոխեք երգերի տոնայնությունը (Key) և ակորդները։";
+    $keywords = "ակորդների տրանսպոզիցիա, տոնայնության փոփոխում, chord transpose tool, worship chords, online transpose, " . $keywords;
+    
+    $schemas[] = [
+        "@context" => "https://schema.org",
+        "@type" => "SoftwareApplication",
+        "name" => "Ակորդների Տրանսպոզիցիայի Գործիք",
+        "operatingSystem" => "All",
+        "applicationCategory" => "MultimediaApplication",
+        "offers" => [
+            "@type" => "Offer",
+            "price" => "0",
+            "priceCurrency" => "AMD"
+        ]
+    ];
+}
 
 // Server-rendered metadata for public news articles. This is what crawlers see
 // before the React application starts.
@@ -191,14 +233,18 @@ if ($songId) {
 $shouldIndex = true;
 if ($path === '/' || $path === '') {
     $shouldIndex = !empty($config['site_seo_index_home']);
-} elseif ($songId || preg_match('#^/song(?:/|$)#', $path)) {
+} elseif ($songId) {
     $shouldIndex = !empty($config['site_seo_index_song_pages']);
+} elseif (strpos($path, '/song_view.html') !== false || preg_match('#^/song(?:/|$)#', $path)) {
+    $shouldIndex = false; // Never index blank song view shells without an ID
 } elseif (in_array($path, ['/songs', '/songs/', '/songs.html', '/main.html'], true)) {
     $shouldIndex = !empty($config['site_seo_index_songs']);
 } elseif (preg_match('#^/news/[^/]+/?$#', $path)) {
     $shouldIndex = !empty($config['site_seo_index_news_articles']);
 } elseif (in_array($path, ['/news', '/news/', '/news.html'], true)) {
     $shouldIndex = !empty($config['site_seo_index_news']);
+} elseif (in_array($path, ['/transpose', '/transpose/', '/transpose.html'], true) || preg_match('#^/transpose(?:/|$)#i', $path)) {
+    $shouldIndex = !empty($config['site_seo_index_transpose']);
 }
 $robotsContent = $shouldIndex
     ? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'

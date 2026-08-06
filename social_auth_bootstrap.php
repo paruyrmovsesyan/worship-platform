@@ -33,7 +33,7 @@ function wp_social_auth_local_config(): array {
 }
 
 function wp_social_auth_base_url(): string {
-    $https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    $https = function_exists('wp_runtime_is_https') ? wp_runtime_is_https() : (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
     $scheme = $https ? 'https' : 'http';
     $host = trim((string)($_SERVER['HTTP_HOST'] ?? ''));
     if ($host === '') {

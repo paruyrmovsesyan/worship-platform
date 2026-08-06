@@ -86,7 +86,7 @@ $showAdminDeviceSection = $deviceFilters['scope'] !== 'main';
 $allPushSubscriptions = wp_push_load_subscriptions();
 $pushSubscriptions = array_values(array_filter(
     $allPushSubscriptions,
-    'wp_push_has_subscription_endpoint'
+    static fn(array $row): bool => trim((string)($row['endpoint'] ?? '')) !== '' || trim((string)($row['device_id'] ?? '')) !== ''
 ));
 $pushLegacyBackupCount = count(wp_push_legacy_backup_rows());
 $accessMode = (string)($adminUser['access_mode'] ?? 'modern');
@@ -884,6 +884,27 @@ function wp_admin_updates_collect_input(array $config): array {
         'site_social_facebook' => array_key_exists('site_social_facebook', $_POST) ? $_POST['site_social_facebook'] : ($config['site_social_facebook'] ?? ''),
         'site_social_instagram' => array_key_exists('site_social_instagram', $_POST) ? $_POST['site_social_instagram'] : ($config['site_social_instagram'] ?? ''),
         'site_social_youtube' => array_key_exists('site_social_youtube', $_POST) ? $_POST['site_social_youtube'] : ($config['site_social_youtube'] ?? ''),
+        'about_hero_title' => array_key_exists('about_hero_title', $_POST) ? $_POST['about_hero_title'] : ($config['about_hero_title'] ?? ''),
+        'about_hero_subtitle' => array_key_exists('about_hero_subtitle', $_POST) ? $_POST['about_hero_subtitle'] : ($config['about_hero_subtitle'] ?? ''),
+        'about_mission_title' => array_key_exists('about_mission_title', $_POST) ? $_POST['about_mission_title'] : ($config['about_mission_title'] ?? ''),
+        'about_mission_text' => array_key_exists('about_mission_text', $_POST) ? $_POST['about_mission_text'] : ($config['about_mission_text'] ?? ''),
+        'about_vision_title' => array_key_exists('about_vision_title', $_POST) ? $_POST['about_vision_title'] : ($config['about_vision_title'] ?? ''),
+        'about_vision_text' => array_key_exists('about_vision_text', $_POST) ? $_POST['about_vision_text'] : ($config['about_vision_text'] ?? ''),
+        'about_stat1_number' => array_key_exists('about_stat1_number', $_POST) ? $_POST['about_stat1_number'] : ($config['about_stat1_number'] ?? ''),
+        'about_stat1_label' => array_key_exists('about_stat1_label', $_POST) ? $_POST['about_stat1_label'] : ($config['about_stat1_label'] ?? ''),
+        'about_stat2_number' => array_key_exists('about_stat2_number', $_POST) ? $_POST['about_stat2_number'] : ($config['about_stat2_number'] ?? ''),
+        'about_stat2_label' => array_key_exists('about_stat2_label', $_POST) ? $_POST['about_stat2_label'] : ($config['about_stat2_label'] ?? ''),
+        'about_stat3_number' => array_key_exists('about_stat3_number', $_POST) ? $_POST['about_stat3_number'] : ($config['about_stat3_number'] ?? ''),
+        'about_stat3_label' => array_key_exists('about_stat3_label', $_POST) ? $_POST['about_stat3_label'] : ($config['about_stat3_label'] ?? ''),
+        'privacy_title' => array_key_exists('privacy_title', $_POST) ? $_POST['privacy_title'] : ($config['privacy_title'] ?? ''),
+        'privacy_subtitle' => array_key_exists('privacy_subtitle', $_POST) ? $_POST['privacy_subtitle'] : ($config['privacy_subtitle'] ?? ''),
+        'privacy_content' => array_key_exists('privacy_content', $_POST) ? $_POST['privacy_content'] : ($config['privacy_content'] ?? ''),
+        'terms_title' => array_key_exists('terms_title', $_POST) ? $_POST['terms_title'] : ($config['terms_title'] ?? ''),
+        'terms_subtitle' => array_key_exists('terms_subtitle', $_POST) ? $_POST['terms_subtitle'] : ($config['terms_subtitle'] ?? ''),
+        'terms_content' => array_key_exists('terms_content', $_POST) ? $_POST['terms_content'] : ($config['terms_content'] ?? ''),
+        'cookies_title' => array_key_exists('cookies_title', $_POST) ? $_POST['cookies_title'] : ($config['cookies_title'] ?? ''),
+        'cookies_subtitle' => array_key_exists('cookies_subtitle', $_POST) ? $_POST['cookies_subtitle'] : ($config['cookies_subtitle'] ?? ''),
+        'cookies_content' => array_key_exists('cookies_content', $_POST) ? $_POST['cookies_content'] : ($config['cookies_content'] ?? ''),
         'release_apply_mode' => array_key_exists('release_apply_mode', $_POST) ? $_POST['release_apply_mode'] : 'without_file',
         'server_package_mode' => array_key_exists('server_package_mode', $_POST) ? $_POST['server_package_mode'] : ($config['server_package_mode'] ?? 'partial'),
     ];
@@ -1388,7 +1409,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'save_maintenance' => ['maintenance_enabled', 'maintenance_message', 'maintenance_start_at', 'maintenance_end_at', 'maintenance_allowed_ips', 'blocked_os_list'],
                 'save_page_modes' => ['page_app_modes', 'page_web_modes'],
                 'save_access', 'save_access_draft' => ['admin_emails', 'social_auth_google_client_id', 'social_auth_google_redirect_uri', 'meta_note'],
-                'save_site_info', 'save_site_info_draft' => ['site_seo_title', 'site_seo_description', 'site_seo_keywords', 'site_contact_email', 'site_contact_phone', 'site_contact_address', 'site_social_facebook', 'site_social_instagram', 'site_social_youtube'],
+                'save_site_info', 'save_site_info_draft' => ['site_seo_title', 'site_seo_description', 'site_seo_keywords', 'site_contact_email', 'site_contact_phone', 'site_contact_address', 'site_social_facebook', 'site_social_instagram', 'site_social_youtube', 'about_hero_title', 'about_hero_subtitle', 'about_mission_title', 'about_mission_text', 'about_vision_title', 'about_vision_text', 'about_stat1_number', 'about_stat1_label', 'about_stat2_number', 'about_stat2_label', 'about_stat3_number', 'about_stat3_label', 'privacy_title', 'privacy_subtitle', 'privacy_content', 'terms_title', 'terms_subtitle', 'terms_content', 'cookies_title', 'cookies_subtitle', 'cookies_content'],
                 default => [],
             };
             foreach ($actionFields as $field) {
@@ -1555,7 +1576,7 @@ $csrfToken = wp_admin_updates_csrf_token();
   <?php include __DIR__ . '/admin_updates_css.php'; ?>
 
 </head>
-<body>
+<body class="wp-admin-app">
   <script>
     <?= __('const ADMIN_I18N = {
       \'Թարմացում և տեղադրում\': {ru: \'Обновление и установка\', en: \'Update & Deploy\'},
@@ -2079,7 +2100,116 @@ $csrfToken = wp_admin_updates_csrf_token();
             </div>
           </div>
 
-          <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+          <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:24px 0;">
+          <h4 style="margin:0 0 16px 0; font-size:1.1rem; color:var(--accent-cyan, #00f0ff); font-weight:700;">ℹ️ «Մեր Մասին» (About Us) Էջի Բովանդակություն</h4>
+
+          <div class="bento-grid cols-2">
+            <div class="form-field">
+              <label for="about_hero_title"><?= __('Գլխավոր Վերնագիր') ?></label>
+              <input id="about_hero_title" name="about_hero_title" maxlength="150" value="<?= htmlspecialchars((string)($config['about_hero_title'] ?? 'Մեր Մասին'), ENT_QUOTES) ?>">
+            </div>
+            <div class="form-field">
+              <label for="about_hero_subtitle"><?= __('Ենթավերնագիր') ?></label>
+              <input id="about_hero_subtitle" name="about_hero_subtitle" maxlength="500" value="<?= htmlspecialchars((string)($config['about_hero_subtitle'] ?? ''), ENT_QUOTES) ?>">
+            </div>
+          </div>
+
+          <div class="bento-grid cols-2">
+            <div class="form-field">
+              <label for="about_mission_title"><?= __('Առաքելության Վերնագիր') ?></label>
+              <input id="about_mission_title" name="about_mission_title" maxlength="150" value="<?= htmlspecialchars((string)($config['about_mission_title'] ?? 'Մեր Առաքելությունը'), ENT_QUOTES) ?>">
+              <label for="about_mission_text" style="margin-top:10px;"><?= __('Առաքելության Տեքստ') ?></label>
+              <textarea id="about_mission_text" name="about_mission_text" rows="3" maxlength="2000"><?= htmlspecialchars((string)($config['about_mission_text'] ?? ''), ENT_QUOTES) ?></textarea>
+            </div>
+
+            <div class="form-field">
+              <label for="about_vision_title"><?= __('Տեսլականի Վերնագիր') ?></label>
+              <input id="about_vision_title" name="about_vision_title" maxlength="150" value="<?= htmlspecialchars((string)($config['about_vision_title'] ?? 'Մեր Տեսլականը'), ENT_QUOTES) ?>">
+              <label for="about_vision_text" style="margin-top:10px;"><?= __('Տեսլականի Տեքստ') ?></label>
+              <textarea id="about_vision_text" name="about_vision_text" rows="3" maxlength="2000"><?= htmlspecialchars((string)($config['about_vision_text'] ?? ''), ENT_QUOTES) ?></textarea>
+            </div>
+          </div>
+
+          <h5 style="margin:16px 0 10px 0; font-size:0.95rem; color:var(--text);"><?= __('Վիճակագրության Ցուցանիշներ') ?></h5>
+          <div class="bento-grid cols-3">
+            <div class="form-field">
+              <label for="about_stat1_number"><?= __('Ցուցանիշ 1 (Թիվ)') ?></label>
+              <input id="about_stat1_number" name="about_stat1_number" maxlength="50" value="<?= htmlspecialchars((string)($config['about_stat1_number'] ?? '1000+'), ENT_QUOTES) ?>">
+              <label for="about_stat1_label" style="margin-top:6px;"><?= __('Անվանում 1') ?></label>
+              <input id="about_stat1_label" name="about_stat1_label" maxlength="100" value="<?= htmlspecialchars((string)($config['about_stat1_label'] ?? 'Ակտիվ Երգեր'), ENT_QUOTES) ?>">
+            </div>
+            <div class="form-field">
+              <label for="about_stat2_number"><?= __('Ցուցանիշ 2 (Թիվ)') ?></label>
+              <input id="about_stat2_number" name="about_stat2_number" maxlength="50" value="<?= htmlspecialchars((string)($config['about_stat2_number'] ?? '500+'), ENT_QUOTES) ?>">
+              <label for="about_stat2_label" style="margin-top:6px;"><?= __('Անվանում 2') ?></label>
+              <input id="about_stat2_label" name="about_stat2_label" maxlength="100" value="<?= htmlspecialchars((string)($config['about_stat2_label'] ?? 'Պաշտամունքի Թիմեր'), ENT_QUOTES) ?>">
+            </div>
+            <div class="form-field">
+              <label for="about_stat3_number"><?= __('Ցուցանիշ 3 (Թիվ)') ?></label>
+              <input id="about_stat3_number" name="about_stat3_number" maxlength="50" value="<?= htmlspecialchars((string)($config['about_stat3_number'] ?? '10,000+'), ENT_QUOTES) ?>">
+              <label for="about_stat3_label" style="margin-top:6px;"><?= __('Անվանում 3') ?></label>
+              <input id="about_stat3_label" name="about_stat3_label" maxlength="100" value="<?= htmlspecialchars((string)($config['about_stat3_label'] ?? 'Օգտատերեր'), ENT_QUOTES) ?>">
+            </div>
+          </div>
+
+          <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:24px 0;">
+          <h4 style="margin:0 0 16px 0; font-size:1.1rem; color:var(--accent-cyan, #00f0ff); font-weight:700;">🔒 «Գաղտնիության Քաղաքականություն» (Privacy Policy) Էջ</h4>
+
+          <div class="bento-grid cols-2">
+            <div class="form-field">
+              <label for="privacy_title"><?= __('Գլխավոր Վերնագիր') ?></label>
+              <input id="privacy_title" name="privacy_title" maxlength="150" value="<?= htmlspecialchars((string)($config['privacy_title'] ?? 'Գաղտնիության Քաղաքականություն'), ENT_QUOTES) ?>">
+            </div>
+            <div class="form-field">
+              <label for="privacy_subtitle"><?= __('Ենթավերնագիր') ?></label>
+              <input id="privacy_subtitle" name="privacy_subtitle" maxlength="500" value="<?= htmlspecialchars((string)($config['privacy_subtitle'] ?? ''), ENT_QUOTES) ?>">
+            </div>
+          </div>
+
+          <div class="form-field" style="margin-top:12px;">
+            <label for="privacy_content"><?= __('Գաղտնիության Քաղաքականության Տեքստ (Markdown / HTML)') ?></label>
+            <textarea id="privacy_content" name="privacy_content" rows="8" style="font-family: monospace; font-size:0.9rem; line-height:1.5;"><?= htmlspecialchars((string)($config['privacy_content'] ?? ''), ENT_QUOTES) ?></textarea>
+          </div>
+
+          <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:24px 0;">
+          <h4 style="margin:0 0 16px 0; font-size:1.1rem; color:var(--accent-cyan, #00f0ff); font-weight:700;">📜 «Օգտագործման Պայմաններ» (Terms of Service) Էջ</h4>
+
+          <div class="bento-grid cols-2">
+            <div class="form-field">
+              <label for="terms_title"><?= __('Գլխավոր Վերնագիր') ?></label>
+              <input id="terms_title" name="terms_title" maxlength="150" value="<?= htmlspecialchars((string)($config['terms_title'] ?? 'Օգտագործման Պայմաններ'), ENT_QUOTES) ?>">
+            </div>
+            <div class="form-field">
+              <label for="terms_subtitle"><?= __('Ենթավերնագիր') ?></label>
+              <input id="terms_subtitle" name="terms_subtitle" maxlength="500" value="<?= htmlspecialchars((string)($config['terms_subtitle'] ?? ''), ENT_QUOTES) ?>">
+            </div>
+          </div>
+
+          <div class="form-field" style="margin-top:12px;">
+            <label for="terms_content"><?= __('Օգտագործման Պայմանների Տեքստ (Markdown / HTML)') ?></label>
+            <textarea id="terms_content" name="terms_content" rows="8" style="font-family: monospace; font-size:0.9rem; line-height:1.5;"><?= htmlspecialchars((string)($config['terms_content'] ?? ''), ENT_QUOTES) ?></textarea>
+          </div>
+
+          <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:24px 0;">
+          <h4 style="margin:0 0 16px 0; font-size:1.1rem; color:var(--accent-cyan, #00f0ff); font-weight:700;">🍪 «Cookie-ների Քաղաքականություն» (Cookie Policy) Էջ</h4>
+
+          <div class="bento-grid cols-2">
+            <div class="form-field">
+              <label for="cookies_title"><?= __('Գլխավոր Վերնագիր') ?></label>
+              <input id="cookies_title" name="cookies_title" maxlength="150" value="<?= htmlspecialchars((string)($config['cookies_title'] ?? 'Cookie-ների Քաղաքականություն'), ENT_QUOTES) ?>">
+            </div>
+            <div class="form-field">
+              <label for="cookies_subtitle"><?= __('Ենթավերնագիր') ?></label>
+              <input id="cookies_subtitle" name="cookies_subtitle" maxlength="500" value="<?= htmlspecialchars((string)($config['cookies_subtitle'] ?? ''), ENT_QUOTES) ?>">
+            </div>
+          </div>
+
+          <div class="form-field" style="margin-top:12px;">
+            <label for="cookies_content"><?= __('Cookie-ների Քաղաքականության Տեքստ (Markdown / HTML)') ?></label>
+            <textarea id="cookies_content" name="cookies_content" rows="8" style="font-family: monospace; font-size:0.9rem; line-height:1.5;"><?= htmlspecialchars((string)($config['cookies_content'] ?? ''), ENT_QUOTES) ?></textarea>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; margin-top:20px;">
             <button class="btn btn-primary" type="submit" name="form_action" value="save_site_info"><?= __('Պահպանել տվյալները') ?></button>
           </div>
         </section>
@@ -2494,13 +2624,21 @@ $csrfToken = wp_admin_updates_csrf_token();
                       </div>
                     <?php endif; ?>
 
-                    <?php if ($requestType === 'new'): ?>
-                      <div style="font-size:13px; font-weight:600; margin-bottom:8px; border-bottom:1px solid var(--border); padding-bottom:4px;"><?= __('Նոր Երգի Տվյալներ') ?></div>
+                    <?php if ($requestType === 'edit' && empty($requestChanges)): ?>
+                      <div style="background:#fef3c7; border:1px solid #fcd34d; border-left:4px solid #f59e0b; padding:12px 16px; border-radius:6px; font-size:13px; color:#92400e; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:16px;">⚠️</span>
+                        <span><strong><?= __('Ոչ մի փոփոխություն չկա․') ?></strong> <?= __('Այս հայտը ուղարկվել է առանց որևէ տվյալ փոխելու (առաջարկված տվյալները 100% նույնական են ընթացիկ երգի հետ)։') ?></span>
+                      </div>
+                    <?php endif; ?>
+
+                    <?php if ($requestType === 'new' || ($requestType === 'edit' && empty($requestChanges))): ?>
+                      <div style="font-size:13px; font-weight:600; margin-bottom:8px; border-bottom:1px solid var(--border); padding-bottom:4px;"><?= $requestType === 'edit' ? __('Առաջարկված Երգի Տվյալներ') : __('Նոր Երգի Տվյալներ') ?></div>
                       <div class="bento-grid cols-2" style="gap:16px; margin-bottom:16px; background:#f8fafc; padding:16px; border-radius:8px; border:1px solid var(--border);">
                         <div>
                           <div style="font-size:11px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;"><?= __('Մետատվյալներ') ?></div>
                           <ul style="margin:0; padding:0; list-style:none; font-size:13px; display:flex; flex-direction:column; gap:4px;">
-                            <li><strong>HY:</strong> <?= htmlspecialchars((string)($request['title_hy'] ?? ''), ENT_QUOTES) ?: '—' ?></li>
+                            <li><strong>HY:</strong> <?= htmlspecialchars((string)($request['title_hy'] ?? $request['title'] ?? ''), ENT_QUOTES) ?: '—' ?></li>
+                            <li><strong>LAT:</strong> <?= htmlspecialchars((string)($request['title_lat'] ?? ''), ENT_QUOTES) ?: '—' ?></li>
                             <li><strong>EN:</strong> <?= htmlspecialchars((string)($request['title_en'] ?? ''), ENT_QUOTES) ?: '—' ?></li>
                             <li><strong>RU:</strong> <?= htmlspecialchars((string)($request['title_ru'] ?? ''), ENT_QUOTES) ?: '—' ?></li>
                             <li><strong>Հեղինակ:</strong> <?= htmlspecialchars($requestArtistValue !== '' ? $requestArtistValue : '—', ENT_QUOTES) ?></li>
@@ -2742,7 +2880,7 @@ $csrfToken = wp_admin_updates_csrf_token();
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
                 <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;"><?= __('Ծրագրի ընդհանուր ճանաչված տեղադրումներ') ?></span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($installStats['main']['known_count'] ?? 0) ?></strong>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($installStats['total_known'] ?? $installStats['main']['known_count'] ?? 0) ?></strong>
               </div>
               
             </div>
@@ -2752,8 +2890,8 @@ $csrfToken = wp_admin_updates_csrf_token();
           <div class="stat">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
-                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;"><?= __('Վերջին') ?> <?= (int)($installStats['window_days'] ?? 60) ?> <?= __('օրում ակտիվ երևացած սարքեր') ?></span>
-                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($installStats['main']['count'] ?? 0) ?></strong>
+                <span style="display: block; color: var(--muted); font-weight: 600; font-size: 15px; margin-bottom: 8px;"><?= __('Վերջին') ?> <?= (int)($installStats['window_days'] ?? 180) ?> <?= __('օրում ակտիվ երևացած սարքեր') ?></span>
+                <strong style="font-size: 32px; color: var(--text); display: block; margin-bottom: 12px;"><?= (int)($installStats['total'] ?? $installStats['main']['count'] ?? 0) ?></strong>
               </div>
               
             </div>
@@ -4849,7 +4987,11 @@ $csrfToken = wp_admin_updates_csrf_token();
 
       sectionTabs.forEach((tab) => {
         tab?.addEventListener('click', () => {
-          setActiveSection(tab.getAttribute('data-section-tab') || 'release');
+          const newSection = tab.getAttribute('data-section-tab') || 'release';
+          setActiveSection(newSection);
+          const url = new URL(window.location.href);
+          url.searchParams.set('section', newSection);
+          window.history.pushState({}, '', url);
         });
       });
 
@@ -5327,3 +5469,4 @@ $csrfToken = wp_admin_updates_csrf_token();
   </script>
 </body>
 </html>
+<!-- trigger sync -->

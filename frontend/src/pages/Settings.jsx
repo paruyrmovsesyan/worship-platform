@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useIsPWA } from '../hooks/useIsPWA';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { getLocalizedTitle } from '../utils/titleParser';
@@ -34,16 +34,28 @@ function getCachedAppInfo() {
 }
 
 export default function Settings() {
-  const { user, logout } = useAuth();
+  const { user, logout, refetchUser } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const isPWA = useIsPWA();
   const isMobile = useMediaQuery('(max-width: 900px)');
 
   const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam) return tabParam;
     if (!user) return 'app';
     return isMobile ? null : 'profile';
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [location.search]);
   const [msg, setMsg] = useState({ text: '', type: '' });
 
   // App Settings States
@@ -89,6 +101,22 @@ export default function Settings() {
   }, []);
 
   // --- API Calls ---
+  const fetchProfileData = useCallback(async () => {
+    try {
+      const res = await fetch('/account_api.php?action=me');
+      const data = await res.json();
+      if (data && (data.ok || data.id)) {
+        if (data.name !== undefined) setName(data.name || '');
+        if (data.username !== undefined) setUsername(data.username || '');
+        if (data.birth_date !== undefined) setBirthDate(data.birth_date && data.birth_date !== '0000-00-00' ? data.birth_date : '');
+        if (data.gender !== undefined) setGender(data.gender || '');
+        if (data.phone_number !== undefined) setPhoneNumber(data.phone_number || '');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
   const fetchEmailStatus = useCallback(async () => {
     try {
       const res = await fetch('/account_api.php?action=email_status');
@@ -98,6 +126,17 @@ export default function Settings() {
       console.error(e);
     }
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setUsername(user.username || '');
+      setBirthDate(user.birth_date && user.birth_date !== '0000-00-00' ? user.birth_date : '');
+      setGender(user.gender || '');
+      setPhoneNumber(user.phone_number || '');
+      fetchProfileData();
+    }
+  }, [user, fetchProfileData]);
 
   const fetchSessions = useCallback(async () => {
     try {
@@ -240,8 +279,9 @@ export default function Settings() {
       });
       const data = await res.json();
       if (data.ok) {
-        showMsg(t('settings.profile.success'));
-        // If we had a context update function, we'd call it here
+        showMsg(t('settings.profile.success', 'Պրոֆիլը պահպանված է'));
+        if (typeof refetchUser === 'function') await refetchUser();
+        await fetchProfileData();
       } else {
         showMsg(data.error || 'Error', 'err');
       }
@@ -384,7 +424,7 @@ export default function Settings() {
   // Render Functions
   const renderSidebar = () => {
     const menuItems = [
-      { id: 'app', label: t('settings.tabs.app', 'Ծրագրի կարգավորումներ'), icon: <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg> },
+      { id: 'app', label: isPWA ? t('settings.tabs.app', 'Ծրագիր') : t('settings.tabs.web', 'Կայք'), icon: <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg> },
       ...(isPWA ? [
         { id: 'about', label: t('settings.tabs.about'), icon: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> }
       ] : []),
@@ -436,7 +476,7 @@ export default function Settings() {
                 <h4 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: 700, color: '#fff' }}>{t('auth.notLoggedInTitle', 'Դուք մուտք չեք գործել')}</h4>
                 <p style={{ margin: 0, fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)' }}>{t('auth.notLoggedInDesc', 'Մուտք գործեք՝ պրոֆիլը, երգացանկերը և ֆավորիտները կառավարելու համար:')}</p>
               </div>
-              <button className="btn btn-primary" style={{ padding: '8px 18px', borderRadius: '12px', fontSize: '0.9rem' }} onClick={() => navigate('/loginuser.php')}>
+              <button className="btn btn-primary" style={{ padding: '8px 18px', borderRadius: '12px', fontSize: '0.9rem' }} onClick={() => navigate('/login')}>
                 {t('auth.login', 'Մուտք')}
               </button>
             </div>
@@ -488,16 +528,16 @@ export default function Settings() {
               </div>
               <div className="status-info mt-1">
                 <span>{t('settings.security.emailStatus')}:</span>
-                {emailStatus.verified ? (
+                {emailStatus?.verified ? (
                   <span className="badge badge-success">{t('settings.security.verified')}</span>
                 ) : (
                   <span className="badge badge-warning">{t('settings.security.unverified')}</span>
                 )}
               </div>
-              {emailStatus.pending && (
+              {emailStatus?.pending && (
                 <div className="status-info mt-2">
                   <span>Pending:</span>
-                  <span className="text-muted">{emailStatus.pending_email}</span>
+                  <span className="text-muted">{emailStatus?.pending_email}</span>
                 </div>
               )}
             </div>
@@ -509,7 +549,7 @@ export default function Settings() {
 
             <div className="btn-row">
               <button className="settings-btn secondary" onClick={handleUpdateEmail}>{t('settings.security.changeEmail')}</button>
-              {!emailStatus.verified && (
+              {!emailStatus?.verified && (
                 <button className="settings-btn" onClick={handleSendVerify}>{t('settings.security.sendVerify')}</button>
               )}
             </div>
@@ -522,18 +562,18 @@ export default function Settings() {
           <div className="settings-sections fade-in">
             <div className="settings-card">
               <div className="card-header-flex" style={{ marginBottom: '1rem' }}>
-                <h3>{t('settings.tabs.app', 'Ծրագրի կարգավորումներ')}</h3>
+                <h3>{isPWA ? t('settings.tabs.app', 'Ծրագիր') : t('settings.tabs.web', 'Կայք')}</h3>
                 <span className="menu-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg></span>
               </div>
               <p className="text-muted" style={{ marginBottom: '1.5rem' }}>
-                {t('settings.app.desc', 'Կարգավորեք ծրագրի արտաքին տեսքը և աշխատանքի պարամետրերը:')}
+                {isPWA ? t('settings.app.desc', 'Կարգավորեք ծրագրի արտաքին տեսքը և աշխատանքի պարամետրերը:') : 'Կարգավորեք կայքի արտաքին տեսքը և աշխատանքի պարամետրերը:'}
               </p>
 
               <div className="app-theme-setting" style={{ marginBottom: '1.5rem' }}>
                 <div className="app-theme-copy">
                   <strong>{t('settings.app.themeMode', 'Գունային ռեժիմ')}</strong>
                   <p className="text-muted">
-                    {t('settings.app.themeModeDesc', 'Ընտրեք ծրագրի բաց կամ մութ տեսքը։')}
+                    {isPWA ? t('settings.app.themeModeDesc', 'Ընտրեք ծրագրի բաց կամ մութ տեսքը։') : 'Ընտրեք կայքի բաց կամ մութ տեսքը։'}
                   </p>
                 </div>
                 <div className="app-theme-segmented" role="radiogroup" aria-label={t('settings.app.themeMode', 'Գունային ռեժիմ')}>
@@ -746,8 +786,12 @@ export default function Settings() {
                 </div>
                 {appInfo.releaseType && (
                   <div className="about-info-row">
-                    <span>{t('settings.about.releaseType')}</span>
-                    <strong>{t(`settings.about.releaseTypes.${appInfo.releaseType}`)}</strong>
+                    <span>{t('settings.about.releaseType', 'Թողարկման տեսակ')}</span>
+                    <strong>
+                      {typeof t(`settings.about.releaseTypes.${appInfo.releaseType}`) === 'string'
+                        ? t(`settings.about.releaseTypes.${appInfo.releaseType}`)
+                        : String(appInfo.releaseType)}
+                    </strong>
                   </div>
                 )}
                 {appInfo.updatedAt && (
@@ -964,6 +1008,30 @@ export default function Settings() {
       {msg.text && (
         <div className={`settings-msg ${msg.type === 'err' ? 'msg-error' : 'msg-success'}`}>
           {msg.text}
+        </div>
+      )}
+
+      {!isPWA && !isMobile && (
+        <div className="web-settings-hero">
+          <div className="web-settings-hero-bg" />
+          <div className="web-settings-hero-content">
+            <div className="web-settings-hero-title">
+              <h2>{t('settings.title', 'Կարգավորումներ')}</h2>
+              <p>{isPWA ? 'Կառավարեք Ձեր անձնական տվյալները, ծրագրի ռեժիմները և անվտանգությունը։' : 'Կարգավորեք կայքի արտաքին տեսքը, Ձեր անձնական տվյալները և անվտանգությունը։'}</p>
+            </div>
+            {user && (
+              <div className="web-settings-user-pill" onClick={() => navigate('/profile')}>
+                <div className="web-settings-avatar">
+                  {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div className="web-settings-user-info">
+                  <span className="web-settings-name">{user.name}</span>
+                  {user.username && <span className="web-settings-tag">@{user.username}</span>}
+                </div>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

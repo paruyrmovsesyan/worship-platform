@@ -39,11 +39,45 @@ try {
         }
     }
 
+    // Sent Push Notifications
+    $rPush = $conn->query("SHOW TABLES LIKE 'push_history'");
+    if ($rPush && $rPush->num_rows > 0) {
+        $r2 = $conn->query("SELECT id, title, body, devices_count, at FROM push_history ORDER BY id DESC LIMIT 5");
+        if ($r2) {
+            while ($row = $r2->fetch_assoc()) {
+                $items[] = [
+                    'type'    => 'push',
+                    'message' => '📣 Push: ' . ($row['title'] ?? 'Notification'),
+                    'sub'     => ($row['devices_count'] ?? 0) . ' devices reached',
+                    'time'    => $row['at'] ?? date('Y-m-d H:i:s'),
+                    'link'    => '/admin_updates.php?tab=push'
+                ];
+            }
+        }
+    }
+
+    // Pending song change requests (moderation alert)
+    $rReq = $conn->query("SHOW TABLES LIKE 'song_change_requests'");
+    if ($rReq && $rReq->num_rows > 0) {
+        $r2 = $conn->query("SELECT id, title, created_at FROM song_change_requests WHERE status = 'pending' ORDER BY id DESC LIMIT 5");
+        if ($r2) {
+            while ($row = $r2->fetch_assoc()) {
+                $items[] = [
+                    'type'    => 'request',
+                    'message' => '⚠️ Pending request: ' . ($row['title'] ?? 'Song edit'),
+                    'sub'     => 'Requires admin review in Moderation',
+                    'time'    => $row['created_at'] ?? date('Y-m-d H:i:s'),
+                    'link'    => '/admin_messages.php'
+                ];
+            }
+        }
+    }
+
     $conn->close();
 
     // Sort by time desc
     usort($items, fn($a, $b) => strcmp((string)$b['time'], (string)$a['time']));
-    $items = array_slice($items, 0, 12);
+    $items = array_slice($items, 0, 20);
 
 } catch (Throwable $e) {
     echo json_encode(['error' => $e->getMessage(), 'items' => []]);

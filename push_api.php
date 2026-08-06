@@ -1,9 +1,16 @@
 <?php
+// opcache_bust: 3591
 declare(strict_types=1);
 
-require_once __DIR__ . '/auth_bootstrap.php';
-require_once __DIR__ . '/push_service.php';
-require_once __DIR__ . '/runtime_config.php';
+try {
+    require_once __DIR__ . '/auth_bootstrap.php';
+    require_once __DIR__ . '/push_service.php';
+    require_once __DIR__ . '/runtime_config.php';
+} catch (Throwable $e) {
+    header('Content-Type: application/json; charset=UTF-8');
+    echo json_encode(['ok' => false, 'error' => 'Include error: ' . $e->getMessage(), 'file' => $e->getFile(), 'line' => $e->getLine()]);
+    exit;
+}
 
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
@@ -24,16 +31,20 @@ function wp_push_api_body(): array {
     return is_array($decoded) ? $decoded : [];
 }
 
-$action = trim((string)($_GET['action'] ?? $_POST['action'] ?? 'config'));
-$config = wp_push_bootstrap_config();
+try {
+    $action = trim((string)($_GET['action'] ?? $_POST['action'] ?? 'config'));
+    $config = wp_push_bootstrap_config();
 
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'config') {
-    wp_push_api_response([
-        'ok' => true,
-        'enabled' => !empty($config['enabled']) && !empty($config['supported']),
-        'supported' => !empty($config['supported']),
-        'publicKey' => (string)($config['vapid_public_key'] ?? ''),
-    ]);
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'config') {
+        wp_push_api_response([
+            'ok' => true,
+            'enabled' => !empty($config['enabled']) && !empty($config['supported']),
+            'supported' => !empty($config['supported']),
+            'publicKey' => (string)($config['vapid_public_key'] ?? ''),
+        ]);
+    }
+} catch (Throwable $err) {
+    wp_push_api_response(['ok' => false, 'error' => $err->getMessage(), 'file' => $err->getFile(), 'line' => $err->getLine()], 500);
 }
 
 $body = wp_push_api_body();

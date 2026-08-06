@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useCallback, useState, useEffect, useMemo } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { usePageReady } from '../hooks/usePageReady';
@@ -8,8 +8,9 @@ import './SetlistsWeb.css';
 
 export default function SetlistsWeb() {
   const { user, loading: authLoading } = useAuth();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [setlists, setSetlists] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -34,7 +35,7 @@ export default function SetlistsWeb() {
 
   usePageReady(isLoading || authLoading);
 
-  const fetchSetlists = async () => {
+  const fetchSetlists = useCallback(async () => {
     try {
       const res = await fetch('/setlists_api.php?action=get_setlists');
       const data = await res.json();
@@ -46,9 +47,9 @@ export default function SetlistsWeb() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [t]);
 
-  const fetchTeams = async () => {
+  const fetchTeams = useCallback(async () => {
     try {
       const res = await fetch('/teams_api.php?action=get_teams');
       const data = await res.json();
@@ -58,16 +59,36 @@ export default function SetlistsWeb() {
     } catch (err) {
       console.error(err);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!user) {
-      setIsLoading(false);
-      return;
+      const timer = window.setTimeout(() => setIsLoading(false), 0);
+      return () => window.clearTimeout(timer);
     }
-    fetchSetlists();
-    fetchTeams();
+    const timer = window.setTimeout(() => {
+      fetchSetlists();
+      fetchTeams();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchSetlists, fetchTeams, user]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+    const openCreateModal = () => setShowCreateModal(true);
+    window.addEventListener('worship:create-setlist', openCreateModal);
+    return () => window.removeEventListener('worship:create-setlist', openCreateModal);
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const params = new URLSearchParams(location.search);
+    if (params.get('create') === '1') {
+      const timer = window.setTimeout(() => setShowCreateModal(true), 0);
+      return () => window.clearTimeout(timer);
+    }
+    return undefined;
+  }, [location.search, user]);
 
   // Handle Document Click for Action Menus
   useEffect(() => {
@@ -105,7 +126,7 @@ export default function SetlistsWeb() {
       } else {
         alert(data.error || t('setlists.createFailed', 'Չհաջողվեց ստեղծել երգացանկը'));
       }
-    } catch (err) {
+    } catch {
       alert(t('setlists.networkError', 'Ցանցային սխալ'));
     } finally {
       setIsCreating(false);

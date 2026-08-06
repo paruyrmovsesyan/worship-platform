@@ -1,11 +1,16 @@
 <?php
 declare(strict_types=1);
 
+ob_start();
 error_reporting(E_ALL);
-ini_set('display_errors', '0');
+ini_set('display_errors', '0');  // Never leak PHP errors into JSON response
+ini_set('log_errors', '1');
+ini_set('error_log', __DIR__ . '/debug_login_error.log');
 
 header("Content-Type: application/json; charset=UTF-8");
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Pragma: no-cache");
+header("Expires: 0");
 
 require_once __DIR__ . '/auth_bootstrap.php';
 require_once __DIR__ . '/runtime_config.php';
@@ -14,6 +19,9 @@ if (is_file(__DIR__ . '/install_service.php')) {
 }
 
 function out($arr, $code = 200){
+  while (ob_get_level()) {
+    ob_end_clean();
+  }
   http_response_code($code);
   echo json_encode($arr, JSON_UNESCAPED_UNICODE);
   exit;
@@ -83,15 +91,23 @@ if (!function_exists('wp_auth_sync_install_identity')) {
       $name = $username !== '' ? $username : $email;
     }
 
-    wp_install_register($scope, $deviceId, [
-      'verified_source' => wp_install_expected_source($scope),
-      'user_id' => max(0, (int)($user['id'] ?? 0)),
-      'user_name' => $name,
-      'user_username' => $username,
-      'user_email' => $email,
-      'ip_address' => function_exists('wp_runtime_remote_ip') ? wp_runtime_remote_ip() : (string)($_SERVER['REMOTE_ADDR'] ?? ''),
-      'user_agent' => (string)($_SERVER['HTTP_USER_AGENT'] ?? ''),
-    ]);
+    // CRITICAL: wp_install_register uses a separate mysqli connection that may
+    // already be closed by the time login completes. Wrap in Throwable catch so
+    // an install-tracking failure never corrupts the login JSON response.
+    try {
+      wp_install_register($scope, $deviceId, [
+        'verified_source' => wp_install_expected_source($scope),
+        'user_id'         => max(0, (int)($user['id'] ?? 0)),
+        'user_name'       => $name,
+        'user_username'   => $username,
+        'user_email'      => $email,
+        'ip_address'      => function_exists('wp_runtime_remote_ip') ? wp_runtime_remote_ip() : (string)($_SERVER['REMOTE_ADDR'] ?? ''),
+        'user_agent'      => (string)($_SERVER['HTTP_USER_AGENT'] ?? ''),
+      ]);
+    } catch (Throwable $installErr) {
+      // Install sync is non-critical — log it but do NOT let it break login.
+      error_log('wp_install_register failed (non-fatal): ' . $installErr->getMessage());
+    }
   }
 }
 
@@ -114,11 +130,7 @@ $source = function_exists('wp_auth_normalize_session_source')
   : strtolower((string)($d['source'] ?? 'web'));
 
 if($login === '' || $password === ''){
-  out(["error" => "Լրացրեք բոլոր դաշտերը"], 400);
-}
-
-if(!filter_var($login, FILTER_VALIDATE_EMAIL)){
-  out(["error" => "Մուտքագրեք վավեր էլ. փոստի հասցե"], 400);
+  out(["ok" => false, "success" => false, "error" => "Լրացրեք բոլոր դաշտերը"], 400);
 }
 
 try {
@@ -130,16 +142,18 @@ try {
   try {
     $conn->exec("ALTER TABLE users ADD COLUMN blocked_at DATETIME NULL DEFAULT NULL AFTER is_blocked");
   } catch (Throwable $e) {}
-} catch (Exception $e) {
-  out(["error" => "DB connection failed"], 500);
+} catch (Throwable $e) {
+  out(["ok" => false, "success" => false, "error" => "DB connection failed"], 500);
 }
 
-$loginNorm = strtolower($login);
-$stmt = $conn->prepare("SELECT * FROM users WHERE LOWER(email) = ? AND COALESCE(is_blocked, 0) = 0 LIMIT 1");
-$stmt->execute([$loginNorm]);
+$loginNorm = mb_strtolower($login, 'UTF-8');
+$stmt = $conn->prepare("SELECT * FROM users WHERE (LOWER(email) = ? OR LOWER(username) = ? OR LOWER(name) = ? OR email = ? OR username = ? OR name = ?) AND COALESCE(is_blocked, 0) = 0 LIMIT 1");
+$stmt->execute([$loginNorm, $loginNorm, $loginNorm, $login, $login, $login]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if($user && !empty($user['password_hash']) && password_verify($password, $user['password_hash'])){
+$pwMatch = $user && !empty($user['password_hash']) && (password_verify($password, (string)$user['password_hash']) || password_verify(trim($password), (string)$user['password_hash']));
+
+if($user && $pwMatch){
 
   $oldSessionKey = session_id();
   $oldSelector = wp_auth_current_remember_selector();
@@ -190,10 +204,11 @@ if($user && !empty($user['password_hash']) && password_verify($password, $user['
     setcookie("remember_me", "", [
       "expires"  => time() - 3600,
       "path"     => "/",
-      "secure"   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+      "secure"   => function_exists('wp_runtime_is_https') ? wp_runtime_is_https() : (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
       "httponly" => true,
       "samesite" => "Lax",
     ]);
+    wp_auth_issue_session_cookie($expiresTs);
   }
 
   if($oldSessionKey !== ''){
@@ -241,14 +256,15 @@ if($user && !empty($user['password_hash']) && password_verify($password, $user['
   wp_auth_sync_install_identity($user, $source);
 
   out([
-      "ok" => true,
-      "user" => [
-          "id" => (int)$user['id'],
-          "name" => $display,
+      "ok"      => true,
+      "success" => true,
+      "user"    => [
+          "id"    => (int)$user['id'],
+          "name"  => $display,
           "email" => $user['email']
       ]
   ]);
 
 } else {
-  out(["error" => "Սխալ էլ. փոստ կամ գաղտնաբառ"], 401);
+  out(["ok" => false, "success" => false, "error" => "Սխալ էլ. փոստ կամ գաղտնաբառ"], 401);
 }

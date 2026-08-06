@@ -12,6 +12,59 @@ export default function MobileNav() {
   const { guardPath } = usePwaOfflineGuard();
   const location = useLocation();
   const [chatBadgeCount, setChatBadgeCount] = useState(0);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    const handleFocusIn = (e) => {
+      const tag = e.target?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || e.target?.isContentEditable) {
+        const type = e.target?.type?.toLowerCase();
+        if (type !== 'checkbox' && type !== 'radio' && type !== 'button' && type !== 'submit') {
+          setIsKeyboardOpen(true);
+          document.body.classList.add('keyboard-open');
+        }
+      }
+    };
+
+    const handleFocusOut = () => {
+      setTimeout(() => {
+        const activeTag = document.activeElement?.tagName?.toLowerCase();
+        if (activeTag !== 'input' && activeTag !== 'textarea' && !document.activeElement?.isContentEditable) {
+          setIsKeyboardOpen(false);
+          document.body.classList.remove('keyboard-open');
+        }
+      }, 100);
+    };
+
+    const handleVisualViewportResize = () => {
+      if (window.visualViewport) {
+        const isShrunk = window.visualViewport.height < window.innerHeight * 0.8;
+        setIsKeyboardOpen(isShrunk);
+        if (isShrunk) {
+          document.body.classList.add('keyboard-open');
+        } else {
+          document.body.classList.remove('keyboard-open');
+        }
+      }
+    };
+
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleVisualViewportResize);
+      window.visualViewport.addEventListener('scroll', handleVisualViewportResize);
+    }
+
+    return () => {
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
+      document.body.classList.remove('keyboard-open');
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleVisualViewportResize);
+        window.visualViewport.removeEventListener('scroll', handleVisualViewportResize);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let intervalId = null;
@@ -65,8 +118,12 @@ export default function MobileNav() {
     };
   }, [user]);
 
+  if (isKeyboardOpen) {
+    return null;
+  }
+
   return createPortal(
-    <nav id="wpAppDock" className="mobile-bottom-nav">
+    <nav id="wpAppDock" className={`mobile-bottom-nav ${isKeyboardOpen ? 'keyboard-hidden' : ''}`}>
       <NavLink to="/" end onClick={(e) => { if (!guardPath('/')) e.preventDefault(); }} className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -83,7 +140,11 @@ export default function MobileNav() {
         <span>{t('nav.songs')}</span>
       </NavLink>
 
-      <NavLink to="/friends" onClick={(e) => { if (!guardPath('/friends')) e.preventDefault(); }} className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+      <NavLink
+        to="/chats"
+        onClick={(e) => { if (!guardPath('/chats')) e.preventDefault(); }}
+        className={({isActive}) => (isActive || location.pathname.startsWith('/chat/')) ? 'nav-item active' : 'nav-item'}
+      >
         <span className="nav-icon-wrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
@@ -94,7 +155,7 @@ export default function MobileNav() {
             </span>
           )}
         </span>
-        <span>{t('friends.tabs.chats')}</span>
+        <span>{t('chats.chats', 'Չաթեր')}</span>
       </NavLink>
 
       {user ? (

@@ -26,6 +26,8 @@ export default function Navbar() {
   const navMenuRef = useRef(null);
 
   const [unreadCount, setUnreadCount] = useState(0);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const profileMenuRef = useRef(null);
 
   useEffect(() => {
     if (user) {
@@ -96,6 +98,9 @@ export default function Navbar() {
       if (formRef.current && !formRef.current.contains(e.target)) {
         setSearchOpen(false);
       }
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
+        setProfileDropdownOpen(false);
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -123,39 +128,58 @@ export default function Navbar() {
 
   const isActive = (path) => location.pathname === path;
 
-  const navItems = [
+  const navSections = [
     {
-      to: '/', label: t('nav.home'),
-      icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      title: null,
+      items: [
+        {
+          to: '/', label: t('nav.home'),
+          icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        }
+      ]
     },
     {
-      to: '/songs', label: t('nav.songs'),
-      icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      title: t('megaMenu.features', 'Հնարավորություններ'),
+      items: [
+        {
+          to: '/songs', label: t('nav.songs'),
+          icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        },
+        {
+          to: '/transpose', label: t('nav.transposer'),
+          icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M7 4 4 7l3 3M20 17H4m13-3 3 3-3 3"/></svg>
+        },
+        {
+          to: '/setlists', label: t('nav.sets'),
+          icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        },
+        {
+          to: '/friends', label: t('nav.friends'),
+          icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        }
+      ]
     },
     {
-      to: '/transpose', label: t('nav.transposer'),
-      icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M7 4 4 7l3 3M20 17H4m13-3 3 3-3 3"/></svg>
-    },
-    {
-      to: '/setlists', label: t('nav.sets'),
-      icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-    },
-    {
-      to: '/friends', label: t('nav.friends'),
-      icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    },
-    {
-      to: '/community', label: t('nav.community'),
-      icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-    },
-    {
-      to: '/resources', label: t('nav.resources'),
-      icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-    },
-    {
-      to: '/news', label: t('nav.news'),
-      icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/></svg>
-    },
+      title: t('megaMenu.materials', 'Նյութեր & Կապ'),
+      items: [
+        {
+          to: '/news', label: t('nav.news'),
+          icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/></svg>
+        },
+        {
+          to: '/resources', label: t('nav.resources'),
+          icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        },
+        {
+          to: '/community', label: t('nav.community'),
+          icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        },
+        {
+          to: '/contact', label: t('megaMenu.contacts', 'Կապ'),
+          icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        }
+      ]
+    }
   ];
 
   // Mobile drawer rendered via Portal at document.body — escapes backdrop-filter stacking context
@@ -200,19 +224,24 @@ export default function Navbar() {
 
         {/* Nav links */}
         <nav className="menu-nav-links">
-          {navItems.map(item => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`menu-nav-link ${isActive(item.to) ? 'active' : ''}`}
-              onClick={() => setMenuOpen(false)}
-            >
-              <span className="menu-nav-icon">{item.icon}</span>
-              <span>{item.label}</span>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="menu-nav-arrow">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </Link>
+          {navSections.map((sec, idx) => (
+            <div key={idx} className="menu-nav-section">
+              {sec.title && <span className="menu-section-title">{sec.title}</span>}
+              {sec.items.map(item => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={`menu-nav-link ${isActive(item.to) ? 'active' : ''}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <span className="menu-nav-icon">{item.icon}</span>
+                  <span>{item.label}</span>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="menu-nav-arrow">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </Link>
+              ))}
+            </div>
           ))}
         </nav>
 
@@ -330,30 +359,19 @@ export default function Navbar() {
           {/* ── RIGHT SIDE ── */}
           <div className="navbar-right">
 
-            {/* Search */}
-            <form ref={formRef} className={`navbar-search hide-mobile ${searchOpen ? 'open' : ''}`} onSubmit={submitSearch}>
-              <button type="button" className="search-icon-btn" onClick={openSearch} aria-label="Search">
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                </svg>
-              </button>
-              {searchOpen && (
-                <input ref={searchRef} type="text" className="search-input"
-                  placeholder={t('nav.search')} value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)} onKeyDown={onKey}/>
-              )}
-              {searchOpen && searchQuery && (
-                <button type="button" className="search-clear-btn"
-                  onClick={() => { setSearchQuery(''); searchRef.current?.focus(); }}>✕</button>
-              )}
-              {searchOpen && (
-                <button type="submit" className="search-submit-btn">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                  </svg>
-                </button>
-              )}
-            </form>
+            {/* Search Pill (Command Palette Trigger) */}
+            <button
+              type="button"
+              className="nav-search-pill hide-mobile"
+              aria-label="Search"
+              onClick={() => window.dispatchEvent(new CustomEvent('worship:open-command-palette'))}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <span className="search-placeholder">{t('nav.search', 'Որոնել...')}</span>
+              <span className="search-kbd">{navigator.platform?.includes('Mac') ? '⌘K' : 'Ctrl+K'}</span>
+            </button>
 
             {/* Notifications Bell */}
             {user && isPWA && (
@@ -391,9 +409,66 @@ export default function Navbar() {
 
             {/* Auth buttons */}
             {user ? (
-              <div className="navbar-user hide-mobile">
-                <Link to="/profile" className="user-name">{user.name || user.username || user.email}</Link>
-                <button className="btn-logout" onClick={logout}>{t('nav.logout')}</button>
+              <div className="nav-profile-wrapper hide-mobile" ref={profileMenuRef}>
+                <button
+                  type="button"
+                  className={`nav-profile-chip ${profileDropdownOpen ? 'active' : ''}`}
+                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                >
+                  <div className="nav-profile-avatar">
+                    {user.name ? user.name.charAt(0).toUpperCase() : (user.username ? user.username.charAt(0).toUpperCase() : 'U')}
+                  </div>
+                  <span className="nav-profile-name">{user.name || user.username || user.email}</span>
+                  <svg className={`nav-profile-arrow ${profileDropdownOpen ? 'open' : ''}`} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+
+                {profileDropdownOpen && (
+                  <div className="nav-profile-dropdown">
+                    <div className="dropdown-user-header">
+                      <div className="dropdown-avatar-large">
+                        {user.name ? user.name.charAt(0).toUpperCase() : (user.username ? user.username.charAt(0).toUpperCase() : 'U')}
+                      </div>
+                      <div className="dropdown-user-info">
+                        <strong className="dropdown-name">{user.name || user.username || 'User'}</strong>
+                        <span className="dropdown-email">{user.email}</span>
+                      </div>
+                    </div>
+
+                    <div className="dropdown-divider"></div>
+
+                    <div className="dropdown-menu-list">
+                      <Link to="/profile" className="dropdown-item" onClick={() => setProfileDropdownOpen(false)}>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span>{t('profile.title', 'Անձնական էջ')}</span>
+                      </Link>
+                      <Link to="/settings" className="dropdown-item" onClick={() => setProfileDropdownOpen(false)}>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-1.41 3.41h-.1a2 2 0 0 1-1.41-.59l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82V22a2 2 0 0 1-4 0v-.1a1.65 1.65 0 0 0-.33-1.82 1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 0 1 2 18.59v-.1a2 2 0 0 1 .59-1.41l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33H2a2 2 0 0 1 0-4h.1a1.65 1.65 0 0 0 1.82-.33 1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 0 1 5.41 2h.1a2 2 0 0 1 1.41.59l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.82V2a2 2 0 0 1 4 0v.1a1.65 1.65 0 0 0 .33 1.82 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06A2 2 0 0 1 22 5.41v.1a2 2 0 0 1-.59 1.41l-.06.06A1.65 1.65 0 0 0 19.4 9c.23.31.39.66.6 1a1.65 1.65 0 0 0 1.82.33H22a2 2 0 0 1 0 4h-.1a1.65 1.65 0 0 0-1.82.33c-.21.34-.37.69-.6 1z"></path></svg>
+                        <span>{t('profile.accountSettings', 'Կարգավորումներ')}</span>
+                      </Link>
+                      <Link to="/chats" className="dropdown-item" onClick={() => setProfileDropdownOpen(false)}>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        <span>{t('chats.chats', 'Չաթեր')}</span>
+                      </Link>
+                      <Link to="/setlists" className="dropdown-item" onClick={() => setProfileDropdownOpen(false)}>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg>
+                        <span>{t('nav.setlists', 'Երգացանկեր')}</span>
+                      </Link>
+                      <Link to="/favorites" className="dropdown-item" onClick={() => setProfileDropdownOpen(false)}>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                        <span>{t('nav.favorites', 'Նախընտրածներ')}</span>
+                      </Link>
+                    </div>
+
+                    <div className="dropdown-divider"></div>
+
+                    <button type="button" className="dropdown-item danger" onClick={() => { setProfileDropdownOpen(false); logout(); }}>
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                      <span>{t('nav.logout', 'Դուրս գալ')}</span>
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="navbar-auth-btns hide-mobile">
