@@ -171,14 +171,17 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     const pc = new RTCPeerConnection(ICE_SERVERS);
     pcRef.current = pc;
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-      localStreamRef.current = stream;
-      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
-    } catch (e) {
-      console.error('Failed to get microphone stream', e);
-      alert('Միկրոֆոնի թույլտվություն չկա: Խնդրում ենք թույլատրել միկրոֆոնը:');
-      return null;
+    if (localStreamRef.current && localStreamRef.current.getAudioTracks().some((t) => t.readyState === 'live')) {
+      localStreamRef.current.getTracks().forEach((track) => pc.addTrack(track, localStreamRef.current));
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        localStreamRef.current = stream;
+        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+      } catch (e) {
+        console.error('Failed to get microphone stream', e);
+        return null;
+      }
     }
 
     pc.onicecandidate = (event) => {
@@ -447,16 +450,6 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       return;
     } finally {
       pendingStartRef.current = false;
-    }
-
-    // Acquire microphone stream in background asynchronously (non-blocking)
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        localStreamRef.current = stream;
-      } catch (micErr) {
-        console.warn('Microphone permission request warning:', micErr);
-      }
     }
   };
 
