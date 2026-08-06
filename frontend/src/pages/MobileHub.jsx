@@ -19,7 +19,7 @@ export default function MobileHub() {
   const [upcomingSetlist, setUpcomingSetlist] = useState(null);
   const [favorites, setFavorites] = useState([]);
   const [newsItems, setNewsItems] = useState(() => getCachedNewsList(language));
-  const [logoSrc, setLogoSrc] = useState('/platform_logo.png');
+  const [logoSrc, setLogoSrc] = useState('/wolarm_youth.png');
   const { guardPath } = usePwaOfflineGuard();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [lastSyncAt, setLastSyncAt] = useState('');
