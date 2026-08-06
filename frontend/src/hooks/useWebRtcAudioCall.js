@@ -280,7 +280,8 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
 
   // Single stable polling loop — started once, uses refs for state access
   useEffect(() => {
-    if (!currentUserId) return;
+    const uidNum = Number(currentUserId || 0);
+    if (!uidNum) return;
 
     const poll = async () => {
       try {
@@ -379,7 +380,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
 
     // Poll immediately, then every 1500ms — fixed interval, no restart on state changes
     poll();
-    callPollIntervalRef.current = setInterval(poll, 1500);
+    callPollIntervalRef.current = setInterval(poll, 1000);
 
     return () => {
       if (callPollIntervalRef.current) {

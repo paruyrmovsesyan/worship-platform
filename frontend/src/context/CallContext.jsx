@@ -15,7 +15,8 @@ export const useCall = () => {
 
 export function CallProvider({ children }) {
   const { user } = useAuth();
-  const audioCall = useWebRtcAudioCall(0, user?.id);
+  const userId = Number(user?.id || user?.user_id || 0);
+  const audioCall = useWebRtcAudioCall(0, userId);
 
   return (
     <CallContext.Provider value={audioCall}>
