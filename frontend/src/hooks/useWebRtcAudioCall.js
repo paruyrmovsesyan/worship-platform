@@ -216,8 +216,6 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
   }, [releaseWakeLock]);
 
   const isSpeakerOnRef = useRef(true);
-  const audioGainNodeRef = useRef(null);
-  const webAudioCtxRef = useRef(null);
   const audioOutputsRef = useRef([]);
   const selectedOutputIdRef = useRef('');
 
@@ -249,15 +247,6 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
         }
       }
     }
-
-    if (audioGainNodeRef.current) {
-      try {
-        const now = audioGainNodeRef.current.context.currentTime;
-        audioGainNodeRef.current.gain.setValueAtTime(isSpeaker ? 2.5 : 0.5, now);
-      } catch (e) {
-        console.warn('Gain adjustment failed', e);
-      }
-    }
   }, []);
 
   const closePeerConnection = useCallback(() => {
@@ -269,14 +258,6 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       pc.oniceconnectionstatechange = null;
       try { pc.close(); } catch { /* already closed */ }
       pcRef.current = null;
-    }
-    if (audioGainNodeRef.current) {
-      try { audioGainNodeRef.current.disconnect(); } catch { /* ignore */ }
-      audioGainNodeRef.current = null;
-    }
-    if (webAudioCtxRef.current) {
-      try { webAudioCtxRef.current.close(); } catch { /* ignore */ }
-      webAudioCtxRef.current = null;
     }
     pendingIceCandidatesRef.current = [];
     offerInFlightRef.current = false;
@@ -462,29 +443,11 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       if (!remoteAudioRef.current || !stream) return;
       remoteAudioRef.current.srcObject = stream;
       remoteAudioRef.current.play()
-        .then(() => setRemoteAudioBlocked(false))
-        .catch(() => setRemoteAudioBlocked(true));
-
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (AudioCtx) {
-          if (!webAudioCtxRef.current || webAudioCtxRef.current.state === 'closed') {
-            webAudioCtxRef.current = new AudioCtx();
-          }
-          const ctx = webAudioCtxRef.current;
-          if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-          if (!audioGainNodeRef.current) {
-            const source = ctx.createMediaStreamSource(stream);
-            const gain = ctx.createGain();
-            source.connect(gain);
-            gain.connect(ctx.destination);
-            audioGainNodeRef.current = gain;
-          }
+        .then(() => {
+          setRemoteAudioBlocked(false);
           applySpeakerRouting(isSpeakerOnRef.current);
-        }
-      } catch (e) {
-        console.warn('Web Audio gain routing error', e);
-      }
+        })
+        .catch(() => setRemoteAudioBlocked(true));
     };
 
     pc.onconnectionstatechange = () => {
