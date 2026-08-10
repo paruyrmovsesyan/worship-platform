@@ -140,6 +140,18 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
   const [selectedOutputId, setSelectedOutputId] = useState('');
   const [remoteAudioBlocked, setRemoteAudioBlocked] = useState(false);
 
+  let callDisplayName = 'Օգտատեր';
+  let callAvatarGradient = '';
+  if (callInfo) {
+    const isCaller = Number(callInfo.caller_id) === Number(currentUserId);
+    callDisplayName = isCaller
+      ? (callInfo.target_name || callInfo.target_email || 'Օգտատեր')
+      : (callInfo.caller_name || callInfo.caller_email || 'Օգտատեր');
+    callAvatarGradient = isCaller
+      ? (callInfo.target_avatar_gradient || '')
+      : (callInfo.caller_avatar_gradient || '');
+  }
+
   const pcRef = useRef(null);
   const localStreamRef = useRef(null);
   const remoteAudioRef = useRef(null);
@@ -923,18 +935,6 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
   useEffect(() => {
     if (!Number(currentUserId || 0) && callStateRef.current !== 'idle') resetCall();
   }, [currentUserId, resetCall]);
-
-  let callDisplayName = 'Օգտատեր';
-  let callAvatarGradient = '';
-  if (callInfo) {
-    const isCaller = Number(callInfo.caller_id) === Number(currentUserId);
-    callDisplayName = isCaller
-      ? (callInfo.target_name || callInfo.target_email || 'Օգտատեր')
-      : (callInfo.caller_name || callInfo.caller_email || 'Օգտատեր');
-    callAvatarGradient = isCaller
-      ? (callInfo.target_avatar_gradient || '')
-      : (callInfo.caller_avatar_gradient || '');
-  }
 
   return {
     callState,
