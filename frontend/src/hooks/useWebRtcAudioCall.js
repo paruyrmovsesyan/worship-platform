@@ -335,6 +335,9 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
           noiseSuppression: true,
           autoGainControl: true,
           channelCount: 1,
+          // Suppress audio playing on this page from being picked up by the mic
+          // (supported on Chrome/Firefox; silently ignored on iOS Safari)
+          suppressLocalAudioPlayback: true,
         },
         video: false,
       });
@@ -882,21 +885,39 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
 
       if (document.visibilityState === 'hidden') {
         // App went to background:
-        // - Keep mic ACTIVE so the other party still hears us
-        // - Silence the remote audio to prevent speaker→mic echo
+        // Keep mic active + keep speaker on.
+        // Apply suppressLocalAudioPlayback to reduce echo on browsers that support it.
+        // On iOS Safari this is ignored, but it helps on Chrome/Firefox.
         if (localStreamRef.current) {
           localStreamRef.current.getAudioTracks().forEach((track) => {
-            if (track.readyState === 'live') track.enabled = !isMutedRef.current;
+            if (track.readyState === 'live') {
+              track.enabled = !isMutedRef.current;
+              track.applyConstraints({
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: false,
+                suppressLocalAudioPlayback: true,
+              }).catch(() => {});
+            }
           });
         }
+        // Keep remote audio at a reduced volume to limit speaker→mic feedback
         if (remoteAudioRef.current) {
-          remoteAudioRef.current.volume = 0;
+          remoteAudioRef.current.volume = 0.3;
         }
       } else {
-        // App came back to foreground: restore mic + speaker
+        // App came back to foreground: restore normal constraints + full volume
         if (localStreamRef.current) {
           localStreamRef.current.getAudioTracks().forEach((track) => {
-            if (track.readyState === 'live') track.enabled = !isMutedRef.current;
+            if (track.readyState === 'live') {
+              track.enabled = !isMutedRef.current;
+              track.applyConstraints({
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+                suppressLocalAudioPlayback: true,
+              }).catch(() => {});
+            }
           });
         }
         if (remoteAudioRef.current) {
