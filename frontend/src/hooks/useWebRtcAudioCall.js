@@ -803,6 +803,26 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     return () => mediaDevices.removeEventListener('devicechange', refreshAudioOutputs);
   }, [refreshAudioOutputs]);
 
+  const isMutedRef = useRef(false);
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
+
+  useEffect(() => {
+    if (callState === 'connected' && 'mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: callDisplayName || 'Աուդիոզանգ',
+          artist: 'Worship Platform',
+          album: 'Live Call',
+        });
+        navigator.mediaSession.setActionHandler('hangup', () => endCall());
+      } catch (e) {
+        console.warn('MediaSession setup failed', e);
+      }
+    }
+  }, [callState, callDisplayName, endCall]);
+
   useEffect(() => {
     const handleOnline = () => {
       if (callStateRef.current === 'reconnecting') retryConnection();
@@ -814,15 +834,31 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       }
     };
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && callStateRef.current === 'connected') requestWakeLock();
+      if (['connected', 'connecting'].includes(callStateRef.current)) {
+        if (localStreamRef.current) {
+          localStreamRef.current.getAudioTracks().forEach((track) => {
+            if (track.readyState === 'live') {
+              track.enabled = !isMutedRef.current;
+            }
+          });
+        }
+        if (remoteAudioRef.current && remoteAudioRef.current.paused) {
+          remoteAudioRef.current.play().catch(() => setRemoteAudioBlocked(true));
+        }
+        if (document.visibilityState === 'visible') {
+          requestWakeLock();
+        }
+      }
     };
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('pagehide', handleVisibility);
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('pagehide', handleVisibility);
     };
   }, [requestWakeLock, retryConnection, setCallStateStable]);
 
