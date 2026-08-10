@@ -203,6 +203,51 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     releaseWakeLock();
   }, [releaseWakeLock]);
 
+  const isSpeakerOnRef = useRef(true);
+  const audioGainNodeRef = useRef(null);
+  const webAudioCtxRef = useRef(null);
+  const audioOutputsRef = useRef([]);
+  const selectedOutputIdRef = useRef('');
+
+  useEffect(() => {
+    audioOutputsRef.current = audioOutputs;
+  }, [audioOutputs]);
+
+  useEffect(() => {
+    selectedOutputIdRef.current = selectedOutputId;
+  }, [selectedOutputId]);
+
+  const applySpeakerRouting = useCallback((isSpeaker) => {
+    const audio = remoteAudioRef.current;
+    if (audio) {
+      audio.volume = isSpeaker ? 1.0 : 0.35;
+      if (typeof audio.setSinkId === 'function') {
+        if (isSpeaker) {
+          const speakerDevice = (audioOutputsRef.current || []).find((d) => {
+            const label = (d.label || '').toLowerCase();
+            return label.includes('speaker') || label.includes('loudspeaker') || label.includes('динамик') || label.includes('громկ') || label.includes('բարձրախոս');
+          });
+          audio.setSinkId(speakerDevice ? speakerDevice.deviceId : (selectedOutputIdRef.current || '')).catch(() => {});
+        } else {
+          const earpieceDevice = (audioOutputsRef.current || []).find((d) => {
+            const label = (d.label || '').toLowerCase();
+            return label.includes('earpiece') || label.includes('phone') || label.includes('телефон') || label.includes('наուշնիկ') || label.includes('headset');
+          });
+          audio.setSinkId(earpieceDevice ? earpieceDevice.deviceId : '').catch(() => {});
+        }
+      }
+    }
+
+    if (audioGainNodeRef.current) {
+      try {
+        const now = audioGainNodeRef.current.context.currentTime;
+        audioGainNodeRef.current.gain.setValueAtTime(isSpeaker ? 2.5 : 0.5, now);
+      } catch (e) {
+        console.warn('Gain adjustment failed', e);
+      }
+    }
+  }, []);
+
   const closePeerConnection = useCallback(() => {
     const pc = pcRef.current;
     if (pc) {
@@ -212,6 +257,14 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       pc.oniceconnectionstatechange = null;
       try { pc.close(); } catch { /* already closed */ }
       pcRef.current = null;
+    }
+    if (audioGainNodeRef.current) {
+      try { audioGainNodeRef.current.disconnect(); } catch { /* ignore */ }
+      audioGainNodeRef.current = null;
+    }
+    if (webAudioCtxRef.current) {
+      try { webAudioCtxRef.current.close(); } catch { /* ignore */ }
+      webAudioCtxRef.current = null;
     }
     pendingIceCandidatesRef.current = [];
     offerInFlightRef.current = false;
@@ -386,6 +439,27 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       remoteAudioRef.current.play()
         .then(() => setRemoteAudioBlocked(false))
         .catch(() => setRemoteAudioBlocked(true));
+
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          if (!webAudioCtxRef.current || webAudioCtxRef.current.state === 'closed') {
+            webAudioCtxRef.current = new AudioCtx();
+          }
+          const ctx = webAudioCtxRef.current;
+          if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+          if (!audioGainNodeRef.current) {
+            const source = ctx.createMediaStreamSource(stream);
+            const gain = ctx.createGain();
+            source.connect(gain);
+            gain.connect(ctx.destination);
+            audioGainNodeRef.current = gain;
+          }
+          applySpeakerRouting(isSpeakerOnRef.current);
+        }
+      } catch (e) {
+        console.warn('Web Audio gain routing error', e);
+      }
     };
 
     pc.onconnectionstatechange = () => {
@@ -748,32 +822,14 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
 
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
 
-  const toggleSpeaker = useCallback(async () => {
+  const toggleSpeaker = useCallback(() => {
     setIsSpeakerOn((prevSpeaker) => {
       const nextSpeaker = !prevSpeaker;
-      const audio = remoteAudioRef.current;
-
-      if (audio && typeof audio.setSinkId === 'function' && Array.isArray(audioOutputs) && audioOutputs.length > 0) {
-        if (nextSpeaker) {
-          const speakerDevice = audioOutputs.find((d) => {
-            const label = (d.label || '').toLowerCase();
-            return label.includes('speaker') || label.includes('loudspeaker') || label.includes('динамик') || label.includes('громկ') || label.includes('բարձրախոս');
-          });
-          const targetId = speakerDevice ? speakerDevice.deviceId : (selectedOutputId || '');
-          audio.setSinkId(targetId).catch(() => {});
-        } else {
-          const earpieceDevice = audioOutputs.find((d) => {
-            const label = (d.label || '').toLowerCase();
-            return label.includes('earpiece') || label.includes('phone') || label.includes('телефон') || label.includes('наուշնիկ') || label.includes('headset');
-          });
-          const targetId = earpieceDevice ? earpieceDevice.deviceId : '';
-          audio.setSinkId(targetId).catch(() => {});
-        }
-      }
-
+      isSpeakerOnRef.current = nextSpeaker;
+      applySpeakerRouting(nextSpeaker);
       return nextSpeaker;
     });
-  }, [audioOutputs, selectedOutputId]);
+  }, [applySpeakerRouting]);
 
   const selectAudioOutput = useCallback(async (deviceId) => {
     const audio = remoteAudioRef.current;
