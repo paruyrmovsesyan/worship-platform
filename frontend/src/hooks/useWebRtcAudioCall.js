@@ -283,17 +283,24 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
   }, []);
 
-  const stopLocalStream = useCallback(() => {
+  const stopLocalStream = useCallback((forceStop = false) => {
     const stream = localStreamRef.current;
-    if (stream) stream.getTracks().forEach((track) => track.stop());
-    localStreamRef.current = null;
+    if (!stream) return;
+    if (forceStop) {
+      stream.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+    } else {
+      stream.getAudioTracks().forEach((track) => {
+        track.enabled = false;
+      });
+    }
     setIsMuted(false);
   }, []);
 
-  const cleanupWebRtc = useCallback(() => {
+  const cleanupWebRtc = useCallback((forceStopMic = false) => {
     stopConnectionTimers();
     closePeerConnection();
-    stopLocalStream();
+    stopLocalStream(forceStopMic);
     reconnectAttemptsRef.current = 0;
     setConnectionQuality('unknown');
     setRemoteAudioBlocked(false);
@@ -302,7 +309,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
   const resetCall = useCallback(() => {
     if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
     resetTimerRef.current = null;
-    cleanupWebRtc();
+    cleanupWebRtc(false);
     pendingStartRef.current = false;
     cancelPendingStartRef.current = false;
     lastHeartbeatAtRef.current = 0;
@@ -327,7 +334,13 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
 
   const ensureLocalStream = useCallback(async () => {
     const existing = localStreamRef.current;
-    if (existing?.getAudioTracks().some((track) => track.readyState === 'live')) return existing;
+    if (existing?.getAudioTracks().some((track) => track.readyState === 'live')) {
+      existing.getAudioTracks().forEach((track) => {
+        track.enabled = true;
+      });
+      setIsMuted(false);
+      return existing;
+    }
     if (!navigator.mediaDevices?.getUserMedia) {
       const error = new Error('Microphone is not supported');
       error.code = 'microphone_unsupported';
@@ -930,7 +943,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     };
   }, [requestWakeLock, retryConnection, setCallStateStable]);
 
-  useEffect(() => () => cleanupWebRtc(), [cleanupWebRtc]);
+  useEffect(() => () => cleanupWebRtc(true), [cleanupWebRtc]);
 
   useEffect(() => {
     if (!Number(currentUserId || 0) && callStateRef.current !== 'idle') resetCall();
