@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-const assetVersion = '368'
+const assetVersion = '369'
 
 // https://vite.dev/config/
 export default defineConfig({

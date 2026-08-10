@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v368";
+const CACHE_VERSION = "worship-v369";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -35,8 +35,8 @@ const APP_SHELL = [
   "/app.js",
   "/site_guard.js",
   "/fav_bridge.js",
-  "/assets/index.css?v=368",
-  "/assets/index.js?v=368",
+  "/assets/index.css?v=369",
+  "/assets/index.js?v=369",
   "/manifest.json?v=10",
   "/favicon.png?v=2",
   "/apple-touch-icon-v7.png",
@@ -527,7 +527,6 @@ async function handleNotificationClick(event) {
   const notification = event.notification;
   const action = event.action;
   const data = (notification && notification.data) || {};
-  const isCall = data.is_call;
   const callId = data.call_id;
   const rawUrl = data.url || "/";
 
@@ -549,7 +548,9 @@ async function handleNotificationClick(event) {
   }
 
   let targetUrlString = rawUrl;
-  if (action === "accept" || isCall) {
+  // Opening the notification body must only reveal the incoming-call screen.
+  // Auto-accept is reserved for the explicit Accept action.
+  if (action === "accept") {
     if (!targetUrlString.includes("auto_accept=1")) {
       targetUrlString += (targetUrlString.includes("?") ? "&" : "?") + "auto_accept=1";
     }
