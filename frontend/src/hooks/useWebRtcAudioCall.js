@@ -877,8 +877,11 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
         setCallStateStable('reconnecting');
       }
     };
-    const handleVisibility = () => {
-      if (['connected', 'connecting'].includes(callStateRef.current)) {
+    const handleVisibilityChange = () => {
+      if (!['connected', 'connecting'].includes(callStateRef.current)) return;
+
+      if (document.visibilityState === 'hidden') {
+        // App went to background — keep mic alive, don't touch audio element
         if (localStreamRef.current) {
           localStreamRef.current.getAudioTracks().forEach((track) => {
             if (track.readyState === 'live') {
@@ -886,23 +889,21 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
             }
           });
         }
+      } else {
+        // App came back to foreground — resume remote audio & wake lock
         if (remoteAudioRef.current && remoteAudioRef.current.paused) {
           remoteAudioRef.current.play().catch(() => setRemoteAudioBlocked(true));
         }
-        if (document.visibilityState === 'visible') {
-          requestWakeLock();
-        }
+        requestWakeLock();
       }
     };
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-    document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('pagehide', handleVisibility);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('pagehide', handleVisibility);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [requestWakeLock, retryConnection, setCallStateStable]);
 
