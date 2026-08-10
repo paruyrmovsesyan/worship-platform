@@ -9,18 +9,18 @@ function formatDuration(seconds) {
 }
 
 export default function AudioCallModal({
-  callState,
-  callInfo,
-  callDisplayName,
-  callAvatarGradient,
-  isMuted,
+  callState = 'idle',
+  callInfo = null,
+  callDisplayName = '',
+  callAvatarGradient = '',
+  isMuted = false,
   isSpeakerOn = true,
-  callDurationSec,
-  connectionQuality,
-  callError,
-  audioOutputs,
-  selectedOutputId,
-  remoteAudioBlocked,
+  callDurationSec = 0,
+  connectionQuality = 'unknown',
+  callError = null,
+  audioOutputs = [],
+  selectedOutputId = '',
+  remoteAudioBlocked = false,
   remoteAudioRef,
   acceptCall,
   declineCall,
@@ -34,11 +34,12 @@ export default function AudioCallModal({
 }) {
   const { t } = useLanguage();
   const [minimizedCallId, setMinimizedCallId] = useState(0);
+
+  if (!callState || callState === 'idle') return null;
+
   const statusText = callState === 'connected'
     ? formatDuration(callDurationSec)
     : t(`call.${callState}`, t('call.failed'));
-
-  if (callState === 'idle') return null;
 
   const displayName = callDisplayName || 'User';
   const initial = displayName.charAt(0).toUpperCase();
@@ -107,7 +108,7 @@ export default function AudioCallModal({
               </button>
             ) : null}
 
-            {audioOutputs.length > 1 ? (
+            {Array.isArray(audioOutputs) && audioOutputs.length > 1 ? (
               <label className="audio-call-output">
                 <span>{t('call.audioOutput')}</span>
                 <select value={selectedOutputId} onChange={(event) => selectAudioOutput(event.target.value)}>
