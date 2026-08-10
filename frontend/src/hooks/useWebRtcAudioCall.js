@@ -881,26 +881,29 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       if (!['connected', 'connecting'].includes(callStateRef.current)) return;
 
       if (document.visibilityState === 'hidden') {
-        // App went to background.
-        // Disable mic to prevent iOS acoustic echo (AEC stops working in background).
-        // The WebRTC connection stays alive; other party simply won't hear us until we return.
+        // App went to background:
+        // - Keep mic ACTIVE so the other party still hears us
+        // - Silence the remote audio to prevent speaker→mic echo
         if (localStreamRef.current) {
           localStreamRef.current.getAudioTracks().forEach((track) => {
-            if (track.readyState === 'live') track.enabled = false;
+            if (track.readyState === 'live') track.enabled = !isMutedRef.current;
           });
+        }
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.volume = 0;
         }
       } else {
-        // App came back to foreground — restore mic to user's chosen mute state
+        // App came back to foreground: restore mic + speaker
         if (localStreamRef.current) {
           localStreamRef.current.getAudioTracks().forEach((track) => {
-            if (track.readyState === 'live') {
-              track.enabled = !isMutedRef.current;
-            }
+            if (track.readyState === 'live') track.enabled = !isMutedRef.current;
           });
         }
-        // Resume remote audio if the browser paused it
-        if (remoteAudioRef.current && remoteAudioRef.current.paused) {
-          remoteAudioRef.current.play().catch(() => setRemoteAudioBlocked(true));
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.volume = isSpeakerOnRef.current ? 1.0 : 0.4;
+          if (remoteAudioRef.current.paused) {
+            remoteAudioRef.current.play().catch(() => setRemoteAudioBlocked(true));
+          }
         }
         requestWakeLock();
       }
