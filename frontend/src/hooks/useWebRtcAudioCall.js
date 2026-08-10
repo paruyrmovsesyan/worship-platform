@@ -746,6 +746,35 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     });
   }, []);
 
+  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
+
+  const toggleSpeaker = useCallback(async () => {
+    setIsSpeakerOn((prevSpeaker) => {
+      const nextSpeaker = !prevSpeaker;
+      const audio = remoteAudioRef.current;
+
+      if (audio && typeof audio.setSinkId === 'function' && Array.isArray(audioOutputs) && audioOutputs.length > 0) {
+        if (nextSpeaker) {
+          const speakerDevice = audioOutputs.find((d) => {
+            const label = (d.label || '').toLowerCase();
+            return label.includes('speaker') || label.includes('loudspeaker') || label.includes('динамик') || label.includes('громկ') || label.includes('բարձրախոս');
+          });
+          const targetId = speakerDevice ? speakerDevice.deviceId : (selectedOutputId || '');
+          audio.setSinkId(targetId).catch(() => {});
+        } else {
+          const earpieceDevice = audioOutputs.find((d) => {
+            const label = (d.label || '').toLowerCase();
+            return label.includes('earpiece') || label.includes('phone') || label.includes('телефон') || label.includes('наուշնիկ') || label.includes('headset');
+          });
+          const targetId = earpieceDevice ? earpieceDevice.deviceId : '';
+          audio.setSinkId(targetId).catch(() => {});
+        }
+      }
+
+      return nextSpeaker;
+    });
+  }, [audioOutputs, selectedOutputId]);
+
   const selectAudioOutput = useCallback(async (deviceId) => {
     const audio = remoteAudioRef.current;
     if (!audio || typeof audio.setSinkId !== 'function') return false;
@@ -821,6 +850,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     callDisplayName,
     callAvatarGradient,
     isMuted,
+    isSpeakerOn,
     callDurationSec,
     connectionQuality,
     callError,
@@ -834,6 +864,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     endCall,
     retryConnection,
     toggleMute,
+    toggleSpeaker,
     selectAudioOutput,
     resumeRemoteAudio,
     dismissCall: resetCall,

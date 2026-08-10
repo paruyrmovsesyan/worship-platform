@@ -228,6 +228,7 @@
 .btn-call-action.retry { background: #3478f6; }
 .btn-call-action.secondary { background: rgba(255, 255, 255, 0.1); }
 .btn-call-action.mute.active { background: #f4a62a; }
+.btn-call-action.speaker.active { background: #3478f6; }
 
 .audio-call-compact {
   position: fixed;
