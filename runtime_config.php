@@ -835,11 +835,25 @@ if (!function_exists('wp_runtime_load_secret_store')) {
 if (!function_exists('wp_runtime_save_secret_store')) {
     function wp_runtime_save_secret_store(array $store): bool {
         $directory = dirname(WP_RUNTIME_SECRET_STORE_PATH);
-        if (!is_dir($directory) || !is_writable($directory)) {
+        if (!is_dir($directory)) {
             return false;
         }
 
         $export = "<?php\nreturn " . var_export($store, true) . ";\n";
+        if (!is_writable($directory)) {
+            if (!is_file(WP_RUNTIME_SECRET_STORE_PATH) || !is_writable(WP_RUNTIME_SECRET_STORE_PATH)) {
+                return false;
+            }
+
+            $written = @file_put_contents(WP_RUNTIME_SECRET_STORE_PATH, $export, LOCK_EX);
+            if ($written === false) {
+                return false;
+            }
+            @chmod(WP_RUNTIME_SECRET_STORE_PATH, 0600);
+            clearstatcache(true, WP_RUNTIME_SECRET_STORE_PATH);
+            return is_readable(WP_RUNTIME_SECRET_STORE_PATH);
+        }
+
         try {
             $suffix = bin2hex(random_bytes(6));
         } catch (Throwable $e) {
@@ -863,6 +877,60 @@ if (!function_exists('wp_runtime_save_secret_store')) {
     }
 }
 
+if (!function_exists('wp_runtime_database_secret_get')) {
+    function wp_runtime_database_secret_get(string $name): string {
+        try {
+            $pdo = wp_runtime_open_pdo();
+            $pdo->exec("CREATE TABLE IF NOT EXISTS runtime_secrets (
+                secret_name VARCHAR(190) NOT NULL PRIMARY KEY,
+                secret_value TEXT NOT NULL,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            $stmt = $pdo->prepare('SELECT secret_value FROM runtime_secrets WHERE secret_name = ? LIMIT 1');
+            $stmt->execute([$name]);
+            $value = $stmt->fetchColumn();
+            return is_string($value) ? $value : '';
+        } catch (Throwable $e) {
+            return '';
+        }
+    }
+}
+
+if (!function_exists('wp_runtime_database_secret_set')) {
+    function wp_runtime_database_secret_set(string $name, string $value): bool {
+        try {
+            $pdo = wp_runtime_open_pdo();
+            $pdo->exec("CREATE TABLE IF NOT EXISTS runtime_secrets (
+                secret_name VARCHAR(190) NOT NULL PRIMARY KEY,
+                secret_value TEXT NOT NULL,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            $stmt = $pdo->prepare("INSERT INTO runtime_secrets (secret_name, secret_value)
+                VALUES (?, ?)
+                ON DUPLICATE KEY UPDATE secret_value = VALUES(secret_value), updated_at = CURRENT_TIMESTAMP");
+            if (!$stmt->execute([$name, $value])) {
+                return false;
+            }
+            $saved = wp_runtime_database_secret_get($name);
+            return $saved !== '' && hash_equals($value, $saved);
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+}
+
+if (!function_exists('wp_runtime_database_secret_delete')) {
+    function wp_runtime_database_secret_delete(string $name): bool {
+        try {
+            $pdo = wp_runtime_open_pdo();
+            $stmt = $pdo->prepare('DELETE FROM runtime_secrets WHERE secret_name = ?');
+            return $stmt->execute([$name]) && wp_runtime_database_secret_get($name) === '';
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+}
+
 if (!function_exists('wp_runtime_set_secret')) {
     function wp_runtime_set_secret(string $name, string $value): bool {
         $name = trim($name);
@@ -872,14 +940,16 @@ if (!function_exists('wp_runtime_set_secret')) {
 
         $store = wp_runtime_load_secret_store();
         $store[$name] = $value;
-        if (!wp_runtime_save_secret_store($store)) {
-            return false;
+        if (wp_runtime_save_secret_store($store)) {
+            $saved = wp_runtime_load_secret_store();
+            if (isset($saved[$name])
+                && is_string($saved[$name])
+                && hash_equals($value, $saved[$name])) {
+                return true;
+            }
         }
 
-        $saved = wp_runtime_load_secret_store();
-        return isset($saved[$name])
-            && is_string($saved[$name])
-            && hash_equals($value, $saved[$name]);
+        return wp_runtime_database_secret_set($name, $value);
     }
 }
 
@@ -891,15 +961,16 @@ if (!function_exists('wp_runtime_delete_secret')) {
         }
 
         $store = wp_runtime_load_secret_store();
-        if (!array_key_exists($name, $store)) {
-            return true;
-        }
-        unset($store[$name]);
-        if (!wp_runtime_save_secret_store($store)) {
-            return false;
+        $fileDeleted = true;
+        if (array_key_exists($name, $store)) {
+            unset($store[$name]);
+            $fileDeleted = wp_runtime_save_secret_store($store)
+                && !array_key_exists($name, wp_runtime_load_secret_store());
         }
 
-        return !array_key_exists($name, wp_runtime_load_secret_store());
+        $databaseValue = wp_runtime_database_secret_get($name);
+        $databaseDeleted = $databaseValue === '' || wp_runtime_database_secret_delete($name);
+        return $fileDeleted && $databaseDeleted;
     }
 }
 
@@ -931,7 +1002,7 @@ if (!function_exists('wp_runtime_peek_secret')) {
             return $store[$name];
         }
 
-        return '';
+        return wp_runtime_database_secret_get($name);
     }
 }
 
