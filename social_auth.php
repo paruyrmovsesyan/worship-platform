@@ -74,6 +74,42 @@ function wp_social_auth_redirect_to_auth(string $mode, string $next, string $sou
     exit;
 }
 
+function wp_social_auth_append_query(string $url, array $params): string {
+    $separator = strpos($url, '?') === false ? '?' : '&';
+    return $url . $separator . http_build_query($params);
+}
+
+function wp_social_auth_redirect_after_login(string $target): void {
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Location: ' . $target, true, 303);
+    exit;
+}
+
+function wp_social_auth_create_claim(PDO $pdo, int $userId, string $source): string {
+    if ($userId <= 0) {
+        return '';
+    }
+
+    try {
+        $token = bin2hex(random_bytes(32));
+        $insert = $pdo->prepare("
+            INSERT INTO user_sessions
+            (user_id, session_key, selector, remembered, device_name, last_used_at, expires_at, created_at)
+            VALUES (?, 'social_login_claim', ?, 0, ?, NOW(), DATE_ADD(NOW(), INTERVAL 5 MINUTE), NOW())
+        ");
+        $insert->execute([$userId, $token, $source !== '' ? $source : 'pwa']);
+        return $token;
+    } catch (Throwable $e) {
+        error_log(sprintf(
+            '[social_auth] claim_create_failed user_id=%d exception=%s message=%s',
+            $userId,
+            get_class($e),
+            mb_substr($e->getMessage(), 0, 240)
+        ));
+        return '';
+    }
+}
+
 function wp_social_auth_google_exchange_message(array $tokenResponse, array $tokenJson, string $redirectUri): string {
     $status = (int)($tokenResponse['status'] ?? 0);
     $curlError = trim((string)($tokenResponse['error'] ?? ''));
@@ -248,26 +284,27 @@ function wp_social_auth_handle_google_callback(PDO $pdo, array $pending) {
         wp_social_auth_complete_admin_login($pdo, $pending, $user);
     }
 
-    $socialToken = bin2hex(random_bytes(32));
-    $stInsert = $pdo->prepare("INSERT INTO user_sessions (user_id, session_key, selector, device_name, expires_at) VALUES (?, 'social_login_claim', ?, ?, DATE_ADD(NOW(), INTERVAL 5 MINUTE))");
-    $stInsert->execute([(int)$user['id'], $socialToken, (string)($pending['source'] ?? 'pwa')]);
-
     $remember = isset($pending['remember']) ? !empty($pending['remember']) : true;
     wp_social_auth_issue_session($pdo, $user, (string)$pending['source'], $remember);
+    $socialToken = wp_social_auth_create_claim(
+        $pdo,
+        (int)$user['id'],
+        (string)($pending['source'] ?? 'pwa')
+    );
     wp_social_auth_clear_pending();
-    
+
     $targetNext = wp_social_auth_safe_next((string)$pending['next']);
-    $sep = strpos($targetNext, '?') === false ? '?' : '&';
-    $targetNext .= $sep . 'social_login_token=' . $socialToken;
+    if ($socialToken !== '') {
+        $targetNext = wp_social_auth_append_query($targetNext, ['social_login_token' => $socialToken]);
+    }
     if (!empty($isNewRegistration)) {
-        $sep = strpos($targetNext, '?') === false ? '?' : '&';
-        $targetNext .= $sep . 'social_registered=1&password_hint=1';
+        $targetNext = wp_social_auth_append_query($targetNext, [
+            'social_registered' => 1,
+            'password_hint' => 1,
+        ]);
     }
 
-    echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Redirecting...</title>';
-    echo '<script>window.location.replace(' . json_encode($targetNext) . ');</script>';
-    echo '</head><body>Redirecting to app...</body></html>';
-    exit;
+    wp_social_auth_redirect_after_login($targetNext);
 }
 
 $endpointAction = strtolower(trim((string)($_GET['action'] ?? $_POST['action'] ?? '')));
@@ -400,5 +437,21 @@ try {
 }
 
 if ($provider === 'google') {
-    wp_social_auth_handle_google_callback($pdo, $pending);
+    try {
+        wp_social_auth_handle_google_callback($pdo, $pending);
+    } catch (Throwable $e) {
+        error_log(sprintf(
+            '[social_auth] google_callback_failed exception=%s message=%s',
+            get_class($e),
+            mb_substr($e->getMessage(), 0, 240)
+        ));
+        wp_social_auth_clear_pending();
+        wp_social_auth_redirect_to_auth(
+            (string)($pending['mode'] ?? 'login'),
+            (string)($pending['next'] ?? '/songs'),
+            (string)($pending['source'] ?? ''),
+            'Google մուտքն ավարտել չհաջողվեց։ Խնդրում ենք կրկին փորձել։',
+            (string)($pending['auth_target'] ?? 'user')
+        );
+    }
 }
