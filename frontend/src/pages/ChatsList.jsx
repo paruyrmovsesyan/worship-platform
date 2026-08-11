@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +15,9 @@ export default function ChatsList({ isEmbedded = false }) {
 
   const [chats, setChats] = useState([]);
   const [friends, setFriends] = useState([]);
+  const [incomingRequests, setIncomingRequests] = useState([]);
+  const [acceptingRequestId, setAcceptingRequestId] = useState(0);
+  const [requestError, setRequestError] = useState('');
   const [loading, setLoading] = useState(true);
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [groupName, setGroupName] = useState('');
@@ -28,28 +31,59 @@ export default function ChatsList({ isEmbedded = false }) {
 
   usePageReady(loading || authLoading);
 
+  const fetchChats = useCallback(async () => {
+    try {
+      const res = await fetch('/chat_api.php?action=list_chats');
+      const data = await res.json();
+      if (data.ok) setChats(data.chats || []);
+    } catch (e) {
+      console.error(e);
+    }
+    setLoading(false);
+  }, []);
+
+  const fetchFriends = useCallback(async () => {
+    try {
+      const res = await fetch('/friends_api.php?action=list');
+      const data = await res.json();
+      if (data.ok) {
+        const relationships = data.friends || [];
+        setFriends(relationships.filter(friend => friend.status === 'accepted'));
+        setIncomingRequests(relationships.filter(friend => (
+          friend.status === 'pending' && Number(friend.requester_id) !== Number(user?.id)
+        )));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [user?.id]);
+
   useEffect(() => {
     if (!user && !authLoading) {
       navigate('/login');
       return;
     }
     if (user) {
-      fetchChats();
-      fetchFriends();
-      const interval = setInterval(fetchChats, 5000);
-      return () => clearInterval(interval);
+      const initialFetch = window.setTimeout(() => {
+        fetchChats();
+        fetchFriends();
+      }, 0);
+      const interval = setInterval(() => {
+        fetchChats();
+        fetchFriends();
+      }, 5000);
+      return () => {
+        window.clearTimeout(initialFetch);
+        clearInterval(interval);
+      };
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, fetchChats, fetchFriends]);
 
   useEffect(() => {
     const q = searchQuery.trim();
-    if (q.length < 2) {
-      setSearchResults([]);
-      setSearchingUsers(false);
-      return;
-    }
-    setSearchingUsers(true);
+    if (q.length < 2) return;
     const timer = setTimeout(async () => {
+      setSearchingUsers(true);
       try {
         const res = await fetch(`/friends_api.php?action=search_users&q=${encodeURIComponent(q)}`);
         const data = await res.json();
@@ -64,6 +98,15 @@ export default function ChatsList({ isEmbedded = false }) {
     }, 350);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  const handleSearchQueryChange = (event) => {
+    const value = event.target.value;
+    setSearchQuery(value);
+    if (value.trim().length < 2) {
+      setSearchResults([]);
+      setSearchingUsers(false);
+    }
+  };
 
   const addFriend = async (userId) => {
     try {
@@ -89,13 +132,21 @@ export default function ChatsList({ isEmbedded = false }) {
   };
 
   const acceptFriend = async (userId) => {
+    setAcceptingRequestId(Number(userId));
+    setRequestError('');
     try {
-      await fetch('/friends_api.php?action=accept', {
+      const res = await fetch('/friends_api.php?action=accept', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId })
       });
-      fetchFriends();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || t('friends.acceptError', 'Չհաջողվեց ընդունել հարցումը'));
+      }
+      setIncomingRequests(current => current.filter(request => Number(request.friend_id) !== Number(userId)));
+      await fetchFriends();
+      window.dispatchEvent(new CustomEvent('wp-friendship-updated'));
       const q = searchQuery.trim();
       if (q.length >= 2) {
         const resSearch = await fetch(`/friends_api.php?action=search_users&q=${encodeURIComponent(q)}`);
@@ -104,29 +155,9 @@ export default function ChatsList({ isEmbedded = false }) {
       }
     } catch (e) {
       console.error(e);
-    }
-  };
-
-  const fetchChats = async () => {
-    try {
-      const res = await fetch('/chat_api.php?action=list_chats');
-      const data = await res.json();
-      if (data.ok) setChats(data.chats || []);
-    } catch (e) {
-      console.error(e);
-    }
-    setLoading(false);
-  };
-
-  const fetchFriends = async () => {
-    try {
-      const res = await fetch('/friends_api.php?action=list');
-      const data = await res.json();
-      if (data.ok) {
-        setFriends((data.friends || []).filter(friend => friend.status === 'accepted'));
-      }
-    } catch (e) {
-      console.error(e);
+      setRequestError(e.message || t('friends.acceptError', 'Չհաջողվեց ընդունել հարցումը'));
+    } finally {
+      setAcceptingRequestId(0);
     }
   };
 
@@ -135,7 +166,7 @@ export default function ChatsList({ isEmbedded = false }) {
       const res = await fetch('/chat_api.php?action=get_direct_chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ friend_id: friendId })
+        body: JSON.stringify({ user_id: friendId })
       });
       const data = await res.json();
       if (data.ok && data.chat_id) {
@@ -234,6 +265,49 @@ export default function ChatsList({ isEmbedded = false }) {
 
   const onlineFriends = friends.filter(f => Number(f.is_online) === 1);
 
+  const friendRequestsPanel = incomingRequests.length > 0 ? (
+    <section className="chat-friend-requests" aria-label={t('friends.incomingTitle', 'Նոր հարցումներ')}>
+      <div className="chat-friend-requests-heading">
+        <span className="chat-friend-requests-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M19 8v6M22 11h-6" />
+          </svg>
+        </span>
+        <div>
+          <strong>{t('friends.incomingTitle', 'Նոր ընկերության հարցումներ')}</strong>
+          <small>{incomingRequests.length}</small>
+        </div>
+        <button type="button" className="chat-friend-requests-all" onClick={() => navigate('/friends')}>
+          {t('common.viewAll', 'Տեսնել բոլորը')}
+        </button>
+      </div>
+      <div className="chat-friend-request-list">
+        {incomingRequests.map(request => (
+          <div className="chat-friend-request-row" key={request.friend_id}>
+            <span className="chat-friend-request-avatar">{(request.name || 'U').charAt(0).toUpperCase()}</span>
+            <span className="chat-friend-request-copy">
+              <strong>{request.name || request.email}</strong>
+              <small>{request.email}</small>
+            </span>
+            <button
+              type="button"
+              className="chat-friend-request-accept"
+              disabled={acceptingRequestId === Number(request.friend_id)}
+              onClick={() => acceptFriend(request.friend_id)}
+            >
+              {acceptingRequestId === Number(request.friend_id)
+                ? t('common.loading', '...')
+                : t('friends.accept', 'Ընդունել')}
+            </button>
+          </div>
+        ))}
+      </div>
+      {requestError && <p className="chat-friend-request-error" role="alert">{requestError}</p>}
+    </section>
+  ) : null;
+
   // ════════════════════════════════════════════════════════════════
   // WEBSITE MODE DISPLAY (!isPWA && !isEmbedded)
   // ════════════════════════════════════════════════════════════════
@@ -285,6 +359,8 @@ export default function ChatsList({ isEmbedded = false }) {
           </div>
         </div>
 
+        {friendRequestsPanel}
+
         {/* TOOLBAR & TABS */}
         <div className="website-chats-controls">
           <div className="website-chats-tabs">
@@ -322,7 +398,7 @@ export default function ChatsList({ isEmbedded = false }) {
               type="text" 
               placeholder={t('chats.searchPlaceholder', 'Փնտրել զրույցներ, թիմեր...')}
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={handleSearchQueryChange}
             />
             {searchQuery && (
               <button className="clear-search-btn" onClick={() => setSearchQuery('')}>✕</button>
@@ -466,6 +542,8 @@ export default function ChatsList({ isEmbedded = false }) {
         </div>
       )}
 
+      {!isCreatingGroup && friendRequestsPanel}
+
       {!isEmbedded && !isCreatingGroup && onlineFriends.length > 0 && (
         <div className="pwa-active-friends-strip">
           <div className="pwa-active-friends-title">
@@ -495,7 +573,7 @@ export default function ChatsList({ isEmbedded = false }) {
             type="text"
             placeholder={t('chats.searchPlaceholder', 'Փնտրել զրույցներ, թիմեր, օգտատերեր...')}
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={handleSearchQueryChange}
           />
           {searchQuery && (
             <button className="pwa-chats-search-clear" onClick={() => setSearchQuery('')}>✕</button>

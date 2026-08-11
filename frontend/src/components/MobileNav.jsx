@@ -102,12 +102,14 @@ export default function MobileNav() {
         }
       };
       window.addEventListener('focus', fetchBadgeCount);
+      window.addEventListener('wp-friendship-updated', fetchBadgeCount);
       document.addEventListener('visibilitychange', handleVisibilityChange);
 
       return () => {
         cancelled = true;
         if (intervalId) window.clearInterval(intervalId);
         window.removeEventListener('focus', fetchBadgeCount);
+        window.removeEventListener('wp-friendship-updated', fetchBadgeCount);
         document.removeEventListener('visibilitychange', handleVisibilityChange);
       };
     }

@@ -345,9 +345,14 @@ export default function Notifications() {
         const data = await res.json();
         if (data.ok) {
           fetchNotifications();
+          window.dispatchEvent(new CustomEvent('wp-friendship-updated'));
+          navigate('/friends');
+          return;
         }
+        throw new Error(data.error || 'Friend request could not be accepted');
       } catch (err) {
         console.error(err);
+        return;
       }
     }
     navigate('/friends');

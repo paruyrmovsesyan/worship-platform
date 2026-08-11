@@ -83,14 +83,20 @@ export default function Friends() {
 
   const acceptFriend = async (userId) => {
     try {
-      await fetch('/friends_api.php?action=accept', {
+      const res = await fetch('/friends_api.php?action=accept', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: userId })
       });
-      fetchFriends();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || t('friends.acceptError', 'Չհաջողվեց ընդունել հարցումը'));
+      }
+      await fetchFriends();
+      window.dispatchEvent(new CustomEvent('wp-friendship-updated'));
     } catch (e) {
       console.error(e);
+      window.alert(e.message || t('friends.acceptError', 'Չհաջողվեց ընդունել հարցումը'));
     }
   };
 

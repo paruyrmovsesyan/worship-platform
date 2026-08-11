@@ -173,12 +173,18 @@ if ($action === 'add' && $method === 'POST') {
 if ($action === 'accept' && $method === 'POST') {
     $d = readJson();
     $friend_id = (int)($d['user_id'] ?? 0);
+    if ($friend_id <= 0 || $friend_id === $uid) {
+        out(["error" => "Invalid user"], 400);
+    }
     
     $st = $pdo->prepare("UPDATE friends SET status = 'accepted' WHERE user_id_1 = ? AND user_id_2 = ? AND status = 'pending'");
     $st->execute([$friend_id, $uid]); 
     
     if ($st->rowCount() > 0) {
-        $lang = strtolower((string)($_GET['lang'] ?? 'am'));
+        $senderName = wp_friends_current_user_display_name($pdo, $uid);
+        $stLang = $pdo->prepare("SELECT language FROM users WHERE id = ? LIMIT 1");
+        $stLang->execute([$friend_id]);
+        $lang = strtolower((string)($stLang->fetchColumn() ?: 'am'));
         $push_title = "Friend Request Accepted";
         $push_msg = "$senderName accepted your friend request.";
         $notif_text = "$senderName accepted your friend request.";
@@ -189,17 +195,36 @@ if ($action === 'accept' && $method === 'POST') {
             $notif_text = "$senderName-ն ընդունեց Ձեր ընկերության հայտը:";
         } elseif ($lang === 'ru') {
             $push_title = "Запрос в друзья принят";
-            $push_msg = "$senderName принял(ա) ваш запрос в друзья.";
-            $notif_text = "$senderName принял(ա) ваш запрос в друзья.";
+            $push_msg = "$senderName принял(а) ваш запрос в друзья.";
+            $notif_text = "$senderName принял(а) ваш запрос в друзья.";
         }
 
-        $st_notif = $pdo->prepare("INSERT INTO user_notifications (user_id, sender_id, type, content, action_link) VALUES (?, ?, 'friend_accepted', ?, '/friends')");
-        $st_notif->execute([$friend_id, $uid, json_encode(['text' => $notif_text, 'sender_name' => $senderName])]);
+        try {
+            $pdo->prepare("DELETE FROM user_notifications WHERE user_id = ? AND sender_id = ? AND type = 'friend_request'")
+                ->execute([$uid, $friend_id]);
 
-        wp_push_send_to_user($pdo, $friend_id, $push_title, $push_msg, "/friends");
+            $st_notif = $pdo->prepare("INSERT INTO user_notifications (user_id, sender_id, type, content, action_link) VALUES (?, ?, 'friend_accepted', ?, '/friends')");
+            $st_notif->execute([$friend_id, $uid, json_encode(['text' => $notif_text, 'sender_name' => $senderName])]);
+
+            require_once __DIR__ . '/push_service.php';
+            wp_push_send_to_user($pdo, $friend_id, $push_title, $push_msg, "/friends");
+        } catch (Throwable $notifyError) {
+            error_log('Friend acceptance notification failed: ' . $notifyError->getMessage());
+        }
 
         out(["ok" => true]);
     } else {
+        $stAccepted = $pdo->prepare("SELECT 1 FROM friends WHERE ((user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)) AND status = 'accepted' LIMIT 1");
+        $stAccepted->execute([$friend_id, $uid, $uid, $friend_id]);
+        if ($stAccepted->fetchColumn()) {
+            try {
+                $pdo->prepare("DELETE FROM user_notifications WHERE user_id = ? AND sender_id = ? AND type = 'friend_request'")
+                    ->execute([$uid, $friend_id]);
+            } catch (Throwable $cleanupError) {
+                error_log('Accepted friend request cleanup failed: ' . $cleanupError->getMessage());
+            }
+            out(["ok" => true, "already_accepted" => true]);
+        }
         out(["error" => "No pending request found"], 400);
     }
 }
