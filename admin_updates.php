@@ -1507,12 +1507,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $translationSongOptions = wp_admin_updates_translation_song_options();
 
     if (wp_admin_updates_is_async_request()) {
-        header('Content-Type: application/json; charset=UTF-8');
-        echo json_encode([
+        $asyncResponse = [
             'ok' => $messageType !== 'error',
             'message' => $message,
             'type' => $messageType,
-        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        ];
+        if ($action === 'save_access') {
+            $asyncResponse['google_client_secret_stored'] = wp_admin_updates_social_secret_value('social_auth_google_client_secret') !== '';
+        }
+
+        header('Content-Type: application/json; charset=UTF-8');
+        echo json_encode($asyncResponse, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         exit;
     }
 
@@ -1549,7 +1554,8 @@ $appAboutLicensesText = implode("\n", array_map(
 ));
 $adminEmailCount = count(array_filter((array)($config['admin_emails'] ?? []), static fn($email): bool => trim((string)$email) !== ''));
 $adminPermissionRows = wp_admin_updates_permission_rows($config, $adminUser);
-$googleClientSecretStatus = wp_admin_updates_social_secret_status(wp_admin_updates_social_secret_value('social_auth_google_client_secret'));
+$googleClientSecretAvailable = wp_admin_updates_social_secret_value('social_auth_google_client_secret') !== '';
+$googleClientSecretStatus = wp_admin_updates_social_secret_status($googleClientSecretAvailable ? 'stored' : '');
 $packageUploadedAt = wp_version_format_datetime_admin((string)($config['server_package_uploaded_at'] ?? ''));
 $packageAppliedAt = wp_version_format_datetime_admin((string)($config['server_package_applied_at'] ?? ''));
 $packageSyncedAt = wp_version_format_datetime_admin((string)($config['server_package_release_synced_at'] ?? ''));
@@ -2442,7 +2448,7 @@ $csrfToken = wp_admin_updates_csrf_token();
                 </div>
                 <div style="background:#f8fafc; padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
                   <span style="font-size:13px; font-weight:600; color:var(--muted);"><?= __('Client Secret') ?></span>
-                  <div class="chip <?= strpos($googleClientSecretStatus, 'ԲԱՑԱԿԱՅՈՒՄ') === false ? 'success' : 'warning' ?>"><?= htmlspecialchars($googleClientSecretStatus, ENT_QUOTES) ?></div>
+                  <div class="chip <?= $googleClientSecretAvailable ? 'success' : 'warning' ?>" id="googleClientSecretStatus" data-stored="<?= $googleClientSecretAvailable ? '1' : '0' ?>"><?= htmlspecialchars($googleClientSecretStatus, ENT_QUOTES) ?></div>
                 </div>
               </div>
             </div>
@@ -2463,10 +2469,10 @@ $csrfToken = wp_admin_updates_csrf_token();
               
               <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
                 <label class="permission-check" style="margin:0; font-size:12px;">
-                  <input type="checkbox" name="social_auth_google_client_secret_clear" value="1">
+                  <input type="checkbox" id="social_auth_google_client_secret_clear" name="social_auth_google_client_secret_clear" value="1">
                   <span><?= __('Մաքրել Secret-ը') ?></span>
                 </label>
-                <button class="btn btn-primary" type="submit" name="form_action" value="save_access" style="padding:8px 16px; font-size:13px; border-radius:8px;"><?= __('Պահպանել Secret-ը') ?></button>
+                <button class="btn btn-primary" id="saveGoogleSecretBtn" type="submit" name="form_action" value="save_access" style="padding:8px 16px; font-size:13px; border-radius:8px;"><?= __('Պահպանել Secret-ը') ?></button>
               </div>
             </div>
           </div>
@@ -3689,6 +3695,10 @@ $csrfToken = wp_admin_updates_csrf_token();
       const addPermissionRowBtn = document.getElementById('addPermissionRowBtn');
       const adminEmailsInput = document.getElementById('admin_emails');
       const googleClientIdInput = document.getElementById('social_auth_google_client_id');
+      const googleClientSecretInput = document.getElementById('social_auth_google_client_secret');
+      const googleClientSecretClearInput = document.getElementById('social_auth_google_client_secret_clear');
+      const googleClientSecretStatus = document.getElementById('googleClientSecretStatus');
+      const saveGoogleSecretBtn = document.getElementById('saveGoogleSecretBtn');
       const googleRedirectUriInput = document.getElementById('social_auth_google_redirect_uri');
       const translationActionStatus = document.getElementById('translationActionStatus');
       const translationCachePanel = document.getElementById('translationCachePanel');
@@ -5389,13 +5399,62 @@ $csrfToken = wp_admin_updates_csrf_token();
         }
       });
 
-      releaseControlForm?.addEventListener('submit', (event) => {
+      releaseControlForm?.addEventListener('submit', async (event) => {
         const submitter = event.submitter;
         if (!submitter) {
           return;
         }
 
         const action = submitter.value || '';
+        if (action === 'save_access') {
+          event.preventDefault();
+          if (!(saveGoogleSecretBtn instanceof HTMLButtonElement)) {
+            return;
+          }
+
+          const secret = googleClientSecretInput instanceof HTMLInputElement
+            ? googleClientSecretInput.value.trim()
+            : '';
+          const shouldClear = googleClientSecretClearInput instanceof HTMLInputElement
+            && googleClientSecretClearInput.checked;
+
+          if (!secret && !shouldClear) {
+            setAdminBanner('error', 'Լրացրեք նոր Google Client Secret կամ ընտրեք մաքրման տարբերակը։');
+            googleClientSecretInput?.focus();
+            return;
+          }
+
+          saveGoogleSecretBtn.disabled = true;
+          saveGoogleSecretBtn.textContent = 'Պահպանվում է…';
+          try {
+            const fields = buildAccessDraftFields();
+            fields.social_auth_google_client_secret = secret;
+            fields.social_auth_google_client_secret_clear = shouldClear ? '1' : '';
+            const result = await postAdminAction('save_access', fields);
+
+            if (googleClientSecretInput instanceof HTMLInputElement) {
+              googleClientSecretInput.value = '';
+            }
+            if (googleClientSecretClearInput instanceof HTMLInputElement) {
+              googleClientSecretClearInput.checked = false;
+            }
+            if (googleClientSecretStatus) {
+              const isStored = result.google_client_secret_stored === true;
+              googleClientSecretStatus.textContent = isStored ? 'Լրացված է' : 'Լրացված չէ';
+              googleClientSecretStatus.dataset.stored = isStored ? '1' : '0';
+              googleClientSecretStatus.classList.toggle('success', isStored);
+              googleClientSecretStatus.classList.toggle('warning', !isStored);
+            }
+            setAdminBanner('success', result.message || 'Google Client Secret-ը պահպանվեց։');
+          } catch (error) {
+            setAdminBanner('error', error.message || 'Google Client Secret-ը չհաջողվեց պահպանել։');
+          } finally {
+            saveGoogleSecretBtn.disabled = false;
+            saveGoogleSecretBtn.textContent = 'Պահպանել Secret-ը';
+          }
+          return;
+        }
+
         if (action === 'apply_release') {
           const applyMode = releaseApplyModeInput ? releaseApplyModeInput.value : 'without_file';
           if (applyMode !== 'with_file') {
@@ -5414,6 +5473,13 @@ $csrfToken = wp_admin_updates_csrf_token();
             event.preventDefault();
           }
           return;
+        }
+      });
+
+      googleClientSecretInput?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          saveGoogleSecretBtn?.click();
         }
       });
 

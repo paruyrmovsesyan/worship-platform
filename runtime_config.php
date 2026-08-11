@@ -823,28 +823,63 @@ if (!function_exists('wp_runtime_load_secret_store')) {
             return [];
         }
 
-        $loaded = include WP_RUNTIME_SECRET_STORE_PATH;
-        return is_array($loaded) ? $loaded : [];
+        try {
+            $loaded = include WP_RUNTIME_SECRET_STORE_PATH;
+            return is_array($loaded) ? $loaded : [];
+        } catch (Throwable $e) {
+            return [];
+        }
     }
 }
 
 if (!function_exists('wp_runtime_save_secret_store')) {
     function wp_runtime_save_secret_store(array $store): bool {
+        $directory = dirname(WP_RUNTIME_SECRET_STORE_PATH);
+        if (!is_dir($directory) || !is_writable($directory)) {
+            return false;
+        }
+
         $export = "<?php\nreturn " . var_export($store, true) . ";\n";
-        return @file_put_contents(WP_RUNTIME_SECRET_STORE_PATH, $export, LOCK_EX) !== false;
+        try {
+            $suffix = bin2hex(random_bytes(6));
+        } catch (Throwable $e) {
+            $suffix = str_replace('.', '', uniqid('', true));
+        }
+        $temporaryPath = WP_RUNTIME_SECRET_STORE_PATH . '.tmp-' . $suffix . '.php';
+
+        if (@file_put_contents($temporaryPath, $export, LOCK_EX) === false) {
+            return false;
+        }
+
+        @chmod($temporaryPath, 0600);
+        if (!@rename($temporaryPath, WP_RUNTIME_SECRET_STORE_PATH)) {
+            @unlink($temporaryPath);
+            return false;
+        }
+
+        @chmod(WP_RUNTIME_SECRET_STORE_PATH, 0600);
+        clearstatcache(true, WP_RUNTIME_SECRET_STORE_PATH);
+        return is_file(WP_RUNTIME_SECRET_STORE_PATH) && is_readable(WP_RUNTIME_SECRET_STORE_PATH);
     }
 }
 
 if (!function_exists('wp_runtime_set_secret')) {
     function wp_runtime_set_secret(string $name, string $value): bool {
         $name = trim($name);
-        if ($name === '') {
+        if ($name === '' || $value === '') {
             return false;
         }
 
         $store = wp_runtime_load_secret_store();
         $store[$name] = $value;
-        return wp_runtime_save_secret_store($store);
+        if (!wp_runtime_save_secret_store($store)) {
+            return false;
+        }
+
+        $saved = wp_runtime_load_secret_store();
+        return isset($saved[$name])
+            && is_string($saved[$name])
+            && hash_equals($value, $saved[$name]);
     }
 }
 
@@ -860,16 +895,30 @@ if (!function_exists('wp_runtime_delete_secret')) {
             return true;
         }
         unset($store[$name]);
-        return wp_runtime_save_secret_store($store);
+        if (!wp_runtime_save_secret_store($store)) {
+            return false;
+        }
+
+        return !array_key_exists($name, wp_runtime_load_secret_store());
     }
 }
 
 if (!function_exists('wp_runtime_peek_secret')) {
     function wp_runtime_peek_secret(string $name): string {
-        $envKey = 'WORSHIP_' . strtoupper(preg_replace('/[^A-Za-z0-9]+/', '_', $name)) . '_SECRET';
-        $envValue = wp_runtime_env($envKey, '');
-        if (is_string($envValue) && trim($envValue) !== '') {
-            return trim($envValue);
+        $normalizedName = strtoupper((string)preg_replace('/[^A-Za-z0-9]+/', '_', $name));
+        $envKeys = [
+            'WORSHIP_' . $normalizedName,
+            'WORSHIP_' . $normalizedName . '_SECRET',
+        ];
+        if ($name === 'social_auth_google_client_secret') {
+            array_unshift($envKeys, 'WORSHIP_GOOGLE_CLIENT_SECRET');
+        }
+
+        foreach (array_unique($envKeys) as $envKey) {
+            $envValue = wp_runtime_env($envKey, '');
+            if (is_string($envValue) && trim($envValue) !== '') {
+                return trim($envValue);
+            }
         }
 
         $local = wp_runtime_local_config();
