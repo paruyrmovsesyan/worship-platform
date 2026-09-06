@@ -8,7 +8,7 @@
   width: 100%;
   max-width: 720px;
   margin: 0 auto;
-  padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px calc(env(safe-area-inset-bottom, 0px) + 120px);
+  padding: 4px 16px calc(env(safe-area-inset-bottom, 0px) + 100px);
   min-height: 100dvh;
   box-sizing: border-box;
   color: var(--color-text-primary, #f5f7fb);
