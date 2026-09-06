@@ -1351,3 +1351,76 @@ body.wp-standalone-app > .sl-modal-overlay {
   font-family: inherit;
 }
 
+/* ── Setlist Editor Empty State ── */
+.sle-empty-state {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 48px 20px !important;
+  text-align: center !important;
+  width: 100% !important;
+  min-height: 200px !important;
+}
+
+.sle-empty-state .sle-empty-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-tertiary, #64748b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.sle-empty-state p,
+.sle-empty-state .sle-empty-text {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  margin: 0 !important;
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+  max-width: 320px;
+  line-height: 1.5;
+  text-align: center;
+  z-index: auto !important;
+}
+
+/* ── Quick Song Drawer Overlay & Dock Management ── */
+body.quick-drawer-open #wpAppDock,
+body.quick-drawer-open .mobile-bottom-nav {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.quick-song-drawer-backdrop {
+  z-index: 2147483647 !important;
+}
+
+@media (max-width: 640px) {
+  .quick-song-drawer-backdrop {
+    align-items: flex-end !important;
+    justify-content: center !important;
+  }
+  .quick-song-drawer {
+    width: 100% !important;
+    height: 78vh !important;
+    max-height: calc(100dvh - 50px) !important;
+    border-radius: 28px 28px 0 0 !important;
+    border-left: none !important;
+    border-top: 1px solid rgba(160, 190, 230, 0.26) !important;
+    animation: quick-drawer-slide-up 240ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
+    padding-bottom: max(24px, env(safe-area-inset-bottom, 20px)) !important;
+  }
+}
+
+@keyframes quick-drawer-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+

@@ -559,6 +559,17 @@ export default function SetlistEditor() {
 
   useEffect(() => {
     if (!isQuickDrawerOpen) return undefined;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.body.classList.add('quick-drawer-open');
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.classList.remove('quick-drawer-open');
+    };
+  }, [isQuickDrawerOpen]);
+
+  useEffect(() => {
+    if (!isQuickDrawerOpen) return undefined;
     window.clearTimeout(quickSearchTimerRef.current);
     const query = quickQuery.trim();
     if (!query) {
@@ -787,9 +798,15 @@ export default function SetlistEditor() {
       {/* Setlist Items */}
       <div className="track-list sle-pro-list">
         {items.length === 0 ? (
-          <div className="list-placeholder empty-state">
-            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
-            <p>{t('setlists.emptySetlist', 'Երգացանկը դատարկ է')}</p>
+          <div className="sle-empty-state animate-fade-in">
+            <div className="sle-empty-icon">
+              <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M9 18V5l12-2v13"></path>
+                <circle cx="6" cy="18" r="3"></circle>
+                <circle cx="18" cy="16" r="3"></circle>
+              </svg>
+            </div>
+            <p className="sle-empty-text">{t('setlists.emptySetlist', 'Երգացանկը դատարկ է: Ավելացրեք երգեր փնտրման միջոցով:')}</p>
           </div>
         ) : (
           (() => {
