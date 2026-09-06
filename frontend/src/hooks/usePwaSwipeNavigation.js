@@ -126,6 +126,9 @@ export function usePwaSwipeNavigation({
 
       if (isTextEntryTarget(event.target)) return;
       if (!isPrimaryRoute && isDetailInteractiveTarget(event.target)) return;
+      if (pathname.startsWith('/song/') && (window.location.search.includes('setlist_') || window.location.search.includes('list='))) {
+        return;
+      }
 
       tracking = isPrimaryRoute || nearLeftEdge;
       horizontalIntent = false;

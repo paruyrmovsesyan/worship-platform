@@ -184,7 +184,18 @@ export default function SetlistLive() {
             <React.Fragment key={item.id}>
               <div
                 className={`sll-card${isActive ? ' sll-card--active' : ''}`}
-                onClick={() => navigate(`/song/${item.song_id}`)}
+                onClick={() => {
+                  const q = new URLSearchParams();
+                  if (id) q.set('setlist_id', String(id));
+                  if (item.id) q.set('setlist_item_id', String(item.id));
+                  if (item.target_key) q.set('tkey', item.target_key);
+                  if (item.capo) {
+                    q.set('capo', String(item.capo));
+                    q.set('capo_mode', '1');
+                  }
+                  const qStr = q.toString();
+                  navigate(`/song/${item.song_id}${qStr ? '?' + qStr : ''}`);
+                }}
               >
                 {/* Number */}
                 <div className={`sll-card-num${isActive ? ' sll-card-num--active' : ''}`}>

@@ -123,15 +123,20 @@ export default function SetlistPublicWeb() {
     }
   };
 
-  const openSong = (songId, targetKey, capo) => {
+  const openSong = (songId, targetKey, capo, itemId) => {
     if (!songId) return;
     let url = `/song/${songId}`;
     const params = new URLSearchParams();
-    if (targetKey) params.set('key', targetKey);
+    if (targetKey) {
+      params.set('key', targetKey);
+      params.set('tkey', targetKey);
+    }
     if (capo > 0) {
       params.set('capo', String(capo));
       params.set('capo_mode', '1');
     }
+    if (token) params.set('setlist_token', token);
+    if (itemId) params.set('setlist_item_id', String(itemId));
     const qStr = params.toString();
     if (qStr) url += `?${qStr}`;
     navigate(url);
@@ -324,7 +329,7 @@ export default function SetlistPublicWeb() {
                     key={item.id || idx}
                     className="pub-song-card animate-fade-in"
                     style={{ animationDelay: `${Math.min(idx * 0.04, 0.4)}s` }}
-                    onClick={() => openSong(item.song_id, targetKey, item.capo)}
+                    onClick={() => openSong(item.song_id, targetKey, item.capo, item.id)}
                   >
                     <div className="song-card-num">{idx + 1}</div>
 

@@ -56,6 +56,7 @@ export default function SongView() {
   
   const [setlistNavData, setSetlistNavData] = useState(null);
   const [touchStartX, setTouchStartX] = useState(null);
+  const [touchStartY, setTouchStartY] = useState(null);
 
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareChats, setShareChats] = useState([]);
@@ -435,6 +436,7 @@ export default function SongView() {
   }, [id, language, user]);
 
   useEffect(() => {
+    let cancelled = false;
     const params = new URLSearchParams(window.location.search);
     setSetlistNavData(null);
     const setlistId = params.get('setlist_id');
@@ -450,8 +452,16 @@ export default function SongView() {
       fetch(url)
         .then(r => r.json())
         .then(data => {
+          if (cancelled) return;
           if (!data.error && data.current) {
-            setSetlistNavData(data);
+            setSetlistNavData({
+              ...data,
+              current: {
+                ...data.current,
+                index: data.index,
+                setlist_id: data.setlist?.id || setlistId,
+              },
+            });
           }
         }).catch(() => {});
     }
@@ -494,6 +504,10 @@ export default function SongView() {
           }
         });
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [id, language, location.search, user]);
 
   const increaseFontSize = () => { 
@@ -570,22 +584,32 @@ export default function SongView() {
   };
 
   const navigateToSetlistSong = (item) => {
-    let url = `/song/${item.id}?`;
-    if (item.target_key) url += `tkey=${encodeURIComponent(item.target_key)}&`;
-    const pref = JSON.parse(localStorage.getItem(`song_capo_pref:${item.id}`) || '{"capo":0,"capo_mode":0}');
-    if (pref.capo_mode === 1 && pref.capo > 0) url += `capo=${pref.capo}&capo_mode=1&`;
+    if (!item || !item.id) return;
+    const q = new URLSearchParams();
+    if (item.target_key) q.set('tkey', item.target_key);
+    if (item.capo) {
+      q.set('capo', String(item.capo));
+      q.set('capo_mode', '1');
+    } else {
+      const pref = JSON.parse(localStorage.getItem(`song_capo_pref:${item.id}`) || '{"capo":0,"capo_mode":0}');
+      if (pref.capo_mode === 1 && pref.capo > 0) {
+        q.set('capo', String(pref.capo));
+        q.set('capo_mode', '1');
+      }
+    }
     
     const params = new URLSearchParams(window.location.search);
-    if (params.get('list')) url += `list=${params.get('list')}&`;
-    if (params.get('sort')) url += `sort=${encodeURIComponent(params.get('sort'))}&`;
-    if (params.get('key')) url += `key=${encodeURIComponent(params.get('key'))}&`;
-    if (params.get('setlist_id')) url += `setlist_id=${params.get('setlist_id')}&`;
-    if (params.get('setlist_token')) url += `setlist_token=${params.get('setlist_token')}&`;
-    if (item.item_id) url += `setlist_item_id=${item.item_id}&`;
+    if (params.get('list')) q.set('list', params.get('list'));
+    if (params.get('sort')) q.set('sort', params.get('sort'));
+    if (params.get('key')) q.set('key', params.get('key'));
+    if (params.get('setlist_id')) q.set('setlist_id', params.get('setlist_id'));
+    if (params.get('setlist_token')) q.set('setlist_token', params.get('setlist_token'));
+    if (item.item_id) q.set('setlist_item_id', String(item.item_id));
     
     // Paging changes the current song, but should not create a back-history
     // entry for every song in the saved list or setlist.
-    navigate(url, { replace: true });
+    const qStr = q.toString();
+    navigate(`/song/${item.id}${qStr ? '?' + qStr : ''}`, { replace: true });
   };
 
   const handleSongBack = () => {
@@ -600,6 +624,12 @@ export default function SongView() {
     const setlistId = params.get('setlist_id') || (list.startsWith('setlist_') ? list.slice(8) : '');
     if (setlistId) {
       navigate(`/setlists/${setlistId}`, { replace: true });
+      return;
+    }
+
+    const setlistToken = params.get('setlist_token');
+    if (setlistToken) {
+      navigate(`/setlists/public?token=${setlistToken}`, { replace: true });
       return;
     }
 
@@ -675,6 +705,36 @@ export default function SongView() {
     };
   }, [popoverChord]);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const mainEl = document.querySelector('main') || document.documentElement;
+    if (mainEl && mainEl.scrollTop > 0) mainEl.scrollTop = 0;
+  }, [id]);
+
+  useEffect(() => {
+    if (!setlistNavData) return;
+
+    const handleKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName) || e.target?.isContentEditable) {
+        return;
+      }
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+        if (setlistNavData.next) {
+          e.preventDefault();
+          navigateToSetlistSong(setlistNavData.next);
+        }
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        if (setlistNavData.prev) {
+          e.preventDefault();
+          navigateToSetlistSong(setlistNavData.prev);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setlistNavData]);
+
   if (loading || authLoading) {
     return null;
   }
@@ -693,27 +753,36 @@ export default function SongView() {
   const handleTouchStart = (e) => {
     if (e.touches.length === 1) {
       setTouchStartX(e.touches[0].clientX);
+      setTouchStartY(e.touches[0].clientY);
     }
   };
 
   const handleTouchEnd = (e) => {
-    if (touchStartX === null) return;
+    if (touchStartX === null || touchStartY === null) return;
+    if (popoverChord || isShareModalOpen || isSetlistModalOpen || isPrintOpen) {
+      setTouchStartX(null);
+      setTouchStartY(null);
+      return;
+    }
     const touchEndX = e.changedTouches[0].clientX;
-    const diff = touchStartX - touchEndX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const diffX = touchStartX - touchEndX;
+    const diffY = touchStartY - touchEndY;
 
-    if (Math.abs(diff) > 70) {
-      if (diff > 0 && setlistNavData?.next) {
+    if (Math.abs(diffX) > 60 && Math.abs(diffX) > Math.abs(diffY) * 1.5) {
+      if (diffX > 0 && setlistNavData?.next) {
         navigateToSetlistSong(setlistNavData.next);
-      } else if (diff < 0 && setlistNavData?.prev) {
+      } else if (diffX < 0 && setlistNavData?.prev) {
         navigateToSetlistSong(setlistNavData.prev);
       }
     }
     setTouchStartX(null);
+    setTouchStartY(null);
   };
 
   return (
     <>
-    <div className={`song-view-page animate-fade-in ${setlistNavData ? 'has-seq-nav' : ''} ${!isPWA ? 'web-song-pro' : ''}`} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+    <div key={id} className={`song-view-page animate-fade-in ${setlistNavData ? 'has-seq-nav' : ''} ${!isPWA ? 'web-song-pro' : ''}`} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {/* Top Header */}
       <div className="sv-header">
         <div className="sv-header-left">
@@ -734,10 +803,10 @@ export default function SongView() {
         {Number.parseInt(song.bpm, 10) > 0 && <div className="sv-meta-pill">BPM: {song.bpm}</div>}
         
         <div className="sv-header-actions" style={{ marginLeft: 'auto' }}>
-            {setlistNavData?.current?.id && (
+            {(setlistNavData?.setlist?.id || setlistNavData?.current?.setlist_id) && (
               <button 
                 className="icon-btn highlight-btn"
-                onClick={() => navigate(`/setlists/${setlistNavData.current.setlist_id}`)}
+                onClick={() => navigate(`/setlists/${setlistNavData.setlist?.id || setlistNavData.current.setlist_id}`)}
                 title={t('songView.backToSetlist')}
               >
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
@@ -1107,8 +1176,8 @@ export default function SongView() {
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
         </button>
         <div className="seq-info">
-          <span className="seq-count">{setlistNavData.current.index} / {setlistNavData.total}</span>
-          <span className="seq-title">{t('songView.setlistTitle')}</span>
+          <span className="seq-count">{(setlistNavData.current?.index ?? setlistNavData.index) || 1} / {setlistNavData.total}</span>
+          <span className="seq-title">{setlistNavData.setlist?.name || t('songView.setlistTitle')}</span>
         </div>
         <button className="seq-btn" disabled={!setlistNavData.next} onClick={() => navigateToSetlistSong(setlistNavData.next)}>
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>

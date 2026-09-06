@@ -907,7 +907,18 @@ export default function SetlistEditorApp() {
                   <div
                     className={`sla-song-card ${draggingItemId === item.id ? 'is-dragging' : ''} ${dropTargetItemId === item.id ? 'is-drop-target' : ''}`}
                     draggable={canEdit}
-                    onClick={() => navigate(`/song/${item.song_id}`)}
+                    onClick={() => {
+                      const q = new URLSearchParams();
+                      if (id) q.set('setlist_id', String(id));
+                      if (item.id) q.set('setlist_item_id', String(item.id));
+                      if (item.target_key) q.set('tkey', item.target_key);
+                      if (item.capo) {
+                        q.set('capo', String(item.capo));
+                        q.set('capo_mode', '1');
+                      }
+                      const qStr = q.toString();
+                      navigate(`/song/${item.song_id}${qStr ? '?' + qStr : ''}`);
+                    }}
                     onDragStart={() => setDraggingItemId(item.id)}
                     onDragOver={e => { if (canEdit) { e.preventDefault(); setDropTargetItemId(item.id); } }}
                     onDragLeave={() => setDropTargetItemId(null)}

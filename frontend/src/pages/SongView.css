@@ -450,6 +450,8 @@
   z-index: 1002;
 }
 
+body.wp-standalone-app > .seq-nav,
+body.wp-standalone-app .seq-nav,
 body.mobile-theme .seq-nav,
 body.is-pwa .seq-nav,
 body.mobile-theme .song-view-page .seq-nav,
@@ -458,12 +460,12 @@ body.is-pwa .song-view-page .seq-nav {
   left: 0 !important;
   right: 0 !important;
   top: auto !important;
-  bottom: calc(var(--bottom-nav-safe-gap, 24px) + var(--bottom-nav-actual-height, 64px) + 8px) !important;
+  bottom: calc(max(24px, env(safe-area-inset-bottom, 24px)) + 72px) !important;
   transform: none !important;
   width: min(304px, calc(100vw - 80px)) !important;
   justify-content: space-between !important;
   display: flex !important;
-  z-index: 1200 !important;
+  z-index: 2147483000 !important;
   margin: 0 auto !important;
 }
 
@@ -529,9 +531,10 @@ body.wp-main-app.song-view-active .song-view-page {
   padding: 12px 0 16px;
 }
 
+body.wp-standalone-app .song-view-page.has-seq-nav,
 body.mobile-theme .song-view-page.has-seq-nav,
 body.is-pwa .song-view-page.has-seq-nav {
-  padding-bottom: calc(var(--bottom-nav-total-offset, 88px) + 72px);
+  padding-bottom: calc(var(--bottom-nav-total-offset, 88px) + 72px) !important;
 }
 
 body.song-view-active.wp-main-app #root,
