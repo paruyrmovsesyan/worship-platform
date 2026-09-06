@@ -446,29 +446,35 @@ export default function SetlistsApp() {
 
       {/* Header */}
       <div className="setlists-page-header sl-app-header">
-        <div className="sl-app-header-left">
-          <h1 className="sl-title">
-            <span>{t('nav.setlists')}</span>
+        <div className="sl-app-header-top">
+          <h1 className="sl-title sl-app-title">
+            <span className="sl-title-text">{t('nav.setlists')}</span>
             <span className="count-badge">{setlists.length}</span>
           </h1>
-          <p className="sl-app-subtitle">
-            {language === 'am'
-              ? 'Կազմակերպեք և վարեք պաշտամունքի երգացանկերը'
-              : language === 'ru'
-              ? 'Планируйте и проводите служения прославления'
-              : 'Plan, organize and lead worship services'}
-          </p>
+          <button
+            type="button"
+            className="btn btn-primary btn-new-set sl-app-new-btn"
+            onClick={() => setShowCreateModal(true)}
+            aria-label={t('setlists.newSetlist')}
+            title={t('setlists.newSetlist')}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span className="sl-new-btn-text-full">{t('setlists.newSetlist')}</span>
+            <span className="sl-new-btn-text-short">
+              {language === 'am' ? 'Նոր' : language === 'ru' ? 'Новый' : 'New'}
+            </span>
+          </button>
         </div>
-        <button
-          className="btn btn-primary btn-new-set sl-app-new-btn"
-          onClick={() => setShowCreateModal(true)}
-        >
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          {t('setlists.newSetlist')}
-        </button>
+        <p className="sl-app-subtitle">
+          {language === 'am'
+            ? 'Կազմակերպեք և վարեք պաշտամունքի երգացանկերը'
+            : language === 'ru'
+            ? 'Планируйте и проводите служения прославления'
+            : 'Plan, organize and lead worship services'}
+        </p>
       </div>
 
       {/* Summary / Stats Banner */}
@@ -525,6 +531,9 @@ export default function SetlistsApp() {
                 <span className="sl-app-stat-val upcoming-title">{stats.upcoming.name}</span>
                 <span className="sl-app-stat-lbl">{stats.upcoming.service_date}</span>
               </div>
+              <svg className="sl-app-upcoming-arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
             </div>
           )}
         </div>
@@ -545,10 +554,10 @@ export default function SetlistsApp() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={
               language === 'am'
-                ? 'Որոնել ըստ անվան, ամսաթվի կամ թիմի...'
+                ? 'Որոնել երգացանկ...'
                 : language === 'ru'
-                ? 'Поиск по названию, дате или команде...'
-                : 'Search by title, date, or team...'
+                ? 'Поиск сет-листа...'
+                : 'Search setlists...'
             }
           />
           {searchQuery && (
@@ -775,20 +784,20 @@ export default function SetlistsApp() {
                         {relDate.text}
                       </span>
                     )}
+
+                    <span className="sl-songs-count">
+                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <circle cx="6" cy="18" r="3"></circle>
+                        <circle cx="18" cy="16" r="3"></circle>
+                        <path d="M9 18V5l12-2v13"></path>
+                      </svg>
+                      {list.items_count} {t('setlists.songsCount')}
+                    </span>
                   </div>
 
                   {/* Card Bottom Meta & Actions */}
                   <div className="sl-meta sl-app-bottom-meta">
                     <div className="sl-app-tags">
-                      <span className="sl-songs-count">
-                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <circle cx="6" cy="18" r="3"></circle>
-                          <circle cx="18" cy="16" r="3"></circle>
-                          <path d="M9 18V5l12-2v13"></path>
-                        </svg>
-                        {list.items_count} {t('setlists.songsCount')}
-                      </span>
-
                       <span className="sl-badge sl-app-role-badge">
                         {list.access_role === 'team' ? (
                           <>

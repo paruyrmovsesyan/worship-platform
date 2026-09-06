@@ -704,35 +704,101 @@ body.wp-standalone-app > .sla-modal-overlay {
   font-weight: 800;
 }
 
+/* PWA Padding Scoping */
+body.wp-standalone-app .setlists-page.sl-pwa-enhanced,
+body.is-pwa .setlists-page.sl-pwa-enhanced {
+  padding: 12px 16px !important;
+  padding-top: max(10px, env(safe-area-inset-top, 10px)) !important;
+  padding-bottom: calc(var(--bottom-nav-total-offset, 84px) + 24px) !important;
+  max-width: 860px;
+}
+
 /* Header Enhancements */
 .sl-app-header {
   display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+  margin-bottom: 1.15rem !important;
+  width: 100% !important;
+}
+.sl-app-header-top {
+  display: flex !important;
   flex-direction: row !important;
-  align-items: flex-start !important;
+  align-items: center !important;
   justify-content: space-between !important;
-  gap: 14px !important;
-  margin-bottom: 1.25rem !important;
+  gap: 12px !important;
+  width: 100% !important;
+  min-width: 0 !important;
 }
-.sl-app-header-left {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-  flex: 1;
+.sl-title.sl-app-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  font-size: clamp(1.4rem, 5.2vw, 1.85rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.4px !important;
+  color: var(--color-text-primary) !important;
+  min-width: 0 !important;
+  width: auto !important;
+  flex: 1 1 auto !important;
+  margin: 0 !important;
 }
-.sl-app-subtitle {
-  margin: 0;
-  font-size: 0.88rem;
-  color: var(--color-text-secondary);
-  line-height: 1.35;
+.sl-title.sl-app-title .sl-title-text {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.sl-title.sl-app-title .count-badge {
+  flex-shrink: 0 !important;
+  font-size: 0.8rem !important;
+  padding: 3px 9px !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--color-text-secondary) !important;
 }
 .sl-app-new-btn {
-  flex-shrink: 0;
-  white-space: nowrap;
-  padding: 8px 16px !important;
-  font-size: 0.88rem !important;
-  border-radius: 99px;
-  gap: 6px;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 8px 14px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  border-radius: 99px !important;
+  box-shadow: 0 4px 16px rgba(0, 240, 255, 0.28) !important;
+  cursor: pointer !important;
+  transition: transform 0.15s, box-shadow 0.15s !important;
+}
+.sl-app-new-btn:active {
+  transform: scale(0.96) !important;
+}
+.sl-new-btn-text-full {
+  display: none !important;
+}
+.sl-new-btn-text-short {
+  display: inline !important;
+}
+@media (min-width: 480px) {
+  .sl-new-btn-text-full {
+    display: inline !important;
+  }
+  .sl-new-btn-text-short {
+    display: none !important;
+  }
+  .sl-app-new-btn {
+    padding: 8px 18px !important;
+    font-size: 0.88rem !important;
+  }
+}
+.sl-app-subtitle {
+  margin: 0 !important;
+  font-size: 0.84rem !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.4 !important;
+  width: 100% !important;
 }
 
 /* Stats Bar */
@@ -823,6 +889,16 @@ body.wp-standalone-app > .sla-modal-overlay {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.sl-app-upcoming-arrow {
+  margin-left: auto;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  transition: transform 0.15s, color 0.15s;
+}
+.sl-app-stat-card.upcoming-card:hover .sl-app-upcoming-arrow {
+  color: var(--color-accent-cyan, #00f0ff);
+  transform: translateX(2px);
+}
 
 /* Toolbar: Search + Sort + View */
 .sl-app-toolbar {
@@ -852,18 +928,18 @@ body.wp-standalone-app > .sla-modal-overlay {
 }
 .sl-app-search-input {
   width: 100%;
-  padding: 11px 36px 11px 40px;
-  background: rgba(0, 0, 0, 0.25);
+  padding: 10px 36px 10px 38px;
+  background: rgba(0, 0, 0, 0.28);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   color: var(--color-text-primary);
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   outline: none;
   transition: border-color 0.2s, background 0.2s;
 }
 .sl-app-search-input:focus {
   border-color: var(--color-accent-cyan);
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.45);
 }
 .sl-app-search-clear {
   position: absolute;
@@ -1061,7 +1137,7 @@ body.wp-standalone-app > .sla-modal-overlay {
 .sl-app-meta-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   flex-wrap: wrap;
 }
 .sl-app-date-chip {
@@ -1093,6 +1169,18 @@ body.wp-standalone-app > .sla-modal-overlay {
 .sl-app-rel-badge.tone-past {
   background: rgba(255, 255, 255, 0.05);
   color: var(--color-text-tertiary);
+}
+.sl-app-meta-row .sl-songs-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 2px 7px;
+  border-radius: 6px;
 }
 
 /* Card Bottom Meta & Actions */
