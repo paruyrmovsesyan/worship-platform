@@ -1207,35 +1207,66 @@ body.wp-standalone-app > .sl-modal-overlay {
   to { transform: rotate(360deg); }
 }
 
-.sl-app-empty {
-  padding: 50px 20px !important;
-  text-align: center;
-  border-radius: 20px;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.02);
+.sl-app-empty-state {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 56px 20px !important;
+  text-align: center !important;
+  border-radius: 24px !important;
+  border: 1px dashed rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  margin: 20px 0 30px !important;
+  position: relative !important;
 }
-.sl-app-empty-glow {
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 16px;
+.sl-app-empty-state .sl-app-empty-glow {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 18px;
   border-radius: 50%;
-  background: rgba(0, 240, 255, 0.08);
+  background: rgba(0, 240, 255, 0.1);
   color: var(--color-accent-cyan);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.15);
 }
-.sl-app-empty h3 {
-  margin: 0 0 8px 0;
-  font-size: 1.3rem;
-  color: var(--color-text-primary);
+.sl-app-empty-state h3 {
+  position: static !important;
+  margin: 0 0 10px 0 !important;
+  font-size: 1.35rem !important;
+  font-weight: 700 !important;
+  color: var(--color-text-primary) !important;
 }
-.sl-app-empty p {
-  margin: 0 0 20px 0;
-  color: var(--color-text-secondary);
-  font-size: 0.95rem;
-  max-width: 400px;
-  margin-inline: auto;
+.sl-app-empty-state p,
+.sl-app-empty-state .sl-app-empty-desc {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  margin: 0 0 24px 0 !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 0.95rem !important;
+  line-height: 1.55 !important;
+  max-width: 400px !important;
+  margin-inline: auto !important;
+  width: auto !important;
+  text-align: center !important;
+  z-index: 1 !important;
+}
+.sl-app-empty-state .sl-app-empty-action {
+  position: static !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 12px 28px !important;
+  border-radius: 99px !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 20px rgba(0, 240, 255, 0.28) !important;
+  margin: 0 auto !important;
+  cursor: pointer !important;
 }
 
 /* Modal Improvements */

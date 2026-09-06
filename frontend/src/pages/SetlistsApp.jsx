@@ -657,7 +657,7 @@ export default function SetlistsApp() {
           <p>{language === 'am' ? 'Բեռնվում է...' : 'Loading...'}</p>
         </div>
       ) : filteredSetlists.length === 0 ? (
-        <div className="sl-placeholder empty-state animate-fade-in sl-app-empty">
+        <div className="sl-app-empty-state animate-fade-in">
           <div className="sl-app-empty-glow">
             <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M9 18V5l12-2v13"></path>
@@ -668,14 +668,14 @@ export default function SetlistsApp() {
           {searchQuery ? (
             <>
               <h3>{language === 'am' ? 'Երգացանկեր չեն գտնվել' : 'No setlists found'}</h3>
-              <p>
+              <p className="sl-app-empty-desc">
                 {language === 'am'
                   ? `«${searchQuery}» հարցմամբ ոչինչ չի գտնվել`
                   : `No results matching "${searchQuery}"`}
               </p>
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-secondary sl-app-empty-action"
                 onClick={() => {
                   setSearchQuery('');
                   setCategoryFilter('all');
@@ -687,14 +687,14 @@ export default function SetlistsApp() {
           ) : (
             <>
               <h3>{language === 'am' ? 'Երգացանկեր դեռ չկան' : t('setlists.empty')}</h3>
-              <p>
+              <p className="sl-app-empty-desc">
                 {language === 'am'
                   ? 'Ստեղծեք Ձեր առաջին երգացանկը, ընտրեք երգեր և կազմակերպեք պաշտամունքը'
                   : 'Create your first setlist, add songs and lead worship effortlessly'}
               </p>
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-primary sl-app-empty-action"
                 onClick={() => setShowCreateModal(true)}
               >
                 + {t('setlists.newSetlist')}
