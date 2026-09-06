@@ -56,6 +56,31 @@ function wp_friends_current_user_display_name(PDO $pdo, int $uid): string {
     return 'Someone';
 }
 
+function wp_friends_ensure_direct_chat(PDO $pdo, int $firstUserId, int $secondUserId): int {
+    $st = $pdo->prepare("
+        SELECT c.id
+        FROM chats c
+        JOIN chat_participants cp1 ON cp1.chat_id = c.id AND cp1.user_id = ?
+        JOIN chat_participants cp2 ON cp2.chat_id = c.id AND cp2.user_id = ?
+        WHERE c.type = 'direct'
+        ORDER BY c.id ASC
+        LIMIT 1
+    ");
+    $st->execute([$firstUserId, $secondUserId]);
+    $chatId = (int)($st->fetchColumn() ?: 0);
+    if ($chatId > 0) {
+        return $chatId;
+    }
+
+    $st = $pdo->prepare("INSERT INTO chats (type, created_by) VALUES ('direct', ?)");
+    $st->execute([$firstUserId]);
+    $chatId = (int)$pdo->lastInsertId();
+
+    $st = $pdo->prepare("INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?), (?, ?)");
+    $st->execute([$chatId, $firstUserId, $chatId, $secondUserId]);
+    return $chatId;
+}
+
 if ($action === 'search_users' && $method === 'GET') {
     $q = trim($_GET['q'] ?? '');
     if (strlen($q) < 2) {
@@ -176,11 +201,41 @@ if ($action === 'accept' && $method === 'POST') {
     if ($friend_id <= 0 || $friend_id === $uid) {
         out(["error" => "Invalid user"], 400);
     }
-    
-    $st = $pdo->prepare("UPDATE friends SET status = 'accepted' WHERE user_id_1 = ? AND user_id_2 = ? AND status = 'pending'");
-    $st->execute([$friend_id, $uid]); 
-    
-    if ($st->rowCount() > 0) {
+
+    $newlyAccepted = false;
+    $chatId = 0;
+    try {
+        $pdo->beginTransaction();
+        $st = $pdo->prepare("UPDATE friends SET status = 'accepted' WHERE user_id_1 = ? AND user_id_2 = ? AND status = 'pending'");
+        $st->execute([$friend_id, $uid]);
+        $newlyAccepted = $st->rowCount() > 0;
+
+        if (!$newlyAccepted) {
+            $stAccepted = $pdo->prepare("SELECT 1 FROM friends WHERE ((user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)) AND status = 'accepted' LIMIT 1 FOR UPDATE");
+            $stAccepted->execute([$friend_id, $uid, $uid, $friend_id]);
+            if (!$stAccepted->fetchColumn()) {
+                $pdo->rollBack();
+                out(["error" => "No pending request found"], 400);
+            }
+        }
+
+        $chatId = wp_friends_ensure_direct_chat($pdo, $uid, $friend_id);
+        try {
+            $pdo->prepare("DELETE FROM user_notifications WHERE user_id = ? AND sender_id = ? AND type = 'friend_request'")
+                ->execute([$uid, $friend_id]);
+        } catch (Throwable $cleanupError) {
+            error_log('Accepted friend request cleanup failed: ' . $cleanupError->getMessage());
+        }
+        $pdo->commit();
+    } catch (Throwable $acceptError) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log('Friend request acceptance failed: ' . $acceptError->getMessage());
+        out(["error" => "Could not accept friend request"], 500);
+    }
+
+    if ($newlyAccepted) {
         $senderName = wp_friends_current_user_display_name($pdo, $uid);
         $stLang = $pdo->prepare("SELECT language FROM users WHERE id = ? LIMIT 1");
         $stLang->execute([$friend_id]);
@@ -200,9 +255,6 @@ if ($action === 'accept' && $method === 'POST') {
         }
 
         try {
-            $pdo->prepare("DELETE FROM user_notifications WHERE user_id = ? AND sender_id = ? AND type = 'friend_request'")
-                ->execute([$uid, $friend_id]);
-
             $st_notif = $pdo->prepare("INSERT INTO user_notifications (user_id, sender_id, type, content, action_link) VALUES (?, ?, 'friend_accepted', ?, '/friends')");
             $st_notif->execute([$friend_id, $uid, json_encode(['text' => $notif_text, 'sender_name' => $senderName])]);
 
@@ -211,22 +263,9 @@ if ($action === 'accept' && $method === 'POST') {
         } catch (Throwable $notifyError) {
             error_log('Friend acceptance notification failed: ' . $notifyError->getMessage());
         }
-
-        out(["ok" => true]);
-    } else {
-        $stAccepted = $pdo->prepare("SELECT 1 FROM friends WHERE ((user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)) AND status = 'accepted' LIMIT 1");
-        $stAccepted->execute([$friend_id, $uid, $uid, $friend_id]);
-        if ($stAccepted->fetchColumn()) {
-            try {
-                $pdo->prepare("DELETE FROM user_notifications WHERE user_id = ? AND sender_id = ? AND type = 'friend_request'")
-                    ->execute([$uid, $friend_id]);
-            } catch (Throwable $cleanupError) {
-                error_log('Accepted friend request cleanup failed: ' . $cleanupError->getMessage());
-            }
-            out(["ok" => true, "already_accepted" => true]);
-        }
-        out(["error" => "No pending request found"], 400);
     }
+
+    out(["ok" => true, "chat_id" => $chatId, "already_accepted" => !$newlyAccepted]);
 }
 
 if ($action === 'remove' && $method === 'POST') {

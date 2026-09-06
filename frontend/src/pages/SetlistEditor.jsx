@@ -541,14 +541,24 @@ export default function SetlistEditor() {
   }, [isEditingSettings]);
 
   useEffect(() => {
-    if (isPWA) return undefined;
     const openPrintStudio = () => setIsPrintOpen(true);
     window.addEventListener('worship:open-print-studio', openPrintStudio);
     return () => window.removeEventListener('worship:open-print-studio', openPrintStudio);
-  }, [isPWA]);
+  }, []);
 
   useEffect(() => {
-    if (isPWA || !isQuickDrawerOpen) return undefined;
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setIsQuickDrawerOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (!isQuickDrawerOpen) return undefined;
     window.clearTimeout(quickSearchTimerRef.current);
     const query = quickQuery.trim();
     if (!query) {
@@ -565,7 +575,7 @@ export default function SetlistEditor() {
     }, 220);
 
     return () => window.clearTimeout(quickSearchTimerRef.current);
-  }, [isPWA, isQuickDrawerOpen, quickQuery]);
+  }, [isQuickDrawerOpen, quickQuery]);
 
   if (authLoading || loading) {
     return null;
@@ -613,7 +623,7 @@ export default function SetlistEditor() {
                 <button type="button" className="sle-icon-btn" onClick={openShareModal} title={t('setlists.share', 'Կիսվել երգացանկով')}>
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
                 </button>
-                <button type="button" className="sle-icon-btn" onClick={() => isPWA ? window.print() : setIsPrintOpen(true)} title="Տպել (Print)">
+                <button type="button" className="sle-icon-btn" onClick={() => setIsPrintOpen(true)} title="Տպել (Print)">
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                 </button>
               </div>
@@ -644,12 +654,10 @@ export default function SetlistEditor() {
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12h16M4 6h16M4 18h16"></path></svg>
               Ավելացնել Բաժին
             </button>
-            {!isPWA && (
-              <button className="btn btn-secondary sle-btn" type="button" onClick={() => setIsQuickDrawerOpen(true)}>
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h10M4 18h7"></path><path d="M18 15v6M15 18h6"></path></svg>
-                Արագ ավելացում
-              </button>
-            )}
+            <button className="btn btn-secondary sle-btn" type="button" onClick={() => setIsQuickDrawerOpen(true)}>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h10M4 18h7"></path><path d="M18 15v6M15 18h6"></path></svg>
+              Արագ ավելացում
+            </button>
             <button className="btn btn-primary sle-btn sle-btn--add-song" onClick={() => setIsSearching(!isSearching)}>
               {isSearching ? (
                 <><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> {t('setlists.closeSearch', 'Փակել')}</>
@@ -792,15 +800,15 @@ export default function SetlistEditor() {
                 <div
                   key={item.id}
                   className={`track-item section-header sle-pro-item ${draggingItemId === item.id ? 'is-dragging' : ''} ${dropTargetItemId === item.id ? 'is-drop-target' : ''}`}
-                  draggable={!isPWA && canEdit}
+                  draggable={canEdit}
                   onDragStart={() => setDraggingItemId(item.id)}
-                  onDragOver={event => { if (!isPWA && canEdit) { event.preventDefault(); setDropTargetItemId(item.id); } }}
+                  onDragOver={event => { if (canEdit) { event.preventDefault(); setDropTargetItemId(item.id); } }}
                   onDragLeave={() => setDropTargetItemId(null)}
                   onDrop={event => { event.preventDefault(); reorderByItemId(draggingItemId, item.id); setDraggingItemId(null); setDropTargetItemId(null); }}
                   onDragEnd={() => { setDraggingItemId(null); setDropTargetItemId(null); }}
                   style={{ background: 'var(--color-surface)', marginTop: '16px', borderLeft: '4px solid var(--color-primary)' }}
                 >
-                  {!isPWA && canEdit && <span className="sle-drag-handle" aria-hidden="true">⋮⋮</span>}
+                  {canEdit && <span className="sle-drag-handle" aria-hidden="true">⋮⋮</span>}
                   <div className="track-info" style={{ width: '100%', paddingLeft: '8px' }}>
                     <span className="track-title" style={{ fontSize: '1.2rem', color: 'var(--color-primary)', fontWeight: 'bold' }}>{item.title}</span>
                   </div>
@@ -837,15 +845,15 @@ export default function SetlistEditor() {
               <React.Fragment key={item.id}>
               <div
                 className={`track-item sle-pro-item ${draggingItemId === item.id ? 'is-dragging' : ''} ${dropTargetItemId === item.id ? 'is-drop-target' : ''}`}
-                draggable={!isPWA && canEdit}
+                draggable={canEdit}
                 onClick={() => navigate(`/song/${item.song_id}`)}
                 onDragStart={() => setDraggingItemId(item.id)}
-                onDragOver={event => { if (!isPWA && canEdit) { event.preventDefault(); setDropTargetItemId(item.id); } }}
+                onDragOver={event => { if (canEdit) { event.preventDefault(); setDropTargetItemId(item.id); } }}
                 onDragLeave={() => setDropTargetItemId(null)}
                 onDrop={event => { event.preventDefault(); reorderByItemId(draggingItemId, item.id); setDraggingItemId(null); setDropTargetItemId(null); }}
                 onDragEnd={() => { setDraggingItemId(null); setDropTargetItemId(null); }}
               >
-                {!isPWA && canEdit && <span className="sle-drag-handle" aria-hidden="true">⋮⋮</span>}
+                {canEdit && <span className="sle-drag-handle" aria-hidden="true">⋮⋮</span>}
                 <div className="track-number dim">
                   {songCount.toString().padStart(2, '0')}
                 </div>
@@ -1158,17 +1166,15 @@ export default function SetlistEditor() {
         document.body
       )}
 
-      {!isPWA && (
-        <PrintStudio
-          isOpen={isPrintOpen}
-          onClose={() => setIsPrintOpen(false)}
-          documents={printDocuments}
-          documentTitle={setlistData.name}
-          defaultShowChords
-        />
-      )}
+      <PrintStudio
+        isOpen={isPrintOpen}
+        onClose={() => setIsPrintOpen(false)}
+        documents={printDocuments}
+        documentTitle={setlistData.name}
+        defaultShowChords
+      />
 
-      {!isPWA && isQuickDrawerOpen && createPortal(
+      {isQuickDrawerOpen && createPortal(
         <div className="quick-song-drawer-backdrop" onMouseDown={() => setIsQuickDrawerOpen(false)}>
           <aside className="quick-song-drawer" onMouseDown={event => event.stopPropagation()} aria-label="Արագ երգ ավելացնել">
             <header>

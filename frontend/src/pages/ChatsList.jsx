@@ -145,7 +145,7 @@ export default function ChatsList({ isEmbedded = false }) {
         throw new Error(data.error || t('friends.acceptError', 'Չհաջողվեց ընդունել հարցումը'));
       }
       setIncomingRequests(current => current.filter(request => Number(request.friend_id) !== Number(userId)));
-      await fetchFriends();
+      await Promise.all([fetchFriends(), fetchChats()]);
       window.dispatchEvent(new CustomEvent('wp-friendship-updated'));
       const q = searchQuery.trim();
       if (q.length >= 2) {

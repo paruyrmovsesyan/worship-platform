@@ -261,27 +261,29 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     }
     pendingIceCandidatesRef.current = [];
     offerInFlightRef.current = false;
-    if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
+    if (remoteAudioRef.current) {
+      const remoteStream = remoteAudioRef.current.srcObject;
+      remoteAudioRef.current.pause();
+      remoteAudioRef.current.srcObject = null;
+      remoteStream?.getTracks?.().forEach((track) => track.stop());
+    }
   }, []);
 
-  const stopLocalStream = useCallback((forceStop = false) => {
+  const stopLocalStream = useCallback(() => {
     const stream = localStreamRef.current;
     if (!stream) return;
-    if (forceStop) {
-      stream.getTracks().forEach((track) => track.stop());
-      localStreamRef.current = null;
-    } else {
-      stream.getAudioTracks().forEach((track) => {
-        track.enabled = false;
-      });
-    }
+    stream.getTracks().forEach((track) => {
+      track.onended = null;
+      track.stop();
+    });
+    localStreamRef.current = null;
     setIsMuted(false);
   }, []);
 
-  const cleanupWebRtc = useCallback((forceStopMic = false) => {
+  const cleanupWebRtc = useCallback(() => {
     stopConnectionTimers();
     closePeerConnection();
-    stopLocalStream(forceStopMic);
+    stopLocalStream();
     reconnectAttemptsRef.current = 0;
     setConnectionQuality('unknown');
     setRemoteAudioBlocked(false);
@@ -290,7 +292,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
   const resetCall = useCallback(() => {
     if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
     resetTimerRef.current = null;
-    cleanupWebRtc(false);
+    cleanupWebRtc();
     pendingStartRef.current = false;
     cancelPendingStartRef.current = false;
     lastHeartbeatAtRef.current = 0;
@@ -464,7 +466,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       if (pcRef.current === pc && pc.iceConnectionState === 'failed') scheduleReconnect(0);
     };
     return pc;
-  }, [closePeerConnection, ensureLocalStream, markConnected, scheduleReconnect, sendSignal]);
+  }, [applySpeakerRouting, closePeerConnection, ensureLocalStream, markConnected, scheduleReconnect, sendSignal]);
 
   const flushPendingCandidates = useCallback(async (pc) => {
     const queued = pendingIceCandidatesRef.current;
@@ -545,6 +547,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
       setCallError('connection_failed');
       setCallStateStable('failed');
+      cleanupWebRtc();
       return;
     }
     reconnectAttemptsRef.current += 1;
@@ -560,7 +563,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       console.warn('WebRTC reconnect failed', error);
       scheduleReconnect(1200);
     }
-  }, [createAndSendOffer, scheduleReconnect, setCallStateStable]);
+  }, [cleanupWebRtc, createAndSendOffer, scheduleReconnect, setCallStateStable]);
 
   useEffect(() => { restartConnectionRef.current = restartConnection; }, [restartConnection]);
 
@@ -614,6 +617,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
           if (callStateRef.current !== 'idle') {
             closeCallNotifications(callInfoRef.current?.id);
             setCallStateStable('ended');
+            cleanupWebRtc();
             scheduleReset(1200);
           }
           return;
@@ -689,7 +693,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       window.removeEventListener('online', wakePoll);
       document.removeEventListener('visibilitychange', wakePoll);
     };
-  }, [acknowledgeSignals, chatId, createAndSendOffer, currentUserId, markConnected, processSignal, scheduleReset, setCallInfoStable, setCallStateStable]);
+  }, [acknowledgeSignals, chatId, cleanupWebRtc, createAndSendOffer, currentUserId, markConnected, processSignal, scheduleReset, setCallInfoStable, setCallStateStable]);
 
   const startCall = useCallback(async (targetUserId = 0, defaultDisplayName = '', customChatId = 0) => {
     if (callStateRef.current !== 'idle') return;
@@ -856,18 +860,24 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
   }, [isMuted]);
 
   useEffect(() => {
-    if (callState === 'connected' && 'mediaSession' in navigator) {
-      try {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: callDisplayName || 'Աուդիոզանգ',
-          artist: 'Worship Platform',
-          album: 'Live Call',
-        });
-        navigator.mediaSession.setActionHandler('hangup', () => endCall());
-      } catch (e) {
-        console.warn('MediaSession setup failed', e);
-      }
+    if (callState !== 'connected' || !('mediaSession' in navigator)) return undefined;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: callDisplayName || 'Աուդիոզանգ',
+        artist: 'Worship Platform',
+        album: 'Live Call',
+      });
+      navigator.mediaSession.setActionHandler('hangup', () => endCall());
+    } catch (e) {
+      console.warn('MediaSession setup failed', e);
     }
+
+    return () => {
+      try {
+        navigator.mediaSession.setActionHandler('hangup', null);
+        navigator.mediaSession.metadata = null;
+      } catch { /* MediaSession cleanup is best effort */ }
+    };
   }, [callState, callDisplayName, endCall]);
 
   useEffect(() => {
@@ -939,7 +949,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     };
   }, [requestWakeLock, retryConnection, setCallStateStable]);
 
-  useEffect(() => () => cleanupWebRtc(true), [cleanupWebRtc]);
+  useEffect(() => () => cleanupWebRtc(), [cleanupWebRtc]);
 
   useEffect(() => {
     if (!Number(currentUserId || 0) && callStateRef.current !== 'idle') resetCall();

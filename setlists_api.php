@@ -223,8 +223,11 @@ if ($action === 'create_setlist' && $method === 'POST') {
         }
         // ------------------------------
 
-        $st = $pdo->prepare("INSERT INTO setlists (user_id, team_id, name) VALUES (?, ?, ?)");
-        $st->execute([$uid, $team_id, $name]);
+        $service_date = normalizeNullable($d['service_date'] ?? '');
+        $description = normalizeNullable($d['description'] ?? '');
+
+        $st = $pdo->prepare("INSERT INTO setlists (user_id, team_id, name, service_date, description) VALUES (?, ?, ?, ?, ?)");
+        $st->execute([$uid, $team_id, $name, $service_date, $description]);
 
         out([
             "ok" => true,
