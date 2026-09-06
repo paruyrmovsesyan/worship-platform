@@ -442,30 +442,30 @@ body.is-pwa .song-view-page .seq-nav {
   left: 50% !important;
   right: auto !important;
   top: auto !important;
-  bottom: max(16px, env(safe-area-inset-bottom, 16px)) !important;
+  bottom: calc(max(24px, env(safe-area-inset-bottom, 24px)) + 72px) !important;
   transform: translateX(-50%) !important;
-  width: min(360px, calc(100vw - 32px)) !important;
-  height: 56px !important;
+  width: min(340px, calc(100vw - 48px)) !important;
+  height: 50px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  gap: 10px !important;
+  gap: 8px !important;
   background: rgba(22, 26, 36, 0.94) !important;
   backdrop-filter: blur(20px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  padding: 6px 10px !important;
+  padding: 4px 8px !important;
   box-sizing: border-box !important;
   border-radius: 999px !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.25) !important;
   z-index: 2147483000 !important;
   margin: 0 !important;
 }
 
 .seq-btn {
-  width: 42px !important;
-  height: 42px !important;
-  min-width: 42px !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
   border-radius: 50% !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   background: rgba(255, 255, 255, 0.08) !important;
@@ -507,36 +507,32 @@ body.is-pwa .song-view-page .seq-nav {
   cursor: pointer !important;
   user-select: none !important;
   -webkit-user-select: none !important;
+  overflow: hidden !important;
 }
 
 .seq-count {
-  font-size: 0.78rem !important;
+  font-size: 0.76rem !important;
   font-weight: 700 !important;
   color: var(--sv-accent, #38bdf8) !important;
-  letter-spacing: 0.03em !important;
-  line-height: 1.2 !important;
+  letter-spacing: 0.02em !important;
+  line-height: 1.15 !important;
+  white-space: nowrap !important;
 }
 
 .seq-title {
-  font-size: 0.76rem !important;
+  font-size: 0.74rem !important;
   font-weight: 500 !important;
   color: rgba(255, 255, 255, 0.78) !important;
   text-transform: none !important;
   letter-spacing: normal !important;
-  margin-top: 2px !important;
+  margin-top: 1px !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  max-width: 220px !important;
-  line-height: 1.2 !important;
-}
-
-/* Hide main bottom dock when sequential setlist navigation is active */
-body.has-seq-nav-active #wpAppDock,
-body.wp-main-app.has-seq-nav-active #wpAppDock,
-body.wp-standalone-app.has-seq-nav-active #wpAppDock,
-body:has(.seq-nav) #wpAppDock {
-  display: none !important;
+  max-width: 210px !important;
+  width: 100% !important;
+  text-align: center !important;
+  line-height: 1.15 !important;
 }
 
 .sv-edit-action {
@@ -569,7 +565,7 @@ body.wp-main-app .song-view-page.has-seq-nav,
 body.mobile-theme .song-view-page.has-seq-nav,
 body.is-pwa .song-view-page.has-seq-nav,
 .song-view-page.has-seq-nav {
-  padding-bottom: calc(max(24px, env(safe-area-inset-bottom, 24px)) + 90px) !important;
+  padding-bottom: 24px !important;
 }
 
 body.song-view-active.wp-main-app #root,
@@ -674,7 +670,7 @@ body.is-pwa .song-view-page.has-seq-nav .sv-control-panel {
   }
 
   .song-view-page.has-seq-nav .sv-edit-action {
-    margin-bottom: calc(var(--bottom-nav-total-offset, 88px) + 24px);
+    margin-bottom: 24px !important;
   }
 }
 

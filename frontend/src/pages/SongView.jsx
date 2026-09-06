@@ -510,17 +510,6 @@ export default function SongView() {
     };
   }, [id, language, location.search, user]);
 
-  useEffect(() => {
-    if (setlistNavData) {
-      document.body.classList.add('has-seq-nav-active');
-    } else {
-      document.body.classList.remove('has-seq-nav-active');
-    }
-    return () => {
-      document.body.classList.remove('has-seq-nav-active');
-    };
-  }, [setlistNavData]);
-
   const increaseFontSize = () => { 
     setFontSize(prev => {
       const v = Math.min(prev + 2, 40);
