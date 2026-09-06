@@ -430,26 +430,8 @@
 
 /* Toast removed to use global index.css toast */
 
-.seq-nav {
-  position: fixed;
-  bottom: calc(var(--bottom-nav-total-offset, 88px) + 4px);
-  left: 0;
-  right: 0;
-  margin: 0 auto;
-  width: min(304px, calc(100vw - 96px));
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  background: rgba(18, 22, 34, 0.85);
-  backdrop-filter: blur(12px) saturate(150%);
-  padding: 8px;
-  border-radius: 99px;
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-  z-index: 1002;
-}
-
+/* Sequential Navigation Bar (Setlist/Favorites song flip) */
+.seq-nav,
 body.wp-standalone-app > .seq-nav,
 body.wp-standalone-app .seq-nav,
 body.mobile-theme .seq-nav,
@@ -457,53 +439,104 @@ body.is-pwa .seq-nav,
 body.mobile-theme .song-view-page .seq-nav,
 body.is-pwa .song-view-page .seq-nav {
   position: fixed !important;
-  left: 0 !important;
-  right: 0 !important;
+  left: 50% !important;
+  right: auto !important;
   top: auto !important;
-  bottom: calc(max(24px, env(safe-area-inset-bottom, 24px)) + 72px) !important;
-  transform: none !important;
-  width: min(304px, calc(100vw - 80px)) !important;
-  justify-content: space-between !important;
+  bottom: max(16px, env(safe-area-inset-bottom, 16px)) !important;
+  transform: translateX(-50%) !important;
+  width: min(360px, calc(100vw - 32px)) !important;
+  height: 56px !important;
   display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  background: rgba(22, 26, 36, 0.94) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  padding: 6px 10px !important;
+  box-sizing: border-box !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
   z-index: 2147483000 !important;
-  margin: 0 auto !important;
+  margin: 0 !important;
 }
 
 .seq-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255,255,255,0.06);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  border-radius: 50% !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  flex-shrink: 0 !important;
+  padding: 0 !important;
+}
+
+.seq-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.seq-btn:active:not(:disabled) {
+  transform: scale(0.92) !important;
+  background: rgba(255, 255, 255, 0.22) !important;
 }
 
 .seq-btn:disabled {
-  opacity: 0.3;
+  opacity: 0.22 !important;
+  cursor: default !important;
+  background: transparent !important;
+  border-color: transparent !important;
 }
 
 .seq-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 80px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  padding: 0 6px !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 
 .seq-count {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--sv-accent);
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  color: var(--sv-accent, #38bdf8) !important;
+  letter-spacing: 0.03em !important;
+  line-height: 1.2 !important;
 }
 
 .seq-title {
-  font-size: 0.7rem;
-  color: var(--color-text-dim);
-  text-transform: uppercase;
+  font-size: 0.76rem !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.78) !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  margin-top: 2px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 220px !important;
+  line-height: 1.2 !important;
+}
+
+/* Hide main bottom dock when sequential setlist navigation is active */
+body.has-seq-nav-active #wpAppDock,
+body.wp-main-app.has-seq-nav-active #wpAppDock,
+body.wp-standalone-app.has-seq-nav-active #wpAppDock,
+body:has(.seq-nav) #wpAppDock {
+  display: none !important;
 }
 
 .sv-edit-action {
@@ -532,9 +565,11 @@ body.wp-main-app.song-view-active .song-view-page {
 }
 
 body.wp-standalone-app .song-view-page.has-seq-nav,
+body.wp-main-app .song-view-page.has-seq-nav,
 body.mobile-theme .song-view-page.has-seq-nav,
-body.is-pwa .song-view-page.has-seq-nav {
-  padding-bottom: calc(var(--bottom-nav-total-offset, 88px) + 72px) !important;
+body.is-pwa .song-view-page.has-seq-nav,
+.song-view-page.has-seq-nav {
+  padding-bottom: calc(max(24px, env(safe-area-inset-bottom, 24px)) + 90px) !important;
 }
 
 body.song-view-active.wp-main-app #root,

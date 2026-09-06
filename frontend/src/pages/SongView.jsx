@@ -510,6 +510,17 @@ export default function SongView() {
     };
   }, [id, language, location.search, user]);
 
+  useEffect(() => {
+    if (setlistNavData) {
+      document.body.classList.add('has-seq-nav-active');
+    } else {
+      document.body.classList.remove('has-seq-nav-active');
+    }
+    return () => {
+      document.body.classList.remove('has-seq-nav-active');
+    };
+  }, [setlistNavData]);
+
   const increaseFontSize = () => { 
     setFontSize(prev => {
       const v = Math.min(prev + 2, 40);
@@ -1172,15 +1183,29 @@ export default function SongView() {
     {/* Setlist Navigation */}
     {setlistNavData && createPortal(
       <div className="seq-nav">
-        <button className="seq-btn" disabled={!setlistNavData.prev} onClick={() => navigateToSetlistSong(setlistNavData.prev)}>
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <button 
+          className="seq-btn" 
+          disabled={!setlistNavData.prev} 
+          onClick={() => navigateToSetlistSong(setlistNavData.prev)}
+          aria-label={t('songView.prevSong', 'Նախորդ երգ')}
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
         </button>
-        <div className="seq-info">
+        <div 
+          className="seq-info" 
+          onClick={handleSongBack}
+          title={t('songView.backToSetlist', 'Վերադառնալ սեթլիստ')}
+        >
           <span className="seq-count">{(setlistNavData.current?.index ?? setlistNavData.index) || 1} / {setlistNavData.total}</span>
           <span className="seq-title">{setlistNavData.setlist?.name || t('songView.setlistTitle')}</span>
         </div>
-        <button className="seq-btn" disabled={!setlistNavData.next} onClick={() => navigateToSetlistSong(setlistNavData.next)}>
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        <button 
+          className="seq-btn" 
+          disabled={!setlistNavData.next} 
+          onClick={() => navigateToSetlistSong(setlistNavData.next)}
+          aria-label={t('songView.nextSong', 'Հաջորդ երգ')}
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
       </div>,
       document.body
