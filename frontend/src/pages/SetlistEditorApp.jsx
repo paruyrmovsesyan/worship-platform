@@ -1007,8 +1007,7 @@ export default function SetlistEditorApp() {
       {/* 1. Quick Song Search Drawer */}
       {isQuickDrawerOpen && createPortal(
         <div className="sla-modal-overlay" onClick={() => setIsQuickDrawerOpen(false)}>
-          <div className="sla-sheet" onClick={e => e.stopPropagation()}>
-            <div className="sla-sheet-handle" />
+          <div className="sla-sheet sla-sheet--song-search" onClick={e => e.stopPropagation()}>
             <div className="sla-sheet-header">
               <h3>Ավելացնել երգ</h3>
               <button type="button" className="sla-sheet-close" onClick={() => setIsQuickDrawerOpen(false)}>✕</button>
@@ -1025,7 +1024,6 @@ export default function SetlistEditorApp() {
                   placeholder="Որոնել երգ..."
                   value={quickQuery}
                   onChange={e => setQuickQuery(e.target.value)}
-                  autoFocus
                 />
                 {quickQuery && (
                   <button type="button" className="sla-drawer-search-clear" onClick={() => setQuickQuery('')}>
@@ -1099,7 +1097,6 @@ export default function SetlistEditorApp() {
       {isAddSectionOpen && createPortal(
         <div className="sla-modal-overlay" onClick={() => setIsAddSectionOpen(false)}>
           <div className="sla-sheet" onClick={e => e.stopPropagation()}>
-            <div className="sla-sheet-handle" />
             <div className="sla-sheet-header">
               <h3>Ավելացնել Բաժին</h3>
               <button type="button" className="sla-sheet-close" onClick={() => setIsAddSectionOpen(false)}>✕</button>
@@ -1156,7 +1153,6 @@ export default function SetlistEditorApp() {
       {isTeamModalOpen && createPortal(
         <div className="sla-modal-overlay" onClick={() => setIsTeamModalOpen(false)}>
           <div className="sla-sheet" onClick={e => e.stopPropagation()}>
-            <div className="sla-sheet-handle" />
             <div className="sla-sheet-header">
               <h3>Երգացանկի Թիմ</h3>
               <button type="button" className="sla-sheet-close" onClick={() => setIsTeamModalOpen(false)}>✕</button>
@@ -1258,7 +1254,6 @@ export default function SetlistEditorApp() {
       {isShareModalOpen && createPortal(
         <div className="sla-modal-overlay" onClick={() => setIsShareModalOpen(false)}>
           <div className="sla-sheet" onClick={e => e.stopPropagation()}>
-            <div className="sla-sheet-handle" />
             <div className="sla-sheet-header">
               <h3>Կիսվել երգացանկով</h3>
               <button type="button" className="sla-sheet-close" onClick={() => setIsShareModalOpen(false)}>✕</button>
@@ -1368,7 +1363,6 @@ export default function SetlistEditorApp() {
       {editingItem && createPortal(
         <div className="sla-modal-overlay" onClick={() => setEditingItem(null)}>
           <div className="sla-sheet" onClick={e => e.stopPropagation()}>
-            <div className="sla-sheet-handle" />
             <div className="sla-sheet-header">
               <h3>{editingItem.item_type === 'section' ? 'Խմբագրել բաժինը' : 'Խմբագրել երգը'}</h3>
               <button type="button" className="sla-sheet-close" onClick={() => setEditingItem(null)}>✕</button>
@@ -1476,7 +1470,6 @@ export default function SetlistEditorApp() {
       {isEditingSettings && createPortal(
         <div className="sla-modal-overlay" onClick={closeEditSettings}>
           <div className="sla-sheet" onClick={e => e.stopPropagation()}>
-            <div className="sla-sheet-handle" />
             <div className="sla-sheet-header">
               <h3>Խմբագրել երգացանկը</h3>
               <button type="button" className="sla-sheet-close" onClick={closeEditSettings}>✕</button>
