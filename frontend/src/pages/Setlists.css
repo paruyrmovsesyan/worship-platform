@@ -378,13 +378,13 @@
 
 /* Modals */
 .sl-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 2147483000;
-  display: flex;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  z-index: 2147483647 !important;
+  display: flex !important;
   align-items: flex-end; /* Bottom sheet on mobile by default */
   justify-content: center;
   box-sizing: border-box;
@@ -392,6 +392,15 @@
   padding: 0; /* Flush to edges on mobile */
   overflow: hidden;
   animation: fadeIn 0.3s ease;
+}
+
+/* Hide MobileNav dock when any setlist modal is open */
+body.sl-modal-open #wpAppDock,
+body.sl-modal-open .mobile-bottom-nav {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
 }
 
 /* pwa-init sets direct body children to position:relative; the modal portal must
@@ -405,13 +414,13 @@ body.wp-standalone-app > .sl-modal-overlay {
 .sl-modal {
   background: var(--color-surface);
   width: 100%;
-  max-width: 440px;
-  border-radius: 24px 24px 0 0; /* Bottom sheet style */
-  max-height: calc(90dvh - env(safe-area-inset-top, 0px));
-  padding: 24px 20px calc(24px + 80px + env(safe-area-inset-bottom, 0px)); /* Extra padding to clear MobileNav */
+  max-width: 480px;
+  border-radius: 28px 28px 0 0; /* Bottom sheet style */
+  max-height: min(88dvh, calc(100dvh - 60px));
+  padding: 24px 20px max(32px, env(safe-area-inset-bottom, 24px));
   border: 1px solid var(--color-surface-hover);
   border-bottom: none;
-  box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+  box-shadow: 0 -12px 50px rgba(0, 0, 0, 0.7);
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -420,14 +429,15 @@ body.wp-standalone-app > .sl-modal-overlay {
 
 @media (min-width: 768px) {
   .sl-modal-overlay {
-    align-items: center; /* Center on desktop */
-    padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+    align-items: center !important; /* Center on desktop */
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)) !important;
   }
   .sl-modal {
     border-radius: 24px;
     border-bottom: 1px solid var(--color-surface-hover);
     padding-bottom: 24px; /* Normal padding on desktop */
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    max-height: 85vh;
     animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 }
@@ -488,6 +498,14 @@ body.wp-standalone-app > .sl-modal-overlay {
 
 .sl-input:focus {
   border-color: var(--color-accent-cyan);
+}
+
+.sl-input[type="date"] {
+  color-scheme: dark;
+  -webkit-appearance: none;
+  min-height: 48px;
+  color: var(--color-text-primary);
+  font-family: inherit;
 }
 
 .sl-select-wrapper {
@@ -687,23 +705,33 @@ body.wp-standalone-app > .sl-modal-overlay {
 
 /* Header Enhancements */
 .sl-app-header {
-  margin-bottom: 1.25rem;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  margin-bottom: 1.25rem !important;
 }
 .sl-app-header-left {
   display: flex;
   flex-direction: column;
   gap: 4px;
   min-width: 0;
+  flex: 1;
 }
 .sl-app-subtitle {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: var(--color-text-secondary);
-  line-height: 1.4;
+  line-height: 1.35;
 }
 .sl-app-new-btn {
   flex-shrink: 0;
   white-space: nowrap;
+  padding: 8px 16px !important;
+  font-size: 0.88rem !important;
+  border-radius: 99px;
+  gap: 6px;
 }
 
 /* Stats Bar */

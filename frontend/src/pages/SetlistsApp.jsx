@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -145,6 +146,18 @@ export default function SetlistsApp() {
     window.addEventListener('click', handleDocClick);
     return () => window.removeEventListener('click', handleDocClick);
   }, []);
+
+  // Lock body scroll and mark modal open so MobileNav is hidden
+  useEffect(() => {
+    if (!showCreateModal) return undefined;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.body.classList.add('sl-modal-open');
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.classList.remove('sl-modal-open');
+    };
+  }, [showCreateModal]);
 
   // Duplicate Setlist
   const handleDuplicate = async (e, listId) => {
@@ -911,7 +924,7 @@ export default function SetlistsApp() {
       )}
 
       {/* Create Modal */}
-      {showCreateModal && (
+      {showCreateModal && createPortal(
         <div className="sl-modal-overlay" onClick={() => setShowCreateModal(false)}>
           <div className="sl-modal sl-app-create-modal" onClick={(e) => e.stopPropagation()}>
             <div className="sl-modal-header">
@@ -1037,7 +1050,8 @@ export default function SetlistsApp() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
