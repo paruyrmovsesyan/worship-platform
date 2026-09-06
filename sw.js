@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v391";
+const CACHE_VERSION = "worship-v392";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;

@@ -313,7 +313,12 @@ export default function SupportContactApp({ initialTab }) {
             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
-          <span>{language === 'am' ? 'Հարց ու պատասխան (FAQ)' : language === 'ru' ? 'Вопросы и ответы (FAQ)' : 'FAQ & Help'}</span>
+          <span className="sca-tab-text-full">
+            {language === 'am' ? 'Հարց ու պատասխան (FAQ)' : language === 'ru' ? 'Вопросы и ответы (FAQ)' : 'FAQ & Help'}
+          </span>
+          <span className="sca-tab-text-short">
+            {language === 'am' ? 'Հարցեր (FAQ)' : language === 'ru' ? 'Вопросы (FAQ)' : 'FAQ'}
+          </span>
         </button>
         <button
           type="button"
@@ -324,7 +329,12 @@ export default function SupportContactApp({ initialTab }) {
             <line x1="22" y1="2" x2="11" y2="13" />
             <polygon points="22 2 15 22 11 13 2 9 22 2" />
           </svg>
-          <span>{language === 'am' ? 'Ուղարկել նամակ' : language === 'ru' ? 'Написать нам' : 'Contact Us'}</span>
+          <span className="sca-tab-text-full">
+            {language === 'am' ? 'Ուղարկել նամակ' : language === 'ru' ? 'Написать нам' : 'Contact Us'}
+          </span>
+          <span className="sca-tab-text-short">
+            {language === 'am' ? 'Գրել նամակ' : language === 'ru' ? 'Написать' : 'Contact'}
+          </span>
         </button>
       </div>
 
