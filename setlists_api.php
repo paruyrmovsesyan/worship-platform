@@ -942,7 +942,7 @@ if ($action === 'search_songs' && $method === 'GET') {
              s.title_hy, s.title_lat, s.title_en, s.title_ru,
              NULL AS last_played_date
       FROM songs s
-      ORDER BY s.views_count DESC, s.id DESC
+      ORDER BY s.id DESC
       LIMIT 25
     ");
     out($st->fetchAll());

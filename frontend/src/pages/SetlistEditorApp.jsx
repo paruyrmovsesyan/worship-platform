@@ -758,7 +758,10 @@ export default function SetlistEditorApp() {
           <button
             type="button"
             className="sla-hero-add-btn"
-            onClick={() => setIsQuickDrawerOpen(true)}
+            onClick={() => {
+              setQuickQuery('');
+              setIsQuickDrawerOpen(true);
+            }}
           >
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.4">
               <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -813,7 +816,14 @@ export default function SetlistEditorApp() {
             <h3 className="sla-empty-title">{t('setlists.emptySetlist', 'Երգացանկը դատարկ է')}</h3>
             <p className="sla-empty-subtitle">Ավելացրեք երգեր կամ բաժիններ ծառայությունը կազմակերպելու համար</p>
             {canEdit && (
-              <button type="button" className="sla-empty-btn" onClick={() => setIsQuickDrawerOpen(true)}>
+              <button
+                type="button"
+                className="sla-empty-btn"
+                onClick={() => {
+                  setQuickQuery('');
+                  setIsQuickDrawerOpen(true);
+                }}
+              >
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <line x1="12" y1="5" x2="12" y2="19"></line>
                   <line x1="5" y1="12" x2="19" y2="12"></line>

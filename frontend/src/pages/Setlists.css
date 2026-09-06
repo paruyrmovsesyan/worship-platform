@@ -405,7 +405,8 @@ body.sl-modal-open .mobile-bottom-nav {
 
 /* pwa-init sets direct body children to position:relative; the modal portal must
    stay attached to the visual viewport instead of the bottom of the document. */
-body.wp-standalone-app > .sl-modal-overlay {
+body.wp-standalone-app > .sl-modal-overlay,
+body.wp-standalone-app > .sla-modal-overlay {
   position: fixed !important;
   inset: 0 !important;
   z-index: 2147483647 !important;
