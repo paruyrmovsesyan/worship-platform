@@ -937,7 +937,15 @@ if ($action === 'search_songs' && $method === 'GET') {
   $q = trim((string)($_GET['q'] ?? ''));
 
   if ($q === '') {
-    out([]);
+    $st = $pdo->query("
+      SELECT s.id, s.title, s.artist, s.song_key, s.tags,
+             s.title_hy, s.title_lat, s.title_en, s.title_ru,
+             NULL AS last_played_date
+      FROM songs s
+      ORDER BY s.views_count DESC, s.id DESC
+      LIMIT 25
+    ");
+    out($st->fetchAll());
   }
 
   $like = '%' . $q . '%';

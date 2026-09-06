@@ -6,7 +6,8 @@ body.live-mode-active {
   color: #ffffff !important;
 }
 body.live-mode-active .app-sidebar,
-body.live-mode-active .app-header {
+body.live-mode-active .app-header,
+body.live-mode-active #wpAppDock {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
