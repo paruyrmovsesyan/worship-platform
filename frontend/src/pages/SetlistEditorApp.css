@@ -307,6 +307,14 @@
   flex-direction: column;
   gap: 10px;
   width: 100%;
+  overscroll-behavior-y: contain;
+}
+
+body.is-touch-dragging-active {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: none !important;
 }
 
 .sla-song-card {
@@ -318,8 +326,9 @@
   background: rgba(22, 30, 44, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.06);
   cursor: pointer;
-  transition: transform 0.12s ease, background 0.12s ease;
+  transition: background 0.12s ease;
   position: relative;
+  touch-action: pan-y;
 }
 
 .sla-song-card:active {
@@ -338,21 +347,36 @@
 
 .sla-song-card.is-touch-dragging,
 .sla-section-card.is-touch-dragging {
-  opacity: 0.95 !important;
-  transform: scale(1.025) !important;
+  opacity: 0.96 !important;
   border-color: #00d4ff !important;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 212, 255, 0.4) !important;
-  z-index: 99 !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), 0 0 28px rgba(0, 212, 255, 0.5) !important;
+  z-index: 9999 !important;
   position: relative;
-  background: rgba(14, 28, 48, 0.96) !important;
+  background: rgba(14, 26, 48, 0.98) !important;
+  will-change: transform;
 }
 
 .sla-song-card.is-touch-target,
 .sla-section-card.is-touch-target {
   border-color: #00d4ff !important;
   box-shadow: 0 0 20px rgba(0, 212, 255, 0.45) !important;
-  transform: translateY(-2px);
   background: rgba(0, 212, 255, 0.08) !important;
+  position: relative;
+}
+
+.sla-song-card.is-touch-target::after,
+.sla-section-card.is-touch-target::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: -6px;
+  height: 3.5px;
+  background: linear-gradient(90deg, transparent, #00d4ff, #38bdf8, transparent);
+  border-radius: 99px;
+  box-shadow: 0 0 12px #00d4ff;
+  pointer-events: none;
+  z-index: 100;
 }
 
 .sla-song-card.is-reorder-mode,

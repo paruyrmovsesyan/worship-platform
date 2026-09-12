@@ -115,6 +115,20 @@ export default function SetlistEditorApp() {
   });
   const dragCooldownRef = useRef(0);
   const autoScrollFrameRef = useRef(null);
+  const draggedCardElementRef = useRef(null);
+  const longPressTimerRef = useRef(null);
+  const touchStartPosRef = useRef({ x: 0, y: 0, itemId: null });
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.classList.toggle('is-reorder-active', isReorderMode);
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove('is-reorder-active');
+      }
+    };
+  }, [isReorderMode]);
 
   // Batch song add in quick drawer
   const [selectedSongIds, setSelectedSongIds] = useState(new Set());
@@ -463,10 +477,18 @@ export default function SetlistEditorApp() {
   }, []);
 
   // Touch reorder handlers for mobile drag & drop
-  const handleTouchStartReorder = (e, itemId) => {
+  const handleTouchStartReorder = (e, itemId, explicitCardEl = null) => {
     if (!canEdit) return;
-    const touch = e.touches[0];
+    const touch = e.touches ? e.touches[0] : e;
     if (!touch) return;
+
+    const cardEl = explicitCardEl || (e.currentTarget ? e.currentTarget.closest('[data-item-id]') : null);
+    draggedCardElementRef.current = cardEl;
+
+    if (typeof window !== 'undefined') {
+      window.__wpIsDragging = true;
+      document.body.classList.add('is-touch-dragging-active');
+    }
 
     touchDragStateRef.current = {
       activeId: itemId,
@@ -480,7 +502,7 @@ export default function SetlistEditorApp() {
     setTouchDropTargetId(itemId);
 
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      try { navigator.vibrate(25); } catch {}
+      try { navigator.vibrate(30); } catch {}
     }
 
     startAutoScroll();
@@ -488,20 +510,28 @@ export default function SetlistEditorApp() {
 
   const handleTouchMoveReorder = (e) => {
     if (!touchDragStateRef.current.activeId) return;
-    const touch = e.touches[0];
+    const touch = e.touches ? e.touches[0] : e;
     if (!touch) return;
 
     if (e.cancelable) {
       e.preventDefault();
     }
 
-    const deltaY = Math.abs(touch.clientY - touchDragStateRef.current.startY);
-    if (deltaY > 6) {
+    const deltaY = touch.clientY - touchDragStateRef.current.startY;
+    if (Math.abs(deltaY) > 5) {
       touchDragStateRef.current.didMove = true;
     }
 
     touchDragStateRef.current.currentY = touch.clientY;
     touchDragStateRef.current.currentX = touch.clientX;
+
+    // Real-time hardware-accelerated visual translation of the dragging card!
+    if (draggedCardElementRef.current) {
+      draggedCardElementRef.current.style.transform = `translate3d(0, ${deltaY}px, 0) scale(1.035)`;
+      draggedCardElementRef.current.style.zIndex = '9999';
+      draggedCardElementRef.current.style.transition = 'none';
+      draggedCardElementRef.current.style.pointerEvents = 'none';
+    }
 
     const targetId = findDropTargetAtY(touch.clientY);
     if (targetId && targetId !== touchDragStateRef.current.currentTargetId) {
@@ -515,6 +545,25 @@ export default function SetlistEditorApp() {
 
   const handleTouchEndReorder = () => {
     stopAutoScroll();
+
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+
+    if (draggedCardElementRef.current) {
+      draggedCardElementRef.current.style.transform = '';
+      draggedCardElementRef.current.style.zIndex = '';
+      draggedCardElementRef.current.style.transition = '';
+      draggedCardElementRef.current.style.pointerEvents = '';
+      draggedCardElementRef.current = null;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.__wpIsDragging = false;
+      document.body.classList.remove('is-touch-dragging-active');
+    }
+
     const { activeId, currentTargetId, didMove } = touchDragStateRef.current;
     if (didMove) {
       dragCooldownRef.current = Date.now() + 450;
@@ -532,6 +581,65 @@ export default function SetlistEditorApp() {
     };
     setTouchDraggingId(null);
     setTouchDropTargetId(null);
+  };
+
+  // Card-level touch handler supporting press-and-hold (long-press) drag
+  const handleCardTouchStart = (e, item) => {
+    if (!canEdit) return;
+    const touch = e.touches ? e.touches[0] : null;
+    if (!touch) return;
+
+    const cardEl = e.currentTarget;
+    touchStartPosRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      itemId: item.id,
+      cardEl
+    };
+
+    if (isReorderMode) {
+      handleTouchStartReorder(e, item.id, cardEl);
+      return;
+    }
+
+    clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = setTimeout(() => {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try { navigator.vibrate([25, 30, 25]); } catch {}
+      }
+      handleTouchStartReorder(e, item.id, cardEl);
+    }, 240);
+  };
+
+  const handleCardTouchMove = (e) => {
+    const touch = e.touches ? e.touches[0] : null;
+    if (!touch) return;
+
+    if (touchDragStateRef.current.activeId) {
+      handleTouchMoveReorder(e);
+      return;
+    }
+
+    if (longPressTimerRef.current) {
+      const dist = Math.hypot(
+        touch.clientX - touchStartPosRef.current.x,
+        touch.clientY - touchStartPosRef.current.y
+      );
+      if (dist > 8) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+    }
+  };
+
+  const handleCardTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    if (touchDragStateRef.current.activeId) {
+      handleTouchEndReorder();
+    }
   };
 
   // Toggle selection of a song in Quick Drawer
@@ -1171,7 +1279,7 @@ export default function SetlistEditorApp() {
       )}
 
       {/* ── Setlist Items List ── */}
-      <div className="sla-item-list">
+      <div className="sla-item-list" data-no-ptr="true">
         {items.length === 0 ? (
           <div className="sla-empty-state animate-fade-in">
             <div className="sla-empty-icon">
@@ -1211,10 +1319,10 @@ export default function SetlistEditorApp() {
                     data-item-id={item.id}
                     className={`sla-section-card ${isReorderMode ? 'is-reorder-mode' : ''} ${(draggingItemId === item.id || touchDraggingId === item.id) ? 'is-dragging is-touch-dragging' : ''} ${(dropTargetItemId === item.id || touchDropTargetId === item.id) ? 'is-drop-target is-touch-target' : ''}`}
                     draggable={canEdit}
-                    onTouchStart={isReorderMode && canEdit ? (e) => handleTouchStartReorder(e, item.id) : undefined}
-                    onTouchMove={isReorderMode && canEdit ? handleTouchMoveReorder : undefined}
-                    onTouchEnd={isReorderMode && canEdit ? handleTouchEndReorder : undefined}
-                    onTouchCancel={isReorderMode && canEdit ? handleTouchEndReorder : undefined}
+                    onTouchStart={(e) => handleCardTouchStart(e, item)}
+                    onTouchMove={handleCardTouchMove}
+                    onTouchEnd={handleCardTouchEnd}
+                    onTouchCancel={handleCardTouchEnd}
                     onDragStart={() => setDraggingItemId(item.id)}
                     onDragOver={e => { if (canEdit) { e.preventDefault(); setDropTargetItemId(item.id); } }}
                     onDragLeave={() => setDropTargetItemId(null)}
@@ -1228,6 +1336,7 @@ export default function SetlistEditorApp() {
                         title="Քաշել վերադասավորելու համար"
                         onTouchStart={(e) => {
                           e.stopPropagation();
+                          if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
                           handleTouchStartReorder(e, item.id);
                         }}
                         onTouchMove={handleTouchMoveReorder}
@@ -1348,10 +1457,10 @@ export default function SetlistEditorApp() {
                     data-item-id={item.id}
                     className={`sla-song-card ${isReorderMode ? 'is-reorder-mode' : ''} ${(draggingItemId === item.id || touchDraggingId === item.id) ? 'is-dragging is-touch-dragging' : ''} ${(dropTargetItemId === item.id || touchDropTargetId === item.id) ? 'is-drop-target is-touch-target' : ''}`}
                     draggable={canEdit}
-                    onTouchStart={isReorderMode && canEdit ? (e) => handleTouchStartReorder(e, item.id) : undefined}
-                    onTouchMove={isReorderMode && canEdit ? handleTouchMoveReorder : undefined}
-                    onTouchEnd={isReorderMode && canEdit ? handleTouchEndReorder : undefined}
-                    onTouchCancel={isReorderMode && canEdit ? handleTouchEndReorder : undefined}
+                    onTouchStart={(e) => handleCardTouchStart(e, item)}
+                    onTouchMove={handleCardTouchMove}
+                    onTouchEnd={handleCardTouchEnd}
+                    onTouchCancel={handleCardTouchEnd}
                     onClick={() => {
                       if (isReorderMode || Date.now() < dragCooldownRef.current) return;
                       const q = new URLSearchParams();
@@ -1378,6 +1487,7 @@ export default function SetlistEditorApp() {
                         title="Քաշել վերադասավորելու համար"
                         onTouchStart={(e) => {
                           e.stopPropagation();
+                          if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
                           handleTouchStartReorder(e, item.id);
                         }}
                         onTouchMove={handleTouchMoveReorder}
