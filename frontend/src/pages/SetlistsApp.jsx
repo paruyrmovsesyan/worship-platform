@@ -103,6 +103,14 @@ export default function SetlistsApp() {
   const [toastMessage, setToastMessage] = useState(null);
   const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
 
+  // Invite via Chat State (must be declared before the useEffect that depends on inviteSetlist)
+  const [inviteSetlist, setInviteSetlist] = useState(null);
+  const [inviteChats, setInviteChats] = useState([]);
+  const [inviteChatsLoading, setInviteChatsLoading] = useState(false);
+  const [inviteMessage, setInviteMessage] = useState('');
+  const [inviteCanEdit, setInviteCanEdit] = useState(false);
+  const [sendingInviteChatId, setSendingInviteChatId] = useState(null);
+
   const showToast = useCallback((msg) => {
     setToastMessage(msg);
     window.clearTimeout(window.__slToastTimer);
@@ -297,14 +305,6 @@ export default function SetlistsApp() {
       setActionLoadingId(null);
     }
   };
-
-  // Invite via Chat State & Handlers
-  const [inviteSetlist, setInviteSetlist] = useState(null);
-  const [inviteChats, setInviteChats] = useState([]);
-  const [inviteChatsLoading, setInviteChatsLoading] = useState(false);
-  const [inviteMessage, setInviteMessage] = useState('');
-  const [inviteCanEdit, setInviteCanEdit] = useState(false);
-  const [sendingInviteChatId, setSendingInviteChatId] = useState(null);
 
   const handleOpenInviteModal = (e, list) => {
     e.stopPropagation();
