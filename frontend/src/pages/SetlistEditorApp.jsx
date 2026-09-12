@@ -104,12 +104,17 @@ export default function SetlistEditorApp() {
   const [dropTargetItemId, setDropTargetItemId] = useState(null);
   const [touchDraggingId, setTouchDraggingId] = useState(null);
   const [touchDropTargetId, setTouchDropTargetId] = useState(null);
+  const [isReorderMode, setIsReorderMode] = useState(false);
   const touchDragStateRef = useRef({
     activeId: null,
     startY: 0,
     currentY: 0,
+    currentX: 0,
     currentTargetId: null,
+    didMove: false,
   });
+  const dragCooldownRef = useRef(0);
+  const autoScrollFrameRef = useRef(null);
 
   // Batch song add in quick drawer
   const [selectedSongIds, setSelectedSongIds] = useState(new Set());
@@ -362,22 +367,123 @@ export default function SetlistEditorApp() {
     }
   };
 
+  const moveToExtremity = async (index, position, e) => {
+    if (e) e.stopPropagation();
+    if (position === 'top' && index === 0) return;
+    if (position === 'bottom' && index === items.length - 1) return;
+
+    const nextItems = [...items];
+    const [moved] = nextItems.splice(index, 1);
+    if (position === 'top') {
+      nextItems.unshift(moved);
+    } else {
+      nextItems.push(moved);
+    }
+    setItems(nextItems);
+
+    try {
+      await persistReorder(nextItems);
+    } catch (err) {
+      console.error(err);
+      fetchSetlist();
+    }
+  };
+
+  // Find closest drop target element using vertical center distance
+  const findDropTargetAtY = (clientY) => {
+    const cards = document.querySelectorAll('.sla-item-list [data-item-id]');
+    if (!cards || !cards.length) return null;
+    let closestId = null;
+    let minDistance = Infinity;
+
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
+      const rect = card.getBoundingClientRect();
+      const centerY = rect.top + rect.height / 2;
+      const distance = Math.abs(clientY - centerY);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestId = card.getAttribute('data-item-id');
+      }
+    }
+    return closestId;
+  };
+
+  const stopAutoScroll = () => {
+    if (autoScrollFrameRef.current) {
+      cancelAnimationFrame(autoScrollFrameRef.current);
+      autoScrollFrameRef.current = null;
+    }
+  };
+
+  const startAutoScroll = () => {
+    if (autoScrollFrameRef.current) return;
+
+    const scrollLoop = () => {
+      const { activeId, currentY } = touchDragStateRef.current;
+      if (!activeId) {
+        autoScrollFrameRef.current = null;
+        return;
+      }
+
+      const threshold = 120;
+      const viewHeight = window.innerHeight;
+      let scrollSpeed = 0;
+
+      if (currentY > 0 && currentY < threshold) {
+        const factor = (threshold - currentY) / threshold;
+        scrollSpeed = -Math.max(4, Math.round(factor * 18));
+      } else if (currentY > viewHeight - threshold) {
+        const factor = (currentY - (viewHeight - threshold)) / threshold;
+        scrollSpeed = Math.max(4, Math.round(factor * 18));
+      }
+
+      if (scrollSpeed !== 0) {
+        window.scrollBy({ top: scrollSpeed, behavior: 'auto' });
+        const newTargetId = findDropTargetAtY(currentY);
+        if (newTargetId && newTargetId !== touchDragStateRef.current.currentTargetId) {
+          touchDragStateRef.current.currentTargetId = newTargetId;
+          setTouchDropTargetId(newTargetId);
+          if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            try { navigator.vibrate(12); } catch {}
+          }
+        }
+      }
+
+      autoScrollFrameRef.current = requestAnimationFrame(scrollLoop);
+    };
+
+    autoScrollFrameRef.current = requestAnimationFrame(scrollLoop);
+  };
+
+  useEffect(() => {
+    return () => {
+      stopAutoScroll();
+    };
+  }, []);
+
   // Touch reorder handlers for mobile drag & drop
   const handleTouchStartReorder = (e, itemId) => {
     if (!canEdit) return;
     const touch = e.touches[0];
     if (!touch) return;
+
     touchDragStateRef.current = {
       activeId: itemId,
       startY: touch.clientY,
       currentY: touch.clientY,
+      currentX: touch.clientX,
       currentTargetId: itemId,
+      didMove: false,
     };
     setTouchDraggingId(itemId);
     setTouchDropTargetId(itemId);
+
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       try { navigator.vibrate(25); } catch {}
     }
+
+    startAutoScroll();
   };
 
   const handleTouchMoveReorder = (e) => {
@@ -389,23 +495,30 @@ export default function SetlistEditorApp() {
       e.preventDefault();
     }
 
+    const deltaY = Math.abs(touch.clientY - touchDragStateRef.current.startY);
+    if (deltaY > 6) {
+      touchDragStateRef.current.didMove = true;
+    }
+
     touchDragStateRef.current.currentY = touch.clientY;
-    const el = document.elementFromPoint(touch.clientX, touch.clientY);
-    const cardEl = el?.closest('[data-item-id]');
-    if (cardEl) {
-      const targetId = cardEl.getAttribute('data-item-id');
-      if (targetId && targetId !== touchDragStateRef.current.currentTargetId) {
-        touchDragStateRef.current.currentTargetId = targetId;
-        setTouchDropTargetId(targetId);
-        if (typeof navigator !== 'undefined' && navigator.vibrate) {
-          try { navigator.vibrate(15); } catch {}
-        }
+    touchDragStateRef.current.currentX = touch.clientX;
+
+    const targetId = findDropTargetAtY(touch.clientY);
+    if (targetId && targetId !== touchDragStateRef.current.currentTargetId) {
+      touchDragStateRef.current.currentTargetId = targetId;
+      setTouchDropTargetId(targetId);
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try { navigator.vibrate(15); } catch {}
       }
     }
   };
 
   const handleTouchEndReorder = () => {
-    const { activeId, currentTargetId } = touchDragStateRef.current;
+    stopAutoScroll();
+    const { activeId, currentTargetId, didMove } = touchDragStateRef.current;
+    if (didMove) {
+      dragCooldownRef.current = Date.now() + 450;
+    }
     if (activeId && currentTargetId && String(activeId) !== String(currentTargetId)) {
       reorderByItemId(activeId, currentTargetId);
     }
@@ -413,7 +526,9 @@ export default function SetlistEditorApp() {
       activeId: null,
       startY: 0,
       currentY: 0,
+      currentX: 0,
       currentTargetId: null,
+      didMove: false,
     };
     setTouchDraggingId(null);
     setTouchDropTargetId(null);
@@ -1019,7 +1134,39 @@ export default function SetlistEditorApp() {
               </svg>
               <span>Կարգավ.</span>
             </button>
+
+            {items.length > 1 && (
+              <button
+                type="button"
+                className={`sla-sub-btn ${isReorderMode ? 'sla-sub-btn--active' : ''}`}
+                onClick={() => setIsReorderMode(prev => !prev)}
+                title="Երգերի վերադասավորման ռեժիմ"
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M7 15l5 5 5-5"></path>
+                  <path d="M7 9l5-5 5 5"></path>
+                </svg>
+                <span>{isReorderMode ? 'Ավարտել' : 'Դասավորել'}</span>
+              </button>
+            )}
           </div>
+        </div>
+      )}
+
+      {/* ── Reorder Mode Active Banner ── */}
+      {isReorderMode && (
+        <div className="sla-reorder-banner animate-fade-in">
+          <div className="sla-reorder-banner-info">
+            <span className="sla-reorder-badge">ՌԵԺԻՄ</span>
+            <span className="sla-reorder-title">Երգերի վերադասավորում</span>
+          </div>
+          <button
+            type="button"
+            className="sla-reorder-done-btn"
+            onClick={() => setIsReorderMode(false)}
+          >
+            ✓ Պատրաստ է
+          </button>
         </div>
       )}
 
@@ -1062,8 +1209,12 @@ export default function SetlistEditorApp() {
                   <div
                     key={item.id}
                     data-item-id={item.id}
-                    className={`sla-section-card ${(draggingItemId === item.id || touchDraggingId === item.id) ? 'is-dragging is-touch-dragging' : ''} ${(dropTargetItemId === item.id || touchDropTargetId === item.id) ? 'is-drop-target is-touch-target' : ''}`}
+                    className={`sla-section-card ${isReorderMode ? 'is-reorder-mode' : ''} ${(draggingItemId === item.id || touchDraggingId === item.id) ? 'is-dragging is-touch-dragging' : ''} ${(dropTargetItemId === item.id || touchDropTargetId === item.id) ? 'is-drop-target is-touch-target' : ''}`}
                     draggable={canEdit}
+                    onTouchStart={isReorderMode && canEdit ? (e) => handleTouchStartReorder(e, item.id) : undefined}
+                    onTouchMove={isReorderMode && canEdit ? handleTouchMoveReorder : undefined}
+                    onTouchEnd={isReorderMode && canEdit ? handleTouchEndReorder : undefined}
+                    onTouchCancel={isReorderMode && canEdit ? handleTouchEndReorder : undefined}
                     onDragStart={() => setDraggingItemId(item.id)}
                     onDragOver={e => { if (canEdit) { e.preventDefault(); setDropTargetItemId(item.id); } }}
                     onDragLeave={() => setDropTargetItemId(null)}
@@ -1072,15 +1223,25 @@ export default function SetlistEditorApp() {
                   >
                     {canEdit && (
                       <span
-                        className="sla-drag-handle"
+                        className={`sla-drag-handle ${isReorderMode ? 'sla-drag-handle--prominent' : ''}`}
                         aria-hidden="true"
                         title="Քաշել վերադասավորելու համար"
-                        onTouchStart={(e) => handleTouchStartReorder(e, item.id)}
+                        onTouchStart={(e) => {
+                          e.stopPropagation();
+                          handleTouchStartReorder(e, item.id);
+                        }}
                         onTouchMove={handleTouchMoveReorder}
                         onTouchEnd={handleTouchEndReorder}
                         onTouchCancel={handleTouchEndReorder}
                       >
-                        ⋮⋮
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                          <circle cx="9" cy="5" r="1.7" />
+                          <circle cx="15" cy="5" r="1.7" />
+                          <circle cx="9" cy="12" r="1.7" />
+                          <circle cx="15" cy="12" r="1.7" />
+                          <circle cx="9" cy="19" r="1.7" />
+                          <circle cx="15" cy="19" r="1.7" />
+                        </svg>
                       </span>
                     )}
                     <div className="sla-section-info">
@@ -1089,11 +1250,22 @@ export default function SetlistEditorApp() {
                     </div>
 
                     {canEdit && (
-                      <div className="sla-item-actions" onClick={e => e.stopPropagation()}>
-                        <div className="sla-reorder-pair">
+                      isReorderMode ? (
+                        <div className="sla-reorder-mode-actions" onClick={e => e.stopPropagation()}>
                           <button
                             type="button"
-                            className="sla-reorder-btn"
+                            className="sla-reorder-quick-btn"
+                            onClick={e => moveToExtremity(idx, 'top', e)}
+                            disabled={idx === 0}
+                            title="Ամենասկիզբ"
+                          >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M5 4h14M12 20V8m-5 5l5-5 5 5"/>
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            className="sla-reorder-quick-btn"
                             onClick={e => moveItem(idx, 'up', e)}
                             disabled={idx === 0}
                             title="Վերև"
@@ -1102,34 +1274,68 @@ export default function SetlistEditorApp() {
                           </button>
                           <button
                             type="button"
-                            className="sla-reorder-btn"
+                            className="sla-reorder-quick-btn"
                             onClick={e => moveItem(idx, 'down', e)}
                             disabled={idx === items.length - 1}
                             title="Ներքև"
                           >
                             ▼
                           </button>
+                          <button
+                            type="button"
+                            className="sla-reorder-quick-btn"
+                            onClick={e => moveToExtremity(idx, 'bottom', e)}
+                            disabled={idx === items.length - 1}
+                            title="Ամենավերջ"
+                          >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M5 20h14M12 4v12m-5-5l5 5 5-5"/>
+                            </svg>
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          className="sla-icon-action-btn"
-                          onClick={e => openItemEdit(item, e)}
-                          title="Խմբագրել բաժինը"
-                        >
-                          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M12 20h9"></path>
-                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          className="sla-icon-action-btn sla-icon-action-btn--delete"
-                          onClick={e => removeItem(item.id, e)}
-                          title="Հեռացնել"
-                        >
-                          ✕
-                        </button>
-                      </div>
+                      ) : (
+                        <div className="sla-item-actions" onClick={e => e.stopPropagation()}>
+                          <div className="sla-reorder-pair">
+                            <button
+                              type="button"
+                              className="sla-reorder-btn"
+                              onClick={e => moveItem(idx, 'up', e)}
+                              disabled={idx === 0}
+                              title="Վերև"
+                            >
+                              ▲
+                            </button>
+                            <button
+                              type="button"
+                              className="sla-reorder-btn"
+                              onClick={e => moveItem(idx, 'down', e)}
+                              disabled={idx === items.length - 1}
+                              title="Ներքև"
+                            >
+                              ▼
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            className="sla-icon-action-btn"
+                            onClick={e => openItemEdit(item, e)}
+                            title="Խմբագրել բաժինը"
+                          >
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M12 20h9"></path>
+                              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            className="sla-icon-action-btn sla-icon-action-btn--delete"
+                            onClick={e => removeItem(item.id, e)}
+                            title="Հեռացնել"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )
                     )}
                   </div>
                 );
@@ -1140,9 +1346,14 @@ export default function SetlistEditorApp() {
                 <React.Fragment key={item.id}>
                   <div
                     data-item-id={item.id}
-                    className={`sla-song-card ${(draggingItemId === item.id || touchDraggingId === item.id) ? 'is-dragging is-touch-dragging' : ''} ${(dropTargetItemId === item.id || touchDropTargetId === item.id) ? 'is-drop-target is-touch-target' : ''}`}
+                    className={`sla-song-card ${isReorderMode ? 'is-reorder-mode' : ''} ${(draggingItemId === item.id || touchDraggingId === item.id) ? 'is-dragging is-touch-dragging' : ''} ${(dropTargetItemId === item.id || touchDropTargetId === item.id) ? 'is-drop-target is-touch-target' : ''}`}
                     draggable={canEdit}
+                    onTouchStart={isReorderMode && canEdit ? (e) => handleTouchStartReorder(e, item.id) : undefined}
+                    onTouchMove={isReorderMode && canEdit ? handleTouchMoveReorder : undefined}
+                    onTouchEnd={isReorderMode && canEdit ? handleTouchEndReorder : undefined}
+                    onTouchCancel={isReorderMode && canEdit ? handleTouchEndReorder : undefined}
                     onClick={() => {
+                      if (isReorderMode || Date.now() < dragCooldownRef.current) return;
                       const q = new URLSearchParams();
                       if (id) q.set('setlist_id', String(id));
                       if (item.id) q.set('setlist_item_id', String(item.id));
@@ -1162,15 +1373,25 @@ export default function SetlistEditorApp() {
                   >
                     {canEdit && (
                       <span
-                        className="sla-drag-handle"
+                        className={`sla-drag-handle ${isReorderMode ? 'sla-drag-handle--prominent' : ''}`}
                         aria-hidden="true"
                         title="Քաշել վերադասավորելու համար"
-                        onTouchStart={(e) => handleTouchStartReorder(e, item.id)}
+                        onTouchStart={(e) => {
+                          e.stopPropagation();
+                          handleTouchStartReorder(e, item.id);
+                        }}
                         onTouchMove={handleTouchMoveReorder}
                         onTouchEnd={handleTouchEndReorder}
                         onTouchCancel={handleTouchEndReorder}
                       >
-                        ⋮⋮
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                          <circle cx="9" cy="5" r="1.7" />
+                          <circle cx="15" cy="5" r="1.7" />
+                          <circle cx="9" cy="12" r="1.7" />
+                          <circle cx="15" cy="12" r="1.7" />
+                          <circle cx="9" cy="19" r="1.7" />
+                          <circle cx="15" cy="19" r="1.7" />
+                        </svg>
                       </span>
                     )}
                     <span className="sla-song-num">{String(songCount).padStart(2, '0')}</span>
@@ -1206,11 +1427,22 @@ export default function SetlistEditorApp() {
                     </div>
 
                     {canEdit && (
-                      <div className="sla-item-actions" onClick={e => e.stopPropagation()}>
-                        <div className="sla-reorder-pair">
+                      isReorderMode ? (
+                        <div className="sla-reorder-mode-actions" onClick={e => e.stopPropagation()}>
                           <button
                             type="button"
-                            className="sla-reorder-btn"
+                            className="sla-reorder-quick-btn"
+                            onClick={e => moveToExtremity(idx, 'top', e)}
+                            disabled={idx === 0}
+                            title="Ամենասկիզբ"
+                          >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M5 4h14M12 20V8m-5 5l5-5 5 5"/>
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            className="sla-reorder-quick-btn"
                             onClick={e => moveItem(idx, 'up', e)}
                             disabled={idx === 0}
                             title="Վերև"
@@ -1219,34 +1451,68 @@ export default function SetlistEditorApp() {
                           </button>
                           <button
                             type="button"
-                            className="sla-reorder-btn"
+                            className="sla-reorder-quick-btn"
                             onClick={e => moveItem(idx, 'down', e)}
                             disabled={idx === items.length - 1}
                             title="Ներքև"
                           >
                             ▼
                           </button>
+                          <button
+                            type="button"
+                            className="sla-reorder-quick-btn"
+                            onClick={e => moveToExtremity(idx, 'bottom', e)}
+                            disabled={idx === items.length - 1}
+                            title="Ամենավերջ"
+                          >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M5 20h14M12 4v12m-5-5l5 5 5-5"/>
+                            </svg>
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          className="sla-icon-action-btn"
-                          onClick={e => openItemEdit(item, e)}
-                          title="Խմբագրել երգը"
-                        >
-                          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M12 20h9"></path>
-                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          className="sla-icon-action-btn sla-icon-action-btn--delete"
-                          onClick={e => removeItem(item.id, e)}
-                          title="Հեռացնել"
-                        >
-                          ✕
-                        </button>
-                      </div>
+                      ) : (
+                        <div className="sla-item-actions" onClick={e => e.stopPropagation()}>
+                          <div className="sla-reorder-pair">
+                            <button
+                              type="button"
+                              className="sla-reorder-btn"
+                              onClick={e => moveItem(idx, 'up', e)}
+                              disabled={idx === 0}
+                              title="Վերև"
+                            >
+                              ▲
+                            </button>
+                            <button
+                              type="button"
+                              className="sla-reorder-btn"
+                              onClick={e => moveItem(idx, 'down', e)}
+                              disabled={idx === items.length - 1}
+                              title="Ներքև"
+                            >
+                              ▼
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            className="sla-icon-action-btn"
+                            onClick={e => openItemEdit(item, e)}
+                            title="Խմբագրել երգը"
+                          >
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M12 20h9"></path>
+                              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            className="sla-icon-action-btn sla-icon-action-btn--delete"
+                            onClick={e => removeItem(item.id, e)}
+                            title="Հեռացնել"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )
                     )}
                   </div>
 

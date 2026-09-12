@@ -79,48 +79,52 @@ export default function AudioCallModal({
         </div>
       ) : (
         <div className="audio-call-overlay" role="dialog" aria-modal="true" aria-label={statusText}>
-          <div className="audio-call-card">
+          <section className={`audio-call-card state-${callState}`}>
             {canMinimize ? (
               <button type="button" className="audio-call-minimize" onClick={() => setMinimizedCallId(Number(callInfo?.id || 0))} aria-label={t('call.minimize')}>
                 <ChevronDownIcon />
               </button>
             ) : null}
 
-            <div className="audio-call-avatar-wrap">
-              <div className="audio-call-avatar" style={avatarStyle}>{initial}</div>
-              {['calling', 'ringing', 'connecting', 'reconnecting'].includes(callState) ? <div className="audio-call-pulse" /> : null}
+            <div className="audio-call-identity">
+              <div className="audio-call-avatar-wrap">
+                <div className="audio-call-avatar" style={avatarStyle}>{initial}</div>
+                {['calling', 'ringing', 'connecting', 'reconnecting'].includes(callState) ? <div className="audio-call-pulse" /> : null}
+              </div>
+
+              <div className="audio-call-title">{displayName}</div>
+              <div className={`audio-call-status state-${callState}`}>{statusText}</div>
+
+              {qualityText && callState === 'connected' ? (
+                <div className={`audio-call-quality quality-${connectionQuality}`}>
+                  <span />{qualityText}
+                </div>
+              ) : null}
             </div>
 
-            <div className="audio-call-title">{displayName}</div>
-            <div className={`audio-call-status state-${callState}`}>{statusText}</div>
+            <div className="audio-call-options">
+              {errorText ? <div className="audio-call-error" role="alert">{errorText}</div> : null}
 
-            {qualityText && callState === 'connected' ? (
-              <div className={`audio-call-quality quality-${connectionQuality}`}>
-                <span />{qualityText}
-              </div>
-            ) : null}
+              {remoteAudioBlocked ? (
+                <button type="button" className="audio-call-resume" onClick={resumeRemoteAudio}>
+                  <SpeakerIcon /> {t('call.resumeAudio')}
+                </button>
+              ) : null}
 
-            {errorText ? <div className="audio-call-error" role="alert">{errorText}</div> : null}
-
-            {remoteAudioBlocked ? (
-              <button type="button" className="audio-call-resume" onClick={resumeRemoteAudio}>
-                <SpeakerIcon /> {t('call.resumeAudio')}
-              </button>
-            ) : null}
-
-            {Array.isArray(audioOutputs) && audioOutputs.length > 1 ? (
-              <label className="audio-call-output">
-                <span>{t('call.audioOutput')}</span>
-                <select value={selectedOutputId} onChange={(event) => selectAudioOutput(event.target.value)}>
-                  <option value="">{t('call.defaultOutput')}</option>
-                  {audioOutputs.map((device, index) => (
-                    <option key={device.deviceId || `output-${index}`} value={device.deviceId}>
-                      {device.label || `${t('call.defaultOutput')} ${index + 1}`}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
+              {Array.isArray(audioOutputs) && audioOutputs.length > 1 ? (
+                <label className="audio-call-output">
+                  <span>{t('call.audioOutput')}</span>
+                  <select value={selectedOutputId} onChange={(event) => selectAudioOutput(event.target.value)}>
+                    <option value="">{t('call.defaultOutput')}</option>
+                    {audioOutputs.map((device, index) => (
+                      <option key={device.deviceId || `output-${index}`} value={device.deviceId}>
+                        {device.label || `${t('call.defaultOutput')} ${index + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+            </div>
 
             <div className="audio-call-actions">
               {callState === 'ringing' ? (
@@ -147,7 +151,7 @@ export default function AudioCallModal({
                 </>
               )}
             </div>
-          </div>
+          </section>
         </div>
       )}
     </>
