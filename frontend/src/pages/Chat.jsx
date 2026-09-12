@@ -7,6 +7,181 @@ import { usePageReady } from '../hooks/usePageReady';
 import { useCall } from '../context/CallContext';
 import './Chat.css';
 
+const URL_REGEX = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s՝։֊]|www\.[^\s<]+[^<.,:;"')\]\s՝։֊])/gi;
+
+function extractFirstUrl(text) {
+  if (!text) return null;
+  URL_REGEX.lastIndex = 0;
+  const match = URL_REGEX.exec(text);
+  if (!match) return null;
+  const raw = match[0];
+  const href = raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
+  return { raw, href };
+}
+
+function renderFormattedTextWithLinks(text, isOwn, navigate) {
+  if (!text) return null;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  URL_REGEX.lastIndex = 0;
+
+  while ((match = URL_REGEX.exec(text)) !== null) {
+    const matchIndex = match.index;
+    const urlStr = match[0];
+
+    if (matchIndex > lastIndex) {
+      parts.push(text.substring(lastIndex, matchIndex));
+    }
+
+    const href = urlStr.startsWith('http://') || urlStr.startsWith('https://')
+      ? urlStr
+      : `https://${urlStr}`;
+
+    const isInternal =
+      href.startsWith(window.location.origin) ||
+      (href.startsWith('/') && !href.startsWith('//'));
+
+    parts.push(
+      <a
+        key={`lnk-${matchIndex}`}
+        href={href}
+        className="chat-link"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (isInternal) {
+            e.preventDefault();
+            try {
+              const urlObj = new URL(href, window.location.origin);
+              navigate(urlObj.pathname + urlObj.search + urlObj.hash);
+            } catch {
+              window.open(href, '_blank', 'noopener,noreferrer');
+            }
+          }
+        }}
+        target={isInternal ? undefined : '_blank'}
+        rel={isInternal ? undefined : 'noopener noreferrer'}
+      >
+        {urlStr}
+      </a>
+    );
+
+    lastIndex = matchIndex + urlStr.length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+
+  return parts;
+}
+
+function renderLinkPreview(text, isOwn, navigate, language) {
+  const extracted = extractFirstUrl(text);
+  if (!extracted) return null;
+  const { raw, href } = extracted;
+
+  // 1. Check Setlist
+  const setlistMatch = href.match(/(?:worship\.pmstudio\.am|\/)?setlists\/(\d+)/i);
+  if (setlistMatch) {
+    const setlistId = setlistMatch[1];
+    return (
+      <div
+        className="chat-link-preview-card"
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/setlists/${setlistId}`);
+        }}
+      >
+        <div className="chat-link-icon-box">📋</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="chat-link-preview-label">
+            {language === 'am' ? 'Երգացանկ' : language === 'ru' ? 'Сет-лист' : 'Setlist'}
+          </div>
+          <div className="chat-link-preview-url">#{setlistId} • worship.pmstudio.am</div>
+        </div>
+        <span className="chat-link-preview-action">
+          {language === 'am' ? 'Բացել' : language === 'ru' ? 'Открыть' : 'Open'} ➔
+        </span>
+      </div>
+    );
+  }
+
+  // 2. Check Song
+  const songMatch = href.match(/(?:worship\.pmstudio\.am|\/)?songs\/(\d+)/i);
+  if (songMatch) {
+    const songId = songMatch[1];
+    return (
+      <div
+        className="chat-link-preview-card"
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/songs/${songId}`);
+        }}
+      >
+        <div className="chat-link-icon-box">🎶</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="chat-link-preview-label">
+            {language === 'am' ? 'Երգ' : language === 'ru' ? 'Песня' : 'Song'}
+          </div>
+          <div className="chat-link-preview-url">#{songId} • worship.pmstudio.am</div>
+        </div>
+        <span className="chat-link-preview-action">
+          {language === 'am' ? 'Բացել' : language === 'ru' ? 'Открыть' : 'Open'} ➔
+        </span>
+      </div>
+    );
+  }
+
+  // 3. Check YouTube
+  const ytMatch = href.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([\w-]+)/i);
+  if (ytMatch) {
+    return (
+      <div
+        className="chat-link-preview-card"
+        onClick={(e) => {
+          e.stopPropagation();
+          window.open(href, '_blank', 'noopener,noreferrer');
+        }}
+      >
+        <div className="chat-link-icon-box yt">
+          ▶️
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="chat-link-preview-label" style={{ color: '#f87171' }}>YouTube</div>
+          <div className="chat-link-preview-url">{raw}</div>
+        </div>
+        <span className="chat-link-preview-action">↗</span>
+      </div>
+    );
+  }
+
+  // 4. General External Web Link
+  let hostname = '';
+  try {
+    hostname = new URL(href).hostname.replace(/^www\./, '');
+  } catch {
+    hostname = raw;
+  }
+
+  return (
+    <div
+      className="chat-link-preview-card"
+      onClick={(e) => {
+        e.stopPropagation();
+        window.open(href, '_blank', 'noopener,noreferrer');
+      }}
+    >
+      <div className="chat-link-icon-box">🔗</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="chat-link-preview-label">{hostname}</div>
+        <div className="chat-link-preview-url">{raw}</div>
+      </div>
+      <span className="chat-link-preview-action">↗</span>
+    </div>
+  );
+}
+
 export default function Chat() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -16,6 +191,8 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [chatInfo, setChatInfo] = useState(null);
   const [inputText, setInputText] = useState('');
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkModalUrl, setLinkModalUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
@@ -350,11 +527,13 @@ export default function Chat() {
     }
   };
 
-  const sendMessage = async () => {
-    if (!inputText.trim()) return;
-    const textToSend = inputText.trim();
+  const sendMessage = async (explicitText) => {
+    const textToSend = (explicitText !== undefined ? explicitText : inputText).trim();
+    if (!textToSend) return;
     const tempId = 'temp-' + Date.now();
-    setInputText('');
+    if (explicitText === undefined) {
+      setInputText('');
+    }
     inputRef.current?.focus();
     
     const optimisticMsg = {
@@ -741,7 +920,15 @@ export default function Chat() {
                         {m.message && m.message.startsWith('CALL:') ? (
                           renderCallAttachment(m.message, isOwn)
                         ) : (
-                          m.message && <div className="chat-text">{m.message}</div>
+                          m.message && (
+                            <>
+                              <div className="chat-text">
+                                {renderFormattedTextWithLinks(m.message, isOwn, navigate)}
+                              </div>
+                              {(!m.setlist_id || Number(m.setlist_id) <= 0) &&
+                                renderLinkPreview(m.message, isOwn, navigate, language)}
+                            </>
+                          )
                         )}
                         {m.setlist_id > 0 && (
                           <div
@@ -881,7 +1068,34 @@ export default function Chat() {
 
       {/* INPUT AREA */}
       <div className={`chat-input-area ${showGroupInfo ? 'hidden' : ''}`}>
+        {extractFirstUrl(inputText) && (
+          <div className="chat-input-link-detected">
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span>🔗</span>
+              <span style={{ opacity: 0.7 }}>
+                {language === 'am' ? 'Ճանաչված հղում՝' : language === 'ru' ? 'Распознана ссылка:' : 'Detected link:'}
+              </span>
+              <strong style={{ color: '#38bdf8' }}>
+                {extractFirstUrl(inputText)?.raw}
+              </strong>
+            </span>
+          </div>
+        )}
         <div className="chat-input-form" role="group" aria-label={t('chat.placeholder')}>
+          <button
+            type="button"
+            className="chat-link-btn"
+            title={language === 'am' ? 'Կցել հղում' : language === 'ru' ? 'Прикрепить ссылку' : 'Attach link'}
+            onClick={() => {
+              setLinkModalUrl('');
+              setShowLinkModal(true);
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+          </button>
           <textarea
             ref={inputRef}
             className="chat-input-field"
@@ -909,7 +1123,7 @@ export default function Chat() {
             enterKeyHint="send"
             rows={1}
           />
-          <button type="button" className="chat-send-btn" disabled={!inputText.trim()} onClick={sendMessage}>
+          <button type="button" className="chat-send-btn" disabled={!inputText.trim()} onClick={() => sendMessage()}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'translateX(-1px) translateY(1px)' }}>
               <line x1="22" y1="2" x2="11" y2="13"></line>
               <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
@@ -917,6 +1131,139 @@ export default function Chat() {
           </button>
         </div>
       </div>
+
+      {/* LINK INSERT MODAL */}
+      {showLinkModal && (
+        <div className="chat-modal-overlay" onClick={() => setShowLinkModal(false)}>
+          <div className="chat-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '380px' }}>
+            <h3 className="chat-modal-title">
+              {language === 'am' ? 'Կցել հղում' : language === 'ru' ? 'Прикрепить ссылку' : 'Attach link'}
+            </h3>
+            <p className="chat-modal-text" style={{ marginBottom: '14px' }}>
+              {language === 'am'
+                ? 'Մուտքագրեք կամ տեղադրեք հղումը՝ չաթում ուղարկելու համար'
+                : language === 'ru'
+                ? 'Введите или вставьте ссылку для отправки в чат'
+                : 'Enter or paste a link to send in chat'}
+            </p>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+              <input
+                type="url"
+                value={linkModalUrl}
+                onChange={(e) => setLinkModalUrl(e.target.value)}
+                placeholder="https://..."
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && linkModalUrl.trim()) {
+                    e.preventDefault();
+                    const url = linkModalUrl.trim();
+                    setShowLinkModal(false);
+                    setLinkModalUrl('');
+                    sendMessage(url);
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: '10px',
+                  color: '#fff',
+                  padding: '10px 12px',
+                  fontSize: '0.9rem',
+                  outline: 'none',
+                }}
+              />
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const text = await navigator.clipboard.readText();
+                    if (text && text.trim()) setLinkModalUrl(text.trim());
+                  } catch (e) {
+                    console.error('Clipboard access not granted', e);
+                  }
+                }}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: '10px',
+                  color: '#38bdf8',
+                  padding: '0 12px',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                📋 {language === 'am' ? 'Կպցնել' : language === 'ru' ? 'Вставить' : 'Paste'}
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
+              <button
+                type="button"
+                className="chat-modal-btn cancel"
+                onClick={() => {
+                  setShowLinkModal(false);
+                  setLinkModalUrl('');
+                }}
+              >
+                {t('chat.cancel', 'Չեղարկել')}
+              </button>
+              <button
+                type="button"
+                disabled={!linkModalUrl.trim()}
+                onClick={() => {
+                  const url = linkModalUrl.trim();
+                  if (!url) return;
+                  setShowLinkModal(false);
+                  setLinkModalUrl('');
+                  setInputText((prev) => (prev ? `${prev} ${url}` : url));
+                  setTimeout(() => inputRef.current?.focus(), 50);
+                }}
+                style={{
+                  background: linkModalUrl.trim()
+                    ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)'
+                    : 'rgba(255,255,255,0.1)',
+                  color: linkModalUrl.trim() ? '#fff' : 'rgba(255,255,255,0.4)',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '8px 14px',
+                  fontSize: '0.84rem',
+                  fontWeight: 600,
+                  cursor: linkModalUrl.trim() ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {language === 'am' ? 'Տեղադրել' : language === 'ru' ? 'Вставить' : 'Insert'}
+              </button>
+              <button
+                type="button"
+                disabled={!linkModalUrl.trim()}
+                onClick={() => {
+                  const url = linkModalUrl.trim();
+                  if (!url) return;
+                  setShowLinkModal(false);
+                  setLinkModalUrl('');
+                  sendMessage(url);
+                }}
+                style={{
+                  background: linkModalUrl.trim()
+                    ? 'var(--color-accent-cyan, #00D4FF)'
+                    : 'rgba(255,255,255,0.1)',
+                  color: linkModalUrl.trim() ? '#000' : 'rgba(255,255,255,0.4)',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '8px 14px',
+                  fontSize: '0.84rem',
+                  fontWeight: 700,
+                  cursor: linkModalUrl.trim() ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {language === 'am' ? 'Ուղարկել' : language === 'ru' ? 'Отправить' : 'Send'} ➔
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* DELETE MODAL */}
       {showDeleteModal && (

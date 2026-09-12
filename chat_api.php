@@ -336,7 +336,11 @@ function wp_chat_compact_push_body(string $message, bool $isSetlistShare = false
 
     $message = trim(preg_replace('/\s+/u', ' ', $message));
     if ($message === '') {
-        return 'Sent a message';
+        return 'Նոր հաղորդագրություն';
+    }
+
+    if (preg_match('/^(https?:\/\/|www\.)/i', $message)) {
+        return '🔗 Հղում: ' . mb_substr($message, 0, 45);
     }
 
     return mb_substr($message, 0, 90);

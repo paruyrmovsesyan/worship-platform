@@ -245,6 +245,9 @@ export default function ChatsList({ isEmbedded = false }) {
     if (songMatch) {
       return `🎵 ${songMatch[1].replace(/\.\.\.$/, '')}...`;
     }
+    if (/^(https?:\/\/|www\.)/i.test(chat.last_message.trim())) {
+      return `🔗 ${chat.last_message}`;
+    }
     return chat.last_message;
   };
 
