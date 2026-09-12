@@ -96,7 +96,9 @@ function wp_install_read_store(): array {
             }
             $result->free();
         }
-        $conn->close();
+        // NOTE: Do NOT call $conn->close() here — wp_runtime_open_mysqli() returns a
+        // shared singleton. Closing it here means wp_install_write_store() will receive
+        // an already-closed connection and crash when calling begin_transaction/rollback.
     } catch (Throwable $e) {}
 
     $filePaths = [
