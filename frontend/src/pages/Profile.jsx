@@ -314,7 +314,7 @@ export default function Profile() {
         </div>
 
         <div className="profile-card">
-          <div className="profile-avatar" style={{ background: avatarGradient }} onClick={() => setIsRoleModalOpen(true)} title="Փոխել ավատարը / դերը">
+          <div className="profile-avatar" style={{ background: avatarGradient }} onClick={() => setIsRoleModalOpen(true)} title={t('profile.changeAvatarTitle', 'Փոխել ավատարը / դերը')}>
             {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
             <span className="profile-avatar-edit-icon">✏️</span>
           </div>
@@ -325,7 +325,7 @@ export default function Profile() {
               {currentRoleObj ? (
                 <span>{currentRoleObj.icon} {roleLabel}</span>
               ) : (
-                <span>🎭 Ընտրել դերը թիմում</span>
+                <span>{t('profile.chooseRoleInTeam', '🎭 Ընտրել դերը թիմում')}</span>
               )}
               <span className="profile-role-edit-hint">⚙️</span>
             </div>
@@ -337,14 +337,14 @@ export default function Profile() {
             <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
             </svg>
-            {t('profile.savedSongs')}
+            {t('profile.savedSongs', 'Պահպանված երգեր')}
           </button>
           
           <button className="profile-link-btn" onClick={() => guardPath('/friends', () => navigate('/friends'))}>
             <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
-            {t('nav.friends', 'Ընկերներ / Չաթ')}
+            {t('profile.friendsChat', 'Ընկերներ / Չաթ')}
           </button>
 
           <button className="profile-link-btn" onClick={() => guardPath('/settings', () => navigate('/settings'))}>
@@ -352,7 +352,7 @@ export default function Profile() {
               <circle cx="12" cy="12" r="3"></circle>
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-1.41 3.41h-.1a2 2 0 0 1-1.41-.59l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82V22a2 2 0 0 1-4 0v-.1a1.65 1.65 0 0 0-.33-1.82 1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 0 1 2 18.59v-.1a2 2 0 0 1 .59-1.41l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33H2a2 2 0 0 1 0-4h.1a1.65 1.65 0 0 0 1.82-.33 1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 0 1 5.41 2h.1a2 2 0 0 1 1.41.59l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.82V2a2 2 0 0 1 4 0v.1a1.65 1.65 0 0 0 .33 1.82 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06A2 2 0 0 1 22 5.41v.1a2 2 0 0 1-.59 1.41l-.06.06A1.65 1.65 0 0 0 19.4 9c.23.31.39.66.6 1a1.65 1.65 0 0 0 1.82.33H22a2 2 0 0 1 0 4h-.1a1.65 1.65 0 0 0-1.82.33c-.21.34-.37.69-.6 1z"></path>
             </svg>
-            {t('profile.accountSettings')}
+            {t('profile.accountSettings', 'Կարգավորումներ')}
           </button>
 
           <div className="profile-link-btn profile-push-card" style={{ cursor: 'default' }}>
@@ -384,7 +384,7 @@ export default function Profile() {
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
             </svg>
             <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-              <span>{t('profile.language')}</span>
+              <span>{t('profile.language', 'Լեզու')}</span>
               <span style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginRight: '8px' }}>
                 {languageLabels[language]}
               </span>
@@ -403,7 +403,7 @@ export default function Profile() {
 
         <div className="logout-section">
           <button className="logout-btn" onClick={logout}>
-            {t('profile.logout')}
+            {t('profile.logout', 'Ելք')}
           </button>
         </div>
 
@@ -411,14 +411,14 @@ export default function Profile() {
           <div className="modal-overlay modal-overlay-bottom" onClick={() => setIsRoleModalOpen(false)}>
             <div className="modal-content profile-role-modal" onClick={e => e.stopPropagation()}>
               <div className="modal-header">
-                <h3>🎭 Երկրպագության Թիմի Դեր & Ավատար</h3>
+                <h3>{t('profile.roleModalTitle', '🎭 Երկրպագության Թիմի Դեր & Ավատար')}</h3>
                 <button className="modal-close" onClick={() => setIsRoleModalOpen(false)}>
                   <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
               </div>
               <div className="modal-body role-modal-body">
                 <div className="role-modal-section">
-                  <h4>🎨 Ընտրել Ավատարի Գույնը</h4>
+                  <h4>{t('profile.chooseAvatarColor', '🎨 Ընտրել Ավատարի Գույնը')}</h4>
                   <div className="avatar-gradients-grid">
                     {AVATAR_GRADIENTS.map((grad, i) => (
                       <button
@@ -434,7 +434,7 @@ export default function Profile() {
                 </div>
 
                 <div className="role-modal-section">
-                  <h4>📖 Ընտրել Ձեր Դերը Թիմում</h4>
+                  <h4>{t('profile.chooseYourRole', '📖 Ընտրել Ձեր Դերը Թիմում')}</h4>
                   <div className="roles-grid">
                     {WORSHIP_ROLES.map(r => (
                       <button
@@ -451,7 +451,7 @@ export default function Profile() {
                 </div>
 
                 <button className="role-modal-save-btn" onClick={() => setIsRoleModalOpen(false)}>
-                  Պահպանել
+                  {t('profile.saveBtn', 'Պահպանել')}
                 </button>
               </div>
             </div>
@@ -514,7 +514,7 @@ export default function Profile() {
 
                   <a href="mailto:worship@pmstudio.am" className="support-quick-btn email-btn">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                    <span>Էլ․ փոստ (Email)</span>
+                    <span>{t('support.emailTitle', 'Էլ․ փոստ (Email)')}</span>
                   </a>
                 </div>
 
@@ -532,10 +532,10 @@ export default function Profile() {
                   <div className="form-group">
                     <label>{t('support.topicLabel', 'Թեմա')}</label>
                     <select value={supportTopic} onChange={e => setSupportTopic(e.target.value)} className="full-width-inp">
-                      <option value="question">❓ Հարց կամ օգնություն</option>
-                      <option value="feature">💡 Առաջարկություն</option>
-                      <option value="bug">🛠 Սխալի մասին հայտնում</option>
-                      <option value="other">💬 Այլ</option>
+                      <option value="question">{t('support.topicQuestion', '❓ Հարց կամ օգնություն')}</option>
+                      <option value="feature">{t('support.topicFeature', '💡 Առաջարկություն')}</option>
+                      <option value="bug">{t('support.topicBug', '🛠 Սխալի մասին հայտնում')}</option>
+                      <option value="other">{t('support.topicOther', '💬 Այլ')}</option>
                     </select>
                   </div>
 
@@ -604,7 +604,7 @@ export default function Profile() {
                 {currentRoleObj ? (
                   <span>{currentRoleObj.icon} {roleLabel}</span>
                 ) : (
-                  <span>🎭 Ընտրել դերը թիմում</span>
+                  <span>{t('profile.chooseRoleInTeam', '🎭 Ընտրել դերը թիմում')}</span>
                 )}
                 <span className="profile-role-edit-hint">⚙️</span>
               </div>
@@ -627,7 +627,7 @@ export default function Profile() {
             <div className="web-stat-divider" />
             <div className="web-stat-item clickable" onClick={() => navigate('/setlists')}>
               <span className="web-stat-val">{setlistCount}</span>
-              <span className="web-stat-lbl">{t('nav.setlists', 'Երգացանկեր')}</span>
+              <span className="web-stat-lbl">{t('profile.setlists', 'Երգացանկեր')}</span>
             </div>
             <div className="web-stat-divider" />
             <div className="web-stat-item clickable" onClick={() => navigate('/friends')}>
@@ -641,11 +641,11 @@ export default function Profile() {
         <div className="web-profile-tabs">
           <button className={`web-tab-btn ${webTab === 'workspace' ? 'active' : ''}`} onClick={() => setWebTab('workspace')}>
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-            {t('nav.resources', 'Աշխատանքային Տարածք')}
+            {t('profile.workspace', 'Աշխատանքային Տարածք')}
           </button>
           <button className={`web-tab-btn ${webTab === 'account' ? 'active' : ''}`} onClick={() => setWebTab('account')}>
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            {t('settings.tabs.profile', 'Անձնական Տվյալներ')}
+            {t('profile.personalInfo', 'Անձնական Տվյալներ')}
           </button>
           <button className={`web-tab-btn ${webTab === 'settings' ? 'active' : ''}`} onClick={() => setWebTab('settings')}>
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-1.41 3.41h-.1a2 2 0 0 1-1.41-.59l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82V22a2 2 0 0 1-4 0v-.1a1.65 1.65 0 0 0-.33-1.82 1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 0 1 2 18.59v-.1a2 2 0 0 1 .59-1.41l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33H2a2 2 0 0 1 0-4h.1a1.65 1.65 0 0 0 1.82-.33 1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 0 1 5.41 2h.1a2 2 0 0 1 1.41.59l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.82V2a2 2 0 0 1 4 0v.1a1.65 1.65 0 0 0 .33 1.82 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06A2 2 0 0 1 22 5.41v.1a2 2 0 0 1-.59 1.41l-.06.06A1.65 1.65 0 0 0 19.4 9c.23.31.39.66.6 1a1.65 1.65 0 0 0 1.82.33H22a2 2 0 0 1 0 4h-.1a1.65 1.65 0 0 0-1.82.33c-.21.34-.37.69-.6 1z"></path></svg>
@@ -662,7 +662,7 @@ export default function Profile() {
               </div>
               <div className="web-bento-body">
                 <h3>{t('profile.savedSongs', 'Պահպանված երգեր')}</h3>
-                <p>{favCount} {t('songs.title', 'երգ պահպանված է Ձեր անձնական հավաքածուում։')}</p>
+                <p>{t('profile.savedSongsCardDesc', '{{count}} երգ պահպանված է Ձեր անձնական հավաքածուում։').replace('{{count}}', favCount)}</p>
               </div>
               <div className="web-bento-arrow">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -674,8 +674,8 @@ export default function Profile() {
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
               </div>
               <div className="web-bento-body">
-                <h3>{t('nav.setlists', 'Երգացանկեր')}</h3>
-                <p>{setlistCount} {t('dashboard.manageSetlists', 'երգացանկ պատրաստ է փորձերի և ծառայությունների համար։')}</p>
+                <h3>{t('profile.setlists', 'Երգացանկեր')}</h3>
+                <p>{t('profile.setlistsCardDesc', '{{count}} երգացանկ պատրաստ է փորձերի և ծառայությունների համար։').replace('{{count}}', setlistCount)}</p>
               </div>
               <div className="web-bento-arrow">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -687,8 +687,8 @@ export default function Profile() {
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
               </div>
               <div className="web-bento-body">
-                <h3>{t('nav.friends', 'Ընկերներ / Չաթ')}</h3>
-                <p>{t('megaMenu.communityDesc', 'Կապ հաստատեք թիմի անդամների հետ և կիսվեք երգացանկերով։')}</p>
+                <h3>{t('profile.friendsChat', 'Ընկերներ / Չաթ')}</h3>
+                <p>{t('profile.friendsCardDesc', 'Կապ հաստատեք թիմի անդամների հետ և կիսվեք երգացանկերով։')}</p>
               </div>
               <div className="web-bento-arrow">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -700,8 +700,8 @@ export default function Profile() {
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
               </div>
               <div className="web-bento-body">
-                <h3>{t('settings.requests.title', 'Իմ Հարցումները')}</h3>
-                <p>{t('settings.requests.desc', 'Նոր երգերի ավելացման կամ առաջարկած խմբագրումների կարգավիճակը։')}</p>
+                <h3>{t('profile.myRequests', 'Իմ Հարցումները')}</h3>
+                <p>{t('profile.requestsCardDesc', 'Նոր երգերի ավելացման կամ առաջարկած խմբագրումների կարգավիճակը։')}</p>
               </div>
               <div className="web-bento-arrow">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -749,7 +749,7 @@ export default function Profile() {
                 <div className="web-field-val disabled">{user.email || '—'}</div>
               </div>
               <div className="web-info-field">
-                <label>Օգտատիրոջ տեսակ</label>
+                <label>{t('profile.userType', 'Օգտատիրոջ տեսակ')}</label>
                 <div className="web-field-val text-gold">Worship Member</div>
               </div>
             </div>
@@ -757,7 +757,7 @@ export default function Profile() {
             <div className="web-section-actions">
               <button className="web-primary-btn" onClick={handleSaveProfile} disabled={savingProfile}>
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                {savingProfile ? 'Պահպանվում է...' : 'Պահպանել'}
+                {savingProfile ? t('profile.saving', 'Պահպանվում է...') : t('profile.saveBtn', 'Պահպանել')}
               </button>
               <button className="web-secondary-btn" onClick={() => navigate('/settings')}>
                 {t('settings.security.changePassword', 'Փոխել գաղտնաբառը')}
@@ -790,10 +790,10 @@ export default function Profile() {
                   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-1.41 3.41h-.1a2 2 0 0 1-1.41-.59l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82V22a2 2 0 0 1-4 0v-.1a1.65 1.65 0 0 0-.33-1.82 1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 0 1 2 18.59v-.1a2 2 0 0 1 .59-1.41l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33H2a2 2 0 0 1 0-4h.1a1.65 1.65 0 0 0 1.82-.33 1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 0 1 5.41 2h.1a2 2 0 0 1 1.41.59l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.82V2a2 2 0 0 1 4 0v.1a1.65 1.65 0 0 0 .33 1.82 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06A2 2 0 0 1 22 5.41v.1a2 2 0 0 1-.59 1.41l-.06.06A1.65 1.65 0 0 0 19.4 9c.23.31.39.66.6 1a1.65 1.65 0 0 0 1.82.33H22a2 2 0 0 1 0 4h-.1a1.65 1.65 0 0 0-1.82.33c-.21.34-.37.69-.6 1z"></path></svg>
                 </div>
                 <div className="web-setting-info">
-                  <h4>{t('settings.title', 'Ամբողջական Կարգավորումներ')}</h4>
-                  <p>{t('settings.security.title', 'Անվտանգություն, Սեսիաներ, Ծրագրի ռեժիմներ')}</p>
+                  <h4>{t('profile.fullSettings', 'Ամբողջական Կարգավորումներ')}</h4>
+                  <p>{t('profile.fullSettingsDesc', 'Անվտանգություն, Սեսիաներ, Ծրագրի ռեժիմներ')}</p>
                 </div>
-                <button className="web-inline-btn">{t('megaMenu.readArticle', 'Բացել')}</button>
+                <button className="web-inline-btn">{t('profile.openBtn', 'Բացել')}</button>
               </div>
             </div>
 
@@ -812,14 +812,14 @@ export default function Profile() {
         <div className="modal-overlay" onClick={() => setIsRoleModalOpen(false)}>
           <div className="modal-content profile-role-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>🎭 Երկրպագության Թիմի Դեր & Ավատար</h3>
+              <h3>{t('profile.roleModalTitle', '🎭 Երկրպագության Թիմի Դեր & Ավատար')}</h3>
               <button className="modal-close" onClick={() => setIsRoleModalOpen(false)}>
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
             </div>
             <div className="modal-body role-modal-body">
               <div className="role-modal-section">
-                <h4>🎨 Ընտրեք Ձեր Գույնը</h4>
+                <h4>{t('profile.chooseAvatarColor', '🎨 Ընտրեք Ձեր Գույնը')}</h4>
                 <div className="avatar-gradients-grid">
                   {AVATAR_GRADIENTS.map((grad, i) => (
                     <button
@@ -835,7 +835,7 @@ export default function Profile() {
               </div>
 
               <div className="role-modal-section">
-                <h4>📖 Ընտրեք Ձեր Պաշտոնը</h4>
+                <h4>{t('profile.chooseYourRole', '📖 Ընտրեք Ձեր Պաշտոնը')}</h4>
                 <div className="roles-grid">
                   {WORSHIP_ROLES.map(r => (
                     <button
@@ -852,7 +852,7 @@ export default function Profile() {
               </div>
 
               <button className="role-modal-save-btn" onClick={() => setIsRoleModalOpen(false)}>
-                Պահպանել
+                {t('profile.saveBtn', 'Պահպանել')}
               </button>
             </div>
           </div>
