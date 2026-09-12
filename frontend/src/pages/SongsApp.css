@@ -355,7 +355,7 @@ body.website-theme > .songs-back-to-top {
   text-align: center;
 }
 
-.track-item:active {
+.track-item:active:not(:has(.track-actions:active)) {
   transform: scale(0.98);
   background: rgba(255, 255, 255, 0.08);
 }
@@ -428,19 +428,55 @@ body.website-theme > .songs-back-to-top {
 .track-actions {
   display: flex;
   align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+  margin-left: auto;
+  position: relative;
+  z-index: 5;
 }
 
 .heart-btn {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.35);
   cursor: pointer;
-  padding: 4px;
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: color 0.2s;
+  transition: color 0.2s ease, transform 0.15s ease;
+  touch-action: manipulation;
+  position: relative;
+  z-index: 6;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.heart-btn::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  bottom: -8px;
+  left: -12px;
+  right: -8px;
+  z-index: 1;
+}
+
+.heart-btn svg {
+  pointer-events: none;
+  width: 22px;
+  height: 22px;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.heart-btn:active svg {
+  transform: scale(1.22);
 }
 
 .heart-btn.active {

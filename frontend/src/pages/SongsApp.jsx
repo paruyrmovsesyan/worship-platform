@@ -53,7 +53,18 @@ export default function SongsApp() {
   };
 
   const [songs, setSongs]         = useState([]);
-  const [favorites, setFavorites] = useState(new Set());
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      const cached = localStorage.getItem('wp_user_favorites_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) {
+          return new Set(parsed.map(f => parseInt(f.song_id || f.id, 10)).filter(Boolean));
+        }
+      }
+    } catch {}
+    return new Set();
+  });
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   
@@ -206,7 +217,10 @@ export default function SongsApp() {
         .then(r => r.json())
         .then(d => {
           if (Array.isArray(d)) {
-            setFavorites(new Set(d.map(f => parseInt(f.id))));
+            setFavorites(new Set(d.map(f => parseInt(f.song_id || f.id, 10)).filter(Boolean)));
+            try {
+              localStorage.setItem('wp_user_favorites_cache', JSON.stringify(d));
+            } catch {}
           }
         })
         .catch(() => {});
@@ -214,24 +228,28 @@ export default function SongsApp() {
   }, [user]);
 
   const toggleFavorite = async (e, songId) => {
-    e.stopPropagation();
+    if (e) {
+      try { e.preventDefault(); } catch {}
+      try { e.stopPropagation(); } catch {}
+    }
     if (!user) {
       navigate('/login?next=/songs');
       return;
     }
-    const isFav = favorites.has(songId);
+    const numId = parseInt(songId, 10);
+    const isFav = favorites.has(numId);
     
     // Optimistic UI
     const newFavs = new Set(favorites);
-    if (isFav) newFavs.delete(songId);
-    else newFavs.add(songId);
+    if (isFav) newFavs.delete(numId);
+    else newFavs.add(numId);
     setFavorites(newFavs);
 
     try {
       const response = await fetch('/user_favorites_api.php?action=toggle_favorite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ song_id: songId })
+        body: JSON.stringify({ song_id: numId })
       });
       const data = await response.json();
       if (!response.ok || typeof data.favorite !== 'boolean') {
@@ -240,15 +258,32 @@ export default function SongsApp() {
 
       setFavorites(current => {
         const synced = new Set(current);
-        if (data.favorite) synced.add(songId);
-        else synced.delete(songId);
+        if (data.favorite) synced.add(numId);
+        else synced.delete(numId);
         return synced;
       });
+
+      // Synchronize localStorage cache for favorites
+      try {
+        const cached = localStorage.getItem('wp_user_favorites_cache');
+        let list = cached ? JSON.parse(cached) : [];
+        if (Array.isArray(list)) {
+          if (data.favorite) {
+            const existingSong = songs.find(s => parseInt(s.id, 10) === numId);
+            if (existingSong && !list.some(f => parseInt(f.song_id || f.id, 10) === numId)) {
+              list.unshift({ ...existingSong, song_id: numId, id: numId });
+            }
+          } else {
+            list = list.filter(f => parseInt(f.song_id || f.id, 10) !== numId);
+          }
+          localStorage.setItem('wp_user_favorites_cache', JSON.stringify(list));
+        }
+      } catch {}
     } catch {
       setFavorites(current => {
         const rolledBack = new Set(current);
-        if (isFav) rolledBack.add(songId);
-        else rolledBack.delete(songId);
+        if (isFav) rolledBack.add(numId);
+        else rolledBack.delete(numId);
         return rolledBack;
       });
     }
@@ -461,14 +496,23 @@ export default function SongsApp() {
               {Number.parseInt(song.bpm, 10) > 0 && <span className="track-bpm desk-only dim">{song.bpm} BPM</span>}
             </div>
 
-            <div className="track-actions">
+            <div 
+              className="track-actions"
+              onClick={(e) => { e.stopPropagation(); }}
+              onPointerDown={(e) => { e.stopPropagation(); }}
+              onTouchStart={(e) => { e.stopPropagation(); }}
+            >
               <button 
-                className={`heart-btn ${favorites.has(parseInt(song.id)) ? 'active' : ''}`} 
-                onClick={(e) => toggleFavorite(e, parseInt(song.id))}
-                title={favorites.has(parseInt(song.id)) ? t('songs.removeFromFav', 'Remove') : t('songs.addToFav', 'Save')}
+                type="button"
+                className={`heart-btn ${favorites.has(parseInt(song.id, 10)) ? 'active' : ''}`} 
+                onClick={(e) => toggleFavorite(e, parseInt(song.id, 10))}
+                onPointerDown={(e) => { e.stopPropagation(); }}
+                onTouchStart={(e) => { e.stopPropagation(); }}
+                title={favorites.has(parseInt(song.id, 10)) ? t('songs.removeFromFav', 'Remove') : t('songs.addToFav', 'Save')}
+                aria-label={favorites.has(parseInt(song.id, 10)) ? t('songs.removeFromFav', 'Remove') : t('songs.addToFav', 'Save')}
               >
                 <svg viewBox="0 0 24 24" width="22" height="22" 
-                  fill={favorites.has(parseInt(song.id)) ? 'currentColor' : 'none'} 
+                  fill={favorites.has(parseInt(song.id, 10)) ? 'currentColor' : 'none'} 
                   stroke="currentColor" 
                   strokeWidth="2">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
