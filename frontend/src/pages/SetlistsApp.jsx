@@ -162,7 +162,7 @@ export default function SetlistsApp() {
 
   // Lock body scroll and mark modal open so MobileNav is hidden
   useEffect(() => {
-    if (!showCreateModal) return undefined;
+    if (!showCreateModal && !inviteSetlist) return undefined;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     document.body.classList.add('sl-modal-open');
@@ -170,7 +170,7 @@ export default function SetlistsApp() {
       document.body.style.overflow = prevOverflow;
       document.body.classList.remove('sl-modal-open');
     };
-  }, [showCreateModal]);
+  }, [showCreateModal, inviteSetlist]);
 
   // Duplicate Setlist
   const handleDuplicate = async (e, listId) => {
@@ -295,6 +295,64 @@ export default function SetlistsApp() {
       console.error(err);
     } finally {
       setActionLoadingId(null);
+    }
+  };
+
+  // Invite via Chat State & Handlers
+  const [inviteSetlist, setInviteSetlist] = useState(null);
+  const [inviteChats, setInviteChats] = useState([]);
+  const [inviteChatsLoading, setInviteChatsLoading] = useState(false);
+  const [inviteMessage, setInviteMessage] = useState('');
+  const [inviteCanEdit, setInviteCanEdit] = useState(false);
+  const [sendingInviteChatId, setSendingInviteChatId] = useState(null);
+
+  const handleOpenInviteModal = (e, list) => {
+    e.stopPropagation();
+    setActiveMenuId(null);
+    setInviteSetlist(list);
+    setInviteMessage('');
+    setInviteCanEdit(false);
+    setInviteChatsLoading(true);
+    fetch('/chat_api.php?action=list_chats')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.ok) setInviteChats(data.chats || []);
+        setInviteChatsLoading(false);
+      })
+      .catch(() => setInviteChatsLoading(false));
+  };
+
+  const handleSendChatInvite = async (chatId) => {
+    if (!inviteSetlist) return;
+    setSendingInviteChatId(chatId);
+    try {
+      const res = await fetch('/chat_api.php?action=send_message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          message: inviteMessage.trim(),
+          setlist_id: inviteSetlist.id,
+          can_edit: inviteCanEdit,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setInviteSetlist(null);
+        showToast(
+          language === 'am'
+            ? 'Հրավերն ուղարկվեց չաթում'
+            : language === 'ru'
+            ? 'Приглашение отправлено в чат'
+            : 'Invite sent in chat'
+        );
+      } else {
+        alert(data.error || 'Failed to send invite');
+      }
+    } catch (e) {
+      alert('Network error');
+    } finally {
+      setSendingInviteChatId(null);
     }
   };
 
@@ -987,6 +1045,17 @@ export default function SetlistsApp() {
                             <button
                               type="button"
                               className="sl-app-dropdown-item"
+                              onClick={(e) => handleOpenInviteModal(e, list)}
+                            >
+                              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                              </svg>
+                              {language === 'am' ? 'Հրավիրել չաթով' : language === 'ru' ? 'Пригласить в чат' : 'Invite via chat'}
+                            </button>
+
+                            <button
+                              type="button"
+                              className="sl-app-dropdown-item"
                               onClick={(e) => handleShare(e, list)}
                             >
                               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1149,6 +1218,160 @@ export default function SetlistsApp() {
                   {isCreating ? t('setlists.creatingBtn', 'Ստեղծվում է...') : t('setlists.createBtn', 'Ստեղծել')}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Invite via Chat Modal */}
+      {inviteSetlist && createPortal(
+        <div className="sl-modal-overlay" onClick={() => setInviteSetlist(null)}>
+          <div className="sl-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="sl-modal-header">
+              <div>
+                <h2 style={{ fontSize: '1.25rem', margin: 0 }}>
+                  {language === 'am' ? 'Հրավիրել չաթով' : language === 'ru' ? 'Пригласить в чат' : 'Invite via Chat'}
+                </h2>
+                <div style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+                  {inviteSetlist.name}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="sl-modal-close"
+                onClick={() => setInviteSetlist(null)}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="sl-form-group">
+              <label>
+                {language === 'am' ? 'Հաղորդագրություն (ըստ ցանկության)' : language === 'ru' ? 'Сообщение (необязательно)' : 'Message (optional)'}
+              </label>
+              <textarea
+                className="sl-input sl-textarea"
+                rows={2}
+                value={inviteMessage}
+                onChange={(e) => setInviteMessage(e.target.value)}
+                placeholder={
+                  language === 'am'
+                    ? `Հրավիրում եմ միանալ «${inviteSetlist.name}» երգացանկին`
+                    : language === 'ru'
+                    ? `Приглашаю присоединиться к сет-листу «${inviteSetlist.name}»`
+                    : `Inviting you to join "${inviteSetlist.name}" setlist`
+                }
+              />
+            </div>
+
+            <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.04)', borderRadius: '12px' }}>
+              <div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#fff' }}>
+                  {language === 'am' ? 'Խմբագրման իրավունք' : language === 'ru' ? 'Право редактирования' : 'Edit permission'}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                  {language === 'am' ? 'Մասնակիցները կարող են փոփոխել երգացանկը' : language === 'ru' ? 'Участники могут изменять сет-лист' : 'Participants can edit the setlist'}
+                </div>
+              </div>
+              <label style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={inviteCanEdit}
+                  onChange={(e) => setInviteCanEdit(e.target.checked)}
+                  style={{ width: '18px', height: '18px', accentColor: '#00d4ff' }}
+                />
+              </label>
+            </div>
+
+            <div style={{ marginBottom: '10px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
+              {language === 'am' ? 'Ընտրեք չաթը' : language === 'ru' ? 'Выберите чат' : 'Select a chat'}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto' }}>
+              {inviteChatsLoading ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: 'var(--color-text-secondary)' }}>
+                  {language === 'am' ? 'Բեռնվում է...' : language === 'ru' ? 'Загрузка...' : 'Loading...'}
+                </div>
+              ) : inviteChats.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: 'var(--color-text-secondary)' }}>
+                  {language === 'am' ? 'Չաթեր չկան' : language === 'ru' ? 'Нет чатов' : 'No chats found'}
+                </div>
+              ) : (
+                inviteChats.map((c) => {
+                  const isSending = sendingInviteChatId === c.id;
+                  const chatTitle = c.type === 'group' ? c.name : (c.participant_names || 'Chat');
+                  return (
+                    <div
+                      key={c.id}
+                      onClick={() => !sendingInviteChatId && handleSendChatInvite(c.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '10px 14px',
+                        background: 'rgba(255,255,255,0.04)',
+                        borderRadius: '12px',
+                        cursor: sendingInviteChatId ? 'not-allowed' : 'pointer',
+                        transition: 'background 0.2s',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          background: 'rgba(255,255,255,0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 700,
+                          fontSize: '1rem',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {c.type === 'group' ? '👥' : (chatTitle ? chatTitle.charAt(0).toUpperCase() : '👤')}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {chatTitle}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                          {c.type === 'group' ? (language === 'am' ? 'Խումբ' : language === 'ru' ? 'Группа' : 'Group') : (language === 'am' ? 'Անձնական չաթ' : language === 'ru' ? 'Личный чат' : 'Direct')}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={sendingInviteChatId !== null}
+                        style={{
+                          background: isSending ? 'rgba(0,212,255,0.15)' : 'rgba(0,212,255,0.2)',
+                          color: '#00d4ff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '6px 12px',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          cursor: sendingInviteChatId ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {isSending ? '...' : (language === 'am' ? 'Ուղարկել ➔' : language === 'ru' ? 'Отправить ➔' : 'Send ➔')}
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="sl-modal-actions" style={{ marginTop: '20px' }}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                style={{ width: '100%' }}
+                onClick={() => setInviteSetlist(null)}
+              >
+                {language === 'am' ? 'Փակել' : language === 'ru' ? 'Закрыть' : 'Close'}
+              </button>
             </div>
           </div>
         </div>,

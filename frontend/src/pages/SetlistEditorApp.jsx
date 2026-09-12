@@ -63,9 +63,11 @@ export default function SetlistEditorApp() {
   // Share Modal
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareAsEditable, setShareAsEditable] = useState(false);
+  const [shareMessage, setShareMessage] = useState('');
   const [sharedUsers, setSharedUsers] = useState([]);
   const [shareChats, setShareChats] = useState([]);
   const [shareLoading, setShareLoading] = useState(false);
+  const [sharingChatId, setSharingChatId] = useState(null);
   const [publicShareUrl, setPublicShareUrl] = useState(null);
   const [generatingLink, setGeneratingLink] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -1006,21 +1008,30 @@ export default function SetlistEditorApp() {
   };
 
   const handleShareToChat = async (chatId) => {
+    setSharingChatId(chatId);
     try {
       const res = await fetch('/chat_api.php?action=send_message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, message: '', setlist_id: id, can_edit: shareAsEditable }),
+        body: JSON.stringify({
+          chat_id: chatId,
+          message: shareMessage.trim(),
+          setlist_id: id,
+          can_edit: shareAsEditable,
+        }),
       });
       const data = await res.json();
       if (data.ok) {
         setIsShareModalOpen(false);
+        setShareMessage('');
         alert(t('chat.sent', 'Ուղարկված է չաթում'));
       } else {
         alert('Error: ' + data.error);
       }
     } catch (e) {
       alert('Network error');
+    } finally {
+      setSharingChatId(null);
     }
   };
 
@@ -2006,38 +2017,84 @@ export default function SetlistEditorApp() {
               {/* Chat sharing */}
               <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#fff' }}>Ուղարկել չաթով</span>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#8fa0b5' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#fff' }}>
+                    {language === 'am' ? 'Ուղարկել չաթով' : language === 'ru' ? 'Отправить в чат' : 'Send to chat'}
+                  </span>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#8fa0b5', cursor: 'pointer' }}>
                     <input
                       type="checkbox"
                       checked={shareAsEditable}
                       onChange={e => setShareAsEditable(e.target.checked)}
+                      style={{ accentColor: '#00d4ff' }}
                     />
-                    Թույլատրել խմբագրել
+                    {language === 'am' ? 'Թույլատրել խմբագրել' : language === 'ru' ? 'Разрешить редактировать' : 'Allow editing'}
                   </label>
+                </div>
+
+                <div style={{ marginBottom: '12px' }}>
+                  <input
+                    type="text"
+                    value={shareMessage}
+                    onChange={(e) => setShareMessage(e.target.value)}
+                    placeholder={
+                      language === 'am'
+                        ? 'Հաղորդագրություն (ըստ ցանկության)...'
+                        : language === 'ru'
+                        ? 'Сообщение (необязательно)...'
+                        : 'Message (optional)...'
+                    }
+                    style={{
+                      width: '100%',
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      color: '#fff',
+                      fontSize: '0.84rem',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
                   {shareLoading ? (
-                    <div style={{ textAlign: 'center', padding: '16px', color: '#8fa0b5' }}>Բեռնվում է...</div>
+                    <div style={{ textAlign: 'center', padding: '16px', color: '#8fa0b5' }}>
+                      {language === 'am' ? 'Բեռնվում է...' : language === 'ru' ? 'Загрузка...' : 'Loading...'}
+                    </div>
                   ) : shareChats.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '16px', color: '#68778d' }}>Չաթեր չկան</div>
+                    <div style={{ textAlign: 'center', padding: '16px', color: '#68778d' }}>
+                      {language === 'am' ? 'Չաթեր չկան' : language === 'ru' ? 'Нет чатов' : 'No chats found'}
+                    </div>
                   ) : (
-                    shareChats.map(c => (
-                      <div
-                        key={c.id}
-                        style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', cursor: 'pointer' }}
-                        onClick={() => handleShareToChat(c.id)}
-                      >
-                        <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
-                          {c.type === 'group' ? '👥' : (c.participant_names ? c.participant_names.charAt(0).toUpperCase() : '👤')}
+                    shareChats.map(c => {
+                      const isSending = sharingChatId === c.id;
+                      return (
+                        <div
+                          key={c.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '10px 12px',
+                            background: 'rgba(255,255,255,0.04)',
+                            borderRadius: '12px',
+                            cursor: sharingChatId ? 'not-allowed' : 'pointer'
+                          }}
+                          onClick={() => !sharingChatId && handleShareToChat(c.id)}
+                        >
+                          <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                            {c.type === 'group' ? '👥' : (c.participant_names ? c.participant_names.charAt(0).toUpperCase() : '👤')}
+                          </div>
+                          <span style={{ flex: 1, fontSize: '0.9rem', color: '#fff', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {c.type === 'group' ? c.name : c.participant_names}
+                          </span>
+                          <span style={{ fontSize: '0.76rem', color: '#00d4ff', fontWeight: 600 }}>
+                            {isSending ? '...' : (language === 'am' ? 'Ուղարկել ➔' : language === 'ru' ? 'Отправить ➔' : 'Send ➔')}
+                          </span>
                         </div>
-                        <span style={{ flex: 1, fontSize: '0.9rem', color: '#fff', fontWeight: 500 }}>
-                          {c.type === 'group' ? c.name : c.participant_names}
-                        </span>
-                        <span style={{ fontSize: '0.76rem', color: '#00d4ff' }}>Ուղարկել ➔</span>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </div>

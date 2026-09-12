@@ -27,6 +27,7 @@ export default function Chat() {
   const [groupInfoLoading, setGroupInfoLoading] = useState(false);
   const [editingGroupName, setEditingGroupName] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
+  const [importingSetlistId, setImportingSetlistId] = useState(null);
 
   const messagesEndRef = useRef(null);
   const containerRef = useRef(null);
@@ -36,6 +37,37 @@ export default function Chat() {
   const groupOverlayRef = useRef(null);
   const dragStartY = useRef(null);
   const dragCurrentY = useRef(0);
+
+  const handleImportSetlist = async (setlistId) => {
+    if (!setlistId || importingSetlistId) return;
+    const confirmPrompt =
+      language === 'am'
+        ? 'Ցանկանու՞մ եք պատճենել այս երգացանկը ձեր հաշվում:'
+        : language === 'ru'
+        ? 'Хотите скопировать этот сет-лист в свой аккаунт?'
+        : 'Do you want to copy this setlist to your account?';
+    if (!window.confirm(confirmPrompt)) return;
+
+    setImportingSetlistId(setlistId);
+    try {
+      const res = await fetch('/chat_api.php?action=import_shared_setlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ setlist_id: setlistId }),
+      });
+      const data = await res.json();
+      if (data.ok && data.new_id) {
+        navigate(`/setlists/${data.new_id}`);
+      } else {
+        alert(data.error || 'Failed to import');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error');
+    } finally {
+      setImportingSetlistId(null);
+    }
+  };
 
   const getLastOwnMessageId = () => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -712,38 +744,115 @@ export default function Chat() {
                           m.message && <div className="chat-text">{m.message}</div>
                         )}
                         {m.setlist_id > 0 && (
-                          <div 
-                            className="chat-setlist-attachment" 
-                            onClick={async () => {
-                              if (window.confirm(t('chat.importSetlistPrompt', 'Ցանկանու՞մ եք պատճենել այս երգացանկը ձեր հաշվում:'))) {
-                                try {
-                                  const res = await fetch('/chat_api.php?action=import_shared_setlist', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ setlist_id: m.setlist_id })
-                                  });
-                                  const data = await res.json();
-                                  if (data.ok && data.new_id) {
-                                    navigate(`/setlists/${data.new_id}`);
-                                  } else {
-                                    alert(data.error || 'Failed to import');
-                                  }
-                                } catch (err) {
-                                  console.error(err);
-                                }
-                              }
-                            }}
+                          <div
+                            className="chat-setlist-card"
                             style={{
-                              display: 'flex', alignItems: 'center', gap: '10px',
-                              background: 'rgba(0,0,0,0.15)', padding: '10px 12px',
-                              borderRadius: '10px', marginTop: m.message ? '6px' : '0',
-                              cursor: 'pointer', border: '1px solid rgba(255,255,255,0.05)'
+                              marginTop: m.message ? '8px' : '0',
+                              background: isOwn ? 'rgba(0, 0, 0, 0.28)' : 'rgba(255, 255, 255, 0.06)',
+                              border: '1px solid rgba(255, 255, 255, 0.12)',
+                              borderRadius: '14px',
+                              padding: '12px 14px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '10px',
+                              minWidth: '220px',
+                              maxWidth: '100%',
+                              boxSizing: 'border-box'
                             }}
                           >
-                            <div style={{ fontSize: '1.5rem', opacity: 0.8 }}>📋</div>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f0f0f6' }}>{t('chat.sharedSetlist', 'Կիսվել է երգացանկով')}</span>
-                              <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontWeight: 500, marginTop: '2px' }}>{t('chat.openSetlist', 'Բացել երգացանկը')}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div
+                                style={{
+                                  width: '38px',
+                                  height: '38px',
+                                  borderRadius: '10px',
+                                  background: 'linear-gradient(135deg, rgba(0,212,255,0.2) 0%, rgba(56,189,248,0.1) 100%)',
+                                  border: '1px solid rgba(0,212,255,0.3)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '1.2rem',
+                                  flexShrink: 0
+                                }}
+                              >
+                                🎵
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#38bdf8', fontWeight: 700 }}>
+                                  {language === 'am' ? 'Հրավեր սեթլիստին' : language === 'ru' ? 'Приглашение в сет-лист' : 'Setlist Invitation'}
+                                </div>
+                                <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {m.setlist_name || (language === 'am' ? 'Երգացանկ' : language === 'ru' ? 'Сет-лист' : 'Setlist')}
+                                </div>
+                              </div>
+                            </div>
+
+                            {(m.setlist_date || (m.setlist_items_count !== undefined && m.setlist_items_count !== null && Number(m.setlist_items_count) > 0)) && (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '0.75rem', color: '#94a3b8' }}>
+                                {m.setlist_date && (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '6px' }}>
+                                    📅 {m.setlist_date}
+                                  </span>
+                                )}
+                                {Number(m.setlist_items_count) > 0 && (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '6px' }}>
+                                    🎶 {m.setlist_items_count} {language === 'am' ? 'երգ' : language === 'ru' ? 'песен' : 'songs'}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '2px' }}>
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/setlists/${m.setlist_id}`)}
+                                style={{
+                                  background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                                  color: '#ffffff',
+                                  border: 'none',
+                                  borderRadius: '10px',
+                                  padding: '8px 12px',
+                                  fontSize: '0.82rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '6px',
+                                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.3)',
+                                  transition: 'filter 0.2s',
+                                }}
+                              >
+                                <span>{language === 'am' ? 'Միանալ սեթլիստին' : language === 'ru' ? 'Присоединиться к сет-листу' : 'Join Setlist'}</span>
+                                <span style={{ fontSize: '0.9rem' }}>➔</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={importingSetlistId === m.setlist_id}
+                                onClick={() => handleImportSetlist(m.setlist_id)}
+                                style={{
+                                  background: 'rgba(255, 255, 255, 0.06)',
+                                  color: '#cbd5e1',
+                                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                                  borderRadius: '10px',
+                                  padding: '7px 12px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 500,
+                                  cursor: importingSetlistId === m.setlist_id ? 'not-allowed' : 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '6px',
+                                }}
+                              >
+                                <span>📋</span>
+                                <span>
+                                  {importingSetlistId === m.setlist_id
+                                    ? (language === 'am' ? 'Պատճենվում է...' : language === 'ru' ? 'Копирование...' : 'Copying...')
+                                    : (language === 'am' ? 'Պատճենել իմ ցանկում' : language === 'ru' ? 'Скопировать в мой список' : 'Copy to my setlists')}
+                                </span>
+                              </button>
                             </div>
                           </div>
                         )}

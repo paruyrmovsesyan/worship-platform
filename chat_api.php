@@ -325,9 +325,13 @@ function wp_chat_compact_push_title(string $senderName): string {
     return mb_substr($senderName, 0, 60);
 }
 
-function wp_chat_compact_push_body(string $message, bool $isSetlistShare = false): string {
+function wp_chat_compact_push_body(string $message, bool $isSetlistShare = false, string $setlistName = ''): string {
     if ($isSetlistShare) {
-        return 'Shared a setlist';
+        $cleanName = trim(preg_replace('/\s+/u', ' ', $setlistName));
+        if ($cleanName !== '') {
+            return 'Հրավիրել է միանալ «' . mb_substr($cleanName, 0, 45) . '» երգացանկին';
+        }
+        return 'Հրավիրել է միանալ երգացանկին';
     }
 
     $message = trim(preg_replace('/\s+/u', ' ', $message));
@@ -581,9 +585,20 @@ if ($action === 'get_messages' && $method === 'GET') {
 
     $sql = "
         SELECT * FROM (
-            SELECT m.id, m.user_id, u.name as user_name, m.message, m.setlist_id, m.created_at
+            SELECT 
+                m.id, 
+                m.user_id, 
+                u.name as user_name, 
+                m.message, 
+                m.setlist_id, 
+                m.created_at,
+                s.name as setlist_name,
+                s.event_date as setlist_date,
+                s.type as setlist_type,
+                (SELECT COUNT(*) FROM setlist_items si WHERE si.setlist_id = s.id) as setlist_items_count
             FROM chat_messages m
             JOIN users u ON m.user_id = u.id
+            LEFT JOIN setlists s ON m.setlist_id = s.id
             WHERE m.chat_id = :chat_id 
               AND (:cleared_at1 IS NULL OR m.created_at > :cleared_at2)
               " . ($before_id > 0 ? " AND m.id < :before_id " : "") . "
@@ -645,13 +660,32 @@ if ($action === 'send_message' && $method === 'POST') {
     $setlist_id = isset($d['setlist_id']) ? (int)$d['setlist_id'] : 0;
     $can_edit = !empty($d['can_edit']) ? 1 : 0;
     
+    $setlist_name = null;
+    $setlist_date = null;
+    $setlist_type = null;
+    $setlist_items_count = 0;
+
+    // Check permission to send this setlist
+    if ($setlist_id > 0) {
+        if (!wp_chat_user_can_read_setlist($pdo, $setlist_id, $uid)) {
+            out(["error" => "Setlist access denied"], 403);
+        }
+        $stS = $pdo->prepare("SELECT name, event_date, type, (SELECT COUNT(*) FROM setlist_items si WHERE si.setlist_id = setlists.id) as items_count FROM setlists WHERE id = ? LIMIT 1");
+        $stS->execute([$setlist_id]);
+        $sRow = $stS->fetch(PDO::FETCH_ASSOC);
+        if ($sRow) {
+            $setlist_name = $sRow['name'];
+            $setlist_date = $sRow['event_date'];
+            $setlist_type = $sRow['type'];
+            $setlist_items_count = (int)($sRow['items_count'] ?? 0);
+            if ($message === '') {
+                $message = 'Հրավիրում եմ միանալ «' . ($setlist_name ?: 'Երգացանկ') . '» երգացանկին';
+            }
+        }
+    }
+
     if (trim($message) === '' && $setlist_id <= 0) {
         out(["error" => "Empty message"], 400);
-    }
-    
-    // Check permission to send this setlist
-    if ($setlist_id > 0 && !wp_chat_user_can_read_setlist($pdo, $setlist_id, $uid)) {
-        out(["error" => "Setlist access denied"], 403);
     }
     
     $st = $pdo->prepare("INSERT INTO chat_messages (chat_id, user_id, message, setlist_id) VALUES (?, ?, ?, ?)");
@@ -691,7 +725,7 @@ if ($action === 'send_message' && $method === 'POST') {
         $pdo->prepare("UPDATE chat_participants SET cleared_at = NULL WHERE chat_id = ? AND user_id = ?")->execute([$chat_id, $oid]);
         
         $push_title = wp_chat_compact_push_title((string)$senderName);
-        $push_msg = wp_chat_compact_push_body((string)$message, $setlist_id > 0);
+        $push_msg = wp_chat_compact_push_body((string)$message, $setlist_id > 0, (string)($setlist_name ?? ''));
         wp_push_send_to_user($pdo, $oid, $push_title, $push_msg, "/chat/$chat_id");
     }
     
@@ -699,7 +733,18 @@ if ($action === 'send_message' && $method === 'POST') {
     $st->execute([$msg_id]);
     $res = $st->fetch(PDO::FETCH_ASSOC);
     
-    out(["ok" => true, "id" => $msg_id, "user_name" => $res['user_name'], "created_at" => $res['created_at']]);
+    out([
+        "ok" => true, 
+        "id" => $msg_id, 
+        "user_name" => $res['user_name'], 
+        "created_at" => $res['created_at'],
+        "message" => $message,
+        "setlist_id" => $setlist_id > 0 ? $setlist_id : null,
+        "setlist_name" => $setlist_name,
+        "setlist_date" => $setlist_date,
+        "setlist_type" => $setlist_type,
+        "setlist_items_count" => $setlist_items_count
+    ]);
 }
 
 // 6. Create Group
