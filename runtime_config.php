@@ -1029,3 +1029,8 @@ if (!function_exists('wp_runtime_admin_cookie_secret')) {
         return wp_runtime_get_secret('admin_cookie', 64);
     }
 }
+
+if (!function_exists('wp_error_log_record') && is_file(__DIR__ . '/error_service.php')) {
+    require_once __DIR__ . '/error_service.php';
+}
+

@@ -83,7 +83,6 @@ function wp_error_save_json_store(array $items): bool {
         @mkdir($dir, 0775, true);
     }
 
-    // Keep within limit
     if (count($items) > WP_ERROR_MAX_STORE_ITEMS) {
         $items = array_slice($items, 0, WP_ERROR_MAX_STORE_ITEMS);
     }
@@ -121,7 +120,7 @@ function wp_error_log_record(array $data): array {
     $stack = isset($data['stack_trace']) ? trim((string)$data['stack_trace']) : null;
     $userId = isset($data['user_id']) && is_numeric($data['user_id']) ? (int)$data['user_id'] : null;
     $userEmail = isset($data['user_email']) && $data['user_email'] !== '' ? mb_substr(trim((string)$data['user_email']), 0, 190) : null;
-    $ip = isset($data['ip_address']) ? trim((string)$data['ip_address']) : (function_exists('wp_runtime_remote_ip') ? wp_runtime_remote_ip() : ($_SERVER['REMOTE_ADDR'] ?? ''));
+    $ip = isset($data['ip_address']) ? trim((string)$data['ip_address']) : (function_exists('wp_runtime_remote_ip') ? wp_runtime_remote_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'));
     $userAgent = isset($data['user_agent']) ? mb_substr(trim((string)$data['user_agent']), 0, 255) : mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
     $deviceInfo = isset($data['device_info']) ? (is_array($data['device_info']) ? json_encode($data['device_info']) : (string)$data['device_info']) : null;
 
@@ -163,7 +162,7 @@ function wp_error_log_record(array $data): array {
                 'status' => 'created'
             ];
         } catch (Throwable $e) {
-            // Fallback to JSON below
+            // fallback
         }
     }
 
@@ -189,7 +188,6 @@ function wp_error_log_record(array $data): array {
         if ($userId) $store[$foundIndex]['user_id'] = $userId;
         if ($userEmail) $store[$foundIndex]['user_email'] = $userEmail;
         $updatedItem = $store[$foundIndex];
-        // Move to front
         array_splice($store, $foundIndex, 1);
         array_unshift($store, $updatedItem);
         wp_error_save_json_store($store);
@@ -235,12 +233,114 @@ function wp_error_log_record(array $data): array {
 }
 
 /**
- * Retrieves error logs with optional filtering.
+ * Reads native PHP error_log file lines and converts them into normalized error entries.
+ */
+function wp_error_read_native_php_logs(int $limit = 40): array {
+    $candidates = [
+        __DIR__ . '/error_log',
+        dirname(__DIR__) . '/error_log'
+    ];
+
+    $logFile = null;
+    foreach ($candidates as $cand) {
+        if (is_file($cand) && is_readable($cand) && filesize($cand) > 0) {
+            $logFile = $cand;
+            break;
+        }
+    }
+
+    if (!$logFile) {
+        return [];
+    }
+
+    $handle = @fopen($logFile, 'r');
+    if (!$handle) {
+        return [];
+    }
+
+    fseek($handle, 0, SEEK_END);
+    $fileSize = ftell($handle);
+    $readSize = min($fileSize, 65536);
+    fseek($handle, max(0, $fileSize - $readSize));
+    $content = fread($handle, $readSize);
+    fclose($handle);
+
+    if (!$content) {
+        return [];
+    }
+
+    $rawLines = explode("\n", trim($content));
+    $parsed = [];
+    $rawLines = array_reverse($rawLines);
+
+    foreach ($rawLines as $line) {
+        $line = trim($line);
+        if ($line === '' || str_starts_with($line, 'Stack trace:') || str_starts_with($line, '#')) {
+            continue;
+        }
+
+        if (preg_match('/^\[([^\]]+)\]\s+PHP\s+([^:]+):\s+(.*)$/i', $line, $matches)) {
+            $dateStr = $matches[1];
+            $typeStr = strtolower(trim($matches[2]));
+            $msgPart = trim($matches[3]);
+
+            $level = 'error';
+            if (strpos($typeStr, 'fatal') !== false || strpos($typeStr, 'parse') !== false) {
+                $level = 'fatal';
+            } elseif (strpos($typeStr, 'warning') !== false) {
+                $level = 'warning';
+            }
+
+            $file = null;
+            $lineNum = null;
+            if (preg_match('/in\s+([^\s]+)\s+on\s+line\s+(\d+)$/i', $msgPart, $fileMatches)) {
+                $file = $fileMatches[1];
+                $lineNum = (int)$fileMatches[2];
+                $msgPart = trim(preg_replace('/in\s+[^\s]+\s+on\s+line\s+\d+$/i', '', $msgPart));
+            }
+
+            $entryTs = strtotime($dateStr) ?: time();
+            $formattedDate = date('Y-m-d H:i:s', $entryTs);
+
+            $parsed[] = [
+                'id' => 'php_' . substr(md5($line), 0, 10),
+                'fingerprint' => md5($line),
+                'level' => $level,
+                'environment' => 'server',
+                'message' => $msgPart,
+                'file' => $file,
+                'line' => $lineNum,
+                'url' => null,
+                'stack_trace' => null,
+                'user_id' => null,
+                'user_email' => null,
+                'ip_address' => '127.0.0.1',
+                'user_agent' => 'PHP Server Engine',
+                'device_info' => 'Native PHP Runtime',
+                'occurrences' => 1,
+                'first_seen' => $formattedDate,
+                'last_seen' => $formattedDate,
+                'created_at' => $formattedDate
+            ];
+
+            if (count($parsed) >= $limit) {
+                break;
+            }
+        }
+    }
+
+    return $parsed;
+}
+
+/**
+ * Retrieves error logs with optional filtering, automatically merging native PHP error logs.
  */
 function wp_error_get_logs(array $filters = [], int $limit = 50, int $sinceId = 0): array {
     $envFilter = trim((string)($filters['environment'] ?? ''));
     $levelFilter = trim((string)($filters['level'] ?? ''));
     $search = trim((string)($filters['search'] ?? ''));
+
+    $rows = [];
 
     if (wp_error_init_table()) {
         try {
@@ -281,43 +381,62 @@ function wp_error_get_logs(array $filters = [], int $limit = 50, int $sinceId = 
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $dbRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (is_array($dbRows)) {
+                $rows = $dbRows;
+            }
+        } catch (Throwable $e) {}
+    }
 
-            return is_array($rows) ? $rows : [];
-        } catch (Throwable $e) {
-            // fallback
+    // If DB has no rows or few rows, check JSON store
+    if (empty($rows)) {
+        $store = wp_error_read_json_store();
+        foreach ($store as $item) {
+            $id = (int)($item['id'] ?? 0);
+            if ($sinceId > 0 && $id <= $sinceId) continue;
+            if ($envFilter !== '' && $envFilter !== 'all' && ($item['environment'] ?? '') !== $envFilter) continue;
+            if ($levelFilter !== '' && $levelFilter !== 'all' && ($item['level'] ?? '') !== $levelFilter) continue;
+            if ($search !== '') {
+                $needle = mb_strtolower($search);
+                $haystack = mb_strtolower(($item['message'] ?? '') . ' ' . ($item['file'] ?? '') . ' ' . ($item['url'] ?? '') . ' ' . ($item['user_email'] ?? '') . ' ' . ($item['ip_address'] ?? ''));
+                if (mb_strpos($haystack, $needle) === false) continue;
+            }
+            $rows[] = $item;
+            if (count($rows) >= $limit) break;
         }
     }
 
-    // JSON store fallback
-    $store = wp_error_read_json_store();
-    $filtered = [];
-
-    foreach ($store as $item) {
-        $id = (int)($item['id'] ?? 0);
-        if ($sinceId > 0 && $id <= $sinceId) {
-            continue;
-        }
-        if ($envFilter !== '' && $envFilter !== 'all' && ($item['environment'] ?? '') !== $envFilter) {
-            continue;
-        }
-        if ($levelFilter !== '' && $levelFilter !== 'all' && ($item['level'] ?? '') !== $levelFilter) {
-            continue;
-        }
-        if ($search !== '') {
-            $needle = mb_strtolower($search);
-            $haystack = mb_strtolower(($item['message'] ?? '') . ' ' . ($item['file'] ?? '') . ' ' . ($item['url'] ?? '') . ' ' . ($item['user_email'] ?? '') . ' ' . ($item['ip_address'] ?? ''));
-            if (mb_strpos($haystack, $needle) === false) {
-                continue;
+    // Automatically merge native PHP error_log entries if looking at all or server
+    if (($envFilter === '' || $envFilter === 'all' || $envFilter === 'server') && $sinceId === 0) {
+        $nativeLogs = wp_error_read_native_php_logs(30);
+        foreach ($nativeLogs as $nLog) {
+            if ($levelFilter !== '' && $levelFilter !== 'all' && ($nLog['level'] ?? '') !== $levelFilter) continue;
+            if ($search !== '') {
+                $needle = mb_strtolower($search);
+                $haystack = mb_strtolower(($nLog['message'] ?? '') . ' ' . ($nLog['file'] ?? ''));
+                if (mb_strpos($haystack, $needle) === false) continue;
+            }
+            // Check if not already in rows
+            $alreadyPresent = false;
+            foreach ($rows as $r) {
+                if (($r['fingerprint'] ?? '') === $nLog['fingerprint']) {
+                    $alreadyPresent = true;
+                    break;
+                }
+            }
+            if (!$alreadyPresent) {
+                $rows[] = $nLog;
             }
         }
-        $filtered[] = $item;
-        if (count($filtered) >= $limit) {
-            break;
-        }
+
+        // Re-sort by last_seen desc
+        usort($rows, function($a, $b) {
+            return strcmp((string)($b['last_seen'] ?? ''), (string)($a['last_seen'] ?? ''));
+        });
+        $rows = array_slice($rows, 0, $limit);
     }
 
-    return $filtered;
+    return $rows;
 }
 
 /**
@@ -337,64 +456,36 @@ function wp_error_get_stats(): array {
         try {
             $pdo = wp_runtime_open_pdo();
             
-            // Total & occurrences
             $stmt = $pdo->query("SELECT COUNT(*) as cnt, COALESCE(SUM(occurrences), 0) as total_occurrences FROM system_error_logs");
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             $stats['total'] = (int)($row['total_occurrences'] ?? $row['cnt'] ?? 0);
 
-            // Today
             $today = date('Y-m-d 00:00:00');
             $stmtToday = $pdo->prepare("SELECT COALESCE(SUM(occurrences), 0) as cnt FROM system_error_logs WHERE last_seen >= ?");
             $stmtToday->execute([$today]);
             $stats['today'] = (int)$stmtToday->fetchColumn();
 
-            // App (PWA)
             $stmtApp = $pdo->query("SELECT COALESCE(SUM(occurrences), 0) FROM system_error_logs WHERE environment = 'app'");
             $stats['app'] = (int)$stmtApp->fetchColumn();
 
-            // Web
             $stmtWeb = $pdo->query("SELECT COALESCE(SUM(occurrences), 0) FROM system_error_logs WHERE environment = 'web'");
             $stats['web'] = (int)$stmtWeb->fetchColumn();
 
-            // Server
             $stmtServer = $pdo->query("SELECT COALESCE(SUM(occurrences), 0) FROM system_error_logs WHERE environment IN ('server', 'db', 'api')");
             $stats['server'] = (int)$stmtServer->fetchColumn();
 
-            // Critical / Fatal
             $stmtCrit = $pdo->query("SELECT COALESCE(SUM(occurrences), 0) FROM system_error_logs WHERE level IN ('fatal', 'error')");
             $stats['critical'] = (int)$stmtCrit->fetchColumn();
-
-            return $stats;
-        } catch (Throwable $e) {
-            // fallback
-        }
+        } catch (Throwable $e) {}
     }
 
-    $store = wp_error_read_json_store();
-    $todayTs = strtotime(date('Y-m-d 00:00:00'));
-
-    foreach ($store as $item) {
-        $occ = (int)($item['occurrences'] ?? 1);
-        $stats['total'] += $occ;
-
-        $lastSeenTs = strtotime($item['last_seen'] ?? '0');
-        if ($lastSeenTs >= $todayTs) {
-            $stats['today'] += $occ;
-        }
-
-        $env = $item['environment'] ?? 'web';
-        if ($env === 'app') {
-            $stats['app'] += $occ;
-        } elseif ($env === 'web') {
-            $stats['web'] += $occ;
-        } elseif (in_array($env, ['server', 'db', 'api'], true)) {
-            $stats['server'] += $occ;
-        }
-
-        $level = $item['level'] ?? 'error';
-        if (in_array($level, ['fatal', 'error'], true)) {
-            $stats['critical'] += $occ;
-        }
+    // Add native PHP logs into stats if not captured in table
+    $nativeLogs = wp_error_read_native_php_logs(30);
+    $nativeCount = count($nativeLogs);
+    if ($nativeCount > 0 && $stats['server'] < $nativeCount) {
+        $stats['server'] = max($stats['server'], $nativeCount);
+        $stats['total'] = max($stats['total'], $stats['app'] + $stats['web'] + $stats['server']);
+        $stats['critical'] = max($stats['critical'], $nativeCount);
     }
 
     return $stats;
@@ -422,96 +513,29 @@ function wp_error_clear_logs(): bool {
 }
 
 /**
- * Reads native PHP error_log file lines and converts them into normalized error entries.
+ * Register global PHP shutdown handler to catch fatal crashes
  */
-function wp_error_read_native_php_logs(int $limit = 30): array {
-    $candidates = [
-        __DIR__ . '/error_log',
-        dirname(__DIR__) . '/error_log'
-    ];
+function wp_error_register_shutdown_handler(): void {
+    static $registered = false;
+    if ($registered) return;
+    $registered = true;
 
-    $logFile = null;
-    foreach ($candidates as $cand) {
-        if (is_file($cand) && is_readable($cand)) {
-            $logFile = $cand;
-            break;
-        }
-    }
-
-    if (!$logFile) {
-        return [];
-    }
-
-    $handle = @fopen($logFile, 'r');
-    if (!$handle) {
-        return [];
-    }
-
-    fseek($handle, 0, SEEK_END);
-    $fileSize = ftell($handle);
-    $readSize = min($fileSize, 65536); // read last 64KB
-    fseek($handle, $fileSize - $readSize);
-    $content = fread($handle, $readSize);
-    fclose($handle);
-
-    if (!$content) {
-        return [];
-    }
-
-    $rawLines = explode("\n", trim($content));
-    $parsed = [];
-    $rawLines = array_reverse($rawLines);
-
-    foreach ($rawLines as $line) {
-        $line = trim($line);
-        if ($line === '') continue;
-
-        if (preg_match('/^\[([^\]]+)\]\s+PHP\s+([^:]+):\s+(.*)$/i', $line, $matches)) {
-            $dateStr = $matches[1];
-            $typeStr = strtolower(trim($matches[2]));
-            $msgPart = trim($matches[3]);
-
-            $level = 'error';
-            if (strpos($typeStr, 'fatal') !== false || strpos($typeStr, 'parse') !== false) {
-                $level = 'fatal';
-            } elseif (strpos($typeStr, 'warning') !== false) {
-                $level = 'warning';
-            }
-
-            $file = null;
-            $lineNum = null;
-            if (preg_match('/in\s+([^\s]+)\s+on\s+line\s+(\d+)$/i', $msgPart, $fileMatches)) {
-                $file = $fileMatches[1];
-                $lineNum = (int)$fileMatches[2];
-                $msgPart = trim(preg_replace('/in\s+[^\s]+\s+on\s+line\s+\d+$/i', '', $msgPart));
-            }
-
-            $parsed[] = [
-                'id' => 'php_' . substr(md5($line), 0, 10),
-                'fingerprint' => md5($line),
-                'level' => $level,
+    register_shutdown_function(function() {
+        $error = error_get_last();
+        if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR], true)) {
+            $uri = $_SERVER['REQUEST_URI'] ?? 'CLI';
+            wp_error_log_record([
+                'level' => 'fatal',
                 'environment' => 'server',
-                'message' => $msgPart,
-                'file' => $file,
-                'line' => $lineNum,
-                'url' => null,
-                'stack_trace' => null,
-                'user_id' => null,
-                'user_email' => null,
-                'ip_address' => '127.0.0.1',
-                'user_agent' => 'PHP Server Runtime',
-                'device_info' => 'Native PHP Engine',
-                'occurrences' => 1,
-                'first_seen' => date('Y-m-d H:i:s', strtotime($dateStr) ?: time()),
-                'last_seen' => date('Y-m-d H:i:s', strtotime($dateStr) ?: time()),
-                'created_at' => date('Y-m-d H:i:s', strtotime($dateStr) ?: time())
-            ];
-
-            if (count($parsed) >= $limit) {
-                break;
-            }
+                'message' => 'PHP Fatal: ' . $error['message'],
+                'file' => $error['file'],
+                'line' => $error['line'],
+                'url' => $uri,
+                'stack_trace' => "Fatal error on line {$error['line']} in {$error['file']}",
+            ]);
         }
-    }
-
-    return $parsed;
+    });
 }
+
+// Auto-register shutdown handler
+wp_error_register_shutdown_handler();

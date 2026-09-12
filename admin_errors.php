@@ -32,7 +32,12 @@ $i18n = [
         'export' => 'Արտահանել JSON',
         'test_error' => 'Փորձարկել (Test Error)',
         'sound' => 'Ձայնային ազդանշան',
-        'interval' => 'Թարմացման ինտերվալ',
+        'interval' => 'Թարմացում՝',
+        // Hero
+        'hero_ok_title' => 'Բոլոր համակարգերն աշխատում են անխափան',
+        'hero_ok_sub' => 'Կայքում, PWA ծրագրում և սերվերում ակտիվ սխալներ չկան:',
+        'hero_err_title' => 'Հայտնաբերվել են համակարգային սխալներ',
+        'hero_err_sub' => 'Գրանցվել են սխալներ, որոնք պահանջում են ադմինիստրատորի ուշադրությունը:',
         // Stats
         'total_errors' => 'Ընդհանուր սխալներ',
         'today_errors' => 'Այսօր (24 ժամ)',
@@ -41,9 +46,7 @@ $i18n = [
         'server_errors' => 'Սերվեր (PHP / DB)',
         'critical_errors' => 'Կրիտիկական (Fatal)',
         // Filters
-        'search_placeholder' => 'Որոնել ըստ սխալի, ֆայլի, URL-ի, email-ի, IP-ի...',
-        'filter_env' => 'Բոլոր հարթակները',
-        'filter_level' => 'Բոլոր աստիճանները',
+        'search_placeholder' => 'Որոնել սխալի հաղորդագրություն, ֆայլ, URL, email, IP...',
         'env_all' => 'Բոլոր հարթակները',
         'env_app' => 'PWA Ծրագիր',
         'env_web' => 'Կայք (Web)',
@@ -53,19 +56,13 @@ $i18n = [
         'level_error' => 'Error (Սովորական)',
         'level_warning' => 'Warning (Զգուշացում)',
         'level_promise' => 'Promise Rejection',
+        'level_network' => 'Network / API Error',
         // Table & Details
-        'col_level' => 'Աստիճան',
-        'col_env' => 'Հարթակ',
-        'col_error' => 'Սխալի հաղորդագրություն և տեղ',
-        'col_user' => 'Օգտատեր / IP',
-        'col_time' => 'Ժամանակ',
-        'col_actions' => 'Գործողություն',
         'inspect' => 'Մանրամասն',
         'occurrences' => 'կրկնություն',
         'empty_title' => 'Սխալներ չեն գրանցվել',
-        'empty_desc' => 'Համակարգը, կայքը և PWA ծրագիրն աշխատում են անխափան։ Ցանկացած նոր սխալ կհայտնվի այստեղ անմիջապես։',
-        'native_php_btn' => 'Սերվերի error_log ֆայլ',
-        'modal_title' => 'Սխալի Մանրամասն Աուդիտ',
+        'empty_desc' => 'Համակարգը, կայքը և PWA ծրագիրն աշխատում են անխափան։ Ցանկացած նոր սխալ կհայտնվի այստեղ ակնթարթորեն:',
+        'modal_title' => 'Սխալի Մանրամասն Զննում (Inspector)',
         'close' => 'Փակել',
         'copy_stack' => 'Պատճենել Stack Trace',
         'copy_json' => 'Պատճենել JSON',
@@ -84,7 +81,12 @@ $i18n = [
         'export' => 'Экспорт JSON',
         'test_error' => 'Тест ошибки',
         'sound' => 'Звуковое оповещение',
-        'interval' => 'Интервал обновления',
+        'interval' => 'Обновление:',
+        // Hero
+        'hero_ok_title' => 'Все системы работают стабильно',
+        'hero_ok_sub' => 'В приложении, на сайте и сервере активных сбоев нет.',
+        'hero_err_title' => 'Обнаружены системные ошибки',
+        'hero_err_sub' => 'Зафиксированы сбои, требующие внимания администратора.',
         // Stats
         'total_errors' => 'Всего ошибок',
         'today_errors' => 'Сегодня (24 часа)',
@@ -94,8 +96,6 @@ $i18n = [
         'critical_errors' => 'Критические (Fatal)',
         // Filters
         'search_placeholder' => 'Поиск по ошибке, файлу, URL, email, IP...',
-        'filter_env' => 'Все платформы',
-        'filter_level' => 'Все уровни',
         'env_all' => 'Все платформы',
         'env_app' => 'PWA Приложение',
         'env_web' => 'Сайт (Web)',
@@ -105,18 +105,12 @@ $i18n = [
         'level_error' => 'Error (Обычные)',
         'level_warning' => 'Warning (Предупреждения)',
         'level_promise' => 'Promise Rejection',
+        'level_network' => 'Network / API Error',
         // Table & Details
-        'col_level' => 'Уровень',
-        'col_env' => 'Платформа',
-        'col_error' => 'Сообщение и файл',
-        'col_user' => 'Пользователь / IP',
-        'col_time' => 'Время',
-        'col_actions' => 'Действия',
         'inspect' => 'Подробнее',
         'occurrences' => 'повторений',
         'empty_title' => 'Ошибок не зафиксировано',
         'empty_desc' => 'Платформа, сайт и приложение работают стабильно. Все новые сбои отобразятся здесь мгновенно.',
-        'native_php_btn' => 'Лог сервера (error_log)',
         'modal_title' => 'Детальный аудит ошибки',
         'close' => 'Закрыть',
         'copy_stack' => 'Копировать Stack Trace',
@@ -135,8 +129,13 @@ $i18n = [
         'clear_confirm' => 'Are you sure you want to clear all error records?',
         'export' => 'Export JSON',
         'test_error' => 'Send Test Error',
-        'sound' => 'Audio Chime',
-        'interval' => 'Polling Interval',
+        'sound' => 'Audio Alert',
+        'interval' => 'Interval:',
+        // Hero
+        'hero_ok_title' => 'All Systems Operating Normally',
+        'hero_ok_sub' => 'No critical exceptions detected in Web, App, or Server runtimes.',
+        'hero_err_title' => 'System Errors Detected',
+        'hero_err_sub' => 'Errors recorded that may require administrator review.',
         // Stats
         'total_errors' => 'Total Errors',
         'today_errors' => 'Today (24h)',
@@ -146,8 +145,6 @@ $i18n = [
         'critical_errors' => 'Critical (Fatal)',
         // Filters
         'search_placeholder' => 'Search error message, file, URL, email, IP...',
-        'filter_env' => 'All Platforms',
-        'filter_level' => 'All Severities',
         'env_all' => 'All Platforms',
         'env_app' => 'PWA App',
         'env_web' => 'Web Browser',
@@ -157,18 +154,12 @@ $i18n = [
         'level_error' => 'Error',
         'level_warning' => 'Warning',
         'level_promise' => 'Promise Rejection',
+        'level_network' => 'Network / API Error',
         // Table & Details
-        'col_level' => 'Level',
-        'col_env' => 'Platform',
-        'col_error' => 'Error & Source',
-        'col_user' => 'User / IP',
-        'col_time' => 'Timestamp',
-        'col_actions' => 'Actions',
         'inspect' => 'Inspect',
         'occurrences' => 'hits',
         'empty_title' => 'No Errors Recorded',
         'empty_desc' => 'Everything is running cleanly across Web, App, and Server. Any incoming issues will appear here in real time.',
-        'native_php_btn' => 'Native PHP error_log',
         'modal_title' => 'Error Inspector & Stack Trace',
         'close' => 'Close',
         'copy_stack' => 'Copy Stack Trace',
@@ -179,10 +170,11 @@ $i18n = [
 
 $t = $i18n[$adminLang] ?? $i18n['hy'];
 
-// Initial load of stats and logs
+// Initial load
 $initialStats = wp_error_get_stats();
-$initialLogs  = wp_error_get_logs([], 50);
+$initialLogs  = wp_error_get_logs([], 60);
 
+$hasErrors = ($initialStats['total'] > 0);
 $activePage = 'errors';
 ?>
 <!doctype html>
@@ -191,32 +183,59 @@ $activePage = 'errors';
   <?php wp_admin_render_pwa_head($t['page_title']); ?>
   <?php include __DIR__ . '/admin_shared_css.php'; ?>
   <style>
-    /* ── Real-Time Error Monitor Styles ── */
-    .monitor-header {
+    /* ── Hero Status Banner (Matches admin_status.php & admin_server_load.php) ── */
+    .status-hero {
+      padding: 24px 32px;
+      border-radius: var(--radius-lg);
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
+      gap: 20px;
       margin-bottom: 24px;
+      transition: all 0.3s ease;
+      border: 1px solid transparent;
     }
-    .monitor-title h1 {
-      font-size: 26px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      color: var(--text);
-      margin: 0 0 6px;
+    .status-hero.ok {
+      background: linear-gradient(135deg, #e6f9f3 0%, #d0f5ea 100%);
+      border-color: rgba(5, 205, 153, 0.3);
+    }
+    .status-hero.error {
+      background: linear-gradient(135deg, #ffeeeb 0%, #ffe0da 100%);
+      border-color: rgba(238, 93, 80, 0.3);
+    }
+    .status-hero-icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: center;
+      font-size: 28px;
+      flex-shrink: 0;
+      color: #fff;
     }
-    .monitor-title p {
-      font-size: 14px;
+    .status-hero.ok .status-hero-icon    { background: var(--success); }
+    .status-hero.error .status-hero-icon { background: var(--danger); }
+    .status-hero-text h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text);
+      margin: 0 0 4px;
+      letter-spacing: -0.3px;
+    }
+    .status-hero-text p {
       color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 500;
       margin: 0;
     }
 
-    /* Live Pulsing Badge */
+    /* ── Live Pulse Controls ── */
+    .live-controls-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
     .live-pulse-badge {
       display: inline-flex;
       align-items: center;
@@ -227,22 +246,23 @@ $activePage = 'errors';
       border-radius: 30px;
       font-size: 12px;
       font-weight: 700;
-      letter-spacing: 0.5px;
-      border: 1px solid rgba(5, 150, 105, 0.2);
-      box-shadow: 0 2px 8px rgba(5, 150, 105, 0.1);
-      transition: all 0.25s ease;
+      border: 1px solid rgba(5, 150, 105, 0.25);
     }
     .live-pulse-badge.paused {
       background: #f1f5f9;
       color: #64748b;
       border-color: #cbd5e1;
-      box-shadow: none;
     }
     .live-pulse-badge.alert {
       background: #fef2f2;
       color: #dc2626;
-      border-color: rgba(220, 38, 38, 0.2);
-      box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
+      border-color: rgba(220, 38, 38, 0.3);
+      animation: alert-shake 0.4s ease;
+    }
+    @keyframes alert-shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
     }
     .pulse-dot {
       width: 8px;
@@ -271,10 +291,10 @@ $activePage = 'errors';
       100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
 
-    /* KPI Grid */
-    .kpi-grid {
+    /* ── KPI Summary Cards ── */
+    .kpi-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
@@ -282,39 +302,37 @@ $activePage = 'errors';
       background: var(--card);
       border-radius: var(--radius-md);
       padding: 18px 20px;
-      box-shadow: var(--shadow-sm);
       border: 1px solid var(--line);
+      box-shadow: var(--shadow-sm);
       display: flex;
       flex-direction: column;
       gap: 6px;
-      position: relative;
-      overflow: hidden;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
     .kpi-card:hover {
       transform: translateY(-2px);
       box-shadow: var(--shadow-md);
     }
-    .kpi-label {
-      font-size: 12px;
+    .kpi-title {
+      font-size: 11px;
       font-weight: 700;
       color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.4px;
+      letter-spacing: 0.5px;
     }
-    .kpi-value {
-      font-size: 28px;
+    .kpi-number {
+      font-size: 26px;
       font-weight: 800;
       color: var(--text);
       line-height: 1;
     }
-    .kpi-card.critical .kpi-value { color: #dc2626; }
-    .kpi-card.app .kpi-value { color: #7c3aed; }
-    .kpi-card.web .kpi-value { color: #2563eb; }
-    .kpi-card.server .kpi-value { color: #d97706; }
+    .kpi-card.critical .kpi-number { color: #dc2626; }
+    .kpi-card.app .kpi-number { color: #7c3aed; }
+    .kpi-card.web .kpi-number { color: #2563eb; }
+    .kpi-card.server .kpi-number { color: #d97706; }
 
-    /* Controls Bar */
-    .controls-bar {
+    /* ── Filter Toolbar ── */
+    .filter-panel {
       background: var(--card);
       border: 1px solid var(--line);
       border-radius: var(--radius-md);
@@ -327,40 +345,40 @@ $activePage = 'errors';
       gap: 12px;
       box-shadow: var(--shadow-sm);
     }
-    .controls-left, .controls-right {
+    .filter-left, .filter-right {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
       gap: 10px;
     }
-    .search-input-wrap {
+    .search-wrap {
       position: relative;
-      min-width: 260px;
+      min-width: 280px;
       flex: 1;
     }
-    .search-input-wrap input {
+    .search-wrap input {
       width: 100%;
-      padding: 9px 12px 9px 36px;
+      padding: 8px 12px 8px 36px;
       border: 1px solid var(--line);
       border-radius: var(--radius-sm);
       font-size: 13px;
       background: var(--bg);
       color: var(--text);
       outline: none;
-      transition: border-color 0.15s ease;
+      transition: border-color 0.15s;
     }
-    .search-input-wrap input:focus {
+    .search-wrap input:focus {
       border-color: var(--primary);
     }
-    .search-input-wrap svg {
+    .search-wrap svg {
       position: absolute;
       left: 11px;
       top: 50%;
       transform: translateY(-50%);
       color: var(--muted);
     }
-    .filter-select {
-      padding: 9px 12px;
+    .select-ctrl {
+      padding: 8px 12px;
       border: 1px solid var(--line);
       border-radius: var(--radius-sm);
       font-size: 13px;
@@ -370,8 +388,7 @@ $activePage = 'errors';
       cursor: pointer;
     }
 
-    /* Buttons */
-    .btn-action {
+    .btn-tool {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -383,33 +400,32 @@ $activePage = 'errors';
       background: var(--card);
       color: var(--text);
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all 0.15s;
       user-select: none;
     }
-    .btn-action:hover {
+    .btn-tool:hover {
       background: var(--bg);
       border-color: #cbd5e1;
     }
-    .btn-action.primary {
+    .btn-tool.primary {
       background: var(--primary);
       color: #fff;
       border-color: var(--primary);
     }
-    .btn-action.primary:hover {
+    .btn-tool.primary:hover {
       filter: brightness(1.08);
     }
-    .btn-action.danger {
+    .btn-tool.danger {
       color: #dc2626;
       border-color: rgba(220, 38, 38, 0.3);
       background: #fff;
     }
-    .btn-action.danger:hover {
+    .btn-tool.danger:hover {
       background: #fef2f2;
       border-color: #dc2626;
     }
 
-    /* Toggle pill */
-    .toggle-pill {
+    .audio-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -422,17 +438,17 @@ $activePage = 'errors';
       border: 1px solid var(--line);
       user-select: none;
     }
-    .toggle-pill input {
+    .audio-pill input {
       cursor: pointer;
     }
 
-    /* Error Table & Items */
-    .error-card-list {
+    /* ── Error Stream Cards ── */
+    .error-stream {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
-    .error-item {
+    .error-card-item {
       background: var(--card);
       border: 1px solid var(--line);
       border-radius: var(--radius-md);
@@ -441,24 +457,23 @@ $activePage = 'errors';
       display: flex;
       align-items: flex-start;
       gap: 16px;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.3s ease;
+      transition: border-color 0.15s, box-shadow 0.15s;
       cursor: pointer;
       position: relative;
     }
-    .error-item:hover {
+    .error-card-item:hover {
       border-color: #94a3b8;
       box-shadow: var(--shadow-md);
     }
-    .error-item.just-arrived {
-      animation: flash-highlight 2s ease;
+    .error-card-item.just-added {
+      animation: flash-row 2s ease;
     }
-    @keyframes flash-highlight {
+    @keyframes flash-row {
       0% { background: #fee2e2; }
       100% { background: var(--card); }
     }
 
-    /* Level Badges */
-    .level-badge {
+    .level-chip {
       padding: 4px 10px;
       border-radius: 6px;
       font-size: 11px;
@@ -467,17 +482,15 @@ $activePage = 'errors';
       letter-spacing: 0.5px;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
       flex-shrink: 0;
     }
-    .level-fatal { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
-    .level-error { background: #fff1f2; color: #e11d48; border: 1px solid #ffe4e6; }
-    .level-warning { background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; }
-    .level-promise { background: #f5f3ff; color: #6d28d9; border: 1px solid #ede9fe; }
-    .level-info { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
+    .level-chip.fatal { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .level-chip.error { background: #fff1f2; color: #e11d48; border: 1px solid #ffe4e6; }
+    .level-chip.warning { background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; }
+    .level-chip.promise { background: #f5f3ff; color: #6d28d9; border: 1px solid #ede9fe; }
+    .level-chip.network { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
 
-    /* Environment Badges */
-    .env-badge {
+    .env-chip {
       padding: 3px 8px;
       border-radius: 4px;
       font-size: 11px;
@@ -485,12 +498,12 @@ $activePage = 'errors';
       text-transform: uppercase;
       letter-spacing: 0.3px;
     }
-    .env-app { background: #ede9fe; color: #5b21b6; }
-    .env-web { background: #e0f2fe; color: #0369a1; }
-    .env-server { background: #fef3c7; color: #92400e; }
-    .env-api { background: #fce7f3; color: #9d174d; }
+    .env-chip.app { background: #ede9fe; color: #5b21b6; }
+    .env-chip.web { background: #e0f2fe; color: #0369a1; }
+    .env-chip.server, .env-chip.db { background: #fef3c7; color: #92400e; }
+    .env-chip.api { background: #fce7f3; color: #9d174d; }
 
-    .hit-count-badge {
+    .hits-badge {
       background: #f1f5f9;
       color: #475569;
       border-radius: 20px;
@@ -499,18 +512,18 @@ $activePage = 'errors';
       font-weight: 700;
     }
 
-    .error-item-content {
+    .error-body {
       flex: 1;
       min-width: 0;
     }
-    .error-item-header {
+    .error-body-head {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
       gap: 8px;
       margin-bottom: 6px;
     }
-    .error-msg {
+    .error-text-title {
       font-size: 14px;
       font-weight: 700;
       color: var(--text);
@@ -518,7 +531,7 @@ $activePage = 'errors';
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       word-break: break-word;
     }
-    .error-meta-line {
+    .error-meta-tags {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
@@ -527,48 +540,47 @@ $activePage = 'errors';
       color: var(--muted);
       margin-top: 6px;
     }
-    .meta-tag {
+    .error-meta-tag {
       display: inline-flex;
       align-items: center;
       gap: 4px;
     }
-    .error-time {
+    .error-stamp {
       font-size: 12px;
       color: var(--muted);
       font-weight: 600;
       white-space: nowrap;
     }
 
-    /* Empty state */
-    .empty-state {
+    .empty-banner {
       background: var(--card);
       border: 1px solid var(--line);
       border-radius: var(--radius-lg);
       padding: 60px 24px;
       text-align: center;
     }
-    .empty-state svg {
+    .empty-banner svg {
       color: #10b981;
       margin-bottom: 16px;
     }
-    .empty-state h3 {
+    .empty-banner h3 {
       font-size: 18px;
       font-weight: 800;
       color: var(--text);
       margin: 0 0 6px;
     }
-    .empty-state p {
+    .empty-banner p {
       font-size: 14px;
       color: var(--muted);
       max-width: 500px;
       margin: 0 auto;
     }
 
-    /* Inspection Modal */
-    .err-modal-overlay {
+    /* ── Modal Inspector ── */
+    .inspector-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.65);
+      background: rgba(15, 23, 42, 0.6);
       backdrop-filter: blur(4px);
       z-index: 9999;
       display: none;
@@ -576,22 +588,22 @@ $activePage = 'errors';
       justify-content: center;
       padding: 20px;
     }
-    .err-modal-overlay.open {
+    .inspector-overlay.open {
       display: flex;
     }
-    .err-modal-card {
+    .inspector-card {
       background: var(--card);
       border-radius: var(--radius-lg);
       width: 100%;
-      max-width: 850px;
+      max-width: 860px;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
       border: 1px solid var(--line);
       display: flex;
       flex-direction: column;
     }
-    .err-modal-head {
+    .inspector-header {
       padding: 20px 24px;
       border-bottom: 1px solid var(--line);
       display: flex;
@@ -600,9 +612,9 @@ $activePage = 'errors';
       position: sticky;
       top: 0;
       background: var(--card);
-      z-index: 1;
+      z-index: 2;
     }
-    .err-modal-head h3 {
+    .inspector-header h3 {
       margin: 0;
       font-size: 18px;
       font-weight: 800;
@@ -610,13 +622,13 @@ $activePage = 'errors';
       align-items: center;
       gap: 10px;
     }
-    .err-modal-body {
+    .inspector-content {
       padding: 24px;
       display: flex;
       flex-direction: column;
       gap: 20px;
     }
-    .modal-grid {
+    .inspector-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 16px;
@@ -625,25 +637,25 @@ $activePage = 'errors';
       padding: 16px;
       border: 1px solid var(--line);
     }
-    .modal-field {
+    .grid-cell {
       display: flex;
       flex-direction: column;
       gap: 4px;
     }
-    .modal-field label {
+    .grid-cell label {
       font-size: 11px;
       font-weight: 700;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.4px;
     }
-    .modal-field span {
+    .grid-cell span {
       font-size: 13px;
       font-weight: 600;
       color: var(--text);
       word-break: break-all;
     }
-    .stack-trace-box {
+    .code-trace {
       background: #0f172a;
       color: #f8fafc;
       border-radius: var(--radius-md);
@@ -652,11 +664,11 @@ $activePage = 'errors';
       font-size: 12px;
       line-height: 1.5;
       overflow-x: auto;
-      max-height: 340px;
+      max-height: 350px;
       white-space: pre-wrap;
       border: 1px solid #1e293b;
     }
-    .err-modal-foot {
+    .inspector-footer {
       padding: 16px 24px;
       border-top: 1px solid var(--line);
       display: flex;
@@ -665,188 +677,203 @@ $activePage = 'errors';
       background: var(--card);
       position: sticky;
       bottom: 0;
+      z-index: 2;
     }
   </style>
 </head>
-<body>
+<body class="wp-admin-app">
+<div class="app-layout">
 
-<?php include __DIR__ . '/admin_sidebar.php'; ?>
+  <?php include __DIR__ . '/admin_sidebar.php'; ?>
 
-<main class="app-main">
-  <?php 
-    $searchPlaceholder = $t['search_placeholder'];
-    include __DIR__ . '/admin_topbar.php'; 
-  ?>
+  <main class="app-main">
+    <?php 
+      $searchPlaceholder = $t['search_placeholder'];
+      include __DIR__ . '/admin_topbar.php'; 
+    ?>
 
-  <div class="app-content">
-    
-    <!-- Top Header & Live Indicator -->
-    <div class="monitor-header">
-      <div class="monitor-title">
-        <h1>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-          <?= htmlspecialchars($t['title']) ?>
-        </h1>
-        <p><?= htmlspecialchars($t['subtitle']) ?></p>
-      </div>
-
-      <div style="display:flex; align-items:center; gap:12px;">
-        <div class="live-pulse-badge" id="liveBadge">
-          <div class="pulse-dot"></div>
-          <span id="liveStatusText"><?= htmlspecialchars($t['live']) ?></span>
+    <div style="padding: 28px 40px 60px; max-width: 1400px;">
+      
+      <!-- Top Title & Live Stream Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:24px;">
+        <div>
+          <h1 style="font-size: 1.6rem; font-weight: 800; color: var(--text); margin-bottom: 4px; display:flex; align-items:center; gap:10px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <?= htmlspecialchars($t['title']) ?>
+          </h1>
+          <p style="color: var(--muted); font-size: 0.9rem; font-weight: 500; margin:0;"><?= htmlspecialchars($t['subtitle']) ?></p>
         </div>
 
-        <button class="btn-action primary" id="btnRefresh" title="Refresh error logs">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-          <?= htmlspecialchars($t['refresh']) ?>
-        </button>
-      </div>
-    </div>
+        <div class="live-controls-group">
+          <div class="live-pulse-badge" id="liveBadge">
+            <span class="pulse-dot"></span>
+            <span id="liveStatusText"><?= htmlspecialchars($t['live']) ?></span>
+          </div>
 
-    <!-- KPI Summary Grid -->
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label"><?= htmlspecialchars($t['total_errors']) ?></div>
-        <div class="kpi-value" id="kpiTotal"><?= (int)$initialStats['total'] ?></div>
+          <button class="btn-tool primary" id="btnRefresh" title="Refresh error logs">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <?= htmlspecialchars($t['refresh']) ?>
+          </button>
+        </div>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-label"><?= htmlspecialchars($t['today_errors']) ?></div>
-        <div class="kpi-value" id="kpiToday"><?= (int)$initialStats['today'] ?></div>
-      </div>
-      <div class="kpi-card app">
-        <div class="kpi-label"><?= htmlspecialchars($t['app_errors']) ?></div>
-        <div class="kpi-value" id="kpiApp"><?= (int)$initialStats['app'] ?></div>
-      </div>
-      <div class="kpi-card web">
-        <div class="kpi-label"><?= htmlspecialchars($t['web_errors']) ?></div>
-        <div class="kpi-value" id="kpiWeb"><?= (int)$initialStats['web'] ?></div>
-      </div>
-      <div class="kpi-card server">
-        <div class="kpi-label"><?= htmlspecialchars($t['server_errors']) ?></div>
-        <div class="kpi-value" id="kpiServer"><?= (int)$initialStats['server'] ?></div>
-      </div>
-      <div class="kpi-card critical">
-        <div class="kpi-label"><?= htmlspecialchars($t['critical_errors']) ?></div>
-        <div class="kpi-value" id="kpiCritical"><?= (int)$initialStats['critical'] ?></div>
-      </div>
-    </div>
 
-    <!-- Controls Bar -->
-    <div class="controls-bar">
-      <div class="controls-left">
-        <div class="search-input-wrap">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" id="filterSearch" placeholder="<?= htmlspecialchars($t['search_placeholder']) ?>">
+      <!-- Hero Banner -->
+      <div id="heroBanner" class="status-hero <?= $hasErrors ? 'error' : 'ok' ?>">
+        <div class="status-hero-icon" id="heroIcon">
+          <?= $hasErrors ? '✕' : '✓' ?>
+        </div>
+        <div class="status-hero-text">
+          <h2 id="heroTitle"><?= htmlspecialchars($hasErrors ? $t['hero_err_title'] : $t['hero_ok_title']) ?></h2>
+          <p id="heroSub"><?= htmlspecialchars($hasErrors ? $t['hero_err_sub'] : $t['hero_ok_sub']) ?></p>
+        </div>
+      </div>
+
+      <!-- KPI Grid Cards -->
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-title"><?= htmlspecialchars($t['total_errors']) ?></div>
+          <div class="kpi-number" id="kpiTotal"><?= (int)$initialStats['total'] ?></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title"><?= htmlspecialchars($t['today_errors']) ?></div>
+          <div class="kpi-number" id="kpiToday"><?= (int)$initialStats['today'] ?></div>
+        </div>
+        <div class="kpi-card app">
+          <div class="kpi-title"><?= htmlspecialchars($t['app_errors']) ?></div>
+          <div class="kpi-number" id="kpiApp"><?= (int)$initialStats['app'] ?></div>
+        </div>
+        <div class="kpi-card web">
+          <div class="kpi-title"><?= htmlspecialchars($t['web_errors']) ?></div>
+          <div class="kpi-number" id="kpiWeb"><?= (int)$initialStats['web'] ?></div>
+        </div>
+        <div class="kpi-card server">
+          <div class="kpi-title"><?= htmlspecialchars($t['server_errors']) ?></div>
+          <div class="kpi-number" id="kpiServer"><?= (int)$initialStats['server'] ?></div>
+        </div>
+        <div class="kpi-card critical">
+          <div class="kpi-title"><?= htmlspecialchars($t['critical_errors']) ?></div>
+          <div class="kpi-number" id="kpiCritical"><?= (int)$initialStats['critical'] ?></div>
+        </div>
+      </div>
+
+      <!-- Filter Panel Toolbar -->
+      <div class="filter-panel">
+        <div class="filter-left">
+          <div class="search-wrap">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="filterSearch" placeholder="<?= htmlspecialchars($t['search_placeholder']) ?>">
+          </div>
+
+          <select class="select-ctrl" id="filterEnv">
+            <option value="all"><?= htmlspecialchars($t['env_all']) ?></option>
+            <option value="app"><?= htmlspecialchars($t['env_app']) ?></option>
+            <option value="web"><?= htmlspecialchars($t['env_web']) ?></option>
+            <option value="server"><?= htmlspecialchars($t['env_server']) ?></option>
+          </select>
+
+          <select class="select-ctrl" id="filterLevel">
+            <option value="all"><?= htmlspecialchars($t['level_all']) ?></option>
+            <option value="fatal"><?= htmlspecialchars($t['level_fatal']) ?></option>
+            <option value="error"><?= htmlspecialchars($t['level_error']) ?></option>
+            <option value="warning"><?= htmlspecialchars($t['level_warning']) ?></option>
+            <option value="promise"><?= htmlspecialchars($t['level_promise']) ?></option>
+          </select>
+
+          <select class="select-ctrl" id="pollingInterval">
+            <option value="3000"><?= htmlspecialchars($t['interval']) ?> 3s</option>
+            <option value="5000">5s</option>
+            <option value="10000">10s</option>
+            <option value="0"><?= htmlspecialchars($t['stream_paused']) ?></option>
+          </select>
+
+          <label class="audio-pill" title="Play sound on new errors">
+            <input type="checkbox" id="toggleSound" checked>
+            <span>🔔 <?= htmlspecialchars($t['sound']) ?></span>
+          </label>
         </div>
 
-        <select class="filter-select" id="filterEnv">
-          <option value="all"><?= htmlspecialchars($t['env_all']) ?></option>
-          <option value="app"><?= htmlspecialchars($t['env_app']) ?></option>
-          <option value="web"><?= htmlspecialchars($t['env_web']) ?></option>
-          <option value="server"><?= htmlspecialchars($t['env_server']) ?></option>
-        </select>
+        <div class="filter-right">
+          <button class="btn-tool" id="btnTestError" title="Simulate sending a test error">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+            <?= htmlspecialchars($t['test_error']) ?>
+          </button>
 
-        <select class="filter-select" id="filterLevel">
-          <option value="all"><?= htmlspecialchars($t['level_all']) ?></option>
-          <option value="fatal"><?= htmlspecialchars($t['level_fatal']) ?></option>
-          <option value="error"><?= htmlspecialchars($t['level_error']) ?></option>
-          <option value="warning"><?= htmlspecialchars($t['level_warning']) ?></option>
-          <option value="promise"><?= htmlspecialchars($t['level_promise']) ?></option>
-        </select>
+          <button class="btn-tool" id="btnExport" title="Export all logs as JSON">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <?= htmlspecialchars($t['export']) ?>
+          </button>
 
-        <select class="filter-select" id="pollingInterval">
-          <option value="3000">3s <?= htmlspecialchars($t['interval']) ?></option>
-          <option value="5000">5s</option>
-          <option value="10000">10s</option>
-          <option value="0"><?= htmlspecialchars($t['stream_paused']) ?></option>
-        </select>
-
-        <label class="toggle-pill" title="Enable audio alert chime for new critical errors">
-          <input type="checkbox" id="toggleSound" checked>
-          <span>🔔 <?= htmlspecialchars($t['sound']) ?></span>
-        </label>
+          <button class="btn-tool danger" id="btnClear" title="Clear all error records">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <?= htmlspecialchars($t['clear_all']) ?>
+          </button>
+        </div>
       </div>
 
-      <div class="controls-right">
-        <button class="btn-action" id="btnTestError" title="Simulate sending a test error">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
-          <?= htmlspecialchars($t['test_error']) ?>
-        </button>
-
-        <button class="btn-action" id="btnExport" title="Export all logs as JSON">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          <?= htmlspecialchars($t['export']) ?>
-        </button>
-
-        <button class="btn-action danger" id="btnClear" title="Clear all stored logs">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-          <?= htmlspecialchars($t['clear_all']) ?>
-        </button>
+      <!-- Error Stream Cards Container -->
+      <div id="errorStreamContainer" class="error-stream">
+        <!-- Injected via JavaScript -->
       </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="empty-banner" style="display:none;">
+        <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <h3><?= htmlspecialchars($t['empty_title']) ?></h3>
+        <p><?= htmlspecialchars($t['empty_desc']) ?></p>
+      </div>
+
     </div>
+  </main>
 
-    <!-- Error Stream Container -->
-    <div id="errorStreamContainer" class="error-card-list">
-      <!-- Injected via JavaScript -->
-    </div>
+</div>
 
-    <!-- Empty State -->
-    <div id="emptyState" class="empty-state" style="display:none;">
-      <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-      <h3><?= htmlspecialchars($t['empty_title']) ?></h3>
-      <p><?= htmlspecialchars($t['empty_desc']) ?></p>
-    </div>
-
-  </div>
-</main>
-
-<!-- Detailed Inspector Modal -->
-<div class="err-modal-overlay" id="inspectModal">
-  <div class="err-modal-card">
-    <div class="err-modal-head">
+<!-- Inspector Modal -->
+<div class="inspector-overlay" id="inspectModal">
+  <div class="inspector-card">
+    <div class="inspector-header">
       <h3>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
         <?= htmlspecialchars($t['modal_title']) ?>
       </h3>
-      <button class="btn-action" onclick="closeInspectModal()">✕</button>
+      <button class="btn-tool" onclick="closeInspectModal()">✕</button>
     </div>
 
-    <div class="err-modal-body">
+    <div class="inspector-content">
       <div>
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-          <span id="mLevel" class="level-badge"></span>
-          <span id="mEnv" class="env-badge"></span>
-          <span id="mHits" class="hit-count-badge"></span>
+          <span id="mLevel" class="level-chip"></span>
+          <span id="mEnv" class="env-chip"></span>
+          <span id="mHits" class="hits-badge"></span>
         </div>
-        <div id="mMessage" class="error-msg" style="font-size:16px; padding:12px; background:var(--bg); border:1px solid var(--line); border-radius:8px;"></div>
+        <div id="mMessage" class="error-text-title" style="font-size:15px; padding:12px; background:var(--bg); border:1px solid var(--line); border-radius:8px;"></div>
       </div>
 
-      <div class="modal-grid">
-        <div class="modal-field">
+      <div class="inspector-grid">
+        <div class="grid-cell">
           <label>URL / Route</label>
           <span id="mUrl">—</span>
         </div>
-        <div class="modal-field">
+        <div class="grid-cell">
           <label>Source File & Line</label>
           <span id="mFile">—</span>
         </div>
-        <div class="modal-field">
+        <div class="grid-cell">
           <label>User / Email</label>
           <span id="mUser">—</span>
         </div>
-        <div class="modal-field">
+        <div class="grid-cell">
           <label>IP Address</label>
           <span id="mIp">—</span>
         </div>
-        <div class="modal-field">
+        <div class="grid-cell">
           <label>First Seen</label>
           <span id="mFirstSeen">—</span>
         </div>
-        <div class="modal-field">
+        <div class="grid-cell">
           <label>Last Seen</label>
           <span id="mLastSeen">—</span>
         </div>
-        <div class="modal-field" style="grid-column:1/-1;">
+        <div class="grid-cell" style="grid-column:1/-1;">
           <label>Device / User Agent</label>
           <span id="mUserAgent" style="font-size:12px; color:var(--muted); font-family:monospace;">—</span>
         </div>
@@ -854,21 +881,21 @@ $activePage = 'errors';
 
       <div id="stackTraceSection">
         <label style="font-size:12px; font-weight:700; color:var(--muted); margin-bottom:6px; display:block;">STACK TRACE</label>
-        <pre class="stack-trace-box" id="mStack"></pre>
+        <pre class="code-trace" id="mStack"></pre>
       </div>
     </div>
 
-    <div class="err-modal-foot">
+    <div class="inspector-footer">
       <div style="display:flex; gap:8px;">
-        <button class="btn-action" id="btnCopyStack">
+        <button class="btn-tool" id="btnCopyStack">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
           <?= htmlspecialchars($t['copy_stack']) ?>
         </button>
-        <button class="btn-action" id="btnCopyJson">
+        <button class="btn-tool" id="btnCopyJson">
           <?= htmlspecialchars($t['copy_json']) ?>
         </button>
       </div>
-      <button class="btn-action primary" onclick="closeInspectModal()"><?= htmlspecialchars($t['close']) ?></button>
+      <button class="btn-tool primary" onclick="closeInspectModal()"><?= htmlspecialchars($t['close']) ?></button>
     </div>
   </div>
 </div>
@@ -883,13 +910,11 @@ $activePage = 'errors';
   let lastHighestId = 0;
   let audioContext = null;
 
-  // Initialize highest ID
   currentLogs.forEach(function(item) {
     var idNum = parseInt(item.id, 10) || 0;
     if (idNum > lastHighestId) lastHighestId = idNum;
   });
 
-  // Soft audio chime for real-time alerts
   function playAlertChime() {
     if (!document.getElementById('toggleSound').checked) return;
     try {
@@ -902,8 +927,8 @@ $activePage = 'errors';
       const osc = audioContext.createOscillator();
       const gain = audioContext.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, audioContext.currentTime); // D5
-      osc.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.15); // A5
+      osc.frequency.setValueAtTime(587.33, audioContext.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.15);
       gain.gain.setValueAtTime(0.12, audioContext.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.35);
       osc.connect(gain);
@@ -913,7 +938,6 @@ $activePage = 'errors';
     } catch (_) {}
   }
 
-  // Format relative time (Armenian / Russian / English)
   function formatRelativeTime(dateStr) {
     if (!dateStr) return '—';
     const now = Date.now();
@@ -966,41 +990,30 @@ $activePage = 'errors';
       const occ = parseInt(item.occurrences, 10) || 1;
       const isNew = newlyAddedIds && newlyAddedIds.includes(String(item.id));
 
-      let levelClass = 'level-error';
-      if (level === 'fatal') levelClass = 'level-fatal';
-      else if (level === 'warning') levelClass = 'level-warning';
-      else if (level === 'promise') levelClass = 'level-promise';
-      else if (level === 'info') levelClass = 'level-info';
-
-      let envClass = 'env-web';
-      if (env === 'app') envClass = 'env-app';
-      else if (env === 'server' || env === 'db') envClass = 'env-server';
-      else if (env === 'api') envClass = 'env-api';
-
       const fileInfo = item.file ? `${escapeHtml(item.file)}${item.line ? ':' + item.line : ''}` : '';
       const userTag = item.user_email ? escapeHtml(item.user_email) : (item.ip_address || '');
 
       html += `
-        <div class="error-item ${isNew ? 'just-arrived' : ''}" data-id="${escapeHtml(item.id)}" onclick="window.inspectError('${escapeHtml(item.id)}')">
-          <div class="error-item-content">
-            <div class="error-item-header">
-              <span class="level-badge ${levelClass}">${escapeHtml(level)}</span>
-              <span class="env-badge ${envClass}">${escapeHtml(env)}</span>
-              ${occ > 1 ? `<span class="hit-count-badge">${occ} <?= htmlspecialchars($t['occurrences']) ?></span>` : ''}
+        <div class="error-card-item ${isNew ? 'just-added' : ''}" data-id="${escapeHtml(item.id)}" onclick="window.inspectError('${escapeHtml(item.id)}')">
+          <div class="error-body">
+            <div class="error-body-head">
+              <span class="level-chip ${escapeHtml(level)}">${escapeHtml(level)}</span>
+              <span class="env-chip ${escapeHtml(env)}">${escapeHtml(env)}</span>
+              ${occ > 1 ? `<span class="hits-badge">${occ} <?= htmlspecialchars($t['occurrences']) ?></span>` : ''}
               <span style="flex:1;"></span>
-              <span class="error-time" title="${escapeHtml(item.last_seen)}">${formatRelativeTime(item.last_seen)}</span>
+              <span class="error-stamp" title="${escapeHtml(item.last_seen)}">${formatRelativeTime(item.last_seen)}</span>
             </div>
             
-            <div class="error-msg">${escapeHtml(item.message)}</div>
+            <div class="error-text-title">${escapeHtml(item.message)}</div>
 
-            <div class="error-meta-line">
-              ${fileInfo ? `<span class="meta-tag" title="${escapeHtml(item.file)}">📁 ${fileInfo}</span>` : ''}
-              ${item.url ? `<span class="meta-tag" title="${escapeHtml(item.url)}">🔗 ${escapeHtml(item.url)}</span>` : ''}
-              ${userTag ? `<span class="meta-tag">👤 ${userTag}</span>` : ''}
+            <div class="error-meta-tags">
+              ${fileInfo ? `<span class="error-meta-tag" title="${escapeHtml(item.file)}">📁 ${fileInfo}</span>` : ''}
+              ${item.url ? `<span class="error-meta-tag" title="${escapeHtml(item.url)}">🔗 ${escapeHtml(item.url)}</span>` : ''}
+              ${userTag ? `<span class="error-meta-tag">👤 ${userTag}</span>` : ''}
             </div>
           </div>
           
-          <button class="btn-action" style="padding:6px 12px; font-size:12px; align-self:center;" onclick="event.stopPropagation(); window.inspectError('${escapeHtml(item.id)}')">
+          <button class="btn-tool" style="padding:6px 12px; font-size:12px; align-self:center;" onclick="event.stopPropagation(); window.inspectError('${escapeHtml(item.id)}')">
             <?= htmlspecialchars($t['inspect']) ?>
           </button>
         </div>
@@ -1040,9 +1053,25 @@ $activePage = 'errors';
     document.getElementById('kpiWeb').textContent = stats.web || 0;
     document.getElementById('kpiServer').textContent = stats.server || 0;
     document.getElementById('kpiCritical').textContent = stats.critical || 0;
+
+    const hero = document.getElementById('heroBanner');
+    const heroIcon = document.getElementById('heroIcon');
+    const heroTitle = document.getElementById('heroTitle');
+    const heroSub = document.getElementById('heroSub');
+
+    if (stats.total > 0) {
+      hero.className = 'status-hero error';
+      heroIcon.textContent = '✕';
+      heroTitle.textContent = '<?= htmlspecialchars($t['hero_err_title']) ?>';
+      heroSub.textContent = '<?= htmlspecialchars($t['hero_err_sub']) ?>';
+    } else {
+      hero.className = 'status-hero ok';
+      heroIcon.textContent = '✓';
+      heroTitle.textContent = '<?= htmlspecialchars($t['hero_ok_title']) ?>';
+      heroSub.textContent = '<?= htmlspecialchars($t['hero_ok_sub']) ?>';
+    }
   }
 
-  // Poll errors in real-time
   async function fetchLatestErrors() {
     try {
       const resp = await fetch('/error_api.php?action=poll&limit=60', { cache: 'no-store' });
@@ -1094,16 +1123,15 @@ $activePage = 'errors';
     }
   }
 
-  // Modal Inspector
   window.inspectError = function(id) {
     const item = currentLogs.find(l => String(l.id) === String(id));
     if (!item) return;
     activeInspectItem = item;
 
     document.getElementById('mLevel').textContent = (item.level || 'error').toUpperCase();
-    document.getElementById('mLevel').className = 'level-badge level-' + (item.level || 'error').toLowerCase();
+    document.getElementById('mLevel').className = 'level-chip ' + (item.level || 'error').toLowerCase();
     document.getElementById('mEnv').textContent = (item.environment || 'web').toUpperCase();
-    document.getElementById('mEnv').className = 'env-badge env-' + (item.environment || 'web').toLowerCase();
+    document.getElementById('mEnv').className = 'env-chip ' + (item.environment || 'web').toLowerCase();
     document.getElementById('mHits').textContent = (item.occurrences || 1) + ' <?= htmlspecialchars($t['occurrences']) ?>';
 
     document.getElementById('mMessage').textContent = item.message || '';
@@ -1139,14 +1167,12 @@ $activePage = 'errors';
     activeInspectItem = null;
   };
 
-  // Event Listeners
   document.getElementById('filterSearch').addEventListener('input', applyFilters);
   document.getElementById('filterEnv').addEventListener('change', applyFilters);
   document.getElementById('filterLevel').addEventListener('change', applyFilters);
   document.getElementById('pollingInterval').addEventListener('change', setupPolling);
   document.getElementById('btnRefresh').addEventListener('click', fetchLatestErrors);
 
-  // Clear logs
   document.getElementById('btnClear').addEventListener('click', async function() {
     if (!confirm('<?= htmlspecialchars($t['clear_confirm']) ?>')) return;
     try {
@@ -1160,7 +1186,6 @@ $activePage = 'errors';
     } catch (_) {}
   });
 
-  // Export JSON
   document.getElementById('btnExport').addEventListener('click', function() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentLogs, null, 2));
     const dlAnchor = document.createElement('a');
@@ -1171,7 +1196,6 @@ $activePage = 'errors';
     dlAnchor.remove();
   });
 
-  // Test Error
   document.getElementById('btnTestError').addEventListener('click', async function() {
     try {
       const resp = await fetch('/error_api.php?action=test', {
@@ -1189,7 +1213,6 @@ $activePage = 'errors';
     } catch (_) {}
   });
 
-  // Copy buttons
   document.getElementById('btnCopyStack').addEventListener('click', function() {
     if (!activeInspectItem || !activeInspectItem.stack_trace) return;
     navigator.clipboard.writeText(activeInspectItem.stack_trace).then(() => {
@@ -1208,12 +1231,10 @@ $activePage = 'errors';
     });
   });
 
-  // Close modal on click outside
   document.getElementById('inspectModal').addEventListener('click', function(e) {
     if (e.target === this) closeInspectModal();
   });
 
-  // Initial render & start polling
   applyFilters();
   setupPolling();
 
