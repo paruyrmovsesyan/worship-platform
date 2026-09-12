@@ -17,8 +17,8 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
 
     const shouldIgnoreTouch = (target) => {
       if (!target) return false;
-      // Do not allow pull-to-refresh if touching dedicated drag handles or form inputs
-      if (target.closest('.sla-drag-handle, [data-drag-handle], input, textarea, select, audio, video')) {
+      // Do not allow pull-to-refresh if touching dedicated drag handles, buttons, modals, or form inputs
+      if (target.closest('.sla-drag-handle, [data-drag-handle], input, textarea, select, audio, video, button, .modal, [role="dialog"]')) {
         return true;
       }
       // Do not allow pull-to-refresh if currently dragging or in reorder mode
@@ -79,7 +79,7 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
         if (distance >= refreshThreshold && !hasVibratedRef.current) {
           hasVibratedRef.current = true;
           if (typeof navigator !== 'undefined' && navigator.vibrate) {
-            try { navigator.vibrate(15); } catch {}
+            try { navigator.vibrate(18); } catch {}
           }
         } else if (distance < refreshThreshold) {
           hasVibratedRef.current = false;
@@ -102,12 +102,14 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
         setTimeout(() => {
           if (onRefresh) {
             onRefresh();
-            setIsRefreshing(false);
-            setPullDistance(0);
+            setTimeout(() => {
+              setIsRefreshing(false);
+              setPullDistance(0);
+            }, 300);
           } else {
             window.location.reload();
           }
-        }, 500);
+        }, 600);
       } else {
         setPullDistance(0);
       }
@@ -132,40 +134,47 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
 
   const isPastThreshold = pullDistance >= refreshThreshold;
   const progress = Math.min(pullDistance / refreshThreshold, 1);
+  const isVisible = pullDistance > 0 || isRefreshing;
 
-  // Prominently placed indicator that descends into full view when pulled
+  // Base position starts safely below the notch / Dynamic Island and status bar
+  // On iPhone 14 Pro / 15 / 16 safe-area-inset-top is ~54-59px.
+  // Adding + 16px ensures the base is at ~70-75px, always below hardware cutouts.
+  const translateY = isRefreshing
+    ? 48
+    : (pullDistance > 0 ? Math.min(pullDistance * 0.62, 54) : -40);
+
+  const scale = isRefreshing ? 1 : (isPastThreshold ? 1.08 : Math.max(0.65, 0.65 + progress * 0.35));
+
   const spinnerStyle = {
     position: 'fixed',
-    top: 'calc(var(--safe-top, 0px) + 14px)',
+    top: 'calc(max(24px, env(safe-area-inset-top, 24px)) + 16px)',
     left: '50%',
-    transform: isRefreshing
-      ? 'translate(-50%, 28px)'
-      : `translate(-50%, ${Math.min(pullDistance * 0.7, 50) - 36}px)`,
-    width: '44px',
-    height: '44px',
+    transform: `translate(-50%, ${translateY}px) scale(${scale})`,
+    width: '46px',
+    height: '46px',
     background: 'rgba(15, 23, 42, 0.95)',
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
     borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 99999,
+    zIndex: 2147483647,
     boxShadow: isPastThreshold
-      ? '0 10px 28px rgba(0, 0, 0, 0.65), 0 0 20px rgba(0, 212, 255, 0.5)'
-      : '0 6px 20px rgba(0, 0, 0, 0.45), 0 0 10px rgba(0, 212, 255, 0.2)',
-    border: `1.5px solid ${isPastThreshold ? '#00d4ff' : 'rgba(0, 212, 255, 0.4)'}`,
+      ? '0 14px 34px rgba(0, 0, 0, 0.75), 0 0 24px rgba(0, 212, 255, 0.6)'
+      : '0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(0, 212, 255, 0.25)',
+    border: `2px solid ${isPastThreshold ? '#00d4ff' : 'rgba(56, 189, 248, 0.45)'}`,
     transition: isRefreshing || pullDistance === 0
-      ? 'transform 0.26s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.26s ease'
+      ? 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, border-color 0.2s ease, box-shadow 0.2s ease'
       : 'border-color 0.15s ease, box-shadow 0.15s ease',
-    opacity: isRefreshing ? 1 : (pullDistance > 12 ? Math.min((pullDistance - 12) / 36, 1) : 0),
+    opacity: isRefreshing ? 1 : (pullDistance > 0 ? Math.min(pullDistance / 24, 1) : 0),
     pointerEvents: 'none'
   };
 
   const svgStyle = {
     width: '22px',
     height: '22px',
-    color: isPastThreshold ? '#00d4ff' : '#7dd3fc',
+    color: isPastThreshold ? '#00d4ff' : '#38bdf8',
     transform: isRefreshing ? 'none' : `rotate(${progress * 280}deg)`,
     transition: isRefreshing ? 'none' : 'color 0.15s ease',
     animation: isRefreshing ? 'ptr-spin 0.75s linear infinite' : 'none'
@@ -173,10 +182,11 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
 
   return (
     <>
-      {(pullDistance > 0 || isRefreshing) && (
+      {isVisible && (
         <div style={spinnerStyle} aria-hidden="true">
           <svg style={svgStyle} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.21l5.67-1.42"/>
+            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+            <polyline points="21 3 21 8 16 8" />
           </svg>
         </div>
       )}
