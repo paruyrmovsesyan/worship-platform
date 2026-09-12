@@ -4,6 +4,12 @@
     "category": "songs",
     "question": "Ինչպե՞ս փոխել երգի տոնայնությունը (տրանսպոզիցիա անել):",
     "answer": "Երգի էջում սեղմեք Տոնայնության (Key) կոճակը կամ օգտագործեք + / - կոճակները: Ակորդներն ակնթարթորեն կփոխվեն Ձեր ընտրած տոնայնությանը:",
+    "question_am": "Ինչպե՞ս փոխել երգի տոնայնությունը (տրանսպոզիցիա անել):",
+    "answer_am": "Երգի էջում սեղմեք Տոնայնության (Key) կոճակը կամ օգտագործեք + / - կոճակները: Ակորդներն ակնթարթորեն կփոխվեն Ձեր ընտրած տոնայնությանը:",
+    "question_ru": "Как изменить тональность песни (сделать транспозицию)?",
+    "answer_ru": "На странице песни нажмите кнопку тональности (Key) или используйте кнопки + / -. Аккорды мгновенно транспонируются в выбранную тональность.",
+    "question_en": "How do I change a song's key (transpose)?",
+    "answer_en": "On the song page, click the Key button or use the + / - buttons. Chords will instantly transpose to your chosen key.",
     "created_at": "2026-08-03 18:30:00"
   },
   {
@@ -11,6 +17,12 @@
     "category": "songs",
     "question": "Ինչպե՞ս ավելացնել երգը «Նախընտրածներ» ցանկում:",
     "answer": "Երգի էջում սեղմեք սրտիկի (♥) կոճակը: Պահպանված երգերը հասանելի կլինեն Ձեր անձնական գրադարանում նաև օֆլայն ռեժիմում:",
+    "question_am": "Ինչպե՞ս ավելացնել երգը «Նախընտրածներ» ցանկում:",
+    "answer_am": "Երգի էջում սեղմեք սրտիկի (♥) կոճակը: Պահպանված երգերը հասանելի կլինեն Ձեր անձնական գրադարանում նաև օֆլայն ռեժիմում:",
+    "question_ru": "Как добавить песню в «Избранное»?",
+    "answer_ru": "На странице песни нажмите значок сердечка (♥). Сохранённые песни будут доступны в вашей библиотеке даже без интернета.",
+    "question_en": "How do I add a song to Favorites?",
+    "answer_en": "Click the heart (♥) button on any song page. Saved songs will be available in your library and accessible offline.",
     "created_at": "2026-08-03 18:30:00"
   },
   {
@@ -18,6 +30,12 @@
     "category": "songs",
     "question": "Ինչպե՞ս արտահանել կամ տպել երգի ակորդները:",
     "answer": "Երգի էջի վերևի աջ անկյունում սեղմեք «Տպել» կամ «PDF / TXT» կոճակը` երաժիշտների համար թղթային տարբերակ ունենալու համար:",
+    "question_am": "Ինչպե՞ս արտահանել կամ տպել երգի ակորդները:",
+    "answer_am": "Երգի էջի վերևի աջ անկյունում սեղմեք «Տպել» կամ «PDF / TXT» կոճակը` երաժիշտների համար թղթային տարբերակ ունենալու համար:",
+    "question_ru": "Как экспортировать или распечатать аккорды песни?",
+    "answer_ru": "В правом верхнем углу страницы песни нажмите «Печать» или «PDF / TXT», чтобы получить удобный вариант для печати музыкантам.",
+    "question_en": "How do I export or print song chords?",
+    "answer_en": "In the top-right corner of the song page, click \"Print\" or \"PDF / TXT\" to get a ready-to-print chart for musicians.",
     "created_at": "2026-08-03 18:30:00"
   },
   {
@@ -25,6 +43,12 @@
     "category": "songs",
     "question": "Ի՞նչ անել, եթե երգում նկատել եմ սխալ ակորդ կամ տեքստ:",
     "answer": "Սեղմեք երգի էջում գտնվող «Առաջարկել խմբագրում» կոճակը, լրացրեք ճշգրտումը և մեր ադմինները կվերանայեն այն:",
+    "question_am": "Ի՞նչ անել, եթե երգում նկատել եմ սխալ ակորդ կամ տեքստ:",
+    "answer_am": "Սեղմեք երգի էջում գտնվող «Առաջարկել խմբագրում» կոճակը, լրացրեք ճշգրտումը և մեր ադմինները կվերանայեն այն:",
+    "question_ru": "Что делать, если я заметил ошибку в аккорде или тексте?",
+    "answer_ru": "Нажмите кнопку «Предложить исправление» на странице песни, укажите правку, и наши модераторы проверят её.",
+    "question_en": "What if I find an error in lyrics or chords?",
+    "answer_en": "Click \"Suggest Edit\" on the song page, submit your correction, and our admins will review it.",
     "created_at": "2026-08-03 18:30:00"
   },
   {
@@ -32,6 +56,12 @@
     "category": "setlists",
     "question": "Ինչպե՞ս ստեղծել նոր երգացանկ:",
     "answer": "«Երգացանկեր» բաժնում սեղմեք «Ստեղծել Երգացանկ»: Ավելացրեք երգեր որոնման միջոցով, դասավորեք հերթականությունը և պահպանեք:",
+    "question_am": "Ինչպե՞ս ստեղծել նոր երգացանկ:",
+    "answer_am": "«Երգացանկեր» բաժնում սեղմեք «Ստեղծել Երգացանկ»: Ավելացրեք երգեր որոնման միջոցով, դասավորեք հերթականությունը և պահպանեք:",
+    "question_ru": "Как создать новый сет-лист?",
+    "answer_ru": "В разделе «Сет-листы» нажмите «Создать сет-лист». Добавьте песни через поиск, настройте порядок и сохраните.",
+    "question_en": "How do I create a new setlist?",
+    "answer_en": "In the \"Setlists\" section, click \"Create Setlist\". Add songs via search, arrange their order, and save.",
     "created_at": "2026-08-03 18:30:00"
   },
   {
@@ -39,13 +69,25 @@
     "category": "setlists",
     "question": "Ի՞նչ է Live Mode-ը և ինչպես օգտվել դրանից:",
     "answer": "Live Mode-ը նախատեսված է կիրակնօրյա ծառայությունների և փորձերի համար: Այն ցույց է տալիս ակորդները մեծ տառաչափով և թույլ է տալիս արագ անցումներ կատարել երգից երգ:",
+    "question_am": "Ի՞նչ է Live Mode-ը և ինչպես օգտվել դրանից:",
+    "answer_am": "Live Mode-ը նախատեսված է կիրակնօրյա ծառայությունների և փորձերի համար: Այն ցույց է տալիս ակորդները մեծ տառաչափով և թույլ է տալիս արագ անցումներ կատարել երգից երգ:",
+    "question_ru": "Что такое Live Mode и как им пользоваться?",
+    "answer_ru": "Live Mode создан для богослужений и репетиций. Он отображает аккорды крупным шрифтом с удобным переключением между песнями.",
+    "question_en": "What is Live Mode and how do I use it?",
+    "answer_en": "Live Mode is tailored for rehearsals and worship services, offering large readable chords and fast navigation.",
     "created_at": "2026-08-03 18:30:00"
   },
   {
     "id": "l3",
     "category": "setlists",
     "question": "Ինչպե՞ս կիսվել երգացանկով թիմի հետ:",
-    "answer": "Երգացանկի էջում սեղմեք «Կիսվել» կոճակը: Դուք կստանաք ուղիղ հղում կամ QR կոդ, որը կարող եք ուղարկել Ձեր երաժիշտներին:",
+    "answer": "Երգացանկի էջում սեղմեք «Կիսվել» կոճակը: Դուք կարող եք ուղարկել հրավեր չաթով, ստանալ հանրային հղում կամ QR կոդ, որը կարող եք ուղարկել Ձեր երաժիշտներին:",
+    "question_am": "Ինչպե՞ս կիսվել երգացանկով թիմի հետ:",
+    "answer_am": "Երգացանկի էջում սեղմեք «Կիսվել» կոճակը: Դուք կարող եք ուղարկել հրավեր չաթով, ստանալ հանրային հղում կամ QR կոդ, որը կարող եք ուղարկել Ձեր երաժիշտներին:",
+    "question_ru": "Как поделиться сет-листом с командой?",
+    "answer_ru": "Нажмите «Поделиться» на странице сет-листа. Вы можете отправить приглашение в чат, скопировать ссылку или показать QR-код.",
+    "question_en": "How do I share a setlist with my team?",
+    "answer_en": "Click \"Share\" on the setlist page. You can send an invitation via chat, generate a public link, or use a QR code.",
     "created_at": "2026-08-03 18:30:00"
   },
   {
@@ -53,6 +95,12 @@
     "category": "offline",
     "question": "Ինչպե՞ս է աշխատում օֆլայն ռեժիմը առանց ինտերնետի:",
     "answer": "Worship Platform-ն ավտոմատ պահպանում է Ձեր դիտած երգերն ու երգացանկերը սարքում: Ինտերնետ կապն անջատվելիս ծրագիրը շարունակում է աշխատել անխափան:",
+    "question_am": "Ինչպե՞ս է աշխատում օֆլայն ռեժիմը առանց ինտերնետի:",
+    "answer_am": "Worship Platform-ն ավտոմատ պահպանում է Ձեր դիտած երգերն ու երգացանկերը սարքում: Ինտերնետ կապն անջատվելիս ծրագիրը շարունակում է աշխատել անխափան:",
+    "question_ru": "Как работает офлайн-режим без интернета?",
+    "answer_ru": "Worship Platform автоматически сохраняет просмотренные песни и сет-листы на устройстве. При отсутствии сети приложение продолжает работать стабильно.",
+    "question_en": "How does offline mode work without an internet connection?",
+    "answer_en": "Worship Platform automatically caches viewed songs and setlists locally on your device. When offline, the app continues to operate seamlessly.",
     "created_at": "2026-08-03 18:30:00"
   },
   {
@@ -60,6 +108,12 @@
     "category": "offline",
     "question": "Ինչպե՞ս տեղադրել ծրագիրը հեռախոսի կամ համակարգչի վրա (PWA):",
     "answer": "Բրաուզերի մենյուից ընտրեք «Ավելացնել գլխավոր էկրանին» (Add to Home Screen / Install App): Ծրագիրը կտեղադրվի որպես իսկական App:",
+    "question_am": "Ինչպե՞ս տեղադրել ծրագիրը հեռախոսի կամ համակարգչի վրա:",
+    "answer_am": "Բրաուզերի մենյուից ընտրեք «Ավելացնել գլխավոր էկրանին» (Add to Home Screen / Install App): Ծրագիրը կտեղադրվի որպես իսկական App:",
+    "question_ru": "Как установить приложение на телефон или компьютер?",
+    "answer_ru": "В меню браузера выберите «На экран „Домой“» (Add to Home Screen / Install App). Программа установится как автономное приложение.",
+    "question_en": "How do I install the app on my phone or computer?",
+    "answer_en": "In your browser menu, choose \"Add to Home Screen\" or \"Install App\". The app will be installed as a standalone application.",
     "created_at": "2026-08-03 18:30:00"
   },
   {
@@ -67,6 +121,12 @@
     "category": "account",
     "question": "Ինչպե՞ս փոխել գաղտնաբառը կամ անձնական տվյալները:",
     "answer": "Մտեք «Կարգավորումներ» բաժին: Այնտեղ կարող եք թարմացնել Ձեր անունը, էլ. հասցեն, փոխել գաղտնաբառը և կառավարել ակտիվ սեսիաները:",
+    "question_am": "Ինչպե՞ս փոխել գաղտնաբառը կամ անձնական տվյալները:",
+    "answer_am": "Մտեք «Կարգավորումներ» բաժին: Այնտեղ կարող եք թարմացնել Ձեր անունը, էլ. հասցեն, փոխել գաղտնաբառը և կառավարել ակտիվ սեսիաները:",
+    "question_ru": "Как изменить пароль или данные профиля?",
+    "answer_ru": "Перейдите в раздел «Настройки». Там можно обновить имя, email, сменить пароль и управлять активными сессиями.",
+    "question_en": "How do I change my password or profile details?",
+    "answer_en": "Go to the \"Settings\" section. There you can update your name, email, change your password, and manage active sessions.",
     "created_at": "2026-08-03 18:30:00"
   },
   {
@@ -74,6 +134,12 @@
     "category": "account",
     "question": "Ինչպե՞ս փոխել ակորդների գույնը կամ ոճը:",
     "answer": "«Կարգավորումներ» -> «Ծրագրի կարգավորումներ» բաժնում կարող եք ընտրել ակորդների գույնը (Ոսկեգույն, Կապույտ, Կանաչ և այլն) և միացնել OLED Dark mode-ը:",
+    "question_am": "Ինչպե՞ս փոխել ակորդների գույնը կամ ոճը:",
+    "answer_am": "«Կարգավորումներ» -> «Ծրագրի կարգավորումներ» բաժնում կարող եք ընտրել ակորդների գույնը (Ոսկեգույն, Կապույտ, Կանաչ) և միացնել OLED Dark mode-ը:",
+    "question_ru": "Как изменить цвет или стиль аккордов?",
+    "answer_ru": "В разделе «Настройки» -> «Настройки приложения» вы можете выбрать цвет аккордов (Золотой, Голубой, Изумрудный) и включить OLED тёмную тему.",
+    "question_en": "How do I change chord colors or theme style?",
+    "answer_en": "Under \"Settings\" -> \"App Preferences\", you can customize chord colors (Gold, Electric Cyan, Emerald) and enable OLED dark mode.",
     "created_at": "2026-08-03 18:30:00"
   }
 ]

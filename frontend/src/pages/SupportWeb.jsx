@@ -5,11 +5,29 @@ import { usePageReady } from '../hooks/usePageReady';
 import './Support.css';
 
 const CATEGORY_META = {
-  songs:    { title: '🎵 Երգեր & Ակորդներ',                   color: '#00F0FF' },
-  setlists: { title: '📋 Երգացանկեր & Live Mode',             color: '#9D72FF' },
-  offline:  { title: '📱 Օֆլայն Ռեժիմ & Ծրագիր',            color: '#38EF7D' },
-  account:  { title: '🔐 Անձնական Հաշիվ & Կարգավորումներ',   color: '#F09819' },
-  other:    { title: '💬 Այլ',                                 color: '#aaaaaa' },
+  songs:    { title: { am: '🎵 Երգեր & Ակորդներ', ru: '🎵 Песни и аккорды', en: '🎵 Songs & Chords' },                   color: '#00F0FF' },
+  setlists: { title: { am: '📋 Երգացանկեր & Live Mode', ru: '📋 Сет-листы и Live Mode', en: '📋 Setlists & Live Mode' }, color: '#9D72FF' },
+  offline:  { title: { am: '📱 Օֆլայն Ռեժիմ & Ծրագիր', ru: '📱 Офлайн-режим и приложение', en: '📱 Offline Mode & App' },  color: '#38EF7D' },
+  account:  { title: { am: '🔐 Անձնական Հաշիվ & Կարգավորումներ', ru: '🔐 Аккаунт и настройки', en: '🔐 Account & Settings' }, color: '#F09819' },
+  other:    { title: { am: '💬 Այլ', ru: '💬 Другое', en: '💬 Other' },                                               color: '#aaaaaa' },
+};
+
+const getCategoryTitle = (catId, lang) => {
+  const meta = CATEGORY_META[catId];
+  if (!meta) return catId;
+  return meta.title[lang] || meta.title.am || meta.title.en || catId;
+};
+
+const getFaqQuestion = (faq, lang) => {
+  if (lang === 'ru') return faq.question_ru || faq.question;
+  if (lang === 'en') return faq.question_en || faq.question;
+  return faq.question_am || faq.question;
+};
+
+const getFaqAnswer = (faq, lang) => {
+  if (lang === 'ru') return faq.answer_ru || faq.answer;
+  if (lang === 'en') return faq.answer_en || faq.answer;
+  return faq.answer_am || faq.answer;
 };
 
 // Default fallback FAQs (shown if data/admin_faq.json hasn't been populated yet)
@@ -28,7 +46,7 @@ const DEFAULT_FAQS = [
 ];
 
 export default function SupportWeb() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   usePageReady(false);
 
   const [allFaqs, setAllFaqs]         = useState([]);
@@ -67,10 +85,24 @@ export default function SupportWeb() {
     ? allFaqs
     : allFaqs.filter(f => (f.category || 'songs') === activeCategory);
 
-  const filteredFaqs = filteredByCategory.filter(item =>
-    item.question.toLowerCase().includes(search.toLowerCase()) ||
-    item.answer.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredFaqs = filteredByCategory.filter(item => {
+    const qCur = (getFaqQuestion(item, language) || '').toLowerCase();
+    const aCur = (getFaqAnswer(item, language) || '').toLowerCase();
+    const qAm = (item.question_am || item.question || '').toLowerCase();
+    const aAm = (item.answer_am || item.answer || '').toLowerCase();
+    const qRu = (item.question_ru || '').toLowerCase();
+    const aRu = (item.answer_ru || '').toLowerCase();
+    const qEn = (item.question_en || '').toLowerCase();
+    const aEn = (item.answer_en || '').toLowerCase();
+    const s = search.toLowerCase().trim();
+    if (!s) return true;
+    return (
+      qCur.includes(s) || aCur.includes(s) ||
+      qAm.includes(s) || aAm.includes(s) ||
+      qRu.includes(s) || aRu.includes(s) ||
+      qEn.includes(s) || aEn.includes(s)
+    );
+  });
 
   // Group filtered by category (preserving order)
   const grouped = Object.keys(CATEGORY_META).reduce((acc, cat) => {
@@ -102,7 +134,7 @@ export default function SupportWeb() {
             </svg>
             <input
               type="text"
-              placeholder="Փնտրել հարցեր, թեմաներ..."
+              placeholder={language === 'am' ? 'Փնտրել հարցեր, թեմաներ...' : language === 'ru' ? 'Поиск вопросов, тем...' : 'Search questions, topics...'}
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -122,7 +154,7 @@ export default function SupportWeb() {
               className={`faq-tab-btn ${activeCategory === catId ? 'active' : ''}`}
               onClick={() => setActiveCategory(catId)}
             >
-              {catId === 'all' ? '✨ Բոլոր Հարցերը' : (CATEGORY_META[catId]?.title || catId)}
+              {catId === 'all' ? (language === 'am' ? '✨ Բոլոր Հարցերը' : language === 'ru' ? '✨ Все вопросы' : '✨ All Questions') : getCategoryTitle(catId, language)}
             </button>
           ))}
         </div>
@@ -131,28 +163,31 @@ export default function SupportWeb() {
         {loading ? (
           <div className="faq-loading">
             <div className="faq-loading-spinner" />
-            <p>Բեռնվում է...</p>
+            <p>{language === 'am' ? 'Բեռնվում է...' : language === 'ru' ? 'Загрузка...' : 'Loading...'}</p>
           </div>
         ) : Object.keys(grouped).length === 0 ? (
           <div className="faq-empty-state">
-            <p>🔍 Հարց չի գտնվել «{search}» որոնման համար։</p>
+            <p>🔍 {language === 'am' ? `Հարց չի գտնվել «${search}» որոնման համար։` : language === 'ru' ? `По запросу «${search}» вопросов не найдено.` : `No questions found for "${search}".`}</p>
           </div>
         ) : (
           <div className="faq-sections-list">
             {Object.entries(grouped).map(([catId, items]) => {
-              const meta = CATEGORY_META[catId] || { title: catId, color: '#aaa' };
+              const meta = CATEGORY_META[catId] || { color: '#aaa' };
+              const catTitle = getCategoryTitle(catId, language);
               return (
                 <div key={catId} className="faq-category-block">
                   <h2 className="faq-cat-title" style={{ color: meta.color }}>
-                    {meta.title}
+                    {catTitle}
                   </h2>
                   <div className="faq-accordion-group">
                     {items.map(item => {
                       const isOpen = openFaqId === item.id;
+                      const question = getFaqQuestion(item, language);
+                      const answer = getFaqAnswer(item, language);
                       return (
                         <div key={item.id} className={`faq-card ${isOpen ? 'open' : ''}`}>
                           <button className="faq-card-question" onClick={() => toggleFaq(item.id)}>
-                            <span>{item.question}</span>
+                            <span>{question}</span>
                             <span className="faq-arrow-icon">
                               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2">
                                 <polyline points="6 9 12 15 18 9"/>
@@ -161,7 +196,7 @@ export default function SupportWeb() {
                           </button>
                           {isOpen && (
                             <div className="faq-card-answer">
-                              <p>{item.answer}</p>
+                              <p>{answer}</p>
                             </div>
                           )}
                         </div>
@@ -177,15 +212,15 @@ export default function SupportWeb() {
         {/* BOTTOM CONTACT BANNER */}
         <div className="faq-help-banner">
           <div className="help-banner-content">
-            <h3>💬 Դեռ ունե՞ք հարցեր կամ աջակցության կարիք</h3>
-            <p>Մեր թիմը միշտ պատրաստ է օգնել Ձեզ։ Կապվեք մեզ հետ կամ ուղարկեք հաղորդագրություն։</p>
+            <h3>💬 {language === 'am' ? 'Դեռ ունե՞ք հարցեր կամ աջակցության կարիք' : language === 'ru' ? 'Остались вопросы или нужна помощь?' : 'Still have questions or need support?'}</h3>
+            <p>{language === 'am' ? 'Մեր թիմը միշտ պատրաստ է օգնել Ձեզ։ Կապվեք մեզ հետ կամ ուղարկեք հաղորդագրություն։' : language === 'ru' ? 'Наша команда всегда готова помочь вам. Свяжитесь с нами или отправьте сообщение.' : 'Our team is always ready to assist you. Get in touch or send us a message.'}</p>
           </div>
           <div className="help-banner-actions">
             <Link to="/contact" className="help-btn primary">
-              ✉️ Կապի Էջ & Հաղորդագրություն
+              {language === 'am' ? '✉️ Կապի Էջ & Հաղորդագրություն' : language === 'ru' ? '✉️ Страница связи и сообщение' : '✉️ Contact Page & Message'}
             </Link>
             <a href="https://t.me/worship_platform_bot" target="_blank" rel="noopener noreferrer" className="help-btn telegram">
-              📱 Telegram Բոտ
+              {language === 'am' ? '📱 Telegram Բոտ' : language === 'ru' ? '📱 Telegram-бот' : '📱 Telegram Bot'}
             </a>
           </div>
         </div>
