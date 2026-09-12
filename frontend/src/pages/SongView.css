@@ -124,6 +124,34 @@
   font-weight: 700;
 }
 
+.sv-save-key-pill {
+  background: rgba(0, 212, 255, 0.12);
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  color: #00d4ff;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.sv-save-key-pill:active {
+  transform: scale(0.95);
+  background: rgba(0, 212, 255, 0.25);
+}
+
+.sv-setlist-save-key-btn {
+  font-weight: 700 !important;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 14px rgba(0, 180, 219, 0.25);
+}
+
 /* Default (Web) UI */
 .sv-control-panel { display: none; }
 

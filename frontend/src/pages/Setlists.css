@@ -1514,3 +1514,82 @@ body.quick-drawer-open .mobile-bottom-nav {
   to { transform: translateY(0); }
 }
 
+/* ── Setlists App Offline Notice ── */
+.sl-app-offline-notice {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.4;
+  width: 100%;
+  box-sizing: border-box;
+}
+.sl-app-offline-notice span {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── Setlists App Timeframe Bar ── */
+.sl-app-timeframe-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sl-timeframe-tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-secondary, #94a3b8);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.sl-timeframe-tab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sl-timeframe-tab.active {
+  background: rgba(0, 212, 255, 0.14);
+  color: #00d4ff;
+  border-color: rgba(0, 212, 255, 0.28);
+  box-shadow: 0 2px 8px rgba(0, 212, 255, 0.12);
+}
+
+.sl-tab-badge {
+  font-size: 0.72rem;
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  font-weight: 700;
+}
+
+.sl-timeframe-tab.active .sl-tab-badge {
+  background: rgba(0, 212, 255, 0.22);
+  color: #00d4ff;
+}
+

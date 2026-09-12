@@ -330,12 +330,31 @@
   box-shadow: 0 0 12px rgba(0, 212, 255, 0.25);
 }
 
+.sla-song-card.is-touch-dragging,
+.sla-section-card.is-touch-dragging {
+  opacity: 0.9 !important;
+  transform: scale(1.02) !important;
+  border-color: #00d4ff !important;
+  box-shadow: 0 12px 30px rgba(0, 212, 255, 0.35) !important;
+  z-index: 50 !important;
+  position: relative;
+}
+
+.sla-song-card.is-touch-target,
+.sla-section-card.is-touch-target {
+  border-color: #00d4ff !important;
+  box-shadow: 0 0 16px rgba(0, 212, 255, 0.3) !important;
+  transform: translateY(-2px);
+}
+
 .sla-drag-handle {
-  color: rgba(255, 255, 255, 0.22);
-  font-size: 1rem;
-  padding: 4px 2px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 1.15rem;
+  padding: 8px 6px;
   cursor: grab;
   user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
 }
 
 .sla-song-num {
@@ -993,4 +1012,78 @@ body.wp-standalone-app > .sla-modal-overlay > .sla-sheet,
   color: #cbd5e1;
   font-size: 0.84rem;
   outline: none;
+}
+
+/* ── Offline Banner ── */
+.sla-offline-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.4;
+}
+.sla-offline-banner span {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── Toast Notice ── */
+.sla-toast-notice {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 20px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: rgba(16, 24, 39, 0.95);
+  border: 1px solid rgba(0, 212, 255, 0.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 212, 255, 0.2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ── Quick Drawer Multi-select Checkbox ── */
+.sla-drawer-item {
+  position: relative;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  cursor: pointer;
+  border-radius: 14px;
+  border: 1px solid transparent;
+}
+.sla-drawer-item.is-selected {
+  background: rgba(0, 212, 255, 0.08) !important;
+  border-color: rgba(0, 212, 255, 0.3) !important;
+}
+.sla-drawer-checkbox {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  margin-right: 6px;
+  transition: all 0.15s ease;
+}
+.sla-drawer-checkbox.checked {
+  background: #00d4ff;
+  border-color: #00d4ff;
+  color: #080a10;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
 }

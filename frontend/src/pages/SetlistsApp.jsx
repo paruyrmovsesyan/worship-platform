@@ -87,6 +87,7 @@ export default function SetlistsApp() {
   // Search, Filter & Sort State
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all'); // all, personal, team, shared
+  const [timeframeFilter, setTimeframeFilter] = useState('all'); // all, upcoming, past
   const [sortBy, setSortBy] = useState('newest'); // newest, oldest, name, items
   const [viewMode, setViewMode] = useState(() => {
     try {
@@ -100,11 +101,23 @@ export default function SetlistsApp() {
   const [activeMenuId, setActiveMenuId] = useState(null);
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
 
   const showToast = useCallback((msg) => {
     setToastMessage(msg);
     window.clearTimeout(window.__slToastTimer);
     window.__slToastTimer = window.setTimeout(() => setToastMessage(null), 3000);
+  }, []);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   const changeViewMode = (mode) => {
@@ -163,6 +176,10 @@ export default function SetlistsApp() {
   const handleDuplicate = async (e, listId) => {
     e.stopPropagation();
     setActiveMenuId(null);
+    if (!isOnline) {
+      showToast(language === 'am' ? 'Գործողությունը հնարավոր չէ օֆլայն ռեժիմում' : 'Action not available offline');
+      return;
+    }
     setActionLoadingId(listId);
     try {
       const res = await fetch('/setlists_api.php?action=duplicate_setlist', {
@@ -194,6 +211,10 @@ export default function SetlistsApp() {
   const handleDelete = async (e, listId) => {
     e.stopPropagation();
     setActiveMenuId(null);
+    if (!isOnline) {
+      showToast(language === 'am' ? 'Գործողությունը հնարավոր չէ օֆլայն ռեժիմում' : 'Action not available offline');
+      return;
+    }
     const confirmMsg =
       t('setlists.confirmDelete') ||
       (language === 'am'
@@ -280,6 +301,10 @@ export default function SetlistsApp() {
   // Create Setlist
   const handleCreateSetlist = async () => {
     if (!newSetName.trim()) return;
+    if (!isOnline) {
+      showToast(language === 'am' ? 'Երգացանկ ստեղծելու համար անհրաժեշտ է ինտերնետ կապ' : 'Internet connection required to create setlist');
+      return;
+    }
     setIsCreating(true);
 
     try {
@@ -314,10 +339,21 @@ export default function SetlistsApp() {
     }
   };
 
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+
   // Filter & Sort Setlists
   const filteredSetlists = useMemo(() => {
     return setlists
       .filter((s) => {
+        // Timeframe Filter (Upcoming vs Past)
+        if (timeframeFilter === 'upcoming') {
+          const isUpcoming = s.service_date ? s.service_date >= todayStr : true;
+          if (!isUpcoming) return false;
+        } else if (timeframeFilter === 'past') {
+          const isPast = s.service_date ? s.service_date < todayStr : false;
+          if (!isPast) return false;
+        }
+
         // Category Filter
         if (categoryFilter === 'personal' && (s.access_role === 'team' || s.access_role === 'shared'))
           return false;
@@ -342,7 +378,28 @@ export default function SetlistsApp() {
         if (sortBy === 'items') return (b.items_count || 0) - (a.items_count || 0);
         return 0;
       });
-  }, [setlists, categoryFilter, searchQuery, sortBy]);
+  }, [setlists, timeframeFilter, categoryFilter, searchQuery, sortBy, todayStr]);
+
+  // Timeframe counts (Upcoming vs Past vs All)
+  const timeframeCounts = useMemo(() => {
+    let upcoming = 0;
+    let past = 0;
+    for (const s of setlists) {
+      if (s.service_date) {
+        if (s.service_date >= todayStr) upcoming++;
+        else past++;
+      } else {
+        upcoming++;
+      }
+    }
+    return { all: setlists.length, upcoming, past };
+  }, [setlists, todayStr]);
+
+  const timeframeLabels = {
+    am: { all: 'Բոլորը', upcoming: 'Առաջիկա', past: 'Անցած / Պատմություն' },
+    en: { all: 'All', upcoming: 'Upcoming', past: 'Past / Archive' },
+    ru: { all: 'Все', upcoming: 'Предстоящие', past: 'Прошедшие' },
+  }[language] || { all: 'Բոլորը', upcoming: 'Առաջիկա', past: 'Անցած' };
 
   // Statistics
   const stats = useMemo(() => {
@@ -441,6 +498,13 @@ export default function SetlistsApp() {
       {toastMessage && (
         <div className="sl-toast-notice animate-fade-in">
           <span>✓</span> {toastMessage}
+        </div>
+      )}
+
+      {/* Offline Notice */}
+      {!isOnline && (
+        <div className="sl-app-offline-notice animate-fade-in">
+          <span>📡 Օֆլայն ռեժիմ</span> — Դուք դիտում եք պահպանված երգացանկերը: Կապը վերականգնելուց հետո կկարողանաք ստեղծել կամ փոփոխել:
         </div>
       )}
 
@@ -624,6 +688,34 @@ export default function SetlistsApp() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Timeframe Filter (Upcoming / Past / All) */}
+      <div className="sl-app-timeframe-bar">
+        <button
+          type="button"
+          className={`sl-timeframe-tab ${timeframeFilter === 'all' ? 'active' : ''}`}
+          onClick={() => setTimeframeFilter('all')}
+        >
+          {timeframeLabels.all}
+          <span className="sl-tab-badge">{timeframeCounts.all}</span>
+        </button>
+        <button
+          type="button"
+          className={`sl-timeframe-tab ${timeframeFilter === 'upcoming' ? 'active' : ''}`}
+          onClick={() => setTimeframeFilter('upcoming')}
+        >
+          {timeframeLabels.upcoming}
+          <span className="sl-tab-badge">{timeframeCounts.upcoming}</span>
+        </button>
+        <button
+          type="button"
+          className={`sl-timeframe-tab ${timeframeFilter === 'past' ? 'active' : ''}`}
+          onClick={() => setTimeframeFilter('past')}
+        >
+          {timeframeLabels.past}
+          <span className="sl-tab-badge">{timeframeCounts.past}</span>
+        </button>
       </div>
 
       {/* Category Filter Chips */}

@@ -99,19 +99,79 @@ export default function SetlistEditorApp() {
   // Print Studio
   const [isPrintOpen, setIsPrintOpen] = useState(false);
 
-  // Drag & drop reorder
+  // Drag & drop reorder (desktop HTML5 + mobile Touch)
   const [draggingItemId, setDraggingItemId] = useState(null);
   const [dropTargetItemId, setDropTargetItemId] = useState(null);
+  const [touchDraggingId, setTouchDraggingId] = useState(null);
+  const [touchDropTargetId, setTouchDropTargetId] = useState(null);
+  const touchDragStateRef = useRef({
+    activeId: null,
+    startY: 0,
+    currentY: 0,
+    currentTargetId: null,
+  });
+
+  // Batch song add in quick drawer
+  const [selectedSongIds, setSelectedSongIds] = useState(new Set());
+  const [isBatchAdding, setIsBatchAdding] = useState(false);
+
+  // Online / Offline & Toast
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+  const [toastNotice, setToastNotice] = useState(null);
+  const toastTimerRef = useRef(null);
+
+  const showToast = (msg) => {
+    setToastNotice(msg);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToastNotice(null), 3000);
+  };
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const canEdit = setlistData?.can_edit === true || Number(setlistData?.can_edit) === 1;
   const canDelete = setlistData?.access_role === 'owner';
   const isEditRoute = location.pathname.endsWith('/edit');
 
   const songItems = useMemo(() => items.filter(i => i.item_type !== 'section'), [items]);
-  const totalDuration = useMemo(
-    () => items.reduce((sum, item) => sum + (parseInt(item.duration, 10) || 0), 0),
-    [items]
-  );
+  
+  // Smart duration estimation
+  const durationStats = useMemo(() => {
+    const songs = items.filter(i => i.item_type !== 'section');
+    if (!songs.length) return { total: 0, isEstimate: false, missingCount: 0 };
+
+    let known = 0;
+    let missingCount = 0;
+    for (const s of songs) {
+      const d = parseInt(s.duration, 10);
+      if (d > 0) {
+        known += d;
+      } else {
+        missingCount++;
+      }
+    }
+    for (const s of items) {
+      if (s.item_type === 'section') {
+        const d = parseInt(s.duration, 10);
+        if (d > 0) known += d;
+      }
+    }
+
+    const totalEst = known + (missingCount * 4.5);
+    return {
+      total: Math.round(totalEst),
+      isEstimate: missingCount > 0,
+      missingCount
+    };
+  }, [items]);
 
   // Fetch setlist data
   const fetchSetlist = () => {
@@ -299,6 +359,137 @@ export default function SetlistEditorApp() {
     } catch (err) {
       console.error(err);
       fetchSetlist();
+    }
+  };
+
+  // Touch reorder handlers for mobile drag & drop
+  const handleTouchStartReorder = (e, itemId) => {
+    if (!canEdit) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    touchDragStateRef.current = {
+      activeId: itemId,
+      startY: touch.clientY,
+      currentY: touch.clientY,
+      currentTargetId: itemId,
+    };
+    setTouchDraggingId(itemId);
+    setTouchDropTargetId(itemId);
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try { navigator.vibrate(25); } catch {}
+    }
+  };
+
+  const handleTouchMoveReorder = (e) => {
+    if (!touchDragStateRef.current.activeId) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    if (e.cancelable) {
+      e.preventDefault();
+    }
+
+    touchDragStateRef.current.currentY = touch.clientY;
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const cardEl = el?.closest('[data-item-id]');
+    if (cardEl) {
+      const targetId = cardEl.getAttribute('data-item-id');
+      if (targetId && targetId !== touchDragStateRef.current.currentTargetId) {
+        touchDragStateRef.current.currentTargetId = targetId;
+        setTouchDropTargetId(targetId);
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          try { navigator.vibrate(15); } catch {}
+        }
+      }
+    }
+  };
+
+  const handleTouchEndReorder = () => {
+    const { activeId, currentTargetId } = touchDragStateRef.current;
+    if (activeId && currentTargetId && String(activeId) !== String(currentTargetId)) {
+      reorderByItemId(activeId, currentTargetId);
+    }
+    touchDragStateRef.current = {
+      activeId: null,
+      startY: 0,
+      currentY: 0,
+      currentTargetId: null,
+    };
+    setTouchDraggingId(null);
+    setTouchDropTargetId(null);
+  };
+
+  // Toggle selection of a song in Quick Drawer
+  const toggleSongSelection = (songId) => {
+    setSelectedSongIds(prev => {
+      const next = new Set(prev);
+      if (next.has(songId)) next.delete(songId);
+      else next.add(songId);
+      return next;
+    });
+  };
+
+  // Batch add selected songs to setlist
+  const handleBatchAddSongs = async () => {
+    if (!selectedSongIds.size || isBatchAdding) return;
+    setIsBatchAdding(true);
+    const ids = Array.from(selectedSongIds);
+    try {
+      for (const songId of ids) {
+        await fetch('/setlists_api.php?action=add_song_to_setlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ setlist_id: id, song_id: songId })
+        });
+        setAddedIds(prev => ({ ...prev, [songId]: true }));
+      }
+      setSelectedSongIds(new Set());
+      await fetchSetlist();
+      showToast(language === 'am' ? `✓ ${ids.length} երգ ավելացվեց երգացանկում` : `✓ Added ${ids.length} songs to setlist`);
+    } catch (err) {
+      console.error(err);
+      alert(t('setlists.errorOccurred'));
+    } finally {
+      setIsBatchAdding(false);
+    }
+  };
+
+  // Copy setlist formatted cleanly as text for WhatsApp / Telegram
+  const copySetlistAsText = async () => {
+    if (!setlistData || !items.length) return;
+    const dateStr = setlistData.service_date ? `📅 ${setlistData.service_date}\n` : '';
+    const header = `🎵 ${setlistData.name || 'Երգացանկ'}\n${dateStr}\n`;
+    
+    let songNum = 0;
+    const lines = items.map(item => {
+      if (item.item_type === 'section') {
+        return `\n--- 📌 ${item.title} ---`;
+      }
+      songNum++;
+      const title = getLocalizedTitle(item, language);
+      const key = item.target_key || item.song_key ? ` (${item.target_key || item.song_key})` : '';
+      const capo = item.capo > 0 ? ` [Capo ${item.capo}]` : '';
+      const artist = item.artist || item.song_artist ? ` - ${item.artist || item.song_artist}` : '';
+      return `${songNum}. ${title}${artist}${key}${capo}`;
+    });
+
+    const footer = `\n\n🔗 ${window.location.origin}/setlists/${id}`;
+    const fullText = header + lines.join('\n') + footer;
+
+    try {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(fullText);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = fullText;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      showToast(language === 'am' ? '✓ Երգերի ցանկը պատճենվեց չաթի համար' : '✓ Setlist copied for chat');
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -656,6 +847,20 @@ export default function SetlistEditorApp() {
 
   return (
     <div className="sla-page animate-fade-in">
+      {/* ── Toast notice ── */}
+      {toastNotice && (
+        <div className="sla-toast-notice animate-fade-in">
+          {toastNotice}
+        </div>
+      )}
+
+      {/* ── Offline banner ── */}
+      {!isOnline && (
+        <div className="sla-offline-banner animate-fade-in">
+          <span>📡 Օֆլայն ռեժիմ</span> — Դիտում եք քեշից: Փոփոխությունները կպահպանվեն կապը վերականգնելուց հետո:
+        </div>
+      )}
+
       {/* ── Top Navigation Bar ── */}
       <div className="sla-nav-bar">
         <button className="sla-back-btn" onClick={() => navigate('/setlists')} aria-label="Գնալ հետ" title="Գնալ հետ">
@@ -673,6 +878,19 @@ export default function SetlistEditorApp() {
           >
             <span className="sla-live-dot" />
             <span>Live</span>
+          </button>
+
+          <button
+            type="button"
+            className="sla-action-btn"
+            onClick={copySetlistAsText}
+            title="Պատճենել տեքստով (WhatsApp / Telegram)"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>Չաթի տեքստ</span>
           </button>
 
           <button
@@ -731,9 +949,12 @@ export default function SetlistEditorApp() {
               📅 {setlistData.service_date}
             </span>
           )}
-          {totalDuration > 0 && (
-            <span className="sla-chip sla-chip--duration">
-              ⏱ {totalDuration} րոպե
+          {durationStats.total > 0 && (
+            <span
+              className="sla-chip sla-chip--duration"
+              title={durationStats.isEstimate ? `Մոտավոր տևողություն (${durationStats.missingCount} երգ չունի տևողություն, լռելյայն ~4.5 ր/երգ)` : 'Ընդհանուր տևողություն'}
+            >
+              ⏱ {durationStats.isEstimate ? `~${durationStats.total}` : durationStats.total} րոպե
             </span>
           )}
           <span className="sla-chip">
@@ -840,7 +1061,8 @@ export default function SetlistEditorApp() {
                 return (
                   <div
                     key={item.id}
-                    className={`sla-section-card ${draggingItemId === item.id ? 'is-dragging' : ''} ${dropTargetItemId === item.id ? 'is-drop-target' : ''}`}
+                    data-item-id={item.id}
+                    className={`sla-section-card ${(draggingItemId === item.id || touchDraggingId === item.id) ? 'is-dragging is-touch-dragging' : ''} ${(dropTargetItemId === item.id || touchDropTargetId === item.id) ? 'is-drop-target is-touch-target' : ''}`}
                     draggable={canEdit}
                     onDragStart={() => setDraggingItemId(item.id)}
                     onDragOver={e => { if (canEdit) { e.preventDefault(); setDropTargetItemId(item.id); } }}
@@ -848,7 +1070,19 @@ export default function SetlistEditorApp() {
                     onDrop={e => { e.preventDefault(); reorderByItemId(draggingItemId, item.id); setDraggingItemId(null); setDropTargetItemId(null); }}
                     onDragEnd={() => { setDraggingItemId(null); setDropTargetItemId(null); }}
                   >
-                    {canEdit && <span className="sla-drag-handle" aria-hidden="true">⋮⋮</span>}
+                    {canEdit && (
+                      <span
+                        className="sla-drag-handle"
+                        aria-hidden="true"
+                        title="Քաշել վերադասավորելու համար"
+                        onTouchStart={(e) => handleTouchStartReorder(e, item.id)}
+                        onTouchMove={handleTouchMoveReorder}
+                        onTouchEnd={handleTouchEndReorder}
+                        onTouchCancel={handleTouchEndReorder}
+                      >
+                        ⋮⋮
+                      </span>
+                    )}
                     <div className="sla-section-info">
                       <span className="sla-section-icon">📌</span>
                       <h4 className="sla-section-title">{item.title}</h4>
@@ -905,7 +1139,8 @@ export default function SetlistEditorApp() {
               return (
                 <React.Fragment key={item.id}>
                   <div
-                    className={`sla-song-card ${draggingItemId === item.id ? 'is-dragging' : ''} ${dropTargetItemId === item.id ? 'is-drop-target' : ''}`}
+                    data-item-id={item.id}
+                    className={`sla-song-card ${(draggingItemId === item.id || touchDraggingId === item.id) ? 'is-dragging is-touch-dragging' : ''} ${(dropTargetItemId === item.id || touchDropTargetId === item.id) ? 'is-drop-target is-touch-target' : ''}`}
                     draggable={canEdit}
                     onClick={() => {
                       const q = new URLSearchParams();
@@ -925,7 +1160,19 @@ export default function SetlistEditorApp() {
                     onDrop={e => { e.preventDefault(); reorderByItemId(draggingItemId, item.id); setDraggingItemId(null); setDropTargetItemId(null); }}
                     onDragEnd={() => { setDraggingItemId(null); setDropTargetItemId(null); }}
                   >
-                    {canEdit && <span className="sla-drag-handle" aria-hidden="true">⋮⋮</span>}
+                    {canEdit && (
+                      <span
+                        className="sla-drag-handle"
+                        aria-hidden="true"
+                        title="Քաշել վերադասավորելու համար"
+                        onTouchStart={(e) => handleTouchStartReorder(e, item.id)}
+                        onTouchMove={handleTouchMoveReorder}
+                        onTouchEnd={handleTouchEndReorder}
+                        onTouchCancel={handleTouchEndReorder}
+                      >
+                        ⋮⋮
+                      </span>
+                    )}
                     <span className="sla-song-num">{String(songCount).padStart(2, '0')}</span>
 
                     <div
@@ -1061,9 +1308,17 @@ export default function SetlistEditorApp() {
                 ) : quickResults.length > 0 ? (
                   quickResults.map((song, sIdx) => {
                     const isAdded = Boolean(addedIds[song.id]);
+                    const isSelected = selectedSongIds.has(song.id);
                     return (
-                      <div key={song.id} className="sla-drawer-item">
+                      <div
+                        key={song.id}
+                        className={`sla-drawer-item ${isSelected ? 'is-selected' : ''}`}
+                        onClick={() => toggleSongSelection(song.id)}
+                      >
                         <div className="sla-drawer-item-left">
+                          <div className={`sla-drawer-checkbox ${isSelected ? 'checked' : ''}`} aria-hidden="true">
+                            {isSelected ? '✓' : ''}
+                          </div>
                           <div
                             className="sla-song-cover"
                             style={{
@@ -1090,7 +1345,10 @@ export default function SetlistEditorApp() {
                         <button
                           type="button"
                           className={`sla-drawer-add-btn ${isAdded ? 'is-added' : ''}`}
-                          onClick={() => handleAddSong(song.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddSong(song.id);
+                          }}
                         >
                           {isAdded ? '✓ Ավելացված է' : '+ Ավելացնել'}
                         </button>
@@ -1104,10 +1362,31 @@ export default function SetlistEditorApp() {
                 )}
               </div>
             </div>
-            <div className="sla-sheet-footer">
-              <button type="button" className="sla-btn-primary" onClick={() => setIsQuickDrawerOpen(false)}>
-                Ավարտել
-              </button>
+            <div className="sla-sheet-footer" style={{ display: 'flex', gap: '8px' }}>
+              {selectedSongIds.size > 0 ? (
+                <>
+                  <button
+                    type="button"
+                    className="sla-btn-ghost"
+                    onClick={() => setSelectedSongIds(new Set())}
+                  >
+                    Մաքրել ({selectedSongIds.size})
+                  </button>
+                  <button
+                    type="button"
+                    className="sla-btn-primary"
+                    onClick={handleBatchAddSongs}
+                    disabled={isBatchAdding}
+                    style={{ flex: 1 }}
+                  >
+                    {isBatchAdding ? 'Ավելացվում են...' : `+ Ավելացնել ընտրվածները (${selectedSongIds.size})`}
+                  </button>
+                </>
+              ) : (
+                <button type="button" className="sla-btn-primary" onClick={() => setIsQuickDrawerOpen(false)} style={{ width: '100%' }}>
+                  Ավարտել
+                </button>
+              )}
             </div>
           </div>
         </div>,
@@ -1291,6 +1570,23 @@ export default function SetlistEditorApp() {
                   <span>Կիսվել (WhatsApp, Telegram...)</span>
                 </button>
               )}
+
+              {/* Formatted Text Copy Button */}
+              <button
+                type="button"
+                className="sla-share-native-btn"
+                style={{ background: 'rgba(0, 212, 255, 0.12)', borderColor: 'rgba(0, 212, 255, 0.3)', color: '#00d4ff', marginBottom: '16px' }}
+                onClick={() => {
+                  copySetlistAsText();
+                  setIsShareModalOpen(false);
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                <span>Պատճենել տեքստով (WhatsApp / Telegram)</span>
+              </button>
 
               {/* Public Link Section */}
               <div style={{ marginBottom: '18px' }}>

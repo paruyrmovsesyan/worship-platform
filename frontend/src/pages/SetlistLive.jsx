@@ -15,11 +15,70 @@ export default function SetlistLive() {
   const [error, setError] = useState(null);
   const [activeMetronomeItemId, setActiveMetronomeItemId] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [wakeLockActive, setWakeLockActive] = useState(false);
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
 
   const audioCtxRef = useRef(null);
   const intervalRef = useRef(null);
   const beatCountRef = useRef(0);
   const clockRef = useRef(null);
+  const wakeLockRef = useRef(null);
+
+  // Online / Offline listener
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Wake Lock (Prevent screen timeout during live performance)
+  useEffect(() => {
+    let isMounted = true;
+
+    const requestWakeLock = async () => {
+      if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && document.visibilityState === 'visible') {
+        try {
+          if (!wakeLockRef.current) {
+            const lock = await navigator.wakeLock.request('screen');
+            wakeLockRef.current = lock;
+            if (isMounted) setWakeLockActive(true);
+            lock.addEventListener('release', () => {
+              wakeLockRef.current = null;
+              if (isMounted) setWakeLockActive(false);
+            });
+          }
+        } catch (err) {
+          console.warn('Wake lock error:', err);
+        }
+      }
+    };
+
+    requestWakeLock();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        requestWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      isMounted = false;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (wakeLockRef.current) {
+        try {
+          wakeLockRef.current.release();
+        } catch {}
+        wakeLockRef.current = null;
+      }
+    };
+  }, []);
 
   const playClick = (isAccent = false) => {
     if (!audioCtxRef.current) return;
@@ -115,6 +174,35 @@ export default function SetlistLive() {
   const songItems = items.filter(i => i.item_type !== 'section');
   const totalSongs = songItems.length;
 
+  // Smart duration estimation
+  const durationInfo = React.useMemo(() => {
+    if (!songItems.length) return null;
+    let knownMinutes = 0;
+    let missingDurationCount = 0;
+
+    for (const s of songItems) {
+      const dur = parseInt(s.duration, 10);
+      if (dur > 0) {
+        knownMinutes += dur;
+      } else {
+        missingDurationCount++;
+      }
+    }
+    // Also consider section durations if any
+    for (const sec of items) {
+      if (sec.item_type === 'section') {
+        const secDur = parseInt(sec.duration, 10);
+        if (secDur > 0) knownMinutes += secDur;
+      }
+    }
+
+    const estimatedTotal = knownMinutes + (missingDurationCount * 4.5);
+    return {
+      minutes: Math.round(estimatedTotal),
+      isEstimate: missingDurationCount > 0
+    };
+  }, [items, songItems]);
+
   const formatTime = (date) => {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
   };
@@ -149,6 +237,21 @@ export default function SetlistLive() {
           <h1 className="sll-setlist-name">{setlist?.name}</h1>
           <div className="sll-header-sub">
             <span className="sll-song-count">{totalSongs} երգ</span>
+            {durationInfo && (
+              <span className="sll-dur-badge" title={durationInfo.isEstimate ? 'Մոտավոր ընդհանուր տևողություն' : 'Ընդհանուր տևողություն'}>
+                ⏱ {durationInfo.isEstimate ? `~${durationInfo.minutes}` : durationInfo.minutes} ր
+              </span>
+            )}
+            {wakeLockActive && (
+              <span className="sll-wake-pill" title="Էկրանը բեմի վրա չի անջատվի">
+                ☀️ Արթուն
+              </span>
+            )}
+            {!isOnline && (
+              <span className="sll-offline-pill" title="Անցանց ռեժիմ (քեշից)">
+                📡 Օֆլայն
+              </span>
+            )}
           </div>
         </div>
 
@@ -193,6 +296,9 @@ export default function SetlistLive() {
                     q.set('capo', String(item.capo));
                     q.set('capo_mode', '1');
                   }
+                  const token = new URLSearchParams(window.location.search).get('token');
+                  if (token) q.set('setlist_token', token);
+                  q.set('from_live', '1');
                   const qStr = q.toString();
                   navigate(`/song/${item.song_id}${qStr ? '?' + qStr : ''}`);
                 }}
