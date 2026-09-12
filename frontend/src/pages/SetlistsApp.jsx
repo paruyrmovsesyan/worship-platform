@@ -884,7 +884,7 @@ export default function SetlistsApp() {
             return (
               <div
                 key={list.id}
-                className={`sl-card sl-app-card animate-fade-in ${viewMode === 'list' ? 'sl-card-row' : ''}`}
+                className={`sl-card sl-app-card animate-fade-in ${viewMode === 'grid' ? 'sl-card-grid' : 'sl-card-row'}`}
                 style={{ animationDelay: `${Math.min(idx * 0.04, 0.4)}s` }}
                 onClick={() => navigate(`/setlists/${list.id}`)}
               >

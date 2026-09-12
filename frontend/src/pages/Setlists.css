@@ -1072,12 +1072,12 @@ body.is-pwa .setlists-page.sl-pwa-enhanced {
 /* Grid & List Views */
 .sl-app-container.sl-view-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 @media (min-width: 600px) {
   .sl-app-container.sl-view-grid {
-    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 16px;
   }
 }
@@ -1091,24 +1091,190 @@ body.is-pwa .setlists-page.sl-pwa-enhanced {
 .sl-card.sl-app-card {
   position: relative;
   overflow: visible;
-  padding: 14px 16px;
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015));
   border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 .sl-card.sl-app-card:hover {
   border-color: rgba(0, 240, 255, 0.3);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
-.sl-card-row {
-  padding: 10px 14px !important;
+
+/* ============================================================
+   GRID VIEW (Vertical card, 2 columns on mobile)
+   ============================================================ */
+.sl-card.sl-app-card.sl-card-grid {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 12px;
+  border-radius: 18px;
+  min-width: 0;
+  box-sizing: border-box;
 }
+
+.sl-card-grid .sl-app-cover {
+  width: 100%;
+  height: 94px;
+  border-radius: 14px;
+  margin: 0 0 10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.sl-card-grid .sl-app-cover svg {
+  width: 28px;
+  height: 28px;
+}
+
+.sl-card-grid .sl-app-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  gap: 4px;
+}
+
+.sl-card-grid .sl-app-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-text-primary);
+}
+
+.sl-card-grid .sl-app-meta-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 4px 0 6px 0;
+}
+
+.sl-card-grid .sl-app-date-chip {
+  font-size: 0.73rem;
+  padding: 0;
+  gap: 4px;
+}
+
+.sl-card-grid .sl-app-date-chip svg {
+  width: 11px;
+  height: 11px;
+}
+
+.sl-card-grid .sl-app-rel-badge {
+  font-size: 0.68rem;
+  padding: 1px 6px;
+  border-radius: 5px;
+}
+
+.sl-card-grid .sl-songs-count {
+  font-size: 0.7rem;
+  padding: 1px 5px;
+}
+
+.sl-card-grid .sl-app-bottom-meta {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  width: 100%;
+}
+
+.sl-card-grid .sl-app-role-badge {
+  max-width: 65px;
+  font-size: 0.68rem;
+  padding: 2px 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sl-card-grid .sl-app-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sl-card-grid .sl-app-btn-live {
+  padding: 4px 6px;
+  font-size: 0.72rem;
+  gap: 2px;
+}
+
+.sl-card-grid .sl-app-btn-live svg {
+  width: 12px;
+  height: 12px;
+}
+
+.sl-card-grid .sl-app-menu-btn {
+  width: 28px;
+  height: 28px;
+  font-size: 1.1rem;
+}
+
+/* ============================================================
+   LIST VIEW (Horizontal row, single column)
+   ============================================================ */
+.sl-card.sl-app-card.sl-card-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 11px 14px;
+  border-radius: 16px;
+  gap: 12px;
+}
+
 .sl-card-row .sl-app-cover {
-  width: 48px !important;
-  height: 48px !important;
-  border-radius: 12px !important;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  margin: 0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+.sl-card-row .sl-app-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
 .sl-card-row .sl-app-name {
-  font-size: 1.05rem !important;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sl-card-row .sl-app-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.sl-card-row .sl-app-bottom-meta {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .sl-app-info {
