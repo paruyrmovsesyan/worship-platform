@@ -8,6 +8,7 @@ import { sortSavedSongs } from '../utils/savedSongs';
 import { fallbackNews, getCachedNewsList, fetchNewsList, formatNewsDate, formatNewsVersion, getNewsImageUrl } from '../utils/news';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
+import { useHorizontalDragScroll } from '../hooks/useHorizontalDragScroll';
 import './MobileHub.css';
 
 export default function MobileHub() {
@@ -23,6 +24,9 @@ export default function MobileHub() {
   const { guardPath } = usePwaOfflineGuard();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [lastSyncAt, setLastSyncAt] = useState('');
+
+  const favScrollRef = useHorizontalDragScroll();
+  const recentScrollRef = useHorizontalDragScroll();
 
   const formatSyncStamp = (value) => {
     if (!value) return '—';
@@ -84,7 +88,7 @@ export default function MobileHub() {
       if (cachedSongs) {
         const parsed = JSON.parse(cachedSongs);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setRecentSongs(parsed.slice(0, 5));
+          setRecentSongs(parsed.slice(0, 10));
         }
       }
       const cachedFavs = localStorage.getItem('wp_user_favorites_cache');
@@ -99,7 +103,7 @@ export default function MobileHub() {
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
-          setRecentSongs(data.slice(0, 5));
+          setRecentSongs(data.slice(0, 10));
           try {
             localStorage.setItem('wp_songs_cache', JSON.stringify(data));
           } catch {}
@@ -181,7 +185,7 @@ export default function MobileHub() {
     'saved_newest',
     song => getLocalizedTitle(song, language),
     language
-  ).slice(0, 6), [favorites, language]);
+  ).slice(0, 10), [favorites, language]);
 
   return (
     <div className="mobile-hub animate-fade-in">
@@ -342,7 +346,7 @@ export default function MobileHub() {
               </button>
             </div>
             
-            <div className="hub-horizontal">
+            <div className="hub-horizontal" ref={favScrollRef}>
               {visibleFavorites.map((song, i) => {
                 const songId = song.song_id || song.id;
                 const savedKey = song.target_key || song.song_key || '?';
@@ -383,7 +387,7 @@ export default function MobileHub() {
             <h3>{t('hub.recentChords')}</h3>
           </div>
           
-          <div className="recent-songs-scroll">
+          <div className="recent-songs-scroll" ref={recentScrollRef}>
             {recentSongs.map((song, i) => (
               <div key={song.id} className="recent-song-card" onClick={() => guardPath(`/song/${song.id}`, () => navigate(`/song/${song.id}`))}>
                 <div

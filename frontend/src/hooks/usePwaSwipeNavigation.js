@@ -15,6 +15,34 @@ const isDetailInteractiveTarget = (target) => {
   return Boolean(target.closest('input, textarea, select, button, a, [role="button"], [contenteditable="true"], .no-swipe-nav'));
 };
 
+const isHorizontalScrollTarget = (target) => {
+  if (!target || typeof target.closest !== 'function') return false;
+
+  // 1. Dedicated horizontal containers, cards, and carousels
+  if (
+    target.closest(
+      '.no-swipe-nav, [data-no-swipe], .hub-horizontal, .recent-songs-scroll, .hub-fav-card, .recent-song-card, .sla-song-card, .sla-item-list, .song-filter-nav, .tag-scroll, .category-pills, .chip-group'
+    )
+  ) {
+    return true;
+  }
+
+  // 2. Any ancestor with horizontal scroll overflow
+  let el = target;
+  while (el && el !== document.body && el !== document.documentElement) {
+    try {
+      const style = window.getComputedStyle(el);
+      const overflowX = style.overflowX;
+      if ((overflowX === 'auto' || overflowX === 'scroll') && el.scrollWidth > el.clientWidth) {
+        return true;
+      }
+    } catch (_) {}
+    el = el.parentElement;
+  }
+
+  return false;
+};
+
 const getNavIndex = (pathname, routes) => routes.findIndex((route) => route.path === pathname);
 
 const getFallbackBackPath = (pathname) => {
@@ -125,6 +153,7 @@ export function usePwaSwipeNavigation({
       isPrimaryRoute = getNavIndex(pathname, routes) >= 0;
 
       if (isTextEntryTarget(event.target)) return;
+      if (isHorizontalScrollTarget(event.target)) return;
       if (!isPrimaryRoute && isDetailInteractiveTarget(event.target)) return;
       if (pathname.startsWith('/song/') && (window.location.search.includes('setlist_') || window.location.search.includes('list='))) {
         return;
@@ -142,6 +171,11 @@ export function usePwaSwipeNavigation({
 
     const onTouchMove = (event) => {
       if (!tracking || event.touches.length !== 1) return;
+      if (isHorizontalScrollTarget(event.target)) {
+        tracking = false;
+        horizontalIntent = false;
+        return;
+      }
 
       const touch = event.touches[0];
       const dx = touch.clientX - startX;

@@ -370,11 +370,13 @@ body.light-mode .upcoming-card-icon {
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  scroll-snap-type: x proximity;
-  scroll-padding-inline: 0;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
   scrollbar-width: none;
-  margin: 0;
-  padding: 0 0 16px;
+  margin: 0 -20px;
+  padding: 0 20px 16px 20px;
 }
 
 .hub-horizontal::-webkit-scrollbar {
@@ -384,6 +386,8 @@ body.light-mode .upcoming-card-icon {
 .hub-fav-card {
   min-width: 112px;
   width: 112px;
+  flex: 0 0 112px;
+  flex-shrink: 0;
   padding: 0;
   border: 0;
   border-radius: 12px;
@@ -395,7 +399,9 @@ body.light-mode .upcoming-card-icon {
   font-family: inherit;
   text-align: left;
   cursor: pointer;
-  scroll-snap-align: start;
+  touch-action: pan-x pan-y;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .hub-fav-cover {
@@ -509,6 +515,10 @@ body.light-mode .upcoming-card-icon {
   display: flex;
   gap: 12px;
   overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
   padding-bottom: 16px;
   margin: 0 -20px;
   padding-left: 20px;
@@ -523,10 +533,15 @@ body.light-mode .upcoming-card-icon {
 .recent-song-card {
   min-width: 112px;
   width: 112px;
+  flex: 0 0 112px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
   cursor: pointer;
+  touch-action: pan-x pan-y;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .recent-song-card:hover .recent-song-cover {
