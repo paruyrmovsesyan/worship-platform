@@ -5,6 +5,7 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
   const isPWA = useIsPWA();
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const startX = useRef(0);
   const startY = useRef(0);
   const currentY = useRef(0);
   const isValidPull = useRef(false);
@@ -17,8 +18,16 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
 
     const shouldIgnoreTouch = (target) => {
       if (!target) return false;
-      // Do not allow pull-to-refresh if touching dedicated drag handles, buttons, modals, or form inputs
-      if (target.closest('.sla-drag-handle, [data-drag-handle], input, textarea, select, audio, video, button, .modal, [role="dialog"]')) {
+      // If user is actively typing in a focused input or textarea, don't interrupt typing
+      if (document.activeElement === target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        return true;
+      }
+      // Dedicated setlist drag-and-drop elements, audio/video players, and modal dialogs
+      if (
+        target.closest(
+          '.sla-drag-handle, [data-drag-handle], .sla-song-card, .sla-section-card, [data-item-id], .sla-item-list, [data-no-ptr], textarea, select, audio, video, .modal, [role="dialog"]'
+        )
+      ) {
         return true;
       }
       // Do not allow pull-to-refresh if currently dragging or in reorder mode
@@ -33,7 +42,13 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
     };
 
     const handleTouchStart = (e) => {
-      if (window.scrollY > 0 || isRefreshing) {
+      const scrollY = Math.max(
+        window.scrollY || 0,
+        window.pageYOffset || 0,
+        document.documentElement?.scrollTop || 0,
+        document.body?.scrollTop || 0
+      );
+      if (scrollY > 0 || isRefreshing) {
         isValidPull.current = false;
         return;
       }
@@ -46,6 +61,7 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
       const touch = e.touches[0];
       if (!touch) return;
 
+      startX.current = touch.clientX;
       startY.current = touch.clientY;
       currentY.current = startY.current;
       isValidPull.current = true;
@@ -53,7 +69,13 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
     };
 
     const handleTouchMove = (e) => {
-      if (!isValidPull.current || window.scrollY > 0 || isRefreshing) return;
+      const scrollY = Math.max(
+        window.scrollY || 0,
+        window.pageYOffset || 0,
+        document.documentElement?.scrollTop || 0,
+        document.body?.scrollTop || 0
+      );
+      if (!isValidPull.current || scrollY > 0 || isRefreshing) return;
 
       if (
         (typeof window !== 'undefined' && window.__wpIsDragging) ||
@@ -68,12 +90,21 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
       const touch = e.touches[0];
       if (!touch) return;
 
-      currentY.current = touch.clientY;
-      const diff = currentY.current - startY.current;
+      const diffX = touch.clientX - startX.current;
+      const diffY = touch.clientY - startY.current;
 
-      if (diff > 0) {
+      // Cancel pull if the user's gesture is primarily horizontal (e.g. scrolling carousels or swipe tabs)
+      if (Math.abs(diffX) > Math.abs(diffY) + 4 && Math.abs(diffX) > 12) {
+        isValidPull.current = false;
+        setPullDistance(0);
+        return;
+      }
+
+      currentY.current = touch.clientY;
+
+      if (diffY > 0) {
         // Deep pull friction: requiring deep downward swipe to trigger refresh
-        const distance = Math.min(diff * 0.45, maxPull);
+        const distance = Math.min(diffY * 0.45, maxPull);
         setPullDistance(distance);
 
         if (distance >= refreshThreshold && !hasVibratedRef.current) {
