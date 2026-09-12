@@ -10,6 +10,14 @@
     document.head.appendChild(script);
   })();
 
+  (function ensureErrorReporterScript() {
+    if (window.__wp_error_reporter_initialized || document.querySelector('script[data-wp-error-reporter="1"]')) return;
+    var script = document.createElement("script");
+    script.src = "/error_reporter.js?v=1";
+    script.dataset.wpErrorReporter = "1";
+    document.head.appendChild(script);
+  })();
+
   var PAGE_APP_MODES_CACHE_KEY = "wp_page_app_modes_v1";
   var APP_SOURCE_SESSION_KEY = "wp_active_app_source";
   var pageAppModesCache = null;

@@ -75,6 +75,21 @@ try {
 
     $conn->close();
 
+    // Recent Critical System Errors
+    try {
+        require_once __DIR__ . '/error_service.php';
+        $recentErrors = wp_error_get_logs(['level' => 'fatal'], 3);
+        foreach ($recentErrors as $err) {
+            $items[] = [
+                'type'    => 'error',
+                'message' => '🚨 ' . (($err['environment'] ?? '') === 'app' ? 'PWA: ' : 'System: ') . mb_substr((string)($err['message'] ?? ''), 0, 50),
+                'sub'     => (!empty($err['occurrences']) && $err['occurrences'] > 1 ? "({$err['occurrences']}x) " : '') . (!empty($err['file']) ? basename((string)$err['file']) : (string)($err['environment'] ?? 'crash')),
+                'time'    => $err['last_seen'] ?? date('Y-m-d H:i:s'),
+                'link'    => '/admin_errors.php'
+            ];
+        }
+    } catch (Throwable $_) {}
+
     // Sort by time desc
     usort($items, fn($a, $b) => strcmp((string)$b['time'], (string)$a['time']));
     $items = array_slice($items, 0, 20);

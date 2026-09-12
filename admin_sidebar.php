@@ -18,6 +18,7 @@ $navItems = [
     'faq'        => ['label' => __('FAQ'),          'href' => '/admin_faq.php',         'icon' => '<circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line>'],
     'status'      => ['label' => __('System Status'), 'href' => '/admin_status.php',      'icon' => '<path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>'],
     'server_load' => ['label' => __('Server Load'),   'href' => '/admin_server_load.php', 'icon' => '<rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line>'],
+    'errors'      => ['label' => ($adminLang === 'ru' ? 'Монитор ошибок' : ($adminLang === 'en' ? 'Error Logs' : 'Սխալների մոնիտոր')), 'href' => '/admin_errors.php', 'icon' => '<polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'],
 ];
 
 $mobileNavKeys = ['dashboard', 'songs', 'statistics', 'settings'];
