@@ -13,6 +13,64 @@ export default class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error("Uncaught error in React ErrorBoundary:", error, errorInfo);
+    try {
+      const isApp = window.matchMedia('(display-mode: standalone)').matches ||
+                    window.navigator.standalone === true ||
+                    document.referrer.includes('android-app://') ||
+                    sessionStorage.getItem('wp_active_app_source') === 'pwa';
+      
+      let userId = null;
+      let userEmail = null;
+      try {
+        const rawUser = localStorage.getItem('user') || localStorage.getItem('auth_user') || localStorage.getItem('worship_user');
+        if (rawUser) {
+          const parsed = JSON.parse(rawUser);
+          if (parsed) {
+            userId = parsed.id || null;
+            userEmail = parsed.email || null;
+          }
+        }
+      } catch (_) {}
+
+      const fullStack = (error?.stack || String(error)) + (errorInfo?.componentStack ? '\n\nReact Component Stack:\n' + errorInfo.componentStack : '');
+      const payload = {
+        level: 'fatal',
+        environment: isApp ? 'app' : 'web',
+        message: 'React Error: ' + (error?.message || String(error)),
+        file: error?.fileName || window.location.pathname,
+        line: error?.lineNumber || null,
+        url: window.location.href,
+        stack_trace: fullStack,
+        user_id: userId,
+        user_email: userEmail,
+        device_info: {
+          screen: `${window.screen.width}x${window.screen.height}`,
+          viewport: `${window.innerWidth}x${window.innerHeight}`,
+          online: navigator.onLine !== false,
+          userAgent: navigator.userAgent
+        }
+      };
+
+      if (typeof window.reportAppError === 'function') {
+        window.reportAppError(error, {
+          level: 'fatal',
+          prefix: 'React ErrorBoundary',
+          stack: fullStack,
+        });
+      }
+
+      const body = JSON.stringify(payload);
+      if (typeof navigator.sendBeacon === 'function') {
+        navigator.sendBeacon('/error_api.php', new Blob([body], { type: 'application/json' }));
+      } else {
+        fetch('/error_api.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: body,
+          keepalive: true
+        }).catch(() => {});
+      }
+    } catch (_) {}
   }
 
   render() {

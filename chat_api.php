@@ -597,8 +597,8 @@ if ($action === 'get_messages' && $method === 'GET') {
                 m.setlist_id, 
                 m.created_at,
                 s.name as setlist_name,
-                s.event_date as setlist_date,
-                s.type as setlist_type,
+                s.service_date as setlist_date,
+                s.service_type as setlist_type,
                 (SELECT COUNT(*) FROM setlist_items si WHERE si.setlist_id = s.id) as setlist_items_count
             FROM chat_messages m
             JOIN users u ON m.user_id = u.id
@@ -674,13 +674,13 @@ if ($action === 'send_message' && $method === 'POST') {
         if (!wp_chat_user_can_read_setlist($pdo, $setlist_id, $uid)) {
             out(["error" => "Setlist access denied"], 403);
         }
-        $stS = $pdo->prepare("SELECT name, event_date, type, (SELECT COUNT(*) FROM setlist_items si WHERE si.setlist_id = setlists.id) as items_count FROM setlists WHERE id = ? LIMIT 1");
+        $stS = $pdo->prepare("SELECT name, service_date, service_type, (SELECT COUNT(*) FROM setlist_items si WHERE si.setlist_id = setlists.id) as items_count FROM setlists WHERE id = ? LIMIT 1");
         $stS->execute([$setlist_id]);
         $sRow = $stS->fetch(PDO::FETCH_ASSOC);
         if ($sRow) {
             $setlist_name = $sRow['name'];
-            $setlist_date = $sRow['event_date'];
-            $setlist_type = $sRow['type'];
+            $setlist_date = $sRow['service_date'];
+            $setlist_type = $sRow['service_type'];
             $setlist_items_count = (int)($sRow['items_count'] ?? 0);
             if ($message === '') {
                 $message = 'Հրավիրում եմ միանալ «' . ($setlist_name ?: 'Երգացանկ') . '» երգացանկին';

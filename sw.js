@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v406";
+const CACHE_VERSION = "worship-v408";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -31,6 +31,7 @@ const APP_SHELL = [
   "/nav.css",
   "/loader.js",
   "/pwa-init.js",
+  "/error_reporter.js",
   "/web-activity.js",
   "/app.js",
   "/site_guard.js",
