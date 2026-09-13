@@ -7,6 +7,7 @@ error_reporting(E_ALL);
 require_once __DIR__ . '/runtime_config.php';
 require_once __DIR__ . '/translation_runtime.php';
 require_once __DIR__ . '/auth_bootstrap.php';
+require_once __DIR__ . '/version_config.php';
 session_write_close();
 $pdo = wp_runtime_open_pdo();
 
@@ -96,7 +97,7 @@ function wp_api_json_error(string $message, int $status = 500): void {
 
 function wp_api_require_admin_access(): void {
     require_once __DIR__ . '/admin_access.php';
-    $config = wp_version_load();
+    $config = function_exists('wp_version_load') ? wp_version_load() : [];
     $user = wp_admin_get_current_user();
 
     if (!$user && !wp_admin_has_logout_lock(null)) {
@@ -188,7 +189,7 @@ if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'popular'
 
 // ---------- SITE CONFIG (public) ----------
 if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'site_config') {
-    $config = wp_version_load();
+    $config = function_exists('wp_version_load') ? wp_version_load() : [];
     echo json_encode([
         'ok' => true,
         'hero_title1' => $config['landing_hero_title1'] ?? 'Առաջնորդի՛ր Պաշտամունքը',
@@ -200,7 +201,7 @@ if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'site_con
 
 // ---------- ABOUT CONFIG (public) ----------
 if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'about_config') {
-    $config = wp_version_load();
+    $config = function_exists('wp_version_load') ? wp_version_load() : [];
     echo json_encode([
         'ok' => true,
         'hero_title' => $config['about_hero_title'] ?? 'Մեր Մասին',
@@ -221,7 +222,7 @@ if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'about_co
 
 // ---------- PRIVACY CONFIG (public) ----------
 if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'privacy_config') {
-    $config = wp_version_load();
+    $config = function_exists('wp_version_load') ? wp_version_load() : [];
     echo json_encode([
         'ok' => true,
         'title' => $config['privacy_title'] ?? 'Գաղտնիության Քաղաքականություն',
@@ -234,7 +235,7 @@ if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'privacy_
 
 // ---------- TERMS CONFIG (public) ----------
 if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'terms_config') {
-    $config = wp_version_load();
+    $config = function_exists('wp_version_load') ? wp_version_load() : [];
     echo json_encode([
         'ok' => true,
         'title' => $config['terms_title'] ?? 'Օգտագործման Պայմաններ',
@@ -247,7 +248,7 @@ if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'terms_co
 
 // ---------- COOKIES CONFIG (public) ----------
 if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'cookies_config') {
-    $config = wp_version_load();
+    $config = function_exists('wp_version_load') ? wp_version_load() : [];
     echo json_encode([
         'ok' => true,
         'title' => $config['cookies_title'] ?? 'Cookie-ների Քաղաքականություն',

@@ -505,6 +505,7 @@ function wp_version_defaults(): array {
         'site_contact_address' => '',
         'site_social_facebook' => '',
         'site_social_instagram' => '',
+        'site_social_youtube' => '',
         'landing_hero_title1' => 'Առաջնորդի՛ր Պաշտամունքը',
         'landing_hero_title2' => 'Մեկ Միասնական Հարթակում',
         'landing_hero_subtitle' => 'Ակորդներ, երգացանկեր և թիմային համագործակցություն — ամեն ինչ մեկ հարթակում։',
