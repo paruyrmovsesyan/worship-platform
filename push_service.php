@@ -371,7 +371,7 @@ function wp_push_load_subscriptions(): array {
             }
             $result->free();
         }
-        $conn->close();
+        // NOTE: Do NOT close $conn here — wp_runtime_open_mysqli() returns a shared connection
     } catch (Throwable $e) {}
 
     if (empty($normalized)) {
@@ -740,11 +740,7 @@ function wp_push_upsert_subscription(array $subscription, array $meta = []): arr
     $now = wp_version_now_iso();
     $incomingDeviceId = mb_substr(trim((string)($meta['device_id'] ?? '')), 0, 120);
     $incomingDeviceScope = in_array((string)($meta['device_scope'] ?? 'main'), ['main', 'admin'], true) ? (string)$meta['device_scope'] : 'main';
-    $clearUser = !empty($meta['clear_user']);
-    $incomingUserId = (int)($meta['user_id'] ?? 0);
-    $resolvedUserId = $clearUser ? 0 : ($incomingUserId > 0 ? $incomingUserId : (int)($existing['user_id'] ?? 0));
-    $resolvedUserName = $clearUser ? '' : ($incomingUserId > 0 && !empty($meta['user_name']) ? (string)$meta['user_name'] : (string)($existing['user_name'] ?? ''));
-    $resolvedUserEmail = $clearUser ? '' : ($incomingUserId > 0 && !empty($meta['user_email']) ? (string)$meta['user_email'] : (string)($existing['user_email'] ?? ''));
+
     $existing = null;
     $deviceMatch = null;
     foreach (wp_push_load_subscriptions() as $row) {
@@ -764,6 +760,12 @@ function wp_push_upsert_subscription(array $subscription, array $meta = []): arr
     if ($existing === null) {
         $existing = $deviceMatch;
     }
+
+    $clearUser = !empty($meta['clear_user']);
+    $incomingUserId = (int)($meta['user_id'] ?? 0);
+    $resolvedUserId = $clearUser ? 0 : ($incomingUserId > 0 ? $incomingUserId : (int)($existing['user_id'] ?? 0));
+    $resolvedUserName = $clearUser ? '' : ($incomingUserId > 0 && !empty($meta['user_name']) ? (string)$meta['user_name'] : (string)($existing['user_name'] ?? ''));
+    $resolvedUserEmail = $clearUser ? '' : ($incomingUserId > 0 && !empty($meta['user_email']) ? (string)$meta['user_email'] : (string)($existing['user_email'] ?? ''));
 
     $previousId = (string)($existing['id'] ?? '');
     $nextPermissionState = (string)($meta['permission_state'] ?? 'granted');
@@ -819,11 +821,7 @@ function wp_push_sync_client_status(array $payload, array $meta = []): array {
     $deviceId = mb_substr(trim((string)($payload['device_id'] ?? '')), 0, 120);
     $deviceScope = in_array((string)($payload['device_scope'] ?? 'main'), ['main', 'admin'], true) ? (string)$payload['device_scope'] : 'main';
     $now = wp_version_now_iso();
-    $clearUser = !empty($meta['clear_user']);
-    $incomingUserId = (int)($meta['user_id'] ?? 0);
-    $resolvedUserId = $clearUser ? 0 : ($incomingUserId > 0 ? $incomingUserId : (int)($existing['user_id'] ?? 0));
-    $resolvedUserName = $clearUser ? '' : ($incomingUserId > 0 && !empty($meta['user_name']) ? (string)$meta['user_name'] : (string)($existing['user_name'] ?? ''));
-    $resolvedUserEmail = $clearUser ? '' : ($incomingUserId > 0 && !empty($meta['user_email']) ? (string)$meta['user_email'] : (string)($existing['user_email'] ?? ''));
+
     $existing = null;
     $deviceMatch = null;
     foreach (wp_push_load_subscriptions() as $row) {
@@ -843,6 +841,12 @@ function wp_push_sync_client_status(array $payload, array $meta = []): array {
     if ($existing === null) {
         $existing = $deviceMatch;
     }
+
+    $clearUser = !empty($meta['clear_user']);
+    $incomingUserId = (int)($meta['user_id'] ?? 0);
+    $resolvedUserId = $clearUser ? 0 : ($incomingUserId > 0 ? $incomingUserId : (int)($existing['user_id'] ?? 0));
+    $resolvedUserName = $clearUser ? '' : ($incomingUserId > 0 && !empty($meta['user_name']) ? (string)$meta['user_name'] : (string)($existing['user_name'] ?? ''));
+    $resolvedUserEmail = $clearUser ? '' : ($incomingUserId > 0 && !empty($meta['user_email']) ? (string)$meta['user_email'] : (string)($existing['user_email'] ?? ''));
 
     if ($existing === null && $deviceId === '') {
         return ['ok' => true, 'synced' => false, 'permission' => $permission, 'subscribed' => $subscribed];
@@ -917,16 +921,22 @@ function wp_push_load_queue(): array {
             continue;
         }
 
-        $normalized[] = [
-            'id' => (string)($row['id'] ?? ''),
-            'subscription_id' => (string)$row['subscription_id'],
-            'title' => mb_substr(trim((string)($row['title'] ?? '')), 0, 160),
-            'body' => mb_substr(trim((string)($row['body'] ?? '')), 0, 600),
-            'url' => mb_substr(trim((string)($row['url'] ?? '')), 0, 260),
-            'icon' => mb_substr(trim((string)($row['icon'] ?? '')), 0, 260),
-            'tag' => mb_substr(trim((string)($row['tag'] ?? '')), 0, 120),
-            'created_at' => wp_version_normalize_datetime($row['created_at'] ?? '') ?: wp_version_now_iso(),
-        ];
+        $item = $row;
+        $item['id'] = (string)($row['id'] ?? '');
+        $item['subscription_id'] = (string)$row['subscription_id'];
+        $item['title'] = mb_substr(trim((string)($row['title'] ?? '')), 0, 160);
+        $item['body'] = mb_substr(trim((string)($row['body'] ?? '')), 0, 600);
+        $item['url'] = mb_substr(trim((string)($row['url'] ?? '')), 0, 260);
+        $item['icon'] = mb_substr(trim((string)($row['icon'] ?? '')), 0, 260);
+        $item['tag'] = mb_substr(trim((string)($row['tag'] ?? '')), 0, 120);
+        if (isset($row['type'])) {
+            $item['type'] = (string)$row['type'];
+        }
+        if (isset($row['call_id'])) {
+            $item['call_id'] = (int)$row['call_id'];
+        }
+        $item['created_at'] = wp_version_normalize_datetime($row['created_at'] ?? '') ?: wp_version_now_iso();
+        $normalized[] = $item;
     }
 
     return $normalized;
@@ -1010,7 +1020,7 @@ function wp_push_enqueue(array $subscriptionIds, array $payload): int {
             continue;
         }
 
-        $queue[] = [
+        $item = array_merge($payload, [
             'id' => bin2hex(random_bytes(8)),
             'subscription_id' => $subscriptionId,
             'title' => mb_substr(trim((string)($payload['title'] ?? '')), 0, 160),
@@ -1018,8 +1028,11 @@ function wp_push_enqueue(array $subscriptionIds, array $payload): int {
             'url' => mb_substr(trim((string)($payload['url'] ?? '/')), 0, 260) ?: '/',
             'icon' => mb_substr(trim((string)($payload['icon'] ?? '/wolarm_youth.png')), 0, 260) ?: '/wolarm_youth.png',
             'tag' => mb_substr(trim((string)($payload['tag'] ?? 'worship-general')), 0, 120) ?: 'worship-general',
+            'type' => mb_substr(trim((string)($payload['type'] ?? '')), 0, 60),
+            'call_id' => (int)($payload['call_id'] ?? 0),
             'created_at' => $now,
-        ];
+        ]);
+        $queue[] = $item;
         $count++;
     }
 
@@ -1219,7 +1232,9 @@ function wp_push_post_signal(string $endpoint, array $headers, string $payload =
         curl_exec($ch);
         $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         $error = (string)curl_error($ch);
-        curl_close($ch);
+        if (PHP_VERSION_ID < 80000) {
+            curl_close($ch);
+        }
     } else {
         $context = stream_context_create([
             'http' => [

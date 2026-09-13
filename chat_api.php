@@ -1017,11 +1017,14 @@ if ($action === 'start_call' && $method === 'POST') {
         $senderName = $_SESSION['name'] ?? $_SESSION['username'] ?? 'Someone';
         $pushTitle = "📞 " . wp_chat_compact_push_title((string)$senderName);
         $pushBody = "Մուտքային աուդիոզանգ...";
-        wp_push_send_to_user($pdo, $target_id, $pushTitle, $pushBody, "/chat/$chat_id?call_id=$call_id", [
+        $pushRes = wp_push_send_to_user($pdo, $target_id, $pushTitle, $pushBody, "/chat/$chat_id?call_id=$call_id", [
             'type' => 'call',
             'tag' => "worship-call-$call_id",
             'call_id' => $call_id
         ]);
+        if (empty($pushRes['ok'])) {
+            error_log("Call push to user $target_id: " . ($pushRes['message'] ?? 'not sent'));
+        }
     } catch (Throwable $pushErr) {
         error_log('Call push notification failed (non-fatal): ' . $pushErr->getMessage());
     }

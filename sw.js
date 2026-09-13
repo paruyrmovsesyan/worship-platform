@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v412";
+const CACHE_VERSION = "worship-v413";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -467,19 +467,28 @@ async function handlePushEvent(event) {
     };
   }
 
+  let callId = payload.call_id ? Number(payload.call_id) : 0;
+  if (!callId && payload.url && payload.url.includes("call_id=")) {
+    try {
+      const u = new URL(payload.url, self.location.origin);
+      callId = Number(u.searchParams.get("call_id") || 0);
+    } catch(e) {}
+  }
+
   const isCall = payload.type === 'call' ||
+                 callId > 0 ||
                  (payload.url && payload.url.includes('call_id')) ||
-                 (payload.title && payload.title.includes('📞'));
+                 (payload.title && (payload.title.includes('📞') || payload.title.toLowerCase().includes('զանգ')));
 
   const options = {
     body: payload.body || "",
     icon: payload.icon || "/wolarm_youth.png",
     badge: payload.icon || "/wolarm_youth.png",
-    tag: payload.tag || (isCall ? "worship-call-" + Date.now() : "worship-general"),
+    tag: payload.tag || (isCall ? "worship-call-" + (callId || Date.now()) : "worship-general"),
     renotify: true,
     data: {
       url: payload.url || "/main.html",
-      call_id: payload.call_id || 0,
+      call_id: callId,
       is_call: isCall
     },
   };
@@ -493,7 +502,24 @@ async function handlePushEvent(event) {
     ];
   }
 
-  return self.registration.showNotification(payload.title || "Worship Platform", options);
+  try {
+    return await self.registration.showNotification(payload.title || "Worship Platform", options);
+  } catch (err) {
+    // Safari on iOS / some WebKit versions reject showNotification if actions or vibrate are included.
+    // Fall back to a standard notification so incoming calls and messages are always displayed!
+    const safeOptions = {
+      body: payload.body || "",
+      icon: payload.icon || "/wolarm_youth.png",
+      badge: payload.icon || "/wolarm_youth.png",
+      tag: options.tag || "worship-general",
+      data: options.data
+    };
+    try {
+      return await self.registration.showNotification(payload.title || "Worship Platform", safeOptions);
+    } catch (fallbackErr) {
+      console.error("Critical: showNotification fallback failed", fallbackErr);
+    }
+  }
 }
 
 async function fetchQueuedPushPayload() {
@@ -503,6 +529,9 @@ async function fetchQueuedPushPayload() {
       return null;
     }
 
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
+
     const response = await fetch("/push_api.php?action=pull", {
       method: "POST",
       headers: {
@@ -511,7 +540,10 @@ async function fetchQueuedPushPayload() {
       body: JSON.stringify({
         endpoint: subscription.endpoint,
       }),
+      signal: controller ? controller.signal : undefined
     });
+
+    if (timeoutId) clearTimeout(timeoutId);
 
     if (!response.ok) {
       return null;

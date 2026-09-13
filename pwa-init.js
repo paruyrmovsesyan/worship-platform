@@ -945,6 +945,22 @@
           var isLoggedIn = !!(data && data.logged_in && data.user_id);
           var nextState = isLoggedIn ? ("user:" + String(data.user_id)) : "guest";
 
+          if (isLoggedIn) {
+            try {
+              localStorage.setItem("worship_user", JSON.stringify({
+                id: data.user_id,
+                user_id: data.user_id,
+                name: data.user_name || data.name || "",
+                username: data.username || "",
+                email: data.user_email || data.email || ""
+              }));
+            } catch (e) {}
+
+            if (window.WPPushManager && typeof window.WPPushManager.syncWithUser === "function") {
+              window.WPPushManager.syncWithUser(data.user_id, data.user_name || data.name || "", data.user_email || data.email || "");
+            }
+          }
+
           if (isLoggedIn && window.WPInstallTracker && typeof window.WPInstallTracker.forceSyncCurrentInstall === "function") {
             window.WPInstallTracker.forceSyncCurrentInstall();
           } else if (nextState === "guest" && lastAuthState !== "guest" && window.WPInstallTracker && typeof window.WPInstallTracker.clearCurrentInstallIdentity === "function") {
@@ -1538,7 +1554,21 @@
         setSessionHidden(true);
         hideBanner();
       },
-      clearSuppression: clearPromptSuppression
+      clearSuppression: clearPromptSuppression,
+      syncWithUser: async function(userId, userName, userEmail) {
+        if (!isPushSupported) return;
+        try {
+          var registration = await navigator.serviceWorker.ready;
+          var subscription = await registration.pushManager.getSubscription();
+          if (subscription) {
+            await syncPushStatus(subscription, {
+              user_id: Number(userId || 0),
+              user_name: String(userName || ""),
+              user_email: String(userEmail || "")
+            });
+          }
+        } catch (e) {}
+      }
     };
     window.dispatchEvent(new CustomEvent("wp-push-manager-ready"));
 
