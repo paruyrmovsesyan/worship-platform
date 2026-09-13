@@ -5568,6 +5568,47 @@ $csrfToken = wp_admin_updates_csrf_token($adminUser);
           if (applyMode !== 'with_file') {
             if (!window.confirm('Վստա՞հ եք, որ ուզում եք կիրառել թարմացումը առանց ֆայլի կցման։ Կփոխվեն միայն version/settings տվյալները։')) {
               event.preventDefault();
+              return;
+            }
+            event.preventDefault();
+            const submitBtn = submitter;
+            const origText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Կիրառվում է…';
+            try {
+              const formData = new FormData(releaseControlForm);
+              formData.set('form_action', 'apply_release');
+              formData.set('is_async', '1');
+              let csrfVal = csrfTokenInput ? csrfTokenInput.value : '';
+              if (!csrfVal) {
+                const anyCsrf = document.querySelector('input[name="csrf_token"]');
+                if (anyCsrf && anyCsrf.value) csrfVal = anyCsrf.value;
+              }
+              const headers = {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+              };
+              if (csrfVal) {
+                headers['X-CSRF-Token'] = csrfVal;
+              }
+              const resp = await fetch('/admin_updates.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: headers,
+                body: formData
+              });
+              const result = await resp.json();
+              if (result && result.ok) {
+                setAdminBanner('success', result.message || 'Թարմացումը հաջողությամբ կիրառվեց։');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              } else {
+                setAdminBanner('error', (result && result.message) || 'Չհաջողվեց կիրառել թարմացումը։');
+              }
+            } catch (err) {
+              setAdminBanner('error', err.message || 'Ցանցային սխալ թարմացումը կիրառելիս։');
+            } finally {
+              submitBtn.disabled = false;
+              submitBtn.textContent = origText;
             }
             return;
           }
