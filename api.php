@@ -103,7 +103,7 @@ function wp_api_require_admin_access(): void {
     if (!$user && !wp_admin_has_logout_lock(null)) {
         $restoredUser = wp_admin_restore_user_from_access_cookie();
         if ($restoredUser && wp_admin_is_authorized($restoredUser, $config)) {
-            wp_admin_sign_user_in($restoredUser);
+            wp_admin_sign_user_in($restoredUser, false);
             $user = wp_admin_get_current_user() ?: $restoredUser;
         }
     }

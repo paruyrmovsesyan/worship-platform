@@ -666,27 +666,103 @@ function wp_admin_updates_push_history_search_haystack(array $item): string {
     return mb_strtolower(trim(implode(' ', $parts)));
 }
 
-function wp_admin_updates_csrf_token(): string {
-    // HMAC-based CSRF token: server secret + session ID + 2-hour window.
-    // Not stored in session — survives session GC and avoids "token expired" failures.
-    $secret = function_exists('wp_runtime_admin_cookie_secret') ? wp_runtime_admin_cookie_secret() : 'wp_csrf_fallback_secret_2025';
-    $sessId = session_id() ?: 'no-session';
-    $window = (int)(time() / 7200); // 2-hour rotating window
-    return hash_hmac('sha256', 'csrf:admin_updates:' . $sessId . ':' . $window, $secret);
+function wp_admin_updates_resolve_admin_user(?array $user = null): ?array {
+    if (is_array($user) && !empty($user['id'])) {
+        return $user;
+    }
+    if (!empty($GLOBALS['adminUser']) && is_array($GLOBALS['adminUser'])) {
+        return $GLOBALS['adminUser'];
+    }
+    if (function_exists('wp_admin_get_current_user')) {
+        $curr = wp_admin_get_current_user();
+        if (is_array($curr) && !empty($curr['id'])) {
+            return $curr;
+        }
+    }
+    if (function_exists('wp_admin_restore_user_from_access_cookie')) {
+        $restored = wp_admin_restore_user_from_access_cookie();
+        if (is_array($restored) && !empty($restored['id'])) {
+            return $restored;
+        }
+    }
+    return null;
 }
 
-function wp_admin_updates_verify_csrf(?string $token): bool {
-    $token = (string)($token ?? '');
+function wp_admin_updates_csrf_token(?array $user = null): string {
+    $user = wp_admin_updates_resolve_admin_user($user);
+    $secret = function_exists('wp_runtime_admin_cookie_secret') ? wp_runtime_admin_cookie_secret() : 'wp_csrf_fallback_secret_2025';
+    $userId = (int)($user['id'] ?? 0);
+    $userEmail = strtolower(trim((string)($user['email'] ?? '')));
+    $window = (int)(time() / 86400); // 24-hour rotating daily window
+
+    // Primary token: tied to authenticated user ID + email + 24h window (immune to session regeneration/GC)
+    $token = hash_hmac('sha256', 'csrf:admin_updates:' . $userId . ':' . $userEmail . ':' . $window, $secret);
+
+    // Also set WORSHIPCSRF cookie for double-submit header/field verification
+    if (!headers_sent()) {
+        $secure = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        setcookie('WORSHIPCSRF', $token, [
+            'expires' => time() + 86400 * 7,
+            'path' => '/',
+            'domain' => '',
+            'secure' => $secure,
+            'httponly' => false,
+            'samesite' => 'Lax',
+        ]);
+    }
+
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        $_SESSION['admin_updates_csrf'] = $token;
+    }
+
+    return $token;
+}
+
+function wp_admin_updates_verify_csrf(?string $token, ?array $user = null): bool {
+    $token = trim((string)($token ?? ''));
+    if ($token === '') {
+        $token = trim((string)($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''));
+    }
     if ($token === '') {
         return false;
     }
-    // Accept current window AND previous window (handles boundary crossings gracefully)
+
+    $user = wp_admin_updates_resolve_admin_user($user);
     $secret = function_exists('wp_runtime_admin_cookie_secret') ? wp_runtime_admin_cookie_secret() : 'wp_csrf_fallback_secret_2025';
+    $userId = (int)($user['id'] ?? 0);
+    $userEmail = strtolower(trim((string)($user['email'] ?? '')));
+
+    // 1. Primary verification: User-HMAC with current and previous 24-hour windows (48h total valid window)
+    $window = (int)(time() / 86400);
+    $currentDayToken  = hash_hmac('sha256', 'csrf:admin_updates:' . $userId . ':' . $userEmail . ':' . $window, $secret);
+    $previousDayToken = hash_hmac('sha256', 'csrf:admin_updates:' . $userId . ':' . $userEmail . ':' . ($window - 1), $secret);
+    if (hash_equals($currentDayToken, $token) || hash_equals($previousDayToken, $token)) {
+        return true;
+    }
+
+    // 2. Double-Submit Cookie verification (WORSHIPCSRF)
+    $cookieToken = trim((string)($_COOKIE['WORSHIPCSRF'] ?? ''));
+    if ($cookieToken !== '' && hash_equals($cookieToken, $token)) {
+        return true;
+    }
+
+    // 3. Active session token verification
+    if (session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['admin_updates_csrf'])) {
+        if (hash_equals((string)$_SESSION['admin_updates_csrf'], $token)) {
+            return true;
+        }
+    }
+
+    // 4. Session ID HMAC verification (backward compatibility with 2-hour window)
     $sessId = session_id() ?: 'no-session';
-    $window = (int)(time() / 7200);
-    $current  = hash_hmac('sha256', 'csrf:admin_updates:' . $sessId . ':' . $window, $secret);
-    $previous = hash_hmac('sha256', 'csrf:admin_updates:' . $sessId . ':' . ($window - 1), $secret);
-    return hash_equals($current, $token) || hash_equals($previous, $token);
+    $sessWindow = (int)(time() / 7200);
+    $currSess = hash_hmac('sha256', 'csrf:admin_updates:' . $sessId . ':' . $sessWindow, $secret);
+    $prevSess = hash_hmac('sha256', 'csrf:admin_updates:' . $sessId . ':' . ($sessWindow - 1), $secret);
+    if (hash_equals($currSess, $token) || hash_equals($prevSess, $token)) {
+        return true;
+    }
+
+    return false;
 }
 
 function wp_admin_updates_build_release_push_payload(array $previousConfig, array $nextConfig, string $actorLabel): array {
@@ -961,7 +1037,8 @@ function wp_admin_updates_has_package_upload(array $file): bool {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!wp_admin_updates_verify_csrf($_POST['csrf_token'] ?? '')) {
+    $submittedToken = (string)($_POST['csrf_token'] ?? $_POST['_token'] ?? $_REQUEST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+    if (!wp_admin_updates_verify_csrf($submittedToken, $adminUser)) {
         if (wp_admin_updates_is_async_request()) {
             header('Content-Type: application/json; charset=UTF-8');
             echo json_encode([
@@ -969,7 +1046,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'message' => 'Անվտանգության ստուգումը չանցավ։ Խնդրում ենք էջը թարմացնել և կրկնել գործողությունը։',
                 'type' => 'error',
                 'csrf_failed' => true,
-                'new_csrf_token' => wp_admin_updates_csrf_token(),
+                'new_csrf_token' => wp_admin_updates_csrf_token($adminUser),
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         }
@@ -977,7 +1054,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'message' => 'Անվտանգության ստուգումը չանցավ։ Խնդրում ենք էջը թարմացնել և կրկնել գործողությունը։',
             'type' => 'error',
         ];
-        header('Location: /admin_updates.php');
+        $targetSection = !empty($_GET['section']) ? '?section=' . urlencode((string)$_GET['section']) : '';
+        header('Location: /admin_updates.php' . $targetSection);
         exit;
     }
 
@@ -1532,9 +1610,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'type' => $messageType,
     ];
 
-    $redirectUrl = in_array($action, ['save_push_settings', 'restore_push_subscriptions'], true)
-        ? '/admin_updates.php?section=push'
-        : '/admin_updates.php';
+    $targetSection = !empty($_GET['section']) ? (string)$_GET['section'] : '';
+    if ($targetSection === '') {
+        $targetSection = in_array($action, ['save_push_settings', 'restore_push_subscriptions', 'send_push'], true)
+            ? 'push'
+            : (in_array($action, ['apply_release', 'save_release_draft', 'rollback'], true) ? 'release' : '');
+    }
+    $redirectUrl = '/admin_updates.php' . ($targetSection !== '' ? '?section=' . urlencode($targetSection) : '');
     header('Location: ' . $redirectUrl);
     exit;
 }
@@ -1578,7 +1660,7 @@ $pushLastSentAt = wp_version_format_datetime_admin((string)($pushConfig['last_se
 $pushHistory = wp_push_history_load(50);
 $apnsCredentialAvailable = wp_push_credential_is_available('apns');
 $firebaseCredentialAvailable = wp_push_credential_is_available('firebase');
-$csrfToken = wp_admin_updates_csrf_token();
+$csrfToken = wp_admin_updates_csrf_token($adminUser);
 ?>
 <!doctype html>
 <html lang="hy">
@@ -4288,10 +4370,14 @@ $csrfToken = wp_admin_updates_csrf_token();
       function submitAdminPost(action, fields) {
         const form = document.createElement('form');
         form.method = 'post';
-        form.action = '/admin_updates.php';
+        form.action = currentSection ? ('/admin_updates.php?section=' + encodeURIComponent(currentSection)) : '/admin_updates.php';
         form.style.display = 'none';
 
-        const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
+        let csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
+        if (!csrfToken) {
+          const anyCsrf = document.querySelector('input[name="csrf_token"]');
+          if (anyCsrf && anyCsrf.value) csrfToken = anyCsrf.value;
+        }
         if (csrfToken) {
           const csrfField = document.createElement('input');
           csrfField.type = 'hidden';
@@ -4320,23 +4406,34 @@ $csrfToken = wp_admin_updates_csrf_token();
       }
 
       async function postAdminAction(action, fields) {
+        let csrfVal = csrfTokenInput ? csrfTokenInput.value : '';
+        if (!csrfVal) {
+          const anyCsrf = document.querySelector('input[name="csrf_token"]');
+          if (anyCsrf && anyCsrf.value) csrfVal = anyCsrf.value;
+        }
+
         const formData = new URLSearchParams();
-        if (csrfTokenInput && csrfTokenInput.value) {
-          formData.set('csrf_token', csrfTokenInput.value);
+        if (csrfVal) {
+          formData.set('csrf_token', csrfVal);
         }
         formData.set('form_action', action);
         Object.entries(fields || {}).forEach(([key, value]) => {
           formData.append(key, value == null ? '' : String(value));
         });
 
+        const headers = {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        };
+        if (csrfVal) {
+          headers['X-CSRF-Token'] = csrfVal;
+        }
+
         const response = await fetch('/admin_updates.php', {
           method: 'POST',
           credentials: 'same-origin',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json'
-          },
+          headers: headers,
           body: formData.toString()
         });
 
@@ -4347,9 +4444,9 @@ $csrfToken = wp_admin_updates_csrf_token();
 
         if (!response.ok || !result || result.ok === false) {
           if (result && result.csrf_failed && result.new_csrf_token) {
-            if (csrfTokenInput) {
-              csrfTokenInput.value = result.new_csrf_token;
-            }
+            document.querySelectorAll('input[name="csrf_token"]').forEach((input) => {
+              input.value = result.new_csrf_token;
+            });
             if (!fields || !fields._retry) {
               const retryFields = Object.assign({}, fields || {}, { _retry: '1' });
               return postAdminAction(action, retryFields);

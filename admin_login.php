@@ -47,7 +47,7 @@ if ($socialError !== '' && $error === '') {
 if (empty($_SESSION['user_id']) && !wp_admin_has_logout_lock(null)) {
     $restoredUser = wp_admin_restore_user_from_access_cookie();
     if ($restoredUser && wp_admin_is_authorized($restoredUser, $config)) {
-        wp_admin_sign_user_in($restoredUser);
+        wp_admin_sign_user_in($restoredUser, false);
     }
 }
 
