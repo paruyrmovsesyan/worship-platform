@@ -31,6 +31,75 @@ function getAttachmentType(att) {
   return 'link';
 }
 
+function getNextSundayDate() {
+  const d = new Date();
+  const day = d.getDay(); // 0 = Sunday
+  const addDays = day === 0 ? 7 : 7 - day;
+  d.setDate(d.getDate() + addDays);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const date = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${date}`;
+}
+
+function getRelativeDateLabel(dateStr, lang) {
+  if (!dateStr) return null;
+  const target = new Date(dateStr + 'T00:00:00');
+  if (isNaN(target.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffMs = target.getTime() - today.getTime();
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+  const dict = {
+    am: {
+      today: 'Այսօր',
+      tomorrow: 'Վաղը',
+      yesterday: 'Երեկ',
+      inDays: (n) => `${n} օրից`,
+      daysAgo: (n) => `${n} օր առաջ`,
+    },
+    en: {
+      today: 'Today',
+      tomorrow: 'Tomorrow',
+      yesterday: 'Yesterday',
+      inDays: (n) => `in ${n}d`,
+      daysAgo: (n) => `${n}d ago`,
+    },
+    ru: {
+      today: 'Сегодня',
+      tomorrow: 'Завтра',
+      yesterday: 'Вчера',
+      inDays: (n) => `через ${n} дн.`,
+      daysAgo: (n) => `${n} дн. назад`,
+    },
+  }[lang] || {
+    today: 'Այսօր',
+    tomorrow: 'Վաղը',
+    yesterday: 'Երեկ',
+    inDays: (n) => `${n} օրից`,
+    daysAgo: (n) => `${n} օր առաջ`,
+  };
+
+  if (diffDays === 0) return { text: dict.today, tone: 'highlight' };
+  if (diffDays === 1) return { text: dict.tomorrow, tone: 'soon' };
+  if (diffDays === -1) return { text: dict.yesterday, tone: 'past' };
+  if (diffDays > 1 && diffDays <= 7) return { text: dict.inDays(diffDays), tone: 'soon' };
+  if (diffDays < -1 && diffDays >= -7) return { text: dict.daysAgo(Math.abs(diffDays)), tone: 'past' };
+  return null;
+}
+
+function formatSetlistDate(dateStr, lang) {
+  if (!dateStr) return null;
+  const rel = getRelativeDateLabel(dateStr, lang);
+  const d = new Date(dateStr + 'T00:00:00');
+  const dateFormatted = !isNaN(d.getTime()) ? d.toLocaleDateString(lang === 'am' ? 'hy-AM' : lang === 'ru' ? 'ru-RU' : 'en-US', {
+    month: 'short',
+    day: 'numeric'
+  }) : dateStr;
+  return rel ? `${dateFormatted} (${rel.text})` : dateFormatted;
+}
+
 export default function SongView() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -65,6 +134,13 @@ export default function SongView() {
   const [isSetlistModalOpen, setIsSetlistModalOpen] = useState(false);
   const [userSetlists, setUserSetlists] = useState([]);
   const [setlistsLoading, setSetlistsLoading] = useState(false);
+  const [setlistSearch, setSetlistSearch] = useState('');
+  const [addingSetlistId, setAddingSetlistId] = useState(null);
+  const [addedSetlistIds, setAddedSetlistIds] = useState({});
+  const [isCreatingSetlist, setIsCreatingSetlist] = useState(false);
+  const [newSetName, setNewSetName] = useState('');
+  const [newSetDate, setNewSetDate] = useState('');
+  const [createSetlistLoading, setCreateSetlistLoading] = useState(false);
   const [activeEmbedId, setActiveEmbedId] = useState(null);
   const [savingKeyToSetlist, setSavingKeyToSetlist] = useState(false);
   const [keySavedFeedback, setKeySavedFeedback] = useState(false);
@@ -187,15 +263,47 @@ export default function SongView() {
     }
   };
 
+  // Lock body scroll and mark modal open so MobileNav / bottom dock is hidden
+  useEffect(() => {
+    if (!isSetlistModalOpen) return undefined;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.body.classList.add('sv-modal-open');
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.classList.remove('sv-modal-open');
+    };
+  }, [isSetlistModalOpen]);
+
+  const filteredSetlists = React.useMemo(() => {
+    if (!userSetlists || !Array.isArray(userSetlists)) return [];
+    const q = setlistSearch.trim().toLowerCase();
+    if (!q) return userSetlists;
+    return userSetlists.filter(s => {
+      const nameMatch = (s.name || '').toLowerCase().includes(q);
+      const dateMatch = (s.service_date || '').toLowerCase().includes(q);
+      const teamMatch = (s.team_name || '').toLowerCase().includes(q);
+      return nameMatch || dateMatch || teamMatch;
+    });
+  }, [userSetlists, setlistSearch]);
+
   const openSetlistModal = async () => {
+    if (authLoading) return;
     if (!user) {
       navigate('/login?next=' + window.location.pathname);
       return;
     }
     setIsSetlistModalOpen(true);
+    setSetlistSearch('');
+    setIsCreatingSetlist(false);
+    setNewSetName('');
+    setNewSetDate(getNextSundayDate());
     setSetlistsLoading(true);
     try {
-      const res = await fetch('/setlists_api.php?action=get_setlists');
+      const res = await fetch('/setlists_api.php?action=get_setlists', {
+        credentials: 'same-origin',
+        cache: 'no-store'
+      });
       const data = await res.json();
       if (Array.isArray(data)) {
         setUserSetlists(data);
@@ -214,23 +322,90 @@ export default function SongView() {
   };
 
   const addToSetlist = async (setId) => {
+    if (addingSetlistId) return;
+    setAddingSetlistId(setId);
     try {
       const res = await fetch('/setlists_api.php?action=add_song_to_setlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ setlist_id: setId, song_id: id })
+        body: JSON.stringify({
+          setlist_id: setId,
+          song_id: Number(id),
+          target_key: soundingKey || song?.song_key || null,
+          capo: capo > 0 ? Number(capo) : null
+        })
       });
       const data = await res.json();
       if (data.ok) {
+        setAddedSetlistIds(prev => ({ ...prev, [setId]: true }));
+        setUserSetlists(prev => prev.map(s => s.id === setId ? { ...s, items_count: (s.items_count || 0) + 1 } : s));
         setFavMsg(t('songView.addedToSetlist', 'Ավելացվել է երգացանկում'));
-        setIsSetlistModalOpen(false);
+        setTimeout(() => setFavMsg(''), 2500);
       } else {
         setFavMsg(data.error || 'Error adding to setlist');
+        setTimeout(() => setFavMsg(''), 3000);
       }
-      setTimeout(() => setFavMsg(''), 3000);
     } catch (err) {
       setFavMsg('Error adding to setlist');
       setTimeout(() => setFavMsg(''), 3000);
+    } finally {
+      setAddingSetlistId(null);
+    }
+  };
+
+  const handleCreateAndAddSetlist = async (e) => {
+    e.preventDefault();
+    const nameTrimmed = newSetName.trim();
+    if (!nameTrimmed || createSetlistLoading) return;
+    setCreateSetlistLoading(true);
+
+    try {
+      const createRes = await fetch('/setlists_api.php?action=create_setlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: nameTrimmed,
+          service_date: newSetDate || null
+        })
+      });
+      const createData = await createRes.json();
+      if (!createData.ok || !createData.id) {
+        throw new Error(createData.message || createData.error || 'Failed to create setlist');
+      }
+
+      const newId = Number(createData.id);
+      const addRes = await fetch('/setlists_api.php?action=add_song_to_setlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          setlist_id: newId,
+          song_id: Number(id),
+          target_key: soundingKey || song?.song_key || null,
+          capo: capo > 0 ? Number(capo) : null
+        })
+      });
+      const addData = await addRes.json();
+
+      setAddedSetlistIds(prev => ({ ...prev, [newId]: true }));
+      setFavMsg(t('songView.addedToSetlist', 'Ավելացվել է երգացանկում'));
+      setTimeout(() => setFavMsg(''), 2500);
+
+      const newSl = {
+        id: newId,
+        name: nameTrimmed,
+        service_date: newSetDate || null,
+        items_count: 1,
+        can_edit: 1,
+        access_role: 'owner'
+      };
+      setUserSetlists(prev => [newSl, ...prev]);
+      setIsCreatingSetlist(false);
+      setNewSetName('');
+      setNewSetDate('');
+    } catch (err) {
+      alert(err.message || 'Error creating setlist');
+    } finally {
+      setCreateSetlistLoading(false);
     }
   };
 
@@ -1362,37 +1537,149 @@ export default function SongView() {
 
     {isSetlistModalOpen && createPortal(
       <div className="sv-modal-overlay" onClick={() => setIsSetlistModalOpen(false)}>
-        <div className="sv-modal-content animate-pop-in" onClick={e => e.stopPropagation()}>
+        <div className="sv-modal-content" onClick={e => e.stopPropagation()}>
           <div className="sv-modal-header">
-            <h2>{t('songView.addToSetlist', 'Ավելացնել երգացանկում')}</h2>
-            <button className="icon-btn" onClick={() => setIsSetlistModalOpen(false)}>
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <div className="sv-modal-header-info">
+              <h2>{t('songView.addToSetlist', 'Ավելացնել երգացանկում')}</h2>
+              <div className="sv-modal-song-pill">
+                <span className="sv-modal-song-pill__key">
+                  Տոն՝ {soundingKey || song?.song_key || '—'}{capo > 0 ? ` (Capo ${capo})` : ''}
+                </span>
+              </div>
+            </div>
+            <button type="button" className="icon-btn sv-modal-close" onClick={() => setIsSetlistModalOpen(false)} aria-label="Փակել">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
+
+          <div className="sv-modal-toolbar">
+            <div className="sv-modal-search-wrap">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input
+                type="text"
+                className="sv-modal-search-input"
+                placeholder="Որոնել երգացանկ..."
+                value={setlistSearch}
+                onChange={e => setSetlistSearch(e.target.value)}
+              />
+              {setlistSearch && (
+                <button type="button" className="sv-modal-search-clear" onClick={() => setSetlistSearch('')}>✕</button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              className={`sv-modal-new-btn ${isCreatingSetlist ? 'active' : ''}`}
+              onClick={() => setIsCreatingSetlist(!isCreatingSetlist)}
+            >
+              {isCreatingSetlist ? '✕ Փակել' : '➕ Նոր'}
+            </button>
+          </div>
+
+          {isCreatingSetlist && (
+            <form className="sv-modal-create-box" onSubmit={handleCreateAndAddSetlist}>
+              <div className="sv-modal-create-row">
+                <input
+                  type="text"
+                  className="sv-modal-create-input"
+                  placeholder="Երգացանկի անուն"
+                  value={newSetName}
+                  onChange={e => setNewSetName(e.target.value)}
+                  autoFocus
+                  required
+                />
+                <input
+                  type="date"
+                  className="sv-modal-create-date"
+                  value={newSetDate}
+                  onChange={e => setNewSetDate(e.target.value)}
+                />
+              </div>
+              <div className="sv-modal-create-actions">
+                <button
+                  type="button"
+                  className="sv-btn-cancel"
+                  onClick={() => setIsCreatingSetlist(false)}
+                >
+                  Չեղարկել
+                </button>
+                <button
+                  type="submit"
+                  className="sv-btn-submit"
+                  disabled={createSetlistLoading || !newSetName.trim()}
+                >
+                  {createSetlistLoading ? 'Ստեղծվում է...' : 'Ստեղծել և ավելացնել'}
+                </button>
+              </div>
+            </form>
+          )}
 
           <div className="sv-modal-body">
             {setlistsLoading ? (
               <div className="sv-modal-loading">
                 <div className="loading-spinner" />
               </div>
-            ) : userSetlists.length > 0 ? (
-              userSetlists.map(sl => (
-                <button
-                  key={sl.id}
-                  className="sv-setlist-row"
-                  onClick={() => addToSetlist(sl.id)}
-                >
-                  <span className="sv-setlist-row__name">{sl.name}</span>
-                  {sl.event_date && (
-                    <span className="sv-setlist-row__date">
-                      {new Date(sl.event_date).toLocaleDateString()}
-                    </span>
-                  )}
-                </button>
-              ))
+            ) : filteredSetlists.length > 0 ? (
+              filteredSetlists.map(sl => {
+                const isAdded = !!addedSetlistIds[sl.id];
+                const isAdding = addingSetlistId === sl.id;
+                const dateLabel = formatSetlistDate(sl.service_date, language);
+
+                return (
+                  <div
+                    key={sl.id}
+                    className={`sv-setlist-row ${isAdded ? 'is-added' : ''}`}
+                    onClick={() => !isAdding && !isAdded && addToSetlist(sl.id)}
+                  >
+                    <div className="sv-setlist-row__info">
+                      <div className="sv-setlist-row__title-wrap">
+                        <span className="sv-setlist-row__name">{sl.name}</span>
+                        {sl.team_name && (
+                          <span className="sv-setlist-row__team-pill">{sl.team_name}</span>
+                        )}
+                      </div>
+                      <div className="sv-setlist-row__meta">
+                        {dateLabel && (
+                          <span className="sv-setlist-row__date">📅 {dateLabel}</span>
+                        )}
+                        <span className="sv-setlist-row__count">{sl.items_count || 0} երգ</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className={`sv-setlist-row__btn ${isAdded ? 'added' : ''}`}
+                      disabled={isAdding || isAdded}
+                    >
+                      {isAdding ? (
+                        <div className="loading-spinner-sm" />
+                      ) : isAdded ? (
+                        <>
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                          <span>Ավելացվեց</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                          <span>Ավելացնել</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                );
+              })
             ) : (
               <div className="sv-modal-empty">
-                Երգացանկեր չեն գտնվել
+                <span>{setlistSearch ? 'Երգացանկեր չեն գտնվել' : 'Դեռ երգացանկեր չկան:'}</span>
+                {!isCreatingSetlist && (
+                  <button
+                    type="button"
+                    className="sv-empty-create-btn"
+                    onClick={() => setIsCreatingSetlist(true)}
+                  >
+                    ➕ Ստեղծել նոր երգացանկ
+                  </button>
+                )}
               </div>
             )}
           </div>
