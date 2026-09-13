@@ -289,8 +289,13 @@ if (!function_exists('wp_runtime_open_pdo')) {
 if (!function_exists('wp_runtime_open_mysqli')) {
     function wp_runtime_open_mysqli(): mysqli {
         static $mysqliInstance = null;
-        if ($mysqliInstance !== null) {
-            return $mysqliInstance;
+        if ($mysqliInstance instanceof mysqli) {
+            try {
+                if (@$mysqliInstance->ping()) {
+                    return $mysqliInstance;
+                }
+            } catch (Throwable $e) {}
+            $mysqliInstance = null;
         }
 
         $db = wp_runtime_db_config();
@@ -370,6 +375,11 @@ if (!function_exists('wp_runtime_open_mysqli')) {
                         wp_runtime_append_slow_query($query, null, $duration);
                     }
                     return $result;
+                }
+
+                public function close(): bool {
+                    // Shared singleton connection: do not close underlying socket during request
+                    return true;
                 }
             }
         }

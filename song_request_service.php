@@ -184,14 +184,14 @@ if (!function_exists('wp_song_request_create')) {
         $conn = wp_runtime_open_mysqli();
         wp_runtime_ensure_song_title_columns_mysqli($conn);
         if (!wp_song_request_ensure_table_mysqli($conn)) {
-            $conn->close();
+            
             return ['ok' => false, 'message' => 'Չհաջողվեց պատրաստել մոդերացիայի հերթը։'];
         }
 
         $data = wp_song_request_normalize_payload($payload);
         $error = wp_song_request_validate_payload($data);
         if ($error !== null) {
-            $conn->close();
+            
             return ['ok' => false, 'message' => $error];
         }
 
@@ -201,13 +201,13 @@ if (!function_exists('wp_song_request_create')) {
 
         if ($data['request_type'] === 'edit') {
             if (!$snapshot) {
-                $conn->close();
+                
                 return ['ok' => false, 'message' => 'Ընտրված երգը չգտնվեց։'];
             }
 
             $changes = wp_song_request_build_change_set($data, $snapshot);
             if (empty($changes)) {
-                $conn->close();
+                
                 return ['ok' => false, 'message' => 'Դուք ոչ մի փոփոխություն չեք կատարել։ Խմբագրման հայտ ուղարկելու համար փոխեք որևէ տվյալ։'];
             }
         }
@@ -230,7 +230,7 @@ if (!function_exists('wp_song_request_create')) {
             if ($conn->error !== '') {
                 $message .= ' ' . $conn->error;
             }
-            $conn->close();
+            
             return ['ok' => false, 'message' => $message];
         }
 
@@ -261,7 +261,7 @@ if (!function_exists('wp_song_request_create')) {
         $insertId = (int)$conn->insert_id;
         $errorMessage = $stmt->error;
         $stmt->close();
-        $conn->close();
+        
 
         if (!$ok) {
             return ['ok' => false, 'message' => 'Չհաջողվեց ուղարկել հարցումը։ ' . $errorMessage];
@@ -282,7 +282,7 @@ if (!function_exists('wp_song_request_counts')) {
         try {
             $conn = wp_runtime_open_mysqli();
             if (!wp_song_request_ensure_table_mysqli($conn)) {
-                $conn->close();
+                
                 return ['all' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0];
             }
             $counts = ['all' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0];
@@ -298,7 +298,7 @@ if (!function_exists('wp_song_request_counts')) {
                 }
                 $res->free();
             }
-            $conn->close();
+            
             return $counts;
         } catch (Throwable $e) {
             return ['all' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0];
@@ -311,7 +311,7 @@ if (!function_exists('wp_song_request_list')) {
         try {
             $conn = wp_runtime_open_mysqli();
             if (!wp_song_request_ensure_table_mysqli($conn)) {
-                $conn->close();
+                
                 return [];
             }
 
@@ -342,7 +342,7 @@ if (!function_exists('wp_song_request_list')) {
 
             $stmt = $conn->prepare($sql);
             if (!$stmt) {
-                $conn->close();
+                
                 return [];
             }
             if ($types !== '') {
@@ -372,7 +372,7 @@ if (!function_exists('wp_song_request_list')) {
                 $result->free();
             }
             $stmt->close();
-            $conn->close();
+            
 
             return $rows;
         } catch (Throwable $e) {
@@ -390,7 +390,7 @@ if (!function_exists('wp_song_request_list_for_submitter')) {
         try {
             $conn = wp_runtime_open_mysqli();
             if (!wp_song_request_ensure_table_mysqli($conn)) {
-                $conn->close();
+                
                 return [];
             }
 
@@ -398,7 +398,7 @@ if (!function_exists('wp_song_request_list_for_submitter')) {
             $sql = "SELECT * FROM " . wp_song_request_table_name() . " WHERE submitted_by_user_id = ? ORDER BY created_at DESC LIMIT {$limit}";
             $stmt = $conn->prepare($sql);
             if (!$stmt) {
-                $conn->close();
+                
                 return [];
             }
 
@@ -421,7 +421,7 @@ if (!function_exists('wp_song_request_list_for_submitter')) {
                 $result->free();
             }
             $stmt->close();
-            $conn->close();
+            
 
             return $rows;
         } catch (Throwable $e) {
@@ -585,7 +585,7 @@ if (!function_exists('wp_song_request_apply_decision')) {
         $conn = wp_runtime_open_mysqli();
         wp_runtime_ensure_song_title_columns_mysqli($conn);
         if (!wp_song_request_ensure_table_mysqli($conn)) {
-            $conn->close();
+            
             return ['ok' => false, 'message' => 'Չհաջողվեց պատրաստել մոդերացիայի հերթը։'];
         }
 
@@ -685,7 +685,7 @@ if (!function_exists('wp_song_request_apply_decision')) {
 
             $conn->commit();
             wp_song_request_append_history($request, $decision, $adminUser, $reviewNote, $resolvedSongId, $changeSet);
-            $conn->close();
+            
 
             return [
                 'ok' => true,
@@ -696,7 +696,7 @@ if (!function_exists('wp_song_request_apply_decision')) {
             ];
         } catch (Throwable $e) {
             $conn->rollback();
-            $conn->close();
+            
             return ['ok' => false, 'message' => $e->getMessage()];
         }
     }
