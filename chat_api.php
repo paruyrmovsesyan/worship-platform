@@ -253,7 +253,7 @@ function wp_chat_cleanup_call_data(PDO $pdo): void {
   $cleaned = true;
 
   try {
-    $expired = $pdo->query("SELECT * FROM chat_calls WHERE status = 'calling' AND created_at < DATE_SUB(NOW(), INTERVAL 45 SECOND) LIMIT 100");
+    $expired = $pdo->query("SELECT * FROM chat_calls WHERE status = 'calling' AND created_at < DATE_SUB(NOW(), INTERVAL 65 SECOND) LIMIT 100");
     if ($expired) {
       while ($call = $expired->fetch(PDO::FETCH_ASSOC)) {
         $st = $pdo->prepare("UPDATE chat_calls SET status = 'missed', ended_at = NOW(), end_reason = 'timeout' WHERE id = ? AND status = 'calling'");
@@ -1051,9 +1051,24 @@ if ($action === 'respond_call' && $method === 'POST') {
     }
 
     if ($response === 'accept') {
+        if (($call['status'] ?? '') === 'active') {
+            out([
+                "ok" => true,
+                "status" => "active",
+                "started_at" => $call['started_at'] ?? null,
+            ]);
+        }
         $st = $pdo->prepare("UPDATE chat_calls SET status = 'active', started_at = COALESCE(started_at, NOW()), heartbeat_at = NOW() WHERE id = ? AND target_id = ? AND status = 'calling'");
         $st->execute([$call_id, $uid]);
         if ($st->rowCount() !== 1) {
+            $check = wp_chat_call_by_id($pdo, $call_id);
+            if ($check && ($check['status'] ?? '') === 'active') {
+                out([
+                    "ok" => true,
+                    "status" => "active",
+                    "started_at" => $check['started_at'] ?? null,
+                ]);
+            }
             out(["error" => "Call is no longer available", "code" => "call_not_ringing"], 409);
         }
         wp_chat_update_call_message($pdo, $call, 'active');

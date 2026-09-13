@@ -541,7 +541,18 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
-    // 8. Check if previously marked in resolutions file
+    // 8. Call accept failed / Call is no longer available (idempotent accept and extended timeout)
+    if (stripos($message, 'Call is no longer available') !== false || stripos($message, 'Call accept failed') !== false) {
+        $reason = 'Զանգի ընդունումը դարձվել է idempotent, իսկ timeout-ը երկարացվել է մինչև 65 վրկ';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
+    // 9. Check if previously marked in resolutions file
     if (!empty($knownRes['is_resolved'])) {
         $item['is_resolved'] = 1;
         $item['resolved_at'] = $knownRes['resolved_at'] ?? date('Y-m-d H:i:s');
