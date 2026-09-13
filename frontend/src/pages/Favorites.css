@@ -492,80 +492,6 @@ body.is-pwa > .fav-filter-backdrop {
   font-weight: 800;
 }
 
-.fav-web-controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
-}
-
-.fav-web-search {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
-  padding: 0 14px;
-  height: 46px;
-  flex: 1;
-  min-width: 260px;
-  max-width: 440px;
-  box-sizing: border-box;
-}
-
-.fav-web-search:focus-within {
-  border-color: rgba(255, 74, 106, 0.5);
-  background: rgba(255, 255, 255, 0.09);
-}
-
-.fav-web-search input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: #fff;
-  font-size: 14px;
-  flex: 1;
-  width: 100%;
-}
-
-.fav-web-search-x {
-  background: rgba(255, 255, 255, 0.14);
-  border: none;
-  color: rgba(255, 255, 255, 0.8);
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-}
-
-.fav-setlist-quick-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.07);
-  color: rgba(255, 255, 255, 0.6);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.15s ease;
-}
-
-.fav-setlist-quick-btn:hover {
-  background: rgba(209, 82, 255, 0.2);
-  color: #D152FF;
-  transform: scale(1.08);
-}
-
 .fav-remove-btn {
   width: 38px;
   height: 38px;
@@ -578,12 +504,6 @@ body.is-pwa > .fav-filter-backdrop {
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 0.15s ease;
-}
-
-.fav-remove-btn:hover {
-  background: rgba(255, 74, 106, 0.2);
-  transform: scale(1.08);
 }
 
 .fav-empty {
