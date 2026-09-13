@@ -1365,7 +1365,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!empty($pushResult['ok'])) {
                     $message .= ' Թարմացման push ծանուցումը նույնպես ուղարկվեց։ ' . (string)($pushResult['message'] ?? '');
                 } else {
-                    $message .= ' Բայց ավտոմատ push ծանուցումը չուղարկվեց։ ' . (string)($pushResult['message'] ?? '');
+                    $message .= ' Բայց ավտոմատ push ծանուցումը չուղարկվեց։ ' . (string)($pushResult['message'] ?? '') . ' Սխալներ՝ ' . implode(', ', $pushResult['errors'] ?? []);
                 }
             } else {
                 $message = 'Չհաջողվեց պահպանել թարմացման տվյալները։';
@@ -1423,7 +1423,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             if (!empty($pushResult['ok'])) {
                                 $message .= ' Թարմացման push ծանուցումը նույնպես ուղարկվեց։ ' . (string)($pushResult['message'] ?? '');
                             } else {
-                                $message .= ' Բայց ավտոմատ push ծանուցումը չուղարկվեց։ ' . (string)($pushResult['message'] ?? '');
+                                $message .= ' Բայց ավտոմատ push ծանուցումը չուղարկվեց։ ' . (string)($pushResult['message'] ?? '') . ' Սխալներ՝ ' . implode(', ', $pushResult['errors'] ?? []);
                             }
                         } else {
                             $message = 'Package-ը կիրառվեց, բայց version publish save-ը չհաջողվեց։';
