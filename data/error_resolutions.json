@@ -178,5 +178,17 @@
         "resolved_at": "2026-09-13 12:16:13",
         "resolved_by": "test_runner",
         "resolution_reason": "Ձեռքով ստուգված և լուծված"
+    },
+    "97a4a2b26219af5ccd480af46d1f0fd8": {
+        "is_resolved": 1,
+        "resolved_at": "2026-09-13 16:57:36",
+        "resolved_by": "auto_db_check",
+        "resolution_reason": "Տվյալների բազայի կապը հաջողությամբ վերականգնված է և ակտիվ է"
+    },
+    "db55aa3867fe4e697d7ab4afe1136c71": {
+        "is_resolved": 1,
+        "resolved_at": "2026-09-13 16:57:36",
+        "resolved_by": "auto_db_check",
+        "resolution_reason": "Աղյուսակը (`chat_calls`) գոյություն ունի, DB կապը նորմալ է"
     }
 }
