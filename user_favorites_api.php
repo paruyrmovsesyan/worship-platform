@@ -58,6 +58,10 @@ function wp_ensure_unified_favorites(mysqli $conn, int $userId): void {
   if (empty($userColumns['created_at'])) {
     $conn->query("ALTER TABLE user_favorites ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP");
   }
+  if (empty($userColumns['position'])) {
+    $conn->query("ALTER TABLE user_favorites ADD COLUMN position INT UNSIGNED NOT NULL DEFAULT 0 AFTER target_key");
+    $conn->query("ALTER TABLE user_favorites ADD KEY idx_user_fav_position (user_id, position)");
+  }
 
   $legacyTable = $conn->query("SHOW TABLES LIKE 'favorites'");
   if (!$legacyTable || $legacyTable->num_rows === 0) return;
@@ -170,13 +174,13 @@ switch($action){
     echo json_encode(["ok"=>true, "target_key"=>$target_key]);
     break;
 
-  // ✅ list favorites: վերադարձնել երգի ամբողջ տվյալները + target_key
+  // ✅ list favorites: վերադարձնել երգի ամբողջ տվյալները + target_key + position
   case 'get_favorites':
-    $sql = "SELECT s.*, f.target_key, f.created_at AS favorite_created_at
+    $sql = "SELECT s.*, f.target_key, f.position, f.created_at AS favorite_created_at
             FROM {$TABLE} f
             JOIN songs s ON f.song_id = s.id
             WHERE f.user_id = ?
-            ORDER BY f.created_at DESC, f.id DESC";
+            ORDER BY CASE WHEN f.position > 0 THEN 0 ELSE 1 END, f.position ASC, f.created_at DESC, f.id DESC";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
@@ -185,6 +189,7 @@ switch($action){
     $out = [];
     while($r = $res->fetch_assoc()) {
       $r['target_key'] = norm_key($r['target_key'] ?? null);
+      $r['position'] = (int)($r['position'] ?? 0);
       $out[] = $r;
     }
     $out = wp_translation_translate_rows($out, [
@@ -196,6 +201,39 @@ switch($action){
       'title' => 'api.song.title',
     ], $lang);
     echo json_encode($out, JSON_UNESCAPED_UNICODE);
+    break;
+
+  // ✅ Reorder favorites songs sequence
+  case 'reorder_favorites':
+    if ($method !== "POST") { http_response_code(405); exit; }
+
+    $data = json_decode(file_get_contents("php://input"), true) ?: [];
+    $song_ids = $data['song_ids'] ?? [];
+    if (!is_array($song_ids) || empty($song_ids)) {
+      http_response_code(400);
+      echo json_encode(["error" => "song_ids array required"], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+
+    $conn->begin_transaction();
+    try {
+      $stmt = $conn->prepare("UPDATE {$TABLE} SET position = ? WHERE user_id = ? AND song_id = ?");
+      $pos = 1;
+      foreach ($song_ids as $sid) {
+        $sid = (int)$sid;
+        if ($sid > 0) {
+          $stmt->bind_param("iii", $pos, $user_id, $sid);
+          $stmt->execute();
+          $pos++;
+        }
+      }
+      $conn->commit();
+      echo json_encode(["ok" => true, "count" => $pos - 1], JSON_UNESCAPED_UNICODE);
+    } catch (Throwable $e) {
+      $conn->rollback();
+      http_response_code(500);
+      echo json_encode(["error" => "Failed to reorder favorites"], JSON_UNESCAPED_UNICODE);
+    }
     break;
 
   // ✅ view էջում ցույց տալ՝ տվյալ երգը favorite՞ է + ինչ key-ով

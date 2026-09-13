@@ -3,6 +3,7 @@ import { noteIndex } from './chordTransposer.js';
 export const DEFAULT_SAVED_SONG_SORT = 'saved_newest';
 
 const validSorts = new Set([
+  'custom',
   'saved_newest',
   'saved_oldest',
   'title_asc',
@@ -44,6 +45,14 @@ export function sortSavedSongs(songs, sortBy, getTitle, locale = 'en') {
   return [...songs].sort((a, b) => {
     let result = 0;
 
+    if (normalizedSort === 'custom') {
+      const aPos = Number.parseInt(a?.position, 10) || 0;
+      const bPos = Number.parseInt(b?.position, 10) || 0;
+      if (aPos > 0 && bPos > 0) result = aPos - bPos;
+      else if (aPos > 0) result = -1;
+      else if (bPos > 0) result = 1;
+      else result = savedTimestamp(b) - savedTimestamp(a);
+    }
     if (normalizedSort === 'saved_newest') result = savedTimestamp(b) - savedTimestamp(a);
     if (normalizedSort === 'saved_oldest') result = savedTimestamp(a) - savedTimestamp(b);
     if (normalizedSort === 'title_asc') result = collator.compare(getTitle(a), getTitle(b));

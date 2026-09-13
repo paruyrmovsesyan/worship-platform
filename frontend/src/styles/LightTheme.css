@@ -353,6 +353,43 @@ body.light-mode .fav-filter-sheet-handle {
   background: rgba(15, 23, 42, 0.18);
 }
 
+body.light-mode .fav-reorder-banner {
+  background: rgba(255, 83, 111, 0.08);
+  border-color: rgba(255, 83, 111, 0.2);
+  color: #e11d48;
+}
+
+body.light-mode .fav-track-item.fav-reorder-item {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode .fav-reorder-btn {
+  background: #f1f5f9;
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #334155;
+}
+
+body.light-mode .fav-reorder-bar-wrap {
+  background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.85) 30%, rgba(255, 255, 255, 0.98) 100%);
+}
+
+body.light-mode .fav-reorder-bar {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.15);
+}
+
+body.light-mode .fav-reorder-bar-count {
+  color: #475569;
+}
+
+body.light-mode .fav-reorder-cancel-btn {
+  background: #f1f5f9;
+  border-color: rgba(15, 23, 42, 0.1);
+  color: #475569;
+}
+
 /* Friends and chat list */
 body.is-pwa.light-mode :is(.friends-icon-btn, .friends-search-pill, .friends-view-btn, .friends-inline-back, .friends-panel, .friend-list-row, .chat-group-builder, .chat-group-builder-option),
 body.light-mode :is(.friends-summary-card, .friends-shell-panel) {

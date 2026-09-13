@@ -7,13 +7,19 @@ import { getLocalizedTitle } from '../utils/titleParser';
 import { getSongCoverStyle } from '../utils/songCover';
 import { DEFAULT_SAVED_SONG_SORT, normalizeSavedSongSort, sortSavedSongs } from '../utils/savedSongs';
 import { usePageReady } from '../hooks/usePageReady';
+import { useIsPWA } from '../hooks/useIsPWA';
 import './Favorites.css';
 
 export default function Favorites() {
+  const isPWA = useIsPWA();
   const [songs, setSongs] = useState([]);
   const [activeKeyFilter, setActiveKeyFilter] = useState('all');
   const [sortBy, setSortBy] = useState(() => normalizeSavedSongSort(localStorage.getItem('favorites_sort') || DEFAULT_SAVED_SONG_SORT));
   const [filterOpen, setFilterOpen] = useState(false);
+  const [reorderMode, setReorderMode] = useState(false);
+  const [reorderList, setReorderList] = useState([]);
+  const [savingReorder, setSavingReorder] = useState(false);
+  const [toastMsg, setToastMsg] = useState(null);
   const [loading, setLoading] = useState(true);
   usePageReady(loading);
   const [error, setError] = useState(null);
@@ -87,6 +93,7 @@ export default function Favorites() {
   };
 
   const sortOptions = [
+    ['custom', t('favorites.sortCustom', 'Իմ դասավորությամբ')],
     ['saved_newest', t('favorites.sortSavedNewest')],
     ['saved_oldest', t('favorites.sortSavedOldest')],
     ['title_asc', t('favorites.sortTitle')],
@@ -96,6 +103,66 @@ export default function Favorites() {
     ['bpm_desc', t('favorites.sortBpmDesc')],
   ];
   const activeSortLabel = sortOptions.find(([value]) => value === sortBy)?.[1] || sortOptions[0][1];
+
+  const displaySongs = reorderMode ? reorderList : filteredSongs;
+
+  const startReorder = () => {
+    setReorderList([...filteredSongs]);
+    setReorderMode(true);
+  };
+
+  const cancelReorder = () => {
+    setReorderMode(false);
+    setReorderList([]);
+  };
+
+  const moveItem = (index, direction) => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= reorderList.length) return;
+    const next = [...reorderList];
+    const [item] = next.splice(index, 1);
+    next.splice(targetIndex, 0, item);
+    setReorderList(next);
+  };
+
+  const saveReorder = async () => {
+    if (savingReorder || reorderList.length === 0) return;
+    setSavingReorder(true);
+    try {
+      const songIds = reorderList.map(s => s.id);
+      const res = await fetch('/user_favorites_api.php?action=reorder_favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ song_ids: songIds })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Failed to reorder');
+      }
+
+      const posMap = new Map();
+      songIds.forEach((id, idx) => posMap.set(id, idx + 1));
+
+      setSongs(prev => prev.map(song => {
+        if (posMap.has(song.id)) {
+          return { ...song, position: posMap.get(song.id) };
+        }
+        return song;
+      }));
+
+      setSortBy('custom');
+      localStorage.setItem('favorites_sort', 'custom');
+      setReorderMode(false);
+      setReorderList([]);
+      setToastMsg(t('favorites.reorderDone', 'Հերթականությունը պահպանվեց'));
+      setTimeout(() => setToastMsg(null), 2500);
+    } catch (err) {
+      console.error(err);
+      alert(language === 'am' ? 'Չհաջողվեց պահպանել հերթականությունը' : 'Failed to save order');
+    } finally {
+      setSavingReorder(false);
+    }
+  };
 
   useEffect(() => {
     if (!filterOpen) return undefined;
@@ -111,6 +178,14 @@ export default function Favorites() {
       document.removeEventListener('keydown', handleEscape);
     };
   }, [filterOpen]);
+
+  useEffect(() => {
+    if (!reorderMode) return undefined;
+    document.body.classList.add('favorites-reorder-open');
+    return () => {
+      document.body.classList.remove('favorites-reorder-open');
+    };
+  }, [reorderMode]);
 
   const openSavedSong = (songId) => {
     const params = new URLSearchParams({ list: 'favorites', sort: sortBy });
@@ -183,21 +258,43 @@ export default function Favorites() {
         {/* Play Action Row */}
         {songs.length > 0 && !loading && (
           <div className="fav-action-row animate-fade-in">
-            <button
-              className="fav-action-pill primary"
-              onClick={() => filteredSongs[0] && openSavedSong(filteredSongs[0].id)}
-              disabled={filteredSongs.length === 0}
-            >
-              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-              <span>{t('favorites.openFirst')}</span>
-            </button>
-            <button className="fav-action-pill secondary" onClick={() => navigate('/songs')}>
-              <span>{t('favorites.browseSongs')}</span>
-            </button>
+            {!reorderMode ? (
+              <>
+                <button
+                  className="fav-action-pill primary"
+                  onClick={() => filteredSongs[0] && openSavedSong(filteredSongs[0].id)}
+                  disabled={filteredSongs.length === 0}
+                >
+                  <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <span>{t('favorites.openFirst')}</span>
+                </button>
+                <button className="fav-action-pill secondary" onClick={() => navigate('/songs')}>
+                  <span>{t('favorites.browseSongs')}</span>
+                </button>
+                {isPWA && songs.length > 1 && (
+                  <button
+                    type="button"
+                    className="fav-action-pill reorder"
+                    onClick={startReorder}
+                    title={t('favorites.reorder', 'Վերադասավորել')}
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <path d="M7 15l5 5 5-5M7 9l5-5 5 5" />
+                    </svg>
+                    <span>{t('favorites.reorder', 'Վերադասավորել')}</span>
+                  </button>
+                )}
+              </>
+            ) : (
+              <div className="fav-reorder-banner">
+                <span className="fav-reorder-badge">↕</span>
+                <span>{language === 'am' ? 'Վերադասավորեք երգերը (▲/▼ կոճակներով)' : 'Reorder songs (▲/▼ buttons)'}</span>
+              </div>
+            )}
           </div>
         )}
 
-        {songs.length > 0 && !loading && (
+        {songs.length > 0 && !loading && !reorderMode && (
           <button className="fav-filter-trigger animate-fade-in" type="button" onClick={() => setFilterOpen(true)}>
             <span className="fav-filter-trigger-icon">
               <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -239,12 +336,12 @@ export default function Favorites() {
           </div>
         ) : (
           <div className="fav-track-list">
-            {filteredSongs.map((song, idx) => (
+            {displaySongs.map((song, idx) => (
               <div 
                 key={song.id} 
-                className="fav-track-item animate-fade-in"
+                className={`fav-track-item animate-fade-in ${reorderMode ? 'fav-reorder-item' : ''}`}
                 style={{ animationDelay: `${Math.min(idx * 0.03, 0.5)}s` }}
-                onClick={() => openSavedSong(song.id)}
+                onClick={() => !reorderMode && openSavedSong(song.id)}
               >
                 <div className="fav-track-num">{idx + 1}</div>
 
@@ -260,23 +357,46 @@ export default function Favorites() {
                   <div className="fav-track-artist">{song.artist || t('songs.unknownArtist', 'Unknown Artist')}</div>
                 </div>
                 
-                <div className="fav-track-meta">
-                  {(song.target_key || song.song_key) && <span className="fav-track-badge">{song.target_key || song.song_key}</span>}
-                  {Number.parseInt(song.bpm, 10) > 0 && <span className="fav-track-badge fav-track-bpm">BPM {song.bpm}</span>}
-                  
-                  <button 
-                    className="fav-remove-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFavorite(song.id);
-                    }}
-                    title={t('favorites.removeFromFav', 'Remove')}
-                  >
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                    </svg>
-                  </button>
-                </div>
+                {reorderMode ? (
+                  <div className="fav-reorder-ctrls" onClick={e => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      className="fav-reorder-btn"
+                      disabled={idx === 0}
+                      onClick={() => moveItem(idx, 'up')}
+                      title={language === 'am' ? 'Բարձրացնել' : 'Move up'}
+                    >
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      className="fav-reorder-btn"
+                      disabled={idx === displaySongs.length - 1}
+                      onClick={() => moveItem(idx, 'down')}
+                      title={language === 'am' ? 'Իջեցնել' : 'Move down'}
+                    >
+                      ▼
+                    </button>
+                  </div>
+                ) : (
+                  <div className="fav-track-meta">
+                    {(song.target_key || song.song_key) && <span className="fav-track-badge">{song.target_key || song.song_key}</span>}
+                    {Number.parseInt(song.bpm, 10) > 0 && <span className="fav-track-badge fav-track-bpm">BPM {song.bpm}</span>}
+                    
+                    <button 
+                      className="fav-remove-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFavorite(song.id);
+                      }}
+                      title={t('favorites.removeFromFav', 'Remove')}
+                    >
+                      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                      </svg>
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
             
@@ -348,6 +468,39 @@ export default function Favorites() {
             </footer>
           </section>
         </div>,
+        document.body
+      )}
+
+      {reorderMode && (
+        <div className="fav-reorder-bar-wrap animate-slide-up">
+          <div className="fav-reorder-bar">
+            <span className="fav-reorder-bar-count">
+              {displaySongs.length} {language === 'am' ? 'երգ' : 'songs'}
+            </span>
+            <div className="fav-reorder-bar-actions">
+              <button
+                type="button"
+                className="fav-reorder-cancel-btn"
+                onClick={cancelReorder}
+                disabled={savingReorder}
+              >
+                {t('common.cancel', 'Չեղարկել')}
+              </button>
+              <button
+                type="button"
+                className="fav-reorder-save-btn"
+                onClick={saveReorder}
+                disabled={savingReorder}
+              >
+                {savingReorder ? '...' : t('favorites.saveOrder', 'Պահպանել')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toastMsg && createPortal(
+        <div className="fav-toast animate-fade-in">{toastMsg}</div>,
         document.body
       )}
     </div>
