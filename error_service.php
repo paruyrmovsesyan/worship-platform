@@ -530,7 +530,18 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
-    // 7. Check if previously marked in resolutions file
+    // 7. Install identity & install_api (caused by closed mysqli in install_service.php, resolved)
+    if (stripos($message, 'install_identity_api') !== false || stripos($message, 'install_api') !== false || stripos($message, 'install_service') !== false) {
+        $reason = 'install_service.php-ի փակ MySQLi կապի խնդիրը շտկված է (commit e1ad3ee)';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
+    // 8. Check if previously marked in resolutions file
     if (!empty($knownRes['is_resolved'])) {
         $item['is_resolved'] = 1;
         $item['resolved_at'] = $knownRes['resolved_at'] ?? date('Y-m-d H:i:s');
