@@ -27,6 +27,15 @@ $i18n = [
         'stream_active' => 'Սթրիմն ակտիվ է',
         'stream_paused' => 'Դադարեցված է',
         'refresh' => 'Թարմացնել',
+        'auto_verify' => 'Ավտոմատ Ստուգել',
+        'auto_verifying' => 'Ստուգվում է...',
+        'verify_item' => 'Ստուգել',
+        'mark_resolved' => 'Նշել լուծված',
+        'reopen' => 'Վերաբացել',
+        'resolved_badge' => 'ԼՈՒԾՎԱԾ',
+        'active_badge' => 'ԱԿՏԻՎ',
+        'stat_resolved' => 'Լուծված',
+        'stat_active' => 'Ակտիվ (Չլուծված)',
         'clear_all' => 'Մաքրել մատյանը',
         'clear_confirm' => 'Վստա՞հ եք, որ ցանկանում եք մաքրել բոլոր գրանցված սխալները։',
         'export' => 'Արտահանել JSON',
@@ -36,8 +45,10 @@ $i18n = [
         // Hero
         'hero_ok_title' => 'Բոլոր համակարգերն աշխատում են անխափան',
         'hero_ok_sub' => 'Կայքում, PWA ծրագրում և սերվերում ակտիվ սխալներ չկան:',
-        'hero_err_title' => 'Հայտնաբերվել են համակարգային սխալներ',
-        'hero_err_sub' => 'Գրանցվել են սխալներ, որոնք պահանջում են ադմինիստրատորի ուշադրությունը:',
+        'hero_all_resolved_title' => 'Բոլոր հայտնաբերված խնդիրները լուծված են',
+        'hero_all_resolved_sub' => 'Համակարգն ավտոմատ ստուգել է ծրագրի, կայքի և սերվերի սխալները: Ակտիվ խնդիրներ չկան:',
+        'hero_err_title' => 'Հայտնաբերվել են %d ակտիվ համակարգային սխալներ',
+        'hero_err_sub' => 'Գրանցվել են ակտիվ սխալներ, որոնք պահանջում են ադմինիստրատորի ուշադրությունը:',
         // Stats
         'total_errors' => 'Ընդհանուր սխալներ',
         'today_errors' => 'Այսօր (24 ժամ)',
@@ -47,6 +58,9 @@ $i18n = [
         'critical_errors' => 'Կրիտիկական (Fatal)',
         // Filters
         'search_placeholder' => 'Որոնել սխալի հաղորդագրություն, ֆայլ, URL, email, IP...',
+        'status_all' => 'Բոլոր կարգավիճակները',
+        'status_active' => '🔴 Ակտիվ սխալներ',
+        'status_resolved' => '🟢 Լուծված խնդիրներ',
         'env_all' => 'Բոլոր հարթակները',
         'env_app' => 'PWA Ծրագիր',
         'env_web' => 'Կայք (Web)',
@@ -76,6 +90,15 @@ $i18n = [
         'stream_active' => 'Стрим активен',
         'stream_paused' => 'Приостановлен',
         'refresh' => 'Обновить',
+        'auto_verify' => 'Авто-проверка',
+        'auto_verifying' => 'Проверка...',
+        'verify_item' => 'Проверить',
+        'mark_resolved' => 'Отметить решенной',
+        'reopen' => 'Открыть заново',
+        'resolved_badge' => 'РЕШЕНО',
+        'active_badge' => 'АКТИВНА',
+        'stat_resolved' => 'Исправлено',
+        'stat_active' => 'Активные',
         'clear_all' => 'Очистить журнал',
         'clear_confirm' => 'Вы уверены, что хотите удалить все сохраненные ошибки?',
         'export' => 'Экспорт JSON',
@@ -85,7 +108,9 @@ $i18n = [
         // Hero
         'hero_ok_title' => 'Все системы работают стабильно',
         'hero_ok_sub' => 'В приложении, на сайте и сервере активных сбоев нет.',
-        'hero_err_title' => 'Обнаружены системные ошибки',
+        'hero_all_resolved_title' => 'Все обнаруженные проблемы устранены',
+        'hero_all_resolved_sub' => 'Система автоматически проверила ошибки приложения, сайта и сервера. Активных сбоев нет.',
+        'hero_err_title' => 'Обнаружено %d активных системных ошибок',
         'hero_err_sub' => 'Зафиксированы сбои, требующие внимания администратора.',
         // Stats
         'total_errors' => 'Всего ошибок',
@@ -96,6 +121,9 @@ $i18n = [
         'critical_errors' => 'Критические (Fatal)',
         // Filters
         'search_placeholder' => 'Поиск по ошибке, файлу, URL, email, IP...',
+        'status_all' => 'Все статусы',
+        'status_active' => '🔴 Активные ошибки',
+        'status_resolved' => '🟢 Исправленные',
         'env_all' => 'Все платформы',
         'env_app' => 'PWA Приложение',
         'env_web' => 'Сайт (Web)',
@@ -125,6 +153,15 @@ $i18n = [
         'stream_active' => 'Stream active',
         'stream_paused' => 'Stream paused',
         'refresh' => 'Refresh Now',
+        'auto_verify' => 'Auto-Verify',
+        'auto_verifying' => 'Verifying...',
+        'verify_item' => 'Verify',
+        'mark_resolved' => 'Mark Resolved',
+        'reopen' => 'Reopen',
+        'resolved_badge' => 'RESOLVED',
+        'active_badge' => 'ACTIVE',
+        'stat_resolved' => 'Resolved',
+        'stat_active' => 'Active',
         'clear_all' => 'Clear Logs',
         'clear_confirm' => 'Are you sure you want to clear all error records?',
         'export' => 'Export JSON',
@@ -134,8 +171,10 @@ $i18n = [
         // Hero
         'hero_ok_title' => 'All Systems Operating Normally',
         'hero_ok_sub' => 'No critical exceptions detected in Web, App, or Server runtimes.',
-        'hero_err_title' => 'System Errors Detected',
-        'hero_err_sub' => 'Errors recorded that may require administrator review.',
+        'hero_all_resolved_title' => 'All Detected Issues Are Resolved',
+        'hero_all_resolved_sub' => 'The system automatically verified Web, App, and Server errors. No active issues detected.',
+        'hero_err_title' => '%d Active System Errors Detected',
+        'hero_err_sub' => 'Active errors recorded that require administrator review.',
         // Stats
         'total_errors' => 'Total Errors',
         'today_errors' => 'Today (24h)',
@@ -145,6 +184,9 @@ $i18n = [
         'critical_errors' => 'Critical (Fatal)',
         // Filters
         'search_placeholder' => 'Search error message, file, URL, email, IP...',
+        'status_all' => 'All Statuses',
+        'status_active' => '🔴 Active Issues',
+        'status_resolved' => '🟢 Resolved Issues',
         'env_all' => 'All Platforms',
         'env_app' => 'PWA App',
         'env_web' => 'Web Browser',
@@ -174,7 +216,9 @@ $t = $i18n[$adminLang] ?? $i18n['hy'];
 $initialStats = wp_error_get_stats();
 $initialLogs  = wp_error_get_logs([], 60);
 
-$hasErrors = ($initialStats['total'] > 0);
+$activeCount = (int)($initialStats['active'] ?? 0);
+$hasActiveErrors = ($activeCount > 0);
+$resolvedCount = (int)($initialStats['resolved'] ?? 0);
 $activePage = 'errors';
 ?>
 <!doctype html>
@@ -473,6 +517,73 @@ $activePage = 'errors';
       100% { background: var(--card); }
     }
 
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .status-chip.resolved {
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid rgba(5, 150, 105, 0.35);
+    }
+    .status-chip.active {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid rgba(220, 38, 38, 0.35);
+    }
+    .pulse-dot-sm {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ef4444;
+      display: inline-block;
+      animation: pulse-ring-red 1.2s infinite;
+    }
+    .resolution-reason-text {
+      font-size: 12px;
+      font-weight: 600;
+      color: #059669;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 6px;
+    }
+    .btn-auto-verify {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(5, 150, 105, 0.25);
+      transition: all 0.15s;
+    }
+    .btn-auto-verify:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(5, 150, 105, 0.35);
+    }
+    .btn-auto-verify:disabled {
+      opacity: 0.75;
+      cursor: wait;
+    }
+
     .level-chip {
       padding: 4px 10px;
       border-radius: 6px;
@@ -710,6 +821,11 @@ $activePage = 'errors';
             <span id="liveStatusText"><?= htmlspecialchars($t['live']) ?></span>
           </div>
 
+          <button class="btn-auto-verify" id="btnAutoVerify" onclick="window.triggerAutoVerifyAll()" title="Ստուգել բոլոր խնդիրները ավտոմատ">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span id="autoVerifyBtnLabel"><?= htmlspecialchars($t['auto_verify']) ?></span>
+          </button>
+
           <button class="btn-tool primary" id="btnRefresh" title="Refresh error logs">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
             <?= htmlspecialchars($t['refresh']) ?>
@@ -718,13 +834,13 @@ $activePage = 'errors';
       </div>
 
       <!-- Hero Banner -->
-      <div id="heroBanner" class="status-hero <?= $hasErrors ? 'error' : 'ok' ?>">
+      <div id="heroBanner" class="status-hero <?= $hasActiveErrors ? 'error' : 'ok' ?>">
         <div class="status-hero-icon" id="heroIcon">
-          <?= $hasErrors ? '✕' : '✓' ?>
+          <?= $hasActiveErrors ? '✕' : '✓' ?>
         </div>
         <div class="status-hero-text">
-          <h2 id="heroTitle"><?= htmlspecialchars($hasErrors ? $t['hero_err_title'] : $t['hero_ok_title']) ?></h2>
-          <p id="heroSub"><?= htmlspecialchars($hasErrors ? $t['hero_err_sub'] : $t['hero_ok_sub']) ?></p>
+          <h2 id="heroTitle"><?= htmlspecialchars($hasActiveErrors ? sprintf($t['hero_err_title'], $activeCount) : ($resolvedCount > 0 ? $t['hero_all_resolved_title'] : $t['hero_ok_title'])) ?></h2>
+          <p id="heroSub"><?= htmlspecialchars($hasActiveErrors ? $t['hero_err_sub'] : ($resolvedCount > 0 ? $t['hero_all_resolved_sub'] : $t['hero_ok_sub'])) ?></p>
         </div>
       </div>
 
@@ -734,6 +850,14 @@ $activePage = 'errors';
           <div class="kpi-title"><?= htmlspecialchars($t['total_errors']) ?></div>
           <div class="kpi-number" id="kpiTotal"><?= (int)$initialStats['total'] ?></div>
         </div>
+        <div class="kpi-card <?= $hasActiveErrors ? 'critical' : '' ?>" id="kpiCardActive">
+          <div class="kpi-title"><?= htmlspecialchars($t['stat_active']) ?></div>
+          <div class="kpi-number" id="kpiActive" style="<?= $hasActiveErrors ? 'color:#dc2626;' : 'color:#10b981;' ?>"><?= $activeCount ?></div>
+        </div>
+        <div class="kpi-card" style="border-left: 4px solid #10b981;">
+          <div class="kpi-title" style="color:#059669;"><?= htmlspecialchars($t['stat_resolved']) ?></div>
+          <div class="kpi-number" id="kpiResolved" style="color:#059669;"><?= $resolvedCount ?></div>
+        </div>
         <div class="kpi-card">
           <div class="kpi-title"><?= htmlspecialchars($t['today_errors']) ?></div>
           <div class="kpi-number" id="kpiToday"><?= (int)$initialStats['today'] ?></div>
@@ -742,17 +866,9 @@ $activePage = 'errors';
           <div class="kpi-title"><?= htmlspecialchars($t['app_errors']) ?></div>
           <div class="kpi-number" id="kpiApp"><?= (int)$initialStats['app'] ?></div>
         </div>
-        <div class="kpi-card web">
-          <div class="kpi-title"><?= htmlspecialchars($t['web_errors']) ?></div>
-          <div class="kpi-number" id="kpiWeb"><?= (int)$initialStats['web'] ?></div>
-        </div>
         <div class="kpi-card server">
           <div class="kpi-title"><?= htmlspecialchars($t['server_errors']) ?></div>
           <div class="kpi-number" id="kpiServer"><?= (int)$initialStats['server'] ?></div>
-        </div>
-        <div class="kpi-card critical">
-          <div class="kpi-title"><?= htmlspecialchars($t['critical_errors']) ?></div>
-          <div class="kpi-number" id="kpiCritical"><?= (int)$initialStats['critical'] ?></div>
         </div>
       </div>
 
@@ -763,6 +879,12 @@ $activePage = 'errors';
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             <input type="text" id="filterSearch" placeholder="<?= htmlspecialchars($t['search_placeholder']) ?>">
           </div>
+
+          <select class="select-ctrl" id="filterStatus">
+            <option value="all"><?= htmlspecialchars($t['status_all']) ?></option>
+            <option value="active"><?= htmlspecialchars($t['status_active']) ?></option>
+            <option value="resolved"><?= htmlspecialchars($t['status_resolved']) ?></option>
+          </select>
 
           <select class="select-ctrl" id="filterEnv">
             <option value="all"><?= htmlspecialchars($t['env_all']) ?></option>
@@ -839,6 +961,8 @@ $activePage = 'errors';
     </div>
 
     <div class="inspector-content">
+      <div id="mStatusBox"></div>
+
       <div>
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
           <span id="mLevel" class="level-chip"></span>
@@ -886,7 +1010,13 @@ $activePage = 'errors';
     </div>
 
     <div class="inspector-footer">
-      <div style="display:flex; gap:8px;">
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn-tool primary" id="btnModalVerify">
+          ⚡ <?= htmlspecialchars($t['verify_item']) ?>
+        </button>
+        <button class="btn-tool" id="btnModalToggleResolve">
+          ✓ <?= htmlspecialchars($t['mark_resolved']) ?>
+        </button>
         <button class="btn-tool" id="btnCopyStack">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
           <?= htmlspecialchars($t['copy_stack']) ?>
@@ -903,6 +1033,27 @@ $activePage = 'errors';
 <script>
 (function() {
   'use strict';
+
+  const t = {
+    live: <?= json_encode($t['live']) ?>,
+    stream_paused: <?= json_encode($t['stream_paused']) ?>,
+    occurrences: <?= json_encode($t['occurrences']) ?>,
+    inspect: <?= json_encode($t['inspect']) ?>,
+    verify_item: <?= json_encode($t['verify_item']) ?>,
+    mark_resolved: <?= json_encode($t['mark_resolved']) ?>,
+    reopen: <?= json_encode($t['reopen']) ?>,
+    resolved_badge: <?= json_encode($t['resolved_badge']) ?>,
+    active_badge: <?= json_encode($t['active_badge']) ?>,
+    hero_ok_title: <?= json_encode($t['hero_ok_title']) ?>,
+    hero_ok_sub: <?= json_encode($t['hero_ok_sub']) ?>,
+    hero_all_resolved_title: <?= json_encode($t['hero_all_resolved_title']) ?>,
+    hero_all_resolved_sub: <?= json_encode($t['hero_all_resolved_sub']) ?>,
+    hero_err_title: <?= json_encode($t['hero_err_title']) ?>,
+    hero_err_sub: <?= json_encode($t['hero_err_sub']) ?>,
+    copied: <?= json_encode($t['copied']) ?>,
+    auto_verifying: <?= json_encode($t['auto_verifying']) ?>,
+    auto_verify: <?= json_encode($t['auto_verify']) ?>,
+  };
 
   let currentLogs = <?= json_encode($initialLogs, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
   let activeInspectItem = null;
@@ -989,6 +1140,7 @@ $activePage = 'errors';
       const env = (item.environment || 'web').toLowerCase();
       const occ = parseInt(item.occurrences, 10) || 1;
       const isNew = newlyAddedIds && newlyAddedIds.includes(String(item.id));
+      const isResolved = (item.is_resolved == 1 || item.is_resolved === true);
 
       const fileInfo = item.file ? `${escapeHtml(item.file)}${item.line ? ':' + item.line : ''}` : '';
       const userTag = item.user_email ? escapeHtml(item.user_email) : (item.ip_address || '');
@@ -997,14 +1149,25 @@ $activePage = 'errors';
         <div class="error-card-item ${isNew ? 'just-added' : ''}" data-id="${escapeHtml(item.id)}" onclick="window.inspectError('${escapeHtml(item.id)}')">
           <div class="error-body">
             <div class="error-body-head">
+              ${isResolved 
+                ? `<span class="status-chip resolved"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> ${escapeHtml(t.resolved_badge)}</span>` 
+                : `<span class="status-chip active"><span class="pulse-dot-sm"></span> ${escapeHtml(t.active_badge)}</span>`
+              }
               <span class="level-chip ${escapeHtml(level)}">${escapeHtml(level)}</span>
               <span class="env-chip ${escapeHtml(env)}">${escapeHtml(env)}</span>
-              ${occ > 1 ? `<span class="hits-badge">${occ} <?= htmlspecialchars($t['occurrences']) ?></span>` : ''}
+              ${occ > 1 ? `<span class="hits-badge">${occ} ${escapeHtml(t.occurrences)}</span>` : ''}
               <span style="flex:1;"></span>
               <span class="error-stamp" title="${escapeHtml(item.last_seen)}">${formatRelativeTime(item.last_seen)}</span>
             </div>
             
             <div class="error-text-title">${escapeHtml(item.message)}</div>
+
+            ${isResolved && item.resolution_reason ? `
+              <div class="resolution-reason-text">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>${escapeHtml(item.resolution_reason)}</span>
+              </div>
+            ` : ''}
 
             <div class="error-meta-tags">
               ${fileInfo ? `<span class="error-meta-tag" title="${escapeHtml(item.file)}">📁 ${fileInfo}</span>` : ''}
@@ -1013,9 +1176,17 @@ $activePage = 'errors';
             </div>
           </div>
           
-          <button class="btn-tool" style="padding:6px 12px; font-size:12px; align-self:center;" onclick="event.stopPropagation(); window.inspectError('${escapeHtml(item.id)}')">
-            <?= htmlspecialchars($t['inspect']) ?>
-          </button>
+          <div style="display:flex; flex-direction:column; gap:6px; align-self:center;" onclick="event.stopPropagation();">
+            <button class="btn-tool primary" style="padding:6px 12px; font-size:12px;" onclick="window.verifySingleItem('${escapeHtml(item.fingerprint)}')">
+              ⚡ ${escapeHtml(t.verify_item)}
+            </button>
+            <button class="btn-tool" style="padding:6px 12px; font-size:12px;" onclick="window.toggleResolveItem('${escapeHtml(item.fingerprint)}', ${isResolved ? 0 : 1})">
+              ${isResolved ? '↩ ' + escapeHtml(t.reopen) : '✓ ' + escapeHtml(t.mark_resolved)}
+            </button>
+            <button class="btn-tool" style="padding:6px 12px; font-size:12px;" onclick="window.inspectError('${escapeHtml(item.id)}')">
+              ${escapeHtml(t.inspect)}
+            </button>
+          </div>
         </div>
       `;
     });
@@ -1025,10 +1196,15 @@ $activePage = 'errors';
 
   function applyFilters() {
     const searchVal = document.getElementById('filterSearch').value.toLowerCase().trim();
+    const statusVal = document.getElementById('filterStatus').value;
     const envVal = document.getElementById('filterEnv').value;
     const levelVal = document.getElementById('filterLevel').value;
 
     const filtered = currentLogs.filter(function(item) {
+      const isResolved = (item.is_resolved == 1 || item.is_resolved === true);
+      if (statusVal === 'active' && isResolved) return false;
+      if (statusVal === 'resolved' && !isResolved) return false;
+
       if (envVal !== 'all' && (item.environment || '').toLowerCase() !== envVal) {
         return false;
       }
@@ -1036,7 +1212,7 @@ $activePage = 'errors';
         return false;
       }
       if (searchVal) {
-        const text = `${item.message || ''} ${item.file || ''} ${item.url || ''} ${item.user_email || ''} ${item.ip_address || ''}`.toLowerCase();
+        const text = `${item.message || ''} ${item.file || ''} ${item.url || ''} ${item.user_email || ''} ${item.ip_address || ''} ${item.resolution_reason || ''}`.toLowerCase();
         if (text.indexOf(searchVal) === -1) return false;
       }
       return true;
@@ -1048,27 +1224,51 @@ $activePage = 'errors';
   function updateKpis(stats) {
     if (!stats) return;
     document.getElementById('kpiTotal').textContent = stats.total || 0;
+    
+    const activeVal = stats.active !== undefined ? stats.active : (stats.total || 0);
+    const resolvedVal = stats.resolved !== undefined ? stats.resolved : 0;
+    
+    const kpiActive = document.getElementById('kpiActive');
+    const kpiCardActive = document.getElementById('kpiCardActive');
+    if (kpiActive) {
+      kpiActive.textContent = activeVal;
+      kpiActive.style.color = (activeVal > 0) ? '#dc2626' : '#10b981';
+    }
+    if (kpiCardActive) {
+      if (activeVal > 0) {
+        kpiCardActive.classList.add('critical');
+      } else {
+        kpiCardActive.classList.remove('critical');
+      }
+    }
+
+    const kpiResolved = document.getElementById('kpiResolved');
+    if (kpiResolved) kpiResolved.textContent = resolvedVal;
+
     document.getElementById('kpiToday').textContent = stats.today || 0;
     document.getElementById('kpiApp').textContent = stats.app || 0;
-    document.getElementById('kpiWeb').textContent = stats.web || 0;
     document.getElementById('kpiServer').textContent = stats.server || 0;
-    document.getElementById('kpiCritical').textContent = stats.critical || 0;
 
     const hero = document.getElementById('heroBanner');
     const heroIcon = document.getElementById('heroIcon');
     const heroTitle = document.getElementById('heroTitle');
     const heroSub = document.getElementById('heroSub');
 
-    if (stats.total > 0) {
+    if (activeVal > 0) {
       hero.className = 'status-hero error';
       heroIcon.textContent = '✕';
-      heroTitle.textContent = '<?= htmlspecialchars($t['hero_err_title']) ?>';
-      heroSub.textContent = '<?= htmlspecialchars($t['hero_err_sub']) ?>';
+      heroTitle.textContent = t.hero_err_title.replace('%d', activeVal);
+      heroSub.textContent = t.hero_err_sub;
     } else {
       hero.className = 'status-hero ok';
       heroIcon.textContent = '✓';
-      heroTitle.textContent = '<?= htmlspecialchars($t['hero_ok_title']) ?>';
-      heroSub.textContent = '<?= htmlspecialchars($t['hero_ok_sub']) ?>';
+      if (resolvedVal > 0) {
+        heroTitle.textContent = t.hero_all_resolved_title;
+        heroSub.textContent = t.hero_all_resolved_sub;
+      } else {
+        heroTitle.textContent = t.hero_ok_title;
+        heroSub.textContent = t.hero_ok_sub;
+      }
     }
   }
 
@@ -1088,7 +1288,7 @@ $activePage = 'errors';
         if (idNum > lastHighestId) {
           lastHighestId = idNum;
           newIds.push(String(item.id));
-          if (item.level === 'fatal' || item.level === 'error') {
+          if ((item.level === 'fatal' || item.level === 'error') && !item.is_resolved) {
             hasNewCritical = true;
           }
         }
@@ -1107,6 +1307,71 @@ $activePage = 'errors';
     } catch (_) {}
   }
 
+  window.triggerAutoVerifyAll = async function() {
+    const btn = document.getElementById('btnAutoVerify');
+    const label = document.getElementById('autoVerifyBtnLabel');
+    btn.disabled = true;
+    label.textContent = t.auto_verifying;
+
+    try {
+      const resp = await fetch('/error_api.php?action=auto_verify', { method: 'POST' });
+      const data = await resp.json();
+      if (data.ok) {
+        await fetchLatestErrors();
+      }
+    } catch (_) {
+    } finally {
+      btn.disabled = false;
+      label.textContent = t.auto_verify;
+    }
+  };
+
+  window.verifySingleItem = async function(fingerprint) {
+    try {
+      const resp = await fetch('/error_api.php?action=verify_item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fingerprint: fingerprint })
+      });
+      const data = await resp.json();
+      if (data.ok && data.item) {
+        const idx = currentLogs.findIndex(l => l.fingerprint === fingerprint);
+        if (idx >= 0) {
+          currentLogs[idx] = data.item;
+        }
+        updateKpis(data.stats);
+        applyFilters();
+        if (activeInspectItem && activeInspectItem.fingerprint === fingerprint) {
+          window.inspectError(activeInspectItem.id);
+        }
+      }
+    } catch (_) {}
+  };
+
+  window.toggleResolveItem = async function(fingerprint, targetResolved) {
+    try {
+      const resp = await fetch('/error_api.php?action=toggle_resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fingerprint: fingerprint, is_resolved: targetResolved })
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        currentLogs.forEach(l => {
+          if (l.fingerprint === fingerprint) {
+            l.is_resolved = targetResolved;
+            l.resolution_reason = data.reason || (targetResolved ? 'Լուծված է' : 'Վերաբացված է');
+          }
+        });
+        updateKpis(data.stats);
+        applyFilters();
+        if (activeInspectItem && activeInspectItem.fingerprint === fingerprint) {
+          window.inspectError(activeInspectItem.id);
+        }
+      }
+    } catch (_) {}
+  };
+
   function setupPolling() {
     if (pollTimer) clearInterval(pollTimer);
     const intervalMs = parseInt(document.getElementById('pollingInterval').value, 10);
@@ -1115,11 +1380,11 @@ $activePage = 'errors';
 
     if (intervalMs > 0) {
       badge.classList.remove('paused');
-      statusText.textContent = '<?= htmlspecialchars($t['live']) ?>';
+      statusText.textContent = t.live;
       pollTimer = setInterval(fetchLatestErrors, intervalMs);
     } else {
       badge.classList.add('paused');
-      statusText.textContent = '<?= htmlspecialchars($t['stream_paused']) ?>';
+      statusText.textContent = t.stream_paused;
     }
   }
 
@@ -1128,11 +1393,37 @@ $activePage = 'errors';
     if (!item) return;
     activeInspectItem = item;
 
+    const isResolved = (item.is_resolved == 1 || item.is_resolved === true);
+
+    const statusBox = document.getElementById('mStatusBox');
+    if (isResolved) {
+      statusBox.innerHTML = `
+        <div style="background:#ecfdf5; border:1px solid rgba(5,150,105,0.3); border-radius:8px; padding:12px 16px; color:#065f46; display:flex; align-items:center; gap:10px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <div>
+            <div style="font-weight:800; font-size:14px; color:#059669;">✓ ԽՆԴԻՐԸ ԼՈՒԾՎԱԾ Է (RESOLVED)</div>
+            <div style="font-size:12px; margin-top:2px;">${escapeHtml(item.resolution_reason || 'Համակարգը հաստատել է լուծումը')}</div>
+            ${item.resolved_at ? `<div style="font-size:11px; opacity:0.8; margin-top:2px;">Լուծվել է՝ ${escapeHtml(item.resolved_at)}</div>` : ''}
+          </div>
+        </div>
+      `;
+    } else {
+      statusBox.innerHTML = `
+        <div style="background:#fef2f2; border:1px solid rgba(220,38,38,0.3); border-radius:8px; padding:12px 16px; color:#991b1b; display:flex; align-items:center; gap:10px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <div>
+            <div style="font-weight:800; font-size:14px; color:#dc2626;">⚠ ԱԿՏԻՎ ՉԼՈՒԾՎԱԾ ԽՆԴԻՐ</div>
+            <div style="font-size:12px; margin-top:2px;">Այս սխալը դեռևս չի լուծվել կամ պահանջում է կոդի շտկում:</div>
+          </div>
+        </div>
+      `;
+    }
+
     document.getElementById('mLevel').textContent = (item.level || 'error').toUpperCase();
     document.getElementById('mLevel').className = 'level-chip ' + (item.level || 'error').toLowerCase();
     document.getElementById('mEnv').textContent = (item.environment || 'web').toUpperCase();
     document.getElementById('mEnv').className = 'env-chip ' + (item.environment || 'web').toLowerCase();
-    document.getElementById('mHits').textContent = (item.occurrences || 1) + ' <?= htmlspecialchars($t['occurrences']) ?>';
+    document.getElementById('mHits').textContent = (item.occurrences || 1) + ' ' + t.occurrences;
 
     document.getElementById('mMessage').textContent = item.message || '';
     document.getElementById('mUrl').textContent = item.url || '—';
@@ -1159,6 +1450,17 @@ $activePage = 'errors';
       stackSection.style.display = 'none';
     }
 
+    const btnVerify = document.getElementById('btnModalVerify');
+    btnVerify.onclick = function() {
+      window.verifySingleItem(item.fingerprint);
+    };
+
+    const btnToggle = document.getElementById('btnModalToggleResolve');
+    btnToggle.textContent = isResolved ? ('↩ ' + t.reopen) : ('✓ ' + t.mark_resolved);
+    btnToggle.onclick = function() {
+      window.toggleResolveItem(item.fingerprint, isResolved ? 0 : 1);
+    };
+
     document.getElementById('inspectModal').classList.add('open');
   };
 
@@ -1168,6 +1470,7 @@ $activePage = 'errors';
   };
 
   document.getElementById('filterSearch').addEventListener('input', applyFilters);
+  document.getElementById('filterStatus').addEventListener('change', applyFilters);
   document.getElementById('filterEnv').addEventListener('change', applyFilters);
   document.getElementById('filterLevel').addEventListener('change', applyFilters);
   document.getElementById('pollingInterval').addEventListener('change', setupPolling);
@@ -1181,7 +1484,7 @@ $activePage = 'errors';
       if (data.ok) {
         currentLogs = [];
         renderErrorList([]);
-        updateKpis({ total: 0, today: 0, app: 0, web: 0, server: 0, critical: 0 });
+        updateKpis({ total: 0, active: 0, resolved: 0, today: 0, app: 0, web: 0, server: 0, critical: 0 });
       }
     } catch (_) {}
   });
@@ -1217,7 +1520,7 @@ $activePage = 'errors';
     if (!activeInspectItem || !activeInspectItem.stack_trace) return;
     navigator.clipboard.writeText(activeInspectItem.stack_trace).then(() => {
       const orig = this.innerHTML;
-      this.textContent = '<?= htmlspecialchars($t['copied']) ?>';
+      this.textContent = t.copied;
       setTimeout(() => this.innerHTML = orig, 1500);
     });
   });
@@ -1226,7 +1529,7 @@ $activePage = 'errors';
     if (!activeInspectItem) return;
     navigator.clipboard.writeText(JSON.stringify(activeInspectItem, null, 2)).then(() => {
       const orig = this.innerHTML;
-      this.textContent = '<?= htmlspecialchars($t['copied']) ?>';
+      this.textContent = t.copied;
       setTimeout(() => this.innerHTML = orig, 1500);
     });
   });

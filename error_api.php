@@ -57,6 +57,7 @@ if ($action === 'poll' || $action === 'get_logs') {
     $filters = [
         'environment' => trim((string)($_GET['environment'] ?? '')),
         'level' => trim((string)($_GET['level'] ?? '')),
+        'status' => trim((string)($_GET['status'] ?? 'all')),
         'search' => trim((string)($_GET['search'] ?? '')),
     ];
 
@@ -68,6 +69,96 @@ if ($action === 'poll' || $action === 'get_logs') {
         'logs' => $logs,
         'stats' => $stats,
         'timestamp' => date('Y-m-d H:i:s'),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+if ($action === 'auto_verify') {
+    if (!wp_error_is_admin_request()) {
+        http_response_code(403);
+        echo json_encode(['ok' => false, 'error' => 'Unauthorized']);
+        exit;
+    }
+
+    $result = wp_error_auto_verify_all();
+    $stats = wp_error_get_stats();
+
+    echo json_encode([
+        'ok' => true,
+        'result' => $result,
+        'stats' => $stats,
+        'message' => "Ավտոմատ ստուգումն ավարտվեց: {$result['resolved']} խնդիր լուծված է, {$result['active']} ակտիվ:"
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+if ($action === 'verify_item') {
+    if (!wp_error_is_admin_request()) {
+        http_response_code(403);
+        echo json_encode(['ok' => false, 'error' => 'Unauthorized']);
+        exit;
+    }
+
+    $fingerprint = trim((string)($postData['fingerprint'] ?? $_GET['fingerprint'] ?? ''));
+    if ($fingerprint === '') {
+        http_response_code(400);
+        echo json_encode(['ok' => false, 'error' => 'Missing fingerprint']);
+        exit;
+    }
+
+    $allLogs = wp_error_get_logs(['status' => 'all'], 300);
+    $found = null;
+    foreach ($allLogs as &$l) {
+        if (($l['fingerprint'] ?? '') === $fingerprint) {
+            $found = &$l;
+            break;
+        }
+    }
+
+    if (!$found) {
+        http_response_code(404);
+        echo json_encode(['ok' => false, 'error' => 'Error item not found']);
+        exit;
+    }
+
+    $verifyRes = wp_error_auto_verify_item($found, true);
+    $stats = wp_error_get_stats();
+
+    echo json_encode([
+        'ok' => true,
+        'item' => $found,
+        'verification' => $verifyRes,
+        'stats' => $stats,
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+if ($action === 'toggle_resolve') {
+    if (!wp_error_is_admin_request()) {
+        http_response_code(403);
+        echo json_encode(['ok' => false, 'error' => 'Unauthorized']);
+        exit;
+    }
+
+    $fingerprint = trim((string)($postData['fingerprint'] ?? $_GET['fingerprint'] ?? ''));
+    $isResolved = !empty($postData['is_resolved']) || (isset($_GET['is_resolved']) && $_GET['is_resolved'] === '1');
+    $reason = trim((string)($postData['reason'] ?? ($isResolved ? 'Նշվել է ադմինիստրատորի կողմից որպես լուծված' : 'Վերաբացվել է ադմինիստրատորի կողմից')));
+
+    if ($fingerprint === '') {
+        http_response_code(400);
+        echo json_encode(['ok' => false, 'error' => 'Missing fingerprint']);
+        exit;
+    }
+
+    wp_error_save_resolution($fingerprint, $isResolved, $reason, 'admin_manual');
+    $stats = wp_error_get_stats();
+
+    echo json_encode([
+        'ok' => true,
+        'fingerprint' => $fingerprint,
+        'is_resolved' => $isResolved ? 1 : 0,
+        'reason' => $reason,
+        'stats' => $stats,
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }

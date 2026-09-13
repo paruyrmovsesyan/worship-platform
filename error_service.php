@@ -4,10 +4,11 @@ declare(strict_types=1);
 require_once __DIR__ . '/runtime_config.php';
 
 const WP_ERROR_STORE_FILE = __DIR__ . '/data/error_monitor_store.json';
+const WP_ERROR_RESOLUTIONS_FILE = __DIR__ . '/data/error_resolutions.json';
 const WP_ERROR_MAX_STORE_ITEMS = 500;
 
 /**
- * Initializes the database table if possible.
+ * Initializes the database table if possible and ensures resolution columns exist.
  */
 function wp_error_init_table(): bool {
     static $initialized = null;
@@ -33,21 +34,107 @@ function wp_error_init_table(): bool {
             user_agent VARCHAR(255) NULL,
             device_info TEXT NULL,
             occurrences INT NOT NULL DEFAULT 1,
+            is_resolved TINYINT(1) NOT NULL DEFAULT 0,
+            resolved_at DATETIME NULL,
+            resolved_by VARCHAR(100) NULL,
+            resolution_reason VARCHAR(255) NULL,
+            auto_checked_at DATETIME NULL,
             first_seen DATETIME NOT NULL,
             last_seen DATETIME NOT NULL,
             created_at DATETIME NOT NULL,
             INDEX idx_level (level),
             INDEX idx_env (environment),
             INDEX idx_fingerprint (fingerprint),
+            INDEX idx_resolved (is_resolved),
             INDEX idx_last_seen (last_seen)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
         $pdo->exec($sql);
+
+        // Auto-migration for existing tables missing new resolution columns
+        try {
+            $cols = $pdo->query("SHOW COLUMNS FROM system_error_logs")->fetchAll(PDO::FETCH_COLUMN);
+            $neededCols = [
+                'is_resolved' => 'TINYINT(1) NOT NULL DEFAULT 0',
+                'resolved_at' => 'DATETIME NULL',
+                'resolved_by' => 'VARCHAR(100) NULL',
+                'resolution_reason' => 'VARCHAR(255) NULL',
+                'auto_checked_at' => 'DATETIME NULL',
+            ];
+            foreach ($neededCols as $col => $def) {
+                if (!in_array($col, $cols, true)) {
+                    $pdo->exec("ALTER TABLE system_error_logs ADD COLUMN {$col} {$def}");
+                }
+            }
+        } catch (Throwable $_) {}
+
         $initialized = true;
         return true;
     } catch (Throwable $e) {
         $initialized = false;
         return false;
     }
+}
+
+/**
+ * Loads resolution metadata from JSON file.
+ */
+function wp_error_load_resolutions(): array {
+    if (!is_file(WP_ERROR_RESOLUTIONS_FILE)) {
+        return [];
+    }
+    $raw = @file_get_contents(WP_ERROR_RESOLUTIONS_FILE);
+    if (!$raw) {
+        return [];
+    }
+    $decoded = json_decode($raw, true);
+    return is_array($decoded) ? $decoded : [];
+}
+
+/**
+ * Saves a resolution record to JSON and DB.
+ */
+function wp_error_save_resolution(string $fingerprint, bool $isResolved, ?string $reason = null, ?string $by = null): bool {
+    $resolutions = wp_error_load_resolutions();
+    $now = date('Y-m-d H:i:s');
+
+    if ($isResolved) {
+        $resolutions[$fingerprint] = [
+            'is_resolved' => 1,
+            'resolved_at' => $now,
+            'resolved_by' => $by ?? 'auto_verifier',
+            'resolution_reason' => $reason ?? 'Խնդիրը ստուգված և լուծված է',
+        ];
+    } else {
+        $resolutions[$fingerprint] = [
+            'is_resolved' => 0,
+            'resolved_at' => null,
+            'resolved_by' => $by ?? 'manual',
+            'resolution_reason' => $reason ?? 'Վերաբացված է (նորից ակտիվ)',
+        ];
+    }
+
+    $dir = dirname(WP_ERROR_RESOLUTIONS_FILE);
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0775, true);
+    }
+    @file_put_contents(WP_ERROR_RESOLUTIONS_FILE, json_encode($resolutions, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+
+    if (wp_error_init_table()) {
+        try {
+            $pdo = wp_runtime_open_pdo();
+            $stmt = $pdo->prepare("UPDATE system_error_logs SET is_resolved = ?, resolved_at = ?, resolved_by = ?, resolution_reason = ?, auto_checked_at = ? WHERE fingerprint = ?");
+            $stmt->execute([
+                $isResolved ? 1 : 0,
+                $isResolved ? $now : null,
+                $by ?? ($isResolved ? 'auto_verifier' : 'reopen'),
+                $reason,
+                $now,
+                $fingerprint
+            ]);
+        } catch (Throwable $e) {}
+    }
+
+    return true;
 }
 
 /**
@@ -131,14 +218,15 @@ function wp_error_log_record(array $data): array {
     if (wp_error_init_table()) {
         try {
             $pdo = wp_runtime_open_pdo();
-            // Check for recent duplicate within 1 hour
-            $checkStmt = $pdo->prepare("SELECT id, occurrences FROM system_error_logs WHERE fingerprint = ? AND last_seen >= DATE_SUB(?, INTERVAL 1 HOUR) ORDER BY id DESC LIMIT 1");
+            // Check for duplicate within 24 hours
+            $checkStmt = $pdo->prepare("SELECT id, occurrences FROM system_error_logs WHERE fingerprint = ? AND last_seen >= DATE_SUB(?, INTERVAL 24 HOUR) ORDER BY id DESC LIMIT 1");
             $checkStmt->execute([$fingerprint, $now]);
             $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
             if ($existing) {
-                $updateStmt = $pdo->prepare("UPDATE system_error_logs SET occurrences = occurrences + 1, last_seen = ?, url = COALESCE(?, url), user_id = COALESCE(?, user_id), user_email = COALESCE(?, user_email) WHERE id = ?");
+                $updateStmt = $pdo->prepare("UPDATE system_error_logs SET occurrences = occurrences + 1, last_seen = ?, is_resolved = 0, resolved_at = NULL, resolution_reason = 'Վերաբացվել է (նոր սխալ)', url = COALESCE(?, url), user_id = COALESCE(?, user_id), user_email = COALESCE(?, user_email) WHERE id = ?");
                 $updateStmt->execute([$now, $url, $userId, $userEmail, (int)$existing['id']]);
+                wp_error_save_resolution($fingerprint, false, 'Վերաբացվել է (նոր սխալ)', 'reopen');
                 return [
                     'id' => (int)$existing['id'],
                     'fingerprint' => $fingerprint,
@@ -148,8 +236,8 @@ function wp_error_log_record(array $data): array {
             }
 
             $insertStmt = $pdo->prepare("INSERT INTO system_error_logs 
-                (fingerprint, level, environment, message, file, line, url, stack_trace, user_id, user_email, ip_address, user_agent, device_info, occurrences, first_seen, last_seen, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)");
+                (fingerprint, level, environment, message, file, line, url, stack_trace, user_id, user_email, ip_address, user_agent, device_info, occurrences, is_resolved, first_seen, last_seen, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?, ?)");
             $insertStmt->execute([
                 $fingerprint, $level, $env, $message, $file, $line, $url, $stack, $userId, $userEmail, $ip, $userAgent, $deviceInfo, $now, $now, $now
             ]);
@@ -174,7 +262,7 @@ function wp_error_log_record(array $data): array {
     foreach ($store as $idx => $item) {
         if (($item['fingerprint'] ?? '') === $fingerprint) {
             $itemLastSeen = strtotime($item['last_seen'] ?? '0');
-            if (($nowTs - $itemLastSeen) < 3600) {
+            if (($nowTs - $itemLastSeen) < 86400) {
                 $foundIndex = $idx;
                 break;
             }
@@ -184,6 +272,9 @@ function wp_error_log_record(array $data): array {
     if ($foundIndex >= 0) {
         $store[$foundIndex]['occurrences'] = (int)($store[$foundIndex]['occurrences'] ?? 1) + 1;
         $store[$foundIndex]['last_seen'] = $now;
+        $store[$foundIndex]['is_resolved'] = 0;
+        $store[$foundIndex]['resolved_at'] = null;
+        $store[$foundIndex]['resolution_reason'] = 'Վերաբացվել է (նոր սխալ)';
         if ($url) $store[$foundIndex]['url'] = $url;
         if ($userId) $store[$foundIndex]['user_id'] = $userId;
         if ($userEmail) $store[$foundIndex]['user_email'] = $userEmail;
@@ -191,6 +282,7 @@ function wp_error_log_record(array $data): array {
         array_splice($store, $foundIndex, 1);
         array_unshift($store, $updatedItem);
         wp_error_save_json_store($store);
+        wp_error_save_resolution($fingerprint, false, 'Վերաբացվել է (նոր սխալ)', 'reopen');
         return [
             'id' => (int)($updatedItem['id'] ?? 0),
             'fingerprint' => $fingerprint,
@@ -216,6 +308,10 @@ function wp_error_log_record(array $data): array {
         'user_agent' => $userAgent,
         'device_info' => $deviceInfo,
         'occurrences' => 1,
+        'is_resolved' => 0,
+        'resolved_at' => null,
+        'resolved_by' => null,
+        'resolution_reason' => null,
         'first_seen' => $now,
         'last_seen' => $now,
         'created_at' => $now
@@ -233,7 +329,235 @@ function wp_error_log_record(array $data): array {
 }
 
 /**
- * Reads native PHP error_log file lines and converts them into normalized error entries.
+ * Auto-verifies if a specific error is still active or has been resolved.
+ */
+function wp_error_auto_verify_item(array &$item, bool $force = false): array {
+    $fingerprint = (string)($item['fingerprint'] ?? '');
+    if ($fingerprint === '') {
+        return ['verified' => false, 'is_resolved' => false, 'reason' => 'Missing fingerprint'];
+    }
+
+    $resolutions = wp_error_load_resolutions();
+    $knownRes = $resolutions[$fingerprint] ?? null;
+
+    // If already marked resolved and not forcing recheck
+    if (!$force && !empty($item['is_resolved']) && !empty($item['resolved_at'])) {
+        return [
+            'verified' => true,
+            'is_resolved' => true,
+            'reason' => (string)($item['resolution_reason'] ?? 'Խնդիրը լուծված է'),
+            'by' => (string)($item['resolved_by'] ?? 'auto')
+        ];
+    }
+
+    $file = trim((string)($item['file'] ?? ''));
+    $line = isset($item['line']) && is_numeric($item['line']) ? (int)$item['line'] : null;
+    $message = (string)($item['message'] ?? '');
+    $env = strtolower(trim((string)($item['environment'] ?? 'web')));
+    $lastSeen = (string)($item['last_seen'] ?? date('Y-m-d H:i:s'));
+    $lastSeenTs = strtotime($lastSeen) ?: time();
+
+    // 1. PHP Server / Backend file verification
+    $cleanFilePath = null;
+    if ($file !== '') {
+        $candidates = [
+            $file,
+            __DIR__ . '/' . basename($file),
+            __DIR__ . '/' . ltrim(preg_replace('#^.*?worship\.pmstudio\.am/#', '', $file), '/'),
+            dirname(__DIR__) . '/' . basename($file),
+        ];
+        foreach ($candidates as $cand) {
+            if (is_file($cand)) {
+                $cleanFilePath = realpath($cand);
+                break;
+            }
+        }
+    }
+
+    if ($cleanFilePath && str_ends_with($cleanFilePath, '.php')) {
+        // Syntax check
+        $syntaxOutput = [];
+        $syntaxReturn = 0;
+        @exec('php -l ' . escapeshellarg($cleanFilePath) . ' 2>&1', $syntaxOutput, $syntaxReturn);
+        if ($syntaxReturn !== 0) {
+            return [
+                'verified' => true,
+                'is_resolved' => false,
+                'reason' => 'Ֆայլում դեռ առկա է PHP սինտաքսի սխալ (Syntax error)'
+            ];
+        }
+
+        $fileMtime = @filemtime($cleanFilePath) ?: 0;
+        $fileContent = @file_get_contents($cleanFilePath) ?: '';
+
+        // Case: Call to a member function prepare() on null / Undefined variable $conn
+        if (stripos($message, 'Undefined variable $conn') !== false || stripos($message, 'Call to a member function prepare() on null') !== false) {
+            if (strpos($fileContent, '$conn') === false) {
+                $reason = 'Խնդիրը լուծված է ($conn-ը հեռացված է, կոդը շտկված է)';
+                wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+                $item['is_resolved'] = 1;
+                $item['resolved_at'] = date('Y-m-d H:i:s');
+                $item['resolved_by'] = 'auto_code_analysis';
+                $item['resolution_reason'] = $reason;
+                return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+            }
+        }
+
+        // Case: Undefined function or Class
+        if (preg_match('/Call to undefined function\s+([a-zA-Z0-9_]+)/i', $message, $m)) {
+            $funcName = $m[1];
+            if (function_exists($funcName) || strpos($fileContent, 'function ' . $funcName) !== false) {
+                $reason = "Ֆունկցիան ($funcName) սահմանված է և հասանելի";
+                wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+                $item['is_resolved'] = 1;
+                $item['resolved_at'] = date('Y-m-d H:i:s');
+                $item['resolved_by'] = 'auto_code_analysis';
+                $item['resolution_reason'] = $reason;
+                return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+            }
+        }
+
+        // Case: File updated after error timestamp
+        if ($fileMtime > $lastSeenTs) {
+            $reason = 'Ֆայլը թարմացվել է սխալից հետո (' . date('d.m.Y H:i', $fileMtime) . '), սինտաքսը մաքուր է';
+            wp_error_save_resolution($fingerprint, true, $reason, 'auto_file_update');
+            $item['is_resolved'] = 1;
+            $item['resolved_at'] = date('Y-m-d H:i:s');
+            $item['resolved_by'] = 'auto_file_update';
+            $item['resolution_reason'] = $reason;
+            return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+        }
+    }
+
+    // If file was deleted or no longer exists in project and error is not recent (> 24 hours)
+    if ($cleanFilePath === null && $file !== '') {
+        $baseName = basename($file);
+        if (!is_file(__DIR__ . '/' . $baseName) && (time() - $lastSeenTs) > 86400) {
+            $reason = "Ֆայլը ($baseName) հեռացված է նախագծից, խնդիրը վերացված է";
+            wp_error_save_resolution($fingerprint, true, $reason, 'auto_file_removed');
+            $item['is_resolved'] = 1;
+            $item['resolved_at'] = date('Y-m-d H:i:s');
+            $item['resolved_by'] = 'auto_file_removed';
+            $item['resolution_reason'] = $reason;
+            return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+        }
+    }
+
+    // 2. Database verification check
+    if ($env === 'db' || stripos($message, 'PDOException') !== false || stripos($message, 'SQLSTATE') !== false || stripos($message, 'database') !== false || stripos($message, 'Connection timed out') !== false) {
+        try {
+            $pdo = wp_runtime_open_pdo();
+            $testStmt = $pdo->query("SELECT 1");
+            if ($testStmt && $testStmt->fetchColumn()) {
+                if (preg_match('/Table \'[^\']*\.([a-zA-Z0-9_]+)\' doesn\'t exist/i', $message, $m) || preg_match('/Base table or view not found:.*`([a-zA-Z0-9_]+)`/i', $message, $m)) {
+                    $tbl = $m[1];
+                    $tblCheck = $pdo->query("SHOW TABLES LIKE '{$tbl}'")->fetch();
+                    if ($tblCheck) {
+                        $reason = "Աղյուսակը (`$tbl`) գոյություն ունի, DB կապը նորմալ է";
+                        wp_error_save_resolution($fingerprint, true, $reason, 'auto_db_check');
+                        $item['is_resolved'] = 1;
+                        $item['resolved_at'] = date('Y-m-d H:i:s');
+                        $item['resolved_by'] = 'auto_db_check';
+                        $item['resolution_reason'] = $reason;
+                        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+                    }
+                } else {
+                    if ((time() - $lastSeenTs) > 300) {
+                        $reason = 'Տվյալների բազայի կապը հաջողությամբ վերականգնված է և ակտիվ է';
+                        wp_error_save_resolution($fingerprint, true, $reason, 'auto_db_check');
+                        $item['is_resolved'] = 1;
+                        $item['resolved_at'] = date('Y-m-d H:i:s');
+                        $item['resolved_by'] = 'auto_db_check';
+                        $item['resolution_reason'] = $reason;
+                        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+            return ['verified' => true, 'is_resolved' => false, 'reason' => 'DB կապի խնդիրը դեռ ակտիվ է: ' . $e->getMessage()];
+        }
+    }
+
+    // 3. Frontend Bundle verification
+    if (strpos($file, 'assets/index.js') !== false || strpos($file, 'index.js') !== false) {
+        $bundlePath = __DIR__ . '/assets/index.js';
+        if (is_file($bundlePath)) {
+            $bundleMtime = filemtime($bundlePath);
+            if ($bundleMtime > $lastSeenTs) {
+                $reason = 'Frontend bundle-ը վերակառուցվել է (' . date('d.m.Y H:i', $bundleMtime) . ')';
+                wp_error_save_resolution($fingerprint, true, $reason, 'auto_bundle_build');
+                $item['is_resolved'] = 1;
+                $item['resolved_at'] = date('Y-m-d H:i:s');
+                $item['resolved_by'] = 'auto_bundle_build';
+                $item['resolution_reason'] = $reason;
+                return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+            }
+        }
+    }
+
+    // 4. Test error check
+    if (stripos($message, 'Test front error') !== false || stripos($message, 'Test error') !== false) {
+        if ((time() - $lastSeenTs) > 60) {
+            $reason = 'Թեստային սխալ (փորձարկումն ավարտված է)';
+            wp_error_save_resolution($fingerprint, true, $reason, 'auto_test_verify');
+            $item['is_resolved'] = 1;
+            $item['resolved_at'] = date('Y-m-d H:i:s');
+            $item['resolved_by'] = 'auto_test_verify';
+            $item['resolution_reason'] = $reason;
+            return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+        }
+    }
+
+    // 5. Check if previously marked in resolutions file
+    if (!empty($knownRes['is_resolved'])) {
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = $knownRes['resolved_at'] ?? date('Y-m-d H:i:s');
+        $item['resolved_by'] = $knownRes['resolved_by'] ?? 'manual';
+        $item['resolution_reason'] = $knownRes['resolution_reason'] ?? 'Լուծված է';
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $item['resolution_reason']];
+    }
+
+    return ['verified' => true, 'is_resolved' => false, 'reason' => 'Ակտիվ խնդիր (կոդը կամ սերվերը դեռ չեն թարմացվել)'];
+}
+
+/**
+ * Runs auto-verification on all captured errors.
+ */
+function wp_error_auto_verify_all(): array {
+    $allLogs = wp_error_get_logs(['status' => 'all'], 200);
+    $verifiedCount = 0;
+    $resolvedCount = 0;
+    $activeCount = 0;
+    $details = [];
+
+    foreach ($allLogs as &$item) {
+        $res = wp_error_auto_verify_item($item, true);
+        $verifiedCount++;
+        if (!empty($res['is_resolved'])) {
+            $resolvedCount++;
+        } else {
+            $activeCount++;
+        }
+        $details[] = [
+            'id' => $item['id'] ?? '',
+            'fingerprint' => $item['fingerprint'] ?? '',
+            'message' => $item['message'] ?? '',
+            'is_resolved' => !empty($res['is_resolved']),
+            'reason' => $res['reason'] ?? '',
+        ];
+    }
+
+    return [
+        'total_checked' => $verifiedCount,
+        'resolved' => $resolvedCount,
+        'active' => $activeCount,
+        'details' => $details,
+        'timestamp' => date('Y-m-d H:i:s')
+    ];
+}
+
+/**
+ * Reads native PHP error_log file lines and groups them into normalized error entries.
  */
 function wp_error_read_native_php_logs(int $limit = 40): array {
     $candidates = [
@@ -270,8 +594,9 @@ function wp_error_read_native_php_logs(int $limit = 40): array {
     }
 
     $rawLines = explode("\n", trim($content));
-    $parsed = [];
     $rawLines = array_reverse($rawLines);
+    $grouped = [];
+    $resMap = wp_error_load_resolutions();
 
     foreach ($rawLines as $line) {
         $line = trim($line);
@@ -293,54 +618,77 @@ function wp_error_read_native_php_logs(int $limit = 40): array {
 
             $file = null;
             $lineNum = null;
-            if (preg_match('/in\s+([^\s]+)\s+on\s+line\s+(\d+)$/i', $msgPart, $fileMatches)) {
+            if (preg_match('/in\s+([^\s:]+)(?::| on line )(\d+)$/i', $msgPart, $fileMatches)) {
                 $file = $fileMatches[1];
                 $lineNum = (int)$fileMatches[2];
-                $msgPart = trim(preg_replace('/in\s+[^\s]+\s+on\s+line\s+\d+$/i', '', $msgPart));
+                $msgPart = trim(preg_replace('/in\s+[^\s:]+(?::| on line )\d+$/i', '', $msgPart));
             }
 
             $entryTs = strtotime($dateStr) ?: time();
             $formattedDate = date('Y-m-d H:i:s', $entryTs);
 
-            $parsed[] = [
-                'id' => 'php_' . substr(md5($line), 0, 10),
-                'fingerprint' => md5($line),
-                'level' => $level,
-                'environment' => 'server',
-                'message' => $msgPart,
-                'file' => $file,
-                'line' => $lineNum,
-                'url' => null,
-                'stack_trace' => null,
-                'user_id' => null,
-                'user_email' => null,
-                'ip_address' => '127.0.0.1',
-                'user_agent' => 'PHP Server Engine',
-                'device_info' => 'Native PHP Runtime',
-                'occurrences' => 1,
-                'first_seen' => $formattedDate,
-                'last_seen' => $formattedDate,
-                'created_at' => $formattedDate
-            ];
+            $fp = wp_error_make_fingerprint($level, 'server', $msgPart, $file, $lineNum);
 
-            if (count($parsed) >= $limit) {
+            if (!isset($grouped[$fp])) {
+                $isResolved = !empty($resMap[$fp]['is_resolved']) ? 1 : 0;
+                $resolvedAt = $resMap[$fp]['resolved_at'] ?? null;
+                $resolvedBy = $resMap[$fp]['resolved_by'] ?? null;
+                $resolutionReason = $resMap[$fp]['resolution_reason'] ?? null;
+
+                $grouped[$fp] = [
+                    'id' => 'php_' . substr($fp, 0, 10),
+                    'fingerprint' => $fp,
+                    'level' => $level,
+                    'environment' => 'server',
+                    'message' => $msgPart,
+                    'file' => $file,
+                    'line' => $lineNum,
+                    'url' => null,
+                    'stack_trace' => null,
+                    'user_id' => null,
+                    'user_email' => null,
+                    'ip_address' => '127.0.0.1',
+                    'user_agent' => 'PHP Server Engine',
+                    'device_info' => 'Native PHP Runtime',
+                    'occurrences' => 1,
+                    'is_resolved' => $isResolved,
+                    'resolved_at' => $resolvedAt,
+                    'resolved_by' => $resolvedBy,
+                    'resolution_reason' => $resolutionReason,
+                    'first_seen' => $formattedDate,
+                    'last_seen' => $formattedDate,
+                    'created_at' => $formattedDate
+                ];
+            } else {
+                $grouped[$fp]['occurrences']++;
+                if (strcmp($formattedDate, $grouped[$fp]['first_seen']) < 0) {
+                    $grouped[$fp]['first_seen'] = $formattedDate;
+                }
+                if (strcmp($formattedDate, $grouped[$fp]['last_seen']) > 0) {
+                    $grouped[$fp]['last_seen'] = $formattedDate;
+                }
+            }
+
+            if (count($grouped) >= $limit) {
                 break;
             }
         }
     }
 
-    return $parsed;
+    return array_values($grouped);
 }
 
 /**
- * Retrieves error logs with optional filtering, automatically merging native PHP error logs.
+ * Retrieves error logs with optional filtering, automatically verifying unresolved errors.
  */
 function wp_error_get_logs(array $filters = [], int $limit = 50, int $sinceId = 0): array {
     $envFilter = trim((string)($filters['environment'] ?? ''));
     $levelFilter = trim((string)($filters['level'] ?? ''));
+    $statusFilter = trim((string)($filters['status'] ?? 'all')); // 'all', 'active', 'resolved'
     $search = trim((string)($filters['search'] ?? ''));
 
     $rows = [];
+    $resolutions = wp_error_load_resolutions();
 
     if (wp_error_init_table()) {
         try {
@@ -377,7 +725,7 @@ function wp_error_get_logs(array $filters = [], int $limit = 50, int $sinceId = 
             if (!empty($clauses)) {
                 $sql .= " WHERE " . implode(" AND ", $clauses);
             }
-            $sql .= " ORDER BY last_seen DESC LIMIT " . (int)$limit;
+            $sql .= " ORDER BY last_seen DESC LIMIT " . (int)($limit * 2);
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
@@ -388,7 +736,7 @@ function wp_error_get_logs(array $filters = [], int $limit = 50, int $sinceId = 
         } catch (Throwable $e) {}
     }
 
-    // If DB has no rows or few rows, check JSON store
+    // If DB has no rows, check JSON store
     if (empty($rows)) {
         $store = wp_error_read_json_store();
         foreach ($store as $item) {
@@ -402,7 +750,7 @@ function wp_error_get_logs(array $filters = [], int $limit = 50, int $sinceId = 
                 if (mb_strpos($haystack, $needle) === false) continue;
             }
             $rows[] = $item;
-            if (count($rows) >= $limit) break;
+            if (count($rows) >= ($limit * 2)) break;
         }
     }
 
@@ -416,7 +764,6 @@ function wp_error_get_logs(array $filters = [], int $limit = 50, int $sinceId = 
                 $haystack = mb_strtolower(($nLog['message'] ?? '') . ' ' . ($nLog['file'] ?? ''));
                 if (mb_strpos($haystack, $needle) === false) continue;
             }
-            // Check if not already in rows
             $alreadyPresent = false;
             foreach ($rows as $r) {
                 if (($r['fingerprint'] ?? '') === $nLog['fingerprint']) {
@@ -428,23 +775,51 @@ function wp_error_get_logs(array $filters = [], int $limit = 50, int $sinceId = 
                 $rows[] = $nLog;
             }
         }
-
-        // Re-sort by last_seen desc
-        usort($rows, function($a, $b) {
-            return strcmp((string)($b['last_seen'] ?? ''), (string)($a['last_seen'] ?? ''));
-        });
-        $rows = array_slice($rows, 0, $limit);
     }
 
-    return $rows;
+    // Process resolutions & auto-verification for all entries
+    $processed = [];
+    foreach ($rows as $row) {
+        $fp = (string)($row['fingerprint'] ?? '');
+        if (isset($resolutions[$fp])) {
+            $row['is_resolved'] = (int)($resolutions[$fp]['is_resolved'] ?? 0);
+            $row['resolved_at'] = $resolutions[$fp]['resolved_at'] ?? null;
+            $row['resolved_by'] = $resolutions[$fp]['resolved_by'] ?? null;
+            $row['resolution_reason'] = $resolutions[$fp]['resolution_reason'] ?? null;
+        }
+
+        // If not marked resolved, run auto-verifier
+        if (empty($row['is_resolved'])) {
+            wp_error_auto_verify_item($row, false);
+        }
+
+        // Apply status filter
+        if ($statusFilter === 'active' && !empty($row['is_resolved'])) {
+            continue;
+        }
+        if ($statusFilter === 'resolved' && empty($row['is_resolved'])) {
+            continue;
+        }
+
+        $processed[] = $row;
+    }
+
+    // Sort by last_seen desc
+    usort($processed, function($a, $b) {
+        return strcmp((string)($b['last_seen'] ?? ''), (string)($a['last_seen'] ?? ''));
+    });
+
+    return array_slice($processed, 0, $limit);
 }
 
 /**
- * Returns summary stats about captured errors.
+ * Returns summary stats about captured errors (total, active, resolved, critical).
  */
 function wp_error_get_stats(): array {
     $stats = [
         'total' => 0,
+        'active' => 0,
+        'resolved' => 0,
         'today' => 0,
         'app' => 0,
         'web' => 0,
@@ -452,47 +827,40 @@ function wp_error_get_stats(): array {
         'critical' => 0,
     ];
 
-    if (wp_error_init_table()) {
-        try {
-            $pdo = wp_runtime_open_pdo();
-            
-            $stmt = $pdo->query("SELECT COUNT(*) as cnt, COALESCE(SUM(occurrences), 0) as total_occurrences FROM system_error_logs");
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $stats['total'] = (int)($row['total_occurrences'] ?? $row['cnt'] ?? 0);
+    // Compute stats from all logs after auto-verifying
+    $allLogs = wp_error_get_logs(['status' => 'all'], 300);
+    $todayStart = date('Y-m-d 00:00:00');
 
-            $today = date('Y-m-d 00:00:00');
-            $stmtToday = $pdo->prepare("SELECT COALESCE(SUM(occurrences), 0) as cnt FROM system_error_logs WHERE last_seen >= ?");
-            $stmtToday->execute([$today]);
-            $stats['today'] = (int)$stmtToday->fetchColumn();
+    foreach ($allLogs as $log) {
+        $occ = (int)($log['occurrences'] ?? 1);
+        $stats['total'] += $occ;
 
-            $stmtApp = $pdo->query("SELECT COALESCE(SUM(occurrences), 0) FROM system_error_logs WHERE environment = 'app'");
-            $stats['app'] = (int)$stmtApp->fetchColumn();
+        $isResolved = !empty($log['is_resolved']);
+        if ($isResolved) {
+            $stats['resolved']++;
+        } else {
+            $stats['active']++;
+            $level = strtolower((string)($log['level'] ?? ''));
+            if ($level === 'fatal' || $level === 'error') {
+                $stats['critical']++;
+            }
+        }
 
-            $stmtWeb = $pdo->query("SELECT COALESCE(SUM(occurrences), 0) FROM system_error_logs WHERE environment = 'web'");
-            $stats['web'] = (int)$stmtWeb->fetchColumn();
+        $env = strtolower((string)($log['environment'] ?? 'web'));
+        if ($env === 'app') $stats['app']++;
+        elseif ($env === 'web') $stats['web']++;
+        elseif (in_array($env, ['server', 'db', 'api'], true)) $stats['server']++;
 
-            $stmtServer = $pdo->query("SELECT COALESCE(SUM(occurrences), 0) FROM system_error_logs WHERE environment IN ('server', 'db', 'api')");
-            $stats['server'] = (int)$stmtServer->fetchColumn();
-
-            $stmtCrit = $pdo->query("SELECT COALESCE(SUM(occurrences), 0) FROM system_error_logs WHERE level IN ('fatal', 'error')");
-            $stats['critical'] = (int)$stmtCrit->fetchColumn();
-        } catch (Throwable $e) {}
-    }
-
-    // Add native PHP logs into stats if not captured in table
-    $nativeLogs = wp_error_read_native_php_logs(30);
-    $nativeCount = count($nativeLogs);
-    if ($nativeCount > 0 && $stats['server'] < $nativeCount) {
-        $stats['server'] = max($stats['server'], $nativeCount);
-        $stats['total'] = max($stats['total'], $stats['app'] + $stats['web'] + $stats['server']);
-        $stats['critical'] = max($stats['critical'], $nativeCount);
+        if (!empty($log['last_seen']) && $log['last_seen'] >= $todayStart) {
+            $stats['today'] += $occ;
+        }
     }
 
     return $stats;
 }
 
 /**
- * Clears all error logs from DB and JSON store.
+ * Clears all error logs from DB and JSON store and resolutions.
  */
 function wp_error_clear_logs(): bool {
     $ok = true;
@@ -507,6 +875,9 @@ function wp_error_clear_logs(): bool {
 
     if (is_file(WP_ERROR_STORE_FILE)) {
         @unlink(WP_ERROR_STORE_FILE);
+    }
+    if (is_file(WP_ERROR_RESOLUTIONS_FILE)) {
+        @unlink(WP_ERROR_RESOLUTIONS_FILE);
     }
 
     return $ok;
@@ -539,3 +910,4 @@ function wp_error_register_shutdown_handler(): void {
 
 // Auto-register shutdown handler
 wp_error_register_shutdown_handler();
+
