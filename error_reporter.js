@@ -251,30 +251,6 @@
           }
         } catch (_) {}
         return res;
-      }).catch(function(err) {
-        try {
-          const reqUrl = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
-          const isAbort = err?.name === 'AbortError' || String(err?.message || '').toLowerCase().includes('abort');
-          const isOffline = navigator.onLine === false;
-
-          // Don't report intentionally aborted requests (e.g. AbortController during cleanup/polling) or when device is offline
-          if (!reqUrl.includes('error_api.php') && !isAbort && !isOffline) {
-            const { userId, userEmail } = getUserMeta();
-            sendErrorReport({
-              level: 'network',
-              environment: isStandaloneApp() ? 'app' : 'web',
-              message: `Network Request Failed: ${reqUrl} (${err.message || err})`,
-              file: reqUrl,
-              line: null,
-              url: window.location.href,
-              stack_trace: err?.stack || String(err),
-              user_id: userId,
-              user_email: userEmail,
-              device_info: getDeviceInfo(),
-            });
-          }
-        } catch (_) {}
-        throw err;
       });
     };
   }

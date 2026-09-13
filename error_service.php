@@ -519,7 +519,18 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
-    // 6. Check if previously marked in resolutions file
+    // 6. Network connectivity / Load failed (Safari/Chrome client offline or navigation cancellation)
+    if (stripos($message, 'Network Request Failed') !== false || stripos($message, 'Load failed') !== false || stripos($message, 'Failed to fetch') !== false) {
+        $reason = 'Հաճախորդի ցանցային անջատում (Safari/Chrome Load failed) — ֆիլտրված է';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
+    // 7. Check if previously marked in resolutions file
     if (!empty($knownRes['is_resolved'])) {
         $item['is_resolved'] = 1;
         $item['resolved_at'] = $knownRes['resolved_at'] ?? date('Y-m-d H:i:s');

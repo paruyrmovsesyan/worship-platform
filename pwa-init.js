@@ -13,7 +13,7 @@
   (function ensureErrorReporterScript() {
     if (window.__wp_error_reporter_initialized || document.querySelector('script[data-wp-error-reporter="1"]')) return;
     var script = document.createElement("script");
-    script.src = "/error_reporter.js?v=1";
+    script.src = "/error_reporter.js?v=4";
     script.dataset.wpErrorReporter = "1";
     document.head.appendChild(script);
   })();
