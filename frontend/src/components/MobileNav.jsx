@@ -75,6 +75,12 @@ export default function MobileNav() {
         if (!cancelled) setChatBadgeCount(0);
         return;
       }
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        return;
+      }
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+        return;
+      }
 
       try {
         const res = await fetch(`/chat_api.php?action=badge_summary&t=${Date.now()}`, {

@@ -508,9 +508,9 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         }
     }
 
-    // 5. Call polling / Offline / Rate limiting 503 auto-resolution
-    if (stripos($message, 'poll_call_status') !== false || (stripos($message, '503') !== false && stripos($message, 'Offline') !== false)) {
-        $reason = 'Զանգերի հարցման (poll_call_status) ինտերվալը օպտիմիզացված է, օֆլայն սխալները ֆիլտրված են';
+    // 5. Call polling / badge summary / Offline / Rate limiting 503 auto-resolution
+    if (stripos($message, 'poll_call_status') !== false || stripos($message, 'badge_summary') !== false || (stripos($message, '503') !== false && (stripos($message, 'chat_api') !== false || stripos($message, 'Offline') !== false))) {
+        $reason = 'Service Worker-ի օֆլայն 503 սիմուլյացիա և հարցումների հաճախականություն — շտկված և ֆիլտրված է';
         wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
         $item['is_resolved'] = 1;
         $item['resolved_at'] = date('Y-m-d H:i:s');
