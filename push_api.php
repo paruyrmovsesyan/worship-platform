@@ -56,11 +56,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'subscribe') {
 
     $deviceScope = (string)($body['device_scope'] ?? 'main');
     $permissionState = (string)($body['permission'] ?? 'granted');
+    $uid = (int)($_SESSION['user_id'] ?? $body['user_id'] ?? 0);
+    $uName = (string)($_SESSION['name'] ?? $_SESSION['username'] ?? $body['user_name'] ?? '');
+    $uEmail = (string)($_SESSION['email'] ?? $body['user_email'] ?? '');
+
     $result = wp_push_upsert_subscription((array)($body['subscription'] ?? []), [
         'user_agent' => (string)($_SERVER['HTTP_USER_AGENT'] ?? ''),
-        'user_id' => (int)($_SESSION['user_id'] ?? 0),
-        'user_name' => (string)($_SESSION['name'] ?? $_SESSION['username'] ?? ''),
-        'user_email' => (string)($_SESSION['email'] ?? ''),
+        'user_id' => $uid,
+        'user_name' => $uName,
+        'user_email' => $uEmail,
         'ip_address' => wp_runtime_remote_ip(),
         'device_id' => (string)($body['device_id'] ?? ''),
         'device_scope' => in_array($deviceScope, ['main', 'admin'], true) ? $deviceScope : 'main',
@@ -73,10 +77,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'subscribe') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'status') {
+    $uid = (int)($_SESSION['user_id'] ?? $body['user_id'] ?? 0);
+    $uName = (string)($_SESSION['name'] ?? $_SESSION['username'] ?? $body['user_name'] ?? '');
+    $uEmail = (string)($_SESSION['email'] ?? $body['user_email'] ?? '');
+
     $result = wp_push_sync_client_status($body, [
-        'user_id' => (int)($_SESSION['user_id'] ?? 0),
-        'user_name' => (string)($_SESSION['name'] ?? $_SESSION['username'] ?? ''),
-        'user_email' => (string)($_SESSION['email'] ?? ''),
+        'user_id' => $uid,
+        'user_name' => $uName,
+        'user_email' => $uEmail,
         'user_agent' => (string)($_SERVER['HTTP_USER_AGENT'] ?? ''),
         'ip_address' => wp_runtime_remote_ip(),
     ]);
@@ -102,6 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'pull') {
     wp_push_api_response([
         'ok' => true,
         'notification' => $notification,
+        'payload' => $notification,
     ]);
 }
 

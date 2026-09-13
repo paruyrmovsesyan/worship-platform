@@ -740,7 +740,11 @@ function wp_push_upsert_subscription(array $subscription, array $meta = []): arr
     $now = wp_version_now_iso();
     $incomingDeviceId = mb_substr(trim((string)($meta['device_id'] ?? '')), 0, 120);
     $incomingDeviceScope = in_array((string)($meta['device_scope'] ?? 'main'), ['main', 'admin'], true) ? (string)$meta['device_scope'] : 'main';
-    $clearUser = array_key_exists('clear_user', $meta) ? !empty($meta['clear_user']) : ((int)($meta['user_id'] ?? 0) <= 0);
+    $clearUser = !empty($meta['clear_user']);
+    $incomingUserId = (int)($meta['user_id'] ?? 0);
+    $resolvedUserId = $clearUser ? 0 : ($incomingUserId > 0 ? $incomingUserId : (int)($existing['user_id'] ?? 0));
+    $resolvedUserName = $clearUser ? '' : ($incomingUserId > 0 && !empty($meta['user_name']) ? (string)$meta['user_name'] : (string)($existing['user_name'] ?? ''));
+    $resolvedUserEmail = $clearUser ? '' : ($incomingUserId > 0 && !empty($meta['user_email']) ? (string)$meta['user_email'] : (string)($existing['user_email'] ?? ''));
     $existing = null;
     $deviceMatch = null;
     foreach (wp_push_load_subscriptions() as $row) {
@@ -772,9 +776,9 @@ function wp_push_upsert_subscription(array $subscription, array $meta = []): arr
         'public_key' => $publicKey,
         'auth_key' => $authKey,
         'user_agent' => mb_substr(trim((string)($meta['user_agent'] ?? $existing['user_agent'] ?? '')), 0, 255),
-        'user_id' => $clearUser ? 0 : (!empty($meta['user_id']) ? (int)$meta['user_id'] : (int)($existing['user_id'] ?? 0)),
-        'user_name' => $clearUser ? '' : mb_substr(trim((string)($meta['user_name'] ?? $existing['user_name'] ?? '')), 0, 190),
-        'user_email' => $clearUser ? '' : mb_substr(trim((string)($meta['user_email'] ?? $existing['user_email'] ?? '')), 0, 190),
+        'user_id' => $resolvedUserId ?: (int)($existing['user_id'] ?? 0),
+        'user_name' => $resolvedUserName ?: (string)($existing['user_name'] ?? ''),
+        'user_email' => $resolvedUserEmail ?: (string)($existing['user_email'] ?? ''),
         'ip_address' => wp_push_normalize_ip((string)($meta['ip_address'] ?? $existing['ip_address'] ?? '')),
         'device_id' => $incomingDeviceId !== '' ? $incomingDeviceId : mb_substr(trim((string)($existing['device_id'] ?? '')), 0, 120),
         'device_scope' => $incomingDeviceScope,
@@ -815,7 +819,11 @@ function wp_push_sync_client_status(array $payload, array $meta = []): array {
     $deviceId = mb_substr(trim((string)($payload['device_id'] ?? '')), 0, 120);
     $deviceScope = in_array((string)($payload['device_scope'] ?? 'main'), ['main', 'admin'], true) ? (string)$payload['device_scope'] : 'main';
     $now = wp_version_now_iso();
-    $clearUser = array_key_exists('clear_user', $meta) ? !empty($meta['clear_user']) : ((int)($meta['user_id'] ?? 0) <= 0);
+    $clearUser = !empty($meta['clear_user']);
+    $incomingUserId = (int)($meta['user_id'] ?? 0);
+    $resolvedUserId = $clearUser ? 0 : ($incomingUserId > 0 ? $incomingUserId : (int)($existing['user_id'] ?? 0));
+    $resolvedUserName = $clearUser ? '' : ($incomingUserId > 0 && !empty($meta['user_name']) ? (string)$meta['user_name'] : (string)($existing['user_name'] ?? ''));
+    $resolvedUserEmail = $clearUser ? '' : ($incomingUserId > 0 && !empty($meta['user_email']) ? (string)$meta['user_email'] : (string)($existing['user_email'] ?? ''));
     $existing = null;
     $deviceMatch = null;
     foreach (wp_push_load_subscriptions() as $row) {
@@ -851,9 +859,9 @@ function wp_push_sync_client_status(array $payload, array $meta = []): array {
         'public_key' => (string)($existing['public_key'] ?? ''),
         'auth_key' => (string)($existing['auth_key'] ?? ''),
         'user_agent' => mb_substr(trim((string)($meta['user_agent'] ?? $existing['user_agent'] ?? '')), 0, 255),
-        'user_id' => $clearUser ? 0 : (!empty($meta['user_id']) ? (int)$meta['user_id'] : (int)($existing['user_id'] ?? 0)),
-        'user_name' => $clearUser ? '' : mb_substr(trim((string)($meta['user_name'] ?? $existing['user_name'] ?? '')), 0, 190),
-        'user_email' => $clearUser ? '' : mb_substr(trim((string)($meta['user_email'] ?? $existing['user_email'] ?? '')), 0, 190),
+        'user_id' => $resolvedUserId ?: (int)($existing['user_id'] ?? 0),
+        'user_name' => $resolvedUserName ?: (string)($existing['user_name'] ?? ''),
+        'user_email' => $resolvedUserEmail ?: (string)($existing['user_email'] ?? ''),
         'ip_address' => wp_push_normalize_ip((string)($meta['ip_address'] ?? $existing['ip_address'] ?? '')),
         'device_id' => $deviceId !== '' ? $deviceId : (string)($existing['device_id'] ?? ''),
         'device_scope' => $deviceScope,

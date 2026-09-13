@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v411";
+const CACHE_VERSION = "worship-v412";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -521,7 +521,7 @@ async function fetchQueuedPushPayload() {
       return null;
     });
 
-    return data && data.notification ? data.notification : null;
+    return data ? (data.notification || data.payload || null) : null;
   } catch (err) {
     return null;
   }

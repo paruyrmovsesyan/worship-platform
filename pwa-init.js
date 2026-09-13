@@ -1123,8 +1123,26 @@
       }
     }
 
-    async function syncPushStatus(subscription) {
+    function getStoredUserMeta() {
+      try {
+        var raw = localStorage.getItem("worship_user") || localStorage.getItem("user") || localStorage.getItem("auth_user");
+        if (raw) {
+          var u = JSON.parse(raw);
+          if (u && (u.id || u.user_id)) {
+            return {
+              user_id: Number(u.id || u.user_id || 0),
+              user_name: String(u.name || u.username || ""),
+              user_email: String(u.email || "")
+            };
+          }
+        }
+      } catch (e) {}
+      return { user_id: 0, user_name: "", user_email: "" };
+    }
+
+    async function syncPushStatus(subscription, meta) {
       if (!isPushSupported) return;
+      var userMeta = meta || getStoredUserMeta();
       try {
         await fetch("/push_api.php?action=status", {
           method: "POST",
@@ -1136,7 +1154,10 @@
             subscribed: !!subscription,
             permission: Notification.permission,
             device_id: getPushDeviceId(),
-            device_scope: getPushDeviceScope()
+            device_scope: getPushDeviceScope(),
+            user_id: userMeta.user_id,
+            user_name: userMeta.user_name,
+            user_email: userMeta.user_email
           })
         });
       } catch (err) {}
@@ -1173,10 +1194,11 @@
       }, 500);
     }
 
-    async function registerSubscription(forceEnable) {
+    async function registerSubscription(forceEnable, meta) {
       if (!isPushSupported) return false;
       var currentConfig = await fetchConfig();
       if (!currentConfig || !currentConfig.enabled || !currentConfig.publicKey) return false;
+      var userMeta = meta || getStoredUserMeta();
 
       try {
         var registration = await navigator.serviceWorker.ready;
@@ -1200,7 +1222,10 @@
             permission: Notification.permission,
             device_id: getPushDeviceId(),
             device_scope: getPushDeviceScope(),
-            force_enable: !!forceEnable
+            force_enable: !!forceEnable,
+            user_id: userMeta.user_id,
+            user_name: userMeta.user_name,
+            user_email: userMeta.user_email
           })
         });
         var result = null;
@@ -1215,7 +1240,7 @@
           return false;
         }
         setAdminRemoved(false);
-        await syncPushStatus(subscription);
+        await syncPushStatus(subscription, userMeta);
         return true;
       } catch (err) {
         console.error("Push subscribe failed", err);
