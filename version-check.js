@@ -203,53 +203,53 @@
   }
 
   function handleAppUpdate(version, releaseStamp, button) {
+    if (button) {
+      button.textContent = "Թարմացվում է...";
+      button.disabled = true;
+    }
+
+    var didReload = false;
+    function commitAndReload() {
+      if (didReload) return;
+      didReload = true;
+      try {
+        localStorage.setItem(APP_KEY, version);
+        localStorage.setItem(APP_STAMP_KEY, releaseStamp || version);
+        localStorage.removeItem(PENDING_APP_KEY);
+        localStorage.removeItem(PENDING_APP_STAMP_KEY);
+      } catch (e) {}
+      closeModal();
+      refreshPage(version);
+    }
+
     try {
       localStorage.setItem(PENDING_APP_KEY, version);
       localStorage.setItem(PENDING_APP_STAMP_KEY, releaseStamp || version);
     } catch (e) {}
 
+    // Safety fallback: guaranteed reload within 800ms — NEVER hang indefinitely!
+    var reloadTimer = setTimeout(commitAndReload, 800);
+
     if (!("serviceWorker" in navigator) || !navigator.onLine) {
-      try {
-        localStorage.setItem(APP_KEY, version);
-        localStorage.setItem(APP_STAMP_KEY, releaseStamp || version);
-        localStorage.removeItem(PENDING_APP_KEY);
-        localStorage.removeItem(PENDING_APP_STAMP_KEY);
-      } catch (e) {}
-      closeModal();
-      refreshPage(version);
+      clearTimeout(reloadTimer);
+      commitAndReload();
       return;
     }
 
     navigator.serviceWorker.ready.then(function(reg) {
-      if (reg.update) reg.update();
-
-      if (reg.active) {
-        reg.active.postMessage({ type: "SYNC_OFFLINE_LIBRARY" });
-        return;
+      if (reg.waiting) {
+        try { reg.waiting.postMessage({ type: "SKIP_WAITING" }); } catch (e) {}
       }
-
-      try {
-        localStorage.setItem(APP_KEY, version);
-        localStorage.setItem(APP_STAMP_KEY, releaseStamp || version);
-        localStorage.removeItem(PENDING_APP_KEY);
-        localStorage.removeItem(PENDING_APP_STAMP_KEY);
-      } catch (e) {}
-      closeModal();
-      refreshPage(version);
+      if (reg.update) {
+        try { reg.update().catch(function() {}); } catch (e) {}
+      }
+      if (reg.active) {
+        try { reg.active.postMessage({ type: "SYNC_OFFLINE_LIBRARY", force: true }); } catch (e) {}
+      }
     }).catch(function() {
-      try {
-        localStorage.setItem(APP_KEY, version);
-        localStorage.setItem(APP_STAMP_KEY, releaseStamp || version);
-        localStorage.removeItem(PENDING_APP_KEY);
-        localStorage.removeItem(PENDING_APP_STAMP_KEY);
-      } catch (e) {}
-      closeModal();
-      refreshPage(version);
+      clearTimeout(reloadTimer);
+      commitAndReload();
     });
-
-    if (button) {
-      button.textContent = "Թարմացվում է...";
-    }
   }
 
   function handleWebUpdate(version, releaseStamp) {

@@ -814,6 +814,11 @@ function wp_admin_updates_build_release_push_payload(array $previousConfig, arra
         'url' => '/main.html',
         'icon' => '/wolarm_youth.png',
         'tag' => 'worship-release-update',
+        'type' => 'version_update',
+        'app_version' => $appVersion,
+        'web_version' => $webVersion,
+        'app_release_stamp' => (string)($nextConfig['app_release_stamp'] ?? ''),
+        'web_release_stamp' => (string)($nextConfig['web_release_stamp'] ?? ''),
         'actor' => $actorLabel,
     ];
 }

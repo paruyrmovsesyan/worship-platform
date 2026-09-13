@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v424";
+const CACHE_VERSION = "worship-v425";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -152,7 +152,15 @@ self.addEventListener("message", function(event) {
     return;
   }
 
+  if (event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+    return;
+  }
+
   if (event.data.type === "SYNC_OFFLINE_LIBRARY") {
+    if (event.data.force) {
+      lastOfflineSyncAt = 0;
+    }
     event.waitUntil(syncOfflineLibrary());
     return;
   }
