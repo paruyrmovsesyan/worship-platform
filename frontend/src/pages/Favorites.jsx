@@ -308,8 +308,8 @@ export default function Favorites() {
       </div>
 
       {filterOpen && createPortal(
-        <div className="fav-filter-backdrop" role="presentation" onMouseDown={() => setFilterOpen(false)}>
-          <section className="fav-filter-sheet" role="dialog" aria-modal="true" aria-labelledby="fav-filter-title" onMouseDown={event => event.stopPropagation()}>
+        <div className="fav-filter-backdrop" role="presentation" onClick={() => setFilterOpen(false)}>
+          <section className="fav-filter-sheet" role="dialog" aria-modal="true" aria-labelledby="fav-filter-title" onClick={event => event.stopPropagation()}>
             <div className="fav-filter-sheet-handle" aria-hidden="true" />
             <header className="fav-filter-sheet-header">
               <h2 id="fav-filter-title">{t('favorites.filterAndSort')}</h2>

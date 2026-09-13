@@ -163,31 +163,43 @@ body.favorites-filter-open {
   overflow: hidden;
 }
 
+/* Hide PWA/Mobile dock when favorites filter sheet is open so it doesn't cover actions */
+body.favorites-filter-open #wpAppDock,
+body.favorites-filter-open .mobile-bottom-nav,
+body.favorites-filter-open .app-bottom-nav {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 .fav-filter-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 2400;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483600 !important;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   padding-top: max(24px, env(safe-area-inset-top, 0px));
-  background: rgba(2, 3, 8, 0.72);
+  background: rgba(2, 3, 8, 0.76);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   animation: favBackdropIn 0.18s ease-out;
+  touch-action: none;
 }
 
 /* pwa-init gives every direct body child position: relative. The filter is
-   portalled to body, so restore viewport positioning above the app dock. */
+   portalled to body, so restore viewport positioning above everything. */
 body.wp-standalone-app > .fav-filter-backdrop,
 body.is-pwa > .fav-filter-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 100100;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483600 !important;
 }
 
 .fav-filter-sheet {
   width: min(100%, 560px);
+  max-height: calc(100vh - max(24px, env(safe-area-inset-top, 0px)));
   max-height: calc(100dvh - max(24px, env(safe-area-inset-top, 0px)));
   overflow-y: auto;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -195,8 +207,9 @@ body.is-pwa > .fav-filter-backdrop {
   border-radius: 24px 24px 0 0;
   background: #15151f;
   color: #fff;
-  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.46);
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.55);
   animation: favSheetIn 0.22s ease-out;
+  touch-action: pan-y;
 }
 
 .fav-filter-sheet-handle {
@@ -265,6 +278,12 @@ body.is-pwa > .fav-filter-backdrop {
   font: inherit;
   font-size: 0.9rem;
   font-weight: 700;
+}
+
+.fav-filter-select-wrap select option {
+  background: #15151f;
+  color: #fff;
+  padding: 8px 12px;
 }
 
 .fav-filter-select-wrap svg {
@@ -607,8 +626,13 @@ body.is-pwa > .fav-filter-backdrop {
 
   .fav-filter-sheet {
     max-height: min(720px, calc(100dvh - 48px));
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  }
+
+  .fav-filter-sheet-actions {
+    border-radius: 0 0 20px 20px;
   }
 
   .fav-filter-sheet-handle {
