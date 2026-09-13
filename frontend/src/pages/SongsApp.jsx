@@ -99,7 +99,7 @@ export default function SongsApp() {
   const categories = useMemo(() => [
     { id: 'all', label: language === 'am' ? 'Բոլորը' : language === 'ru' ? 'Все' : 'All', icon: null },
     { id: 'favorites', label: language === 'am' ? 'Իմ ընտրանին' : language === 'ru' ? 'Избранное' : 'Favorites', icon: '❤️' },
-    { id: 'chords', label: language === 'am' ? 'Ակորդներով' : language === 'ru' ? 'С аккордами' : 'With Chords', icon: '🎸' },
+    { id: 'chords', label: language === 'am' ? 'Ակորդներով' : language === 'ru' ? 'С аккордами' : 'With Chords', icon: null },
     { id: 'lyrics', label: language === 'am' ? 'Տեքստեր' : language === 'ru' ? 'Только текст' : 'Lyrics Only', icon: '📄' },
     { id: 'fast', label: language === 'am' ? 'Արագ' : language === 'ru' ? 'Быстрые' : 'Fast', icon: '⚡' },
     { id: 'slow', label: language === 'am' ? 'Խաղաղ' : language === 'ru' ? 'Спокойные' : 'Slow', icon: '🕊' },
@@ -789,9 +789,6 @@ export default function SongsApp() {
                       {song.song_key && <span className="track-key-badge">{song.song_key}</span>}
                       {Number.parseInt(song.bpm, 10) > 0 && (
                         <span className="track-bpm-badge">{song.bpm} BPM</span>
-                      )}
-                      {song.chords && song.chords.trim().length > 0 && (
-                        <span className="track-chord-badge" title="Ակորդներով">🎸</span>
                       )}
                     </div>
                   </div>

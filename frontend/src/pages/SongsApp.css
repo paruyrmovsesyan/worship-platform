@@ -602,11 +602,6 @@ body.website-theme > .songs-back-to-top {
   border-radius: 8px;
 }
 
-.track-chord-badge {
-  font-size: 12px;
-  line-height: 1;
-  opacity: 0.85;
-}
 
 .track-actions {
   display: flex;
