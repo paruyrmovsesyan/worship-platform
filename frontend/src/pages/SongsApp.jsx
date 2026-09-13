@@ -350,11 +350,16 @@ export default function SongsApp() {
         }
 
         const hasChords = !!(s.chords && s.chords.trim().length > 0);
+        const hasLyrics = !!(
+          (s.lyrics && s.lyrics.trim().length > 0) ||
+          (s.chords && /[\u0530-\u058F\u0400-\u04FF]/.test(s.chords))
+        );
+
         if (activeCategory === 'chords' && !hasChords) {
           return false;
         }
 
-        if (activeCategory === 'lyrics' && hasChords) {
+        if (activeCategory === 'lyrics' && !hasLyrics) {
           return false;
         }
 
