@@ -232,6 +232,12 @@
 
 .btn-call-action:active,
 .audio-call-icon-button:active { transform: scale(0.92); }
+.btn-call-action .call-end-glyph {
+  width: 29px;
+  height: 29px;
+  fill: currentColor;
+  stroke: none;
+}
 .btn-call-action.accept { background: #20bf72; }
 .btn-call-action.end { background: #f04455; }
 .btn-call-action.retry { background: #3478f6; }
@@ -310,6 +316,12 @@
 .audio-call-icon-button.end { background: #f04455; }
 .audio-call-icon-button.mute.active { background: #f4a62a; }
 .audio-call-icon-button svg { width: 20px; height: 20px; }
+.audio-call-icon-button .call-end-glyph {
+  width: 23px;
+  height: 23px;
+  fill: currentColor;
+  stroke: none;
+}
 
 body.light-mode .audio-call-compact {
   border-color: rgba(22, 26, 45, 0.12);

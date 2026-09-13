@@ -70,9 +70,11 @@ export const AuthProvider = ({ children }) => {
       const data = await res.json();
       if (data && data.loggedIn) {
         setUser(data.user);
+        try { localStorage.setItem('worship_user', JSON.stringify(data.user)); } catch (_) {}
         return data.user;
       } else {
         setUser(null);
+        try { localStorage.removeItem('worship_user'); } catch (_) {}
         return null;
       }
     } catch (err) {
@@ -156,6 +158,9 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     await clearUserCacheScope(getUserId(user)).catch(() => {});
+    try {
+      localStorage.removeItem('worship_user');
+    } catch (_) {}
     try {
       await fetch('/logout_users.php?silent=1');
     } catch (err) {

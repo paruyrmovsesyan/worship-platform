@@ -597,6 +597,11 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
         schedule(500);
         return;
       }
+      // If client is currently offline, don't waste requests or trigger false errors
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        schedule(5000);
+        return;
+      }
       inFlight = true;
       const info = callInfoRef.current;
       const callId = Number(info?.id || 0);
@@ -671,17 +676,38 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       } finally {
         inFlight = false;
         const config = await loadCallConfig();
-        schedule(document.visibilityState === 'visible' ? config.pollIntervalMs : 4000);
+        const isIdle = callStateRef.current === 'idle';
+        const isVisible = typeof document === 'undefined' || document.visibilityState === 'visible';
+
+        let nextDelay;
+        if (!isIdle) {
+          // In-call or ringing: fast polling for low latency WebRTC signaling
+          nextDelay = config.pollIntervalMs || 1200;
+        } else if (isVisible) {
+          // Idle and tab visible: poll every 6s (safe from rate-limiting & saves battery)
+          nextDelay = 6000;
+        } else {
+          // Idle and tab in background: poll every 20s
+          nextDelay = 20000;
+        }
+        schedule(nextDelay);
       }
     };
 
-    const wakePoll = () => schedule(0);
+    const wakePoll = () => {
+      if (timer) window.clearTimeout(timer);
+      schedule(0);
+    };
     pollWakeRef.current = (action) => {
       if (action === 'accept') window.dispatchEvent(new CustomEvent('wp-call-auto-accept'));
       wakePoll();
     };
     window.addEventListener('online', wakePoll);
-    document.addEventListener('visibilitychange', wakePoll);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        wakePoll();
+      }
+    });
     poll();
 
     return () => {

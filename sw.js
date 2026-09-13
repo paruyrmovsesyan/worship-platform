@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v409";
+const CACHE_VERSION = "worship-v411";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -36,8 +36,8 @@ const APP_SHELL = [
   "/app.js",
   "/site_guard.js",
   "/fav_bridge.js",
-  "/assets/index.css?v=399",
-  "/assets/index.js?v=399",
+  "/assets/index.css?v=410",
+  "/assets/index.js?v=410",
   "/manifest.json?v=10",
   "/favicon.png?v=2",
   "/apple-touch-icon-v7.png",
@@ -316,7 +316,10 @@ async function handleNetworkOnlyRequest(request, url) {
     const isApi = url.pathname.endsWith(".php");
     return new Response(isApi ? JSON.stringify({ error: "Offline", offline: true }) : "Offline", {
       status: 503,
-      headers: isApi ? { "Content-Type": "application/json; charset=UTF-8" } : undefined
+      statusText: "Offline",
+      headers: isApi
+        ? { "Content-Type": "application/json; charset=UTF-8", "X-SW-Offline": "1" }
+        : { "X-SW-Offline": "1" }
     });
   }
 }
@@ -650,7 +653,8 @@ async function handleAccountRequest(request, url) {
       }),
       {
         status: 503,
-        headers: { "Content-Type": "application/json; charset=UTF-8" }
+        statusText: "Offline",
+        headers: { "Content-Type": "application/json; charset=UTF-8", "X-SW-Offline": "1" }
       }
     );
   }
@@ -731,10 +735,11 @@ async function buildSongsFallbackResponse(snapshotResponse, options) {
   return jsonResponse(allSongs || []);
 }
 
-function jsonResponse(payload, status) {
+function jsonResponse(payload, status, extraHeaders) {
   return new Response(JSON.stringify(payload), {
     status: status || 200,
-    headers: { "Content-Type": "application/json; charset=UTF-8" }
+    statusText: status === 503 ? "Offline" : undefined,
+    headers: Object.assign({ "Content-Type": "application/json; charset=UTF-8" }, extraHeaders || {})
   });
 }
 
@@ -754,7 +759,7 @@ async function handleUserDataRequest(event, url) {
   } catch (err) {
     const cached = await cache.match(event.request.url);
     if (cached) return cached;
-    return jsonResponse({ error: "Offline", offline: true }, 503);
+    return jsonResponse({ error: "Offline", offline: true }, 503, { "X-SW-Offline": "1" });
   }
 }
 

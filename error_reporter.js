@@ -36,7 +36,7 @@
       if (rawUser) {
         const parsed = JSON.parse(rawUser);
         if (parsed) {
-          userId = parsed.id || null;
+          userId = parsed.id || parsed.user_id || null;
           userEmail = parsed.email || null;
         }
       }
@@ -227,7 +227,14 @@
       return origFetch.apply(this, args).then(function(res) {
         try {
           const reqUrl = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
-          if (!res.ok && res.status >= 500 && !reqUrl.includes('error_api.php')) {
+          const isOfflineResponse =
+            navigator.onLine === false ||
+            res.statusText === 'Offline' ||
+            res.headers?.get('X-SW-Offline') === '1' ||
+            res.headers?.get('x-sw-offline') === '1';
+
+          // Only report real server crashes (5xx), ignoring simulated offline SW responses
+          if (!res.ok && res.status >= 500 && !reqUrl.includes('error_api.php') && !isOfflineResponse) {
             const { userId, userEmail } = getUserMeta();
             sendErrorReport({
               level: 'fatal',
@@ -247,7 +254,11 @@
       }).catch(function(err) {
         try {
           const reqUrl = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
-          if (!reqUrl.includes('error_api.php')) {
+          const isAbort = err?.name === 'AbortError' || String(err?.message || '').toLowerCase().includes('abort');
+          const isOffline = navigator.onLine === false;
+
+          // Don't report intentionally aborted requests (e.g. AbortController during cleanup/polling) or when device is offline
+          if (!reqUrl.includes('error_api.php') && !isAbort && !isOffline) {
             const { userId, userEmail } = getUserMeta();
             sendErrorReport({
               level: 'network',
