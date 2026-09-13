@@ -377,6 +377,7 @@ if (!function_exists('wp_runtime_open_mysqli')) {
                     return $result;
                 }
 
+                #[\ReturnTypeWillChange]
                 public function close(): bool {
                     // Shared singleton connection: do not close underlying socket during request
                     return true;
