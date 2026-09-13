@@ -346,12 +346,15 @@ export default function SongsWeb() {
   const stats = useMemo(() => {
     const total = songs.length;
     let withChords = 0;
+    let withLyrics = 0;
     songs.forEach(s => {
       if (s.chords && s.chords.trim().length > 0) withChords++;
+      if ((s.lyrics && s.lyrics.trim().length > 0) || (s.chords && /[\u0530-\u058F\u0400-\u04FF]/.test(s.chords))) withLyrics++;
     });
     return {
       total,
       withChords,
+      withLyrics,
       favoritesCount: favorites.size
     };
   }, [songs, favorites]);
@@ -372,11 +375,16 @@ export default function SongsWeb() {
         }
 
         const hasChords = !!(s.chords && s.chords.trim().length > 0);
+        const hasLyrics = !!(
+          (s.lyrics && s.lyrics.trim().length > 0) ||
+          (s.chords && /[\u0530-\u058F\u0400-\u04FF]/.test(s.chords))
+        );
+
         if (activeCategory === 'chords' && !hasChords) {
           return false;
         }
 
-        if (activeCategory === 'lyrics' && hasChords) {
+        if (activeCategory === 'lyrics' && !hasLyrics) {
           return false;
         }
 
@@ -580,7 +588,7 @@ export default function SongsWeb() {
               className={`sw-cat-tab ${activeCategory === 'chords' ? 'active' : ''}`}
               onClick={() => setActiveCategory('chords')}
             >
-              <span>🎸 {language === 'am' ? 'Ակորդներով' : 'With Chords'}</span>
+              <span>{language === 'am' ? 'Ակորդներով' : 'With Chords'}</span>
               <span className="sw-cat-count">{stats.withChords}</span>
             </button>
 
@@ -589,7 +597,8 @@ export default function SongsWeb() {
               className={`sw-cat-tab ${activeCategory === 'lyrics' ? 'active' : ''}`}
               onClick={() => setActiveCategory('lyrics')}
             >
-              <span>📄 {language === 'am' ? 'Միայն տեքստեր' : 'Lyrics only'}</span>
+              <span>📄 {language === 'am' ? 'Տեքստեր' : 'Lyrics'}</span>
+              <span className="sw-cat-count">{stats.withLyrics}</span>
             </button>
 
             <button
@@ -733,7 +742,7 @@ export default function SongsWeb() {
                   <div className="sw-card-footer">
                     <div className="sw-card-tags">
                       {hasChords ? (
-                        <span className="sw-tag-chords">🎸 {language === 'am' ? 'Ակորդներ' : 'Chords'}</span>
+                        <span className="sw-tag-chords">{language === 'am' ? 'Ակորդներ' : 'Chords'}</span>
                       ) : (
                         <span className="sw-tag-lyrics">📄 {language === 'am' ? 'Տեքստ' : 'Lyrics'}</span>
                       )}
@@ -803,7 +812,7 @@ export default function SongsWeb() {
                         <span className="sw-row-name">{localizedTitle}</span>
                         <div className="sw-row-sub">
                           <span className="sw-row-artist-mobile">{song.artist || '—'}</span>
-                          {hasChords && <span className="sw-row-chords-badge">🎸 Chords</span>}
+                          {hasChords && <span className="sw-row-chords-badge">Chords</span>}
                         </div>
                       </div>
                     </div>

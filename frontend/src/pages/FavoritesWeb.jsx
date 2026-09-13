@@ -7,19 +7,54 @@ import { getLocalizedTitle } from '../utils/titleParser';
 import { getSongCoverStyle } from '../utils/songCover';
 import { DEFAULT_SAVED_SONG_SORT, normalizeSavedSongSort, sortSavedSongs } from '../utils/savedSongs';
 import { usePageReady } from '../hooks/usePageReady';
+import { matchSongSearch } from '../utils/searchMatcher';
 import './Favorites.css';
+import './SongsWeb.css';
 
 export default function FavoritesWeb() {
-  const [songs, setSongs] = useState([]);
+  // 1. Instant hydration from localStorage cache
+  const [songs, setSongs] = useState(() => {
+    try {
+      const cached = localStorage.getItem('wp_user_favorites_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [];
+  });
+
   const [activeKeyFilter, setActiveKeyFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState(() => normalizeSavedSongSort(localStorage.getItem('favorites_sort') || DEFAULT_SAVED_SONG_SORT));
   const [filterOpen, setFilterOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    try {
+      const cached = localStorage.getItem('wp_user_favorites_cache');
+      return !(cached && JSON.parse(cached).length > 0);
+    } catch {
+      return true;
+    }
+  });
+
   usePageReady(loading);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, language } = useLanguage();
+
+  // Add to setlist modal state
+  const [setlistModalSong, setSetlistModalSong] = useState(null);
+  const [userSetlists, setUserSetlists] = useState([]);
+  const [setlistsLoading, setSetlistsLoading] = useState(false);
+  const [setlistSearch, setSetlistSearch] = useState('');
+  const [addingSetlistId, setAddingSetlistId] = useState(null);
+  const [addedSetlistIds, setAddedSetlistIds] = useState({});
+  const [isCreatingSetlist, setIsCreatingSetlist] = useState(false);
+  const [newSetName, setNewSetName] = useState('');
+  const [newSetDate, setNewSetDate] = useState('');
+  const [createSetlistLoading, setCreateSetlistLoading] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
 
   const loadFavorites = useCallback(() => {
     if (!user) {
@@ -28,16 +63,18 @@ export default function FavoritesWeb() {
       return;
     }
 
-    setLoading(true);
-    setError(null);
-
     fetch('/user_favorites_api.php?action=get_favorites')
       .then(res => {
         if (!res.ok) throw new Error('API fetch failed');
         return res.json();
       })
       .then(data => {
-        setSongs(Array.isArray(data) ? data : []);
+        if (Array.isArray(data)) {
+          setSongs(data);
+          try {
+            localStorage.setItem('wp_user_favorites_cache', JSON.stringify(data));
+          } catch {}
+        }
         setLoading(false);
       })
       .catch(err => {
@@ -68,17 +105,23 @@ export default function FavoritesWeb() {
   }, [songs]);
 
   const filteredSongs = useMemo(() => {
-    const keyFiltered = activeKeyFilter === 'all'
-      ? songs
-      : songs.filter(song => (song.target_key || song.song_key) === activeKeyFilter);
+    let list = songs;
+
+    if (searchQuery.trim()) {
+      list = list.filter(song => matchSongSearch(song, searchQuery));
+    }
+
+    if (activeKeyFilter !== 'all') {
+      list = list.filter(song => (song.target_key || song.song_key) === activeKeyFilter);
+    }
 
     return sortSavedSongs(
-      keyFiltered,
+      list,
       sortBy,
       song => getLocalizedTitle(song, language),
       language
     );
-  }, [activeKeyFilter, language, songs, sortBy]);
+  }, [songs, searchQuery, activeKeyFilter, sortBy, language]);
 
   const handleSortChange = (event) => {
     const nextSort = normalizeSavedSongSort(event.target.value);
@@ -118,6 +161,13 @@ export default function FavoritesWeb() {
     navigate(`/song/${songId}?${params.toString()}`);
   };
 
+  const handleRandomSong = () => {
+    const pool = filteredSongs.length > 0 ? filteredSongs : songs;
+    if (!pool.length) return;
+    const rnd = pool[Math.floor(Math.random() * pool.length)];
+    if (rnd?.id) openSavedSong(rnd.id);
+  };
+
   useEffect(() => {
     if (activeKeyFilter === 'all') return;
     if (!availableKeys.includes(activeKeyFilter)) {
@@ -126,25 +176,146 @@ export default function FavoritesWeb() {
   }, [activeKeyFilter, availableKeys]);
 
   const removeFavorite = async (songId) => {
-    if (!window.confirm(t('favorites.confirmRemove'))) return;
+    const numId = parseInt(songId, 10);
+    const previousSongs = [...songs];
+    setSongs(prev => prev.filter(s => parseInt(s.id || s.song_id, 10) !== numId));
+
     try {
       const res = await fetch('/user_favorites_api.php?action=toggle_favorite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ song_id: songId })
+        body: JSON.stringify({ song_id: numId })
       });
       const data = await res.json();
       if (!res.ok || typeof data.favorite !== 'boolean') {
         throw new Error(data.error || 'Favorite update failed');
       }
-      if (data.favorite === false) {
-        setSongs(prev => prev.filter(s => String(s.id) !== String(songId)));
-      }
+
+      try {
+        const updated = previousSongs.filter(s => parseInt(s.id || s.song_id, 10) !== numId);
+        localStorage.setItem('wp_user_favorites_cache', JSON.stringify(updated));
+      } catch {}
     } catch (err) {
-      console.error(err);
+      setSongs(previousSongs);
       setError(t('favorites.errorLoad'));
     }
   };
+
+  // Add to setlist operations
+  const openSetlistModalForSong = async (e, song) => {
+    e.stopPropagation();
+    setSetlistModalSong(song);
+    setSetlistSearch('');
+    setIsCreatingSetlist(false);
+    setNewSetName('');
+    setNewSetDate('');
+    setSetlistsLoading(true);
+    try {
+      const res = await fetch('/setlists_api.php?action=get_setlists', {
+        credentials: 'same-origin',
+        cache: 'no-store'
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setUserSetlists(data);
+      } else if (data?.ok) {
+        setUserSetlists(data.setlists || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSetlistsLoading(false);
+    }
+  };
+
+  const addSongToSetlist = async (setId) => {
+    if (addingSetlistId || !setlistModalSong) return;
+    setAddingSetlistId(setId);
+    try {
+      const res = await fetch('/setlists_api.php?action=add_song_to_setlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          setlist_id: setId,
+          song_id: Number(setlistModalSong.id),
+          target_key: setlistModalSong.target_key || setlistModalSong.song_key || null,
+          capo: null
+        })
+      });
+      const data = await res.json();
+      if (data?.ok) {
+        setAddedSetlistIds(prev => ({ ...prev, [setId]: true }));
+        setUserSetlists(prev => prev.map(s => s.id === setId ? { ...s, items_count: (s.items_count || 0) + 1 } : s));
+        setToastMsg(language === 'am' ? '✓ Երգն ավելացվեց երգացանկում' : '✓ Added to setlist');
+        setTimeout(() => setToastMsg(''), 2500);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAddingSetlistId(null);
+    }
+  };
+
+  const handleCreateAndAddSetlist = async (e) => {
+    e.preventDefault();
+    const nameTrimmed = newSetName.trim();
+    if (!nameTrimmed || createSetlistLoading || !setlistModalSong) return;
+    setCreateSetlistLoading(true);
+
+    try {
+      const createRes = await fetch('/setlists_api.php?action=create_setlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: nameTrimmed,
+          service_date: newSetDate || null
+        })
+      });
+      const createData = await createRes.json();
+      if (!createData?.ok || !createData.id) {
+        throw new Error(createData?.message || createData?.error || 'Failed to create setlist');
+      }
+
+      const newId = Number(createData.id);
+      await fetch('/setlists_api.php?action=add_song_to_setlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          setlist_id: newId,
+          song_id: Number(setlistModalSong.id),
+          target_key: setlistModalSong.target_key || setlistModalSong.song_key || null,
+          capo: null
+        })
+      });
+
+      setAddedSetlistIds(prev => ({ ...prev, [newId]: true }));
+      setToastMsg(language === 'am' ? '✓ Ստեղծվեց և ավելացվեց' : '✓ Created and added');
+      setTimeout(() => setToastMsg(''), 2500);
+
+      const newSl = {
+        id: newId,
+        name: nameTrimmed,
+        service_date: newSetDate || null,
+        items_count: 1,
+        can_edit: 1,
+        access_role: 'owner'
+      };
+      setUserSetlists(prev => [newSl, ...prev]);
+      setIsCreatingSetlist(false);
+      setNewSetName('');
+      setNewSetDate('');
+    } catch (err) {
+      alert(err.message || 'Error creating setlist');
+    } finally {
+      setCreateSetlistLoading(false);
+    }
+  };
+
+  const filteredSetlists = useMemo(() => {
+    if (!setlistSearch.trim()) return userSetlists;
+    const q = setlistSearch.toLowerCase();
+    return userSetlists.filter(sl => (sl.name || '').toLowerCase().includes(q));
+  }, [userSetlists, setlistSearch]);
 
   if (!user) {
     return (
@@ -180,20 +351,41 @@ export default function FavoritesWeb() {
       </div>
 
       <div className="fav-content">
-        {/* Play Action Row */}
-        {songs.length > 0 && !loading && (
-          <div className="fav-action-row animate-fade-in">
-            <button
-              className="fav-action-pill primary"
-              onClick={() => filteredSongs[0] && openSavedSong(filteredSongs[0].id)}
-              disabled={filteredSongs.length === 0}
-            >
-              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-              <span>{t('favorites.openFirst')}</span>
-            </button>
-            <button className="fav-action-pill secondary" onClick={() => navigate('/songs')}>
-              <span>{t('favorites.browseSongs')}</span>
-            </button>
+        {/* Search and Play Action Row */}
+        {songs.length > 0 && (
+          <div className="fav-web-controls animate-fade-in">
+            <div className="fav-web-search">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                type="text"
+                placeholder={t('songs.search', 'Որոնել պահպանված երգերում...')}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button type="button" className="fav-web-search-x" onClick={() => setSearchQuery('')}>✕</button>
+              )}
+            </div>
+
+            <div className="fav-action-row">
+              <button
+                className="fav-action-pill primary"
+                onClick={() => filteredSongs[0] && openSavedSong(filteredSongs[0].id)}
+                disabled={filteredSongs.length === 0}
+              >
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <span>{t('favorites.openFirst')}</span>
+              </button>
+              <button className="fav-action-pill secondary" onClick={handleRandomSong}>
+                <span>🎲 {language === 'am' ? 'Պատահական' : 'Random'}</span>
+              </button>
+              <button className="fav-action-pill secondary" onClick={() => navigate('/songs')}>
+                <span>{t('favorites.browseSongs')}</span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -264,7 +456,26 @@ export default function FavoritesWeb() {
                   {(song.target_key || song.song_key) && <span className="fav-track-badge">{song.target_key || song.song_key}</span>}
                   {Number.parseInt(song.bpm, 10) > 0 && <span className="fav-track-badge fav-track-bpm">BPM {song.bpm}</span>}
                   
+                  {/* Quick Add to Setlist button */}
+                  <button
+                    type="button"
+                    className="fav-setlist-quick-btn"
+                    onClick={(e) => openSetlistModalForSong(e, song)}
+                    title={t('songView.addToSetlist', 'Ավելացնել երգացանկում')}
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <line x1="8" y1="6" x2="21" y2="6"></line>
+                      <line x1="8" y1="12" x2="21" y2="12"></line>
+                      <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                      <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                      <line x1="16" y1="16" x2="16" y2="22"></line>
+                      <line x1="13" y1="19" x2="19" y2="19"></line>
+                    </svg>
+                  </button>
+
+                  {/* Remove from favorites */}
                   <button 
+                    type="button"
                     className="fav-remove-btn"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -300,13 +511,16 @@ export default function FavoritesWeb() {
                 </svg>
                 <h3>{t('favorites.noFilterResults')}</h3>
                 <p>{t('favorites.noFilterResultsDesc')}</p>
-                <button className="fav-cta-btn" onClick={() => setActiveKeyFilter('all')}>{t('favorites.filterReset')}</button>
+                <button className="fav-cta-btn" onClick={() => { setActiveKeyFilter('all'); setSearchQuery(''); }}>
+                  {t('favorites.filterReset', 'Մաքրել ֆիլտրերը')}
+                </button>
               </div>
             )}
           </div>
         )}
       </div>
 
+      {/* Filter Modal Sheet */}
       {filterOpen && createPortal(
         <div className="fav-filter-backdrop" role="presentation" onMouseDown={() => setFilterOpen(false)}>
           <section className="fav-filter-sheet" role="dialog" aria-modal="true" aria-labelledby="fav-filter-title" onMouseDown={event => event.stopPropagation()}>
@@ -348,6 +562,123 @@ export default function FavoritesWeb() {
             </footer>
           </section>
         </div>,
+        document.body
+      )}
+
+      {/* Setlist Modal (Web) */}
+      {setlistModalSong && createPortal(
+        <div className="sw-modal-overlay" onClick={() => setSetlistModalSong(null)}>
+          <div className="sw-modal-content animate-pop-in" onClick={e => e.stopPropagation()}>
+            <div className="sw-modal-header">
+              <div className="sw-modal-header-info">
+                <h3>{language === 'am' ? 'Ավելացնել երգացանկում' : 'Add to Setlist'}</h3>
+                <span className="sw-modal-song-name">
+                  {getLocalizedTitle(setlistModalSong, language)}
+                  {(setlistModalSong.target_key || setlistModalSong.song_key) && ` • Տոն՝ ${setlistModalSong.target_key || setlistModalSong.song_key}`}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="sw-modal-close-btn"
+                onClick={() => setSetlistModalSong(null)}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Toolbar */}
+            <div className="sw-modal-toolbar">
+              <input
+                type="text"
+                className="sw-modal-search"
+                placeholder={language === 'am' ? 'Փնտրել երգացանկ...' : 'Search setlists...'}
+                value={setlistSearch}
+                onChange={e => setSetlistSearch(e.target.value)}
+              />
+              <button
+                type="button"
+                className={`sw-modal-new-toggle ${isCreatingSetlist ? 'active' : ''}`}
+                onClick={() => setIsCreatingSetlist(!isCreatingSetlist)}
+              >
+                {isCreatingSetlist ? '✕' : '➕ Նոր'}
+              </button>
+            </div>
+
+            {/* Inline Creation Box */}
+            {isCreatingSetlist && (
+              <form className="sw-modal-create-form" onSubmit={handleCreateAndAddSetlist}>
+                <div className="sw-modal-create-inputs">
+                  <input
+                    type="text"
+                    placeholder="Երգացանկի անուն *"
+                    value={newSetName}
+                    onChange={e => setNewSetName(e.target.value)}
+                    autoFocus
+                    required
+                  />
+                  <input
+                    type="date"
+                    value={newSetDate}
+                    onChange={e => setNewSetDate(e.target.value)}
+                  />
+                </div>
+                <div className="sw-modal-create-btns">
+                  <button type="button" onClick={() => setIsCreatingSetlist(false)}>Չեղարկել</button>
+                  <button type="submit" disabled={createSetlistLoading || !newSetName.trim()}>
+                    {createSetlistLoading ? '...' : 'Ստեղծել և ավելացնել'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Setlists List */}
+            <div className="sw-modal-list">
+              {setlistsLoading ? (
+                <div className="sw-modal-loading">
+                  <div className="sw-spinner-sm"></div>
+                </div>
+              ) : filteredSetlists.length > 0 ? (
+                filteredSetlists.map(sl => {
+                  const isAdded = !!addedSetlistIds[sl.id];
+                  const isAdding = addingSetlistId === sl.id;
+
+                  return (
+                    <div
+                      key={sl.id}
+                      className={`sw-modal-row ${isAdded ? 'added' : ''}`}
+                      onClick={() => !isAdding && !isAdded && addSongToSetlist(sl.id)}
+                    >
+                      <div className="sw-modal-row-info">
+                        <span className="sw-modal-row-title">{sl.name}</span>
+                        <span className="sw-modal-row-date">
+                          {sl.service_date ? `📅 ${sl.service_date}` : 'Անամսաթիվ'} • {sl.items_count || 0} երգ
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        className={`sw-modal-row-btn ${isAdded ? 'added' : ''}`}
+                        disabled={isAdding || isAdded}
+                      >
+                        {isAdding ? '...' : isAdded ? '✓ Ավելացվեց' : '+ Ավելացնել'}
+                      </button>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="sw-modal-empty">
+                  {language === 'am' ? 'Երգացանկեր չեն գտնվել' : 'No setlists found'}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Toast */}
+      {toastMsg && createPortal(
+        <div className="fav-toast animate-fade-in">{toastMsg}</div>,
         document.body
       )}
     </div>
