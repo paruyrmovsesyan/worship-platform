@@ -357,7 +357,7 @@ function wp_admin_updates_translation_song_options(): array {
         $res->free();
     }
 
-    $conn->close();
+    
     return $songs;
 }
 
@@ -1262,7 +1262,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $res->free();
                 }
                 $stmt->close();
-                $conn->close();
+                
             } catch (Throwable $e) {
                 $row = null;
             }
@@ -1292,7 +1292,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt->bind_param("sssssi", $combinedTitle, $hyTitle, $latText, $enText, $ruText, $songId);
                     $dbUpdated = $stmt->execute();
                     $stmt->close();
-                    $conn->close();
+                    
                 } catch (Throwable $e) {
                     $dbUpdated = false;
                 }
