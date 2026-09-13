@@ -667,16 +667,26 @@ function wp_admin_updates_push_history_search_haystack(array $item): string {
 }
 
 function wp_admin_updates_csrf_token(): string {
-    if (empty($_SESSION['admin_updates_csrf']) || !is_string($_SESSION['admin_updates_csrf'])) {
-        $_SESSION['admin_updates_csrf'] = bin2hex(random_bytes(32));
-    }
-    return (string)$_SESSION['admin_updates_csrf'];
+    // HMAC-based CSRF token: server secret + session ID + 2-hour window.
+    // Not stored in session — survives session GC and avoids "token expired" failures.
+    $secret = function_exists('wp_runtime_admin_cookie_secret') ? wp_runtime_admin_cookie_secret() : 'wp_csrf_fallback_secret_2025';
+    $sessId = session_id() ?: 'no-session';
+    $window = (int)(time() / 7200); // 2-hour rotating window
+    return hash_hmac('sha256', 'csrf:admin_updates:' . $sessId . ':' . $window, $secret);
 }
 
 function wp_admin_updates_verify_csrf(?string $token): bool {
-    $sessionToken = (string)($_SESSION['admin_updates_csrf'] ?? '');
     $token = (string)($token ?? '');
-    return $sessionToken !== '' && $token !== '' && hash_equals($sessionToken, $token);
+    if ($token === '') {
+        return false;
+    }
+    // Accept current window AND previous window (handles boundary crossings gracefully)
+    $secret = function_exists('wp_runtime_admin_cookie_secret') ? wp_runtime_admin_cookie_secret() : 'wp_csrf_fallback_secret_2025';
+    $sessId = session_id() ?: 'no-session';
+    $window = (int)(time() / 7200);
+    $current  = hash_hmac('sha256', 'csrf:admin_updates:' . $sessId . ':' . $window, $secret);
+    $previous = hash_hmac('sha256', 'csrf:admin_updates:' . $sessId . ':' . ($window - 1), $secret);
+    return hash_equals($current, $token) || hash_equals($previous, $token);
 }
 
 function wp_admin_updates_build_release_push_payload(array $previousConfig, array $nextConfig, string $actorLabel): array {
@@ -795,13 +805,13 @@ function wp_admin_updates_append_release_history(array $snapshot, array $changed
     return $historyId;
 }
 
-function wp_admin_updates_prepare_release_stamps(array $currentConfig, array $nextConfig, bool $withPackage): array {
+function wp_admin_updates_prepare_release_stamps(array $currentConfig, array $nextConfig, bool $withPackage, bool $forceStamp = false): array {
     $stamp = wp_version_now_iso();
 
     $appFields = ['app_version', 'app_release_type', 'app_release_summary', 'app_title', 'app_message'];
     $webFields = ['web_version', 'web_release_type', 'web_release_summary', 'web_title', 'web_message'];
 
-    $appChanged = $withPackage;
+    $appChanged = $withPackage || $forceStamp;
     foreach ($appFields as $field) {
         if ((string)($nextConfig[$field] ?? $currentConfig[$field] ?? '') !== (string)($currentConfig[$field] ?? '')) {
             $appChanged = true;
@@ -809,7 +819,7 @@ function wp_admin_updates_prepare_release_stamps(array $currentConfig, array $ne
         }
     }
 
-    $webChanged = $withPackage;
+    $webChanged = $withPackage || $forceStamp;
     foreach ($webFields as $field) {
         if ((string)($nextConfig[$field] ?? $currentConfig[$field] ?? '') !== (string)($currentConfig[$field] ?? '')) {
             $webChanged = true;
@@ -1243,7 +1253,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $releaseApplyMode = trim((string)($input['release_apply_mode'] ?? 'without_file'));
         unset($input['release_apply_mode']);
         $withPackage = $releaseApplyMode === 'with_file';
-        $input = wp_admin_updates_prepare_release_stamps($config, $input, $withPackage);
+        $input = wp_admin_updates_prepare_release_stamps($config, $input, $withPackage, true); // forceStamp=true: always bump release stamps
 
         if (!$withPackage) {
             $releaseBaseline = wp_admin_updates_last_committed_release_snapshot() ?: $config;
@@ -1257,26 +1267,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $saveResult = wp_version_last_save_result();
                 $releaseSnapshot = !empty($saveResult['config']) && is_array($saveResult['config']) ? $saveResult['config'] : $config;
                 $releaseDiffFields = wp_admin_updates_release_diff_fields($releaseBaseline, $releaseSnapshot);
-                $shouldAnnounceRelease = !empty($saveResult['changed']) || !empty($releaseDiffFields);
 
-                if ($shouldAnnounceRelease) {
-                    if (empty($saveResult['changed']) && $releaseDiffFields) {
-                        wp_admin_updates_append_release_history($releaseSnapshot, $releaseDiffFields, $actorLabel, $actorIp, 'save_release');
-                    }
+                // Always append history and announce — forceStamp ensures stamps are always fresh
+                if (empty($saveResult['changed']) && $releaseDiffFields) {
+                    wp_admin_updates_append_release_history($releaseSnapshot, $releaseDiffFields, $actorLabel, $actorIp, 'save_release');
+                }
 
-                    $message = 'Թարմացման տվյալները պահպանվեցին առանց ֆայլի տեղադրման։';
+                $message = 'Թարմացման տվյալները պահպանվեցին առանց ֆայլի տեղադրման։';
 
-                    $pushResult = wp_push_send_notification(
-                        wp_admin_updates_build_release_push_payload($releaseBaseline, $releaseSnapshot, $actorLabel)
-                    );
+                $pushResult = wp_push_send_notification(
+                    wp_admin_updates_build_release_push_payload($releaseBaseline, $releaseSnapshot, $actorLabel)
+                );
 
-                    if (!empty($pushResult['ok'])) {
-                        $message .= ' Թարմացման push ծանուցումը նույնպես ուղարկվեց։ ' . (string)($pushResult['message'] ?? '');
-                    } else {
-                        $message .= ' Բայց ավտոմատ push ծանուցումը չուղարկվեց։ ' . (string)($pushResult['message'] ?? '');
-                    }
+                if (!empty($pushResult['ok'])) {
+                    $message .= ' Թարմացման push ծանուցումը նույնպես ուղարկվեց։ ' . (string)($pushResult['message'] ?? '');
                 } else {
-                    $message = 'Թարմացման բաժնում նոր փոփոխություն չկար, դրա համար պատմություն ու push նույնպես չավելացվեցին։';
+                    $message .= ' Բայց ավտոմատ push ծանուցումը չուղարկվեց։ ' . (string)($pushResult['message'] ?? '');
                 }
             } else {
                 $message = 'Չհաջողվեց պահպանել թարմացման տվյալները։';

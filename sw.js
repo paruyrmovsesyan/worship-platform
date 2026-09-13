@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v423";
+const CACHE_VERSION = "worship-v424";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -503,7 +503,18 @@ async function handlePushEvent(event) {
   }
 
   try {
-    return await self.registration.showNotification(payload.title || "Worship Platform", options);
+    const notifyPromise = self.registration.showNotification(payload.title || "Worship Platform", options);
+    // Broadcast to all active window clients in parallel
+    try {
+      const windowClients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of windowClients) {
+        client.postMessage({ type: "PUSH_RECEIVED", payload: payload });
+        if (payload.type === "version_update" || payload.tag === "worship-update" || payload.app_version || payload.web_version) {
+          client.postMessage({ type: "VERSION_UPDATE_PUSH", payload: payload });
+        }
+      }
+    } catch (clientErr) {}
+    return await notifyPromise;
   } catch (err) {
     // Safari on iOS / some WebKit versions reject showNotification if actions or vibrate are included.
     // Fall back to a standard notification so incoming calls and messages are always displayed!
@@ -515,7 +526,17 @@ async function handlePushEvent(event) {
       data: options.data
     };
     try {
-      return await self.registration.showNotification(payload.title || "Worship Platform", safeOptions);
+      const fallbackPromise = self.registration.showNotification(payload.title || "Worship Platform", safeOptions);
+      try {
+        const windowClients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+        for (const client of windowClients) {
+          client.postMessage({ type: "PUSH_RECEIVED", payload: payload });
+          if (payload.type === "version_update" || payload.tag === "worship-update" || payload.app_version || payload.web_version) {
+            client.postMessage({ type: "VERSION_UPDATE_PUSH", payload: payload });
+          }
+        }
+      } catch (clientErr) {}
+      return await fallbackPromise;
     } catch (fallbackErr) {
       console.error("Critical: showNotification fallback failed", fallbackErr);
     }

@@ -324,14 +324,14 @@
   }
 
   var _lastVersionCheckAt = 0;
-  var VERSION_CHECK_THROTTLE_MS = 5 * 60 * 1000; // 5 minutes
+  var VERSION_CHECK_THROTTLE_MS = 40 * 1000; // 40 seconds normal throttle
 
-  function checkVersionManifest() {
+  function checkVersionManifest(force) {
     if (CHECK_IN_PROGRESS) return;
     if (!navigator.onLine) return;
 
     var now = Date.now();
-    if (now - _lastVersionCheckAt < VERSION_CHECK_THROTTLE_MS) return; // throttle
+    if (!force && (now - _lastVersionCheckAt < VERSION_CHECK_THROTTLE_MS)) return; // throttle
     _lastVersionCheckAt = now;
 
     CHECK_IN_PROGRESS = true;
@@ -361,12 +361,37 @@
       });
   }
 
+  // Cross-tab broadcast channel for instant multi-tab sync
+  var versionChannel = null;
+  try {
+    if (typeof BroadcastChannel !== "undefined") {
+      versionChannel = new BroadcastChannel("wp_version_updates");
+      versionChannel.onmessage = function(ev) {
+        if (ev && ev.data && (ev.data.type === "CHECK_VERSION" || ev.data.type === "VERSION_UPDATE_PUSH")) {
+          checkVersionManifest(true);
+        }
+      };
+    }
+  } catch (bcErr) {}
+
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.addEventListener("message", function(event) {
       var data = event && event.data ? event.data : null;
-      var pendingVersion = null;
+      if (!data) return;
 
-      if (!data || data.type !== "DATA_SYNC" || !data.full_library) return;
+      // Handle real-time push notification wakeup from Service Worker
+      if (data.type === "VERSION_UPDATE_PUSH" || data.type === "PUSH_RECEIVED") {
+        checkVersionManifest(true);
+        try {
+          if (versionChannel) {
+            versionChannel.postMessage({ type: "CHECK_VERSION" });
+          }
+        } catch (e) {}
+        return;
+      }
+
+      var pendingVersion = null;
+      if (data.type !== "DATA_SYNC" || !data.full_library) return;
 
       try {
         pendingVersion = localStorage.getItem(PENDING_APP_KEY);
@@ -391,15 +416,22 @@
   }
 
   if (document.readyState === "complete") {
-    checkVersionManifest();
+    checkVersionManifest(false);
   } else {
-    window.addEventListener("load", checkVersionManifest);
+    window.addEventListener("load", function() { checkVersionManifest(false); });
   }
 
-  window.addEventListener("online", checkVersionManifest);
+  window.addEventListener("online", function() { checkVersionManifest(true); });
   document.addEventListener("visibilitychange", function() {
     if (document.visibilityState === "visible") {
-      checkVersionManifest();
+      checkVersionManifest(true);
     }
   });
+
+  // Background polling every 45s while user has tab open
+  setInterval(function() {
+    if (document.visibilityState === "visible") {
+      checkVersionManifest(false);
+    }
+  }, 45 * 1000);
 })();

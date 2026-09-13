@@ -1190,6 +1190,109 @@ function wp_push_der_to_jose(string $der, int $partLength = 32): string {
 
     return $r !== '' && $s !== '' ? $r . $s : '';
 }
+/**
+ * Encrypt a Web Push payload using RFC 8291 (aes128gcm content encoding).
+ *
+ * Returns an array with:
+ *   'body'    => (string) binary ciphertext to send as POST body
+ *   'headers' => (array)  additional HTTP headers (Content-Encoding, Content-Type, Content-Length)
+ *
+ * Returns null if encryption is not possible (missing keys or OpenSSL extensions).
+ *
+ * @param string $plaintext     JSON-encoded notification payload
+ * @param string $clientPublicKey  base64url-encoded P-256 ECDH public key from push subscription
+ * @param string $clientAuthSecret base64url-encoded 16-byte auth secret from push subscription
+ */
+function wp_push_encrypt_payload(string $plaintext, string $clientPublicKey, string $clientAuthSecret): ?array {
+    if (!function_exists('openssl_pkey_new')
+        || !function_exists('openssl_pkey_derive')
+        || !function_exists('hash_hkdf')
+        || !function_exists('openssl_encrypt')) {
+        return null;
+    }
+
+    $rawClientPublicKey = wp_push_base64url_decode($clientPublicKey);
+    $rawAuthSecret      = wp_push_base64url_decode($clientAuthSecret);
+    if (strlen($rawClientPublicKey) !== 65 || strlen($rawAuthSecret) !== 16) {
+        return null;
+    }
+
+    // Generate ephemeral server P-256 ECDH key pair
+    $ephemeralKey = @openssl_pkey_new(['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
+    if (!$ephemeralKey) {
+        return null;
+    }
+    $ephemeralDetails = openssl_pkey_get_details($ephemeralKey);
+    if (!$ephemeralDetails || empty($ephemeralDetails['ec']['x']) || empty($ephemeralDetails['ec']['y'])) {
+        return null;
+    }
+
+    // Build ephemeral server public key in uncompressed 04||x||y format
+    $xBytes = $ephemeralDetails['ec']['x'];
+    $yBytes = $ephemeralDetails['ec']['y'];
+    // Pad to 32 bytes each
+    $xBytes = str_pad($xBytes, 32, "\x00", STR_PAD_LEFT);
+    $yBytes = str_pad($yBytes, 32, "\x00", STR_PAD_LEFT);
+    $serverPublicKeyRaw = "\x04" . $xBytes . $yBytes;
+
+    // Import client public key as OpenSSL resource
+    $clientKeyResource = @openssl_pkey_new([
+        'key_type' => OPENSSL_KEYTYPE_EC,
+        'curve_name' => 'prime256v1',
+    ]);
+    // We use openssl_pkey_get_public with PEM DER wrapping for the raw key
+    // Build a minimal EC public key PEM from the raw 65-byte uncompressed point
+    $derPrefix = "\x30\x59\x30\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01\x06\x08\x2a\x86\x48\xce\x3d\x03\x01\x07\x03\x42\x00";
+    $clientDer  = $derPrefix . $rawClientPublicKey;
+    $clientPem  = "-----BEGIN PUBLIC KEY-----\n" . chunk_split(base64_encode($clientDer), 64, "\n") . "-----END PUBLIC KEY-----\n";
+    $clientPub  = @openssl_pkey_get_public($clientPem);
+    if (!$clientPub) {
+        return null;
+    }
+
+    // ECDH shared secret
+    $sharedSecret = @openssl_pkey_derive($clientPub, $ephemeralKey);
+    if ($sharedSecret === false || $sharedSecret === '') {
+        return null;
+    }
+
+    // RFC 8291 HKDF key derivation
+    $salt = random_bytes(16);
+
+    // PRK (pseudo-random key)
+    $prk = hash_hkdf('sha256', $sharedSecret, 32, "WebPush: info\x00" . $rawClientPublicKey . $serverPublicKeyRaw, $rawAuthSecret);
+
+    // Content encryption key (16 bytes)
+    $cek = substr(hash_hkdf('sha256', $prk, 16, "Content-Encoding: aes128gcm\x00", $salt), 0, 16);
+
+    // Nonce (12 bytes)
+    $nonce = substr(hash_hkdf('sha256', $prk, 12, "Content-Encoding: nonce\x00", $salt), 0, 12);
+
+    // AES-128-GCM encrypt with 2-byte padding delimiter (RFC 8291 §4)
+    // Padding record: plaintext + \x02 (delimiter) — no additional padding needed for single record
+    $record = $plaintext . "\x02";
+    $tag    = '';
+    $cipher = @openssl_encrypt($record, 'aes-128-gcm', $cek, OPENSSL_RAW_DATA, $nonce, $tag, '', 16);
+    if ($cipher === false) {
+        return null;
+    }
+
+    // Build the encrypted_content_coding record (RFC 8188):
+    // salt(16) || rs(4 big-endian, =4096) || idlen(1, =65) || server_public_key(65) || ciphertext+tag
+    $rs     = pack('N', 4096);
+    $idlen  = "\x41"; // 65
+    $body   = $salt . $rs . $idlen . $serverPublicKeyRaw . $cipher . $tag;
+
+    return [
+        'body'    => $body,
+        'headers' => [
+            'Content-Encoding: aes128gcm',
+            'Content-Type: application/octet-stream',
+            'Content-Length: ' . strlen($body),
+        ],
+    ];
+}
+
 
 function wp_push_build_vapid_jwt(string $audience, string $subject, string $privateKeyPem): ?string {
     $header = wp_push_base64url_encode(json_encode(['typ' => 'JWT', 'alg' => 'ES256'], JSON_UNESCAPED_SLASHES));
@@ -1259,7 +1362,7 @@ function wp_push_post_signal(string $endpoint, array $headers, string $payload =
     ];
 }
 
-function wp_push_send_signal(array $subscription, array $config): array {
+function wp_push_send_signal(array $subscription, array $config, string $encryptedPayload = '', array $extraHeaders = []): array {
     $endpoint = trim((string)($subscription['endpoint'] ?? ''));
     if ($endpoint === '') {
         return ['ok' => false, 'status' => 0, 'error' => 'endpoint missing'];
@@ -1277,28 +1380,47 @@ function wp_push_send_signal(array $subscription, array $config): array {
         return ['ok' => false, 'status' => 0, 'error' => 'vapid unavailable'];
     }
 
-    $modernHeaders = [
-        'TTL: 60',
-        'Urgency: high',
-        'Content-Length: 0',
-        'Authorization: vapid t=' . $jwt . ', k=' . (string)$config['vapid_public_key'],
-    ];
+    // Build headers based on whether we have an encrypted body or not
+    if ($encryptedPayload !== '') {
+        $modernHeaders = array_merge([
+            'TTL: 604800',
+            'Urgency: high',
+            'Authorization: vapid t=' . $jwt . ', k=' . (string)$config['vapid_public_key'],
+        ], $extraHeaders);
+    } else {
+        $modernHeaders = [
+            'TTL: 60',
+            'Urgency: high',
+            'Content-Length: 0',
+            'Authorization: vapid t=' . $jwt . ', k=' . (string)$config['vapid_public_key'],
+        ];
+    }
 
-    $modernResult = wp_push_post_signal($endpoint, $modernHeaders);
+    $modernResult = wp_push_post_signal($endpoint, $modernHeaders, $encryptedPayload);
     $modernResult['mode'] = 'vapid';
     if (!empty($modernResult['ok'])) {
         return $modernResult;
     }
 
-    $legacyHeaders = [
-        'TTL: 60',
-        'Urgency: high',
-        'Content-Length: 0',
-        'Authorization: WebPush ' . $jwt,
-        'Crypto-Key: p256ecdsa=' . (string)$config['vapid_public_key'],
-    ];
+    // Legacy fallback (older Chrome/Firefox push endpoints)
+    if ($encryptedPayload !== '') {
+        $legacyHeaders = array_merge([
+            'TTL: 604800',
+            'Urgency: high',
+            'Authorization: WebPush ' . $jwt,
+            'Crypto-Key: p256ecdsa=' . (string)$config['vapid_public_key'],
+        ], $extraHeaders);
+    } else {
+        $legacyHeaders = [
+            'TTL: 60',
+            'Urgency: high',
+            'Content-Length: 0',
+            'Authorization: WebPush ' . $jwt,
+            'Crypto-Key: p256ecdsa=' . (string)$config['vapid_public_key'],
+        ];
+    }
 
-    $legacyResult = wp_push_post_signal($endpoint, $legacyHeaders);
+    $legacyResult = wp_push_post_signal($endpoint, $legacyHeaders, $encryptedPayload);
     $legacyResult['mode'] = 'legacy';
 
     if (!empty($legacyResult['ok'])) {
@@ -1365,40 +1487,163 @@ function wp_push_send_notification(array $payload): array {
     $removed = 0;
     $errorSamples = [];
 
-    foreach ($subscriptions as $subscription) {
-        $result = wp_push_send_signal($subscription, $config);
-        if (!empty($result['ok'])) {
-            $success++;
-            continue;
+    // Build JSON payload string once
+    $payloadJson = json_encode([
+        'title'           => trim((string)($payload['title'] ?? 'Worship Platform')),
+        'body'            => trim((string)($payload['body'] ?? '')),
+        'url'             => trim((string)($payload['url'] ?? '/main.html')),
+        'icon'            => trim((string)($payload['icon'] ?? '/wolarm_youth.png')),
+        'tag'             => trim((string)($payload['tag'] ?? 'worship-update')),
+        'type'            => trim((string)($payload['type'] ?? 'version_update')),
+        'app_version'     => trim((string)($payload['app_version'] ?? '')),
+        'web_version'     => trim((string)($payload['web_version'] ?? '')),
+        'app_release_stamp' => trim((string)($payload['app_release_stamp'] ?? '')),
+        'web_release_stamp' => trim((string)($payload['web_release_stamp'] ?? '')),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+    if (function_exists('curl_multi_init')) {
+        // --- Parallel curl_multi dispatch ---
+        $mh = curl_multi_init();
+        $handles = []; // indexed by subscription key
+
+        foreach ($subscriptions as $idx => $subscription) {
+            $endpoint = trim((string)($subscription['endpoint'] ?? ''));
+            if ($endpoint === '') continue;
+
+            $parts = parse_url($endpoint);
+            if (!is_array($parts) || empty($parts['scheme']) || empty($parts['host'])) continue;
+
+            $audience = $parts['scheme'] . '://' . $parts['host'] . (!empty($parts['port']) ? ':' . $parts['port'] : '');
+            $jwt = wp_push_build_vapid_jwt($audience, (string)$config['vapid_subject'], (string)$config['vapid_private_key_pem']);
+            if ($jwt === null || empty($config['vapid_public_key'])) {
+                $failed++;
+                continue;
+            }
+
+            // Try RFC 8291 payload encryption
+            $encryptedBody = '';
+            $encryptHeaders = [];
+            $pubKey  = trim((string)($subscription['public_key'] ?? ''));
+            $authKey = trim((string)($subscription['auth_key'] ?? ''));
+            if ($pubKey !== '' && $authKey !== '') {
+                $encrypted = wp_push_encrypt_payload($payloadJson, $pubKey, $authKey);
+                if ($encrypted !== null) {
+                    $encryptedBody    = $encrypted['body'];
+                    $encryptHeaders   = $encrypted['headers'];
+                }
+            }
+
+            if ($encryptedBody !== '') {
+                $httpHeaders = array_merge([
+                    'TTL: 604800',
+                    'Urgency: high',
+                    'Authorization: vapid t=' . $jwt . ', k=' . (string)$config['vapid_public_key'],
+                ], $encryptHeaders);
+            } else {
+                $httpHeaders = [
+                    'TTL: 60',
+                    'Urgency: high',
+                    'Content-Length: 0',
+                    'Authorization: vapid t=' . $jwt . ', k=' . (string)$config['vapid_public_key'],
+                ];
+            }
+
+            $ch = curl_init($endpoint);
+            curl_setopt_array($ch, [
+                CURLOPT_POST            => true,
+                CURLOPT_POSTFIELDS      => $encryptedBody,
+                CURLOPT_HTTPHEADER      => $httpHeaders,
+                CURLOPT_RETURNTRANSFER  => true,
+                CURLOPT_HEADER          => false,
+                CURLOPT_CONNECTTIMEOUT  => 8,
+                CURLOPT_TIMEOUT         => 15,
+            ]);
+            curl_multi_add_handle($mh, $ch);
+            $handles[$idx] = ['ch' => $ch, 'subscription' => $subscription];
         }
 
-        $failed++;
-        $status = (int)($result['status'] ?? 0);
-        if (count($errorSamples) < 3) {
-            $errorSamples[] = trim((string)($result['error'] ?? '')) !== ''
-                ? ('#' . $status . ' ' . trim((string)$result['error']))
-                : ('#' . $status . ' signal failed');
+        // Execute all requests in parallel
+        $running = null;
+        do {
+            $status = curl_multi_exec($mh, $running);
+            if ($running) {
+                curl_multi_select($mh, 0.5);
+            }
+        } while ($running > 0 && $status === CURLM_OK);
+
+        // Collect results
+        foreach ($handles as $idx => $item) {
+            $ch           = $item['ch'];
+            $subscription = $item['subscription'];
+            $httpStatus   = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+            $curlError    = curl_error($ch);
+
+            if ($httpStatus >= 200 && $httpStatus < 300) {
+                $success++;
+            } else {
+                $failed++;
+                if (count($errorSamples) < 3) {
+                    $errorSamples[] = $curlError !== ''
+                        ? ('#' . $httpStatus . ' ' . $curlError)
+                        : ('#' . $httpStatus . ' signal failed');
+                }
+                if ($httpStatus === 404 || $httpStatus === 410) {
+                    $removed++;
+                    wp_push_remove_subscription_by_endpoint((string)($subscription['endpoint'] ?? ''));
+                }
+            }
+
+            curl_multi_remove_handle($mh, $ch);
         }
-        if ($status === 404 || $status === 410) {
-            $removed++;
-            wp_push_remove_subscription_by_endpoint((string)($subscription['endpoint'] ?? ''));
+        curl_multi_close($mh);
+    } else {
+        // Fallback: sequential dispatch (no curl_multi available)
+        foreach ($subscriptions as $subscription) {
+            $pubKey  = trim((string)($subscription['public_key'] ?? ''));
+            $authKey = trim((string)($subscription['auth_key'] ?? ''));
+            $encryptedBody    = '';
+            $encryptHeaders   = [];
+            if ($pubKey !== '' && $authKey !== '') {
+                $encrypted = wp_push_encrypt_payload($payloadJson, $pubKey, $authKey);
+                if ($encrypted !== null) {
+                    $encryptedBody  = $encrypted['body'];
+                    $encryptHeaders = $encrypted['headers'];
+                }
+            }
+            $result = wp_push_send_signal($subscription, $config, $encryptedBody, $encryptHeaders);
+            if (!empty($result['ok'])) {
+                $success++;
+                continue;
+            }
+
+            $failed++;
+            $status = (int)($result['status'] ?? 0);
+            if (count($errorSamples) < 3) {
+                $errorSamples[] = trim((string)($result['error'] ?? '')) !== ''
+                    ? ('#' . $status . ' ' . trim((string)$result['error']))
+                    : ('#' . $status . ' signal failed');
+            }
+            if ($status === 404 || $status === 410) {
+                $removed++;
+                wp_push_remove_subscription_by_endpoint((string)($subscription['endpoint'] ?? ''));
+            }
         }
     }
 
     wp_push_save_config([
-        'last_sent_at' => wp_version_now_iso(),
+        'last_sent_at'    => wp_version_now_iso(),
         'last_sent_title' => trim((string)($payload['title'] ?? '')),
-        'last_sent_url' => trim((string)($payload['url'] ?? '/')),
+        'last_sent_url'   => trim((string)($payload['url'] ?? '/')),
     ]);
 
     $result = [
-        'ok' => $success > 0,
+        'ok'      => $success > 0,
         'message' => 'Push-ը հերթագրվեց ' . $queued . ' սարքի համար, ուղարկվեց signal ' . $success . ' subscription-ի, ձախողվեց ' . $failed . ' subscription-ի համար' . ($removed > 0 ? ', և ' . $removed . ' ժամկետանց subscription հեռացվեց։' : '։'),
-        'queued' => $queued,
+        'queued'  => $queued,
         'success' => $success,
-        'failed' => $failed,
+        'failed'  => $failed,
         'removed' => $removed,
-        'errors' => $errorSamples,
+        'errors'  => $errorSamples,
     ];
 
     if ($success === 0 && $errorSamples) {
@@ -1406,18 +1651,18 @@ function wp_push_send_notification(array $payload): array {
     }
 
     wp_push_history_append([
-        'id' => bin2hex(random_bytes(8)),
-        'title' => trim((string)($payload['title'] ?? '')),
-        'body' => trim((string)($payload['body'] ?? '')),
-        'url' => trim((string)($payload['url'] ?? '/')),
-        'tag' => trim((string)($payload['tag'] ?? '')),
-        'actor' => trim((string)($payload['actor'] ?? 'admin')),
+        'id'         => bin2hex(random_bytes(8)),
+        'title'      => trim((string)($payload['title'] ?? '')),
+        'body'       => trim((string)($payload['body'] ?? '')),
+        'url'        => trim((string)($payload['url'] ?? '/')),
+        'tag'        => trim((string)($payload['tag'] ?? '')),
+        'actor'      => trim((string)($payload['actor'] ?? 'admin')),
         'created_at' => wp_version_now_iso(),
-        'queued' => $queued,
-        'success' => $success,
-        'failed' => $failed,
-        'removed' => $removed,
-        'errors' => $errorSamples,
+        'queued'     => $queued,
+        'success'    => $success,
+        'failed'     => $failed,
+        'removed'    => $removed,
+        'errors'     => $errorSamples,
     ]);
 
     return $result;
@@ -1475,8 +1720,21 @@ function wp_push_send_to_user($pdo, int $user_id, string $title, string $body, s
     $failed = 0;
     $removed = 0;
     $errorSamples = [];
+    $payloadJson = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
     foreach ($subs as $sub) {
-        $result = wp_push_send_signal($sub, $config);
+        $pubKey  = trim((string)($sub['public_key'] ?? ''));
+        $authKey = trim((string)($sub['auth_key'] ?? ''));
+        $encryptedBody  = '';
+        $encryptHeaders = [];
+        if ($pubKey !== '' && $authKey !== '') {
+            $encrypted = wp_push_encrypt_payload($payloadJson, $pubKey, $authKey);
+            if ($encrypted !== null) {
+                $encryptedBody  = $encrypted['body'];
+                $encryptHeaders = $encrypted['headers'];
+            }
+        }
+        $result = wp_push_send_signal($sub, $config, $encryptedBody, $encryptHeaders);
         if (!empty($result['ok'])) {
             $success++;
         } else {
