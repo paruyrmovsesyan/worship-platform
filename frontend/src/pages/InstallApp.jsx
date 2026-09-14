@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useIsPWA } from '../hooks/useIsPWA';
 import './InstallApp.css';
@@ -24,6 +24,8 @@ const INSTALL_COPY = {
     copied: 'Հղումը պատճենված է',
     copyLink: 'Պատճենել հղումը',
     installed: 'Ծրագիրն արդեն տեղադրված է այս սարքում։',
+    openApp: 'Բացել ծրագիրը',
+    openAppNote: 'Եթե ծրագիրը չբացվեց ավտոմատ, բացիր այն հեռախոսիդ գլխավոր էկրանից կամ ծրագրերի ցանկից։',
     accepted: 'Գերազանց․ տեղադրումն սկսվեց։',
     dismissed: 'Տեղադրումը չավարտվեց։ Կարող ես կրկին փորձել։',
     back: 'Վերադառնալ գլխավոր էջ',
@@ -50,6 +52,8 @@ const INSTALL_COPY = {
     copied: 'Link copied',
     copyLink: 'Copy link',
     installed: 'The app is already installed on this device.',
+    openApp: 'Open app',
+    openAppNote: 'If the app does not open automatically, open it from your Home Screen or app drawer.',
     accepted: 'Great — installation has started.',
     dismissed: 'Installation was not completed. You can try again.',
     back: 'Back to home',
@@ -76,6 +80,8 @@ const INSTALL_COPY = {
     copied: 'Ссылка скопирована',
     copyLink: 'Скопировать ссылку',
     installed: 'Приложение уже установлено на этом устройстве.',
+    openApp: 'Открыть приложение',
+    openAppNote: 'Если приложение не открылось автоматически, откройте его с главного экрана или из списка приложений.',
     accepted: 'Отлично — установка началась.',
     dismissed: 'Установка не завершена. Можно попробовать снова.',
     back: 'Вернуться на главную',
@@ -99,6 +105,7 @@ function PhoneIcon({ type }) {
 }
 
 export default function InstallApp() {
+  const navigate = useNavigate();
   const { language } = useLanguage();
   const copy = INSTALL_COPY[language] || INSTALL_COPY.hy;
   const detectedDevice = detectDevice();
@@ -106,6 +113,68 @@ export default function InstallApp() {
   const [installPrompt, setInstallPrompt] = useState(() => window.__wpDeferredInstallPrompt || null);
   const [message, setMessage] = useState('');
   const isPWA = useIsPWA();
+  const [isInstalled, setIsInstalled] = useState(() => {
+    if (isPWA) return true;
+    try {
+      return localStorage.getItem('wp_install_confirmed') === '1' ||
+             localStorage.getItem('wp_pwa_installed') === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    let mounted = true;
+
+    if (isPWA) {
+      setIsInstalled(true);
+      try {
+        localStorage.setItem('wp_install_confirmed', '1');
+        localStorage.setItem('wp_pwa_installed', '1');
+      } catch {}
+      return;
+    }
+
+    try {
+      if (localStorage.getItem('wp_install_confirmed') === '1' || localStorage.getItem('wp_pwa_installed') === '1') {
+        setIsInstalled(true);
+      }
+    } catch {}
+
+    if (typeof navigator !== 'undefined' && typeof navigator.getInstalledRelatedApps === 'function') {
+      navigator.getInstalledRelatedApps().then((apps) => {
+        if (!mounted) return;
+        if (Array.isArray(apps) && apps.length > 0) {
+          setIsInstalled(true);
+          try {
+            localStorage.setItem('wp_install_confirmed', '1');
+            localStorage.setItem('wp_pwa_installed', '1');
+          } catch {}
+        }
+      }).catch(() => {});
+    }
+
+    fetch('/install_api.php?action=current_device_status&scope=main', {
+      credentials: 'same-origin',
+      cache: 'no-store'
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!mounted) return;
+        if (data && data.installed === true) {
+          setIsInstalled(true);
+          try {
+            localStorage.setItem('wp_install_confirmed', '1');
+            localStorage.setItem('wp_pwa_installed', '1');
+          } catch {}
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      mounted = false;
+    };
+  }, [isPWA]);
 
   useEffect(() => {
     const handlePrompt = (event) => {
@@ -116,6 +185,11 @@ export default function InstallApp() {
     const handleInstalled = () => {
       window.__wpDeferredInstallPrompt = null;
       setInstallPrompt(null);
+      setIsInstalled(true);
+      try {
+        localStorage.setItem('wp_install_confirmed', '1');
+        localStorage.setItem('wp_pwa_installed', '1');
+      } catch {}
       setMessage(copy.installed);
     };
 
@@ -134,7 +208,16 @@ export default function InstallApp() {
     try {
       await prompt.prompt();
       const choice = await prompt.userChoice;
-      setMessage(choice?.outcome === 'accepted' ? copy.accepted : copy.dismissed);
+      if (choice?.outcome === 'accepted') {
+        setIsInstalled(true);
+        try {
+          localStorage.setItem('wp_install_confirmed', '1');
+          localStorage.setItem('wp_pwa_installed', '1');
+        } catch {}
+        setMessage(copy.accepted);
+      } else {
+        setMessage(copy.dismissed);
+      }
     } catch {
       setMessage(copy.promptWaiting);
     } finally {
@@ -150,6 +233,17 @@ export default function InstallApp() {
     } catch {
       setMessage(window.location.origin);
     }
+  };
+
+  const handleOpenApp = (e) => {
+    if (isPWA) {
+      e.preventDefault();
+      navigate('/');
+      return;
+    }
+    setTimeout(() => {
+      setMessage(copy.openAppNote);
+    }, 1200);
   };
 
   const isIos = device === 'ios';
@@ -216,23 +310,52 @@ export default function InstallApp() {
               ))}
             </ol>
 
-            {isPWA ? <div className="install-status success">✓ {copy.installed}</div> : null}
-            {!isIos && !isPWA ? (
+            {isInstalled ? (
+              <div className="install-installed-actions">
+                <div className="install-status success">✓ {copy.installed}</div>
+                <div style={{ marginTop: '14px' }}>
+                  {isPWA ? (
+                    <button className="install-primary-action" type="button" onClick={() => navigate('/')}>
+                      <span aria-hidden="true">↗</span> {copy.openApp}
+                    </button>
+                  ) : !isIos ? (
+                    <a
+                      className="install-primary-action"
+                      href="intent://worship.pmstudio.am/#Intent;scheme=https;S.browser_fallback_url=https%3A%2F%2Fworship.pmstudio.am%2F;end"
+                      onClick={handleOpenApp}
+                    >
+                      <span aria-hidden="true">↗</span> {copy.openApp}
+                    </a>
+                  ) : (
+                    <button className="install-secondary-action" type="button" onClick={copyPageLink}>
+                      {copy.copyLink}
+                    </button>
+                  )}
+                  {!isPWA && !isIos && (
+                    <p className="install-prompt-note ready" style={{ marginTop: '10px' }}>
+                      {copy.openAppNote}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : (
               <>
-                <button className="install-primary-action" type="button" onClick={startInstall} disabled={!installPrompt}>
-                  <span aria-hidden="true">↓</span> {copy.installNow}
-                </button>
-                <p className={`install-prompt-note ${installPrompt ? 'ready' : ''}`}>
-                  {installPrompt ? copy.promptReady : copy.promptWaiting}
-                </p>
+                {!isIos ? (
+                  <>
+                    <button className="install-primary-action" type="button" onClick={startInstall} disabled={!installPrompt}>
+                      <span aria-hidden="true">↓</span> {copy.installNow}
+                    </button>
+                    <p className={`install-prompt-note ${installPrompt ? 'ready' : ''}`}>
+                      {installPrompt ? copy.promptReady : copy.promptWaiting}
+                    </p>
+                  </>
+                ) : (
+                  <button className="install-secondary-action" type="button" onClick={copyPageLink}>
+                    {copy.copyLink}
+                  </button>
+                )}
               </>
-            ) : null}
-
-            {isIos && !isPWA ? (
-              <button className="install-secondary-action" type="button" onClick={copyPageLink}>
-                {copy.copyLink}
-              </button>
-            ) : null}
+            )}
 
             {message ? <div className="install-status">{message}</div> : null}
             <Link className="install-back-link" to="/">← {copy.back}</Link>

@@ -3,6 +3,7 @@
   "short_name": "Worship Platform",
   "description": "Worship Platform - Equip your worship team with chord charts, setlists, and collaboration tools.",
   "start_url": "/",
+  "id": "/",
   "display": "standalone",
   "background_color": "#3A2DFF",
   "theme_color": "#3A2DFF",
@@ -16,6 +17,12 @@
       "src": "/icon-512-v7.png",
       "sizes": "512x512",
       "type": "image/png"
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://worship.pmstudio.am/manifest.json"
     }
   ]
 }
