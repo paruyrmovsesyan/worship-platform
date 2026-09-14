@@ -6,11 +6,13 @@ import { useIsPWA } from '../hooks/useIsPWA';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { APP_THEMES, applyAppTheme, getStoredAppTheme } from '../utils/appTheme';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import './Settings.css';
 
 const hasWhitespace = (value) => /\s/u.test(String(value));
 const APP_INFO_CACHE_KEY = 'wp_cached_app_info';
 const APP_VERSION_FALLBACK = '2.6.9';
+const LOCKED_GUEST_TABS = ['profile', 'security', 'sessions', 'requests'];
 const DEFAULT_ABOUT_LICENSES = [
   { name: 'React / React DOM', license: 'MIT License' },
   { name: 'React Router', license: 'MIT License' },
@@ -45,8 +47,8 @@ export default function Settings() {
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab');
     if (tabParam) return tabParam;
-    if (!user) return 'app';
-    return isMobile ? null : 'profile';
+    if (isMobile) return null;
+    return user ? 'profile' : 'app';
   });
 
   useEffect(() => {
@@ -211,9 +213,9 @@ export default function Settings() {
   // Adjust active tab when switching between mobile/desktop resize
   useEffect(() => {
     if (!isMobile && !activeTab) {
-      setActiveTab('profile');
+      setActiveTab(user ? 'profile' : 'app');
     }
-  }, [isMobile, activeTab]);
+  }, [isMobile, activeTab, user]);
 
   // --- Handlers ---
   const handleAppThemeChange = (nextTheme) => {
@@ -434,24 +436,69 @@ export default function Settings() {
         { id: 'sessions', label: t('settings.tabs.sessions'), icon: <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> },
         { id: 'requests', label: t('settings.tabs.requests'), icon: <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg> },
         { id: 'danger', label: t('settings.tabs.danger'), icon: <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>, isDanger: true }
-      ] : [])
+      ] : (isPWA ? [
+        { id: 'profile', label: t('settings.tabs.profile'), icon: <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>, locked: true },
+        { id: 'security', label: t('settings.tabs.security'), icon: <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>, locked: true },
+        { id: 'sessions', label: t('settings.tabs.sessions'), icon: <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>, locked: true },
+        { id: 'requests', label: t('settings.tabs.requests'), icon: <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>, locked: true },
+      ] : []))
     ];
 
     return (
       <div className="settings-sidebar">
+        {isMobile && (
+          <button
+            className="settings-back-btn"
+            onClick={() => {
+              if (window.history.state && window.history.state.idx > 0) {
+                navigate(-1);
+              } else {
+                navigate('/');
+              }
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            {t('auth.back', 'Հետ')}
+          </button>
+        )}
         <h2 className="settings-menu-title">{t('settings.title')}</h2>
+
+        {isPWA && !user && (
+          <div className="settings-guest-status-card">
+            <div className="guest-status-copy">
+              <div className="guest-status-title-row">
+                <span className="guest-status-badge">{t('settings.guestMode', 'Հյուրի ռեժիմ')}</span>
+                <span className="guest-status-pill">{t('settings.limitedMode', 'Սահմանափակ')}</span>
+              </div>
+              <p className="guest-status-desc">
+                {t('settings.guestStatusDesc', 'Դուք մուտք չեք գործել։ Ծրագրի կարգավորումները հասանելի են սահմանափակ հնարավորությամբ։')}
+              </p>
+            </div>
+            <button className="settings-btn primary small guest-login-btn" onClick={() => navigate('/login')}>
+              {t('auth.login', 'Մուտք')}
+            </button>
+          </div>
+        )}
+
         <div className="settings-menu-list">
           {menuItems.map(item => (
             <button 
               key={item.id} 
-              className={`settings-menu-item ${activeTab === item.id ? 'active' : ''} ${item.isDanger ? 'danger-item' : ''}`}
+              className={`settings-menu-item ${activeTab === item.id ? 'active' : ''} ${item.isDanger ? 'danger-item' : ''} ${item.locked ? 'locked-item' : ''}`}
               onClick={() => setActiveTab(item.id)}
             >
               <div className="menu-item-left">
                 <div className="menu-icon">{item.icon}</div>
                 <span>{item.label}</span>
               </div>
-              <svg className="menu-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              {item.locked ? (
+                <span className="menu-lock-pill">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  <span>{t('auth.login', 'Մուտք')}</span>
+                </span>
+              ) : (
+                <svg className="menu-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              )}
             </button>
           ))}
         </div>
@@ -465,11 +512,41 @@ export default function Settings() {
         {isMobile && activeTab && (
           <button className="settings-back-btn" onClick={() => setActiveTab(null)}>
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            {t('auth.back')}
+            {t('auth.back', 'Հետ')}
           </button>
         )}
 
-        {!user && (
+        {!user && LOCKED_GUEST_TABS.includes(activeTab) && (
+          <div className="settings-sections fade-in">
+            <div className="settings-card guest-locked-card">
+              <div className="guest-locked-icon">
+                <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
+              <h3>
+                {activeTab === 'profile' ? t('settings.tabs.profile')
+                  : activeTab === 'security' ? t('settings.tabs.security')
+                  : activeTab === 'sessions' ? t('settings.tabs.sessions')
+                  : t('settings.tabs.requests')}
+              </h3>
+              <p className="guest-locked-desc">
+                {t('settings.lockedDesc', 'Այս բաժինը հասանելի է միայն մուտք գործած օգտատերերին։ Մուտք գործեք Ձեր հաշիվ կամ գրանցվեք՝ այն ակտիվացնելու համար։')}
+              </p>
+              <div className="guest-locked-actions">
+                <button className="settings-btn primary" onClick={() => navigate('/login')}>
+                  {t('auth.login', 'Մուտք գործել')}
+                </button>
+                <button className="settings-btn secondary" onClick={() => navigate('/register')}>
+                  {t('auth.registerBtn', 'Գրանցվել')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!user && !LOCKED_GUEST_TABS.includes(activeTab) && (
           <div className="settings-card mb-4" style={{ background: 'linear-gradient(135deg, rgba(58, 45, 255, 0.12), rgba(0, 212, 255, 0.08))', border: '1px solid rgba(58, 45, 255, 0.25)', marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
               <div>
@@ -484,7 +561,7 @@ export default function Settings() {
         )}
 
         {/* PROFILE TAB */}
-        {activeTab === 'profile' && (
+        {user && activeTab === 'profile' && (
           <div className="settings-sections fade-in">
             <div className="settings-card mb-4" style={{ marginBottom: '1.5rem' }}>
               <h3>{t('settings.profile.title')}</h3>
@@ -568,6 +645,20 @@ export default function Settings() {
               <p className="text-muted" style={{ marginBottom: '1.5rem' }}>
                 {isPWA ? t('settings.app.desc', 'Կարգավորեք ծրագրի արտաքին տեսքը և աշխատանքի պարամետրերը:') : 'Կարգավորեք կայքի արտաքին տեսքը և աշխատանքի պարամետրերը:'}
               </p>
+
+              {isPWA && (
+                <div className="remember-device-card" style={{ marginBottom: '1.5rem' }}>
+                  <div className="remember-device-copy">
+                    <div className="remember-device-title-row">
+                      <strong>{t('settings.app.language', 'Լեզու')}</strong>
+                    </div>
+                    <p className="text-muted">
+                      {t('settings.app.languageDesc', 'Ընտրեք ծրագրի հիմնական լեզուն։')}
+                    </p>
+                  </div>
+                  <LanguageSwitcher />
+                </div>
+              )}
 
               <div className="app-theme-setting" style={{ marginBottom: '1.5rem' }}>
                 <div className="app-theme-copy">
@@ -831,7 +922,7 @@ export default function Settings() {
         )}
 
         {/* SECURITY TAB */}
-        {activeTab === 'security' && (
+        {user && activeTab === 'security' && (
           <div className="settings-sections fade-in">
             <div className="settings-card">
               <div className="card-header-flex" style={{ marginBottom: '1rem' }}>
@@ -867,7 +958,7 @@ export default function Settings() {
         )}
 
         {/* SESSIONS TAB */}
-        {activeTab === 'sessions' && (
+        {user && activeTab === 'sessions' && (
           <div className="settings-sections fade-in">
             <div className="settings-card">
               <div className="card-header-flex" style={{ marginBottom: '1rem' }}>
@@ -936,7 +1027,7 @@ export default function Settings() {
         )}
 
         {/* REQUESTS TAB */}
-        {activeTab === 'requests' && (
+        {user && activeTab === 'requests' && (
           <div className="settings-sections fade-in">
             <div className="settings-card">
               <div className="card-header-flex" style={{ marginBottom: '1rem' }}>
@@ -984,7 +1075,7 @@ export default function Settings() {
         )}
 
         {/* DANGER TAB */}
-        {activeTab === 'danger' && (
+        {user && activeTab === 'danger' && (
           <div className="settings-card danger-card fade-in">
             <h3 style={{color: '#ff453a'}}>{t('settings.danger.title')}</h3>
             <p className="text-muted">{t('settings.danger.desc')}</p>

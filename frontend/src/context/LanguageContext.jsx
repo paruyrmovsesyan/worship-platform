@@ -54,7 +54,11 @@ const translations = {
     },
     settings: {
       title: 'Կարգավորումներ',
-      mobileMenu: 'Մենյու',
+      guestMode: 'Հյուրի ռեժիմ',
+      limitedMode: 'Սահմանափակ',
+      guestStatusDesc: 'Դուք մուտք չեք գործել։ Ծրագրի կարգավորումները հասանելի են սահմանափակ հնարավորությամբ։',
+      lockedDesc: 'Այս բաժինը հասանելի է միայն մուտք գործած օգտատերերին։ Մուտք գործեք Ձեր հաշիվ կամ գրանցվեք՝ այն ակտիվացնելու համար։',
+      requiresLogin: 'Պահանջվում է մուտք',
       tabs: {
         profile: 'Անձնական',
         app: 'Ծրագիր',
@@ -66,6 +70,8 @@ const translations = {
       },
       app: {
         desc: 'Կարգավորեք ծրագրի արտաքին տեսքը և աշխատանքի պարամետրերը:',
+        language: 'Լեզու',
+        languageDesc: 'Ընտրեք ծրագրի հիմնական լեզուն։',
         themeMode: 'Գունային ռեժիմ',
         themeModeDesc: 'Ընտրեք ծրագրի բաց կամ մութ տեսքը։',
         darkTheme: 'Մութ',
@@ -865,7 +871,11 @@ const translations = {
     },
     settings: {
       title: 'Settings',
-      mobileMenu: 'Menu',
+      guestMode: 'Guest Mode',
+      limitedMode: 'Limited',
+      guestStatusDesc: 'You are not logged in. App settings are available in limited mode.',
+      lockedDesc: 'This section is only available to logged in users. Log in to your account or sign up to activate it.',
+      requiresLogin: 'Login required',
       tabs: {
         profile: 'Profile',
         app: 'App',
@@ -877,6 +887,8 @@ const translations = {
       },
       app: {
         desc: 'Adjust app appearance and operating parameters.',
+        language: 'Language',
+        languageDesc: 'Choose the primary app language.',
         themeMode: 'Appearance',
         themeModeDesc: 'Choose the app’s light or dark appearance.',
         darkTheme: 'Dark',
@@ -1674,7 +1686,11 @@ const translations = {
     },
     settings: {
       title: 'Настройки',
-      mobileMenu: 'Меню',
+      guestMode: 'Гостевой режим',
+      limitedMode: 'Ограничено',
+      guestStatusDesc: 'Вы не вошли в систему. Настройки приложения доступны в ограниченном режиме.',
+      lockedDesc: 'Этот раздел доступен только авторизованным пользователям. Войдите в свой аккаунт или зарегистрируйтесь, чтобы получить доступ.',
+      requiresLogin: 'Требуется вход',
       tabs: {
         profile: 'Профиль',
         app: 'Приложение',
@@ -1686,6 +1702,8 @@ const translations = {
       },
       app: {
         desc: 'Настройте внешний вид и параметры работы приложения.',
+        language: 'Язык',
+        languageDesc: 'Выберите основной язык приложения.',
         themeMode: 'Оформление',
         themeModeDesc: 'Выберите светлое или темное оформление приложения.',
         darkTheme: 'Темная',

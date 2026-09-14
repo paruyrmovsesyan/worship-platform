@@ -29,11 +29,6 @@ const Login = () => {
     if (searchParams.get('mode') === 'login') return 'login';
     return isPWA ? 'welcome' : 'login';
   });
-  const [isQsOpen, setIsQsOpen] = useState(false);
-  const [qsTheme, setQsThemeState] = useState(() => localStorage.getItem('theme') || 'dark');
-  const [qsOled, setQsOledState] = useState(() => localStorage.getItem('oledMode') === 'true');
-  const [qsChordColor, setQsChordColorState] = useState(() => localStorage.getItem('chordColor') || 'gold');
-  const [qsOutlined, setQsOutlinedState] = useState(() => localStorage.getItem('outlinedChords') === 'true');
 
   useEffect(() => {
     const socialError = searchParams.get('social_error');
@@ -198,130 +193,22 @@ const Login = () => {
     window.scrollTo({ top: 0, left: 0 });
   }, [viewMode]);
 
-  const handleSetTheme = (mode) => {
-    if (mode === 'light') {
-      document.body.classList.add('light-mode');
-      document.body.classList.remove('oled-mode');
-      localStorage.setItem('theme', 'light');
-      localStorage.setItem('oledMode', 'false');
-      setQsThemeState('light');
-      setQsOledState(false);
-      if (qsChordColor === 'white') {
-        setQsChordColorState('gold');
-        localStorage.setItem('chordColor', 'gold');
-      }
-    } else if (mode === 'oled') {
-      document.body.classList.remove('light-mode');
-      document.body.classList.add('oled-mode');
-      localStorage.setItem('theme', 'dark');
-      localStorage.setItem('oledMode', 'true');
-      setQsThemeState('dark');
-      setQsOledState(true);
-      if (qsChordColor === 'black') {
-        setQsChordColorState('gold');
-        localStorage.setItem('chordColor', 'gold');
-      }
-    } else {
-      document.body.classList.remove('light-mode');
-      document.body.classList.remove('oled-mode');
-      localStorage.setItem('theme', 'dark');
-      localStorage.setItem('oledMode', 'false');
-      setQsThemeState('dark');
-      setQsOledState(false);
-      if (qsChordColor === 'black') {
-        setQsChordColorState('gold');
-        localStorage.setItem('chordColor', 'gold');
-      }
-    }
-  };
-
-  const handleSetChordColor = (color) => {
-    ['gold', 'blue', 'green', 'red', 'white', 'black'].forEach((c) => {
-      document.body.classList.remove(`chord-color-${c}`);
-    });
-    if (color !== 'gold') {
-      document.body.classList.add(`chord-color-${color}`);
-    }
-    localStorage.setItem('chordColor', color);
-    setQsChordColorState(color);
-  };
-
-  const handleSetOutlined = (enable) => {
-    if (enable) {
-      document.body.classList.add('outlined-chords');
-      localStorage.setItem('outlinedChords', 'true');
-    } else {
-      document.body.classList.remove('outlined-chords');
-      localStorage.setItem('outlinedChords', 'false');
-    }
-    setQsOutlinedState(enable);
-  };
-
   return (
     <div className={`login-page-container animate-fade-in ${isPWA ? 'pwa-login-page' : 'web-login-page'} ${viewMode === 'welcome' ? 'is-welcome' : 'is-login-form'}`}>
       {isPWA && (
-        <>
-      {/* Pre-Login Topbar */}
-      <div className="prelogin-topbar">
-        <Link to="/" className="prelogin-brand">
-          <img src="/user_uploaded_logo.png" alt="" className="prelogin-brand-logo" />
-          <span>Worship Platform</span>
-        </Link>
-        <div className="prelogin-actions">
-          <button type="button" className="qs-btn" onClick={() => setIsQsOpen(true)} aria-label={t('settings.title')}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            <span>{t('settings.title')}</span>
-          </button>
-          <LanguageSwitcher />
-        </div>
-      </div>
-
-      {/* Quick Settings Modal Overlay */}
-      <div className={`qs-modal-overlay ${isQsOpen ? 'active' : ''}`} onClick={(e) => { if (e.target === e.currentTarget) setIsQsOpen(false); }}>
-        <div className="qs-modal-card">
-          <div className="qs-modal-header">
-            <h3>{t('settings.title', 'Ծրագրի կարգավորումներ')}</h3>
-            <button type="button" className="qs-close-btn" onClick={() => setIsQsOpen(false)}>✕</button>
-          </div>
-
-          {/* Theme Mode */}
-          <div className="qs-group">
-            <span className="qs-group-title">{t('settings.app.themeMode')}</span>
-            <div className="qs-options-row">
-              <button type="button" className={`qs-opt-btn ${qsTheme === 'light' ? 'active' : ''}`} onClick={() => handleSetTheme('light')}>{t('settings.app.lightTheme')}</button>
-              <button type="button" className={`qs-opt-btn ${qsTheme === 'dark' && !qsOled ? 'active' : ''}`} onClick={() => handleSetTheme('dark')}>{t('settings.app.darkTheme')}</button>
-              <button type="button" className={`qs-opt-btn ${qsOled ? 'active' : ''}`} onClick={() => handleSetTheme('oled')}>OLED</button>
-            </div>
-          </div>
-
-          {/* Chord Color */}
-          <div className="qs-group">
-            <span className="qs-group-title">{t('settings.app.chordColor')}</span>
-            <div className="qs-options-row">
-              <button type="button" className={`qs-opt-btn ${qsChordColor === 'gold' ? 'active' : ''}`} onClick={() => handleSetChordColor('gold')}><span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#3A2DFF', display: 'inline-block' }}></span>{t('settings.app.colorGold')}</button>
-              <button type="button" className={`qs-opt-btn ${qsChordColor === 'blue' ? 'active' : ''}`} onClick={() => handleSetChordColor('blue')}><span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#00D4FF', display: 'inline-block' }}></span>{t('settings.app.colorBlue')}</button>
-              <button type="button" className={`qs-opt-btn ${qsChordColor === 'green' ? 'active' : ''}`} onClick={() => handleSetChordColor('green')}><span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#4ADE80', display: 'inline-block' }}></span>{t('settings.app.colorGreen')}</button>
-              <button type="button" className={`qs-opt-btn ${qsChordColor === 'red' ? 'active' : ''}`} onClick={() => handleSetChordColor('red')}><span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#FF4A4A', display: 'inline-block' }}></span>{t('settings.app.colorRed')}</button>
-              {qsTheme !== 'light' && (
-                <button type="button" className={`qs-opt-btn ${qsChordColor === 'white' ? 'active' : ''}`} onClick={() => handleSetChordColor('white')}><span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#FFFFFF', border: '1px solid #ccc', display: 'inline-block' }}></span>{t('settings.app.colorWhite')}</button>
-              )}
-              {qsTheme === 'light' && (
-                <button type="button" className={`qs-opt-btn ${qsChordColor === 'black' ? 'active' : ''}`} onClick={() => handleSetChordColor('black')}><span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#000000', border: '1px solid #555', display: 'inline-block' }}></span>{t('settings.app.colorBlack')}</button>
-              )}
-            </div>
-          </div>
-
-          {/* Outlined Chords */}
-          <div className="qs-group">
-            <span className="qs-group-title">{t('settings.app.chordStyle')}</span>
-            <div className="qs-options-row">
-              <button type="button" className={`qs-opt-btn ${!qsOutlined ? 'active' : ''}`} onClick={() => handleSetOutlined(false)}>{t('settings.app.standardChords')}</button>
-              <button type="button" className={`qs-opt-btn ${qsOutlined ? 'active' : ''}`} onClick={() => handleSetOutlined(true)}>{t('settings.app.outlinedChords')}</button>
-            </div>
+        <div className="prelogin-topbar">
+          <Link to="/" className="prelogin-brand">
+            <img src="/user_uploaded_logo.png" alt="" className="prelogin-brand-logo" />
+            <span>Worship Platform</span>
+          </Link>
+          <div className="prelogin-actions">
+            <button type="button" className="qs-btn" onClick={() => navigate('/settings')} aria-label={t('settings.title')}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              <span>{t('settings.title')}</span>
+            </button>
+            <LanguageSwitcher />
           </div>
         </div>
-      </div>
-        </>
       )}
 
       {/* Hero Section */}

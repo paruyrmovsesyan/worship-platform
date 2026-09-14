@@ -45,10 +45,10 @@ const isHorizontalScrollTarget = (target) => {
 
 const getNavIndex = (pathname, routes) => routes.findIndex((route) => route.path === pathname);
 
-const getFallbackBackPath = (pathname) => {
+const getFallbackBackPath = (pathname, user) => {
   if (pathname.startsWith('/song/') || pathname === '/favorites' || pathname === '/transpose') return '/songs';
   if (pathname.startsWith('/chat/') || pathname === '/chats') return '/friends';
-  if (pathname.startsWith('/settings') || pathname === '/notifications') return '/profile';
+  if (pathname.startsWith('/settings') || pathname === '/notifications') return user ? '/profile' : '/';
   if (pathname.startsWith('/setlists/')) return '/setlists';
   if (pathname.startsWith('/news/')) return '/news';
   return '/';
@@ -134,7 +134,7 @@ export function usePwaSwipeNavigation({
         return true;
       }
 
-      const fallbackPath = getFallbackBackPath(pathname);
+      const fallbackPath = getFallbackBackPath(pathname, user);
       if (typeof canAccessPath === 'function' && !canAccessPath(fallbackPath)) {
         if (typeof onBlocked === 'function') onBlocked();
         return false;
