@@ -531,23 +531,71 @@
 
 /* ── User Section ── */
 .menu-user-section {
-  padding: 20px;
+  padding: 16px 20px;
   display: flex;
   align-items: center;
   gap: 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-decoration: none;
+  background: transparent;
+  transition: background 0.2s ease;
+  cursor: pointer;
 }
+
+.menu-user-section:hover,
+.menu-user-section:active {
+  background: rgba(255, 255, 255, 0.05);
+}
+
 .menu-user-avatar {
-  width: 46px; height: 46px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   background: linear-gradient(135deg, #9D72FF, #00F0FF);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.2rem; font-weight: 700; color: #05050A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #05050A;
   flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(0, 240, 255, 0.22);
 }
-.menu-user-info { display: flex; flex-direction: column; gap: 3px; }
-.menu-user-name { font-weight: 600; font-size: 0.95rem; color: #fff; }
-.menu-user-role { font-size: 0.78rem; color: #7070A0; }
+
+.menu-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.menu-user-name {
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menu-user-role {
+  font-size: 0.78rem;
+  color: #72e6ff;
+  font-weight: 500;
+}
+
+.menu-user-arrow {
+  color: #7070A0;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.menu-user-section:hover .menu-user-arrow,
+.menu-user-section:active .menu-user-arrow {
+  color: #00F0FF;
+  transform: translateX(3px);
+}
 
 .menu-nav-links {
   display: flex;

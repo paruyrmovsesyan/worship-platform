@@ -204,13 +204,21 @@ export default function Navbar() {
 
         {/* Auth */}
         {user ? (
-          <div className="menu-user-section">
+          <Link
+            to="/profile"
+            className="menu-user-section"
+            onClick={() => setMenuOpen(false)}
+            aria-label={t('profile.title', 'Անձնական էջ')}
+          >
             <div className="menu-user-avatar">{(user.name || user.email || 'U').charAt(0).toUpperCase()}</div>
             <div className="menu-user-info">
               <span className="menu-user-name">{user.name || user.username || user.email}</span>
-              <span className="menu-user-role">Worship Member</span>
+              <span className="menu-user-role">{t('profile.title', 'Անձնական էջ')}</span>
             </div>
-          </div>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="menu-user-arrow">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </Link>
         ) : (
           <div className="menu-auth-section">
             <Link to="/register" className="menu-btn-register" onClick={() => setMenuOpen(false)}>
@@ -243,6 +251,51 @@ export default function Navbar() {
               ))}
             </div>
           ))}
+
+          {user && (
+            <div className="menu-nav-section">
+              <span className="menu-section-title">{t('profile.accountSettings', 'Կարգավորումներ')}</span>
+              <Link
+                to="/profile"
+                className={`menu-nav-link ${isActive('/profile') ? 'active' : ''}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                <span className="menu-nav-icon">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </span>
+                <span>{t('profile.title', 'Անձնական էջ')}</span>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="menu-nav-arrow">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </Link>
+              <Link
+                to="/settings"
+                className={`menu-nav-link ${isActive('/settings') ? 'active' : ''}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                <span className="menu-nav-icon">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-1.41 3.41h-.1a2 2 0 0 1-1.41-.59l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82V22a2 2 0 0 1-4 0v-.1a1.65 1.65 0 0 0-.33-1.82 1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 0 1 2 18.59v-.1a2 2 0 0 1 .59-1.41l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33H2a2 2 0 0 1 0-4h.1a1.65 1.65 0 0 0 1.82-.33 1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06A2 2 0 0 1 5.41 2h.1a2 2 0 0 1 1.41.59l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.82V2a2 2 0 0 1 4 0v.1a1.65 1.65 0 0 0 .33 1.82 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06A2 2 0 0 1 22 5.41v.1a2 2 0 0 1-.59 1.41l-.06.06A1.65 1.65 0 0 0 19.4 9c.23.31.39.66.6 1a1.65 1.65 0 0 0 1.82.33H22a2 2 0 0 1 0 4h-.1a1.65 1.65 0 0 0-1.82.33c-.21.34-.37.69-.6 1z"></path></svg>
+                </span>
+                <span>{t('profile.accountSettings', 'Կարգավորումներ')}</span>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="menu-nav-arrow">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </Link>
+              <Link
+                to="/favorites"
+                className={`menu-nav-link ${isActive('/favorites') ? 'active' : ''}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                <span className="menu-nav-icon">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                </span>
+                <span>{t('nav.favorites', 'Նախընտրածներ')}</span>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="menu-nav-arrow">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </Link>
+            </div>
+          )}
         </nav>
 
         {/* Footer */}
