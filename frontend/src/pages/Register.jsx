@@ -197,7 +197,23 @@ const Register = () => {
   };
 
   return (
-    <div className="register-page-container animate-fade-in">
+    <div className={`register-page-container animate-fade-in ${isPWA ? 'pwa-register-page' : 'web-register-page'}`}>
+      {isPWA && (
+        <div className="prelogin-topbar">
+          <Link to="/" className="prelogin-brand">
+            <img src="/user_uploaded_logo.png" alt="" className="prelogin-brand-logo" />
+            <span>Worship Platform</span>
+          </Link>
+          <div className="prelogin-actions">
+            <button type="button" className="qs-btn" onClick={() => navigate('/settings')} aria-label={t('settings.title')}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              <span>{t('settings.title')}</span>
+            </button>
+            <LanguageSwitcher />
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <div className="register-hero-section">
         <div className="register-hero-content">
@@ -205,11 +221,6 @@ const Register = () => {
           <h1 className="register-hero-title">{t('auth.registerTitle')}</h1>
           <p className="register-hero-lead">{t('auth.registerSubtitle')}</p>
         </div>
-        {isPWA && (
-          <LanguageSwitcher 
-            style={{ position: 'absolute', top: '20px', right: '20px' }} 
-          />
-        )}
       </div>
 
       {/* Form Section */}
@@ -220,7 +231,7 @@ const Register = () => {
           </button>
 
           <div className="register-form-header">
-            <h2>{t('auth.joinCommunity')}</h2>
+            <h2>{t('auth.registerTitle', 'Ստեղծել հաշիվ')}</h2>
             <p>{t('auth.joinDesc')}</p>
           </div>
 

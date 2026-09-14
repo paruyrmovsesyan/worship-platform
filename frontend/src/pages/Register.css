@@ -379,3 +379,8 @@
     padding-top: 60px;
   }
 }
+
+/* PWA Mode Adjustments */
+.pwa-register-page .register-form-section {
+  padding-top: calc(60px + env(safe-area-inset-top, 0px) + 20px);
+}
