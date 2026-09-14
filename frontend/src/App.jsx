@@ -52,6 +52,7 @@ import SongRequest from './pages/SongRequest';
 import Notifications from './pages/Notifications';
 import ChatsList from './pages/ChatsList';
 import TransposeTool from './pages/TransposeTool';
+import InstallApp from './pages/InstallApp';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useIsPWA } from './hooks/useIsPWA';
 import ScrollToTop from './components/ScrollToTop';
@@ -273,6 +274,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/songs" element={<Songs />} />
               <Route path="/transpose" element={<TransposeTool />} />
+              <Route path="/install" element={<InstallApp />} />
               <Route path="/song/:id" element={<SongView />} />
               <Route path="/setlists" element={<Setlists />} />
               <Route path="/setlists/public" element={<SetlistPublicWeb />} />

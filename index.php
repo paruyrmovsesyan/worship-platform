@@ -23,7 +23,7 @@ if (!empty($parsedUrl['query'])) {
 
 // Ensure unknown routes return a 404 status code (fixes search engine Soft 404 errors).
 $validStaticRoutes = [
-    '/', '/login', '/register', '/songs', '/transpose', '/setlists', '/setlists/public', 
+    '/', '/login', '/register', '/songs', '/transpose', '/install', '/setlists', '/setlists/public', 
     '/setlist_public.html', '/favorites', '/news', '/friends', '/chats', '/community', 
     '/resources', '/contact', '/about', '/blog', '/careers', '/documentation', '/tutorials', 
     '/support', '/privacy', '/terms', '/cookies', '/profile', '/settings', '/song-request', 

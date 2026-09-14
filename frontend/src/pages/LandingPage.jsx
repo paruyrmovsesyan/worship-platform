@@ -152,6 +152,13 @@ export default function LandingPage() {
             <button className="btn-start" onClick={() => navigate('/register')}>
               <span>{t('landing.startBtn')}</span> <ArrowIcon />
             </button>
+            <button className="btn-install-app" onClick={() => navigate('/install')}>
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 3v12m0 0 4-4m-4 4-4-4" />
+                <path d="M5 19h14" />
+              </svg>
+              <span>{t('landing.installApp', 'Պահպանել որպես ծրագիր')}</span>
+            </button>
             <button className="btn-demo" onClick={() => setShowVideo(true)}>
               <span className="demo-play">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>

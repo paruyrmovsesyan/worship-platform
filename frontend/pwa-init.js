@@ -945,6 +945,22 @@
           var isLoggedIn = !!(data && data.logged_in && data.user_id);
           var nextState = isLoggedIn ? ("user:" + String(data.user_id)) : "guest";
 
+          if (isLoggedIn) {
+            try {
+              localStorage.setItem("worship_user", JSON.stringify({
+                id: data.user_id,
+                user_id: data.user_id,
+                name: data.user_name || data.name || "",
+                username: data.username || "",
+                email: data.user_email || data.email || ""
+              }));
+            } catch (e) {}
+
+            if (window.WPPushManager && typeof window.WPPushManager.syncWithUser === "function") {
+              window.WPPushManager.syncWithUser(data.user_id, data.user_name || data.name || "", data.user_email || data.email || "");
+            }
+          }
+
           if (isLoggedIn && window.WPInstallTracker && typeof window.WPInstallTracker.forceSyncCurrentInstall === "function") {
             window.WPInstallTracker.forceSyncCurrentInstall();
           } else if (nextState === "guest" && lastAuthState !== "guest" && window.WPInstallTracker && typeof window.WPInstallTracker.clearCurrentInstallIdentity === "function") {
@@ -987,6 +1003,15 @@
     if (window.WPPushManager) return;
     
     var isPushSupported = ("Notification" in window) && ("serviceWorker" in navigator) && ("PushManager" in window);
+
+    function getNotificationPermission() {
+      try {
+        if (typeof window !== "undefined" && ("Notification" in window) && window.Notification) {
+          return window.Notification.permission || "default";
+        }
+      } catch (e) {}
+      return "denied";
+    }
 
     var config = null;
     var sessionHideKey = "wp_push_prompt_hidden_session";
@@ -1152,7 +1177,7 @@
           body: JSON.stringify({
             endpoint: subscription ? subscription.endpoint : "",
             subscribed: !!subscription,
-            permission: Notification.permission,
+            permission: getNotificationPermission(),
             device_id: getPushDeviceId(),
             device_scope: getPushDeviceScope(),
             user_id: userMeta.user_id,
@@ -1219,7 +1244,7 @@
           headers: { "Content-Type": "application/json; charset=UTF-8" },
           body: JSON.stringify({
             subscription: subscription.toJSON(),
-            permission: Notification.permission,
+            permission: getNotificationPermission(),
             device_id: getPushDeviceId(),
             device_scope: getPushDeviceScope(),
             force_enable: !!forceEnable,
@@ -1265,7 +1290,7 @@
             endpoint: subscription.endpoint,
             device_id: getPushDeviceId(),
             device_scope: getPushDeviceScope(),
-            permission: Notification.permission
+            permission: getNotificationPermission()
           })
         });
 
@@ -1341,7 +1366,8 @@
     }
 
     async function restorePromptAfterExternalDisable() {
-      if (Notification.permission === "denied") return;
+      if (!isPushSupported) return;
+      if (getNotificationPermission() === "denied") return;
 
       var hasSubscription = false;
       try {
@@ -1363,7 +1389,8 @@
       if (!isStandaloneMode()) return;
       if (isAccountDisabled()) return;
       if (isUserDisabled()) return;
-      if (Notification.permission === "denied") return;
+      if (!isPushSupported) return;
+      if (getNotificationPermission() === "denied") return;
 
       try {
         sessionStorage.removeItem(sessionHideKey);
@@ -1397,7 +1424,7 @@
       var status = {
         supported: !!currentConfig && !!currentConfig.supported,
         enabledBySite: !!currentConfig && !!currentConfig.enabled,
-        permission: Notification.permission,
+        permission: getNotificationPermission(),
         subscribed: !!subscription,
         suppressed: isSessionHidden(),
         userDisabled: isUserDisabled(),
@@ -1409,7 +1436,7 @@
     }
 
     async function enablePush(options) {
-      if (!isPushSupported) {
+      if (!isPushSupported || !("Notification" in window) || typeof Notification.requestPermission !== "function") {
          return { ok: false, permission: 'denied', error: 'not_supported' };
       }
       options = options || {};
@@ -1434,7 +1461,7 @@
         return { ok: false, permission: permission };
       } catch (err) {
         console.error("Push permission request failed", err);
-        return { ok: false, permission: Notification.permission, error: err };
+        return { ok: false, permission: getNotificationPermission(), error: err };
       }
     }
 
@@ -1445,7 +1472,7 @@
       setSessionHidden(false);
       hideBanner();
       var ok = await unregisterSubscription();
-      return { ok: ok, permission: Notification.permission };
+      return { ok: ok, permission: getNotificationPermission() };
     }
 
     async function showBannerIfNeeded() {
@@ -1456,7 +1483,7 @@
       }
       var currentConfig = await fetchConfig();
       if (!currentConfig || !currentConfig.enabled) return;
-      if (Notification.permission === "denied") return;
+      if (getNotificationPermission() === "denied") return;
       if (isAccountDisabled()) return;
       if (isSessionHidden()) return;
 
@@ -1468,7 +1495,7 @@
       } catch (err) {
         hasSubscription = false;
       }
-      if (Notification.permission === "granted" && hasSubscription && !adminRemoved) return;
+      if (getNotificationPermission() === "granted" && hasSubscription && !adminRemoved) return;
 
       var banner = ensureBanner();
       var text = banner.querySelector(".wp-push-text");
@@ -1504,9 +1531,10 @@
     });
 
     async function tryAutomaticPrompt() {
+      if (!isPushSupported) return;
       var currentConfig = await fetchConfig();
       if (!currentConfig || !currentConfig.enabled) return;
-      if (Notification.permission !== "default") return;
+      if (getNotificationPermission() !== "default") return;
       if (isAccountDisabled()) return;
       if (isUserDisabled() || isSessionHidden()) return;
       if (isAdminRemoved()) return;
@@ -1519,7 +1547,7 @@
       } catch (err) {}
 
       var result = await enablePush({ persistOnDecline: false });
-      if (!result.ok && Notification.permission === "default") {
+      if (!result.ok && getNotificationPermission() === "default") {
         setTimeout(function() {
           showBannerIfNeeded();
         }, 1200);
@@ -1538,14 +1566,29 @@
         setSessionHidden(true);
         hideBanner();
       },
-      clearSuppression: clearPromptSuppression
+      clearSuppression: clearPromptSuppression,
+      syncWithUser: async function(userId, userName, userEmail) {
+        if (!isPushSupported) return;
+        try {
+          var registration = await navigator.serviceWorker.ready;
+          var subscription = await registration.pushManager.getSubscription();
+          if (subscription) {
+            await syncPushStatus(subscription, {
+              user_id: Number(userId || 0),
+              user_name: String(userName || ""),
+              user_email: String(userEmail || "")
+            });
+          }
+        } catch (e) {}
+      }
     };
     window.dispatchEvent(new CustomEvent("wp-push-manager-ready"));
 
     async function runAutomaticPushRecovery() {
+      if (!isPushSupported) return;
       var currentConfig = await fetchConfig();
       if (!currentConfig || !currentConfig.enabled) return;
-      if (Notification.permission !== "granted") return;
+      if (getNotificationPermission() !== "granted") return;
       if (isUserDisabled() || isAccountDisabled() || isAdminRemoved()) return;
 
       var registered = await registerSubscription(true);
@@ -1559,13 +1602,14 @@
     }
 
     window.addEventListener("load", async function() {
+      if (!isPushSupported) return;
       var currentConfig = await fetchConfig();
       if (!currentConfig || !currentConfig.enabled) return;
 
       clearLegacyPromptSuppressionForApp();
       await restorePromptAfterExternalDisable();
 
-      if (Notification.permission === "granted") {
+      if (getNotificationPermission() === "granted") {
         if (isUserDisabled()) {
           setTimeout(function() {
             showBannerIfNeeded();
