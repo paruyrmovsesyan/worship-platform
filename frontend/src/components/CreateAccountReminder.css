@@ -1,0 +1,212 @@
+.create-account-reminder {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: min(calc(100vw - 32px), 380px);
+  z-index: 1500;
+  background: rgba(18, 22, 34, 0.94);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(114, 230, 255, 0.24);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 35px rgba(58, 45, 255, 0.22);
+  padding: 16px 18px;
+  color: #fff;
+  opacity: 0;
+  transform: translateY(24px) scale(0.96);
+  pointer-events: none;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.create-account-reminder.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.reminder-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.reminder-badge {
+  display: grid;
+  place-items: center;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(88, 105, 255, 0.3), rgba(0, 212, 255, 0.2));
+  border: 1px solid rgba(114, 230, 255, 0.3);
+  color: #72e6ff;
+  box-shadow: 0 6px 16px rgba(0, 212, 255, 0.16);
+}
+
+.reminder-badge svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+}
+
+.reminder-title-area {
+  flex: 1;
+  min-width: 0;
+}
+
+.reminder-title {
+  margin: 0;
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: #f1f7ff;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.reminder-desc {
+  margin: 4px 0 0;
+  font-size: 0.81rem;
+  color: #9bb0cb;
+  line-height: 1.45;
+}
+
+.reminder-close-btn {
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  margin-left: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: #8da1b9;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.reminder-close-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  transform: scale(1.06);
+}
+
+.reminder-close-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+}
+
+.reminder-actions {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reminder-primary-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 42px;
+  background: linear-gradient(100deg, #5b58ff 0%, #00d4ff 100%);
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-decoration: none;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 212, 255, 0.24);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.reminder-primary-btn:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 12px 30px rgba(0, 212, 255, 0.35);
+  color: #fff;
+}
+
+.reminder-primary-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  transition: transform 0.2s ease;
+}
+
+.reminder-primary-btn:hover svg {
+  transform: translateX(3px);
+}
+
+.reminder-secondary-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  color: #7e93ab;
+}
+
+.reminder-has-account {
+  color: #8498b0;
+}
+
+.reminder-login-link {
+  color: #72e6ff;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.reminder-login-link:hover {
+  color: #9eedff;
+  text-decoration: underline;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 900px) {
+  .create-account-reminder {
+    left: 14px;
+    right: 14px;
+    width: auto;
+    max-width: 400px;
+    margin: 0 auto;
+    bottom: calc(var(--bottom-nav-safe-gap, max(24px, env(safe-area-inset-bottom, 24px))) + 74px);
+    padding: 14px 16px;
+    border-radius: 18px;
+  }
+
+  .reminder-badge {
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+  }
+
+  .reminder-badge svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .reminder-title {
+    font-size: 0.91rem;
+  }
+
+  .reminder-desc {
+    font-size: 0.77rem;
+  }
+
+  .reminder-primary-btn {
+    height: 39px;
+    font-size: 0.84rem;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .create-account-reminder {
+    transition: opacity 0.2s ease;
+    transform: none;
+  }
+}

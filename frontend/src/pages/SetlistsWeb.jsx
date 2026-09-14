@@ -38,11 +38,12 @@ export default function SetlistsWeb() {
   const fetchSetlists = useCallback(async () => {
     try {
       const res = await fetch('/setlists_api.php?action=get_setlists');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setSetlists(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
-      console.error(err);
+      console.warn('Setlists load error:', err);
       setError(t('setlists.errorLoad', 'Չհաջողվեց բեռնել երգացանկերը։'));
     } finally {
       setIsLoading(false);
@@ -52,12 +53,13 @@ export default function SetlistsWeb() {
   const fetchTeams = useCallback(async () => {
     try {
       const res = await fetch('/teams_api.php?action=get_teams');
+      if (!res.ok) return;
       const data = await res.json();
-      if (data.ok) {
+      if (data && data.ok) {
         setTeams(data.teams || []);
       }
     } catch (err) {
-      console.error(err);
+      console.warn('Teams load error:', err);
     }
   }, []);
 

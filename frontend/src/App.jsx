@@ -64,6 +64,7 @@ import { showPwaOfflineBlockedNotice } from './utils/pwaOfflineGuard';
 import { useLanguage } from './context/LanguageContext';
 import { applyAppTheme, getStoredAppTheme } from './utils/appTheme';
 import WebCommandPalette from './components/WebCommandPalette';
+import CreateAccountReminder from './components/CreateAccountReminder';
 
 function App() {
   const mediaQueryMatch = useMediaQuery('(max-width: 900px)');
@@ -408,6 +409,7 @@ function App() {
           </div>
         </div>
       )}
+      <CreateAccountReminder />
       {isPWA ? null : <Footer />}
       {isPWA ? null : <WebCommandPalette />}
     </div>

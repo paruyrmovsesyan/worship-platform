@@ -531,6 +531,20 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
+    // 3.3. WebKit JSON parse on non-json / teams_api.php (The string did not match the expected pattern. json@[native code])
+    if (stripos($message, 'The string did not match the expected pattern') !== false ||
+        (stripos($message, 'pattern') !== false && stripos($stackTrace, 'json') !== false)) {
+        if (is_file(__DIR__ . '/teams_api.php')) {
+            $reason = 'teams_api.php-ի բացակայության պատճառով HTML ստանալու և JSON parsing-ի խնդիրը շտկված է';
+            wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+            $item['is_resolved'] = 1;
+            $item['resolved_at'] = date('Y-m-d H:i:s');
+            $item['resolved_by'] = 'auto_code_analysis';
+            $item['resolution_reason'] = $reason;
+            return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+        }
+    }
+
     // 4. Test error check
     if (stripos($message, 'Test front error') !== false || stripos($message, 'Test error') !== false) {
         if ((time() - $lastSeenTs) > 60) {

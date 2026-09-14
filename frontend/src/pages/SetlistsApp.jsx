@@ -156,8 +156,8 @@ export default function SetlistsApp() {
     }
     fetchSetlists();
     fetch('/teams_api.php?action=get_teams')
-      .then((res) => res.json())
-      .then((data) => setTeams(data.ok ? data.teams : []))
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setTeams(data?.ok ? data.teams : []))
       .catch(() => {});
   }, [user, fetchSetlists]);
 
