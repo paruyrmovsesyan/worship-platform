@@ -339,9 +339,7 @@ const Login = () => {
           {viewMode === 'welcome' ? (
             <div className="welcome-landing-wrap">
               <div className="welcome-intro">
-                <div className="welcome-app-logo-wrap">
-                  <img src="/user_uploaded_logo.png" alt="Worship Platform" className="welcome-app-logo" />
-                </div>
+                <img src="/user_uploaded_logo.png" alt="Worship Platform" className="welcome-app-logo" />
                 <span className="welcome-badge-tag">{t('auth.guestEyebrow')}</span>
                 <h1 className="welcome-heading">Worship Platform</h1>
                 <p className="welcome-sub">{t('auth.guestDescription')}</p>
