@@ -103,7 +103,7 @@ export const AuthProvider = ({ children }) => {
 
   // Global automatic Push Subscription Sync
   useEffect(() => {
-    if (!user || !window.Notification || Notification.permission !== 'granted') {
+    if (!user || !('Notification' in window) || !window.Notification || window.Notification.permission !== 'granted') {
       return undefined;
     }
 
