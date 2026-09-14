@@ -203,6 +203,27 @@ export default function Profile() {
     'en': 'English'
   };
 
+  const languageOptions = [
+    {
+      code: 'am',
+      label: 'Հայերեն',
+      sub: language === 'ru' ? 'Армянский' : language === 'en' ? 'Armenian' : 'Հայաստան',
+      flag: '🇦🇲'
+    },
+    {
+      code: 'ru',
+      label: 'Русский',
+      sub: language === 'am' ? 'Ռուսերեն' : language === 'en' ? 'Russian' : 'Россия',
+      flag: '🇷🇺'
+    },
+    {
+      code: 'en',
+      label: 'English',
+      sub: language === 'am' ? 'Անգլերեն' : language === 'ru' ? 'Английский' : 'International',
+      flag: '🇬🇧'
+    }
+  ];
+
   useEffect(() => {
     if (authLoading) return;
 
@@ -459,28 +480,55 @@ export default function Profile() {
         )}
 
         {isLangModalOpen && (
-          <div className="modal-overlay" onClick={() => setIsLangModalOpen(false)}>
+          <div className="modal-overlay profile-lang-overlay" onClick={() => setIsLangModalOpen(false)}>
             <div className="modal-content profile-lang-modal" onClick={e => e.stopPropagation()}>
-              <div className="modal-header">
-                <h3>{t('profile.selectLanguage')}</h3>
-                <button className="modal-close" onClick={() => setIsLangModalOpen(false)}>
-                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              <div className="profile-lang-handle" />
+              <div className="profile-lang-header">
+                <div className="profile-lang-title-group">
+                  <div className="profile-lang-icon-badge">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="2" y1="12" x2="22" y2="12"></line>
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="profile-lang-title">{t('profile.selectLanguage', 'Ընտրեք լեզուն')}</h3>
+                    <p className="profile-lang-subtitle">{t('profile.selectLanguageSubtitle', 'Ընտրեք հավելվածի հիմնական լեզուն')}</p>
+                  </div>
+                </div>
+                <button className="profile-lang-close-btn" onClick={() => setIsLangModalOpen(false)} aria-label="Close">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
                 </button>
               </div>
-              <div className="modal-body lang-modal-options">
-                {Object.entries(languageLabels).map(([code, label]) => (
+              <div className="profile-lang-body">
+                {languageOptions.map((opt) => (
                   <button
-                    key={code}
-                    className={`lang-option-btn ${language === code ? 'active' : ''}`}
+                    key={opt.code}
+                    type="button"
+                    className={`profile-lang-item ${language === opt.code ? 'active' : ''}`}
                     onClick={() => {
-                      setLanguage(code);
+                      setLanguage(opt.code);
                       setIsLangModalOpen(false);
                     }}
                   >
-                    <span className="lang-label">{label}</span>
-                    {language === code && (
-                      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    )}
+                    <div className="profile-lang-item-left">
+                      <span className="profile-lang-flag">{opt.flag}</span>
+                      <div className="profile-lang-names">
+                        <span className="profile-lang-primary">{opt.label}</span>
+                        <span className="profile-lang-secondary">{opt.sub}</span>
+                      </div>
+                    </div>
+                    <div className="profile-lang-radio">
+                      {language === opt.code && (
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      )}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -861,28 +909,55 @@ export default function Profile() {
 
       {/* Language Modal */}
       {isLangModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsLangModalOpen(false)}>
+        <div className="modal-overlay profile-lang-overlay" onClick={() => setIsLangModalOpen(false)}>
           <div className="modal-content profile-lang-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{t('profile.selectLanguage')}</h3>
-              <button className="modal-close" onClick={() => setIsLangModalOpen(false)}>
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <div className="profile-lang-handle" />
+            <div className="profile-lang-header">
+              <div className="profile-lang-title-group">
+                <div className="profile-lang-icon-badge">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="profile-lang-title">{t('profile.selectLanguage', 'Ընտրեք լեզուն')}</h3>
+                  <p className="profile-lang-subtitle">{t('profile.selectLanguageSubtitle', 'Ընտրեք հավելվածի հիմնական լեզուն')}</p>
+                </div>
+              </div>
+              <button className="profile-lang-close-btn" onClick={() => setIsLangModalOpen(false)} aria-label="Close">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
               </button>
             </div>
-            <div className="modal-body lang-modal-options">
-              {Object.entries(languageLabels).map(([code, label]) => (
+            <div className="profile-lang-body">
+              {languageOptions.map((opt) => (
                 <button
-                  key={code}
-                  className={`lang-option-btn ${language === code ? 'active' : ''}`}
+                  key={opt.code}
+                  type="button"
+                  className={`profile-lang-item ${language === opt.code ? 'active' : ''}`}
                   onClick={() => {
-                    setLanguage(code);
+                    setLanguage(opt.code);
                     setIsLangModalOpen(false);
                   }}
                 >
-                  <span className="lang-label">{label}</span>
-                  {language === code && (
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  )}
+                  <div className="profile-lang-item-left">
+                    <span className="profile-lang-flag">{opt.flag}</span>
+                    <div className="profile-lang-names">
+                      <span className="profile-lang-primary">{opt.label}</span>
+                      <span className="profile-lang-secondary">{opt.sub}</span>
+                    </div>
+                  </div>
+                  <div className="profile-lang-radio">
+                    {language === opt.code && (
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    )}
+                  </div>
                 </button>
               ))}
             </div>
