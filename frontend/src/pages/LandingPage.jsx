@@ -17,6 +17,8 @@ export default function LandingPage() {
   const [songPage, setSongPage] = useState(0);
   const [activeFilter, setActiveFilter] = useState('songs');
   const [showVideo, setShowVideo] = useState(false);
+  // Demo video button is disabled until demo video is created
+  const hasDemoVideo = false;
   const contentRef = useRef(null);
   const SONGS_PER_PAGE = 9;
 
@@ -159,12 +161,14 @@ export default function LandingPage() {
               </svg>
               <span>{t('landing.installApp', 'Պահպանել որպես ծրագիր')}</span>
             </button>
-            <button className="btn-demo" onClick={() => setShowVideo(true)}>
-              <span className="demo-play">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-              </span>
-              <span>{t('landing.watchDemo')}</span>
-            </button>
+            {hasDemoVideo && (
+              <button className="btn-demo" onClick={() => setShowVideo(true)}>
+                <span className="demo-play">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                </span>
+                <span>{t('landing.watchDemo')}</span>
+              </button>
+            )}
           </div>
           <button className="hero-scroll-link" onClick={scrollToContent}>
             <span>{t('landing.popularSongs')}</span>
@@ -287,7 +291,7 @@ export default function LandingPage() {
 
       {/* FOOTER MOVED TO APP.JSX */}
       {/* Video Modal Overlay */}
-      {showVideo && (
+      {hasDemoVideo && showVideo && (
         <div className="video-modal-overlay" onClick={() => setShowVideo(false)}>
           <div className="video-modal-content" onClick={e => e.stopPropagation()}>
             <button className="video-close" onClick={() => setShowVideo(false)}>&times;</button>
