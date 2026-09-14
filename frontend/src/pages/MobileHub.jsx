@@ -330,6 +330,43 @@ export default function MobileHub() {
           </div>
         )}
 
+        {/* Guest Account Prompt Card */}
+        {!user && (
+          <div className="hub-account-prompt-card">
+            <div className="hub-account-prompt-badge" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="8.5" cy="7" r="4" />
+                <line x1="20" y1="8" x2="20" y2="14" />
+                <line x1="23" y1="11" x2="17" y2="11" />
+              </svg>
+            </div>
+            <div className="hub-account-prompt-body">
+              <h3 className="hub-account-prompt-title">
+                {language === 'ru' ? 'Создайте свой аккаунт' : language === 'en' ? 'Create your account' : 'Ստեղծի՛ր քո հաշիվը'}
+              </h3>
+              <p className="hub-account-prompt-desc">
+                {language === 'ru'
+                  ? 'Сохраняйте любимые песни, создавайте сет-листы и открывайте все возможности.'
+                  : language === 'en'
+                  ? 'Save favorite songs, build setlists, and unlock all features.'
+                  : 'Պահպանիր սիրելի երգերը, կազմիր երգացանկեր և օգտվիր բոլոր հնարավորություններից։'}
+              </p>
+              <div className="hub-account-prompt-actions">
+                <Link to="/register" className="hub-account-prompt-btn-primary">
+                  <span>{language === 'ru' ? 'Создать аккаунт' : language === 'en' ? 'Create Account' : 'Ստեղծել հաշիվ'}</span>
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </Link>
+                <Link to="/login" className="hub-account-prompt-btn-secondary">
+                  {language === 'ru' ? 'Войти' : language === 'en' ? 'Log in' : 'Մուտք'}
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* My Favorites (Horizontal Scroll) */}
         {user && favorites.length > 0 && (
           <div className="section-block">

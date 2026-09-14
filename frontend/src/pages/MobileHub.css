@@ -313,6 +313,125 @@ body.light-mode .upcoming-card-icon {
   }
 }
 
+/* ── Guest Account Prompt Card ── */
+.hub-account-prompt-card {
+  position: relative;
+  overflow: hidden;
+  margin: 0 0 28px;
+  padding: 18px 18px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(30, 36, 56, 0.85) 0%, rgba(18, 22, 34, 0.95) 100%);
+  border: 1px solid rgba(114, 230, 255, 0.22);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35), 0 0 24px rgba(76, 76, 255, 0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  gap: 15px;
+  align-items: flex-start;
+}
+
+.hub-account-prompt-badge {
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, rgba(88, 105, 255, 0.35), rgba(0, 212, 255, 0.25));
+  border: 1px solid rgba(114, 230, 255, 0.35);
+  color: #72e6ff;
+  box-shadow: 0 6px 18px rgba(0, 212, 255, 0.2);
+}
+
+.hub-account-prompt-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.hub-account-prompt-title {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: #f1f7ff;
+  letter-spacing: -0.01em;
+}
+
+.hub-account-prompt-desc {
+  margin: 5px 0 14px;
+  font-size: 0.82rem;
+  color: #9bb0cb;
+  line-height: 1.45;
+}
+
+.hub-account-prompt-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hub-account-prompt-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 16px;
+  height: 38px;
+  background: linear-gradient(100deg, #5b58ff 0%, #00d4ff 100%);
+  color: #ffffff;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 11px;
+  box-shadow: 0 6px 18px rgba(0, 212, 255, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hub-account-prompt-btn-primary:active {
+  transform: scale(0.97);
+}
+
+.hub-account-prompt-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  height: 38px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #d2e1f5;
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 11px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.hub-account-prompt-btn-secondary:active {
+  transform: scale(0.97);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+body.light-mode .hub-account-prompt-card {
+  background: #ffffff;
+  border-color: rgba(20, 115, 180, 0.18);
+  box-shadow: 0 10px 30px rgba(30, 74, 110, 0.08);
+}
+
+body.light-mode .hub-account-prompt-title {
+  color: #10243b;
+}
+
+body.light-mode .hub-account-prompt-desc {
+  color: #536980;
+}
+
+body.light-mode .hub-account-prompt-btn-secondary {
+  background: #edf3fa;
+  border-color: #d6e2ef;
+  color: #10243b;
+}
+
 /* ── Section Blocks ── */
 .section-block {
   margin-bottom: 32px;

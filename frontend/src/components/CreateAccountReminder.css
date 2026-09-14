@@ -1,15 +1,15 @@
 .create-account-reminder {
-  position: fixed;
+  position: fixed !important;
   bottom: 28px;
   right: 28px;
   width: min(calc(100vw - 32px), 380px);
-  z-index: 1500;
+  z-index: 2147483000 !important;
   background: rgba(18, 22, 34, 0.94);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(114, 230, 255, 0.24);
+  border: 1px solid rgba(114, 230, 255, 0.28);
   border-radius: 20px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 35px rgba(58, 45, 255, 0.22);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 35px rgba(58, 45, 255, 0.25);
   padding: 16px 18px;
   color: #fff;
   opacity: 0;
@@ -168,12 +168,12 @@
 /* Mobile responsive adjustments */
 @media (max-width: 900px) {
   .create-account-reminder {
-    left: 14px;
-    right: 14px;
-    width: auto;
+    left: 14px !important;
+    right: 14px !important;
+    width: auto !important;
     max-width: 400px;
     margin: 0 auto;
-    bottom: calc(var(--bottom-nav-safe-gap, max(24px, env(safe-area-inset-bottom, 24px))) + 74px);
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
     padding: 14px 16px;
     border-radius: 18px;
   }
@@ -201,6 +201,19 @@
     height: 39px;
     font-size: 0.84rem;
   }
+}
+
+/* Float cleanly above PWA bottom dock */
+body.is-pwa .create-account-reminder,
+body.wp-standalone-app .create-account-reminder {
+  bottom: calc(var(--bottom-nav-safe-gap, max(24px, env(safe-area-inset-bottom, 24px))) + 76px) !important;
+}
+
+/* Hide when virtual keyboard is active to avoid obstruction */
+body.keyboard-open .create-account-reminder {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 /* Reduced motion */

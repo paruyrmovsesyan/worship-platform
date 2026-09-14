@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -101,7 +102,7 @@ export default function CreateAccountReminder() {
     setIsVisible(false);
   };
 
-  return (
+  return createPortal(
     <aside
       className={`create-account-reminder ${isVisible ? 'visible' : ''}`}
       aria-label="Create account reminder"
@@ -153,6 +154,7 @@ export default function CreateAccountReminder() {
           </Link>
         </div>
       </div>
-    </aside>
+    </aside>,
+    document.body
   );
 }
