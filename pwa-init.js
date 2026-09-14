@@ -69,8 +69,6 @@
       var expectedSource = getExpectedAppSource();
       try {
         window.sessionStorage.setItem(APP_SOURCE_SESSION_KEY, expectedSource);
-        window.localStorage.setItem("wp_install_confirmed", "1");
-        window.localStorage.setItem("wp_pwa_installed", "1");
       } catch (err) {
         // ignore storage issues
       }

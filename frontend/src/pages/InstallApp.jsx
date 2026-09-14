@@ -26,6 +26,7 @@ const INSTALL_COPY = {
     installed: 'Ծրագիրն արդեն տեղադրված է այս սարքում։',
     openApp: 'Բացել ծրագիրը',
     openAppNote: 'Եթե ծրագիրը չբացվեց ավտոմատ, բացիր այն հեռախոսիդ գլխավոր էկրանից կամ ծրագրերի ցանկից։',
+    reinstallBtn: 'Տեղադրել նորից',
     accepted: 'Գերազանց․ տեղադրումն սկսվեց։',
     dismissed: 'Տեղադրումը չավարտվեց։ Կարող ես կրկին փորձել։',
     back: 'Վերադառնալ գլխավոր էջ',
@@ -54,6 +55,7 @@ const INSTALL_COPY = {
     installed: 'The app is already installed on this device.',
     openApp: 'Open app',
     openAppNote: 'If the app does not open automatically, open it from your Home Screen or app drawer.',
+    reinstallBtn: 'Install again',
     accepted: 'Great — installation has started.',
     dismissed: 'Installation was not completed. You can try again.',
     back: 'Back to home',
@@ -82,6 +84,7 @@ const INSTALL_COPY = {
     installed: 'Приложение уже установлено на этом устройстве.',
     openApp: 'Открыть приложение',
     openAppNote: 'Если приложение не открылось автоматически, откройте его с главного экрана или из списка приложений.',
+    reinstallBtn: 'Установить снова',
     accepted: 'Отлично — установка началась.',
     dismissed: 'Установка не завершена. Можно попробовать снова.',
     back: 'Вернуться на главную',
@@ -113,83 +116,63 @@ export default function InstallApp() {
   const [installPrompt, setInstallPrompt] = useState(() => window.__wpDeferredInstallPrompt || null);
   const [message, setMessage] = useState('');
   const isPWA = useIsPWA();
-  const [isInstalled, setIsInstalled] = useState(() => {
-    if (isPWA) return true;
-    try {
-      return localStorage.getItem('wp_install_confirmed') === '1' ||
-             localStorage.getItem('wp_pwa_installed') === '1';
-    } catch {
-      return false;
-    }
-  });
+  const [isInstalled, setIsInstalled] = useState(isPWA);
 
   useEffect(() => {
+    try {
+      localStorage.removeItem('wp_install_confirmed');
+      localStorage.removeItem('wp_pwa_installed');
+    } catch {}
+
     let mounted = true;
 
     if (isPWA) {
       setIsInstalled(true);
-      try {
-        localStorage.setItem('wp_install_confirmed', '1');
-        localStorage.setItem('wp_pwa_installed', '1');
-      } catch {}
       return;
     }
 
-    try {
-      if (localStorage.getItem('wp_install_confirmed') === '1' || localStorage.getItem('wp_pwa_installed') === '1') {
-        setIsInstalled(true);
-      }
-    } catch {}
+    if (installPrompt || window.__wpDeferredInstallPrompt) {
+      setIsInstalled(false);
+      return;
+    }
 
     if (typeof navigator !== 'undefined' && typeof navigator.getInstalledRelatedApps === 'function') {
       navigator.getInstalledRelatedApps().then((apps) => {
         if (!mounted) return;
-        if (Array.isArray(apps) && apps.length > 0) {
-          setIsInstalled(true);
-          try {
-            localStorage.setItem('wp_install_confirmed', '1');
-            localStorage.setItem('wp_pwa_installed', '1');
-          } catch {}
-        }
-      }).catch(() => {});
-    }
+        const hasApp = Array.isArray(apps) && apps.some((app) => {
+          const platform = String(app?.platform || '').toLowerCase();
+          const url = String(app?.url || '');
+          return platform === 'webapp' || url.includes('manifest.json');
+        });
 
-    fetch('/install_api.php?action=current_device_status&scope=main', {
-      credentials: 'same-origin',
-      cache: 'no-store'
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!mounted) return;
-        if (data && data.installed === true) {
+        if (hasApp && !window.__wpDeferredInstallPrompt) {
           setIsInstalled(true);
-          try {
-            localStorage.setItem('wp_install_confirmed', '1');
-            localStorage.setItem('wp_pwa_installed', '1');
-          } catch {}
+        } else {
+          setIsInstalled(false);
         }
-      })
-      .catch(() => {});
+      }).catch(() => {
+        if (mounted) setIsInstalled(false);
+      });
+    } else {
+      setIsInstalled(false);
+    }
 
     return () => {
       mounted = false;
     };
-  }, [isPWA]);
+  }, [isPWA, installPrompt]);
 
   useEffect(() => {
     const handlePrompt = (event) => {
       event.preventDefault();
       window.__wpDeferredInstallPrompt = event;
       setInstallPrompt(event);
+      setIsInstalled(false);
     };
     const handleInstalled = () => {
       window.__wpDeferredInstallPrompt = null;
       setInstallPrompt(null);
       setIsInstalled(true);
-      try {
-        localStorage.setItem('wp_install_confirmed', '1');
-        localStorage.setItem('wp_pwa_installed', '1');
-      } catch {}
       setMessage(copy.installed);
     };
 
@@ -210,10 +193,6 @@ export default function InstallApp() {
       const choice = await prompt.userChoice;
       if (choice?.outcome === 'accepted') {
         setIsInstalled(true);
-        try {
-          localStorage.setItem('wp_install_confirmed', '1');
-          localStorage.setItem('wp_pwa_installed', '1');
-        } catch {}
         setMessage(copy.accepted);
       } else {
         setMessage(copy.dismissed);
@@ -332,9 +311,18 @@ export default function InstallApp() {
                     </button>
                   )}
                   {!isPWA && !isIos && (
-                    <p className="install-prompt-note ready" style={{ marginTop: '10px' }}>
-                      {copy.openAppNote}
-                    </p>
+                    <>
+                      <p className="install-prompt-note ready" style={{ marginTop: '10px' }}>
+                        {copy.openAppNote}
+                      </p>
+                      <button
+                        type="button"
+                        className="install-reinstall-btn"
+                        onClick={() => setIsInstalled(false)}
+                      >
+                        ↻ {copy.reinstallBtn}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

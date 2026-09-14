@@ -21,12 +21,6 @@ function detectPwaMode() {
   );
 
   if (nativeApp) {
-    try {
-      localStorage.setItem('wp_install_confirmed', '1');
-      localStorage.setItem('wp_pwa_installed', '1');
-    } catch {
-      // Storage may be unavailable
-    }
     return true;
   }
 

@@ -91,6 +91,26 @@
 .install-prompt-note { margin: 10px 4px 0; color: #8495ac; font-size: .7rem; line-height: 1.5; text-align: center; }.install-prompt-note.ready { color: #79e6c4; }
 .install-status { margin-top: 14px; padding: 11px 13px; color: #cde9ff; font-size: .77rem; text-align: center; background: rgba(86,172,255,.09); border: 1px solid rgba(112,209,255,.14); border-radius: 12px; }.install-status.success { margin: 24px 0 0; color: #8ceacb; background: rgba(48,190,143,.09); border-color: rgba(88,224,176,.17); }
 .install-back-link { display: block; width: max-content; margin: 22px auto 0; color: #8fa0b5; font-size: .76rem; font-weight: 700; transition: color .2s ease; }.install-back-link:hover { color: #72e6ff; }
+.install-reinstall-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 14px auto 0;
+  padding: 7px 15px;
+  color: #72e6ff;
+  font-size: .78rem;
+  font-weight: 700;
+  background: rgba(114, 230, 255, .06);
+  border: 1px dashed rgba(114, 230, 255, .35);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
+}
+.install-reinstall-btn:hover {
+  background: rgba(114, 230, 255, .14);
+  border-color: rgba(114, 230, 255, .6);
+  color: #fff;
+}
 
 @media (max-width: 820px) {
   .install-app-shell { grid-template-columns: 1fr; gap: 28px; width: min(100% - 32px, 600px); padding: 38px 0 54px; }
