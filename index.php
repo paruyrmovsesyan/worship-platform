@@ -182,6 +182,11 @@ if (preg_match('#^/news/([^/]+)/?$#', $path, $newsMatch)) {
     $description = 'Worship Platform-ի վերջին նորությունները, թարմացումները և օգտակար նյութերը։';
 }
 
+if ($path === '/install' || $path === '/install/') {
+    $title = 'Պահպանել որպես ծրագիր | ' . $siteName;
+    $description = 'Տեղադրեք Worship Platform-ը iPhone կամ Android հեռախոսում և բացեք այն որպես առանձին ծրագիր։';
+}
+
 // Check if it's a song view
 $songId = null;
 if (strpos($path, '/song_view.html') !== false && !empty($query['id'])) {

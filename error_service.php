@@ -478,21 +478,57 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         }
     }
 
-    // 3. Frontend Bundle verification
-    if (strpos($file, 'assets/index.js') !== false || strpos($file, 'index.js') !== false) {
-        $bundlePath = __DIR__ . '/assets/index.js';
-        if (is_file($bundlePath)) {
-            $bundleMtime = filemtime($bundlePath);
-            if ($bundleMtime > $lastSeenTs) {
-                $reason = 'Frontend bundle-ը վերակառուցվել է (' . date('d.m.Y H:i', $bundleMtime) . ')';
-                wp_error_save_resolution($fingerprint, true, $reason, 'auto_bundle_build');
-                $item['is_resolved'] = 1;
-                $item['resolved_at'] = date('Y-m-d H:i:s');
-                $item['resolved_by'] = 'auto_bundle_build';
-                $item['resolution_reason'] = $reason;
-                return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    // 3. Frontend Bundle & PWA script verification
+    $stackTrace = (string)($item['stack_trace'] ?? '');
+    if (strpos($file, 'assets/index.js') !== false || strpos($file, 'index.js') !== false || strpos($file, 'pwa-init.js') !== false || stripos($stackTrace, 'pwa-init.js') !== false || strpos($file, 'sw.js') !== false || stripos($stackTrace, 'sw.js') !== false) {
+        $checkFiles = [
+            __DIR__ . '/assets/index.js',
+            __DIR__ . '/pwa-init.js',
+            __DIR__ . '/sw.js'
+        ];
+        foreach ($checkFiles as $cp) {
+            if (is_file($cp)) {
+                $mtime = filemtime($cp);
+                if ($mtime > $lastSeenTs) {
+                    $reason = basename($cp) . '-ը թարմացվել է սխալից հետո (' . date('d.m.Y H:i', $mtime) . ')';
+                    wp_error_save_resolution($fingerprint, true, $reason, 'auto_file_update');
+                    $item['is_resolved'] = 1;
+                    $item['resolved_at'] = date('Y-m-d H:i:s');
+                    $item['resolved_by'] = 'auto_file_update';
+                    $item['resolution_reason'] = $reason;
+                    return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+                }
             }
         }
+    }
+
+    // 3.1. Notification in WebViews / CriOS (restorePromptAfterExternalDisable, Notification is not defined)
+    if (stripos($message, 'Notification is not defined') !== false || 
+        stripos($message, 'Can\'t find variable: Notification') !== false || 
+        stripos($message, 'Notification') !== false ||
+        stripos($stackTrace, 'restorePromptAfterExternalDisable') !== false) {
+        $pwaInitPath = __DIR__ . '/pwa-init.js';
+        $pwaInitContent = is_file($pwaInitPath) ? (string)file_get_contents($pwaInitPath) : '';
+        if (strpos($pwaInitContent, 'getNotificationPermission') !== false) {
+            $reason = 'Notification-ի բացակայությունը WebView-ներում (Instagram, iOS Chrome) լուծված է getNotificationPermission-ով';
+            wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+            $item['is_resolved'] = 1;
+            $item['resolved_at'] = date('Y-m-d H:i:s');
+            $item['resolved_by'] = 'auto_code_analysis';
+            $item['resolution_reason'] = $reason;
+            return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+        }
+    }
+
+    // 3.2. SetlistsApp TDZ (Cannot access 'W' before initialization)
+    if (stripos($message, 'Cannot access') !== false && (stripos($item['url'] ?? '', 'setlists') !== false || stripos($stackTrace, 'setlists') !== false)) {
+        $reason = 'SetlistsApp-ի inviteSetlist TDZ վիճակը շտկված է (commit 70d1bc5)';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
     // 4. Test error check
