@@ -615,9 +615,12 @@ body.oled-mode .pwa-login-page.is-welcome {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 0 calc(var(--bottom-nav-safe-gap, max(24px, env(safe-area-inset-bottom, 24px))) + 84px);
+  justify-content: center;
+  min-height: calc(100svh - 100px);
+  padding: 16px 0 calc(var(--bottom-nav-safe-gap, max(24px, env(safe-area-inset-bottom, 24px))) + 84px);
   width: 100%;
-  gap: 18px;
+  gap: 24px;
+  box-sizing: border-box;
 }
 
 .pwa-login-page.is-welcome .login-form-section {
@@ -657,8 +660,8 @@ body.oled-mode .pwa-login-page.is-welcome {
 .welcome-app-logo {
   position: relative;
   z-index: 1;
-  width: 76px;
-  height: 76px;
+  width: 78px;
+  height: 78px;
   object-fit: cover;
   border-radius: 20px;
   box-shadow: 0 14px 36px rgba(0, 212, 255, 0.28), 0 0 40px rgba(91, 88, 255, 0.22);
@@ -698,7 +701,7 @@ body.oled-mode .pwa-login-page.is-welcome {
 }
 
 .welcome-heading {
-  font-size: 2.05rem;
+  font-size: 2.1rem;
   font-weight: 850;
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -709,11 +712,11 @@ body.oled-mode .pwa-login-page.is-welcome {
 body.light-mode .welcome-heading { color: #0f172a; }
 
 .welcome-sub {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   color: #9bb0cb;
   max-width: 330px;
-  line-height: 1.48;
-  margin: 0 0 14px;
+  line-height: 1.5;
+  margin: 0 0 16px;
 }
 
 body.light-mode .welcome-sub { color: #475569; }
@@ -724,22 +727,21 @@ body.light-mode .welcome-sub { color: #475569; }
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 8px;
   max-width: 390px;
   width: 100%;
-  margin-bottom: 4px;
 }
 
 .welcome-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 11px;
+  padding: 6px 12px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #d1dcf0;
-  font-size: 0.74rem;
+  font-size: 0.76rem;
   font-weight: 650;
   white-space: nowrap;
   backdrop-filter: blur(10px);
@@ -761,242 +763,13 @@ body.light-mode .welcome-pill svg {
   color: #0284c7;
 }
 
-/* Song Preview Card */
-.welcome-song-preview {
-  width: 100%;
-  max-width: 390px;
-  border: 1px solid rgba(114, 230, 255, 0.22);
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(22, 27, 44, 0.85) 0%, rgba(13, 16, 28, 0.95) 100%);
-  overflow: hidden;
-  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.4), 0 0 26px rgba(91, 88, 255, 0.12);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-.welcome-preview-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 15px 16px 13px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.welcome-preview-head > div {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-}
-
-.welcome-preview-kicker {
-  color: #72e6ff;
-  font-size: 0.67rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.welcome-preview-head strong {
-  color: #f5f6fb;
-  font-size: 0.98rem;
-  font-weight: 750;
-}
-
-/* Key Stepper */
-.welcome-key-stepper {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  background: rgba(0, 212, 255, 0.08);
-  border: 1px solid rgba(114, 230, 255, 0.26);
-  border-radius: 999px;
-  padding: 3px 5px;
-}
-
-.welcome-key-step-btn {
-  display: grid;
-  place-items: center;
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.1);
-  color: #72e6ff;
-  cursor: pointer;
-  padding: 0;
-  transition: background 0.15s, transform 0.15s;
-}
-
-.welcome-key-step-btn:active {
-  transform: scale(0.9);
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.welcome-key-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0 7px;
-  color: #ffffff;
-  font-size: 0.86rem;
-  font-weight: 800;
-}
-
-.welcome-key-badge small {
-  color: #72e6ff;
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-
-.welcome-chord-sheet {
-  display: grid;
-  grid-template-columns: 58px minmax(0, 1fr);
-  align-items: center;
-  gap: 12px 10px;
-  padding: 15px 16px;
-  text-align: left;
-}
-
-.welcome-chord-sheet > span {
-  color: #8da1b9;
-  font-size: 0.74rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.welcome-chord-sheet > strong {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  color: #f7f7fb;
-  font-size: 1.02rem;
-  flex-wrap: wrap;
-}
-
-.welcome-chord-sheet b {
-  color: #55e6ff;
-  font-weight: 800;
-  transition: color 0.15s ease;
-  display: inline-block;
-}
-
-.welcome-chord-sheet i {
-  color: rgba(255, 255, 255, 0.22);
-  font-style: normal;
-  font-weight: 400;
-}
-
-.welcome-transpose-link {
-  width: 100%;
-  min-height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.025);
-  color: #9bb0cb;
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.welcome-transpose-link:hover,
-.welcome-transpose-link:active {
-  background: rgba(255, 255, 255, 0.07);
-  color: #ffffff;
-}
-
-.welcome-transpose-link svg {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.welcome-link-arrow {
-  width: 14px !important;
-  height: 14px !important;
-  transition: transform 0.2s ease;
-}
-
-.welcome-transpose-link:hover .welcome-link-arrow {
-  transform: translateX(3px);
-}
-
-body.light-mode .welcome-song-preview {
-  background: #ffffff;
-  border-color: rgba(20, 115, 180, 0.18);
-  box-shadow: 0 16px 40px rgba(30, 74, 110, 0.1);
-}
-
-body.light-mode .welcome-preview-head,
-body.light-mode .welcome-transpose-link {
-  border-color: rgba(0, 0, 0, 0.08);
-}
-
-body.light-mode .welcome-preview-head strong,
-body.light-mode .welcome-chord-sheet > strong {
-  color: #0f172a;
-}
-
-body.light-mode .welcome-preview-kicker {
-  color: #0284c7;
-}
-
-body.light-mode .welcome-chord-sheet > span {
-  color: #64748b;
-}
-
-body.light-mode .welcome-chord-sheet b {
-  color: #0284c7;
-}
-
-body.light-mode .welcome-chord-sheet i {
-  color: rgba(0, 0, 0, 0.2);
-}
-
-body.light-mode .welcome-key-stepper {
-  background: rgba(2, 132, 199, 0.08);
-  border-color: rgba(2, 132, 199, 0.25);
-}
-
-body.light-mode .welcome-key-step-btn {
-  background: rgba(0, 0, 0, 0.06);
-  color: #0284c7;
-}
-
-body.light-mode .welcome-key-badge {
-  color: #0f172a;
-}
-
-body.light-mode .welcome-key-badge small {
-  color: #0284c7;
-}
-
-body.light-mode .welcome-transpose-link {
-  background: #f8fafc;
-  color: #475569;
-}
-
 /* Actions Stack */
 .welcome-actions-stack {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  max-width: 390px;
+  max-width: 380px;
 }
 
 .btn-welcome-primary {
@@ -1155,27 +928,23 @@ body.light-mode .btn-welcome-ghost:hover {
 @media (max-height: 760px) and (max-width: 520px) {
   .welcome-landing-wrap {
     padding-top: 14px;
-    gap: 14px;
+    gap: 16px;
   }
 
   .welcome-app-logo {
-    width: 62px;
-    height: 62px;
-    border-radius: 15px;
+    width: 66px;
+    height: 66px;
+    border-radius: 16px;
     margin-bottom: 10px;
   }
 
   .welcome-heading {
-    font-size: 1.75rem;
+    font-size: 1.8rem;
   }
 
   .welcome-sub {
-    font-size: 0.82rem;
-  }
-
-  .welcome-chord-sheet {
-    padding-block: 13px;
-    gap: 9px 10px;
+    font-size: 0.84rem;
+    margin-bottom: 10px;
   }
 }
 

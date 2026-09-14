@@ -6,15 +6,6 @@ import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import './Login.css';
 
-const DEMO_KEYS = ['C', 'D', 'E', 'G', 'A'];
-const DEMO_CHORDS = {
-  C: { verse: ['C', 'F', 'Am', 'G'], chorus: ['F', 'C', 'G', 'Am'] },
-  D: { verse: ['D', 'G', 'Bm', 'A'], chorus: ['G', 'D', 'A', 'Bm'] },
-  E: { verse: ['E', 'A', 'C#m', 'B'], chorus: ['A', 'E', 'B', 'C#m'] },
-  G: { verse: ['G', 'C', 'Em', 'D'], chorus: ['C', 'G', 'D', 'Em'] },
-  A: { verse: ['A', 'D', 'F#m', 'E'], chorus: ['D', 'A', 'E', 'F#m'] },
-};
-
 const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
 
 const Login = () => {
@@ -43,20 +34,6 @@ const Login = () => {
   const [qsOled, setQsOledState] = useState(() => localStorage.getItem('oledMode') === 'true');
   const [qsChordColor, setQsChordColorState] = useState(() => localStorage.getItem('chordColor') || 'gold');
   const [qsOutlined, setQsOutlinedState] = useState(() => localStorage.getItem('outlinedChords') === 'true');
-
-  const [demoKeyIndex, setDemoKeyIndex] = useState(1); // default 'D'
-  const currentDemoKey = DEMO_KEYS[demoKeyIndex];
-  const currentChords = DEMO_CHORDS[currentDemoKey];
-
-  const handlePrevDemoKey = (e) => {
-    e.stopPropagation();
-    setDemoKeyIndex((prev) => (prev - 1 + DEMO_KEYS.length) % DEMO_KEYS.length);
-  };
-
-  const handleNextDemoKey = (e) => {
-    e.stopPropagation();
-    setDemoKeyIndex((prev) => (prev + 1) % DEMO_KEYS.length);
-  };
 
   useEffect(() => {
     const socialError = searchParams.get('social_error');
@@ -388,66 +365,6 @@ const Login = () => {
                     <span>{t('nav.offline', 'Օֆֆլայն')}</span>
                   </div>
                 </div>
-              </div>
-
-              {/* Interactive Chords Preview Card with Live Transpose */}
-              <div className="welcome-song-preview" aria-label={t('auth.guestPreviewLabel')}>
-                <div className="welcome-preview-head">
-                  <div>
-                    <span className="welcome-preview-kicker">{t('auth.guestPreviewLabel')}</span>
-                    <strong>{t('auth.guestPreviewTitle')}</strong>
-                  </div>
-                  <div className="welcome-key-stepper" aria-label="Demo transposer">
-                    <button
-                      type="button"
-                      className="welcome-key-step-btn"
-                      onClick={handlePrevDemoKey}
-                      aria-label="Transpose down"
-                      title="Transpose down"
-                    >
-                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14" /></svg>
-                    </button>
-                    <span className="welcome-key-badge">
-                      <small>{t('auth.guestKey')}</small> {currentDemoKey}
-                    </span>
-                    <button
-                      type="button"
-                      className="welcome-key-step-btn"
-                      onClick={handleNextDemoKey}
-                      aria-label="Transpose up"
-                      title="Transpose up"
-                    >
-                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" /></svg>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="welcome-chord-sheet" aria-hidden="true">
-                  <span>Verse</span>
-                  <strong>
-                    {currentChords.verse.map((chord, idx) => (
-                      <React.Fragment key={`v-${chord}-${idx}`}>
-                        <b>{chord}</b>
-                        {idx < currentChords.verse.length - 1 && <i>|</i>}
-                      </React.Fragment>
-                    ))}
-                  </strong>
-                  <span>Chorus</span>
-                  <strong>
-                    {currentChords.chorus.map((chord, idx) => (
-                      <React.Fragment key={`c-${chord}-${idx}`}>
-                        <b>{chord}</b>
-                        {idx < currentChords.chorus.length - 1 && <i>|</i>}
-                      </React.Fragment>
-                    ))}
-                  </strong>
-                </div>
-
-                <button type="button" className="welcome-transpose-link" onClick={() => navigate('/transpose')}>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M7 4 4 7l3 3M20 17H4m13-3 3 3-3 3" /></svg>
-                  <span>{t('auth.guestOpenTransposer')}</span>
-                  <svg className="welcome-link-arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6" /></svg>
-                </button>
               </div>
 
               {/* Action Buttons */}
