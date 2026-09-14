@@ -160,6 +160,7 @@ export const AuthProvider = ({ children }) => {
     await clearUserCacheScope(getUserId(user)).catch(() => {});
     try {
       localStorage.removeItem('worship_user');
+      localStorage.removeItem('wp_user_favorites_cache');
     } catch (_) {}
     try {
       await fetch('/logout_users.php?silent=1');

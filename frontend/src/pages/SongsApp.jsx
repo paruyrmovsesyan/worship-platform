@@ -55,6 +55,7 @@ export default function SongsApp() {
   const [songs, setSongs] = useState([]);
   const [favorites, setFavorites] = useState(() => {
     try {
+      if (!localStorage.getItem('worship_user')) return new Set();
       const cached = localStorage.getItem('wp_user_favorites_cache');
       if (cached) {
         const parsed = JSON.parse(cached);
@@ -98,12 +99,12 @@ export default function SongsApp() {
   // Categories config
   const categories = useMemo(() => [
     { id: 'all', label: language === 'am' ? 'Բոլորը' : language === 'ru' ? 'Все' : 'All', icon: null },
-    { id: 'favorites', label: language === 'am' ? 'Իմ ընտրանին' : language === 'ru' ? 'Избранное' : 'Favorites', icon: '❤️' },
+    ...(user ? [{ id: 'favorites', label: language === 'am' ? 'Իմ ընտրանին' : language === 'ru' ? 'Избранное' : 'Favorites', icon: '❤️' }] : []),
     { id: 'chords', label: language === 'am' ? 'Ակորդներով' : language === 'ru' ? 'С аккордами' : 'With Chords', icon: null },
     { id: 'lyrics', label: language === 'am' ? 'Տեքստեր' : language === 'ru' ? 'Только текст' : 'Lyrics Only', icon: '📄' },
     { id: 'fast', label: language === 'am' ? 'Արագ' : language === 'ru' ? 'Быстрые' : 'Fast', icon: '⚡' },
     { id: 'slow', label: language === 'am' ? 'Խաղաղ' : language === 'ru' ? 'Спокойные' : 'Slow', icon: '🕊' },
-  ], [language]);
+  ], [language, user]);
 
   // Extract available keys dynamically
   const availableKeys = useMemo(() => {
@@ -266,8 +267,19 @@ export default function SongsApp() {
           }
         })
         .catch(() => {});
+    } else {
+      setFavorites(new Set());
+      try {
+        localStorage.removeItem('wp_user_favorites_cache');
+      } catch {}
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!user && activeCategory === 'favorites') {
+      setActiveCategory('all');
+    }
+  }, [user, activeCategory]);
 
   const toggleFavorite = async (e, songId) => {
     if (e) {

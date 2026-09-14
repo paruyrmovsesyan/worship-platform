@@ -381,6 +381,26 @@
 }
 
 /* PWA Mode Adjustments */
+.pwa-register-page {
+  padding-top: 56px;
+  box-sizing: border-box;
+}
+
+.pwa-register-page .prelogin-topbar {
+  height: 56px;
+  padding-top: 0;
+  box-sizing: border-box;
+}
+
 .pwa-register-page .register-form-section {
-  padding-top: calc(60px + env(safe-area-inset-top, 0px) + 20px);
+  padding-top: 12px;
+  padding-bottom: calc(var(--bottom-nav-total-offset, 90px) + 28px);
+}
+
+.pwa-register-page .register-back-link {
+  margin-bottom: 12px;
+}
+
+.pwa-register-page .register-form-header {
+  margin-bottom: 18px;
 }

@@ -91,10 +91,12 @@ export default function MobileHub() {
           setRecentSongs(parsed.slice(0, 10));
         }
       }
-      const cachedFavs = localStorage.getItem('wp_user_favorites_cache');
-      if (cachedFavs) {
-        const parsed = JSON.parse(cachedFavs);
-        if (Array.isArray(parsed)) setFavorites(parsed);
+      if (user) {
+        const cachedFavs = localStorage.getItem('wp_user_favorites_cache');
+        if (cachedFavs) {
+          const parsed = JSON.parse(cachedFavs);
+          if (Array.isArray(parsed)) setFavorites(parsed);
+        }
       }
     } catch {}
 

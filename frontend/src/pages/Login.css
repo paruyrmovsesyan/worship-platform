@@ -19,17 +19,28 @@
 }
 
 .pwa-login-page {
-  padding-top: 60px;
+  padding-top: 56px;
+  box-sizing: border-box;
 }
 
 .pwa-login-page .prelogin-topbar {
-  height: 60px;
+  height: 56px;
   padding-top: 0;
   box-sizing: border-box;
 }
 
 .pwa-login-page .login-form-section {
-  min-height: calc(var(--vv-height, 100svh) - 60px);
+  min-height: calc(var(--vv-height, 100svh) - 56px);
+  padding-top: 12px;
+  padding-bottom: calc(var(--bottom-nav-total-offset, 90px) + 28px);
+}
+
+.pwa-login-page .login-back-link {
+  margin-bottom: 12px;
+}
+
+.pwa-login-page .login-form-header {
+  margin-bottom: 18px;
 }
 
 /* ── Left Side: Hero / Artwork ── */
@@ -502,11 +513,11 @@ body.oled-mode .pwa-login-page.is-welcome {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: calc(100svh - 100px);
-  padding: 16px 0 calc(var(--bottom-nav-safe-gap, max(24px, env(safe-area-inset-bottom, 24px))) + 84px);
+  justify-content: flex-start;
+  min-height: auto;
+  padding: 14px 0 calc(var(--bottom-nav-safe-gap, max(24px, env(safe-area-inset-bottom, 24px))) + 84px);
   width: 100%;
-  gap: 24px;
+  gap: 20px;
   box-sizing: border-box;
 }
 
