@@ -1,175 +1,175 @@
 {
     "b49ce0d3cc765ca53cf89ffbe039289d": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:04",
-        "resolved_by": "auto_bundle_build",
-        "resolution_reason": "Frontend bundle-ը վերակառուցվել է (13.09.2026 01:34)"
+        "resolved_at": "2026-09-14 11:41:40",
+        "resolved_by": "auto_file_update",
+        "resolution_reason": "index.js-ը թարմացվել է սխալից հետո (14.09.2026 11:32)"
     },
     "be8f2929b17ca2a4d3d2d85d832ca946": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:04",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_code_analysis",
         "resolution_reason": "Խնդիրը լուծված է ($conn-ը հեռացված է, կոդը շտկված է)"
     },
     "3786852ec3707ead5830670012f06e6e": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:04",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_code_analysis",
         "resolution_reason": "Խնդիրը լուծված է ($conn-ը հեռացված է, կոդը շտկված է)"
     },
     "75655adfa78977f305ef486f1ce2deb6": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:04",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_update",
         "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (07.09.2026 00:22), սինտաքսը մաքուր է"
     },
     "0a64d891597c319219b8b53228e52dfb": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:04",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_update",
         "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (22.07.2026 12:38), սինտաքսը մաքուր է"
     },
     "a2371b2f58ec0b19bec96d8f2dc4542f": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:04",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_update",
         "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (07.09.2026 00:22), սինտաքսը մաքուր է"
     },
     "338c13190816c3dd6b1f2a035f21d7ae": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:04",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_update",
         "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (07.09.2026 00:22), սինտաքսը մաքուր է"
     },
     "4f3d0c9b41d9a970f85a406067099bff": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:04",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_update",
         "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (01.08.2026 01:51), սինտաքսը մաքուր է"
     },
     "53727c5224cec570e638ed7d0e01eb9c": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:04",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_update",
         "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (03.07.2026 00:21), սինտաքսը մաքուր է"
     },
     "c6913ea4b342cfed0851fa1ed7cbf3b5": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:04",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_update",
         "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (22.07.2026 12:38), սինտաքսը մաքուր է"
     },
     "e42e0873c588cdfdcac0ca0b0460e082": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:04",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_update",
-        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (05.08.2026 17:51), սինտաքսը մաքուր է"
+        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (13.09.2026 17:16), սինտաքսը մաքուր է"
     },
     "69cb57ae3f945180ab622b9d9befd10f": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:04",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_update",
-        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (05.08.2026 17:51), սինտաքսը մաքուր է"
+        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (13.09.2026 17:16), սինտաքսը մաքուր է"
     },
     "3215b7d8dc41ff1e2b1836de758f4e04": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:04",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_update",
-        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (05.08.2026 17:51), սինտաքսը մաքուր է"
+        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (13.09.2026 17:16), սինտաքսը մաքուր է"
     },
     "9a0e43fb7b1751c32d5e4f9ea5a3c37a": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:05",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_update",
-        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (05.08.2026 17:51), սինտաքսը մաքուր է"
+        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (13.09.2026 17:16), սինտաքսը մաքուր է"
     },
     "d8764fd70562fc954150184335d9b6e2": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:05",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_update",
-        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (05.08.2026 17:51), սինտաքսը մաքուր է"
+        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (13.09.2026 17:16), սինտաքսը մաքուր է"
     },
     "14b55ffb115c1960f12be23df9e969ed": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:05",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_update",
         "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (06.08.2026 20:18), սինտաքսը մաքուր է"
     },
     "f68f7739e759b44717fa327519212209": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:05",
+        "resolved_at": "2026-09-14 11:41:41",
         "resolved_by": "auto_file_update",
-        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (05.08.2026 17:51), սինտաքսը մաքուր է"
+        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (13.09.2026 17:16), սինտաքսը մաքուր է"
     },
     "3e7685c7baa60318b01eabddfa0e5cd8": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:05",
+        "resolved_at": "2026-09-14 11:41:41",
         "resolved_by": "auto_file_update",
-        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (05.08.2026 17:51), սինտաքսը մաքուր է"
+        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (13.09.2026 17:16), սինտաքսը մաքուր է"
     },
     "3f1c20eb49f39b492250ad9bd962a903": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:05",
+        "resolved_at": "2026-09-14 11:41:41",
         "resolved_by": "auto_file_update",
         "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (13.07.2026 01:31), սինտաքսը մաքուր է"
     },
     "73e54470b49b5f0ab9b58a8705abf43b": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:05",
+        "resolved_at": "2026-09-14 11:41:41",
         "resolved_by": "auto_code_analysis",
         "resolution_reason": "Խնդիրը լուծված է ($conn-ը հեռացված է, կոդը շտկված է)"
     },
     "eb533f6a305f20fb92272e6c206f61cd": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:05",
+        "resolved_at": "2026-09-14 11:41:41",
         "resolved_by": "auto_file_update",
         "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (13.07.2026 01:31), սինտաքսը մաքուր է"
     },
     "d7e842b039cb2ea2e17e2b06fde3ffa3": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:05",
+        "resolved_at": "2026-09-14 11:41:41",
         "resolved_by": "auto_file_update",
         "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (13.07.2026 01:31), սինտաքսը մաքուր է"
     },
     "72b5bb61ed79f45b8111be56b70af24b": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:05",
+        "resolved_at": "2026-09-14 11:41:41",
         "resolved_by": "auto_file_update",
         "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (13.07.2026 01:31), սինտաքսը մաքուր է"
     },
     "c90c4b417afe8045c04b0ba1d4e4afcd": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:05",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_removed",
         "resolution_reason": "Ֆայլը (api_health.php) հեռացված է նախագծից, խնդիրը վերացված է"
     },
     "561bb67f78f8c513ead045f0eacf4d19": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:05",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_removed",
         "resolution_reason": "Ֆայլը (api_health.php) հեռացված է նախագծից, խնդիրը վերացված է"
     },
     "5ceba7783d990aedd0d16942e3a02dfc": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:05",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_removed",
         "resolution_reason": "Ֆայլը (api_health.php) հեռացված է նախագծից, խնդիրը վերացված է"
     },
     "85b30436ffe6adf771029df0c7a5b952": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:05",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_removed",
         "resolution_reason": "Ֆայլը (api_health.php) հեռացված է նախագծից, խնդիրը վերացված է"
     },
     "a5f2b08a2672230a0e3bbcf2c0ef2a6f": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:05",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_removed",
         "resolution_reason": "Ֆայլը (api_health.php) հեռացված է նախագծից, խնդիրը վերացված է"
     },
     "d5498e12a074c14bec3d96dee7ce27b9": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 12:10:05",
+        "resolved_at": "2026-09-14 11:41:40",
         "resolved_by": "auto_file_removed",
         "resolution_reason": "Ֆայլը (reset.php) հեռացված է նախագծից, խնդիրը վերացված է"
     },
@@ -181,14 +181,32 @@
     },
     "97a4a2b26219af5ccd480af46d1f0fd8": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 16:57:36",
-        "resolved_by": "auto_db_check",
-        "resolution_reason": "Տվյալների բազայի կապը հաջողությամբ վերականգնված է և ակտիվ է"
+        "resolved_at": "2026-09-14 11:41:40",
+        "resolved_by": "auto_file_update",
+        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (13.09.2026 18:40), սինտաքսը մաքուր է"
     },
     "db55aa3867fe4e697d7ab4afe1136c71": {
         "is_resolved": 1,
-        "resolved_at": "2026-09-13 16:57:36",
-        "resolved_by": "auto_db_check",
-        "resolution_reason": "Աղյուսակը (`chat_calls`) գոյություն ունի, DB կապը նորմալ է"
+        "resolved_at": "2026-09-14 11:41:40",
+        "resolved_by": "auto_file_update",
+        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (13.09.2026 18:40), սինտաքսը մաքուր է"
+    },
+    "5d52147d9f12d7830e6ea4c42dc2b0da": {
+        "is_resolved": 1,
+        "resolved_at": "2026-09-14 11:41:40",
+        "resolved_by": "auto_file_update",
+        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (13.09.2026 18:40), սինտաքսը մաքուր է"
+    },
+    "6a0ee279cb3f46260cd8eaf0a8b5a928": {
+        "is_resolved": 1,
+        "resolved_at": "2026-09-14 11:41:40",
+        "resolved_by": "auto_file_update",
+        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (13.09.2026 18:40), սինտաքսը մաքուր է"
+    },
+    "36d09f1ace515d9969f95b3ff2873015": {
+        "is_resolved": 1,
+        "resolved_at": "2026-09-14 11:41:40",
+        "resolved_by": "auto_file_update",
+        "resolution_reason": "Ֆայլը թարմացվել է սխալից հետո (13.09.2026 18:40), սինտաքսը մաքուր է"
     }
 }
