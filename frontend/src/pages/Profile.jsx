@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -18,6 +19,17 @@ export default function Profile() {
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (isLangModalOpen) {
+      document.body.classList.add('lang-modal-open');
+    } else {
+      document.body.classList.remove('lang-modal-open');
+    }
+    return () => {
+      document.body.classList.remove('lang-modal-open');
+    };
+  }, [isLangModalOpen]);
 
   const [teamRole, setTeamRole] = useState(null);
   const [avatarGradient, setAvatarGradient] = useState('linear-gradient(135deg, #00d4ff, #3a2dff)');
@@ -479,7 +491,7 @@ export default function Profile() {
           </div>
         )}
 
-        {isLangModalOpen && (
+        {isLangModalOpen && createPortal(
           <div className="modal-overlay profile-lang-overlay" onClick={() => setIsLangModalOpen(false)}>
             <div className="modal-content profile-lang-modal" onClick={e => e.stopPropagation()}>
               <div className="profile-lang-handle" />
@@ -533,7 +545,8 @@ export default function Profile() {
                 ))}
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {isSupportModalOpen && (
@@ -908,7 +921,7 @@ export default function Profile() {
       )}
 
       {/* Language Modal */}
-      {isLangModalOpen && (
+      {isLangModalOpen && createPortal(
         <div className="modal-overlay profile-lang-overlay" onClick={() => setIsLangModalOpen(false)}>
           <div className="modal-content profile-lang-modal" onClick={e => e.stopPropagation()}>
             <div className="profile-lang-handle" />
@@ -962,7 +975,8 @@ export default function Profile() {
               ))}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

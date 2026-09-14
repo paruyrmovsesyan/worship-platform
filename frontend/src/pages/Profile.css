@@ -259,6 +259,15 @@
    Premium Language Picker Modal (Bottom Sheet on Mobile/PWA,
    Centered Modal on Desktop)
 ────────────────────────────────────────────────────────────── */
+/* Hide MobileNav dock when language modal is open */
+body.lang-modal-open #wpAppDock,
+body.lang-modal-open .mobile-bottom-nav {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
 .profile-lang-overlay {
   position: fixed !important;
   inset: 0 !important;
@@ -321,7 +330,7 @@
     border-right: none !important;
     border-bottom: none !important;
     border-top: 1px solid rgba(255, 255, 255, 0.14) !important;
-    padding-bottom: max(28px, calc(env(safe-area-inset-bottom, 24px) + 12px)) !important;
+    padding-bottom: max(36px, calc(env(safe-area-inset-bottom, 24px) + 20px)) !important;
     animation: langModalSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 }
