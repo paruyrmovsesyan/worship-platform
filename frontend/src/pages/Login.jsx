@@ -1,10 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useIsPWA } from '../hooks/useIsPWA';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import './Login.css';
+
+const DEMO_KEYS = ['C', 'D', 'E', 'G', 'A'];
+const DEMO_CHORDS = {
+  C: { verse: ['C', 'F', 'Am', 'G'], chorus: ['F', 'C', 'G', 'Am'] },
+  D: { verse: ['D', 'G', 'Bm', 'A'], chorus: ['G', 'D', 'A', 'Bm'] },
+  E: { verse: ['E', 'A', 'C#m', 'B'], chorus: ['A', 'E', 'B', 'C#m'] },
+  G: { verse: ['G', 'C', 'Em', 'D'], chorus: ['C', 'G', 'D', 'Em'] },
+  A: { verse: ['A', 'D', 'F#m', 'E'], chorus: ['D', 'A', 'E', 'F#m'] },
+};
 
 const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
 
@@ -34,6 +43,20 @@ const Login = () => {
   const [qsOled, setQsOledState] = useState(() => localStorage.getItem('oledMode') === 'true');
   const [qsChordColor, setQsChordColorState] = useState(() => localStorage.getItem('chordColor') || 'gold');
   const [qsOutlined, setQsOutlinedState] = useState(() => localStorage.getItem('outlinedChords') === 'true');
+
+  const [demoKeyIndex, setDemoKeyIndex] = useState(1); // default 'D'
+  const currentDemoKey = DEMO_KEYS[demoKeyIndex];
+  const currentChords = DEMO_CHORDS[currentDemoKey];
+
+  const handlePrevDemoKey = (e) => {
+    e.stopPropagation();
+    setDemoKeyIndex((prev) => (prev - 1 + DEMO_KEYS.length) % DEMO_KEYS.length);
+  };
+
+  const handleNextDemoKey = (e) => {
+    e.stopPropagation();
+    setDemoKeyIndex((prev) => (prev + 1) % DEMO_KEYS.length);
+  };
 
   useEffect(() => {
     const socialError = searchParams.get('social_error');
@@ -339,44 +362,136 @@ const Login = () => {
           {viewMode === 'welcome' ? (
             <div className="welcome-landing-wrap">
               <div className="welcome-intro">
-                <img src="/user_uploaded_logo.png" alt="" className="welcome-app-logo" />
+                <div className="welcome-app-logo-wrap">
+                  <img src="/user_uploaded_logo.png" alt="Worship Platform" className="welcome-app-logo" />
+                </div>
                 <span className="welcome-badge-tag">{t('auth.guestEyebrow')}</span>
                 <h1 className="welcome-heading">Worship Platform</h1>
                 <p className="welcome-sub">{t('auth.guestDescription')}</p>
+
+                {/* Feature Chips */}
+                <div className="welcome-feature-pills" aria-label="Platform highlights">
+                  <div className="welcome-pill">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                    <span>1000+ {t('hub.categories.songs', 'Երգեր')}</span>
+                  </div>
+                  <div className="welcome-pill">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16M7 4 4 7l3 3M20 17H4m13-3 3 3-3 3" /></svg>
+                    <span>{t('hub.categories.transposer', 'Տրանսպոզ')}</span>
+                  </div>
+                  <div className="welcome-pill">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" /></svg>
+                    <span>{t('hub.categories.setlists', 'Երգացանկեր')}</span>
+                  </div>
+                  <div className="welcome-pill">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" /></svg>
+                    <span>{t('nav.offline', 'Օֆֆլայն')}</span>
+                  </div>
+                </div>
               </div>
 
+              {/* Interactive Chords Preview Card with Live Transpose */}
               <div className="welcome-song-preview" aria-label={t('auth.guestPreviewLabel')}>
                 <div className="welcome-preview-head">
                   <div>
                     <span className="welcome-preview-kicker">{t('auth.guestPreviewLabel')}</span>
                     <strong>{t('auth.guestPreviewTitle')}</strong>
                   </div>
-                  <span className="welcome-key-badge">{t('auth.guestKey')} D</span>
+                  <div className="welcome-key-stepper" aria-label="Demo transposer">
+                    <button
+                      type="button"
+                      className="welcome-key-step-btn"
+                      onClick={handlePrevDemoKey}
+                      aria-label="Transpose down"
+                      title="Transpose down"
+                    >
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14" /></svg>
+                    </button>
+                    <span className="welcome-key-badge">
+                      <small>{t('auth.guestKey')}</small> {currentDemoKey}
+                    </span>
+                    <button
+                      type="button"
+                      className="welcome-key-step-btn"
+                      onClick={handleNextDemoKey}
+                      aria-label="Transpose up"
+                      title="Transpose up"
+                    >
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" /></svg>
+                    </button>
+                  </div>
                 </div>
+
                 <div className="welcome-chord-sheet" aria-hidden="true">
                   <span>Verse</span>
-                  <strong><b>D</b><i>|</i><b>G</b><i>|</i><b>Bm</b><i>|</i><b>A</b></strong>
+                  <strong>
+                    {currentChords.verse.map((chord, idx) => (
+                      <React.Fragment key={`v-${chord}-${idx}`}>
+                        <b>{chord}</b>
+                        {idx < currentChords.verse.length - 1 && <i>|</i>}
+                      </React.Fragment>
+                    ))}
+                  </strong>
                   <span>Chorus</span>
-                  <strong><b>G</b><i>|</i><b>D</b><i>|</i><b>A</b><i>|</i><b>Bm</b></strong>
+                  <strong>
+                    {currentChords.chorus.map((chord, idx) => (
+                      <React.Fragment key={`c-${chord}-${idx}`}>
+                        <b>{chord}</b>
+                        {idx < currentChords.chorus.length - 1 && <i>|</i>}
+                      </React.Fragment>
+                    ))}
+                  </strong>
                 </div>
+
                 <button type="button" className="welcome-transpose-link" onClick={() => navigate('/transpose')}>
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M7 4 4 7l3 3M20 17H4m13-3 3 3-3 3" /></svg>
-                  {t('auth.guestOpenTransposer')}
+                  <span>{t('auth.guestOpenTransposer')}</span>
+                  <svg className="welcome-link-arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6" /></svg>
                 </button>
               </div>
 
+              {/* Action Buttons */}
               <div className="welcome-actions-stack">
                 <button type="button" className="btn-welcome-primary" onClick={() => setViewMode('login')}>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" /></svg>
-                  {t('auth.guestLogin')}
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" strokeWidth="2.2" /></svg>
+                  <span>{t('auth.guestLogin')}</span>
                 </button>
-                <button type="button" className="btn-welcome-secondary" onClick={() => navigate('/songs')}>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM18 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" /></svg>
-                  {t('auth.guestBrowseSongs')}
-                </button>
-                <Link className="welcome-register-link" to={`/register?next=${encodeURIComponent(next)}&source=${encodeURIComponent(source)}`}>
-                  {t('auth.noAccount')} <span>{t('auth.createNow')}</span>
+
+                <Link
+                  to={`/register?next=${encodeURIComponent(next)}&source=${encodeURIComponent(source)}`}
+                  className="btn-welcome-secondary"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="8.5" cy="7" r="4" />
+                    <line x1="20" y1="8" x2="20" y2="14" />
+                    <line x1="23" y1="11" x2="17" y2="11" />
+                  </svg>
+                  <span>{t('auth.registerTitle', 'Ստեղծել հաշիվ')}</span>
                 </Link>
+
+                {googleEnabled && (
+                  <a
+                    href={googleAuthUrl}
+                    onClick={handleGoogleClick}
+                    className="btn-welcome-google"
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    <span>{t('auth.googleLogin', 'Մուտք Google-ով')}</span>
+                  </a>
+                )}
+
+                <button type="button" className="btn-welcome-ghost" onClick={() => navigate('/songs')}>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 18V5l12-2v13M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM18 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+                  </svg>
+                  <span>{t('auth.guestBrowseSongs')}</span>
+                </button>
               </div>
             </div>
           ) : (

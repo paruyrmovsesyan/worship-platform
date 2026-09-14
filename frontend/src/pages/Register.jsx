@@ -215,11 +215,9 @@ const Register = () => {
       {/* Form Section */}
       <div className="register-form-section">
         <div className="register-form-container">
-          {!isPWA && (
-            <button className="register-back-link" onClick={() => navigate(-1)}>
-              &larr; {t('auth.back')}
-            </button>
-          )}
+          <button className="register-back-link" type="button" onClick={() => navigate(-1)}>
+            &larr; {t('auth.back', 'Վերադառնալ')}
+          </button>
 
           <div className="register-form-header">
             <h2>{t('auth.joinCommunity')}</h2>
