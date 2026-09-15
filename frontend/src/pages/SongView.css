@@ -621,6 +621,10 @@ body.wp-main-app.song-view-active .song-view-page .sv-meta-row {
   padding-right: 16px;
 }
 
+body.is-pwa.is-ios .song-view-page {
+  padding-top: 20px !important;
+}
+
 body.mobile-theme .song-view-page .sv-segment-control,
 body.mobile-theme .song-view-page .sv-sheet,
 body.mobile-theme .song-view-page .sv-control-panel,
