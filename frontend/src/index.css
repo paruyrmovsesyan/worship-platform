@@ -47,7 +47,7 @@ html {
   /* Start with gradient that matches #app-loader - prevents any flash */
   background: linear-gradient(135deg, #3A2DFF 0%, #00D4FF 100%);
   background-color: var(--color-bg);
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 
@@ -76,12 +76,37 @@ body.is-pwa {
   overflow-anchor: none !important;
 }
 
-body.is-pwa * {
+body.is-pwa *,
+html.wp-standalone-app *,
+body.wp-standalone-app * {
   overflow-anchor: none !important;
 }
 
 body.is-pwa main {
   overscroll-behavior-x: none;
+}
+
+/* Universal Smooth Hardware-Accelerated Scrolling on all pages */
+.songs-page,
+.setlists-page,
+.song-view-page,
+.favorites-page,
+.profile-page,
+.mobile-hub,
+.news-page,
+.news-article-page,
+.chats-list-page,
+.chat-page-container,
+.login-page-container,
+.register-page-container,
+.settings-page,
+.support-page,
+.notifications-page,
+.transpose-page,
+.song-request-page,
+.page-container {
+  overflow-anchor: none !important;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Optional: we removed position: fixed from chat-active here to prevent desktop layout bugs. 
@@ -132,7 +157,7 @@ h3 { font-size: 1.2rem; }
   position: relative; 
   z-index: 1; 
   padding-top: env(safe-area-inset-top); 
-  overflow-x: hidden;
+  overflow-x: clip;
   width: 100%;
 }
 
@@ -170,42 +195,19 @@ main { flex: 1; }
   /* Website Mobile uses top Navbar, needs top padding */
   body.website-theme main { padding-top: var(--nav-height); }
 
-  /* Let every PWA page continue its own background behind the iOS status bar. */
-  body.is-pwa.mobile-theme main > *:not(.login-page-container):not(.register-page-container):not(.chat-page-container):not(.seq-nav):not(.sv-edit-action):not(.toast-message) {
-    position: relative;
-    isolation: isolate;
-  }
-
-  body.is-pwa.mobile-theme main > *:not(.login-page-container):not(.register-page-container):not(.chat-page-container):not(.seq-nav):not(.sv-edit-action):not(.toast-message)::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: calc(env(safe-area-inset-top, 0px) * -1);
-    height: calc(env(safe-area-inset-top, 0px) + 1px);
-    background: inherit;
-    border-top-left-radius: inherit;
-    border-top-right-radius: inherit;
-    pointer-events: none;
-    z-index: -1;
-  }
-
   /* iOS 27 Standalone PWA Safe-Area & Blur Protection */
   body.is-pwa.is-ios #root {
     padding-top: max(env(safe-area-inset-top, 0px), 44px);
   }
 
-  body.is-pwa.is-ios.mobile-theme main > *:not(.login-page-container):not(.register-page-container):not(.chat-page-container):not(.seq-nav):not(.sv-edit-action):not(.toast-message)::before {
-    top: calc(max(env(safe-area-inset-top, 0px), 44px) * -1);
-    height: calc(max(env(safe-area-inset-top, 0px), 44px) + 1px);
-  }
-
-  /* Disable scroll anchoring completely on PWA to prevent scroll jitter/stutter */
+  /* Disable scroll anchoring and enforce smooth touch scrolling completely on PWA */
   body.is-pwa,
   body.is-pwa #root,
   body.is-pwa main,
+  body.is-pwa main > *,
   body.is-pwa * {
     overflow-anchor: none !important;
+    -webkit-overflow-scrolling: touch;
   }
   
   .desktop-only { display: none !important; }

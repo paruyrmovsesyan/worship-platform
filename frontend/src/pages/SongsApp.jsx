@@ -190,41 +190,28 @@ export default function SongsApp() {
   };
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      let maxScroll = Math.max(
-        window.scrollY || 0,
-        window.pageYOffset || 0,
-        document.documentElement?.scrollTop || 0,
-        document.body?.scrollTop || 0
-      );
-
-      if (maxScroll <= 150) {
-        const divs = document.querySelectorAll('div, main, section, article');
-        for (let i = 0; i < divs.length; i++) {
-          if (divs[i].scrollTop > maxScroll) {
-            maxScroll = divs[i].scrollTop;
-          }
-        }
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollY = Math.max(
+            window.scrollY || 0,
+            window.pageYOffset || 0,
+            document.documentElement?.scrollTop || 0,
+            document.body?.scrollTop || 0
+          );
+          setShowBackToTop(scrollY > 150);
+          ticking = false;
+        });
+        ticking = true;
       }
-
-      setShowBackToTop(maxScroll > 150);
     };
 
     handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
-    document.addEventListener('scroll', handleScroll, { passive: true, capture: true });
-
-    const observerTargets = document.querySelectorAll('div, main, section, article');
-    observerTargets.forEach(t => {
-      t.addEventListener('scroll', handleScroll, { passive: true, capture: true });
-    });
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
-      window.removeEventListener('scroll', handleScroll, { capture: true });
-      document.removeEventListener('scroll', handleScroll, { capture: true });
-      observerTargets.forEach(t => {
-        t.removeEventListener('scroll', handleScroll, { capture: true });
-      });
+      window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 

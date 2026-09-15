@@ -163,25 +163,29 @@ export function usePwaSwipeNavigation({
       horizontalIntent = false;
       startX = touch.clientX;
       startY = touch.clientY;
-
-      if (tracking && (nearLeftEdge || nearRightEdge) && event.cancelable) {
-        event.preventDefault();
-      }
     };
 
     const onTouchMove = (event) => {
       if (!tracking || event.touches.length !== 1) return;
+
+      const touch = event.touches[0];
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+
+      // If vertical movement dominates, this is a page scroll: immediately stop tracking
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 6) {
+        tracking = false;
+        horizontalIntent = false;
+        return;
+      }
+
       if (isHorizontalScrollTarget(event.target)) {
         tracking = false;
         horizontalIntent = false;
         return;
       }
 
-      const touch = event.touches[0];
-      const dx = touch.clientX - startX;
-      const dy = touch.clientY - startY;
-
-      if (!horizontalIntent && Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * VERTICAL_TOLERANCE) {
+      if (!horizontalIntent && Math.abs(dx) > 16 && Math.abs(dx) > Math.abs(dy) * VERTICAL_TOLERANCE) {
         horizontalIntent = true;
       }
 
@@ -218,7 +222,7 @@ export function usePwaSwipeNavigation({
       horizontalIntent = false;
     };
 
-    document.addEventListener('touchstart', onTouchStart, { passive: false, capture: true });
+    document.addEventListener('touchstart', onTouchStart, { passive: true, capture: true });
     document.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
     document.addEventListener('touchend', onTouchEnd, { passive: true });
     document.addEventListener('touchcancel', onTouchCancel, { passive: true });

@@ -12,6 +12,7 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
   const hasVibratedRef = useRef(false);
   const maxPull = 120;
   const refreshThreshold = 85;
+  const pullDistanceRef = useRef(0);
 
   useEffect(() => {
     if (!isPWA || disabled) return;
@@ -83,6 +84,7 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
         document.body.classList.contains('is-reorder-active')
       ) {
         isValidPull.current = false;
+        pullDistanceRef.current = 0;
         setPullDistance(0);
         return;
       }
@@ -96,6 +98,7 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
       // Cancel pull if the user's gesture is primarily horizontal (e.g. scrolling carousels or swipe tabs)
       if (Math.abs(diffX) > Math.abs(diffY) + 4 && Math.abs(diffX) > 12) {
         isValidPull.current = false;
+        pullDistanceRef.current = 0;
         setPullDistance(0);
         return;
       }
@@ -105,6 +108,7 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
       if (diffY > 0) {
         // Deep pull friction: requiring deep downward swipe to trigger refresh
         const distance = Math.min(diffY * 0.45, maxPull);
+        pullDistanceRef.current = distance;
         setPullDistance(distance);
 
         if (distance >= refreshThreshold && !hasVibratedRef.current) {
@@ -116,25 +120,29 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
           hasVibratedRef.current = false;
         }
       } else {
+        pullDistanceRef.current = 0;
         setPullDistance(0);
       }
     };
 
     const handleTouchEnd = () => {
       if (!isValidPull.current) {
+        pullDistanceRef.current = 0;
         setPullDistance(0);
         return;
       }
       isValidPull.current = false;
 
-      if (pullDistance >= refreshThreshold && !isRefreshing) {
+      if (pullDistanceRef.current >= refreshThreshold && !isRefreshing) {
         setIsRefreshing(true);
+        pullDistanceRef.current = refreshThreshold;
         setPullDistance(refreshThreshold);
         setTimeout(() => {
           if (onRefresh) {
             onRefresh();
             setTimeout(() => {
               setIsRefreshing(false);
+              pullDistanceRef.current = 0;
               setPullDistance(0);
             }, 300);
           } else {
@@ -142,6 +150,7 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
           }
         }, 600);
       } else {
+        pullDistanceRef.current = 0;
         setPullDistance(0);
       }
     };
@@ -157,7 +166,7 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
       document.removeEventListener('touchend', handleTouchEnd);
       document.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [isPWA, pullDistance, isRefreshing, disabled]);
+  }, [isPWA, isRefreshing, disabled]);
 
   if (!isPWA || disabled) {
     return <>{children}</>;
