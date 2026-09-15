@@ -8,12 +8,14 @@
   margin: 0 auto;
 }
 
-body.is-pwa .songs-page {
+body.is-pwa .songs-page,
+body.wp-standalone-app .songs-page {
   padding-top: 18px;
 }
 
-body.is-pwa.is-ios .songs-page {
-  padding-top: 24px;
+body.is-pwa.is-ios .songs-page,
+body.wp-standalone-app.is-ios .songs-page {
+  padding-top: 36px !important;
 }
 
 /* Hide PWA dock when songbook modal is open */
@@ -73,8 +75,8 @@ body.website-theme > .songs-back-to-top {
 .songs-header {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 14px;
+  margin-bottom: 20px;
 }
 
 .songs-header-top {
@@ -144,44 +146,57 @@ body.website-theme > .songs-back-to-top {
 
 /* ── Search ── */
 .songs-page .search-box,
-.search-box {
+.songs-page .songs-search-box,
+.songs-search-box {
   display: flex !important;
   align-items: center !important;
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  border-radius: 14px !important;
-  padding: 0 14px !important;
-  height: 46px !important;
+  justify-content: flex-start !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 16px !important;
+  padding: 0 14px 0 16px !important;
+  min-height: 48px !important;
+  height: 48px !important;
   width: 100% !important;
-  gap: 10px !important;
+  gap: 12px !important;
   box-sizing: border-box !important;
-  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22) !important;
+  flex-shrink: 0 !important;
   position: relative !important;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease !important;
 }
 
 .songs-page .search-box:focus-within,
-.search-box:focus-within {
-  background: rgba(255, 255, 255, 0.09) !important;
-  border-color: rgba(209, 82, 255, 0.5) !important;
-  box-shadow: 0 0 0 3px rgba(209, 82, 255, 0.15) !important;
+.songs-page .songs-search-box:focus-within,
+.songs-search-box:focus-within {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(209, 82, 255, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(209, 82, 255, 0.2), 0 6px 24px rgba(0, 0, 0, 0.28) !important;
 }
 
 .songs-page .search-box .search-box-icon,
-.search-box .search-box-icon {
+.songs-page .songs-search-box .search-box-icon,
+.songs-search-box .search-box-icon {
   position: static !important;
   left: auto !important;
   top: auto !important;
   margin: 0 !important;
-  color: rgba(255, 255, 255, 0.45) !important;
+  color: rgba(255, 255, 255, 0.55) !important;
   flex-shrink: 0 !important;
   pointer-events: none !important;
-  width: 18px !important;
-  height: 18px !important;
-  display: block !important;
+  width: 19px !important;
+  height: 19px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .songs-page .search-box input,
-.search-box input {
+.songs-page .songs-search-box input,
+.songs-search-box input,
+.songs-search-input {
   position: static !important;
   left: auto !important;
   top: auto !important;
@@ -200,33 +215,55 @@ body.website-theme > .songs-back-to-top {
   padding: 0 !important;
   margin: 0 !important;
   height: 100% !important;
-  line-height: normal !important;
+  line-height: 48px !important;
+  display: block !important;
+  box-sizing: border-box !important;
 }
 
 .songs-page .search-box input:focus,
 .songs-page .search-box input:active,
-.search-box input:focus,
-.search-box input:active {
+.songs-page .songs-search-box input:focus,
+.songs-page .songs-search-box input:active,
+.songs-search-box input:focus,
+.songs-search-box input:active,
+.songs-search-input:focus,
+.songs-search-input:active {
   background: transparent !important;
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
 }
 
-.search-box input::-webkit-search-decoration,
-.search-box input::-webkit-search-cancel-button,
-.search-box input::-webkit-search-results-button,
-.search-box input::-webkit-search-results-decoration {
+.songs-page .search-box input::-webkit-search-decoration,
+.songs-page .search-box input::-webkit-search-cancel-button,
+.songs-page .search-box input::-webkit-search-results-button,
+.songs-page .search-box input::-webkit-search-results-decoration,
+.songs-page .songs-search-box input::-webkit-search-decoration,
+.songs-page .songs-search-box input::-webkit-search-cancel-button,
+.songs-page .songs-search-box input::-webkit-search-results-button,
+.songs-page .songs-search-box input::-webkit-search-results-decoration,
+.songs-search-box input::-webkit-search-decoration,
+.songs-search-box input::-webkit-search-cancel-button,
+.songs-search-box input::-webkit-search-results-button,
+.songs-search-box input::-webkit-search-results-decoration,
+.songs-search-input::-webkit-search-decoration,
+.songs-search-input::-webkit-search-cancel-button,
+.songs-search-input::-webkit-search-results-button,
+.songs-search-input::-webkit-search-results-decoration {
   -webkit-appearance: none !important;
   display: none !important;
 }
 
-.search-box input::placeholder {
-  color: rgba(255, 255, 255, 0.35) !important;
+.songs-page .search-box input::placeholder,
+.songs-page .songs-search-box input::placeholder,
+.songs-search-box input::placeholder,
+.songs-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.45) !important;
 }
 
 .songs-page .search-x,
-.search-x {
+.songs-page .songs-search-box .search-x,
+.songs-search-box .search-x {
   position: relative !important;
   left: auto !important;
   top: auto !important;
@@ -234,7 +271,7 @@ body.website-theme > .songs-back-to-top {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  background: rgba(255, 255, 255, 0.14) !important;
+  background: rgba(255, 255, 255, 0.16) !important;
   border: none !important;
   outline: none !important;
   color: rgba(255, 255, 255, 0.85) !important;
@@ -253,16 +290,22 @@ body.website-theme > .songs-back-to-top {
   user-select: none !important;
 }
 
-.search-x:hover,
-.search-x:active {
+.songs-page .search-x:hover,
+.songs-page .search-x:active,
+.songs-page .songs-search-box .search-x:hover,
+.songs-page .songs-search-box .search-x:active,
+.songs-search-box .search-x:hover,
+.songs-search-box .search-x:active {
   background: rgba(255, 255, 255, 0.28) !important;
   color: #ffffff !important;
   transform: scale(1.06) !important;
 }
 
 .songs-page .search-x .search-x-icon,
-.search-x .search-x-icon,
-.search-x svg {
+.songs-page .songs-search-box .search-x .search-x-icon,
+.songs-search-box .search-x .search-x-icon,
+.songs-page .search-x svg,
+.songs-search-box .search-x svg {
   position: static !important;
   left: auto !important;
   top: auto !important;
@@ -275,6 +318,44 @@ body.website-theme > .songs-back-to-top {
   stroke: currentColor !important;
   flex-shrink: 0 !important;
   display: block !important;
+}
+
+/* Light mode support for songs search */
+body.light-mode .songs-page .search-box,
+body.light-mode .songs-search-box {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+}
+
+body.light-mode .songs-page .search-box:focus-within,
+body.light-mode .songs-search-box:focus-within {
+  background: rgba(0, 0, 0, 0.08) !important;
+  border-color: rgba(180, 50, 230, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(180, 50, 230, 0.18) !important;
+}
+
+body.light-mode .songs-page .search-box .search-box-icon,
+body.light-mode .songs-search-box .search-box-icon {
+  color: rgba(0, 0, 0, 0.5) !important;
+}
+
+body.light-mode .songs-page .search-box input,
+body.light-mode .songs-search-box input,
+body.light-mode .songs-search-input {
+  color: #111111 !important;
+}
+
+body.light-mode .songs-page .search-box input::placeholder,
+body.light-mode .songs-search-box input::placeholder,
+body.light-mode .songs-search-input::placeholder {
+  color: rgba(0, 0, 0, 0.4) !important;
+}
+
+body.light-mode .songs-page .search-x,
+body.light-mode .songs-search-box .search-x {
+  background: rgba(0, 0, 0, 0.08) !important;
+  color: rgba(0, 0, 0, 0.7) !important;
 }
 
 /* ── Tabs ── */
