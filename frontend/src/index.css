@@ -184,6 +184,29 @@ main { flex: 1; }
     pointer-events: none;
     z-index: -1;
   }
+
+  /* iOS 27 Standalone PWA Safe-Area & Blur Protection */
+  body.is-pwa.is-ios #root {
+    padding-top: max(env(safe-area-inset-top, 0px), 44px);
+  }
+
+  body.is-pwa.is-ios.mobile-theme main > *:not(.login-page-container):not(.register-page-container):not(.chat-page-container):not(.seq-nav):not(.sv-edit-action):not(.toast-message)::before {
+    top: calc(max(env(safe-area-inset-top, 0px), 44px) * -1);
+    height: calc(max(env(safe-area-inset-top, 0px), 44px) + 1px);
+  }
+
+  /* iOS 27 / Safari 27 Native Scroll Anchoring for PWA */
+  body.is-pwa {
+    overflow-anchor: auto;
+  }
+
+  body.is-pwa #wpAppDock,
+  body.is-pwa .mobile-bottom-nav,
+  body.is-pwa .toast-message,
+  body.is-pwa .modal-overlay,
+  body.is-pwa .seq-nav {
+    overflow-anchor: none;
+  }
   
   .desktop-only { display: none !important; }
   .hide-mobile { display: none !important; }

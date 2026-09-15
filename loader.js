@@ -232,8 +232,13 @@
     var apply = function() {
       if (!document.body) return;
 
+      var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent || "");
       document.documentElement.classList.add("wp-standalone-app");
       document.body.classList.add("wp-standalone-app", "wp-main-app");
+      if (isIOS) {
+        document.documentElement.classList.add("wp-ios-app");
+        document.body.classList.add("wp-ios-app");
+      }
       document.body.dataset.wpAppScope = "main";
 
       if (!document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')) {
@@ -254,6 +259,7 @@
       style.textContent =
         "html.wp-standalone-app{background:#0b1020;color-scheme:dark}" +
         "body.wp-standalone-app{min-height:100svh;padding-top:max(10px,env(safe-area-inset-top));padding-right:max(10px,env(safe-area-inset-right));padding-bottom:max(18px,env(safe-area-inset-bottom));padding-left:max(10px,env(safe-area-inset-left));background:radial-gradient(circle at top left,rgba(107,124,255,.18),transparent 28%),radial-gradient(circle at top right,rgba(87,214,195,.14),transparent 24%),linear-gradient(180deg,#0b1020 0%,#10182f 100%);overscroll-behavior-y:contain}" +
+        "body.wp-standalone-app.wp-ios-app{padding-top:max(44px,env(safe-area-inset-top))}" +
         "body.wp-standalone-app::before{content:'';position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 22%),radial-gradient(circle at 20% 0%,rgba(255,255,255,.05),transparent 24%);z-index:0}" +
         "body.wp-standalone-app>*{position:relative;z-index:1}" +
         "body.wp-standalone-app .container,body.wp-standalone-app .shell,body.wp-standalone-app .auth-shell,body.wp-standalone-app main{max-width:min(1480px,calc(100vw - 2px));margin-inline:auto}" +
@@ -261,7 +267,7 @@
         "body.wp-standalone-app .header{border:1px solid rgba(255,255,255,.07);border-radius:24px;box-shadow:0 20px 44px rgba(0,0,0,.28);background:rgba(11,16,32,.28)}" +
         "body.wp-standalone-app .section{padding-bottom:max(28px,env(safe-area-inset-bottom))}" +
         "body.wp-standalone-app #wpInstallBanner,body.wp-standalone-app .wp-install{display:none!important}" +
-        "@media (max-width:720px){body.wp-standalone-app{padding-top:max(8px,env(safe-area-inset-top));padding-right:max(8px,env(safe-area-inset-right));padding-bottom:max(16px,env(safe-area-inset-bottom));padding-left:max(8px,env(safe-area-inset-left))}body.wp-standalone-app .header{border-radius:18px}}";
+        "@media (max-width:720px){body.wp-standalone-app{padding-top:max(8px,env(safe-area-inset-top));padding-right:max(8px,env(safe-area-inset-right));padding-bottom:max(16px,env(safe-area-inset-bottom));padding-left:max(8px,env(safe-area-inset-left))}body.wp-standalone-app.wp-ios-app{padding-top:max(44px,env(safe-area-inset-top))}body.wp-standalone-app .header{border-radius:18px}}";
       document.head.appendChild(style);
     };
 

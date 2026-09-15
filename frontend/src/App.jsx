@@ -96,10 +96,13 @@ function App() {
   const { t } = useLanguage();
 
   useEffect(() => {
-    document.body.classList.remove('mobile-theme', 'app-desktop-theme', 'website-theme', 'is-pwa');
+    document.body.classList.remove('mobile-theme', 'app-desktop-theme', 'website-theme', 'is-pwa', 'is-ios');
     
     if (isPWA) {
       document.body.classList.add('is-pwa');
+      if (isIOSMobile) {
+        document.body.classList.add('is-ios');
+      }
       if (isMobile) {
         document.body.classList.add('mobile-theme');
       } else {
@@ -111,7 +114,7 @@ function App() {
         document.body.classList.add('mobile-theme');
       }
     }
-  }, [isMobile, isPWA]);
+  }, [isMobile, isPWA, isIOSMobile]);
 
   useEffect(() => {
     const syncThemeColor = () => {
