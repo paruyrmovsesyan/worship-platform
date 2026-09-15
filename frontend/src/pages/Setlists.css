@@ -707,10 +707,13 @@ body.wp-standalone-app > .sla-modal-overlay {
 /* PWA Padding Scoping */
 body.wp-standalone-app .setlists-page.sl-pwa-enhanced,
 body.is-pwa .setlists-page.sl-pwa-enhanced {
-  padding: 4px 16px !important;
-  padding-top: 0px !important;
-  padding-bottom: calc(var(--bottom-nav-total-offset, 84px) + 24px) !important;
+  padding: 16px 16px calc(var(--bottom-nav-total-offset, 84px) + 24px) !important;
+  padding-top: 18px !important;
   max-width: 860px;
+}
+
+body.is-pwa.is-ios .setlists-page.sl-pwa-enhanced {
+  padding-top: 24px !important;
 }
 
 /* Header Enhancements */
