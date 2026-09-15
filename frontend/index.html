@@ -84,6 +84,10 @@
         min-height: 100% !important;
         overscroll-behavior-y: auto !important;
         overflow-y: auto !important;
+        overflow-anchor: none !important;
+      }
+      html.wp-standalone-app *, body.wp-standalone-app * {
+        overflow-anchor: none !important;
       }
       body.wp-standalone-app::before {
         display: none !important;

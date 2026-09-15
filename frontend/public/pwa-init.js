@@ -307,7 +307,7 @@
           "body.wp-admin-app{min-height:100dvh;margin:0;padding:0;overflow:hidden;overscroll-behavior:none}" +
           "body.wp-admin-app #wpInstallBanner,body.wp-admin-app .wp-install{display:none!important}"
         : "html.wp-standalone-app{background:#0b1020;color-scheme:dark}" +
-          "body.wp-standalone-app{min-height:100svh;padding-top:max(10px,env(safe-area-inset-top));padding-right:env(safe-area-inset-right, 0px);padding-bottom:max(18px,env(safe-area-inset-bottom));padding-left:env(safe-area-inset-left, 0px);overscroll-behavior-y:contain}" +
+          "body.wp-standalone-app{min-height:100svh;padding-top:max(10px,env(safe-area-inset-top));padding-right:env(safe-area-inset-right, 0px);padding-bottom:max(18px,env(safe-area-inset-bottom));padding-left:env(safe-area-inset-left, 0px);overscroll-behavior-y:contain;overflow-anchor:none}" +
           "body.wp-standalone-app.wp-ios-app{padding-top:max(44px,env(safe-area-inset-top))}" +
           "body.wp-main-app{background:radial-gradient(circle at top left,rgba(107,124,255,.18),transparent 28%),radial-gradient(circle at top right,rgba(87,214,195,.14),transparent 24%),linear-gradient(180deg,#0b1020 0%,#10182f 100%)}" +
           "body.wp-standalone-app::before{content:'';position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 22%),radial-gradient(circle at 20% 0%,rgba(255,255,255,.05),transparent 24%);z-index:0}" +

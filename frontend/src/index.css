@@ -73,6 +73,11 @@ body {
 
 body.is-pwa {
   overscroll-behavior-x: none;
+  overflow-anchor: none !important;
+}
+
+body.is-pwa * {
+  overflow-anchor: none !important;
 }
 
 body.is-pwa main {
@@ -195,17 +200,12 @@ main { flex: 1; }
     height: calc(max(env(safe-area-inset-top, 0px), 44px) + 1px);
   }
 
-  /* iOS 27 / Safari 27 Native Scroll Anchoring for PWA */
-  body.is-pwa {
-    overflow-anchor: auto;
-  }
-
-  body.is-pwa #wpAppDock,
-  body.is-pwa .mobile-bottom-nav,
-  body.is-pwa .toast-message,
-  body.is-pwa .modal-overlay,
-  body.is-pwa .seq-nav {
-    overflow-anchor: none;
+  /* Disable scroll anchoring completely on PWA to prevent scroll jitter/stutter */
+  body.is-pwa,
+  body.is-pwa #root,
+  body.is-pwa main,
+  body.is-pwa * {
+    overflow-anchor: none !important;
   }
   
   .desktop-only { display: none !important; }

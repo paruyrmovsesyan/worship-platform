@@ -258,7 +258,7 @@
       style.id = "wpStandaloneChromeStyles";
       style.textContent =
         "html.wp-standalone-app{background:#0b1020;color-scheme:dark}" +
-        "body.wp-standalone-app{min-height:100svh;padding-top:max(10px,env(safe-area-inset-top));padding-right:max(10px,env(safe-area-inset-right));padding-bottom:max(18px,env(safe-area-inset-bottom));padding-left:max(10px,env(safe-area-inset-left));background:radial-gradient(circle at top left,rgba(107,124,255,.18),transparent 28%),radial-gradient(circle at top right,rgba(87,214,195,.14),transparent 24%),linear-gradient(180deg,#0b1020 0%,#10182f 100%);overscroll-behavior-y:contain}" +
+        "body.wp-standalone-app{min-height:100svh;padding-top:max(10px,env(safe-area-inset-top));padding-right:max(10px,env(safe-area-inset-right));padding-bottom:max(18px,env(safe-area-inset-bottom));padding-left:max(10px,env(safe-area-inset-left));background:radial-gradient(circle at top left,rgba(107,124,255,.18),transparent 28%),radial-gradient(circle at top right,rgba(87,214,195,.14),transparent 24%),linear-gradient(180deg,#0b1020 0%,#10182f 100%);overscroll-behavior-y:contain;overflow-anchor:none}" +
         "body.wp-standalone-app.wp-ios-app{padding-top:max(44px,env(safe-area-inset-top))}" +
         "body.wp-standalone-app::before{content:'';position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 22%),radial-gradient(circle at 20% 0%,rgba(255,255,255,.05),transparent 24%);z-index:0}" +
         "body.wp-standalone-app>*{position:relative;z-index:1}" +
