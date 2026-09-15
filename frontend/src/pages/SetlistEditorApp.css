@@ -16,6 +16,11 @@
   -webkit-font-smoothing: antialiased;
 }
 
+body.is-pwa.is-ios .sla-page,
+body.wp-standalone-app.is-ios .sla-page {
+  padding-top: 36px !important;
+}
+
 /* ── Top Navigation Bar ── */
 .sla-nav-bar {
   display: flex;

@@ -196,8 +196,14 @@ main { flex: 1; }
   body.website-theme main { padding-top: var(--nav-height); }
 
   /* iOS 27 Standalone PWA Safe-Area & Blur Protection */
-  body.is-pwa.is-ios #root {
+  body.is-pwa.is-ios #root,
+  body.wp-standalone-app.is-ios #root {
     padding-top: max(env(safe-area-inset-top, 0px), 44px);
+  }
+
+  body.is-pwa.is-ios .page-container,
+  body.wp-standalone-app.is-ios .page-container {
+    padding-top: 36px !important;
   }
 
   /* Disable scroll anchoring and enforce smooth touch scrolling completely on PWA */

@@ -2,6 +2,16 @@
   padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 108px);
 }
 
+body.is-pwa .friends-page,
+body.wp-standalone-app .friends-page {
+  padding-top: 18px !important;
+}
+
+body.is-pwa.is-ios .friends-page,
+body.wp-standalone-app.is-ios .friends-page {
+  padding-top: 36px !important;
+}
+
 .friends-page-header {
   margin-bottom: 18px;
 }

@@ -712,8 +712,9 @@ body.is-pwa .setlists-page.sl-pwa-enhanced {
   max-width: 860px;
 }
 
-body.is-pwa.is-ios .setlists-page.sl-pwa-enhanced {
-  padding-top: 24px !important;
+body.is-pwa.is-ios .setlists-page.sl-pwa-enhanced,
+body.wp-standalone-app.is-ios .setlists-page.sl-pwa-enhanced {
+  padding-top: 36px !important;
 }
 
 /* Header Enhancements */

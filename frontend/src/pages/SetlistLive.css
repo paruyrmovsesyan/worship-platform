@@ -91,6 +91,11 @@ body.live-mode-active .app-content {
   padding-right: 16px;
 }
 
+body.is-pwa.is-ios .sll-header,
+body.wp-standalone-app.is-ios .sll-header {
+  padding-top: calc(max(env(safe-area-inset-top, 0px), 44px) + 20px) !important;
+}
+
 /* Back button */
 .sll-back {
   width: 36px;

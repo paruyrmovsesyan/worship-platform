@@ -980,3 +980,17 @@ body.light-mode .chat-friend-request-row {
     width: 100%;
   }
 }
+
+/* ══════════════════════════════════════════════
+   PWA DEDICATED CHATS LIST PADDING (iOS 27 SAFE)
+   ══════════════════════════════════════════════ */
+body.is-pwa .chats-list-page,
+body.wp-standalone-app .chats-list-page {
+  padding: 18px 16px 100px !important;
+}
+
+body.is-pwa.is-ios .chats-list-page,
+body.wp-standalone-app.is-ios .chats-list-page {
+  padding-top: 36px !important;
+}
+

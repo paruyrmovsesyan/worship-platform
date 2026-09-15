@@ -62,6 +62,11 @@ body.website-theme.mobile-theme .chat-page-container {
   flex-shrink: 0;
 }
 
+body.is-pwa.is-ios .chat-header,
+body.wp-standalone-app.is-ios .chat-header {
+  padding-top: calc(max(env(safe-area-inset-top, 0px), 44px) + 16px) !important;
+}
+
 .chat-header-left {
   display: flex;
   align-items: center;

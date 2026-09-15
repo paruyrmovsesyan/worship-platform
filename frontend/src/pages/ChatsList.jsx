@@ -522,7 +522,7 @@ export default function ChatsList({ isEmbedded = false }) {
   // ════════════════════════════════════════════════════════════════
   // PWA & EMBEDDED MODE DISPLAY (100% UNTOUCHED ORIGINAL LAYOUT)
   // ════════════════════════════════════════════════════════════════
-  const containerProps = isEmbedded ? { className: "embedded-chats" } : { className: "page-container animate-fade-in", style: { padding: '24px 16px', paddingBottom: '100px' } };
+  const containerProps = isEmbedded ? { className: "embedded-chats" } : { className: "page-container animate-fade-in chats-list-page", style: { paddingBottom: '100px' } };
 
   return (
     <div {...containerProps}>
