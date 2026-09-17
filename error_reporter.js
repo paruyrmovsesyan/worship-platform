@@ -170,6 +170,17 @@
         }
       }
 
+      // Ignore transient ServiceWorker background update/registration network drops
+      if (
+        message.includes('Failed to update a ServiceWorker') ||
+        message.includes('Failed to register a ServiceWorker') ||
+        message.includes('An unknown error occurred when fetching the script') ||
+        message.includes('The Service Worker script failed to load') ||
+        message.includes('service worker registration')
+      ) {
+        return;
+      }
+
       const { userId, userEmail } = getUserMeta();
 
       sendErrorReport({

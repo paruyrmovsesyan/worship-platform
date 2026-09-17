@@ -38,7 +38,7 @@ const APP_SHELL = [
   "/fav_bridge.js",
   "/assets/index.css?v=527",
   "/assets/index.js?v=527",
-  "/manifest.json?v=10",
+  "/manifest.json?v=11",
   "/favicon.png?v=2",
   "/apple-touch-icon-v7.png",
   "/icon-192-v7.png",

@@ -449,12 +449,17 @@
 
   window.addEventListener("load", function() {
     ensureStandaloneSourceParam();
+    if (!("serviceWorker" in navigator)) return;
     navigator.serviceWorker.register("/sw.js").then(function(reg) {
       announceAppClient(reg);
 
-      if (navigator.onLine) reg.update();
+      if (navigator.onLine && typeof reg.update === "function") {
+        reg.update().catch(function() {});
+      }
       window.addEventListener("online", function() {
-        reg.update();
+        if (typeof reg.update === "function") {
+          reg.update().catch(function() {});
+        }
         announceAppClient(reg);
       });
     }).catch(function(err) {

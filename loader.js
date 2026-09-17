@@ -1287,9 +1287,13 @@
           });
         });
 
-        if (navigator.onLine) reg.update();
+        if (navigator.onLine && typeof reg.update === "function") {
+          reg.update().catch(function() {});
+        }
         window.addEventListener("online", function() {
-          reg.update();
+          if (typeof reg.update === "function") {
+            reg.update().catch(function() {});
+          }
           announceAppClient(reg);
         });
       }).catch(function(err) {
