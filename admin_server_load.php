@@ -359,6 +359,127 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && ($_GET['action'] ?? '') 
     }
     exit;
 }
+// ── STORAGE SCANNER & CACHING HELPERS ─────────────────────────
+function wp_server_scan_dir_bytes(string $dir): int {
+    if (!is_dir($dir) || !is_readable($dir)) {
+        return 0;
+    }
+    // du -sk is fast (approx 10ms on Linux / cPanel / macOS)
+    $cmd = 'du -sk ' . escapeshellarg($dir) . ' 2>/dev/null';
+    $output = @shell_exec($cmd);
+    if ($output && preg_match('/^(\d+)/', trim($output), $m)) {
+        return (int)$m[1] * 1024;
+    }
+    // Fallback: fast recursive directory iteration with safety limit
+    $size = 0;
+    try {
+        $flags = FilesystemIterator::SKIP_DOTS;
+        $it = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($dir, $flags),
+            RecursiveIteratorIterator::LEAVES_ONLY
+        );
+        $count = 0;
+        foreach ($it as $file) {
+            $count++;
+            if ($count > 40000) break;
+            $size += $file->getSize();
+        }
+    } catch (Throwable $e) {}
+    return $size;
+}
+
+function wp_server_detect_public_html(): array {
+    $candidates = [
+        realpath(__DIR__ . '/../public_html'),
+        realpath(__DIR__ . '/../../public_html'),
+        '/home2/pmstudio/public_html',
+        '/home/pmstudio/public_html',
+    ];
+    foreach ($candidates as $c) {
+        if ($c && is_dir($c) && is_readable($c)) {
+            return [
+                'detected' => true,
+                'name' => 'pmstudio.am (public_html)',
+                'path' => $c,
+            ];
+        }
+    }
+    return [
+        'detected' => false,
+        'name' => 'pmstudio.am (public_html)',
+        'path' => '',
+    ];
+}
+
+function wp_server_get_cached_storage(bool $forceRefresh = false): array {
+    $cacheFile = __DIR__ . '/data/server_storage_cache.json';
+    $cacheTtl = 900; // 15 minutes TTL
+
+    if (!$forceRefresh && is_file($cacheFile) && is_readable($cacheFile)) {
+        $raw = @file_get_contents($cacheFile);
+        if ($raw) {
+            $cached = @json_decode($raw, true);
+            if (is_array($cached) && !empty($cached['cached_at']) && (time() - (int)$cached['cached_at'] < $cacheTtl)) {
+                $cached['is_cached'] = true;
+                return $cached;
+            }
+        }
+    }
+
+    $worshipRoot = __DIR__;
+    $uploadsBytes = wp_server_scan_dir_bytes($worshipRoot . '/uploads');
+    $audioBytes = wp_server_scan_dir_bytes($worshipRoot . '/audio');
+    $assetsBytes = wp_server_scan_dir_bytes($worshipRoot . '/assets');
+    $frontendBytes = wp_server_scan_dir_bytes($worshipRoot . '/frontend');
+    $dataBytes = wp_server_scan_dir_bytes($worshipRoot . '/data') + wp_server_scan_dir_bytes($worshipRoot . '/logs');
+    $worshipTotalBytes = wp_server_scan_dir_bytes($worshipRoot);
+
+    $otherInfo = wp_server_detect_public_html();
+    $otherFilesBytes = 0;
+    if ($otherInfo['detected'] && $otherInfo['path'] !== '') {
+        $otherFilesBytes = wp_server_scan_dir_bytes($otherInfo['path']);
+    }
+
+    $payload = [
+        'cached_at' => time(),
+        'cached_at_formatted' => date('H:i:s'),
+        'is_cached' => false,
+        'worship' => [
+            'total_bytes' => $worshipTotalBytes,
+            'uploads_bytes' => $uploadsBytes,
+            'audio_bytes' => $audioBytes,
+            'assets_bytes' => $assetsBytes,
+            'frontend_bytes' => $frontendBytes,
+            'data_bytes' => $dataBytes,
+        ],
+        'other' => [
+            'detected' => $otherInfo['detected'],
+            'name' => $otherInfo['name'],
+            'path' => $otherInfo['path'],
+            'files_bytes' => $otherFilesBytes,
+        ]
+    ];
+
+    if (!is_dir(dirname($cacheFile))) {
+        @mkdir(dirname($cacheFile), 0775, true);
+    }
+    @file_put_contents($cacheFile, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+    return $payload;
+}
+
+// ── STORAGE RESCAN AJAX ENDPOINT ─────────────────────────────
+if (($_GET['action'] ?? '') === 'refresh_storage') {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    $refreshed = wp_server_get_cached_storage(true);
+    echo json_encode([
+        'ok' => true,
+        'storage' => $refreshed,
+        'cached_at' => $refreshed['cached_at_formatted'],
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 // ── DATA COLLECTOR FUNCTION ─────────────────────────────────
 function get_server_metrics(): array {
@@ -451,8 +572,21 @@ function get_server_metrics(): array {
     $diskUsedGb = round($diskUsedB / 1024 / 1024 / 1024, 2);
     $diskPct = round(($diskUsedB / $diskTotalB) * 100, 1);
 
+    // Cached Storage Breakdown (Worship vs pmstudio.am / public_html)
+    $storageData = wp_server_get_cached_storage(false);
+    $worshipFilesBytes = (int)($storageData['worship']['total_bytes'] ?? 0);
+    $otherFilesBytes = (int)($storageData['other']['files_bytes'] ?? 0);
+
     // Database Metrics
     $dbConnected = false;
+    $worshipDbName = 'pmstudio_wolarm';
+    $worshipDbBytes = 0;
+    $worshipDbTables = 0;
+    $worshipConns = 0;
+    $worshipRunning = 0;
+    $otherConns = 0;
+    $otherRunning = 0;
+
     $dbMetrics = [
         'queries' => 0,
         'threads_connected' => 0,
@@ -504,6 +638,52 @@ function get_server_metrics(): array {
             'uptime_sec' => $uptime,
             'qps' => $uptime > 0 ? round($questions / $uptime, 2) : 0,
         ];
+
+        // Worship Database Isolation (pmstudio_wolarm)
+        try {
+            $curDb = $pdo->query("SELECT DATABASE()")->fetchColumn();
+            if ($curDb && trim((string)$curDb) !== '') {
+                $worshipDbName = trim((string)$curDb);
+            }
+        } catch (Throwable $e) {}
+
+        try {
+            $tStmt = $pdo->prepare("SELECT COUNT(*) as t_count, COALESCE(SUM(data_length + index_length), 0) as total_size FROM information_schema.TABLES WHERE table_schema = ?");
+            $tStmt->execute([$worshipDbName]);
+            $tRow = $tStmt->fetch(PDO::FETCH_ASSOC);
+            if ($tRow) {
+                $worshipDbTables = (int)($tRow['t_count'] ?? 0);
+                $worshipDbBytes = (int)($tRow['total_size'] ?? 0);
+            }
+        } catch (Throwable $e) {}
+
+        // Separate Worship vs Other/System connections and running queries
+        try {
+            $procStmt = $pdo->query("SELECT ID, USER, HOST, DB, COMMAND, TIME, STATE FROM information_schema.PROCESSLIST");
+            if ($procStmt) {
+                while ($pr = $procStmt->fetch(PDO::FETCH_ASSOC)) {
+                    $pDb = (string)($pr['DB'] ?? '');
+                    $pCmd = (string)($pr['COMMAND'] ?? '');
+                    $pUser = (string)($pr['USER'] ?? '');
+                    $isRun = ($pCmd !== 'Sleep' && $pCmd !== 'Binlog Dump' && $pCmd !== 'Connect');
+                    $isWorship = ($pDb === $worshipDbName || stripos($pUser, 'wolarm') !== false || stripos($pDb, 'wolarm') !== false);
+                    if ($isWorship) {
+                        $worshipConns++;
+                        if ($isRun) $worshipRunning++;
+                    } else {
+                        $otherConns++;
+                        if ($isRun) $otherRunning++;
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+            $worshipConns = (int)($statusVars['Threads_connected'] ?? 1);
+            $worshipRunning = (int)($statusVars['Threads_running'] ?? 0);
+        }
+        $totalThreadsConn = (int)($statusVars['Threads_connected'] ?? 0);
+        if ($otherConns === 0 && $totalThreadsConn > $worshipConns) {
+            $otherConns = $totalThreadsConn - $worshipConns;
+        }
     } catch (Throwable $e) {}
 
     // Audience Metrics
@@ -720,25 +900,55 @@ function get_server_metrics(): array {
         $audience['error'] = true;
     }
 
-    // OPcache
+    // OPcache (with Project Isolation)
     $opcacheStatus = [
         'enabled' => false,
         'memory_used_mb' => 0,
         'memory_free_mb' => 0,
         'hit_rate' => 0,
         'cached_scripts' => 0,
+        'worship_scripts' => 0,
+        'worship_memory_mb' => 0,
+        'other_scripts' => 0,
+        'other_memory_mb' => 0,
     ];
     if (function_exists('opcache_get_status')) {
-        $st = @opcache_get_status(false);
+        $st = @opcache_get_status(true);
         if ($st && !empty($st['opcache_enabled'])) {
             $mem = $st['memory_usage'] ?? [];
             $stats = $st['opcache_statistics'] ?? [];
+            $totalScripts = (int)($stats['num_cached_scripts'] ?? 0);
+            $scriptsList = $st['scripts'] ?? [];
+            $wDir = realpath(__DIR__) ?: __DIR__;
+            $worshipScriptsCount = 0;
+            $worshipScriptsMem = 0;
+            $otherScriptsCount = 0;
+            $otherScriptsMem = 0;
+            if (!empty($scriptsList) && is_array($scriptsList)) {
+                foreach ($scriptsList as $sKey => $sVal) {
+                    $p = (string)($sVal['full_path'] ?? $sKey);
+                    $m = (int)($sVal['memory_consumption'] ?? 0);
+                    if (strpos($p, $wDir) === 0) {
+                        $worshipScriptsCount++;
+                        $worshipScriptsMem += $m;
+                    } else {
+                        $otherScriptsCount++;
+                        $otherScriptsMem += $m;
+                    }
+                }
+            } else {
+                $worshipScriptsCount = $totalScripts;
+            }
             $opcacheStatus = [
                 'enabled' => true,
                 'memory_used_mb' => round(($mem['used_memory'] ?? 0) / 1024 / 1024, 1),
                 'memory_free_mb' => round(($mem['free_memory'] ?? 0) / 1024 / 1024, 1),
                 'hit_rate' => round($stats['opcache_hit_rate'] ?? 0, 1),
-                'cached_scripts' => (int)($stats['num_cached_scripts'] ?? 0),
+                'cached_scripts' => $totalScripts,
+                'worship_scripts' => $worshipScriptsCount,
+                'worship_memory_mb' => round($worshipScriptsMem / 1024 / 1024, 2),
+                'other_scripts' => $otherScriptsCount,
+                'other_memory_mb' => round($otherScriptsMem / 1024 / 1024, 2),
             ];
         }
     }
@@ -982,6 +1192,40 @@ function get_server_metrics(): array {
     $diskReasonRu = "Причина: Использование дискового пространства ({$diskUsedGb} ГБ занято, осталось {$diskFreeGb} ГБ)";
     $diskReasonEn = "Cause: Disk storage utilization ({$diskUsedGb} GB used, {$diskFreeGb} GB available)";
 
+    // Project Footprint & Storage Breakdown
+    $worshipTotalBytes = $worshipFilesBytes + $worshipDbBytes;
+    $worshipFilesPct = $diskTotalB > 0 ? round(($worshipFilesBytes / $diskTotalB) * 100, 2) : 0;
+    $worshipDbPct = $diskTotalB > 0 ? round(($worshipDbBytes / $diskTotalB) * 100, 2) : 0;
+    $otherFilesPct = $diskTotalB > 0 ? round((($otherFilesBytes > 0 ? $otherFilesBytes : max(0, $diskUsedB - $worshipFilesBytes)) / $diskTotalB) * 100, 2) : 0;
+    $freeDiskPct = $diskTotalB > 0 ? round(($diskFreeB / $diskTotalB) * 100, 2) : 0;
+
+    $totalDbConnsTracked = max(1, $worshipConns + $otherConns);
+    $worshipConnPct = round(($worshipConns / $totalDbConnsTracked) * 100, 1);
+    $otherConnPct = max(0, round(100 - $worshipConnPct, 1));
+
+    $totalRunningQueries = $worshipRunning + $otherRunning;
+    $worshipRunningPct = $totalRunningQueries > 0 ? round(($worshipRunning / $totalRunningQueries) * 100, 1) : 0;
+
+    // Attribution Score (0-100%) - How much of current workload is Worship?
+    $activeLoadScore = 5; // idle baseline
+    if ($worshipRunning > 0) {
+        $activeLoadScore = round(($worshipRunning / max(1, $worshipRunning + $otherRunning)) * 100);
+    } elseif ($online5mVal > 0) {
+        $activeLoadScore = min(85, max(20, $online5mVal * 8));
+    }
+    $worshipAttributionScore = max(5, min(95, $activeLoadScore));
+    $otherAttributionScore = max(0, 100 - $worshipAttributionScore);
+
+    if ($worshipRunning > 0 || $online5mVal > 0) {
+        $attributionReasonHy = "Սերվերի ընթացիկ ակտիվության մեծ մասը գալիս է Worship Platform-ից ({$online5mVal} օնլայն, {$worshipRunning} running հարցում)։";
+        $attributionReasonRu = "Большая часть активности сервера исходит от Worship Platform ({$online5mVal} онлайн, {$worshipRunning} активных запросов).";
+        $attributionReasonEn = "Current server activity is driven by Worship Platform ({$online5mVal} online, {$worshipRunning} active queries).";
+    } else {
+        $attributionReasonHy = "Worship Platform-ը գտնվում է օպտիմալ/հանգիստ վիճակում։ Ծանրաբեռնվածությունը գալիս է pmstudio.am-ից կամ սերվերային ֆոնային պրոցեսներից։";
+        $attributionReasonRu = "Worship Platform в оптимальном/спокойном режиме. Нагрузка создается процессами pmstudio.am или ОС.";
+        $attributionReasonEn = "Worship Platform is running in an optimal/idle state. Background server processes or pmstudio.am account for load.";
+    }
+
     $factors = [
         'cpu' => [
             'key' => 'cpu',
@@ -1036,6 +1280,56 @@ function get_server_metrics(): array {
         'timestamp' => date('H:i:s'),
         'overall_load_pct' => $overallPct,
         'top_factor' => $topFactor,
+        'project_attribution' => [
+            'worship_share_pct' => $worshipAttributionScore,
+            'other_share_pct' => $otherAttributionScore,
+            'reason_hy' => $attributionReasonHy,
+            'reason_ru' => $attributionReasonRu,
+            'reason_en' => $attributionReasonEn,
+        ],
+        'storage_breakdown' => [
+            'cached_at' => $storageData['cached_at_formatted'] ?? date('H:i:s'),
+            'is_cached' => !empty($storageData['is_cached']),
+            'worship_files_bytes' => $worshipFilesBytes,
+            'worship_files_mb' => round($worshipFilesBytes / 1048576, 1),
+            'worship_files_gb' => round($worshipFilesBytes / 1073741824, 2),
+            'worship_db_bytes' => $worshipDbBytes,
+            'worship_db_mb' => round($worshipDbBytes / 1048576, 2),
+            'worship_db_gb' => round($worshipDbBytes / 1073741824, 3),
+            'worship_db_tables' => $worshipDbTables,
+            'worship_total_bytes' => $worshipTotalBytes,
+            'worship_total_mb' => round($worshipTotalBytes / 1048576, 1),
+            'worship_total_gb' => round($worshipTotalBytes / 1073741824, 2),
+            'other_detected' => !empty($storageData['other']['detected']),
+            'other_name' => $storageData['other']['name'] ?? 'pmstudio.am (public_html)',
+            'other_path' => $storageData['other']['path'] ?? '',
+            'other_files_bytes' => $otherFilesBytes,
+            'other_files_mb' => round($otherFilesBytes / 1048576, 1),
+            'other_files_gb' => round($otherFilesBytes / 1073741824, 2),
+            'server_total_gb' => $diskTotalGb,
+            'server_free_gb' => $diskFreeGb,
+            'server_used_gb' => $diskUsedGb,
+            'worship_files_pct' => $worshipFilesPct,
+            'worship_db_pct' => $worshipDbPct,
+            'other_files_pct' => $otherFilesPct,
+            'free_disk_pct' => $freeDiskPct,
+            'breakdown' => [
+                'uploads_mb' => round(($storageData['worship']['uploads_bytes'] ?? 0) / 1048576, 1),
+                'audio_mb' => round(($storageData['worship']['audio_bytes'] ?? 0) / 1048576, 1),
+                'frontend_mb' => round(($storageData['worship']['frontend_bytes'] ?? 0) / 1048576, 1),
+                'data_mb' => round(($storageData['worship']['data_bytes'] ?? 0) / 1048576, 1),
+                'core_mb' => round(max(0, $worshipFilesBytes - ($storageData['worship']['uploads_bytes'] ?? 0) - ($storageData['worship']['audio_bytes'] ?? 0) - ($storageData['worship']['frontend_bytes'] ?? 0) - ($storageData['worship']['data_bytes'] ?? 0)) / 1048576, 1),
+            ],
+        ],
+        'db_attribution' => [
+            'worship_db_name' => $worshipDbName,
+            'worship_conns' => $worshipConns,
+            'worship_running' => $worshipRunning,
+            'other_conns' => $otherConns,
+            'other_running' => $otherRunning,
+            'worship_conn_pct' => $worshipConnPct,
+            'other_conn_pct' => $otherConnPct,
+        ],
         'cpu' => [
             'cores' => $cpuCores,
             'load_1m' => $load[0],

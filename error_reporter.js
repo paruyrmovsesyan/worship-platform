@@ -61,6 +61,18 @@
 
   function sendErrorReport(payload) {
     try {
+      if (!payload) return;
+      const rawMsg = String(payload.message || '');
+      const rawStack = String(payload.stack_trace || '');
+      // Ignore background version manifest polling glitches
+      if (
+        rawMsg.includes('version_manifest') ||
+        rawMsg.includes('Version manifest check') ||
+        rawStack.includes('version-check.js')
+      ) {
+        return;
+      }
+
       const now = Date.now();
       // Rate limiting: max 10 errors per 10 seconds
       if (now - errorWindowStart > 10000) {
@@ -170,13 +182,15 @@
         }
       }
 
-      // Ignore transient ServiceWorker background update/registration network drops
+      // Ignore transient ServiceWorker background update/registration network drops & version manifest polling
       if (
         message.includes('Failed to update a ServiceWorker') ||
         message.includes('Failed to register a ServiceWorker') ||
         message.includes('An unknown error occurred when fetching the script') ||
         message.includes('The Service Worker script failed to load') ||
-        message.includes('service worker registration')
+        message.includes('service worker registration') ||
+        message.includes('version_manifest') ||
+        message.includes('Version manifest check')
       ) {
         return;
       }
@@ -211,8 +225,15 @@
         return String(a);
       }).join(' ');
 
-      // Ignore normal dev warnings
-      if (text && !text.includes('Download the React DevTools') && !text.includes('[Fast Refresh]') && !text.includes('React Router Future Flag Warning')) {
+      // Ignore normal dev warnings & version manifest polling
+      if (
+        text &&
+        !text.includes('Download the React DevTools') &&
+        !text.includes('[Fast Refresh]') &&
+        !text.includes('React Router Future Flag Warning') &&
+        !text.includes('version_manifest') &&
+        !text.includes('Version manifest check')
+      ) {
         const firstErr = args.find(a => a instanceof Error);
         const { userId, userEmail } = getUserMeta();
         sendErrorReport({

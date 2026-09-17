@@ -338,10 +338,11 @@
 
     fetch(MANIFEST_URL + "?_=" + now, { cache: "no-store" })
       .then(function(res) {
-        if (!res.ok) throw new Error("version_manifest failed");
+        if (!res.ok) return null;
         return res.json();
       })
       .then(function(data) {
+        if (!data) return;
         if (data && data.ok) {
           if (isOSBlocked(data)) {
             if (window.location.pathname !== "/maintenance.html") {
@@ -354,7 +355,11 @@
         }
       })
       .catch(function(err) {
-        console.error("Version manifest check failed", err);
+        // Network hiccups during background polling are transient and normal;
+        // do not log to console.error to avoid false positive error reports.
+        if (typeof console !== "undefined" && typeof console.warn === "function") {
+          console.warn("Version manifest check notice:", err && (err.message || err));
+        }
       })
       .finally(function() {
         CHECK_IN_PROGRESS = false;

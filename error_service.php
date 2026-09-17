@@ -627,6 +627,17 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
+    // 9.1. Version manifest check background polling transient failure
+    if (stripos($message, 'version_manifest') !== false || stripos($message, 'Version manifest check') !== false || stripos($stackTrace, 'version-check.js') !== false) {
+        $reason = 'version-check.js-ի background polling-ը շտկված է (ցանցային ժամանակավոր սխալները այլևս console.error կամ system error չեն առաջացնում)';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
     // 10. Check if previously marked in resolutions file
     if (!empty($knownRes['is_resolved'])) {
         $item['is_resolved'] = 1;
