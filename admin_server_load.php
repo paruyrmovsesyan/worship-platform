@@ -1680,6 +1680,209 @@ $activePage = 'server_load';
       outline: none;
       cursor: pointer;
     }
+
+    /* Scope Selector Navigation */
+    .scope-nav-container {
+      margin-bottom: 24px;
+    }
+    .scope-nav-bar {
+      display: inline-flex;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      padding: 4px;
+      border-radius: 14px;
+      gap: 6px;
+      box-shadow: var(--shadow-sm);
+    }
+    .scope-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .scope-pill-btn:hover {
+      color: var(--text);
+      background: rgba(67,24,255,0.04);
+    }
+    .scope-pill-btn.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(58,45,255,0.25);
+    }
+    .scope-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .scope-desc-note {
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 500;
+      margin-top: 8px;
+      padding-left: 4px;
+    }
+
+    /* Multi-Segment Storage Bar */
+    .multi-seg-bar {
+      display: flex;
+      width: 100%;
+      height: 22px;
+      border-radius: 11px;
+      overflow: hidden;
+      background: rgba(163,174,209,0.18);
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+      margin: 14px 0 16px;
+    }
+    .seg-part {
+      height: 100%;
+      transition: width 0.5s ease;
+      min-width: 2px;
+      position: relative;
+    }
+    .seg-worship-files { background: #3A2DFF; }
+    .seg-worship-db    { background: #8B5CF6; }
+    .seg-other-files   { background: #F59E0B; }
+    .seg-free-space    { background: #05CD99; }
+
+    .seg-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .seg-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .seg-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+    }
+
+    /* Storage Footprint Breakdown Grid */
+    .storage-breakdown-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .storage-mini-box {
+      background: rgba(163,174,209,0.06);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+    }
+    .storage-mini-box .box-val {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .storage-mini-box .box-lbl {
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Database Attribution Grid */
+    .db-attr-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    @media (max-width: 768px) {
+      .db-attr-grid { grid-template-columns: 1fr; }
+    }
+    .db-attr-col {
+      background: rgba(163,174,209,0.05);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .db-attr-col.highlight-worship {
+      border-color: rgba(58,45,255,0.3);
+      background: linear-gradient(180deg, rgba(58,45,255,0.03) 0%, rgba(58,45,255,0.01) 100%);
+    }
+    .db-attr-col-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed var(--line);
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    /* Sparkline SVGs */
+    .sparkline-container {
+      display: inline-flex;
+      align-items: center;
+      height: 28px;
+      margin-left: auto;
+    }
+    .sparkline-svg {
+      width: 90px;
+      height: 26px;
+      overflow: visible;
+    }
+
+    /* Attribution Score Banner */
+    .attr-bar-container {
+      margin-top: 14px;
+      padding: 12px 16px;
+      background: rgba(58,45,255,0.04);
+      border: 1px solid rgba(58,45,255,0.15);
+      border-radius: 10px;
+    }
+    .attr-bar-track {
+      display: flex;
+      height: 12px;
+      border-radius: 6px;
+      overflow: hidden;
+      background: rgba(163,174,209,0.2);
+      margin: 8px 0;
+    }
+    .attr-bar-fill-worship {
+      background: var(--primary);
+      transition: width 0.5s ease;
+    }
+    .attr-bar-fill-other {
+      background: #F59E0B;
+      transition: width 0.5s ease;
+    }
+    .latency-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: rgba(5,205,153,0.1);
+      color: var(--success);
+      border: 1px solid rgba(5,205,153,0.25);
+    }
   </style>
 </head>
 <body class="wp-admin-app">
