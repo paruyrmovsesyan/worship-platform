@@ -1,8 +1,11 @@
 .setlists-page {
   padding: 1.25rem 1.5rem;
+  width: 100%;
   max-width: 1000px;
   margin: 0 auto;
   padding-bottom: 100px;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* Header */
@@ -719,7 +722,7 @@ body.wp-standalone-app.is-ios .setlists-page.sl-pwa-enhanced {
 
 body.is-pwa.is-android .setlists-page.sl-pwa-enhanced,
 body.wp-standalone-app:not(.is-ios) .setlists-page.sl-pwa-enhanced {
-  padding-top: 28px !important;
+  padding-top: 14px !important;
 }
 
 /* Header Enhancements */
@@ -814,9 +817,11 @@ body.wp-standalone-app:not(.is-ios) .setlists-page.sl-pwa-enhanced {
 /* Stats Bar */
 .sl-app-stats-bar {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
   margin-bottom: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 @media (min-width: 640px) {
   .sl-app-stats-bar {
@@ -826,12 +831,15 @@ body.wp-standalone-app:not(.is-ios) .setlists-page.sl-pwa-enhanced {
 .sl-app-stat-card {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  padding: 12px 14px;
+  padding: 11px 12px;
   transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 .sl-app-stat-card:hover {
   background: rgba(255, 255, 255, 0.06);
@@ -862,6 +870,7 @@ body.wp-standalone-app:not(.is-ios) .setlists-page.sl-pwa-enhanced {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1;
 }
 .sl-app-stat-val {
   font-size: 1.15rem;
@@ -870,9 +879,11 @@ body.wp-standalone-app:not(.is-ios) .setlists-page.sl-pwa-enhanced {
   line-height: 1.2;
 }
 .sl-app-stat-lbl {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   color: var(--color-text-secondary);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sl-app-stat-card.upcoming-card {
   cursor: pointer;

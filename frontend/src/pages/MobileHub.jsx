@@ -268,8 +268,9 @@ export default function MobileHub() {
                 border: 'none',
                 background: 'transparent',
                 color: 'var(--color-text-primary)',
-                fontSize: '1.1rem',
+                fontSize: 'clamp(0.92rem, 3.8vw, 1.05rem)',
                 width: '100%',
+                minWidth: 0,
                 outline: 'none',
                 fontWeight: '500'
               }}

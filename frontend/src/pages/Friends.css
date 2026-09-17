@@ -14,7 +14,7 @@ body.wp-standalone-app.is-ios .friends-page {
 
 body.is-pwa.is-android .friends-page,
 body.wp-standalone-app:not(.is-ios) .friends-page {
-  padding-top: 28px !important;
+  padding-top: 14px !important;
 }
 
 .friends-page-header {
@@ -218,24 +218,32 @@ body.wp-standalone-app:not(.is-ios) .friends-page {
 .friends-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
   margin-top: 14px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .friends-summary-card {
-  padding: 14px 14px 12px;
-  border-radius: 18px;
+  padding: 10px 8px;
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.035);
   backdrop-filter: blur(14px);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .friends-summary-card span {
-  font-size: 0.78rem;
+  font-size: clamp(0.68rem, 2.6vw, 0.78rem);
   color: rgba(255, 255, 255, 0.62);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .friends-summary-card strong {

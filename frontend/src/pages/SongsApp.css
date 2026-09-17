@@ -4,13 +4,16 @@
 
 .songs-page {
   padding: 16px 16px 120px;
+  width: 100%;
   max-width: 800px;
   margin: 0 auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 body.is-pwa .songs-page,
 body.wp-standalone-app .songs-page {
-  padding-top: 18px;
+  padding-top: 14px;
 }
 
 body.is-pwa.is-ios .songs-page,
@@ -20,7 +23,7 @@ body.wp-standalone-app.is-ios .songs-page {
 
 body.is-pwa.is-android .songs-page,
 body.wp-standalone-app:not(.is-ios) .songs-page {
-  padding-top: 28px !important;
+  padding-top: 14px !important;
 }
 
 /* Hide PWA dock when songbook modal is open */
@@ -88,18 +91,21 @@ body.website-theme > .songs-back-to-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
 }
 
 .songs-title {
-  font-size: 30px;
+  font-size: clamp(20px, 5.5vw, 30px);
   font-weight: 800;
   margin: 0;
   color: #fff;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   letter-spacing: -0.5px;
+  min-width: 0;
 }
 
 .count-badge {
@@ -109,6 +115,7 @@ body.website-theme > .songs-back-to-top {
   padding: 3px 10px;
   border-radius: 16px;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .random-song-btn {
@@ -127,6 +134,8 @@ body.website-theme > .songs-back-to-top {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .random-song-btn:active {

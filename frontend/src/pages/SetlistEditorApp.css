@@ -11,6 +11,7 @@
   padding: 4px 16px calc(env(safe-area-inset-bottom, 0px) + 100px);
   min-height: 100dvh;
   box-sizing: border-box;
+  overflow-x: hidden;
   color: var(--color-text-primary, #f5f7fb);
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -23,7 +24,7 @@ body.wp-standalone-app.is-ios .sla-page {
 
 body.is-pwa.is-android .sla-page,
 body.wp-standalone-app:not(.is-ios) .sla-page {
-  padding-top: 28px !important;
+  padding-top: 14px !important;
 }
 
 /* ── Top Navigation Bar ── */

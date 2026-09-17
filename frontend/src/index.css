@@ -207,15 +207,34 @@ main { flex: 1; }
     padding-top: 36px !important;
   }
 
-  /* Android Standalone PWA Safe Spacing */
+  /* Android Standalone PWA Spacing: native status bar is rendered above webview */
   body.is-pwa.is-android #root,
   body.wp-standalone-app:not(.is-ios) #root {
-    padding-top: max(env(safe-area-inset-top, 0px), 16px);
+    padding-top: env(safe-area-inset-top, 0px);
   }
 
   body.is-pwa.is-android .page-container,
   body.wp-standalone-app:not(.is-ios) .page-container {
-    padding-top: 28px !important;
+    padding-top: 14px !important;
+  }
+
+  /* Enforce strict viewport width bounds to prevent horizontal overflow/clipping on Android */
+  body.is-pwa,
+  body.wp-standalone-app {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  body.is-pwa #root,
+  body.wp-standalone-app #root,
+  body.is-pwa .app-container,
+  body.wp-standalone-app .app-container,
+  body.is-pwa main,
+  body.wp-standalone-app main {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    box-sizing: border-box;
   }
 
   /* Disable scroll anchoring and enforce smooth touch scrolling completely on PWA */

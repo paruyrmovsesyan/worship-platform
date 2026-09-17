@@ -2,6 +2,8 @@
   width: min(100%, 1040px);
   margin: 0 auto;
   padding: 24px 20px calc(var(--bottom-nav-total-offset, 88px) + 40px);
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .transpose-header {
@@ -318,7 +320,7 @@
   }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 580px) {
   .transpose-controls {
     grid-template-columns: 1fr;
   }
