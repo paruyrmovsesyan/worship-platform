@@ -95,6 +95,49 @@ $i18n = [
         'overall_summary' => 'Ընդհանուր սերվերային ռեսուրսների օգտագործում (CPU, RAM, Disk, DB)',
         'top_factor_title' => 'Գլխավոր ծանրաբեռնող ռեսուրսը՝',
         'top_factor_none' => 'Բոլոր ռեսուրսները աշխատում են օպտիմալ',
+        // Scope Selector
+        'scope_worship_tab' => 'Worship Platform',
+        'scope_comparative_tab' => 'Համեմատական',
+        'scope_all_tab' => 'Ամբողջ Սերվեր',
+        'scope_worship_desc' => 'Ցուցանիշներ՝ բացառապես worship.pmstudio.am կայքի և ծրագրի համար',
+        'scope_comparative_desc' => 'Worship Platform vs pmstudio.am (public_html) համեմատություն',
+        'scope_all_desc' => 'Սերվերի բոլոր ռեսուրսների ընդհանուր պատկեր',
+        // Attribution Banner
+        'attribution_title' => 'Ծանրաբեռնվածության վերագրում',
+        'worship_platform_label' => 'Worship Platform',
+        'other_projects_label' => 'pmstudio.am / Այլ',
+        'latency_label' => 'Ստուգման ուշացում',
+        // Storage Card
+        'storage_card_title' => 'Սկավառակի Footprint (ծրագրերի կողմից)',
+        'worship_files_label' => 'Worship ֆայլեր',
+        'worship_db_label' => 'Worship DB',
+        'other_files_label' => 'pmstudio.am (public_html)',
+        'free_space_label' => 'Ազատ տարածք',
+        'storage_uploads_lbl' => 'Uploads',
+        'storage_audio_lbl' => 'Audio',
+        'storage_frontend_lbl' => 'Frontend/Assets',
+        'storage_data_lbl' => 'Data/Logs',
+        'storage_core_lbl' => 'Core ֆայլեր',
+        'storage_db_lbl' => 'DB (\$worshipDbName)',
+        'rescan_btn' => 'Վերահաշվարկել',
+        'rescan_running' => 'Հաշվում է...',
+        'last_scanned' => 'Վերջ. հաշվ.',
+        'other_detected_yes' => 'Հայտնաբերված է',
+        'other_detected_no' => 'Չի հայտնաբերված',
+        // DB Attribution Card
+        'db_attr_title' => 'Բազայի Ճանաչում (pmstudio_wolarm vs Այլ)',
+        'worship_db_col_title' => 'Worship (pmstudio_wolarm)',
+        'other_db_col_title' => 'pmstudio.am / Այլ DB',
+        'db_worship_conns_lbl' => 'Worship Connections',
+        'db_worship_running_lbl' => 'Worship Running Queries',
+        'db_worship_tables_lbl' => 'DB Tables (pmstudio_wolarm)',
+        'db_worship_size_lbl' => 'DB Տվյալների Ծավալ',
+        'db_other_conns_lbl' => 'Այլ Connections',
+        'db_other_running_lbl' => 'Այլ Running Queries',
+        // OPcache Attribution
+        'op_worship_scripts' => 'Worship PHP Ֆայլեր (OPcache)',
+        'op_worship_mem' => 'Worship OPcache RAM',
+        'op_other_scripts' => 'Այլ PHP Ֆայլեր (OPcache)',
     ],
     'ru' => [
         'page_title' => 'Нагрузка сервера — Worship Platform Admin',
@@ -175,6 +218,49 @@ $i18n = [
         'overall_summary' => 'Суммарное использование ресурсов сервера (CPU, RAM, Диск, БД)',
         'top_factor_title' => 'Главный фактор нагрузки:',
         'top_factor_none' => 'Все ресурсы работают оптимально',
+        // Scope Selector
+        'scope_worship_tab' => 'Worship Platform',
+        'scope_comparative_tab' => 'Сравнение',
+        'scope_all_tab' => 'Весь Сервер',
+        'scope_worship_desc' => 'Метрики только для worship.pmstudio.am (сайт и приложение)',
+        'scope_comparative_desc' => 'Worship Platform vs pmstudio.am (public_html)',
+        'scope_all_desc' => 'Общая картина всех ресурсов сервера',
+        // Attribution Banner
+        'attribution_title' => 'Распределение нагрузки',
+        'worship_platform_label' => 'Worship Platform',
+        'other_projects_label' => 'pmstudio.am / Другие',
+        'latency_label' => 'Задержка запроса',
+        // Storage Card
+        'storage_card_title' => 'Использование диска (по проектам)',
+        'worship_files_label' => 'Файлы Worship',
+        'worship_db_label' => 'Worship DB',
+        'other_files_label' => 'pmstudio.am (public_html)',
+        'free_space_label' => 'Свободное место',
+        'storage_uploads_lbl' => 'Uploads',
+        'storage_audio_lbl' => 'Audio',
+        'storage_frontend_lbl' => 'Frontend/Assets',
+        'storage_data_lbl' => 'Data/Logs',
+        'storage_core_lbl' => 'Ядро системы',
+        'storage_db_lbl' => 'DB ($worshipDbName)',
+        'rescan_btn' => 'Пересчитать',
+        'rescan_running' => 'Считает...',
+        'last_scanned' => 'Последний расчёт',
+        'other_detected_yes' => 'Обнаружен',
+        'other_detected_no' => 'Не обнаружен',
+        // DB Attribution Card
+        'db_attr_title' => 'Распределение нагрузки БД (pmstudio_wolarm vs Другие)',
+        'worship_db_col_title' => 'Worship (pmstudio_wolarm)',
+        'other_db_col_title' => 'pmstudio.am / Другие БД',
+        'db_worship_conns_lbl' => 'Worship Connections',
+        'db_worship_running_lbl' => 'Worship Running Queries',
+        'db_worship_tables_lbl' => 'Таблиц (pmstudio_wolarm)',
+        'db_worship_size_lbl' => 'Размер БД',
+        'db_other_conns_lbl' => 'Другие Connections',
+        'db_other_running_lbl' => 'Другие Running Queries',
+        // OPcache Attribution
+        'op_worship_scripts' => 'Worship PHP скриптов (OPcache)',
+        'op_worship_mem' => 'Worship OPcache RAM',
+        'op_other_scripts' => 'Другие PHP скрипты (OPcache)',
     ],
     'en' => [
         'page_title' => 'Server Load — Worship Platform Admin',
@@ -326,6 +412,57 @@ $i18n = [
         'live_users_title' => 'Live Users Now',
         'live_users_empty' => 'No active users right now.',
         'audience_error' => 'Audience metrics could not be loaded. Check the users, user_sessions, web_activity tables and database permissions.',
+        // Scope Selector
+        'scope_worship_tab' => 'Worship Platform',
+        'scope_comparative_tab' => 'Comparative',
+        'scope_all_tab' => 'Full Server',
+        'scope_worship_desc' => 'Metrics scoped exclusively to worship.pmstudio.am (site & app)',
+        'scope_comparative_desc' => 'Worship Platform vs pmstudio.am (public_html) side-by-side',
+        'scope_all_desc' => 'Full server-wide view of all resource consumption',
+        // Attribution Banner
+        'attribution_title' => 'Load Attribution',
+        'worship_platform_label' => 'Worship Platform',
+        'other_projects_label' => 'pmstudio.am / Other',
+        'latency_label' => 'Request Latency',
+        // Storage Card
+        'storage_card_title' => 'Disk Footprint (per project)',
+        'worship_files_label' => 'Worship Files',
+        'worship_db_label' => 'Worship DB',
+        'other_files_label' => 'pmstudio.am (public_html)',
+        'free_space_label' => 'Free Space',
+        'storage_uploads_lbl' => 'Uploads',
+        'storage_audio_lbl' => 'Audio',
+        'storage_frontend_lbl' => 'Frontend/Assets',
+        'storage_data_lbl' => 'Data/Logs',
+        'storage_core_lbl' => 'Core Files',
+        'storage_db_lbl' => 'DB ($worshipDbName)',
+        'rescan_btn' => 'Rescan Storage',
+        'rescan_running' => 'Scanning...',
+        'last_scanned' => 'Last scan',
+        'other_detected_yes' => 'Detected',
+        'other_detected_no' => 'Not found',
+        // DB Attribution Card
+        'db_attr_title' => 'Database Attribution (pmstudio_wolarm vs Other)',
+        'worship_db_col_title' => 'Worship (pmstudio_wolarm)',
+        'other_db_col_title' => 'pmstudio.am / Other DBs',
+        'db_worship_conns_lbl' => 'Worship Connections',
+        'db_worship_running_lbl' => 'Worship Running Queries',
+        'db_worship_tables_lbl' => 'Tables (pmstudio_wolarm)',
+        'db_worship_size_lbl' => 'DB Data Size',
+        'db_other_conns_lbl' => 'Other Connections',
+        'db_other_running_lbl' => 'Other Running Queries',
+        // OPcache Attribution
+        'op_worship_scripts' => 'Worship PHP Scripts (OPcache)',
+        'op_worship_mem' => 'Worship OPcache RAM',
+        'op_other_scripts' => 'Other PHP Scripts (OPcache)',
+        // Overall / Top Factor
+        'overall_load_title' => 'Overall Server Load',
+        'overall_status_good' => 'Light / Normal (Optimal)',
+        'overall_status_warn' => 'Moderate Load',
+        'overall_status_danger' => 'High / Critical Load',
+        'overall_summary' => 'Combined server resource utilization (CPU, RAM, Disk, DB)',
+        'top_factor_title' => 'Top Load Factor:',
+        'top_factor_none' => 'All resources running optimally',
     ]
 ];
 
@@ -1923,6 +2060,25 @@ $activePage = 'server_load';
         </div>
       </div>
 
+      <!-- Scope Selector Navigation -->
+      <div class="scope-nav-container">
+        <div class="scope-nav-bar">
+          <button class="scope-pill-btn active" data-scope="worship" id="scopeBtnWorship">
+            <span class="scope-dot" style="background:#3A2DFF;"></span>
+            <?= htmlspecialchars($t['scope_worship_tab']) ?>
+          </button>
+          <button class="scope-pill-btn" data-scope="comparative" id="scopeBtnComparative">
+            <span class="scope-dot" style="background:#F59E0B;"></span>
+            <?= htmlspecialchars($t['scope_comparative_tab']) ?>
+          </button>
+          <button class="scope-pill-btn" data-scope="all" id="scopeBtnAll">
+            <span class="scope-dot" style="background:#05CD99;"></span>
+            <?= htmlspecialchars($t['scope_all_tab']) ?>
+          </button>
+        </div>
+        <div class="scope-desc-note" id="scopeDescText"><?= htmlspecialchars($t['scope_worship_desc']) ?></div>
+      </div>
+
       <!-- Overall Server Load Card -->
       <div class="load-card" style="margin-bottom: 24px; background: linear-gradient(135deg, var(--surface) 0%, rgba(67, 24, 255, 0.03) 100%); border: 1px solid var(--line);">
         <div class="load-card-header" style="margin-bottom: 12px;">
@@ -1984,6 +2140,28 @@ $activePage = 'server_load';
           <div id="topFactorReason" style="font-size: 0.82rem; color: var(--warning); font-weight: 700; background: rgba(245,158,11,0.06); padding: 8px 12px; border-radius: 8px; border: 1px dashed rgba(245,158,11,0.3);">
             <?= htmlspecialchars($tf['reason_' . $adminLang] ?? $tf['reason_hy']) ?>
           </div>
+
+          <!-- Attribution Bar -->
+          <div class="attr-bar-container">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+              <span style="font-size: 0.82rem; font-weight: 700; color: var(--text);"><?= htmlspecialchars($t['attribution_title']) ?></span>
+              <div class="latency-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <?= htmlspecialchars($t['latency_label']) ?>: <span id="latencyVal">—</span> ms
+              </div>
+            </div>
+            <div class="attr-bar-track">
+              <div class="attr-bar-fill-worship" id="attrBarWorship" style="width: <?= $metrics['project_attribution']['worship_share_pct'] ?>%;"></div>
+              <div class="attr-bar-fill-other" id="attrBarOther" style="width: <?= $metrics['project_attribution']['other_share_pct'] ?>%;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 600;">
+              <span style="color: var(--primary);">⬤ <?= htmlspecialchars($t['worship_platform_label']) ?> <span id="attrWorshipPct"><?= $metrics['project_attribution']['worship_share_pct'] ?></span>%</span>
+              <span style="color: #F59E0B;">⬤ <?= htmlspecialchars($t['other_projects_label']) ?> <span id="attrOtherPct"><?= $metrics['project_attribution']['other_share_pct'] ?></span>%</span>
+            </div>
+            <div id="attrReasonText" style="font-size: 0.79rem; color: var(--muted); margin-top: 6px; font-style: italic;">
+              <?= htmlspecialchars($metrics['project_attribution']['reason_' . $adminLang] ?? $metrics['project_attribution']['reason_hy']) ?>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2000,6 +2178,11 @@ $activePage = 'server_load';
             <span id="cpuBadge" class="load-card-badge <?= $metrics['cpu']['pct'] > 80 ? 'danger' : ($metrics['cpu']['pct'] > 50 ? 'warn' : 'good') ?>">
               <?= $metrics['cpu']['pct'] ?>%
             </span>
+            <div class="sparkline-container">
+              <svg class="sparkline-svg" id="cpuSparkline" viewBox="0 0 90 26">
+                <polyline id="cpuSparklineLine" fill="none" stroke="var(--primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="0,13 90,13"/>
+              </svg>
+            </div>
           </div>
 
           <div class="gauge-val"><span id="cpuPctText"><?= $metrics['cpu']['pct'] ?></span>%</div>
@@ -2040,6 +2223,11 @@ $activePage = 'server_load';
             <span id="memBadge" class="load-card-badge <?= $metrics['memory']['pct'] > 85 ? 'danger' : ($metrics['memory']['pct'] > 65 ? 'warn' : 'good') ?>">
               <?= $metrics['memory']['pct'] ?>%
             </span>
+            <div class="sparkline-container">
+              <svg class="sparkline-svg" id="ramSparkline" viewBox="0 0 90 26">
+                <polyline id="ramSparklineLine" fill="none" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="0,13 90,13"/>
+              </svg>
+            </div>
           </div>
 
           <div class="gauge-val"><span id="memUsedMbText"><?= $metrics['memory']['used_mb'] ?></span> MB <span style="font-size:0.9rem; color:var(--muted); font-weight:500;">/ <?= $metrics['memory']['total_mb'] ?> MB</span></div>
@@ -2208,6 +2396,155 @@ $activePage = 'server_load';
 
       </div> <!-- /load-grid -->
 
+      <!-- Storage Breakdown Card (Worship vs pmstudio.am vs Free) -->
+      <?php
+        $sb = $metrics['storage_breakdown'];
+        $diskTotal = max(1, ($sb['server_total_gb'] ?? 1) * 1073741824);
+        $worshipFilesBytes = (int)($sb['worship_files_bytes'] ?? 0);
+        $worshipDbBytes = (int)($sb['worship_db_bytes'] ?? 0);
+        $otherFilesBytes = (int)($sb['other_files_bytes'] ?? 0);
+        $diskFreeBytes = ($sb['server_free_gb'] ?? 0) * 1073741824;
+        $worshipFilesPct = max(0, min(100, ($sb['worship_files_pct'] ?? 0)));
+        $worshipDbPct = max(0, min(100, ($sb['worship_db_pct'] ?? 0)));
+        $otherFilesPct = max(0, min(100, ($sb['other_files_pct'] ?? 0)));
+        $freePct = max(0, min(100, ($sb['free_disk_pct'] ?? 0)));
+        $bkd = $sb['breakdown'] ?? [];
+      ?>
+      <div class="load-card" style="margin-bottom: 24px;">
+        <div class="load-card-header">
+          <div class="load-card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+            <?= htmlspecialchars($t['storage_card_title']) ?>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span style="font-size:0.78rem; color:var(--muted); font-weight:600;">
+              <?php if (!empty($sb['is_cached'])): ?>
+                <?= htmlspecialchars($t['last_scanned']) ?>: <span id="storageScannedAt"><?= htmlspecialchars($sb['cached_at'] ?? '—') ?></span>
+              <?php else: ?>
+                <span id="storageScannedAt"><?= htmlspecialchars($sb['cached_at'] ?? '—') ?></span>
+              <?php endif; ?>
+            </span>
+            <button id="rescanStorageBtn" style="border:1px solid var(--line); background:var(--surface); color:var(--text); border-radius:8px; padding:6px 12px; font-size:0.78rem; font-weight:700; cursor:pointer;"
+              data-label="<?= htmlspecialchars($t['rescan_btn'], ENT_QUOTES) ?>"
+              data-running-label="<?= htmlspecialchars($t['rescan_running'], ENT_QUOTES) ?>">
+              <?= htmlspecialchars($t['rescan_btn']) ?>
+            </button>
+          </div>
+        </div>
+
+        <!-- Multi-segment storage bar -->
+        <div class="multi-seg-bar">
+          <div class="seg-part seg-worship-files" id="segWorshipFiles" style="width:<?= $worshipFilesPct ?>%;" title="Worship Files: <?= $sb['worship_files_gb'] ?? 0 ?> GB"></div>
+          <div class="seg-part seg-worship-db" id="segWorshipDb" style="width:<?= $worshipDbPct ?>%;" title="Worship DB: <?= $sb['worship_db_mb'] ?? 0 ?> MB"></div>
+          <div class="seg-part seg-other-files" id="segOtherFiles" style="width:<?= $otherFilesPct ?>%;" title="pmstudio.am: <?= $sb['other_files_gb'] ?? 0 ?> GB"></div>
+          <div class="seg-part seg-free-space" id="segFreeSpace" style="width:<?= $freePct ?>%;" title="Free: <?= $sb['server_free_gb'] ?? 0 ?> GB"></div>
+        </div>
+
+        <!-- Legend -->
+        <div class="seg-legend">
+          <div class="seg-legend-item">
+            <span class="seg-legend-dot" style="background:#3A2DFF;"></span>
+            <?= htmlspecialchars($t['worship_files_label']) ?>
+            <span style="color:var(--muted); font-size:0.78rem; font-weight:500;"> <?= $sb['worship_files_gb'] ?? 0 ?> GB</span>
+          </div>
+          <div class="seg-legend-item">
+            <span class="seg-legend-dot" style="background:#8B5CF6;"></span>
+            <?= htmlspecialchars($t['worship_db_label']) ?>
+            <span style="color:var(--muted); font-size:0.78rem; font-weight:500;"> <?= $sb['worship_db_mb'] ?? 0 ?> MB</span>
+          </div>
+          <div class="seg-legend-item" id="otherFilesLegend">
+            <span class="seg-legend-dot" style="background:#F59E0B;"></span>
+            <span id="otherFilesLbl"><?= htmlspecialchars($t['other_files_label']) ?></span>
+            <span style="color:var(--muted); font-size:0.78rem; font-weight:500;" id="otherFilesSize"> <?= $sb['other_detected'] ? ($sb['other_files_gb'] . ' GB') : htmlspecialchars($t['other_detected_no']) ?></span>
+          </div>
+          <div class="seg-legend-item">
+            <span class="seg-legend-dot" style="background:#05CD99;"></span>
+            <?= htmlspecialchars($t['free_space_label']) ?>
+            <span style="color:var(--muted); font-size:0.78rem; font-weight:500;"> <?= $sb['server_free_gb'] ?? 0 ?> GB</span>
+          </div>
+        </div>
+
+        <!-- Worship Breakdown Mini Boxes -->
+        <div class="storage-breakdown-grid">
+          <div class="storage-mini-box">
+            <div class="box-val" id="sbUploads"><?= $bkd['uploads_mb'] ?? 0 ?> MB</div>
+            <div class="box-lbl"><?= htmlspecialchars($t['storage_uploads_lbl']) ?></div>
+          </div>
+          <div class="storage-mini-box">
+            <div class="box-val" id="sbAudio"><?= $bkd['audio_mb'] ?? 0 ?> MB</div>
+            <div class="box-lbl"><?= htmlspecialchars($t['storage_audio_lbl']) ?></div>
+          </div>
+          <div class="storage-mini-box">
+            <div class="box-val" id="sbFrontend"><?= $bkd['frontend_mb'] ?? 0 ?> MB</div>
+            <div class="box-lbl"><?= htmlspecialchars($t['storage_frontend_lbl']) ?></div>
+          </div>
+          <div class="storage-mini-box">
+            <div class="box-val" id="sbData"><?= $bkd['data_mb'] ?? 0 ?> MB</div>
+            <div class="box-lbl"><?= htmlspecialchars($t['storage_data_lbl']) ?></div>
+          </div>
+          <div class="storage-mini-box">
+            <div class="box-val" id="sbCore"><?= $bkd['core_mb'] ?? 0 ?> MB</div>
+            <div class="box-lbl"><?= htmlspecialchars($t['storage_core_lbl']) ?></div>
+          </div>
+          <div class="storage-mini-box" style="border-color:rgba(139,92,246,0.35);">
+            <div class="box-val" style="color:#8B5CF6;" id="sbWorshipDb"><?= $sb['worship_db_mb'] ?? 0 ?> MB</div>
+            <div class="box-lbl"><?= htmlspecialchars($t['storage_db_lbl']) ?></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DB Attribution Card -->
+      <?php $dba = $metrics['db_attribution']; ?>
+      <div class="load-card" style="margin-bottom: 24px;">
+        <div class="load-card-header">
+          <div class="load-card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+            <?= htmlspecialchars($t['db_attr_title']) ?>
+          </div>
+          <span class="load-card-badge good" style="font-size:0.78rem; padding:4px 12px;"><?= htmlspecialchars($dba['worship_db_name']) ?></span>
+        </div>
+        <div class="db-attr-grid">
+          <!-- Worship Column -->
+          <div class="db-attr-col highlight-worship">
+            <div class="db-attr-col-header">
+              <span><?= htmlspecialchars($t['worship_db_col_title']) ?></span>
+              <span style="font-size:0.78rem; padding:3px 10px; border-radius:8px; background:rgba(58,45,255,0.1); color:var(--primary);"><?= $dba['worship_conn_pct'] ?>%</span>
+            </div>
+            <div class="stat-row">
+              <span class="lbl"><?= htmlspecialchars($t['db_worship_conns_lbl']) ?></span>
+              <span class="val" id="dbaWorshipConns"><?= $dba['worship_conns'] ?></span>
+            </div>
+            <div class="stat-row">
+              <span class="lbl"><?= htmlspecialchars($t['db_worship_running_lbl']) ?></span>
+              <span class="val" id="dbaWorshipRunning" style="<?= $dba['worship_running'] > 0 ? 'color:var(--primary);' : '' ?>"><?= $dba['worship_running'] ?></span>
+            </div>
+            <div class="stat-row">
+              <span class="lbl"><?= htmlspecialchars($t['db_worship_tables_lbl']) ?></span>
+              <span class="val" id="dbaWorshipTables"><?= $metrics['storage_breakdown']['worship_db_tables'] ?? 0 ?></span>
+            </div>
+            <div class="stat-row">
+              <span class="lbl"><?= htmlspecialchars($t['db_worship_size_lbl']) ?></span>
+              <span class="val" id="dbaWorshipSize"><?= $metrics['storage_breakdown']['worship_db_mb'] ?? 0 ?> MB</span>
+            </div>
+          </div>
+          <!-- Other Column -->
+          <div class="db-attr-col">
+            <div class="db-attr-col-header">
+              <span><?= htmlspecialchars($t['other_db_col_title']) ?></span>
+              <span style="font-size:0.78rem; padding:3px 10px; border-radius:8px; background:rgba(245,158,11,0.1); color:#F59E0B;"><?= $dba['other_conn_pct'] ?>%</span>
+            </div>
+            <div class="stat-row">
+              <span class="lbl"><?= htmlspecialchars($t['db_other_conns_lbl']) ?></span>
+              <span class="val" id="dbaOtherConns"><?= $dba['other_conns'] ?></span>
+            </div>
+            <div class="stat-row">
+              <span class="lbl"><?= htmlspecialchars($t['db_other_running_lbl']) ?></span>
+              <span class="val" id="dbaOtherRunning"><?= $dba['other_running'] ?></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
     <div class="load-grid">
         <!-- 6. AUDIENCE ACTIVITY CARD -->
         <div class="load-card" style="grid-column: 1 / -1;">
@@ -2363,9 +2700,66 @@ $activePage = 'server_load';
     warn: <?= json_encode($t['overall_status_warn']) ?>,
     danger: <?= json_encode($t['overall_status_danger']) ?>
   };
+  window.scopeDescriptions = {
+    worship: <?= json_encode($t['scope_worship_desc']) ?>,
+    comparative: <?= json_encode($t['scope_comparative_desc']) ?>,
+    all: <?= json_encode($t['scope_all_desc']) ?>
+  };
   
   (function() {
   let timerId = null;
+
+  // ── SPARKLINE STATE ────────────────────────────────────────────
+  const SPARKLINE_MAX = 15;
+  const cpuTrend = [];
+  const ramTrend = [];
+
+  function buildSparklinePoints(data, width, height) {
+    if (!data || data.length < 2) return null;
+    const minV = Math.min(...data);
+    const maxV = Math.max(...data);
+    const rangeV = maxV - minV || 1;
+    const stepX = width / (data.length - 1);
+    return data.map((v, i) => {
+      const x = (i * stepX).toFixed(1);
+      const y = (height - ((v - minV) / rangeV) * (height - 4) - 2).toFixed(1);
+      return x + ',' + y;
+    }).join(' ');
+  }
+
+  function updateSparkline(lineId, data) {
+    const line = document.getElementById(lineId);
+    if (!line) return;
+    const pts = buildSparklinePoints(data, 90, 26);
+    if (pts) line.setAttribute('points', pts);
+  }
+
+  // ── SCOPE SWITCHER ─────────────────────────────────────────────
+  const scopeBtns = document.querySelectorAll('.scope-pill-btn');
+  const scopeDescEl = document.getElementById('scopeDescText');
+
+  // Restore saved scope
+  const savedScope = localStorage.getItem('wp_server_load_scope') || 'worship';
+  scopeBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.scope === savedScope);
+  });
+  if (scopeDescEl && window.scopeDescriptions) {
+    scopeDescEl.textContent = window.scopeDescriptions[savedScope] || '';
+  }
+  document.body.dataset.scope = savedScope;
+
+  scopeBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      const scope = this.dataset.scope;
+      scopeBtns.forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      document.body.dataset.scope = scope;
+      localStorage.setItem('wp_server_load_scope', scope);
+      if (scopeDescEl && window.scopeDescriptions) {
+        scopeDescEl.textContent = window.scopeDescriptions[scope] || '';
+      }
+    });
+  });
 
   function getStatusClass(pct, warnThreshold = 60, dangerThreshold = 85) {
     if (pct >= dangerThreshold) return 'danger';
@@ -2443,6 +2837,11 @@ $activePage = 'server_load';
       document.getElementById('cpuLoad1').textContent = data.cpu.load_1m;
       document.getElementById('cpuLoad5').textContent = data.cpu.load_5m;
       document.getElementById('cpuLoad15').textContent = data.cpu.load_15m;
+
+      // CPU Sparkline
+      cpuTrend.push(data.cpu.pct);
+      if (cpuTrend.length > SPARKLINE_MAX) cpuTrend.shift();
+      updateSparkline('cpuSparklineLine', cpuTrend);
     }
 
     // 2. RAM
@@ -2461,6 +2860,39 @@ $activePage = 'server_load';
 
       document.getElementById('phpMemUsed').textContent = data.memory.php_used_mb + ' MB';
       document.getElementById('phpMemPeak').textContent = data.memory.php_peak_mb + ' MB';
+
+      // RAM Sparkline
+      ramTrend.push(pct);
+      if (ramTrend.length > SPARKLINE_MAX) ramTrend.shift();
+      updateSparkline('ramSparklineLine', ramTrend);
+    }
+
+    // 2b. Attribution
+    if (data.project_attribution) {
+      const pa = data.project_attribution;
+      const lang = window.adminLang || 'hy';
+      const attrBarW = document.getElementById('attrBarWorship');
+      const attrBarO = document.getElementById('attrBarOther');
+      if (attrBarW) attrBarW.style.width = pa.worship_share_pct + '%';
+      if (attrBarO) attrBarO.style.width = pa.other_share_pct + '%';
+      const attrWPct = document.getElementById('attrWorshipPct');
+      if (attrWPct) attrWPct.textContent = pa.worship_share_pct;
+      const attrOPct = document.getElementById('attrOtherPct');
+      if (attrOPct) attrOPct.textContent = pa.other_share_pct;
+      const attrReason = document.getElementById('attrReasonText');
+      if (attrReason) attrReason.textContent = pa['reason_' + lang] || pa.reason_hy || '';
+    }
+
+    // 2c. DB Attribution
+    if (data.db_attribution) {
+      const dba = data.db_attribution;
+      const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      setTxt('dbaWorshipConns', dba.worship_conns);
+      setTxt('dbaWorshipRunning', dba.worship_running);
+      setTxt('dbaOtherConns', dba.other_conns);
+      setTxt('dbaOtherRunning', dba.other_running);
+      const wr = document.getElementById('dbaWorshipRunning');
+      if (wr) wr.style.color = dba.worship_running > 0 ? 'var(--primary)' : '';
     }
 
     // 3. DISK
@@ -2636,7 +3068,11 @@ $activePage = 'server_load';
 
   async function fetchMetrics() {
     try {
+      const t0 = performance.now();
       const res = await fetch('?ajax=1');
+      const latencyMs = Math.round(performance.now() - t0);
+      const latencyEl = document.getElementById('latencyVal');
+      if (latencyEl) latencyEl.textContent = latencyMs;
       if (res.ok) {
         const data = await res.json();
         updateMetricsUI(data);
@@ -2658,6 +3094,51 @@ $activePage = 'server_load';
   document.getElementById('manualRefreshBtn').addEventListener('click', function() {
     fetchMetrics();
   });
+
+  // ── STORAGE RESCAN BUTTON ───────────────────────────────────────
+  const rescanBtn = document.getElementById('rescanStorageBtn');
+  if (rescanBtn) {
+    rescanBtn.addEventListener('click', async function() {
+      rescanBtn.disabled = true;
+      rescanBtn.textContent = rescanBtn.dataset.runningLabel;
+      try {
+        const resp = await fetch('?action=refresh_storage', { cache: 'no-store' });
+        if (resp.ok) {
+          const result = await resp.json();
+          if (result.ok && result.storage) {
+            const s = result.storage;
+            const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+            // Update timestamp
+            setTxt('storageScannedAt', result.cached_at || '');
+            // Update mini boxes
+            const bkd = s.breakdown || {};
+            setTxt('sbUploads', (bkd.uploads_mb || 0) + ' MB');
+            setTxt('sbAudio', (bkd.audio_mb || 0) + ' MB');
+            setTxt('sbFrontend', (bkd.frontend_mb || 0) + ' MB');
+            setTxt('sbData', (bkd.data_mb || 0) + ' MB');
+            setTxt('sbCore', (bkd.core_mb || 0) + ' MB');
+            setTxt('sbWorshipDb', (s.worship_db_mb || 0) + ' MB');
+            // Update segment bar widths
+            const setWidth = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = pct + '%'; };
+            setWidth('segWorshipFiles', s.worship_files_pct || 0);
+            setWidth('segWorshipDb', s.worship_db_pct || 0);
+            setWidth('segOtherFiles', s.other_files_pct || 0);
+            setWidth('segFreeSpace', s.free_disk_pct || 0);
+            // Update other size label
+            const otherSizeEl = document.getElementById('otherFilesSize');
+            if (otherSizeEl) {
+              otherSizeEl.textContent = s.other_detected ? (' ' + (s.other_files_gb || 0) + ' GB') : ' —';
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Storage rescan failed:', e);
+      } finally {
+        rescanBtn.disabled = false;
+        rescanBtn.textContent = rescanBtn.dataset.label;
+      }
+    });
+  }
 
   const slowLogTestBtn = document.getElementById('slowLogTestBtn');
   if (slowLogTestBtn) {
