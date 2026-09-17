@@ -1,5 +1,5 @@
 .mobile-hub {
-  padding-bottom: 90px; /* Space for bottom nav */
+  padding-bottom: calc(var(--bottom-nav-total-offset, 88px) + 36px); /* Space for bottom nav */
   position: relative;
 }
 
@@ -8,6 +8,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+body.is-pwa.is-android .hub-header,
+body.wp-standalone-app:not(.is-ios) .hub-header {
+  padding-top: calc(max(env(safe-area-inset-top, 0px), 16px) + 12px);
 }
 
 .hub-logo-btn {

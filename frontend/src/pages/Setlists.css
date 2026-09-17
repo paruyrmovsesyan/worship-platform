@@ -717,6 +717,11 @@ body.wp-standalone-app.is-ios .setlists-page.sl-pwa-enhanced {
   padding-top: 36px !important;
 }
 
+body.is-pwa.is-android .setlists-page.sl-pwa-enhanced,
+body.wp-standalone-app:not(.is-ios) .setlists-page.sl-pwa-enhanced {
+  padding-top: 28px !important;
+}
+
 /* Header Enhancements */
 .sl-app-header {
   display: flex !important;

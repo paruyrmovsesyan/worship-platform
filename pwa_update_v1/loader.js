@@ -245,15 +245,15 @@
 
       var themeMeta = document.querySelector('meta[name="theme-color"]');
       if (themeMeta) {
-        themeMeta.setAttribute("content", "#0b1020");
+        themeMeta.setAttribute("content", "#05050A");
       }
 
       if (document.getElementById("wpStandaloneChromeStyles")) return;
       var style = document.createElement("style");
       style.id = "wpStandaloneChromeStyles";
       style.textContent =
-        "html.wp-standalone-app{background:#0b1020;color-scheme:dark}" +
-        "body.wp-standalone-app{min-height:100svh;padding-top:max(10px,env(safe-area-inset-top));padding-right:max(10px,env(safe-area-inset-right));padding-bottom:max(18px,env(safe-area-inset-bottom));padding-left:max(10px,env(safe-area-inset-left));background:radial-gradient(circle at top left,rgba(107,124,255,.18),transparent 28%),radial-gradient(circle at top right,rgba(87,214,195,.14),transparent 24%),linear-gradient(180deg,#0b1020 0%,#10182f 100%);overscroll-behavior-y:contain}" +
+        "html.wp-standalone-app{background:#05050A;color-scheme:dark}" +
+        "body.wp-standalone-app{min-height:100svh;padding-top:max(10px,env(safe-area-inset-top));padding-right:max(10px,env(safe-area-inset-right));padding-bottom:max(18px,env(safe-area-inset-bottom));padding-left:max(10px,env(safe-area-inset-left));background:radial-gradient(circle at top left,rgba(107,124,255,.18),transparent 28%),radial-gradient(circle at top right,rgba(87,214,195,.14),transparent 24%),linear-gradient(180deg,#05050A 0%,#10182f 100%);overscroll-behavior-y:contain}" +
         "body.wp-standalone-app::before{content:'';position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 22%),radial-gradient(circle at 20% 0%,rgba(255,255,255,.05),transparent 24%);z-index:0}" +
         "body.wp-standalone-app>*{position:relative;z-index:1}" +
         "body.wp-standalone-app .container,body.wp-standalone-app .shell,body.wp-standalone-app .auth-shell,body.wp-standalone-app main{max-width:min(1480px,calc(100vw - 2px));margin-inline:auto}" +

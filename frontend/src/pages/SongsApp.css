@@ -18,6 +18,11 @@ body.wp-standalone-app.is-ios .songs-page {
   padding-top: 36px !important;
 }
 
+body.is-pwa.is-android .songs-page,
+body.wp-standalone-app:not(.is-ios) .songs-page {
+  padding-top: 28px !important;
+}
+
 /* Hide PWA dock when songbook modal is open */
 body.songs-modal-open #wpAppDock,
 body.songs-modal-open .mobile-bottom-nav,

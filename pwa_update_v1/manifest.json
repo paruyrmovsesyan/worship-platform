@@ -4,8 +4,8 @@
   "description": "Premium worship resource platform.",
   "start_url": "/?source=pwa",
   "display": "standalone",
-  "background_color": "#070910",
-  "theme_color": "#070910",
+  "background_color": "#05050A",
+  "theme_color": "#05050A",
   "icons": [
     {
       "src": "/wolarm_youth.png",

@@ -67,6 +67,11 @@ body.wp-standalone-app.is-ios .chat-header {
   padding-top: calc(max(env(safe-area-inset-top, 0px), 44px) + 16px) !important;
 }
 
+body.is-pwa.is-android .chat-header,
+body.wp-standalone-app:not(.is-ios) .chat-header {
+  padding-top: calc(max(env(safe-area-inset-top, 0px), 16px) + 12px) !important;
+}
+
 .chat-header-left {
   display: flex;
   align-items: center;

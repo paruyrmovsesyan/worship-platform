@@ -69,6 +69,7 @@ import CreateAccountReminder from './components/CreateAccountReminder';
 function App() {
   const mediaQueryMatch = useMediaQuery('(max-width: 900px)');
   const isIOSMobile = /iPhone|iPod/.test(navigator.userAgent);
+  const isAndroidMobile = /Android/i.test(navigator.userAgent);
   
   // Apply Global App Settings
   useEffect(() => {
@@ -82,7 +83,7 @@ function App() {
       document.body.classList.add(`chord-color-${cColor}`);
     }
   }, []);
-  const isMobile = mediaQueryMatch || isIOSMobile;
+  const isMobile = mediaQueryMatch || isIOSMobile || isAndroidMobile;
   const isPWA = useIsPWA();
   const { isOffline, canAccessPath } = usePwaOfflineGuard();
   const location = useLocation();
@@ -96,12 +97,14 @@ function App() {
   const { t } = useLanguage();
 
   useEffect(() => {
-    document.body.classList.remove('mobile-theme', 'app-desktop-theme', 'website-theme', 'is-pwa', 'is-ios');
+    document.body.classList.remove('mobile-theme', 'app-desktop-theme', 'website-theme', 'is-pwa', 'is-ios', 'is-android');
     
     if (isPWA) {
       document.body.classList.add('is-pwa');
       if (isIOSMobile) {
         document.body.classList.add('is-ios');
+      } else {
+        document.body.classList.add('is-android');
       }
       if (isMobile) {
         document.body.classList.add('mobile-theme');

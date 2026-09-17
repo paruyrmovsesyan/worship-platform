@@ -21,6 +21,11 @@ body.wp-standalone-app.is-ios .sla-page {
   padding-top: 36px !important;
 }
 
+body.is-pwa.is-android .sla-page,
+body.wp-standalone-app:not(.is-ios) .sla-page {
+  padding-top: 28px !important;
+}
+
 /* ── Top Navigation Bar ── */
 .sla-nav-bar {
   display: flex;
