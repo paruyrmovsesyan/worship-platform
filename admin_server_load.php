@@ -118,7 +118,7 @@ $i18n = [
         'storage_frontend_lbl' => 'Frontend/Assets',
         'storage_data_lbl' => 'Data/Logs',
         'storage_core_lbl' => 'Core ֆայլեր',
-        'storage_db_lbl' => 'DB (\$worshipDbName)',
+        'storage_db_lbl' => 'DB (pmstudio_wolarm)',
         'rescan_btn' => 'Վերահաշվարկել',
         'rescan_running' => 'Հաշվում է...',
         'last_scanned' => 'Վերջ. հաշվ.',
@@ -138,6 +138,16 @@ $i18n = [
         'op_worship_scripts' => 'Worship PHP Ֆայլեր (OPcache)',
         'op_worship_mem' => 'Worship OPcache RAM',
         'op_other_scripts' => 'Այլ PHP Ֆայլեր (OPcache)',
+        // Dynamic Scope Hero
+        'scope_worship_hero_title' => 'Worship Platform Ծանրաբեռնվածություն (Միայն այս պրոեկտը)',
+        'scope_comparative_hero_title' => 'Համեմատական՝ Worship Platform vs pmstudio.am',
+        'scope_all_hero_title' => 'Ընդհանուր Սերվերի Ծանրաբեռնվածություն',
+        'scope_worship_hero_summary' => 'Worship Platform-ին վերագրվող ընթացիկ բեռնվածությունը (CPU, RAM, DB, Օգտատերեր)',
+        'scope_comparative_hero_summary' => 'Worship Platform vs pmstudio.am (public_html) և այլ ֆոնային պրոցեսներ',
+        'scope_all_hero_summary' => 'Ընդհանուր սերվերային բոլոր ռեսուրսների օգտագործում (CPU, RAM, Disk, DB)',
+        'worship_focus_badge' => 'ՄԻԱՅՆ WORSHIP PLATFORM',
+        'comparative_badge' => 'ՀԱՄԵՄԱՏԱԿԱՆ',
+        'all_badge' => 'ԱՄԲՈՂՋ ՍԵՐՎԵՐ',
     ],
     'ru' => [
         'page_title' => 'Нагрузка сервера — Worship Platform Admin',
@@ -241,7 +251,7 @@ $i18n = [
         'storage_frontend_lbl' => 'Frontend/Assets',
         'storage_data_lbl' => 'Data/Logs',
         'storage_core_lbl' => 'Ядро системы',
-        'storage_db_lbl' => 'DB ($worshipDbName)',
+        'storage_db_lbl' => 'DB (pmstudio_wolarm)',
         'rescan_btn' => 'Пересчитать',
         'rescan_running' => 'Считает...',
         'last_scanned' => 'Последний расчёт',
@@ -261,84 +271,16 @@ $i18n = [
         'op_worship_scripts' => 'Worship PHP скриптов (OPcache)',
         'op_worship_mem' => 'Worship OPcache RAM',
         'op_other_scripts' => 'Другие PHP скрипты (OPcache)',
-    ],
-    'en' => [
-        'page_title' => 'Server Load — Worship Platform Admin',
-        'title' => 'Server Load Monitor',
-        'subtitle' => 'Real-time system CPU, RAM, Disk & Database performance metrics',
-        'live' => 'LIVE',
-        'refresh_lbl' => 'Refresh:',
-        'manual_only' => 'Manual Only',
-        'refresh' => 'Refresh',
-        // Card 1
-        'cpu_title' => 'CPU Usage & Load',
-        'core_capacity' => 'Core Capacity Usage',
-        'cores' => 'Cores',
-        'load_1m' => 'Load Average (1m):',
-        'load_5m' => 'Load Average (5m):',
-        'load_15m' => 'Load Average (15m):',
-        // Card 2
-        'ram_title' => 'RAM (System Memory)',
-        'ram_usage' => 'RAM Usage',
-        'free' => 'Free',
-        'php_used' => 'PHP Current Usage:',
-        'php_peak' => 'PHP Peak Usage:',
-        'php_limit' => 'PHP Memory Limit:',
-        // Card 3
-        'disk_title' => 'Disk Storage',
-        'disk_usage' => 'Disk Usage',
-        'available_space' => 'Available Space:',
-        'total_capacity' => 'Total Capacity:',
-        'storage_status' => 'Status:',
-        'healthy' => 'Healthy',
-        // Card 4
-        'db_title' => 'Database Load',
-        'connected' => 'Connected',
-        'error' => 'Error',
-        'active_conn' => 'Active Connections',
-        'conn_pool' => 'Connection Pool',
-        'max' => 'Max:',
-        'active_queries' => 'Active Queries (Threads Running):',
-        'qps' => 'Avg Queries Per Sec (QPS):',
-        'slow_queries' => 'Slow Queries:',
-        'total_queries' => 'Total Questions Processed:',
-        // Card 5
-        'server_opcache_title' => 'Server & OPcache Info',
-        'op_active' => 'OPcache Active',
-        'op_off' => 'OPcache Off',
-        'op_hit_rate' => 'OPcache Hit Rate:',
-        'op_mem_used' => 'OPcache Memory Used:',
-        'op_scripts' => 'Cached PHP Scripts:',
-        'sys_uptime' => 'Server Uptime:',
-        'php_ver' => 'PHP Version:',
-        'os_plat' => 'OS Platform:',
-        'online_users' => 'Online Users:',
-        'audience_title' => 'Audience Activity',
-        'active_now' => 'Right Now',
-        'active_unique_now' => 'Unique active',
-        'active_app_now' => 'Main app',
-        'active_web_now' => 'Website',
-        'active_admin_now' => 'Admin app',
-        'active_24h' => 'Today (24h)',
-        'active_7d' => 'This Week (7d)',
-        'active_30d' => 'This Month (30d)',
-        'new_today' => 'New Today (24h)',
-        'total_users' => 'Total Database',
-        'platforms_title' => 'Platforms (last 24h):',
-        'slow_log_title' => 'Slow Queries Log',
-        'slow_log_active' => 'APP LOGGING ACTIVE',
-        'slow_log_unavailable' => 'APP LOG NOT WRITABLE',
-        'slow_log_test' => 'Test log',
-        'slow_log_testing' => 'Testing...',
-        'slow_log_test_failed' => 'Log test failed.',
-        'live_users_title' => 'Live Users Now',
-        'live_users_empty' => 'No active users right now.',
-        'audience_error' => 'Audience metrics could not be loaded. Check the users, user_sessions, web_activity tables and database permissions.',
-        'overall_load_title' => 'Overall Server Load',
-        'overall_status_good' => 'Light / Normal (Optimal)',
-        'overall_status_warn' => 'Moderate Load',
-        'overall_status_danger' => 'High / Critical Load',
-        'overall_summary' => 'Combined server resource utilization (CPU, RAM, Disk, DB)',
+        // Dynamic Scope Hero
+        'scope_worship_hero_title' => 'Нагрузка Worship Platform (Только этот проект)',
+        'scope_comparative_hero_title' => 'Сравнение: Worship Platform vs pmstudio.am',
+        'scope_all_hero_title' => 'Общая Нагрузка Сервера',
+        'scope_worship_hero_summary' => 'Нагрузка, приходящаяся на Worship Platform (CPU, RAM, БД, Пользователи)',
+        'scope_comparative_hero_summary' => 'Worship Platform vs pmstudio.am (public_html) и системные процессы',
+        'scope_all_hero_summary' => 'Суммарное использование ресурсов сервера (CPU, RAM, Диск, БД)',
+        'worship_focus_badge' => 'ТОЛЬКО WORSHIP PLATFORM',
+        'comparative_badge' => 'СРАВНЕНИЕ',
+        'all_badge' => 'ВЕСЬ СЕРВЕР',
     ],
     'en' => [
         'page_title' => 'Server Load — Worship Platform Admin',
@@ -435,7 +377,7 @@ $i18n = [
         'storage_frontend_lbl' => 'Frontend/Assets',
         'storage_data_lbl' => 'Data/Logs',
         'storage_core_lbl' => 'Core Files',
-        'storage_db_lbl' => 'DB ($worshipDbName)',
+        'storage_db_lbl' => 'DB (pmstudio_wolarm)',
         'rescan_btn' => 'Rescan Storage',
         'rescan_running' => 'Scanning...',
         'last_scanned' => 'Last scan',
@@ -463,6 +405,16 @@ $i18n = [
         'overall_summary' => 'Combined server resource utilization (CPU, RAM, Disk, DB)',
         'top_factor_title' => 'Top Load Factor:',
         'top_factor_none' => 'All resources running optimally',
+        // Dynamic Scope Hero
+        'scope_worship_hero_title' => 'Worship Platform Load (Isolated Project)',
+        'scope_comparative_hero_title' => 'Comparative: Worship vs pmstudio.am',
+        'scope_all_hero_title' => 'Overall Server Load',
+        'scope_worship_hero_summary' => 'Current load attributed to Worship Platform (CPU, RAM, DB, Users)',
+        'scope_comparative_hero_summary' => 'Worship Platform vs pmstudio.am (public_html) & background processes',
+        'scope_all_hero_summary' => 'Combined server-wide resource utilization (CPU, RAM, Disk, DB)',
+        'worship_focus_badge' => 'WORSHIP PLATFORM ONLY',
+        'comparative_badge' => 'COMPARATIVE',
+        'all_badge' => 'FULL SERVER',
     ]
 ];
 
@@ -609,11 +561,13 @@ function wp_server_get_cached_storage(bool $forceRefresh = false): array {
 if (($_GET['action'] ?? '') === 'refresh_storage') {
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    $refreshed = wp_server_get_cached_storage(true);
+    wp_server_get_cached_storage(true);
+    $fullMetrics = get_server_metrics();
     echo json_encode([
         'ok' => true,
-        'storage' => $refreshed,
-        'cached_at' => $refreshed['cached_at_formatted'],
+        'storage' => $fullMetrics['storage_breakdown'],
+        'storage_breakdown' => $fullMetrics['storage_breakdown'],
+        'cached_at' => $fullMetrics['storage_breakdown']['cached_at'],
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -1295,7 +1249,7 @@ function get_server_metrics(): array {
     } elseif ($online5mVal > 0) {
         $cpuReasonHy = "Պատճառ՝ Օնլայն օգտատերերի հարցումներ ({$online5mVal} ակտիվ) և PHP սկրիպտների մշակում";
         $cpuReasonRu = "Причина: Запросы онлайн пользователей ({$online5mVal} активных) и обработка PHP скриптов";
-        $cpuReasonEn = "Cause: Online user requests ({$online55mVal} active) and PHP script execution";
+        $cpuReasonEn = "Cause: Online user requests ({$online5mVal} active) and PHP script execution";
     } else {
         $cpuReasonHy = "Պատճառ՝ Համակարգային background պրոցեսներ և PHP / OS ռեսուրսների ծանրաբեռնվածություն";
         $cpuReasonRu = "Причина: Системные фоновые процессы и нагрузка ресурсов PHP / ОС";
@@ -2020,6 +1974,29 @@ $activePage = 'server_load';
       color: var(--success);
       border: 1px solid rgba(5,205,153,0.25);
     }
+
+    /* Scope Adaptations */
+    body[data-scope="worship"] .db-attr-col.highlight-worship {
+      border: 2px solid var(--primary);
+      box-shadow: 0 4px 16px rgba(58,45,255,0.12);
+    }
+    body[data-scope="worship"] .db-attr-col:not(.highlight-worship) {
+      opacity: 0.65;
+    }
+    body[data-scope="worship"] .storage-mini-box:nth-child(6) {
+      border-width: 2px;
+      box-shadow: 0 2px 10px rgba(139,92,246,0.15);
+    }
+    body[data-scope="comparative"] .db-attr-col {
+      border-width: 2px;
+    }
+    body[data-scope="comparative"] .attr-bar-container {
+      border: 2px solid rgba(58,45,255,0.3);
+      background: rgba(58,45,255,0.06);
+    }
+    body[data-scope="comparative"] .multi-seg-bar {
+      box-shadow: 0 0 0 2px rgba(245,158,11,0.25);
+    }
   </style>
 </head>
 <body class="wp-admin-app">
@@ -2082,9 +2059,10 @@ $activePage = 'server_load';
       <!-- Overall Server Load Card -->
       <div class="load-card" style="margin-bottom: 24px; background: linear-gradient(135deg, var(--surface) 0%, rgba(67, 24, 255, 0.03) 100%); border: 1px solid var(--line);">
         <div class="load-card-header" style="margin-bottom: 12px;">
-          <div class="load-card-title">
+          <div class="load-card-title" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            <?= htmlspecialchars($t['overall_load_title']) ?>
+            <span id="overallCardTitle"><?= htmlspecialchars($t['scope_worship_hero_title']) ?></span>
+            <span id="scopeModeBadge" class="load-card-badge" style="background:rgba(58,45,255,0.12); color:var(--primary); font-size:0.75rem; padding:3px 8px; font-weight:800; border:1px solid rgba(58,45,255,0.25);"><?= htmlspecialchars($t['worship_focus_badge']) ?></span>
           </div>
           <?php 
             $overall = $metrics['overall_load_pct'];
@@ -2098,11 +2076,11 @@ $activePage = 'server_load';
 
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
           <div style="flex: 1; min-width: 240px;">
-            <div class="gauge-val" style="font-size: 2.4rem; margin-bottom: 8px;"><span id="overallPctText"><?= $overall ?></span>%</div>
+            <div class="gauge-val" style="font-size: 2.4rem; margin-bottom: 8px;"><span id="overallPctText"><?= $metrics['project_attribution']['worship_share_pct'] ?></span>%</div>
             <div class="progress-bar-bg" style="height: 16px; border-radius: 8px;">
-              <div id="overallBar" class="progress-bar-fill <?= $overallClass ?>" style="width: <?= $overall ?>%; border-radius: 8px;"></div>
+              <div id="overallBar" class="progress-bar-fill good" style="width: <?= $metrics['project_attribution']['worship_share_pct'] ?>%; border-radius: 8px;"></div>
             </div>
-            <p style="color: var(--muted); font-size: 0.8rem; margin-top: 8px; font-weight: 500;"><?= htmlspecialchars($t['overall_summary']) ?></p>
+            <p id="overallSummaryText" style="color: var(--muted); font-size: 0.8rem; margin-top: 8px; font-weight: 500;"><?= htmlspecialchars($t['scope_worship_hero_summary']) ?></p>
           </div>
 
           <div style="display: flex; gap: 12px; flex-wrap: wrap;">
@@ -2313,6 +2291,11 @@ $activePage = 'server_load';
             <span id="dbBadge" class="load-card-badge <?= $metrics['db']['connected'] ? 'good' : 'danger' ?>">
               <?= $metrics['db']['connected'] ? htmlspecialchars($t['connected']) : htmlspecialchars($t['error']) ?>
             </span>
+            <div class="sparkline-container">
+              <svg class="sparkline-svg" id="dbSparkline" viewBox="0 0 90 26">
+                <polyline id="dbSparklineLine" fill="none" stroke="#8B5CF6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="0,13 90,13"/>
+              </svg>
+            </div>
           </div>
 
           <?php 
@@ -2378,6 +2361,18 @@ $activePage = 'server_load';
             <div class="stat-row">
               <span class="lbl"><?= htmlspecialchars($t['op_scripts']) ?></span>
               <span class="val" id="opScripts"><?= $metrics['opcache']['enabled'] ? number_format($metrics['opcache']['cached_scripts']) : 'N/A' ?></span>
+            </div>
+            <div class="stat-row" style="background: rgba(58,45,255,0.04); padding: 5px 8px; border-radius: 6px; margin: 3px 0;">
+              <span class="lbl" style="color:var(--primary); font-weight:700;"><?= htmlspecialchars($t['op_worship_scripts']) ?></span>
+              <span class="val" id="opWorshipScripts" style="color:var(--primary); font-weight:800;"><?= $metrics['opcache']['enabled'] ? number_format($metrics['opcache']['worship_scripts'] ?? 0) : '—' ?></span>
+            </div>
+            <div class="stat-row" style="background: rgba(58,45,255,0.04); padding: 5px 8px; border-radius: 6px; margin: 3px 0;">
+              <span class="lbl" style="color:var(--primary); font-weight:700;"><?= htmlspecialchars($t['op_worship_mem']) ?></span>
+              <span class="val" id="opWorshipMem" style="color:var(--primary); font-weight:800;"><?= $metrics['opcache']['enabled'] ? (($metrics['opcache']['worship_memory_mb'] ?? 0) . ' MB') : '—' ?></span>
+            </div>
+            <div class="stat-row" style="padding: 4px 8px;">
+              <span class="lbl" style="color:var(--muted);"><?= htmlspecialchars($t['op_other_scripts']) ?></span>
+              <span class="val" id="opOtherScripts" style="color:var(--muted);"><?= $metrics['opcache']['enabled'] ? (number_format($metrics['opcache']['other_scripts'] ?? 0) . ' (' . ($metrics['opcache']['other_memory_mb'] ?? 0) . ' MB)') : '—' ?></span>
             </div>
             <div class="stat-row" style="margin-top: 8px; border-top: 1px solid var(--line); padding-top: 10px;">
               <span class="lbl"><?= htmlspecialchars($t['sys_uptime']) ?></span>
@@ -2705,14 +2700,32 @@ $activePage = 'server_load';
     comparative: <?= json_encode($t['scope_comparative_desc']) ?>,
     all: <?= json_encode($t['scope_all_desc']) ?>
   };
+  window.scopeTitles = {
+    worship: <?= json_encode($t['scope_worship_hero_title']) ?>,
+    comparative: <?= json_encode($t['scope_comparative_hero_title']) ?>,
+    all: <?= json_encode($t['scope_all_hero_title']) ?>
+  };
+  window.scopeSummaries = {
+    worship: <?= json_encode($t['scope_worship_hero_summary']) ?>,
+    comparative: <?= json_encode($t['scope_comparative_hero_summary']) ?>,
+    all: <?= json_encode($t['scope_all_hero_summary']) ?>
+  };
+  window.scopeBadges = {
+    worship: <?= json_encode($t['worship_focus_badge']) ?>,
+    comparative: <?= json_encode($t['comparative_badge']) ?>,
+    all: <?= json_encode($t['all_badge']) ?>
+  };
   
   (function() {
   let timerId = null;
+  let latestMetrics = <?= json_encode($metrics) ?>;
+  let currentScope = localStorage.getItem('wp_server_load_scope') || 'worship';
 
   // ── SPARKLINE STATE ────────────────────────────────────────────
   const SPARKLINE_MAX = 15;
   const cpuTrend = [];
   const ramTrend = [];
+  const dbTrend = [];
 
   function buildSparklinePoints(data, width, height) {
     if (!data || data.length < 2) return null;
@@ -2734,91 +2747,175 @@ $activePage = 'server_load';
     if (pts) line.setAttribute('points', pts);
   }
 
-  // ── SCOPE SWITCHER ─────────────────────────────────────────────
-  const scopeBtns = document.querySelectorAll('.scope-pill-btn');
-  const scopeDescEl = document.getElementById('scopeDescText');
-
-  // Restore saved scope
-  const savedScope = localStorage.getItem('wp_server_load_scope') || 'worship';
-  scopeBtns.forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.scope === savedScope);
-  });
-  if (scopeDescEl && window.scopeDescriptions) {
-    scopeDescEl.textContent = window.scopeDescriptions[savedScope] || '';
-  }
-  document.body.dataset.scope = savedScope;
-
-  scopeBtns.forEach(btn => {
-    btn.addEventListener('click', function() {
-      const scope = this.dataset.scope;
-      scopeBtns.forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      document.body.dataset.scope = scope;
-      localStorage.setItem('wp_server_load_scope', scope);
-      if (scopeDescEl && window.scopeDescriptions) {
-        scopeDescEl.textContent = window.scopeDescriptions[scope] || '';
-      }
-    });
-  });
-
   function getStatusClass(pct, warnThreshold = 60, dangerThreshold = 85) {
     if (pct >= dangerThreshold) return 'danger';
     if (pct >= warnThreshold) return 'warn';
     return 'good';
   }
 
-  function updateMetricsUI(data) {
-    if (!data) return;
+  // ── STORAGE UI SYNC ────────────────────────────────────────────
+  function updateStorageUI(s) {
+    if (!s) return;
+    const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    if (s.cached_at) setTxt('storageScannedAt', s.cached_at);
+    const bkd = s.breakdown || {};
+    setTxt('sbUploads', (bkd.uploads_mb ?? 0) + ' MB');
+    setTxt('sbAudio', (bkd.audio_mb ?? 0) + ' MB');
+    setTxt('sbFrontend', (bkd.frontend_mb ?? 0) + ' MB');
+    setTxt('sbData', (bkd.data_mb ?? 0) + ' MB');
+    setTxt('sbCore', (bkd.core_mb ?? 0) + ' MB');
+    setTxt('sbWorshipDb', (s.worship_db_mb ?? 0) + ' MB');
+    const setWidth = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = pct + '%'; };
+    setWidth('segWorshipFiles', s.worship_files_pct ?? 0);
+    setWidth('segWorshipDb', s.worship_db_pct ?? 0);
+    setWidth('segOtherFiles', s.other_files_pct ?? 0);
+    setWidth('segFreeSpace', s.free_disk_pct ?? 0);
+    const otherSizeEl = document.getElementById('otherFilesSize');
+    if (otherSizeEl) {
+      otherSizeEl.textContent = s.other_detected ? (' ' + (s.other_files_gb ?? 0) + ' GB') : ' —';
+    }
+  }
 
-    document.getElementById('lastUpdated').textContent = data.timestamp;
+  // ── SCOPE SWITCHER & HERO ADAPTATION ────────────────────────────
+  const scopeBtns = document.querySelectorAll('.scope-pill-btn');
+  const scopeDescEl = document.getElementById('scopeDescText');
 
-    // 0. OVERALL LOAD
-    if (typeof data.overall_load_pct !== 'undefined') {
-      const pct = data.overall_load_pct;
+  function applyScope(scope) {
+    currentScope = scope;
+    document.body.dataset.scope = scope;
+    localStorage.setItem('wp_server_load_scope', scope);
+
+    scopeBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.scope === scope);
+    });
+
+    if (scopeDescEl && window.scopeDescriptions) {
+      scopeDescEl.textContent = window.scopeDescriptions[scope] || '';
+    }
+
+    const heroTitle = document.getElementById('overallCardTitle');
+    if (heroTitle && window.scopeTitles) {
+      heroTitle.textContent = window.scopeTitles[scope] || '';
+    }
+
+    const heroSummary = document.getElementById('overallSummaryText');
+    if (heroSummary && window.scopeSummaries) {
+      heroSummary.textContent = window.scopeSummaries[scope] || '';
+    }
+
+    const scopeBadge = document.getElementById('scopeModeBadge');
+    if (scopeBadge && window.scopeBadges) {
+      scopeBadge.textContent = window.scopeBadges[scope] || '';
+      if (scope === 'worship') {
+        scopeBadge.style.background = 'rgba(58,45,255,0.12)';
+        scopeBadge.style.color = 'var(--primary)';
+        scopeBadge.style.borderColor = 'rgba(58,45,255,0.3)';
+      } else if (scope === 'comparative') {
+        scopeBadge.style.background = 'rgba(245,158,11,0.12)';
+        scopeBadge.style.color = '#F59E0B';
+        scopeBadge.style.borderColor = 'rgba(245,158,11,0.3)';
+      } else {
+        scopeBadge.style.background = 'rgba(5,205,153,0.12)';
+        scopeBadge.style.color = 'var(--success)';
+        scopeBadge.style.borderColor = 'rgba(5,205,153,0.3)';
+      }
+    }
+
+    if (!latestMetrics) return;
+
+    const overallPctEl = document.getElementById('overallPctText');
+    const overallBar = document.getElementById('overallBar');
+    const overallBadge = document.getElementById('overallBadge');
+    const statusTextEl = document.getElementById('overallStatusText');
+
+    if (scope === 'worship' && latestMetrics.project_attribution) {
+      const wShare = latestMetrics.project_attribution.worship_share_pct;
+      if (overallPctEl) overallPctEl.textContent = wShare;
+      if (overallBar) {
+        overallBar.style.width = wShare + '%';
+        overallBar.className = 'progress-bar-fill good';
+      }
+      if (overallBadge) overallBadge.className = 'load-card-badge good';
+      if (statusTextEl) {
+        statusTextEl.textContent = wShare <= 25 ? (window.overallLoadText ? window.overallLoadText.good : 'Optimal') : (window.overallLoadText ? window.overallLoadText.warn : 'Moderate');
+      }
+    } else if (scope === 'comparative' && latestMetrics.project_attribution) {
+      const wShare = latestMetrics.project_attribution.worship_share_pct;
+      const oShare = latestMetrics.project_attribution.other_share_pct;
+      if (overallPctEl) overallPctEl.textContent = wShare + '% / ' + oShare;
+      if (overallBar) {
+        overallBar.style.width = wShare + '%';
+        overallBar.className = 'progress-bar-fill good';
+      }
+      if (overallBadge) overallBadge.className = 'load-card-badge good';
+      if (statusTextEl) statusTextEl.textContent = 'Worship: ' + wShare + '% | Other: ' + oShare + '%';
+    } else {
+      const pct = latestMetrics.overall_load_pct;
       const statusClass = getStatusClass(pct, 50, 80);
-      document.getElementById('overallPctText').textContent = pct;
-      
-      const overallBar = document.getElementById('overallBar');
+      if (overallPctEl) overallPctEl.textContent = pct;
       if (overallBar) {
         overallBar.style.width = pct + '%';
         overallBar.className = 'progress-bar-fill ' + statusClass;
       }
-      
-      const overallBadge = document.getElementById('overallBadge');
-      if (overallBadge) {
-        overallBadge.className = 'load-card-badge ' + statusClass;
-      }
-      
-      const statusTextEl = document.getElementById('overallStatusText');
+      if (overallBadge) overallBadge.className = 'load-card-badge ' + statusClass;
       if (statusTextEl && window.overallLoadText) {
         statusTextEl.textContent = pct >= 80 ? window.overallLoadText.danger : (pct >= 50 ? window.overallLoadText.warn : window.overallLoadText.good);
       }
+    }
+  }
+
+  scopeBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      applyScope(this.dataset.scope);
+    });
+  });
+
+  // Apply initial scope & storage UI
+  applyScope(currentScope);
+  if (latestMetrics && latestMetrics.storage_breakdown) {
+    updateStorageUI(latestMetrics.storage_breakdown);
+  }
+
+  // ── METRICS UI UPDATE (TICK) ───────────────────────────────────
+  function updateMetricsUI(data) {
+    if (!data) return;
+    latestMetrics = data;
+
+    document.getElementById('lastUpdated').textContent = data.timestamp;
+
+    // Apply active scope perspective to hero card
+    applyScope(currentScope);
+
+    // Update Storage Card on each tick
+    if (data.storage_breakdown) {
+      updateStorageUI(data.storage_breakdown);
+    }
+
+    // Mini Indicators
+    if (data.cpu) document.getElementById('overallCpuMini').textContent = data.cpu.pct;
+    if (data.memory) document.getElementById('overallRamMini').textContent = data.memory.pct;
+    if (data.disk) document.getElementById('overallDiskMini').textContent = data.disk.pct;
+    if (data.db && data.db.metrics) {
+      const maxConn = data.db.metrics.max_connections || 151;
+      document.getElementById('overallDbMini').textContent = Math.round((data.db.metrics.threads_connected / maxConn) * 100);
+    }
+
+    if (data.top_factor) {
+      const lang = window.adminLang || 'hy';
+      const tfName = document.getElementById('topFactorName');
+      if (tfName) tfName.textContent = data.top_factor['name_' + lang] || data.top_factor.name_hy;
       
-      if (data.cpu) document.getElementById('overallCpuMini').textContent = data.cpu.pct;
-      if (data.memory) document.getElementById('overallRamMini').textContent = data.memory.pct;
-      if (data.disk) document.getElementById('overallDiskMini').textContent = data.disk.pct;
-      if (data.db && data.db.metrics) {
-        const maxConn = data.db.metrics.max_connections || 151;
-        document.getElementById('overallDbMini').textContent = Math.round((data.db.metrics.threads_connected / maxConn) * 100);
+      const tfPct = document.getElementById('topFactorPct');
+      if (tfPct) {
+        tfPct.textContent = data.top_factor.pct + '%';
+        tfPct.className = 'load-card-badge ' + getStatusClass(data.top_factor.pct, 50, 80);
       }
+      
+      const tfDetail = document.getElementById('topFactorDetail');
+      if (tfDetail) tfDetail.textContent = data.top_factor.detail;
 
-      if (data.top_factor) {
-        const lang = window.adminLang || 'hy';
-        const tfName = document.getElementById('topFactorName');
-        if (tfName) tfName.textContent = data.top_factor['name_' + lang] || data.top_factor.name_hy;
-        
-        const tfPct = document.getElementById('topFactorPct');
-        if (tfPct) {
-          tfPct.textContent = data.top_factor.pct + '%';
-          tfPct.className = 'load-card-badge ' + getStatusClass(data.top_factor.pct, 50, 80);
-        }
-        
-        const tfDetail = document.getElementById('topFactorDetail');
-        if (tfDetail) tfDetail.textContent = data.top_factor.detail;
-
-        const tfReason = document.getElementById('topFactorReason');
-        if (tfReason) tfReason.textContent = data.top_factor['reason_' + lang] || data.top_factor.reason_hy;
-      }
+      const tfReason = document.getElementById('topFactorReason');
+      if (tfReason) tfReason.textContent = data.top_factor['reason_' + lang] || data.top_factor.reason_hy;
     }
 
     // 1. CPU
@@ -2893,6 +2990,10 @@ $activePage = 'server_load';
       setTxt('dbaOtherRunning', dba.other_running);
       const wr = document.getElementById('dbaWorshipRunning');
       if (wr) wr.style.color = dba.worship_running > 0 ? 'var(--primary)' : '';
+      if (data.storage_breakdown) {
+        setTxt('dbaWorshipTables', data.storage_breakdown.worship_db_tables || 0);
+        setTxt('dbaWorshipSize', (data.storage_breakdown.worship_db_mb || 0) + ' MB');
+      }
     }
 
     // 3. DISK
@@ -2936,6 +3037,11 @@ $activePage = 'server_load';
         const outEl = document.getElementById('onlineUsers');
         if (outEl) outEl.textContent = m.active_users_5m;
       }
+
+      // DB Sparkline
+      dbTrend.push(m.threads_connected);
+      if (dbTrend.length > SPARKLINE_MAX) dbTrend.shift();
+      updateSparkline('dbSparklineLine', dbTrend);
     }
 
     // 5. OPCACHE & SYSTEM
@@ -2944,6 +3050,12 @@ $activePage = 'server_load';
         document.getElementById('opHitRate').textContent = data.opcache.hit_rate + '%';
         document.getElementById('opMemUsed').textContent = data.opcache.memory_used_mb + ' MB';
         document.getElementById('opScripts').textContent = Number(data.opcache.cached_scripts).toLocaleString();
+        const opWS = document.getElementById('opWorshipScripts');
+        if (opWS) opWS.textContent = Number(data.opcache.worship_scripts || 0).toLocaleString();
+        const opWM = document.getElementById('opWorshipMem');
+        if (opWM) opWM.textContent = (data.opcache.worship_memory_mb || 0) + ' MB';
+        const opOS = document.getElementById('opOtherScripts');
+        if (opOS) opOS.textContent = Number(data.opcache.other_scripts || 0).toLocaleString() + ' (' + (data.opcache.other_memory_mb || 0) + ' MB)';
       }
     }
     if (data.server && data.server.uptime) {
@@ -2964,7 +3076,6 @@ $activePage = 'server_load';
       document.getElementById('audNewToday').textContent = data.audience.new_today;
       document.getElementById('audTotalUsers').textContent = Number(data.audience.total_users).toLocaleString();
       
-      // Update top header badge as well (if exists)
       const outEl = document.getElementById('onlineUsers');
       if (outEl) outEl.textContent = data.audience.online_5m;
       
@@ -2975,15 +3086,12 @@ $activePage = 'server_load';
       if (Object.keys(platforms).length === 0) {
         pContainer.innerHTML = '<div style="font-size:0.8rem; color:var(--muted);">—</div>';
       } else {
-        // Calculate total for percentages
         let total = 0;
         for (const count of Object.values(platforms)) total += count;
         
-        // Colors for platforms
         const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#64748b'];
         let colorIdx = 0;
         
-        // Build the stacked bar
         const barContainer = document.createElement('div');
         barContainer.style.display = 'flex';
         barContainer.style.width = '100%';
@@ -2993,7 +3101,6 @@ $activePage = 'server_load';
         barContainer.style.marginBottom = '12px';
         barContainer.style.background = 'rgba(163,174,209,0.2)';
         
-        // Build the legend
         const legendContainer = document.createElement('div');
         legendContainer.style.display = 'flex';
         legendContainer.style.flexWrap = 'wrap';
@@ -3003,14 +3110,12 @@ $activePage = 'server_load';
           const color = colors[colorIdx % colors.length];
           const pct = ((c / total) * 100).toFixed(1);
           
-          // Bar segment
           const segment = document.createElement('div');
           segment.style.width = pct + '%';
           segment.style.background = color;
           segment.title = p + ': ' + c + ' (' + pct + '%)';
           barContainer.appendChild(segment);
           
-          // Legend item
           const legItem = document.createElement('div');
           legItem.style.fontSize = '0.8rem';
           legItem.style.color = 'var(--text)';
@@ -3106,31 +3211,10 @@ $activePage = 'server_load';
         if (resp.ok) {
           const result = await resp.json();
           if (result.ok && result.storage) {
-            const s = result.storage;
-            const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-            // Update timestamp
-            setTxt('storageScannedAt', result.cached_at || '');
-            // Update mini boxes
-            const bkd = s.breakdown || {};
-            setTxt('sbUploads', (bkd.uploads_mb || 0) + ' MB');
-            setTxt('sbAudio', (bkd.audio_mb || 0) + ' MB');
-            setTxt('sbFrontend', (bkd.frontend_mb || 0) + ' MB');
-            setTxt('sbData', (bkd.data_mb || 0) + ' MB');
-            setTxt('sbCore', (bkd.core_mb || 0) + ' MB');
-            setTxt('sbWorshipDb', (s.worship_db_mb || 0) + ' MB');
-            // Update segment bar widths
-            const setWidth = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = pct + '%'; };
-            setWidth('segWorshipFiles', s.worship_files_pct || 0);
-            setWidth('segWorshipDb', s.worship_db_pct || 0);
-            setWidth('segOtherFiles', s.other_files_pct || 0);
-            setWidth('segFreeSpace', s.free_disk_pct || 0);
-            // Update other size label
-            const otherSizeEl = document.getElementById('otherFilesSize');
-            if (otherSizeEl) {
-              otherSizeEl.textContent = s.other_detected ? (' ' + (s.other_files_gb || 0) + ' GB') : ' —';
-            }
+            updateStorageUI(result.storage);
           }
         }
+        await fetchMetrics();
       } catch (e) {
         console.error('Storage rescan failed:', e);
       } finally {
