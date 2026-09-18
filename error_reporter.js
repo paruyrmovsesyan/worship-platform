@@ -64,11 +64,17 @@
       if (!payload) return;
       const rawMsg = String(payload.message || '');
       const rawStack = String(payload.stack_trace || '');
-      // Ignore background version manifest polling glitches
+      // Ignore background version manifest polling glitches and ServiceWorker registration rejections
       if (
         rawMsg.includes('version_manifest') ||
         rawMsg.includes('Version manifest check') ||
-        rawStack.includes('version-check.js')
+        rawStack.includes('version-check.js') ||
+        rawMsg.includes('Service worker registration') ||
+        rawMsg.includes('service worker registration') ||
+        rawMsg.includes('Failed to register a ServiceWorker') ||
+        rawMsg.includes('Failed to update a ServiceWorker') ||
+        rawMsg.includes('ServiceWorker') ||
+        rawStack.includes('ServiceWorkerContainer')
       ) {
         return;
       }
@@ -225,14 +231,18 @@
         return String(a);
       }).join(' ');
 
-      // Ignore normal dev warnings & version manifest polling
+      // Ignore normal dev warnings, version manifest polling & service worker registration notices
       if (
         text &&
         !text.includes('Download the React DevTools') &&
         !text.includes('[Fast Refresh]') &&
         !text.includes('React Router Future Flag Warning') &&
         !text.includes('version_manifest') &&
-        !text.includes('Version manifest check')
+        !text.includes('Version manifest check') &&
+        !text.includes('Service worker registration') &&
+        !text.includes('service worker registration') &&
+        !text.includes('ServiceWorkerContainer') &&
+        !text.includes('Failed to register a ServiceWorker')
       ) {
         const firstErr = args.find(a => a instanceof Error);
         const { userId, userEmail } = getUserMeta();

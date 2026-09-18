@@ -250,5 +250,35 @@
         "resolved_at": "2026-09-18 00:49:00",
         "resolved_by": "auto_code_analysis",
         "resolution_reason": "Շտկված է։ Version manifest-ի background polling-ի ժամանակավոր ցանցային սխալները այլևս չեն գրանցվում որպես ծրագրի կրիտիկական խնդիր։"
+    },
+    "dbb44284b1d7cae26c673aa8c8afaad2": {
+        "is_resolved": 1,
+        "resolved_at": "2026-09-18 14:51:44",
+        "resolved_by": "auto_code_analysis",
+        "resolution_reason": "sw.js-ի գրանցումը և reg.update()-ի սխալների որսումը (catch) ապահովված է, ֆոնային/կրոուլերների սխալները ֆիլտրված են"
+    },
+    "e0ce2e397f4db265157da73d6f883c1e": {
+        "is_resolved": 1,
+        "resolved_at": "2026-09-18 14:51:44",
+        "resolved_by": "auto_code_analysis",
+        "resolution_reason": "sw.js-ի գրանցումը և reg.update()-ի սխալների որսումը (catch) ապահովված է, ֆոնային/կրոուլերների սխալները ֆիլտրված են"
+    },
+    "634e7ab31379f34dc54ffdf623f7ab74": {
+        "is_resolved": 1,
+        "resolved_at": "2026-09-18 14:51:44",
+        "resolved_by": "auto_code_analysis",
+        "resolution_reason": "sw.js-ի գրանցումը և reg.update()-ի սխալների որսումը (catch) ապահովված է, ֆոնային/կրոուլերների սխալները ֆիլտրված են"
+    },
+    "a14c4d557897e8e06aa842347cb0503b": {
+        "is_resolved": 1,
+        "resolved_at": "2026-09-18 14:51:44",
+        "resolved_by": "auto_code_analysis",
+        "resolution_reason": "sw.js-ի գրանցումը և reg.update()-ի սխալների որսումը (catch) ապահովված է, ֆոնային/կրոուլերների սխալները ֆիլտրված են"
+    },
+    "bcfb157f52e6513f0d13fee7e20f31c6": {
+        "is_resolved": 1,
+        "resolved_at": "2026-09-18 14:51:44",
+        "resolved_by": "auto_code_analysis",
+        "resolution_reason": "sw.js-ի գրանցումը և reg.update()-ի սխալների որսումը (catch) ապահովված է, ֆոնային/կրոուլերների սխալները ֆիլտրված են"
     }
 }

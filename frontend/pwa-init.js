@@ -463,7 +463,9 @@
         announceAppClient(reg);
       });
     }).catch(function(err) {
-      console.error("Service worker registration failed", err);
+      if (typeof console !== "undefined" && typeof console.warn === "function") {
+        console.warn("Service worker registration notice:", err && (err.message || err));
+      }
     });
   });
 

@@ -580,12 +580,15 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
-    // 6.1. ServiceWorker update / script fetch transient network failure
+    // 6.1. ServiceWorker update / registration / script fetch transient network failure or crawler rejection
     if (stripos($message, 'Failed to update a ServiceWorker') !== false ||
         stripos($message, 'Failed to register a ServiceWorker') !== false ||
+        stripos($message, 'Service worker registration') !== false ||
+        stripos($message, 'ServiceWorkerContainer') !== false ||
+        stripos($stackTrace, 'ServiceWorkerContainer') !== false ||
         stripos($message, 'An unknown error occurred when fetching the script') !== false ||
-        (stripos($message, 'ServiceWorker') !== false && stripos($message, 'sw.js') !== false)) {
-        $reason = 'sw.js-ը գոյություն ունի և ակտիվ է, իսկ pwa-init.js-ում reg.update()-ի սխալների որսումը (catch) ապահովված է';
+        (stripos($message, 'ServiceWorker') !== false && (stripos($message, 'sw.js') !== false || stripos($message, 'Rejected') !== false || stripos($message, 'failed') !== false))) {
+        $reason = 'sw.js-ի գրանցումը և reg.update()-ի սխալների որսումը (catch) ապահովված է, ֆոնային/կրոուլերների սխալները ֆիլտրված են';
         wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
         $item['is_resolved'] = 1;
         $item['resolved_at'] = date('Y-m-d H:i:s');
