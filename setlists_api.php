@@ -201,7 +201,7 @@ function requireSetlistReadable(PDO $pdo, int $setlistId, int $uid): array {
     return $decorated;
   }
 
-  // Public / Shared link access: if setlist exists and is active, allow read-only access
+  // Public / Shared link access: if setlist exists and is active, allow access (default can_edit = 0)
   $st = $pdo->prepare("
     SELECT s.*, u.name AS owner_name, u.email AS owner_email
     FROM setlists s
@@ -212,6 +212,35 @@ function requireSetlistReadable(PDO $pdo, int $setlistId, int $uid): array {
   $st->execute([$setlistId]);
   $row = $st->fetch(PDO::FETCH_ASSOC);
   if ($row) {
+    if ($uid > 0 && $uid !== (int)$row['user_id']) {
+      try {
+        $stUser = $pdo->prepare("SELECT email FROM users WHERE id = ? LIMIT 1");
+        $stUser->execute([$uid]);
+        $uEmail = $stUser->fetchColumn() ?: null;
+
+        $insAccess = $pdo->prepare("
+          INSERT INTO setlist_user_access (setlist_id, owner_user_id, grantee_user_id, grantee_email, can_edit, created_at)
+          VALUES (?, ?, ?, ?, 0, NOW())
+          ON DUPLICATE KEY UPDATE updated_at = NOW()
+        ");
+        $insAccess->execute([$setlistId, (int)$row['user_id'], $uid, $uEmail]);
+
+        $stRecheck = $pdo->prepare("
+          SELECT id AS access_id, expires_at AS access_expires_at, can_edit
+          FROM setlist_user_access
+          WHERE setlist_id = ? AND grantee_user_id = ? AND revoked_at IS NULL
+          LIMIT 1
+        ");
+        $stRecheck->execute([$setlistId, $uid]);
+        $accRow = $stRecheck->fetch(PDO::FETCH_ASSOC);
+        if ($accRow) {
+          return decorateSetlistAccess($row, 'shared', (bool)$accRow['can_edit'], [
+            'id' => (int)$accRow['access_id'],
+            'expires_at' => $accRow['access_expires_at'] ?? null,
+          ]);
+        }
+      } catch (Throwable $e) {}
+    }
     return decorateSetlistAccess($row, 'shared', false);
   }
 
@@ -534,18 +563,60 @@ if ($action === 'revoke_setlist_access' && $method === 'POST') {
   $d = readJson();
   $setlist_id = (int)($d['setlist_id'] ?? 0);
   $access_id = (int)($d['access_id'] ?? 0);
+  $grantee_user_id = (int)($d['grantee_user_id'] ?? 0);
 
-  if ($setlist_id <= 0 || $access_id <= 0) out(["error" => "Invalid data"], 400);
+  if ($setlist_id <= 0 || ($access_id <= 0 && $grantee_user_id <= 0)) out(["error" => "Invalid data"], 400);
   requireSetlistOwner($pdo, $setlist_id, $uid);
 
-  $st = $pdo->prepare("
-    UPDATE setlist_user_access
-    SET revoked_at = NOW(), updated_at = NOW()
-    WHERE id = ? AND setlist_id = ? AND owner_user_id = ?
-  ");
-  $st->execute([$access_id, $setlist_id, $uid]);
+  if ($access_id > 0) {
+    $st = $pdo->prepare("
+      UPDATE setlist_user_access
+      SET revoked_at = NOW(), updated_at = NOW()
+      WHERE id = ? AND setlist_id = ? AND owner_user_id = ?
+    ");
+    $st->execute([$access_id, $setlist_id, $uid]);
+  } else {
+    $st = $pdo->prepare("
+      UPDATE setlist_user_access
+      SET revoked_at = NOW(), updated_at = NOW()
+      WHERE grantee_user_id = ? AND setlist_id = ? AND owner_user_id = ?
+    ");
+    $st->execute([$grantee_user_id, $setlist_id, $uid]);
+  }
 
   out(["ok" => true]);
+}
+
+/* SET USER EDIT PERMISSION */
+if ($action === 'set_user_edit_permission' && $method === 'POST') {
+  $d = readJson();
+  $setlist_id = (int)($d['setlist_id'] ?? 0);
+  $access_id = (int)($d['access_id'] ?? 0);
+  $grantee_user_id = (int)($d['grantee_user_id'] ?? 0);
+  $can_edit = !empty($d['can_edit']) ? 1 : 0;
+
+  if ($setlist_id <= 0 || ($access_id <= 0 && $grantee_user_id <= 0)) {
+    out(["error" => "Invalid data"], 400);
+  }
+  requireSetlistOwner($pdo, $setlist_id, $uid);
+
+  if ($access_id > 0) {
+    $st = $pdo->prepare("
+      UPDATE setlist_user_access
+      SET can_edit = ?, revoked_at = NULL, updated_at = NOW()
+      WHERE id = ? AND setlist_id = ? AND owner_user_id = ?
+    ");
+    $st->execute([$can_edit, $access_id, $setlist_id, $uid]);
+  } else {
+    $st = $pdo->prepare("
+      UPDATE setlist_user_access
+      SET can_edit = ?, revoked_at = NULL, updated_at = NOW()
+      WHERE grantee_user_id = ? AND setlist_id = ? AND owner_user_id = ?
+    ");
+    $st->execute([$can_edit, $grantee_user_id, $setlist_id, $uid]);
+  }
+
+  out(["ok" => true, "can_edit" => (bool)$can_edit]);
 }
 
 /* RENAME / UPDATE SETLIST */
@@ -731,6 +802,30 @@ if ($action === 'get_setlist_items' && $method === 'GET') {
         ];
       }
     } catch (Throwable $e) {}
+
+    $collaborators = [];
+    try {
+      $collabStmt = $pdo->prepare("
+        SELECT a.id, a.grantee_user_id, a.can_edit, a.created_at, a.updated_at,
+               u.name AS user_name, u.email AS user_email
+        FROM setlist_user_access a
+        JOIN users u ON u.id = a.grantee_user_id
+        WHERE a.setlist_id = ? AND a.revoked_at IS NULL
+        ORDER BY a.created_at DESC
+      ");
+      $collabStmt->execute([$setlist_id]);
+      $rawCollab = $collabStmt->fetchAll(PDO::FETCH_ASSOC);
+      foreach ($rawCollab as $rc) {
+        $collaborators[] = [
+          'id' => (int)$rc['id'],
+          'user_id' => (int)$rc['grantee_user_id'],
+          'user_name' => $rc['user_name'] ?: 'User #' . $rc['grantee_user_id'],
+          'user_email' => $rc['user_email'] ?: '',
+          'can_edit' => (bool)$rc['can_edit'],
+          'created_at' => $rc['created_at']
+        ];
+      }
+    } catch (Throwable $e) {}
   }
 
   $st = $pdo->prepare("
@@ -802,6 +897,8 @@ if ($action === 'get_setlist_items' && $method === 'GET') {
     "owner_email" => $setlist['owner_email'] ?? null,
     "team_role" => $setlist['team_role'] ?? null,
     "views_count" => $isOwner ? $viewsCount : 0,
+    "collaborators_count" => $isOwner ? count($collaborators) : 0,
+    "collaborators" => $isOwner ? $collaborators : [],
     "saves_count" => $isOwner ? count($savedByUsers) : 0,
     "saved_by" => $isOwner ? $savedByUsers : []
   ], [
@@ -1318,6 +1415,21 @@ if ($action === 'get_public_setlist' && $method === 'GET') {
   }
 
   trackSetlistView($pdo, (int)$setlist['id'], $uid, (int)$setlist['user_id']);
+
+  if ($uid > 0 && $uid !== (int)$setlist['user_id']) {
+    try {
+      $stUser = $pdo->prepare("SELECT email FROM users WHERE id = ? LIMIT 1");
+      $stUser->execute([$uid]);
+      $uEmail = $stUser->fetchColumn() ?: null;
+
+      $insAccess = $pdo->prepare("
+        INSERT INTO setlist_user_access (setlist_id, owner_user_id, grantee_user_id, grantee_email, can_edit, created_at)
+        VALUES (?, ?, ?, ?, 0, NOW())
+        ON DUPLICATE KEY UPDATE updated_at = NOW()
+      ");
+      $insAccess->execute([(int)$setlist['id'], (int)$setlist['user_id'], $uid, $uEmail]);
+    } catch (Throwable $e) {}
+  }
 
   $viewsSt = $pdo->prepare("SELECT views_count FROM setlists WHERE id = ? LIMIT 1");
   $viewsSt->execute([$setlist['id']]);

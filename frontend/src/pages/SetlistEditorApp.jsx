@@ -1054,6 +1054,50 @@ export default function SetlistEditorApp() {
     }
   };
 
+  const handleToggleUserPermission = async (granteeUserId, currentCanEdit, accessId) => {
+    try {
+      const res = await fetch('/setlists_api.php?action=set_user_edit_permission', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          setlist_id: id,
+          grantee_user_id: granteeUserId,
+          access_id: accessId,
+          can_edit: !currentCanEdit
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setSharedUsers(prev => prev.map(u => (u.grantee_user_id === granteeUserId || u.id === accessId) ? { ...u, can_edit: !currentCanEdit } : u));
+      } else {
+        alert(data.error || 'Failed to update permission');
+      }
+    } catch (e) {
+      alert('Network error');
+    }
+  };
+
+  const handleRevokeUserAccess = async (accessId, granteeUserId) => {
+    if (!confirm('Հեռացնե՞լ այս օգտատիրոջ հասանելիությունը երգացանկից:')) return;
+    try {
+      const res = await fetch('/setlists_api.php?action=revoke_setlist_access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          setlist_id: id,
+          access_id: accessId,
+          grantee_user_id: granteeUserId
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setSharedUsers(prev => prev.filter(u => u.grantee_user_id !== granteeUserId && u.id !== accessId));
+      }
+    } catch (e) {
+      alert('Network error');
+    }
+  };
+
   const handleSaveToMyAccount = async () => {
     if (!user) {
       navigate(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
@@ -1300,6 +1344,16 @@ export default function SetlistEditorApp() {
               >
                 💾 {setlistData.saves_count || 0} {t('setlists.savesCount', 'պահպանում')}
               </span>
+              {((setlistData.collaborators_count && setlistData.collaborators_count > 0) || (sharedUsers && sharedUsers.length > 0)) && (
+                <span
+                  className="sla-chip sla-chip--clickable"
+                  onClick={openShareModal}
+                  style={{ cursor: 'pointer', background: 'rgba(0, 212, 255, 0.12)', color: '#00d4ff', borderColor: 'rgba(0, 212, 255, 0.3)' }}
+                  title="Տեսնել և կառավարել համատեղ օգտագործողների իրավունքները"
+                >
+                  🤝 {setlistData.collaborators_count || sharedUsers.length} {t('setlists.coUsersCount', 'մասնակից')}
+                </span>
+              )}
             </>
           )}
         </div>
@@ -1330,9 +1384,8 @@ export default function SetlistEditorApp() {
                 {t('setlists.sharedSetlistBannerTitle', 'Կիսված երգացանկ')}
               </div>
               <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {setlistData.owner_name
-                  ? t('setlists.sharedByAuthorShort', `Հեղինակ՝ ${setlistData.owner_name}`)
-                  : t('setlists.sharedSetlistHintShort', 'Պահպանեք ձեր հաշվում՝ խմբագրելու համար')}
+                {setlistData.owner_name ? t('setlists.sharedByAuthorShort', `Հեղինակ՝ ${setlistData.owner_name}`) : ''}
+                {canEdit ? ' • Խմբագրման իրավունքով' : ' • Դիտման ռեժիմ'}
               </div>
             </div>
           </div>
@@ -2165,6 +2218,110 @@ export default function SetlistEditorApp() {
                   </button>
                 )}
               </div>
+
+              {/* Co-users / Collaborators Section */}
+              {sharedUsers && sharedUsers.length > 0 && (
+                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#fff' }}>
+                      Համատեղ օգտագործողներ
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: '#8fa0b5' }}>
+                      {sharedUsers.filter(u => u.status === 'active').length} մասնակից
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#8fa0b5', marginBottom: '10px', lineHeight: '1.3' }}>
+                    {isOwner
+                      ? 'Հղումով միացածները լռելյայն դիտող են։ Սեղմեք՝ խմբագրում թույլատրելու համար։'
+                      : 'Երգացանկի համատեղ օգտագործողներ'}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '160px', overflowY: 'auto' }}>
+                    {sharedUsers.filter(u => u.status === 'active').map(u => (
+                      <div
+                        key={u.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '8px 10px',
+                          background: 'rgba(255,255,255,0.04)',
+                          borderRadius: '10px',
+                          gap: '8px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                          <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>
+                            {u.grantee_name ? u.grantee_name.charAt(0).toUpperCase() : '👤'}
+                          </div>
+                          <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <div style={{ fontSize: '0.82rem', color: '#fff', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {u.grantee_name || u.email}
+                            </div>
+                            {u.grantee_name && u.email && (
+                              <div style={{ fontSize: '0.7rem', color: '#8fa0b5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {u.email}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                          {isOwner ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleUserPermission(u.grantee_user_id, u.can_edit, u.id)}
+                                style={{
+                                  border: u.can_edit ? '1px solid rgba(46,204,113,0.4)' : '1px solid rgba(255,255,255,0.15)',
+                                  background: u.can_edit ? 'rgba(46,204,113,0.18)' : 'rgba(255,255,255,0.06)',
+                                  color: u.can_edit ? '#2ecc71' : '#8fa0b5',
+                                  borderRadius: '6px',
+                                  padding: '4px 8px',
+                                  fontSize: '0.74rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer'
+                                }}
+                                title={u.can_edit ? 'Սեղմեք՝ դարձնելու դիտող' : 'Սեղմեք՝ թույլատրելու խմբագրել'}
+                              >
+                                {u.can_edit ? '✓ Խմբագրող' : '👁 Դիտող'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRevokeUserAccess(u.id, u.grantee_user_id)}
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: '#ff6b6b',
+                                  fontSize: '0.85rem',
+                                  padding: '4px 6px',
+                                  cursor: 'pointer'
+                                }}
+                                title="Հեռացնել"
+                              >
+                                ✕
+                              </button>
+                            </>
+                          ) : (
+                            <span
+                              style={{
+                                padding: '3px 8px',
+                                borderRadius: '6px',
+                                background: u.can_edit ? 'rgba(46,204,113,0.15)' : 'rgba(255,255,255,0.06)',
+                                color: u.can_edit ? '#2ecc71' : '#8fa0b5',
+                                fontSize: '0.74rem'
+                              }}
+                            >
+                              {u.can_edit ? 'Խմբագրող' : 'Դիտող'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {sharedUsers.filter(u => u.status === 'active').length === 0 && (
+                      <div style={{ fontSize: '0.8rem', color: '#68778d' }}>Դեռ ոչ ոք չի միացել</div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Chat sharing */}
               <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>

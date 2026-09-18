@@ -266,6 +266,50 @@ export default function SetlistEditorWeb() {
     }
   };
 
+  const handleToggleUserPermission = async (granteeUserId, currentCanEdit, accessId) => {
+    try {
+      const res = await fetch('/setlists_api.php?action=set_user_edit_permission', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          setlist_id: id,
+          grantee_user_id: granteeUserId,
+          access_id: accessId,
+          can_edit: !currentCanEdit
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setSharedUsers(prev => prev.map(u => (u.grantee_user_id === granteeUserId || u.id === accessId) ? { ...u, can_edit: !currentCanEdit } : u));
+      } else {
+        alert(data.error || 'Failed to update permission');
+      }
+    } catch (e) {
+      alert('Network error');
+    }
+  };
+
+  const handleRevokeUserAccess = async (accessId, granteeUserId) => {
+    if (!confirm('Հեռացնե՞լ այս օգտատիրոջ հասանելիությունը երգացանկից:')) return;
+    try {
+      const res = await fetch('/setlists_api.php?action=revoke_setlist_access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          setlist_id: id,
+          access_id: accessId,
+          grantee_user_id: granteeUserId
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setSharedUsers(prev => prev.filter(u => u.grantee_user_id !== granteeUserId && u.id !== accessId));
+      }
+    } catch (e) {
+      alert('Network error');
+    }
+  };
+
   const handleSaveToMyAccount = async () => {
     if (!user) {
       navigate(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
@@ -725,6 +769,16 @@ export default function SetlistEditorWeb() {
                     💾 {setlistData.saves_count || 0} {t('setlists.savesCount', 'պահպանում')}
                     <span style={{ fontSize: '11px', opacity: 0.8, marginLeft: '2px' }}>👥</span>
                   </button>
+                  {((setlistData.collaborators_count && setlistData.collaborators_count > 0) || (sharedUsers && sharedUsers.length > 0)) && (
+                    <button
+                      type="button"
+                      className="sle-stat-chip sle-stat-chip--clickable"
+                      onClick={openShareModal}
+                      title="Տեսնել և կառավարել համատեղ օգտագործողների իրավունքները"
+                    >
+                      🤝 {setlistData.collaborators_count || sharedUsers.length} {t('setlists.coUsersCount', 'մասնակից')}
+                    </button>
+                  )}
                 </>
               )}
             </div>
@@ -1277,23 +1331,85 @@ export default function SetlistEditorWeb() {
 
             {sharedUsers && sharedUsers.length > 0 && (
               <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '8px', color: '#fff' }}>Ում է հասանելի</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
-                  {sharedUsers.filter(u => u.status === 'active').map(user => (
-                    <div key={user.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}>
-                          {user.grantee_name ? user.grantee_name.charAt(0).toUpperCase() : '👤'}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#fff', margin: 0 }}>
+                    Համատեղ օգտագործողներ
+                  </h3>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                    {sharedUsers.filter(u => u.status === 'active').length} մասնակից
+                  </span>
+                </div>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px', lineHeight: '1.4' }}>
+                  {isOwner
+                    ? 'Հղումով միացած օգտատերերը լռելյայն դիտող են։ Սեղմեք կոճակը՝ խմբագրելու իրավունք տալու համար։'
+                    : 'Երգացանկի համատեղ օգտագործողներ'}
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
+                  {sharedUsers.filter(u => u.status === 'active').map(sUser => (
+                    <div key={sUser.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+                        <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 'bold', flexShrink: 0 }}>
+                          {sUser.grantee_name ? sUser.grantee_name.charAt(0).toUpperCase() : '👤'}
                         </div>
-                        <span style={{ fontSize: '13px', color: '#fff' }}>{user.grantee_name || user.email}</span>
+                        <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: '13px', color: '#fff', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {sUser.grantee_name || sUser.email}
+                          </div>
+                          {sUser.grantee_name && sUser.email && (
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {sUser.email}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '4px', background: user.can_edit ? 'rgba(46,204,113,0.2)' : 'rgba(255,255,255,0.1)', color: user.can_edit ? '#2ecc71' : 'var(--text-muted)' }}>
-                        {user.can_edit ? 'Խմբագրող' : 'Դիտող'}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                        {isOwner ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleUserPermission(sUser.grantee_user_id, sUser.can_edit, sUser.id)}
+                              style={{
+                                cursor: 'pointer',
+                                border: sUser.can_edit ? '1px solid rgba(46,204,113,0.4)' : '1px solid rgba(255,255,255,0.2)',
+                                background: sUser.can_edit ? 'rgba(46,204,113,0.2)' : 'rgba(255,255,255,0.08)',
+                                color: sUser.can_edit ? '#2ecc71' : 'var(--text-muted)',
+                                borderRadius: '6px',
+                                padding: '4px 10px',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                transition: 'all 0.2s ease'
+                              }}
+                              title={sUser.can_edit ? 'Սեղմեք՝ դարձնելու դիտող' : 'Սեղմեք՝ թույլատրելու խմբագրել'}
+                            >
+                              {sUser.can_edit ? '✓ Խմբագրող' : '👁 Դիտող'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRevokeUserAccess(sUser.id, sUser.grantee_user_id)}
+                              style={{
+                                cursor: 'pointer',
+                                border: 'none',
+                                background: 'transparent',
+                                color: '#ff6b6b',
+                                fontSize: '14px',
+                                padding: '4px 6px',
+                                borderRadius: '4px'
+                              }}
+                              title="Հեռացնել հասանելիությունը"
+                            >
+                              ✕
+                            </button>
+                          </>
+                        ) : (
+                          <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: sUser.can_edit ? 'rgba(46,204,113,0.2)' : 'rgba(255,255,255,0.1)', color: sUser.can_edit ? '#2ecc71' : 'var(--text-muted)' }}>
+                            {sUser.can_edit ? 'Խմբագրող' : 'Դիտող'}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ))}
                   {sharedUsers.filter(u => u.status === 'active').length === 0 && (
-                    <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Դեռ ոչ ոքի չի ուղարկվել</div>
+                    <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Դեռ ոչ ոք չի միացել</div>
                   )}
                 </div>
               </div>
