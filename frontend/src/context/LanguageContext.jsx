@@ -485,7 +485,13 @@ const translations = {
       savesCountTooltip: 'Պահպանումների քանակ',
       statViews: 'Դիտում',
       statSaves: 'Պահպանում',
-      viewWhoSaved: 'Տեսնել ովքեր են պահպանել'
+      viewWhoSaved: 'Տեսնել ովքեր են պահպանել',
+      sharedSetlistBannerTitle: 'Համատեղ երգացանկ',
+      sharedByAuthorCoUser: 'Հեղինակ՝ {{name}}',
+      canEditMode: 'Խմբագրման իրավունքով',
+      readOnlyMode: 'Դիտման ռեժիմ (խմբագրումը թույլատրում է ստեղծողը)',
+      savedInYourAccount: 'Պահպանված է ձեր հաշվում',
+      savedInYourAccountShort: 'Պահպանված է'
     },
     news: { 
       title: 'Նորություններ և Թարմացումներ'
@@ -1312,7 +1318,13 @@ const translations = {
       savesCountTooltip: 'Save count',
       statViews: 'Views',
       statSaves: 'Saves',
-      viewWhoSaved: 'View who saved'
+      viewWhoSaved: 'View who saved',
+      sharedSetlistBannerTitle: 'Shared Setlist',
+      sharedByAuthorCoUser: 'Author: {{name}}',
+      canEditMode: 'With edit permissions',
+      readOnlyMode: 'View-only mode (editor access given by creator)',
+      savedInYourAccount: 'Saved in your account',
+      savedInYourAccountShort: 'Saved'
     },
     news: { title: 'News & Updates' },
     teams: {
@@ -2138,7 +2150,13 @@ const translations = {
       savesCountTooltip: 'Количество сохранений',
       statViews: 'Просмотры',
       statSaves: 'Сохранения',
-      viewWhoSaved: 'Посмотреть сохранивших'
+      viewWhoSaved: 'Посмотреть сохранивших',
+      sharedSetlistBannerTitle: 'Совместный сетлист',
+      sharedByAuthorCoUser: 'Автор: {{name}}',
+      canEditMode: 'С правом редактирования',
+      readOnlyMode: 'Режим просмотра (редактирование разрешает создатель)',
+      savedInYourAccount: 'Сохранено в вашем аккаунте',
+      savedInYourAccountShort: 'Сохранено'
     },
     news: { title: 'Новости и Обновления' },
     teams: {

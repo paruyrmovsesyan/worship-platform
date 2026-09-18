@@ -225,6 +225,13 @@ function requireSetlistReadable(PDO $pdo, int $setlistId, int $uid): array {
         ");
         $insAccess->execute([$setlistId, (int)$row['user_id'], $uid, $uEmail]);
 
+        $stSCheck = $pdo->prepare("SELECT id FROM setlist_saves WHERE setlist_id = ? AND user_id = ? LIMIT 1");
+        $stSCheck->execute([$setlistId, $uid]);
+        if (!$stSCheck->fetchColumn()) {
+          $insSave = $pdo->prepare("INSERT INTO setlist_saves (setlist_id, user_id, saved_setlist_id, created_at) VALUES (?, ?, ?, NOW())");
+          $insSave->execute([$setlistId, $uid, $setlistId]);
+        }
+
         $stRecheck = $pdo->prepare("
           SELECT id AS access_id, expires_at AS access_expires_at, can_edit
           FROM setlist_user_access
@@ -375,11 +382,12 @@ if ($action === 'get_setlists' && $method === 'GET') {
           JOIN setlists s ON s.id = a.setlist_id
           LEFT JOIN users u ON u.id = s.user_id
           WHERE a.grantee_user_id = ?
+            AND s.user_id != ?
             AND a.revoked_at IS NULL
             AND (a.expires_at IS NULL OR a.expires_at > NOW())
             AND s.status = 'active'
         ");
-        $sharedSt->execute([$uid]);
+        $sharedSt->execute([$uid, $uid]);
         $rows = array_merge($rows, $sharedSt->fetchAll(PDO::FETCH_ASSOC));
       } catch (PDOException $e) {
       }
@@ -405,6 +413,34 @@ if ($action === 'get_setlists' && $method === 'GET') {
         $rows = array_merge($rows, $teamSt->fetchAll(PDO::FETCH_ASSOC));
       } catch (PDOException $e) {
       }
+
+      // Filter out any duplicate personal copy created earlier when saving a shared setlist
+      try {
+        $stDupSaves = $pdo->prepare("
+          SELECT saved_setlist_id FROM setlist_saves
+          WHERE user_id = ? AND saved_setlist_id IS NOT NULL AND saved_setlist_id != setlist_id
+        ");
+        $stDupSaves->execute([$uid]);
+        $dupSavedIds = $stDupSaves->fetchAll(PDO::FETCH_COLUMN);
+        if (!empty($dupSavedIds)) {
+          $dupMap = array_flip(array_map('intval', $dupSavedIds));
+          $rows = array_values(array_filter($rows, static function($r) use ($dupMap) {
+            return !isset($dupMap[(int)$r['id']]);
+          }));
+        }
+      } catch (Throwable $e) {}
+
+      // Deduplicate rows by setlist ID
+      $seenIds = [];
+      $uniqueRows = [];
+      foreach ($rows as $rowItem) {
+        $sid = (int)$rowItem['id'];
+        if (!isset($seenIds[$sid])) {
+          $seenIds[$sid] = true;
+          $uniqueRows[] = $rowItem;
+        }
+      }
+      $rows = $uniqueRows;
     }
 
     usort($rows, static function($a, $b) {
@@ -731,6 +767,109 @@ if ($action === 'unarchive_setlist' && $method === 'POST') {
   $st->execute([$setlist_id, $uid]);
 
   out(["ok" => true]);
+}
+
+/* SAVE SHARED SETLIST (JOIN AS CO-USER WITHOUT DUPLICATING) */
+if ($action === 'save_shared_setlist' && $method === 'POST') {
+  $d = readJson();
+  $setlist_id = (int)($d['setlist_id'] ?? 0);
+  $token = trim((string)($d['token'] ?? ''));
+
+  if ($setlist_id <= 0 && $token === '') {
+    out(["error" => "Invalid setlist_id or token"], 400);
+  }
+
+  $setlist = null;
+  if ($token !== '') {
+    $st = $pdo->prepare("SELECT * FROM setlists WHERE share_token = ? LIMIT 1");
+    $st->execute([$token]);
+    $setlist = $st->fetch(PDO::FETCH_ASSOC);
+
+    if (!$setlist && ctype_digit($token)) {
+      $st = $pdo->prepare("SELECT * FROM setlists WHERE id = ? AND (status = 'active' OR status IS NULL) LIMIT 1");
+      $st->execute([(int)$token]);
+      $setlist = $st->fetch(PDO::FETCH_ASSOC);
+    }
+  }
+
+  if (!$setlist && $setlist_id > 0) {
+    $st = $pdo->prepare("SELECT * FROM setlists WHERE id = ? AND (status = 'active' OR status IS NULL) LIMIT 1");
+    $st->execute([$setlist_id]);
+    $setlist = $st->fetch(PDO::FETCH_ASSOC);
+  }
+
+  if (!$setlist) {
+    out(["error" => "Setlist not found"], 404);
+  }
+
+  $targetId = (int)$setlist['id'];
+  $ownerId = (int)$setlist['user_id'];
+
+  if ($uid > 0 && $uid === $ownerId) {
+    out(["ok" => true, "id" => $targetId, "is_owner" => true]);
+  }
+
+  if ($uid > 0) {
+    $stUser = $pdo->prepare("SELECT email FROM users WHERE id = ? LIMIT 1");
+    $stUser->execute([$uid]);
+    $uEmail = $stUser->fetchColumn() ?: null;
+
+    $insAccess = $pdo->prepare("
+      INSERT INTO setlist_user_access (setlist_id, owner_user_id, grantee_user_id, grantee_email, can_edit, created_at)
+      VALUES (?, ?, ?, ?, 0, NOW())
+      ON DUPLICATE KEY UPDATE updated_at = NOW(), revoked_at = NULL
+    ");
+    $insAccess->execute([$targetId, $ownerId, $uid, $uEmail]);
+
+    $stSCheck = $pdo->prepare("SELECT id FROM setlist_saves WHERE setlist_id = ? AND user_id = ? LIMIT 1");
+    $stSCheck->execute([$targetId, $uid]);
+    if (!$stSCheck->fetchColumn()) {
+      $insSave = $pdo->prepare("
+        INSERT INTO setlist_saves (setlist_id, user_id, saved_setlist_id, created_at)
+        VALUES (?, ?, ?, NOW())
+      ");
+      $insSave->execute([$targetId, $uid, $targetId]);
+    } else {
+      $updSave = $pdo->prepare("UPDATE setlist_saves SET saved_setlist_id = ? WHERE setlist_id = ? AND user_id = ?");
+      $updSave->execute([$targetId, $targetId, $uid]);
+    }
+
+    // Clean up any accidental duplicate personal copy created earlier for this user from this setlist
+    try {
+      $findSavedDups = $pdo->prepare("
+        SELECT saved_setlist_id FROM setlist_saves
+        WHERE setlist_id = ? AND user_id = ? AND saved_setlist_id IS NOT NULL AND saved_setlist_id != ?
+      ");
+      $findSavedDups->execute([$targetId, $uid, $targetId]);
+      $savedDupIds = $findSavedDups->fetchAll(PDO::FETCH_COLUMN);
+      foreach ($savedDupIds as $sDupId) {
+        if ($sDupId && (int)$sDupId !== $targetId) {
+          $pdo->prepare("DELETE FROM setlist_items WHERE setlist_id = ?")->execute([$sDupId]);
+          $pdo->prepare("DELETE FROM setlists WHERE id = ? AND user_id = ?")->execute([$sDupId, $uid]);
+        }
+      }
+
+      $findNameDups = $pdo->prepare("
+        SELECT id FROM setlists
+        WHERE user_id = ? AND status = 'active'
+          AND (name = ? OR name = ?)
+          AND id != ?
+      ");
+      $findNameDups->execute([
+        $uid,
+        $setlist['name'] . ' (պահպանված)',
+        $setlist['name'] . ' (կրկնօրինակ)',
+        $targetId
+      ]);
+      $nameDupIds = $findNameDups->fetchAll(PDO::FETCH_COLUMN);
+      foreach ($nameDupIds as $nDupId) {
+        $pdo->prepare("DELETE FROM setlist_items WHERE setlist_id = ?")->execute([$nDupId]);
+        $pdo->prepare("DELETE FROM setlists WHERE id = ? AND user_id = ?")->execute([$nDupId, $uid]);
+      }
+    } catch (Throwable $e) {}
+  }
+
+  out(["ok" => true, "id" => $targetId, "name" => $setlist['name']]);
 }
 
 /* DUPLICATE SETLIST */
@@ -1464,6 +1603,13 @@ if ($action === 'get_public_setlist' && $method === 'GET') {
         ON DUPLICATE KEY UPDATE updated_at = NOW()
       ");
       $insAccess->execute([(int)$setlist['id'], (int)$setlist['user_id'], $uid, $uEmail]);
+
+      $stSCheck = $pdo->prepare("SELECT id FROM setlist_saves WHERE setlist_id = ? AND user_id = ? LIMIT 1");
+      $stSCheck->execute([(int)$setlist['id'], $uid]);
+      if (!$stSCheck->fetchColumn()) {
+        $insSave = $pdo->prepare("INSERT INTO setlist_saves (setlist_id, user_id, saved_setlist_id, created_at) VALUES (?, ?, ?, NOW())");
+        $insSave->execute([(int)$setlist['id'], $uid, (int)$setlist['id']]);
+      }
     } catch (Throwable $e) {}
   }
 

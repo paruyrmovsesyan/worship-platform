@@ -79,10 +79,10 @@ export default function SetlistPublicWeb() {
     setIsImporting(true);
 
     try {
-      const res = await fetch('/setlists_api.php?action=duplicate_setlist', {
+      const res = await fetch('/setlists_api.php?action=save_shared_setlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ setlist_id: setlist.id })
+        body: JSON.stringify({ setlist_id: setlist.id, token: token || undefined })
       });
       const data = await res.json();
 
