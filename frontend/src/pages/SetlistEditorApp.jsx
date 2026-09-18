@@ -165,6 +165,57 @@ export default function SetlistEditorApp() {
   const canDelete = isOwner;
   const isEditRoute = location.pathname.endsWith('/edit');
 
+  const allCoUsers = useMemo(() => {
+    const map = new Map();
+    (setlistData?.collaborators || []).forEach(c => {
+      map.set(Number(c.user_id), {
+        id: c.id,
+        user_id: c.user_id,
+        user_name: c.user_name,
+        user_email: c.user_email,
+        can_edit: c.can_edit,
+        created_at: c.created_at,
+        source: 'collaborator'
+      });
+    });
+    (setlistData?.saved_by || []).forEach(s => {
+      const existing = map.get(Number(s.user_id));
+      if (existing) {
+        existing.save_id = s.save_id;
+      } else {
+        map.set(Number(s.user_id), {
+          save_id: s.save_id,
+          user_id: s.user_id,
+          user_name: s.user_name,
+          user_email: s.user_email,
+          can_edit: false,
+          created_at: s.created_at,
+          source: 'saver'
+        });
+      }
+    });
+    (sharedUsers || []).forEach(u => {
+      if (u.status === 'active' && u.grantee_user_id) {
+        const existing = map.get(Number(u.grantee_user_id));
+        if (existing) {
+          existing.id = u.id || existing.id;
+          existing.can_edit = u.can_edit !== undefined ? u.can_edit : existing.can_edit;
+        } else {
+          map.set(Number(u.grantee_user_id), {
+            id: u.id,
+            user_id: u.grantee_user_id,
+            user_name: u.grantee_name || u.email,
+            user_email: u.email || '',
+            can_edit: u.can_edit,
+            created_at: u.created_at,
+            source: 'collaborator'
+          });
+        }
+      }
+    });
+    return Array.from(map.values());
+  }, [setlistData?.collaborators, setlistData?.saved_by, sharedUsers]);
+
   const songItems = useMemo(() => items.filter(i => i.item_type !== 'section'), [items]);
   
   // Smart duration estimation
@@ -1068,7 +1119,14 @@ export default function SetlistEditorApp() {
       });
       const data = await res.json();
       if (data.ok) {
-        setSharedUsers(prev => prev.map(u => (u.grantee_user_id === granteeUserId || u.id === accessId) ? { ...u, can_edit: !currentCanEdit } : u));
+        setSharedUsers(prev => prev.map(u => (Number(u.grantee_user_id) === Number(granteeUserId) || Number(u.id) === Number(accessId)) ? { ...u, can_edit: !currentCanEdit } : u));
+        setSetlistData(prev => {
+          if (!prev || !prev.collaborators) return prev;
+          return {
+            ...prev,
+            collaborators: prev.collaborators.map(c => (Number(c.user_id) === Number(granteeUserId) || Number(c.id) === Number(accessId)) ? { ...c, can_edit: !currentCanEdit } : c)
+          };
+        });
       } else {
         alert(data.error || 'Failed to update permission');
       }
@@ -1077,8 +1135,9 @@ export default function SetlistEditorApp() {
     }
   };
 
-  const handleRevokeUserAccess = async (accessId, granteeUserId) => {
-    if (!confirm('Հեռացնե՞լ այս օգտատիրոջ հասանելիությունը երգացանկից:')) return;
+  const handleRevokeUserAccess = async (accessId, granteeUserId, userName = '', saveId = 0) => {
+    const displayName = userName ? `«${userName}»-ին` : 'այս օգտատիրոջը';
+    if (!confirm(`Հեռացնե՞լ ${displayName} երգացանկի համատեղ օգտագործողների ցանկից:`)) return;
     try {
       const res = await fetch('/setlists_api.php?action=revoke_setlist_access', {
         method: 'POST',
@@ -1086,12 +1145,28 @@ export default function SetlistEditorApp() {
         body: JSON.stringify({
           setlist_id: id,
           access_id: accessId,
-          grantee_user_id: granteeUserId
+          grantee_user_id: granteeUserId,
+          user_id: granteeUserId,
+          save_id: saveId
         })
       });
       const data = await res.json();
       if (data.ok) {
-        setSharedUsers(prev => prev.filter(u => u.grantee_user_id !== granteeUserId && u.id !== accessId));
+        setSharedUsers(prev => prev.filter(u => (granteeUserId ? Number(u.grantee_user_id) !== Number(granteeUserId) : true) && (accessId ? Number(u.id) !== Number(accessId) : true)));
+        setSetlistData(prev => {
+          if (!prev) return prev;
+          const nextCollabs = (prev.collaborators || []).filter(c => (granteeUserId ? Number(c.user_id) !== Number(granteeUserId) : true) && (accessId ? Number(c.id) !== Number(accessId) : true));
+          const nextSaved = (prev.saved_by || []).filter(s => (granteeUserId ? Number(s.user_id) !== Number(granteeUserId) : true) && (saveId ? Number(s.save_id) !== Number(saveId) : true));
+          return {
+            ...prev,
+            collaborators: nextCollabs,
+            collaborators_count: nextCollabs.length,
+            saved_by: nextSaved,
+            saves_count: nextSaved.length
+          };
+        });
+      } else {
+        alert(data.error || 'Failed to remove user');
       }
     } catch (e) {
       alert('Network error');
@@ -1336,22 +1411,14 @@ export default function SetlistEditorApp() {
               <span className="sla-chip sla-chip--views" title={t('setlists.viewsCountTooltip', 'Դիտումների քանակ հղումով')}>
                 👁 {setlistData.views_count || 0} {t('setlists.viewsCount', 'դիտում')}
               </span>
-              <span
-                className="sla-chip sla-chip--saves sla-chip--clickable"
-                onClick={() => setIsSavesModalOpen(true)}
-                style={{ cursor: 'pointer' }}
-                title={t('setlists.viewWhoSaved', 'Տեսնել ովքեր են պահպանել')}
-              >
-                💾 {setlistData.saves_count || 0} {t('setlists.savesCount', 'պահպանում')}
-              </span>
-              {((setlistData.collaborators_count && setlistData.collaborators_count > 0) || (sharedUsers && sharedUsers.length > 0)) && (
+              {(allCoUsers.length > 0 || (setlistData.saves_count && setlistData.saves_count > 0) || (setlistData.collaborators_count && setlistData.collaborators_count > 0)) && (
                 <span
                   className="sla-chip sla-chip--clickable"
-                  onClick={openShareModal}
+                  onClick={() => setIsSavesModalOpen(true)}
                   style={{ cursor: 'pointer', background: 'rgba(0, 212, 255, 0.12)', color: '#00d4ff', borderColor: 'rgba(0, 212, 255, 0.3)' }}
-                  title="Տեսնել և կառավարել համատեղ օգտագործողների իրավունքները"
+                  title="Տեսնել և կառավարել համատեղ օգտագործողներին"
                 >
-                  🤝 {setlistData.collaborators_count || sharedUsers.length} {t('setlists.coUsersCount', 'մասնակից')}
+                  🤝 {allCoUsers.length || setlistData.collaborators_count || setlistData.saves_count} {t('setlists.coUsersCount', 'մասնակից')}
                 </span>
               )}
             </>
@@ -2286,18 +2353,23 @@ export default function SetlistEditorApp() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleRevokeUserAccess(u.id, u.grantee_user_id)}
+                                onClick={() => handleRevokeUserAccess(u.id, u.grantee_user_id, u.grantee_name || u.email)}
                                 style={{
-                                  background: 'transparent',
-                                  border: 'none',
-                                  color: '#ff6b6b',
-                                  fontSize: '0.85rem',
-                                  padding: '4px 6px',
+                                  border: '1px solid rgba(255, 71, 87, 0.35)',
+                                  background: 'rgba(255, 71, 87, 0.12)',
+                                  color: '#ff4757',
+                                  fontSize: '0.74rem',
+                                  fontWeight: 600,
+                                  padding: '4px 8px',
+                                  borderRadius: '6px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
                                   cursor: 'pointer'
                                 }}
-                                title="Հեռացնել"
+                                title="Հեռացնել համատեղ օգտագործողների ցանկից"
                               >
-                                ✕
+                                🗑 {t('common.remove', 'Հեռացնել')}
                               </button>
                             </>
                           ) : (
@@ -2588,46 +2660,46 @@ export default function SetlistEditorApp() {
         document.body
       )}
 
-      {/* 6.5 Saves Sheet Modal */}
+      {/* 6.5 Co-Users & Saves Sheet Modal */}
       {isSavesModalOpen && createPortal(
         <div className="sla-modal-overlay" onClick={() => setIsSavesModalOpen(false)}>
           <div className="sla-sheet" onClick={e => e.stopPropagation()}>
             <div className="sla-sheet-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '18px' }}>💾</span>
-                <h3>{t('setlists.savedByTitle', 'Երգացանկը պահպանած օգտատերեր')}</h3>
+                <span style={{ fontSize: '18px' }}>🤝</span>
+                <h3>{t('setlists.coUsersModalTitle', 'Համատեղ օգտագործողներ')}</h3>
               </div>
               <button type="button" className="sla-sheet-close" onClick={() => setIsSavesModalOpen(false)}>✕</button>
             </div>
             <div className="sla-sheet-body" style={{ padding: '16px' }}>
               <div style={{ marginBottom: '14px', fontSize: '12.5px', color: '#8fa0b5' }}>
-                {t('setlists.savedBySubtitle', 'Այս օգտատերերը պահպանել (պատճենել) են այս երգացանկը իրենց անձնական հաշվում։')}
+                {t('setlists.coUsersModalSubtitle', 'Այս օգտատերերը միացել են կամ պահպանել են այս երգացանկը։ Դուք կարող եք տալ խմբագրման իրավունք կամ հեռացնել նրանց։')}
               </div>
 
-              {(!setlistData?.saved_by || setlistData.saved_by.length === 0) ? (
+              {(!allCoUsers || allCoUsers.length === 0) ? (
                 <div style={{ textAlign: 'center', padding: '32px 16px', color: '#8fa0b5' }}>
-                  <div style={{ fontSize: '32px', marginBottom: '8px' }}>📂</div>
-                  <div>{t('setlists.savedByEmpty', 'Դեռ ոչ ոք չի պահպանել այս երգացանկը։')}</div>
+                  <div style={{ fontSize: '32px', marginBottom: '8px' }}>👥</div>
+                  <div>{t('setlists.coUsersEmpty', 'Դեռ ոչ մի համատեղ օգտագործող չկա։')}</div>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '50vh', overflowY: 'auto' }}>
-                  {setlistData.saved_by.map((saver, idx) => {
-                    const initials = (saver.user_name || 'U').charAt(0).toUpperCase();
+                  {allCoUsers.map((coUser, idx) => {
+                    const initials = (coUser.user_name || 'U').charAt(0).toUpperCase();
                     return (
                       <div
-                        key={saver.save_id || idx}
+                        key={coUser.id || coUser.user_id || idx}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          gap: '12px',
+                          gap: '10px',
                           padding: '10px 12px',
                           borderRadius: '12px',
                           background: 'rgba(255, 255, 255, 0.05)',
                           border: '1px solid rgba(255, 255, 255, 0.08)'
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
                           <div style={{
                             width: '34px',
                             height: '34px',
@@ -2645,24 +2717,71 @@ export default function SetlistEditorApp() {
                           </div>
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontWeight: 600, fontSize: '13.5px', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {saver.user_name}
+                              {coUser.user_name}
                             </div>
-                            {saver.user_email && (
+                            {coUser.user_email && (
                               <div style={{ fontSize: '11.5px', color: '#8fa0b5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {saver.user_email}
+                                {coUser.user_email}
                               </div>
                             )}
                           </div>
                         </div>
 
-                        {saver.created_at && (
-                          <div style={{ fontSize: '11px', color: '#8fa0b5', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                            {new Date(saver.created_at).toLocaleDateString(language === 'hy' ? 'hy-AM' : (language === 'ru' ? 'ru-RU' : 'en-US'), {
-                              month: 'short',
-                              day: 'numeric'
-                            })}
-                          </div>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                          {isOwner ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleUserPermission(coUser.user_id, coUser.can_edit, coUser.id)}
+                                style={{
+                                  border: coUser.can_edit ? '1px solid rgba(46,204,113,0.4)' : '1px solid rgba(255,255,255,0.15)',
+                                  background: coUser.can_edit ? 'rgba(46,204,113,0.18)' : 'rgba(255,255,255,0.06)',
+                                  color: coUser.can_edit ? '#2ecc71' : '#8fa0b5',
+                                  borderRadius: '6px',
+                                  padding: '4px 8px',
+                                  fontSize: '0.74rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer'
+                                }}
+                                title={coUser.can_edit ? 'Սեղմեք՝ դարձնելու դիտող' : 'Սեղմեք՝ թույլատրելու խմբագրել'}
+                              >
+                                {coUser.can_edit ? '✓ Խմբագրող' : '👁 Դիտող'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRevokeUserAccess(coUser.id, coUser.user_id, coUser.user_name || coUser.user_email, coUser.save_id)}
+                                style={{
+                                  border: '1px solid rgba(255, 71, 87, 0.35)',
+                                  background: 'rgba(255, 71, 87, 0.12)',
+                                  color: '#ff4757',
+                                  fontSize: '0.74rem',
+                                  fontWeight: 600,
+                                  padding: '4px 8px',
+                                  borderRadius: '6px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  cursor: 'pointer'
+                                }}
+                                title="Հեռացնել համատեղ օգտագործողների ցանկից"
+                              >
+                                🗑 {t('common.remove', 'Հեռացնել')}
+                              </button>
+                            </>
+                          ) : (
+                            <span
+                              style={{
+                                padding: '3px 8px',
+                                borderRadius: '6px',
+                                background: coUser.can_edit ? 'rgba(46,204,113,0.15)' : 'rgba(255,255,255,0.06)',
+                                color: coUser.can_edit ? '#2ecc71' : '#8fa0b5',
+                                fontSize: '0.74rem'
+                              }}
+                            >
+                              {coUser.can_edit ? 'Խմբագրող' : 'Դիտող'}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     );
                   })}

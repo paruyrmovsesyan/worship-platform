@@ -558,30 +558,66 @@ if ($action === 'grant_setlist_access' && $method === 'POST') {
   ]);
 }
 
-/* REVOKE USER ACCESS TO SETLIST */
-if ($action === 'revoke_setlist_access' && $method === 'POST') {
+/* REVOKE / REMOVE USER ACCESS TO SETLIST */
+if (($action === 'revoke_setlist_access' || $action === 'remove_co_user') && $method === 'POST') {
   $d = readJson();
   $setlist_id = (int)($d['setlist_id'] ?? 0);
   $access_id = (int)($d['access_id'] ?? 0);
-  $grantee_user_id = (int)($d['grantee_user_id'] ?? 0);
+  $grantee_user_id = (int)($d['grantee_user_id'] ?? $d['user_id'] ?? 0);
+  $save_id = (int)($d['save_id'] ?? 0);
 
-  if ($setlist_id <= 0 || ($access_id <= 0 && $grantee_user_id <= 0)) out(["error" => "Invalid data"], 400);
+  if ($setlist_id <= 0 || ($access_id <= 0 && $grantee_user_id <= 0 && $save_id <= 0)) {
+    out(["error" => "Invalid data"], 400);
+  }
   requireSetlistOwner($pdo, $setlist_id, $uid);
+
+  // If save_id was given, find grantee user_id from setlist_saves
+  if ($save_id > 0 && $grantee_user_id <= 0) {
+    try {
+      $stS = $pdo->prepare("SELECT user_id FROM setlist_saves WHERE id = ? AND setlist_id = ?");
+      $stS->execute([$save_id, $setlist_id]);
+      $grantee_user_id = (int)$stS->fetchColumn();
+    } catch (Throwable $e) {}
+  }
+
+  // If access_id was given, find grantee_user_id from setlist_user_access
+  if ($access_id > 0 && $grantee_user_id <= 0) {
+    try {
+      $stA = $pdo->prepare("SELECT grantee_user_id FROM setlist_user_access WHERE id = ? AND setlist_id = ?");
+      $stA->execute([$access_id, $setlist_id]);
+      $grantee_user_id = (int)$stA->fetchColumn();
+    } catch (Throwable $e) {}
+  }
 
   if ($access_id > 0) {
     $st = $pdo->prepare("
       UPDATE setlist_user_access
-      SET revoked_at = NOW(), updated_at = NOW()
+      SET revoked_at = NOW(), can_edit = 0, updated_at = NOW()
       WHERE id = ? AND setlist_id = ? AND owner_user_id = ?
     ");
     $st->execute([$access_id, $setlist_id, $uid]);
-  } else {
+  }
+
+  if ($grantee_user_id > 0) {
     $st = $pdo->prepare("
       UPDATE setlist_user_access
-      SET revoked_at = NOW(), updated_at = NOW()
+      SET revoked_at = NOW(), can_edit = 0, updated_at = NOW()
       WHERE grantee_user_id = ? AND setlist_id = ? AND owner_user_id = ?
     ");
     $st->execute([$grantee_user_id, $setlist_id, $uid]);
+
+    // Also clean up setlist_saves so the user is completely removed
+    try {
+      $stDelSave = $pdo->prepare("DELETE FROM setlist_saves WHERE setlist_id = ? AND user_id = ?");
+      $stDelSave->execute([$setlist_id, $grantee_user_id]);
+    } catch (Throwable $e) {}
+  }
+
+  if ($save_id > 0) {
+    try {
+      $stDelSave2 = $pdo->prepare("DELETE FROM setlist_saves WHERE id = ? AND setlist_id = ?");
+      $stDelSave2->execute([$save_id, $setlist_id]);
+    } catch (Throwable $e) {}
   }
 
   out(["ok" => true]);
