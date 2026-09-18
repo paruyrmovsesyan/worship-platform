@@ -377,6 +377,8 @@ export default function SetlistEditorWeb() {
             saves_count: nextSaved.length
           };
         });
+        // Refresh from server to get fully accurate state
+        fetchSetlist();
       } else {
         alert(data.error || 'Failed to remove user');
       }

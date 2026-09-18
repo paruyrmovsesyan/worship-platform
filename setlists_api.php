@@ -201,7 +201,6 @@ function requireSetlistReadable(PDO $pdo, int $setlistId, int $uid): array {
     return $decorated;
   }
 
-  // Public / Shared link access: if setlist exists and is active, allow access (default can_edit = 0)
   $st = $pdo->prepare("
     SELECT s.*, u.name AS owner_name, u.email AS owner_email
     FROM setlists s
@@ -212,42 +211,6 @@ function requireSetlistReadable(PDO $pdo, int $setlistId, int $uid): array {
   $st->execute([$setlistId]);
   $row = $st->fetch(PDO::FETCH_ASSOC);
   if ($row) {
-    if ($uid > 0 && $uid !== (int)$row['user_id']) {
-      try {
-        $stUser = $pdo->prepare("SELECT email FROM users WHERE id = ? LIMIT 1");
-        $stUser->execute([$uid]);
-        $uEmail = $stUser->fetchColumn() ?: null;
-
-        $insAccess = $pdo->prepare("
-          INSERT INTO setlist_user_access (setlist_id, owner_user_id, grantee_user_id, grantee_email, can_edit, created_at)
-          VALUES (?, ?, ?, ?, 0, NOW())
-          ON DUPLICATE KEY UPDATE updated_at = NOW()
-        ");
-        $insAccess->execute([$setlistId, (int)$row['user_id'], $uid, $uEmail]);
-
-        $stSCheck = $pdo->prepare("SELECT id FROM setlist_saves WHERE setlist_id = ? AND user_id = ? LIMIT 1");
-        $stSCheck->execute([$setlistId, $uid]);
-        if (!$stSCheck->fetchColumn()) {
-          $insSave = $pdo->prepare("INSERT INTO setlist_saves (setlist_id, user_id, saved_setlist_id, created_at) VALUES (?, ?, ?, NOW())");
-          $insSave->execute([$setlistId, $uid, $setlistId]);
-        }
-
-        $stRecheck = $pdo->prepare("
-          SELECT id AS access_id, expires_at AS access_expires_at, can_edit
-          FROM setlist_user_access
-          WHERE setlist_id = ? AND grantee_user_id = ? AND revoked_at IS NULL
-          LIMIT 1
-        ");
-        $stRecheck->execute([$setlistId, $uid]);
-        $accRow = $stRecheck->fetch(PDO::FETCH_ASSOC);
-        if ($accRow) {
-          return decorateSetlistAccess($row, 'shared', (bool)$accRow['can_edit'], [
-            'id' => (int)$accRow['access_id'],
-            'expires_at' => $accRow['access_expires_at'] ?? null,
-          ]);
-        }
-      } catch (Throwable $e) {}
-    }
     return decorateSetlistAccess($row, 'shared', false);
   }
 
@@ -509,7 +472,7 @@ if ($action === 'list_setlist_access' && $method === 'GET') {
            u.name AS grantee_name, u.email AS user_email
     FROM setlist_user_access a
     LEFT JOIN users u ON u.id = a.grantee_user_id
-    WHERE a.setlist_id = ? AND a.owner_user_id = ?
+    WHERE a.setlist_id = ?
     ORDER BY
       CASE
         WHEN a.revoked_at IS NULL AND (a.expires_at IS NULL OR a.expires_at > NOW()) THEN 0
@@ -519,7 +482,7 @@ if ($action === 'list_setlist_access' && $method === 'GET') {
       a.expires_at ASC,
       a.created_at DESC
   ");
-  $st->execute([$setlist_id, $uid]);
+  $st->execute([$setlist_id]);
   $rows = $st->fetchAll(PDO::FETCH_ASSOC);
 
   $now = time();
@@ -625,34 +588,40 @@ if (($action === 'revoke_setlist_access' || $action === 'remove_co_user') && $me
     } catch (Throwable $e) {}
   }
 
-  if ($access_id > 0) {
-    $st = $pdo->prepare("
-      UPDATE setlist_user_access
-      SET revoked_at = NOW(), can_edit = 0, updated_at = NOW()
-      WHERE id = ? AND setlist_id = ? AND owner_user_id = ?
-    ");
-    $st->execute([$access_id, $setlist_id, $uid]);
+  if ($grantee_user_id > 0) {
+    try {
+      $pdo->prepare("DELETE FROM setlist_user_access WHERE setlist_id = ? AND grantee_user_id = ?")
+          ->execute([$setlist_id, $grantee_user_id]);
+    } catch (Throwable $e) {}
+
+    try {
+      $pdo->prepare("DELETE FROM setlist_saves WHERE setlist_id = ? AND user_id = ?")
+          ->execute([$setlist_id, $grantee_user_id]);
+    } catch (Throwable $e) {}
+
+    // Clean up duplicate personal copies if any exist
+    try {
+      $stDups = $pdo->prepare("SELECT id FROM setlists WHERE user_id = ? AND (name LIKE ? OR name LIKE ?) AND id != ?");
+      $stDups->execute([$grantee_user_id, '% (պահպանված)', '% (կրկնօրինակ)', $setlist_id]);
+      $dIds = $stDups->fetchAll(PDO::FETCH_COLUMN);
+      foreach ($dIds as $dId) {
+        $pdo->prepare("DELETE FROM setlist_items WHERE setlist_id = ?")->execute([$dId]);
+        $pdo->prepare("DELETE FROM setlists WHERE id = ? AND user_id = ?")->execute([$dId, $grantee_user_id]);
+      }
+    } catch (Throwable $e) {}
   }
 
-  if ($grantee_user_id > 0) {
-    $st = $pdo->prepare("
-      UPDATE setlist_user_access
-      SET revoked_at = NOW(), can_edit = 0, updated_at = NOW()
-      WHERE grantee_user_id = ? AND setlist_id = ? AND owner_user_id = ?
-    ");
-    $st->execute([$grantee_user_id, $setlist_id, $uid]);
-
-    // Also clean up setlist_saves so the user is completely removed
+  if ($access_id > 0) {
     try {
-      $stDelSave = $pdo->prepare("DELETE FROM setlist_saves WHERE setlist_id = ? AND user_id = ?");
-      $stDelSave->execute([$setlist_id, $grantee_user_id]);
+      $pdo->prepare("DELETE FROM setlist_user_access WHERE id = ? AND setlist_id = ?")
+          ->execute([$access_id, $setlist_id]);
     } catch (Throwable $e) {}
   }
 
   if ($save_id > 0) {
     try {
-      $stDelSave2 = $pdo->prepare("DELETE FROM setlist_saves WHERE id = ? AND setlist_id = ?");
-      $stDelSave2->execute([$save_id, $setlist_id]);
+      $pdo->prepare("DELETE FROM setlist_saves WHERE id = ? AND setlist_id = ?")
+          ->execute([$save_id, $setlist_id]);
     } catch (Throwable $e) {}
   }
 
@@ -672,20 +641,39 @@ if ($action === 'set_user_edit_permission' && $method === 'POST') {
   }
   requireSetlistOwner($pdo, $setlist_id, $uid);
 
+  $updated = 0;
   if ($access_id > 0) {
     $st = $pdo->prepare("
       UPDATE setlist_user_access
       SET can_edit = ?, revoked_at = NULL, updated_at = NOW()
-      WHERE id = ? AND setlist_id = ? AND owner_user_id = ?
+      WHERE id = ? AND setlist_id = ?
     ");
-    $st->execute([$can_edit, $access_id, $setlist_id, $uid]);
-  } else {
+    $st->execute([$can_edit, $access_id, $setlist_id]);
+    $updated = $st->rowCount();
+  }
+
+  if (!$updated && $grantee_user_id > 0) {
     $st = $pdo->prepare("
       UPDATE setlist_user_access
       SET can_edit = ?, revoked_at = NULL, updated_at = NOW()
-      WHERE grantee_user_id = ? AND setlist_id = ? AND owner_user_id = ?
+      WHERE grantee_user_id = ? AND setlist_id = ?
     ");
-    $st->execute([$can_edit, $grantee_user_id, $setlist_id, $uid]);
+    $st->execute([$can_edit, $grantee_user_id, $setlist_id]);
+    $updated = $st->rowCount();
+  }
+
+  if (!$updated && $grantee_user_id > 0) {
+    try {
+      $stUser = $pdo->prepare("SELECT email FROM users WHERE id = ? LIMIT 1");
+      $stUser->execute([$grantee_user_id]);
+      $uEmail = $stUser->fetchColumn() ?: null;
+      $ins = $pdo->prepare("
+        INSERT INTO setlist_user_access (setlist_id, owner_user_id, grantee_user_id, grantee_email, can_edit, created_at)
+        VALUES (?, ?, ?, ?, ?, NOW())
+        ON DUPLICATE KEY UPDATE can_edit = VALUES(can_edit), revoked_at = NULL, updated_at = NOW()
+      ");
+      $ins->execute([$setlist_id, $uid, $grantee_user_id, $uEmail, $can_edit]);
+    } catch (Throwable $e) {}
   }
 
   out(["ok" => true, "can_edit" => (bool)$can_edit]);
@@ -759,6 +747,17 @@ if (($action === 'delete_setlist' || $action === 'leave_shared_setlist' || $acti
 
       $pdo->prepare("DELETE FROM setlist_saves WHERE setlist_id=? AND user_id=?")
           ->execute([$setlist_id, $uid]);
+
+      // Clean up duplicate personal copies if any exist
+      try {
+        $stDups = $pdo->prepare("SELECT id FROM setlists WHERE user_id = ? AND (name LIKE ? OR name LIKE ?) AND id != ?");
+        $stDups->execute([$uid, '% (պահպանված)', '% (կրկնօրինակ)', $setlist_id]);
+        $dIds = $stDups->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($dIds as $dId) {
+          $pdo->prepare("DELETE FROM setlist_items WHERE setlist_id = ?")->execute([$dId]);
+          $pdo->prepare("DELETE FROM setlists WHERE id = ? AND user_id = ?")->execute([$dId, $uid]);
+        }
+      } catch (Throwable $e) {}
 
       $pdo->commit();
       out(["ok" => true, "is_owner" => false]);
@@ -998,6 +997,8 @@ if ($action === 'get_setlist_items' && $method === 'GET') {
       $rawSaved = $savedByStmt->fetchAll(PDO::FETCH_ASSOC);
       foreach ($rawSaved as $rs) {
         $savedByUsers[] = [
+          'id' => (int)$rs['save_id'],
+          'save_id' => (int)$rs['save_id'],
           'user_id' => (int)$rs['user_id'],
           'user_name' => $rs['user_name'] ?: 'User #' . $rs['user_id'],
           'user_email' => $rs['user_email'] ?: '',
@@ -1618,28 +1619,6 @@ if ($action === 'get_public_setlist' && $method === 'GET') {
   }
 
   trackSetlistView($pdo, (int)$setlist['id'], $uid, (int)$setlist['user_id']);
-
-  if ($uid > 0 && $uid !== (int)$setlist['user_id']) {
-    try {
-      $stUser = $pdo->prepare("SELECT email FROM users WHERE id = ? LIMIT 1");
-      $stUser->execute([$uid]);
-      $uEmail = $stUser->fetchColumn() ?: null;
-
-      $insAccess = $pdo->prepare("
-        INSERT INTO setlist_user_access (setlist_id, owner_user_id, grantee_user_id, grantee_email, can_edit, created_at)
-        VALUES (?, ?, ?, ?, 0, NOW())
-        ON DUPLICATE KEY UPDATE updated_at = NOW()
-      ");
-      $insAccess->execute([(int)$setlist['id'], (int)$setlist['user_id'], $uid, $uEmail]);
-
-      $stSCheck = $pdo->prepare("SELECT id FROM setlist_saves WHERE setlist_id = ? AND user_id = ? LIMIT 1");
-      $stSCheck->execute([(int)$setlist['id'], $uid]);
-      if (!$stSCheck->fetchColumn()) {
-        $insSave = $pdo->prepare("INSERT INTO setlist_saves (setlist_id, user_id, saved_setlist_id, created_at) VALUES (?, ?, ?, NOW())");
-        $insSave->execute([(int)$setlist['id'], $uid, (int)$setlist['id']]);
-      }
-    } catch (Throwable $e) {}
-  }
 
   $viewsSt = $pdo->prepare("SELECT views_count FROM setlists WHERE id = ? LIMIT 1");
   $viewsSt->execute([$setlist['id']]);
