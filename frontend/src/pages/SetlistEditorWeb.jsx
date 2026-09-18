@@ -50,6 +50,7 @@ export default function SetlistEditorWeb() {
   const [editDesc, setEditDesc] = useState('');
   const [editSaving, setEditSaving] = useState(false);
   const [isSavingToAccount, setIsSavingToAccount] = useState(false);
+  const [isSavesModalOpen, setIsSavesModalOpen] = useState(false);
   const isOwner = setlistData?.access_role === 'owner' || (user && setlistData?.user_id && Number(user.id) === Number(setlistData.user_id));
   const canEdit = setlistData?.can_edit === true || Number(setlistData?.can_edit) === 1;
   const canDelete = isOwner;
@@ -681,39 +682,21 @@ export default function SetlistEditorWeb() {
                 <button type="button" className="sle-icon-btn" onClick={() => setIsPrintOpen(true)} title="Տպել (Print)">
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                 </button>
-                <button
-                  type="button"
-                  className="btn btn-primary sle-save-account-btn"
-                  onClick={handleSaveToMyAccount}
-                  disabled={isSavingToAccount}
-                  title={!isOwner ? t('setlists.saveToAccount', 'Պահպանել իմ հաշվում') : t('setlists.duplicate', 'Պատճենել')}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    padding: '6px 14px',
-                    borderRadius: '20px',
-                    background: 'linear-gradient(135deg, #00d4ff, #0072ff)',
-                    color: '#fff',
-                    border: 'none',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(0, 150, 255, 0.35)',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                    <polyline points="7 3 7 8 15 8"></polyline>
-                  </svg>
-                  <span>
-                    {isSavingToAccount
-                      ? t('setlists.saving', 'Պահպանվում է...')
-                      : (!isOwner ? t('setlists.saveToAccount', 'Պահպանել իմ հաշվում') : t('setlists.duplicate', 'Պատճենել'))}
-                  </span>
-                </button>
+                {!isOwner && (
+                  <button
+                    type="button"
+                    className="sle-icon-btn"
+                    onClick={handleSaveToMyAccount}
+                    disabled={isSavingToAccount}
+                    title={t('setlists.saveToAccount', 'Պահպանել իմ հաշվում')}
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                      <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                      <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
             
@@ -727,6 +710,26 @@ export default function SetlistEditorWeb() {
                 <span className="sle-duration-chip">
                   ⏱ {totalDuration} րոպե
                 </span>
+              )}
+              <span className="sle-stat-chip" title={t('setlists.viewsCountTooltip', 'Դիտումների քանակ հղումով')}>
+                👁 {setlistData.views_count || 0} {t('setlists.viewsCount', 'դիտում')}
+              </span>
+              {isOwner ? (
+                <button
+                  type="button"
+                  className="sle-stat-chip sle-stat-chip--clickable"
+                  onClick={() => setIsSavesModalOpen(true)}
+                  title={t('setlists.viewWhoSaved', 'Տեսնել ովքեր են պահպանել այս երգացանկը')}
+                >
+                  💾 {setlistData.saves_count || 0} {t('setlists.savesCount', 'պահպանում')}
+                  <span style={{ fontSize: '11px', opacity: 0.8, marginLeft: '2px' }}>👥</span>
+                </button>
+              ) : (
+                (setlistData.saves_count > 0) && (
+                  <span className="sle-stat-chip">
+                    💾 {setlistData.saves_count} {t('setlists.savesCount', 'պահպանում')}
+                  </span>
+                )
               )}
             </div>
           </div>
@@ -1389,6 +1392,106 @@ export default function SetlistEditorWeb() {
               )}
             </div>
           </aside>
+        </div>,
+        document.body
+      )}
+
+      {/* Saves Modal (Who saved this setlist) */}
+      {isSavesModalOpen && createPortal(
+        <div className="sl-modal-overlay" onClick={() => setIsSavesModalOpen(false)}>
+          <div className="sl-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+            <div className="sl-modal-header">
+              <h3 className="sl-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>💾</span>
+                <span>{t('setlists.savedByTitle', 'Երգացանկը պահպանած օգտատերեր')}</span>
+              </h3>
+              <button className="sl-modal-close" onClick={() => setIsSavesModalOpen(false)}>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+
+            <div style={{ padding: '16px' }}>
+              <div style={{ marginBottom: '16px', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+                {t('setlists.savedBySubtitle', 'Այս օգտատերերը պահպանել (պատճենել) են այս երգացանկը իրենց անձնական հաշվում։')}
+              </div>
+
+              {(!setlistData?.saved_by || setlistData.saved_by.length === 0) ? (
+                <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--color-text-tertiary)' }}>
+                  <div style={{ fontSize: '32px', marginBottom: '8px' }}>📂</div>
+                  <div>{t('setlists.savedByEmpty', 'Դեռ ոչ ոք չի պահպանել այս երգացանկը։')}</div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '350px', overflowY: 'auto' }}>
+                  {setlistData.saved_by.map((saver, idx) => {
+                    const initials = (saver.user_name || 'U').charAt(0).toUpperCase();
+                    return (
+                      <div
+                        key={saver.save_id || idx}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '12px',
+                          padding: '10px 14px',
+                          borderRadius: '12px',
+                          background: 'var(--color-surface)',
+                          border: '1px solid var(--color-surface-hover)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                          <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #00d4ff, #0072ff)',
+                            color: '#fff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 700,
+                            fontSize: '14px',
+                            flexShrink: 0
+                          }}>
+                            {initials}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {saver.user_name}
+                            </div>
+                            {saver.user_email && (
+                              <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {saver.user_email}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {saver.created_at && (
+                          <div style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                            {new Date(saver.created_at).toLocaleDateString(language === 'hy' ? 'hy-AM' : (language === 'ru' ? 'ru-RU' : 'en-US'), {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="sl-modal-actions" style={{ justifyContent: 'flex-end', padding: '12px 16px' }}>
+              <button
+                type="button"
+                className="sl-btn sl-btn-secondary"
+                onClick={() => setIsSavesModalOpen(false)}
+              >
+                {t('common.close', 'Փակել')}
+              </button>
+            </div>
+          </div>
         </div>,
         document.body
       )}

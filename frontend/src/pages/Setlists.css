@@ -85,7 +85,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
 }
 
@@ -95,9 +95,8 @@
   font-weight: 700;
   line-height: 1.25;
   color: var(--color-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
 }
 
 .sle-actions-group {
@@ -105,6 +104,24 @@
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .sle-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .sle-title-text {
+    width: 100%;
+    white-space: normal;
+    word-break: break-word;
+    font-size: 1.3rem;
+  }
+  .sle-actions-group {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 .sle-icon-btn {
@@ -157,6 +174,33 @@
   padding: 3px 10px;
   border-radius: 20px;
   font-weight: 600;
+}
+
+.sle-stat-chip {
+  font-size: 0.78rem;
+  color: var(--color-text-secondary, #94a3b8);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sle-stat-chip--clickable {
+  cursor: pointer;
+  background: rgba(0, 212, 255, 0.08);
+  border-color: rgba(0, 212, 255, 0.25);
+  color: #00d4ff;
+  transition: all 0.2s ease;
+}
+
+.sle-stat-chip--clickable:hover {
+  background: rgba(0, 212, 255, 0.18);
+  border-color: rgba(0, 212, 255, 0.45);
+  transform: translateY(-1px);
 }
 
 .sle-controls-row {

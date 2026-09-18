@@ -475,7 +475,17 @@ const translations = {
       confirmDelete: 'Համոզվա՞ծ եք, որ ցանկանում եք ջնջել այս երգացանկը։ Այս գործողությունը անդառնալի է:',
       limitReached: 'Երգացանկերի սահմանափակումը սպառվել է:',
       createFailed: 'Չհաջողվեց ստեղծել երգացանկ:',
-      networkError: 'Կապի խնդիր'
+      networkError: 'Կապի խնդիր',
+      savedByTitle: 'Երգացանկը պահպանած օգտատերեր',
+      savedBySubtitle: 'Այս օգտատերերը պահպանել (պատճենել) են այս երգացանկը իրենց անձնական հաշվում։',
+      savedByEmpty: 'Դեռ ոչ ոք չի պահպանել այս երգացանկը։',
+      viewsCount: 'դիտում',
+      savesCount: 'պահպանում',
+      viewsCountTooltip: 'Դիտումների քանակ հղումով',
+      savesCountTooltip: 'Պահպանումների քանակ',
+      statViews: 'Դիտում',
+      statSaves: 'Պահպանում',
+      viewWhoSaved: 'Տեսնել ովքեր են պահպանել'
     },
     news: { 
       title: 'Նորություններ և Թարմացումներ'
@@ -1292,7 +1302,17 @@ const translations = {
       confirmDelete: 'Are you sure you want to delete this setlist? This action cannot be undone.',
       limitReached: 'Setlist limit reached.',
       createFailed: 'Failed to create setlist.',
-      networkError: 'Network error'
+      networkError: 'Network error',
+      savedByTitle: 'Users who saved this setlist',
+      savedBySubtitle: 'These users saved (duplicated) this setlist into their personal account.',
+      savedByEmpty: 'No one has saved this setlist yet.',
+      viewsCount: 'views',
+      savesCount: 'saves',
+      viewsCountTooltip: 'Link view count',
+      savesCountTooltip: 'Save count',
+      statViews: 'Views',
+      statSaves: 'Saves',
+      viewWhoSaved: 'View who saved'
     },
     news: { title: 'News & Updates' },
     teams: {
@@ -2108,7 +2128,17 @@ const translations = {
       confirmDelete: 'Вы уверены, что хотите удалить этот сет-лист? Это действие необратимо.',
       limitReached: 'Достигнут лимит сет-листов.',
       createFailed: 'Не удалось создать сет-лист.',
-      networkError: 'Ошибка сети'
+      networkError: 'Ошибка сети',
+      savedByTitle: 'Пользователи, сохранившие сетлист',
+      savedBySubtitle: 'Эти пользователи сохранили (скопировали) данный сетлист в свой личный аккаунт.',
+      savedByEmpty: 'Пока никто не сохранил этот сетлист.',
+      viewsCount: 'просмотров',
+      savesCount: 'сохранений',
+      viewsCountTooltip: 'Количество просмотров по ссылке',
+      savesCountTooltip: 'Количество сохранений',
+      statViews: 'Просмотры',
+      statSaves: 'Сохранения',
+      viewWhoSaved: 'Посмотреть сохранивших'
     },
     news: { title: 'Новости и Обновления' },
     teams: {

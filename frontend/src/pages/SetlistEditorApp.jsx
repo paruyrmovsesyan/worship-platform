@@ -78,6 +78,7 @@ export default function SetlistEditorApp() {
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userSearchResults, setUserSearchResults] = useState([]);
   const [teamSaving, setTeamSaving] = useState(false);
+  const [isSavesModalOpen, setIsSavesModalOpen] = useState(false);
 
   // Edit Setlist Settings
   const [isEditingSettings, setIsEditingSettings] = useState(false);
@@ -252,6 +253,7 @@ export default function SetlistEditorApp() {
     isAddSectionOpen ||
     isTeamModalOpen ||
     isShareModalOpen ||
+    isSavesModalOpen ||
     editingItem ||
     isEditingSettings ||
     isPrintOpen
@@ -1284,6 +1286,25 @@ export default function SetlistEditorApp() {
             <span className="sla-chip sla-chip--team" onClick={openTeamModal} title="Տեսնել թիմը">
               👥 {team.length} անդամ
             </span>
+          )}
+          <span className="sla-chip sla-chip--views" title={t('setlists.viewsCountTooltip', 'Դիտումների քանակ հղումով')}>
+            👁 {setlistData.views_count || 0}
+          </span>
+          {isOwner ? (
+            <span
+              className="sla-chip sla-chip--saves sla-chip--clickable"
+              onClick={() => setIsSavesModalOpen(true)}
+              style={{ cursor: 'pointer' }}
+              title={t('setlists.viewWhoSaved', 'Տեսնել ովքեր են պահպանել')}
+            >
+              💾 {setlistData.saves_count || 0}
+            </span>
+          ) : (
+            (setlistData.saves_count > 0) && (
+              <span className="sla-chip sla-chip--saves">
+                💾 {setlistData.saves_count}
+              </span>
+            )
           )}
         </div>
         {setlistData.description && (
@@ -2409,6 +2430,92 @@ export default function SetlistEditorApp() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* 6.5 Saves Sheet Modal */}
+      {isSavesModalOpen && createPortal(
+        <div className="sla-modal-overlay" onClick={() => setIsSavesModalOpen(false)}>
+          <div className="sla-sheet" onClick={e => e.stopPropagation()}>
+            <div className="sla-sheet-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '18px' }}>💾</span>
+                <h3>{t('setlists.savedByTitle', 'Երգացանկը պահպանած օգտատերեր')}</h3>
+              </div>
+              <button type="button" className="sla-sheet-close" onClick={() => setIsSavesModalOpen(false)}>✕</button>
+            </div>
+            <div className="sla-sheet-body" style={{ padding: '16px' }}>
+              <div style={{ marginBottom: '14px', fontSize: '12.5px', color: '#8fa0b5' }}>
+                {t('setlists.savedBySubtitle', 'Այս օգտատերերը պահպանել (պատճենել) են այս երգացանկը իրենց անձնական հաշվում։')}
+              </div>
+
+              {(!setlistData?.saved_by || setlistData.saved_by.length === 0) ? (
+                <div style={{ textAlign: 'center', padding: '32px 16px', color: '#8fa0b5' }}>
+                  <div style={{ fontSize: '32px', marginBottom: '8px' }}>📂</div>
+                  <div>{t('setlists.savedByEmpty', 'Դեռ ոչ ոք չի պահպանել այս երգացանկը։')}</div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '50vh', overflowY: 'auto' }}>
+                  {setlistData.saved_by.map((saver, idx) => {
+                    const initials = (saver.user_name || 'U').charAt(0).toUpperCase();
+                    return (
+                      <div
+                        key={saver.save_id || idx}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '12px',
+                          padding: '10px 12px',
+                          borderRadius: '12px',
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.08)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                          <div style={{
+                            width: '34px',
+                            height: '34px',
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #00d4ff, #0072ff)',
+                            color: '#fff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 700,
+                            fontSize: '13.5px',
+                            flexShrink: 0
+                          }}>
+                            {initials}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '13.5px', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {saver.user_name}
+                            </div>
+                            {saver.user_email && (
+                              <div style={{ fontSize: '11.5px', color: '#8fa0b5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {saver.user_email}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {saver.created_at && (
+                          <div style={{ fontSize: '11px', color: '#8fa0b5', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                            {new Date(saver.created_at).toLocaleDateString(language === 'hy' ? 'hy-AM' : (language === 'ru' ? 'ru-RU' : 'en-US'), {
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>,
         document.body

@@ -180,6 +180,29 @@ body.wp-standalone-app:not(.is-ios) .sla-page {
   cursor: pointer;
 }
 
+.sla-chip--views {
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.sla-chip--saves {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+}
+
+.sla-chip--clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sla-chip--clickable:hover,
+.sla-chip--clickable:active {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
 .sla-desc-card {
   margin-top: 4px;
   padding: 10px 14px;

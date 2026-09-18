@@ -101,6 +101,43 @@ function ensureSetlistAccessTable(PDO $pdo): void {
   try {
     $pdo->exec("ALTER TABLE setlist_user_access MODIFY expires_at DATETIME NULL");
   } catch (Throwable $e) {}
+
+  try {
+    $pdo->exec("ALTER TABLE setlists ADD COLUMN views_count INT UNSIGNED NOT NULL DEFAULT 0");
+  } catch (Throwable $e) {}
+
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS setlist_saves (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      setlist_id INT UNSIGNED NOT NULL,
+      user_id INT UNSIGNED NOT NULL,
+      saved_setlist_id INT UNSIGNED NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      KEY idx_setlist (setlist_id),
+      KEY idx_user (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+}
+
+function trackSetlistView(PDO $pdo, int $setlistId, int $currentUid, int $ownerUid): void {
+  if ($setlistId <= 0) return;
+  if ($currentUid > 0 && $currentUid === $ownerUid) return;
+
+  if (session_status() === PHP_SESSION_NONE) {
+    @session_start();
+  }
+  if (!isset($_SESSION['viewed_setlists']) || !is_array($_SESSION['viewed_setlists'])) {
+    $_SESSION['viewed_setlists'] = [];
+  }
+  $lastViewed = (int)($_SESSION['viewed_setlists'][$setlistId] ?? 0);
+  if (time() - $lastViewed > 300) {
+    $_SESSION['viewed_setlists'][$setlistId] = time();
+    try {
+      $st = $pdo->prepare("UPDATE setlists SET views_count = views_count + 1 WHERE id = ?");
+      $st->execute([$setlistId]);
+    } catch (Throwable $e) {}
+  }
 }
 
 function decorateSetlistAccess(array $row, string $role, bool $canEdit, ?array $access = null): array {
@@ -642,6 +679,14 @@ if ($action === 'duplicate_setlist' && $method === 'POST') {
       ]);
     }
 
+    if (!$isOwner) {
+      $insSave = $pdo->prepare("
+        INSERT INTO setlist_saves (setlist_id, user_id, saved_setlist_id, created_at)
+        VALUES (?, ?, ?, NOW())
+      ");
+      $insSave->execute([(int)$src['id'], $uid, $newSetlistId]);
+    }
+
     $pdo->commit();
     out(["ok" => true, "id" => $newSetlistId]);
   } catch (Exception $e) {
@@ -656,6 +701,32 @@ if ($action === 'get_setlist_items' && $method === 'GET') {
   if ($setlist_id <= 0) out(["error" => "Invalid setlist_id"], 400);
 
   $setlist = requireSetlistReadable($pdo, $setlist_id, $uid);
+  trackSetlistView($pdo, $setlist_id, $uid, (int)$setlist['user_id']);
+
+  $viewsSt = $pdo->prepare("SELECT views_count FROM setlists WHERE id = ? LIMIT 1");
+  $viewsSt->execute([$setlist_id]);
+  $viewsCount = (int)($viewsSt->fetchColumn() ?: 0);
+
+  $savedByUsers = [];
+  try {
+    $savedByStmt = $pdo->prepare("
+      SELECT s.id AS save_id, s.user_id, s.created_at, u.name AS user_name, u.email AS user_email
+      FROM setlist_saves s
+      JOIN users u ON u.id = s.user_id
+      WHERE s.setlist_id = ?
+      ORDER BY s.id DESC
+    ");
+    $savedByStmt->execute([$setlist_id]);
+    $rawSaved = $savedByStmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($rawSaved as $rs) {
+      $savedByUsers[] = [
+        'user_id' => (int)$rs['user_id'],
+        'user_name' => $rs['user_name'] ?: 'User #' . $rs['user_id'],
+        'user_email' => $rs['user_email'] ?: '',
+        'created_at' => $rs['created_at']
+      ];
+    }
+  } catch (Throwable $e) {}
 
   $st = $pdo->prepare("
     SELECT i.*,
@@ -724,7 +795,10 @@ if ($action === 'get_setlist_items' && $method === 'GET') {
     "access_expires_at" => $setlist['access_expires_at'] ?? null,
     "owner_name" => $setlist['owner_name'] ?? null,
     "owner_email" => $setlist['owner_email'] ?? null,
-    "team_role" => $setlist['team_role'] ?? null
+    "team_role" => $setlist['team_role'] ?? null,
+    "views_count" => $viewsCount,
+    "saves_count" => count($savedByUsers),
+    "saved_by" => $savedByUsers
   ], [
     'name' => 'setlists.items.setlist_name',
     'description' => 'setlists.items.setlist_description',
@@ -1238,6 +1312,19 @@ if ($action === 'get_public_setlist' && $method === 'GET') {
     out(["error" => "Setlist not found"], 404);
   }
 
+  trackSetlistView($pdo, (int)$setlist['id'], $uid, (int)$setlist['user_id']);
+
+  $viewsSt = $pdo->prepare("SELECT views_count FROM setlists WHERE id = ? LIMIT 1");
+  $viewsSt->execute([$setlist['id']]);
+  $viewsCount = (int)($viewsSt->fetchColumn() ?: 0);
+
+  $savesCount = 0;
+  try {
+    $scStmt = $pdo->prepare("SELECT COUNT(*) FROM setlist_saves WHERE setlist_id = ?");
+    $scStmt->execute([$setlist['id']]);
+    $savesCount = (int)$scStmt->fetchColumn();
+  } catch (Throwable $e) {}
+
   $itemsSt = $pdo->prepare("
     SELECT i.*,
            s.title AS song_title,
@@ -1269,7 +1356,9 @@ if ($action === 'get_public_setlist' && $method === 'GET') {
     "description" => $setlist['description'],
     "service_date" => $setlist['service_date'],
     "service_type" => $setlist['service_type'],
-    "status" => $setlist['status']
+    "status" => $setlist['status'],
+    "views_count" => $viewsCount,
+    "saves_count" => $savesCount
   ], [
     'name' => 'setlists.public.name',
     'description' => 'setlists.public.description',
