@@ -79,53 +79,20 @@ export default function SetlistPublicWeb() {
     setIsImporting(true);
 
     try {
-      // Create new setlist based on public setlist
-      const createRes = await fetch('/setlists_api.php?action=create_setlist', {
+      const res = await fetch('/setlists_api.php?action=duplicate_setlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: `${setlist.name} (${t('setlists.importedTag', 'Պատճեն')})`,
-          service_date: setlist.service_date || ''
-        })
+        body: JSON.stringify({ setlist_id: setlist.id })
       });
-      const createData = await createRes.json();
+      const data = await res.json();
 
-      if (!createData.ok || !createData.id) {
-        throw new Error(createData.error || 'Failed to create setlist');
+      if (!data.ok || !data.id) {
+        throw new Error(data.error || 'Failed to save setlist');
       }
 
-      const newId = createData.id;
-
-      // Duplicate/Add items
-      for (const item of items) {
-        if (item.item_type === 'section') {
-          await fetch('/setlists_api.php?action=add_section_to_setlist', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              setlist_id: newId,
-              title: item.title || 'Section'
-            })
-          });
-        } else if (item.song_id) {
-          await fetch('/setlists_api.php?action=add_song_to_setlist', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              setlist_id: newId,
-              song_id: item.song_id,
-              target_key: item.target_key || item.original_key || '',
-              capo: item.capo || 0,
-              is_required: item.is_required || 0,
-              notes: item.notes || ''
-            })
-          });
-        }
-      }
-
-      navigate(`/setlists/${newId}`);
+      navigate(`/setlists/${data.id}`);
     } catch (err) {
-      alert(err.message || 'Error copying setlist');
+      alert(err.message || 'Error saving setlist');
     } finally {
       setIsImporting(false);
     }

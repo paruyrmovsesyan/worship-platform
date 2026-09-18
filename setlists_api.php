@@ -597,9 +597,11 @@ if ($action === 'duplicate_setlist' && $method === 'POST') {
 
   $pdo->beginTransaction();
   try {
-    $src = requireSetlistOwner($pdo, $setlist_id, $uid);
+    $src = requireSetlistReadable($pdo, $setlist_id, $uid);
 
-    $newName = $src['name'] . ' (copy)';
+    $isOwner = ((int)$src['user_id'] === (int)$uid);
+    $defaultSuffix = $isOwner ? ' (կրկնօրինակ)' : ' (պահպանված)';
+    $newName = !empty($d['name']) ? trim((string)$d['name']) : ($src['name'] . $defaultSuffix);
 
     $ins = $pdo->prepare("
       INSERT INTO setlists (user_id, name, description, service_date, service_type, status)
@@ -620,8 +622,8 @@ if ($action === 'duplicate_setlist' && $method === 'POST') {
 
     $insItem = $pdo->prepare("
       INSERT INTO setlist_items
-      (setlist_id, item_type, song_id, title, position, target_key, notes, capo, is_required)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (setlist_id, item_type, song_id, title, position, target_key, notes, capo, is_required, bpm, duration)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
 
     while ($row = $items->fetch(PDO::FETCH_ASSOC)) {
@@ -634,7 +636,9 @@ if ($action === 'duplicate_setlist' && $method === 'POST') {
         $row['target_key'],
         $row['notes'],
         $row['capo'],
-        $row['is_required']
+        $row['is_required'],
+        $row['bpm'] ?? null,
+        $row['duration'] ?? null
       ]);
     }
 
@@ -642,7 +646,7 @@ if ($action === 'duplicate_setlist' && $method === 'POST') {
     out(["ok" => true, "id" => $newSetlistId]);
   } catch (Exception $e) {
     $pdo->rollBack();
-    out(["error" => "Server error"], 500);
+    out(["error" => "Server error: " . $e->getMessage()], 500);
   }
 }
 

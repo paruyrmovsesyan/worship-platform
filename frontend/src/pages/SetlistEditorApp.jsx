@@ -158,8 +158,10 @@ export default function SetlistEditorApp() {
     };
   }, []);
 
+  const [isSavingToAccount, setIsSavingToAccount] = useState(false);
+  const isOwner = setlistData?.access_role === 'owner' || (user && setlistData?.user_id && Number(user.id) === Number(setlistData.user_id));
   const canEdit = setlistData?.can_edit === true || Number(setlistData?.can_edit) === 1;
-  const canDelete = setlistData?.access_role === 'owner';
+  const canDelete = isOwner;
   const isEditRoute = location.pathname.endsWith('/edit');
 
   const songItems = useMemo(() => items.filter(i => i.item_type !== 'section'), [items]);
@@ -1050,6 +1052,33 @@ export default function SetlistEditorApp() {
     }
   };
 
+  const handleSaveToMyAccount = async () => {
+    if (!user) {
+      navigate(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+      return;
+    }
+    if (isSavingToAccount) return;
+    setIsSavingToAccount(true);
+    try {
+      const res = await fetch('/setlists_api.php?action=duplicate_setlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ setlist_id: id }),
+      });
+      const data = await res.json();
+      if (data.ok && data.id) {
+        navigate(`/setlists/${data.id}`);
+      } else {
+        alert(data.error || t('setlists.errorDuplicate', 'Չհաջողվեց պահպանել երգացանկը'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error');
+    } finally {
+      setIsSavingToAccount(false);
+    }
+  };
+
   // Print documents
   const printDocuments = useMemo(() => {
     return items
@@ -1204,6 +1233,30 @@ export default function SetlistEditorApp() {
               </svg>
             </button>
           )}
+
+          {!isOwner && (
+            <button
+              type="button"
+              className="sla-action-btn"
+              onClick={handleSaveToMyAccount}
+              disabled={isSavingToAccount}
+              title={t('setlists.saveToAccount', 'Պահպանել իմ հաշվում')}
+              style={{
+                background: 'linear-gradient(135deg, #00d4ff, #0072ff)',
+                color: '#fff',
+                fontWeight: 700,
+                border: 'none',
+                gap: '5px'
+              }}
+            >
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              <span>{isSavingToAccount ? '...' : t('setlists.saveShort', 'Պահպանել')}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -1239,6 +1292,55 @@ export default function SetlistEditorApp() {
           </div>
         )}
       </div>
+
+      {!isOwner && (
+        <div className="sla-shared-banner animate-fade-in" style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          padding: '12px 16px',
+          margin: '0 16px 16px',
+          borderRadius: '16px',
+          background: 'rgba(0, 212, 255, 0.1)',
+          border: '1px solid rgba(0, 212, 255, 0.25)',
+          color: '#fff'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+            <span style={{ fontSize: '22px' }}>📋</span>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '13px', fontWeight: 700 }}>
+                {t('setlists.sharedSetlistBannerTitle', 'Կիսված երգացանկ')}
+              </div>
+              <div style={{ fontSize: '11.5px', color: 'rgba(255, 255, 255, 0.7)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {setlistData.owner_name
+                  ? t('setlists.sharedByAuthorShort', `Հեղինակ՝ ${setlistData.owner_name}`)
+                  : t('setlists.sharedSetlistHintShort', 'Պահպանեք ձեր հաշվում՝ խմբագրելու համար')}
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="sla-btn-primary"
+            onClick={handleSaveToMyAccount}
+            disabled={isSavingToAccount}
+            style={{
+              padding: '8px 14px',
+              fontSize: '12px',
+              fontWeight: 700,
+              borderRadius: '20px',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              background: 'linear-gradient(135deg, #00d4ff, #0072ff)',
+              color: '#fff',
+              border: 'none',
+              boxShadow: '0 4px 12px rgba(0, 150, 255, 0.35)'
+            }}
+          >
+            {isSavingToAccount ? t('setlists.saving', 'Պահպանվում է...') : t('setlists.saveToAccount', 'Պահպանել իմ հաշվում')}
+          </button>
+        </div>
+      )}
 
       {/* ── Main Action Controls ── */}
       {canEdit && (
