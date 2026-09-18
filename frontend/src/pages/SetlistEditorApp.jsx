@@ -875,7 +875,10 @@ export default function SetlistEditorApp() {
   };
 
   const handleDeleteSetlist = async () => {
-    if (!window.confirm(t('setlists.confirmDelete', 'Վստա՞հ եք, որ ցանկանում եք ջնջել այս երգացանկը:'))) return;
+    const confirmMsg = isOwner
+      ? t('setlists.confirmDelete', 'Վստա՞հ եք, որ ցանկանում եք ջնջել այս երգացանկը:')
+      : t('setlists.confirmRemoveFromMyList', 'Հեռացնե՞լ այս երգացանկը Ձեր հաշվից (համատեղ երգացանկը կմնա հեղինակի մոտ)։');
+    if (!window.confirm(confirmMsg)) return;
     try {
       const res = await fetch('/setlists_api.php?action=delete_setlist', {
         method: 'POST',
@@ -1430,24 +1433,50 @@ export default function SetlistEditorApp() {
               </div>
             </div>
           </div>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '5px',
-            padding: '6px 12px',
-            fontSize: '11.5px',
-            fontWeight: 600,
-            borderRadius: '20px',
-            whiteSpace: 'nowrap',
-            flexShrink: 0,
-            background: 'rgba(0, 212, 255, 0.15)',
-            color: '#00d4ff',
-            border: '1px solid rgba(0, 212, 255, 0.3)'
-          }}>
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>{t('setlists.savedInYourAccountShort', 'Պահպանված է')}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '6px 12px',
+              fontSize: '11.5px',
+              fontWeight: 600,
+              borderRadius: '20px',
+              whiteSpace: 'nowrap',
+              background: 'rgba(0, 212, 255, 0.15)',
+              color: '#00d4ff',
+              border: '1px solid rgba(0, 212, 255, 0.3)'
+            }}>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>{t('setlists.savedInYourAccountShort', 'Պահպանված է')}</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleDeleteSetlist}
+              title={t('setlists.removeFromMyList', 'Հեռացնել իմ ցանկից')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '6px 10px',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                borderRadius: '20px',
+                border: '1px solid rgba(255, 68, 68, 0.35)',
+                background: 'rgba(255, 68, 68, 0.12)',
+                color: '#ff6b6b',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              <span>{t('setlists.removeShort', 'Հեռացնել')}</span>
+            </button>
           </div>
         </div>
       )}

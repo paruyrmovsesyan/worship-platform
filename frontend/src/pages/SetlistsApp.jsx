@@ -216,18 +216,25 @@ export default function SetlistsApp() {
   };
 
   // Delete Setlist
-  const handleDelete = async (e, listId) => {
+  const handleDelete = async (e, listOrId) => {
     e.stopPropagation();
     setActiveMenuId(null);
     if (!isOnline) {
       showToast(language === 'am' ? 'Գործողությունը հնարավոր չէ օֆլայն ռեժիմում' : 'Action not available offline');
       return;
     }
-    const confirmMsg =
-      t('setlists.confirmDelete') ||
-      (language === 'am'
-        ? 'Վստա՞հ եք, որ ցանկանում եք ջնջել այս երգացանկը:'
-        : 'Are you sure you want to delete this setlist?');
+    const listId = typeof listOrId === 'object' ? listOrId.id : listOrId;
+    const isOwner = typeof listOrId === 'object' ? listOrId.access_role === 'owner' : true;
+
+    const confirmMsg = isOwner
+      ? (t('setlists.confirmDelete') ||
+        (language === 'am'
+          ? 'Վստա՞հ եք, որ ցանկանում եք ջնջել այս երգացանկը:'
+          : 'Are you sure you want to delete this setlist?'))
+      : (t('setlists.confirmRemoveFromMyList') ||
+        (language === 'am'
+          ? 'Հեռացնե՞լ այս երգացանկը Ձեր հաշվից (համատեղ երգացանկը կմնա հեղինակի մոտ)։'
+          : 'Remove this setlist from your account?'));
     if (!window.confirm(confirmMsg)) return;
 
     setActionLoadingId(listId);
@@ -241,11 +248,17 @@ export default function SetlistsApp() {
       if (data.ok) {
         setSetlists((prev) => prev.filter((s) => String(s.id) !== String(listId)));
         showToast(
-          language === 'am'
-            ? 'Երգացանկը ջնջվեց'
-            : language === 'ru'
-            ? 'Сет-лист удален'
-            : 'Setlist deleted'
+          isOwner
+            ? (language === 'am'
+              ? 'Երգացանկը ջնջվեց'
+              : language === 'ru'
+              ? 'Сет-лист удален'
+              : 'Setlist deleted')
+            : (language === 'am'
+              ? 'Երգացանկը հեռացվեց Ձեր հաշվից'
+              : language === 'ru'
+              ? 'Сет-лист удален из вашего аккаунта'
+              : 'Setlist removed from your account')
         );
       } else {
         alert(data.error || 'Delete failed');
@@ -1069,19 +1082,17 @@ export default function SetlistsApp() {
                               {t('setlists.share', 'Կիսվել')}
                             </button>
 
-                            {list.access_role === 'owner' && (
-                              <button
-                                type="button"
-                                className="sl-app-dropdown-item delete-item"
-                                onClick={(e) => handleDelete(e, list.id)}
-                              >
-                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <polyline points="3 6 5 6 21 6"></polyline>
-                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
-                                {t('setlists.delete', 'Ջնջել')}
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              className="sl-app-dropdown-item delete-item"
+                              onClick={(e) => handleDelete(e, list)}
+                            >
+                              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                              </svg>
+                              {list.access_role === 'owner' ? t('setlists.delete', 'Ջնջել') : t('setlists.removeFromMyList', 'Հեռացնել իմ ցանկից')}
+                            </button>
                           </div>
                         )}
                       </div>

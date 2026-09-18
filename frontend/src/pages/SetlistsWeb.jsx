@@ -155,10 +155,17 @@ export default function SetlistsWeb() {
     }
   };
 
-  const handleDelete = async (e, listId) => {
+  const handleDelete = async (e, listOrId) => {
     e.stopPropagation();
     setActiveMenuId(null);
-    if (!window.confirm(t('setlists.confirmDelete', 'Վստա՞հ եք, որ ցանկանում եք ջնջել այս երգացանկը:'))) return;
+    const listId = typeof listOrId === 'object' ? listOrId.id : listOrId;
+    const isOwner = typeof listOrId === 'object' ? listOrId.access_role === 'owner' : true;
+
+    const confirmMsg = isOwner
+      ? t('setlists.confirmDelete', 'Վստա՞հ եք, որ ցանկանում եք ջնջել այս երգացանկը:')
+      : t('setlists.confirmRemoveFromMyList', 'Հեռացնե՞լ այս երգացանկը Ձեր հաշվից (համատեղ երգացանկը կմնա հեղինակի մոտ)։');
+
+    if (!window.confirm(confirmMsg)) return;
 
     try {
       const res = await fetch('/setlists_api.php?action=delete_setlist', {
@@ -553,7 +560,11 @@ export default function SetlistsWeb() {
                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                     </svg>
                   </button>
-                  <button className="row-act-btn danger" onClick={(e) => handleDelete(e, list.id)} title="Delete">
+                  <button
+                    className="row-act-btn danger"
+                    onClick={(e) => handleDelete(e, list)}
+                    title={list.access_role === 'owner' ? t('setlists.delete', 'Ջնջել') : t('setlists.removeFromMyList', 'Հեռացնել իմ ցանկից')}
+                  >
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="3 6 5 6 21 6"></polyline>
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>

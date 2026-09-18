@@ -717,27 +717,55 @@ if ($action === 'update_setlist' && $method === 'POST') {
   out(["ok" => true]);
 }
 
-/* DELETE SETLIST */
-if ($action === 'delete_setlist' && $method === 'POST') {
+/* DELETE OR REMOVE SETLIST */
+if (($action === 'delete_setlist' || $action === 'leave_shared_setlist' || $action === 'remove_saved_setlist') && $method === 'POST') {
   $d = readJson();
   $setlist_id = (int)($d['setlist_id'] ?? 0);
   if ($setlist_id <= 0) out(["error" => "Invalid setlist_id"], 400);
 
-  requireSetlistOwner($pdo, $setlist_id, $uid);
+  $st = $pdo->prepare("SELECT id, user_id FROM setlists WHERE id = ? LIMIT 1");
+  $st->execute([$setlist_id]);
+  $setlist = $st->fetch(PDO::FETCH_ASSOC);
+  if (!$setlist) {
+    out(["error" => "Setlist not found"], 404);
+  }
 
-  $pdo->beginTransaction();
-  try {
-    $st = $pdo->prepare("DELETE FROM setlist_items WHERE setlist_id=?");
-    $st->execute([$setlist_id]);
+  $isOwner = ((int)$setlist['user_id'] === $uid);
 
-    $st = $pdo->prepare("DELETE FROM setlists WHERE id=? AND user_id=?");
-    $st->execute([$setlist_id, $uid]);
+  if ($isOwner) {
+    $pdo->beginTransaction();
+    try {
+      $st = $pdo->prepare("DELETE FROM setlist_items WHERE setlist_id=?");
+      $st->execute([$setlist_id]);
 
-    $pdo->commit();
-    out(["ok" => true]);
-  } catch (Exception $e) {
-    $pdo->rollBack();
-    out(["error" => "Server error"], 500);
+      $pdo->prepare("DELETE FROM setlist_user_access WHERE setlist_id=?")->execute([$setlist_id]);
+      $pdo->prepare("DELETE FROM setlist_saves WHERE setlist_id=?")->execute([$setlist_id]);
+
+      $st = $pdo->prepare("DELETE FROM setlists WHERE id=? AND user_id=?");
+      $st->execute([$setlist_id, $uid]);
+
+      $pdo->commit();
+      out(["ok" => true, "is_owner" => true]);
+    } catch (Exception $e) {
+      $pdo->rollBack();
+      out(["error" => "Server error"], 500);
+    }
+  } else {
+    // Non-owner co-user: remove from this user's account only
+    $pdo->beginTransaction();
+    try {
+      $pdo->prepare("DELETE FROM setlist_user_access WHERE setlist_id=? AND grantee_user_id=?")
+          ->execute([$setlist_id, $uid]);
+
+      $pdo->prepare("DELETE FROM setlist_saves WHERE setlist_id=? AND user_id=?")
+          ->execute([$setlist_id, $uid]);
+
+      $pdo->commit();
+      out(["ok" => true, "is_owner" => false]);
+    } catch (Exception $e) {
+      $pdo->rollBack();
+      out(["error" => "Server error"], 500);
+    }
   }
 }
 

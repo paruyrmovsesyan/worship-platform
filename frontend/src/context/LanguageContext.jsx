@@ -491,7 +491,10 @@ const translations = {
       canEditMode: 'Խմբագրման իրավունքով',
       readOnlyMode: 'Դիտման ռեժիմ (խմբագրումը թույլատրում է ստեղծողը)',
       savedInYourAccount: 'Պահպանված է ձեր հաշվում',
-      savedInYourAccountShort: 'Պահպանված է'
+      savedInYourAccountShort: 'Պահպանված է',
+      removeFromMyList: 'Հեռացնել իմ ցանկից',
+      removeShort: 'Հեռացնել',
+      confirmRemoveFromMyList: 'Հեռացնե՞լ այս երգացանկը Ձեր հաշվից (համատեղ երգացանկը կմնա հեղինակի մոտ)։'
     },
     news: { 
       title: 'Նորություններ և Թարմացումներ'
@@ -1324,7 +1327,10 @@ const translations = {
       canEditMode: 'With edit permissions',
       readOnlyMode: 'View-only mode (editor access given by creator)',
       savedInYourAccount: 'Saved in your account',
-      savedInYourAccountShort: 'Saved'
+      savedInYourAccountShort: 'Saved',
+      removeFromMyList: 'Remove from my list',
+      removeShort: 'Remove',
+      confirmRemoveFromMyList: 'Remove this setlist from your account? The shared setlist will remain with the author.'
     },
     news: { title: 'News & Updates' },
     teams: {
@@ -2156,7 +2162,10 @@ const translations = {
       canEditMode: 'С правом редактирования',
       readOnlyMode: 'Режим просмотра (редактирование разрешает создатель)',
       savedInYourAccount: 'Сохранено в вашем аккаунте',
-      savedInYourAccountShort: 'Сохранено'
+      savedInYourAccountShort: 'Сохранено',
+      removeFromMyList: 'Удалить из моего списка',
+      removeShort: 'Удалить',
+      confirmRemoveFromMyList: 'Удалить этот сет-лист из вашего аккаунта? Совместный сет-лист останется у автора.'
     },
     news: { title: 'Новости и Обновления' },
     teams: {
