@@ -29,7 +29,16 @@ $js_i18n_keys = [
     'Untitled' => __('Անանուն'),
     'TotalSongs' => __('ընդհանուր'),
     'WithLyricsCount' => __('բառերով'),
-    'Update' => __('Թարմացնել')
+    'WithoutLyricsCount' => __('առանց բառերի'),
+    'Update' => __('Թարմացնել'),
+    'SmartSplitDone' => __('Ակորդներն ու բառերը զատվեցին ✅'),
+    'StanzasFormatted' => __('Տները ձևաչափվեցին ✅'),
+    'ChorusExpanded' => __('Կրկներգերը բացվեցին ✅'),
+    'ChordsStripped' => __('Ակորդները մաքրվեցին տեքստից ✅'),
+    'FetchingAi' => __('AI-ն փնտրում է բառերը... ✨'),
+    'AiSuccess' => __('Բառերը հաջողությամբ գտնվեցին ✨'),
+    'OcrProcessing' => __('Լուսանկարը ճանաչվում է... 📷'),
+    'OcrSuccess' => __('Տեքստը ճանաչվեց լուսանկարից 📷')
 ];
 
 
@@ -412,11 +421,26 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
           <button id="songsSearchClear" class="songs-search-clear" type="button" aria-label="<?= htmlspecialchars(__('Մաքրել որոնումը')) ?>" hidden>&times;</button>
         </div>
 
-        <div class="toolbar" style="margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center;">
-          <div class="toolbar-left" style="display:flex; gap:12px;">
+        <div class="toolbar" style="margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div class="toolbar-left" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
             <button id="refreshList" class="btn" style="background:white; border:1px solid var(--line);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg> <?= __('Refresh') ?></button>
             <button id="exportAllPdf" class="btn" style="background:white; border:1px solid var(--line);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 18 15 15"></polyline></svg> <?= __('Export PDF') ?></button>
             <button id="toggleFiltersBtn" class="btn" style="display:none;"><?= __('Filters') ?></button>
+
+            <button type="button" id="batchLyricsAssistantBtn" class="btn" style="background:linear-gradient(135deg, #7d40ff, #581fd9); color:white; border:none; font-weight:700; box-shadow:0 4px 14px rgba(125,64,255,0.25); display:inline-flex; align-items:center; gap:8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+              <?= __('Բառերի Օգնական (AI)') ?>
+              <span id="statNoLyricsBadge" style="background:rgba(255,255,255,0.28); color:white; border-radius:12px; padding:2px 8px; font-size:11px; font-weight:800;">0</span>
+            </button>
+
+            <button type="button" id="batchFileImportBtn" class="btn" style="background:white; border:1px solid var(--line); font-weight:600; display:inline-flex; align-items:center; gap:6px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <?= __('Իմպորտ ֆայլերից (PPTX/Word/TXT)') ?>
+            </button>
+
+            <button type="button" id="lyricsAiSettingsBtn" class="btn" style="background:white; border:1px solid var(--line); padding:8px 12px;" title="<?= __('Gemini AI Կարգավորումներ') ?>">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
           </div>
           <button id="newSongBtn" class="btn btn-primary" style="padding: 14px 28px;">+ <?= __('Add Song') ?></button>
         </div>
@@ -531,8 +555,31 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
           <textarea id="chords" rows="8" placeholder="[C]  [G]  [Am]  [F]"></textarea>
         </div>
         <div class="form-field">
-          <label><?= __('Բառեր') ?></label>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+            <label style="margin:0;"><?= __('Բառեր') ?></label>
+            <div class="smart-lyrics-toolbar" style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button type="button" id="aiFetchLyricsBtn" class="btn compact-btn" style="background:linear-gradient(135deg, #7d40ff, #581fd9); color:white; font-weight:700; border:none; padding:3px 9px; font-size:11px;" title="<?= __('Գտնել բառերը Gemini AI-ով') ?>">
+                ✨ <?= __('AI Բառեր') ?>
+              </button>
+              <button type="button" id="ocrLyricsBtn" class="btn compact-btn" style="background:white; border:1px solid var(--line); font-weight:600; padding:3px 9px; font-size:11px;" title="<?= __('Վերբեռնել երգարանի լուսանկարը OCR ճանաչման համար') ?>">
+                📷 <?= __('Լուսանկարից') ?>
+              </button>
+              <button type="button" id="splitMixedLyricsBtn" class="btn compact-btn" style="background:white; border:1px solid var(--line); font-weight:600; padding:3px 9px; font-size:11px;" title="<?= __('Զատել խառը ակորդները chords դաշտ, իսկ բառերը՝ lyrics') ?>">
+                ⚡ <?= __('Զատել ակորդները') ?>
+              </button>
+              <button type="button" id="formatStanzasBtn" class="btn compact-btn" style="background:white; border:1px solid var(--line); font-weight:600; padding:3px 9px; font-size:11px;" title="<?= __('Ավելացնել [Տուն 1], [Կրկներգ] և մաքրել տողերը') ?>">
+                📝 <?= __('Ձևաչափել տները') ?>
+              </button>
+              <button type="button" id="expandChorusBtn" class="btn compact-btn" style="background:white; border:1px solid var(--line); font-weight:600; padding:3px 9px; font-size:11px;" title="<?= __('Բացել (Կրկն.) նշված տեղերում ամբողջական կրկներգը') ?>">
+                🔁 <?= __('Բացել կրկներգը') ?>
+              </button>
+              <button type="button" id="stripChordsBtn" class="btn compact-btn" style="background:white; border:1px solid var(--line); font-weight:600; padding:3px 9px; font-size:11px;" title="<?= __('Մաքրել բոլոր [ակորդները] տեքստից') ?>">
+                🧹 <?= __('Մաքրել ակորդները') ?>
+              </button>
+            </div>
+          </div>
           <textarea id="lyrics" rows="8" placeholder="<?= __('Երգի տեքստը...') ?>"></textarea>
+          <input type="file" id="ocrImageFileInput" accept="image/*" style="display:none;">
         </div>
 
         <section id="songMaterials" class="song-materials is-locked" aria-labelledby="songMaterialsTitle">
@@ -622,6 +669,157 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
            <span id="transposeInfo"></span>
            <span id="selected<?= __('Key') ?>Pill"></span>
          </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. BATCH LYRICS ASSISTANT MODAL (Option 3) -->
+  <div id="batchLyricsAssistantPane" class="editor-modal">
+    <div class="editor-drawer" style="width:720px;">
+      <div class="editor-header">
+        <div>
+          <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+            <span>⚡ <?= __('Բառերի Ավտո-Օգնական') ?></span>
+            <span id="blaProgressBadge" class="period-badge" style="background:#f3ebff; color:#7d40ff; font-size:12px; font-weight:700;">0 / 0</span>
+          </h3>
+          <p style="margin:4px 0 0; color:var(--muted); font-size:12px;"><?= __('Ավտոմատ գտեք և արագ լրացրեք այն բոլոր երգերի բառերը, որոնք դեռ դատարկ են։') ?></p>
+        </div>
+        <button type="button" class="btn" id="blaCloseBtn"><?= __('Փակել') ?></button>
+      </div>
+
+      <div class="editor-body" style="gap:16px;">
+        <div id="blaEmptyState" style="text-align:center; padding:40px 20px;" hidden>
+          <div style="font-size:48px; margin-bottom:12px;">🎉</div>
+          <h4 style="margin:0 0 8px; color:var(--text); font-size:18px;"><?= __('Բոլոր երգերն ունեն բառեր') ?></h4>
+          <p style="margin:0; color:var(--muted); font-size:13px;"><?= __('Բազայում առանց բառերի երգ չի մնացել։') ?></p>
+        </div>
+
+        <div id="blaActiveSongCard" style="background:rgba(67,24,255,0.03); border:1px solid var(--line); border-radius:14px; padding:18px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+            <div>
+              <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase;"><?= __('Ընթացիկ երգ') ?></div>
+              <h3 id="blaSongTitle" style="margin:2px 0; font-size:20px; font-weight:800; color:var(--text);">—</h3>
+              <div id="blaSongArtist" style="font-size:13px; color:var(--muted); font-weight:600;">—</div>
+            </div>
+            <button type="button" id="blaFetchAiBtn" class="btn btn-primary" style="padding:10px 18px; font-weight:700;">
+              ✨ <?= __('Գտնել բառերը AI-ով') ?>
+            </button>
+          </div>
+
+          <div class="form-field" style="margin-top:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label style="margin:0; font-size:12px;"><?= __('Բառերի նախադիտում և խմբագրում') ?></label>
+              <span id="blaFetchStatus" style="font-size:12px; font-weight:600; color:var(--primary);"></span>
+            </div>
+            <textarea id="blaLyricsText" rows="12" style="font-family:inherit; min-height:220px;" placeholder="<?= __('Սեղմեք «Գտնել բառերը AI-ով» կամ տեղադրեք տեքստը...') ?>"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-footer" style="justify-content:space-between;">
+        <div>
+          <button type="button" id="blaPrevBtn" class="btn" style="background:white; border:1px solid var(--line);">◀ <?= __('Նախորդ') ?></button>
+          <button type="button" id="blaSkipBtn" class="btn" style="background:white; border:1px solid var(--line);"><?= __('Բաց թողնել') ?> ▶</button>
+        </div>
+        <button type="button" id="blaSaveNextBtn" class="btn btn-primary" style="padding:12px 24px; font-weight:700;">
+          💾 <?= __('Պահպանել և Հաջորդը') ?> ▶
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. BATCH FILE IMPORT MODAL (Option 4) -->
+  <div id="batchFileImportPane" class="editor-modal">
+    <div class="editor-drawer" style="width:820px;">
+      <div class="editor-header">
+        <div>
+          <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+            <span>📥 <?= __('Երգերի Իմպորտ Ֆայլերից') ?></span>
+          </h3>
+          <p style="margin:4px 0 0; color:var(--muted); font-size:12px;"><?= __('Ներբեռնեք PowerPoint (.pptx), Word (.docx), TXT կամ ChordPro ֆայլեր։') ?></p>
+        </div>
+        <button type="button" class="btn" id="bfiCloseBtn"><?= __('Փակել') ?></button>
+      </div>
+
+      <div class="editor-body" style="gap:20px;">
+        <div id="bfiDropzone" style="border:2px dashed var(--line); border-radius:14px; padding:36px 20px; text-align:center; cursor:pointer; background:rgba(67,24,255,0.02); transition:all .2s;">
+          <input type="file" id="bfiFileInput" accept=".pptx,.docx,.txt,.chordpro,.cho,.crd,.json" style="display:none;">
+          <div style="font-size:40px; margin-bottom:10px;">📄</div>
+          <h4 style="margin:0 0 6px; font-size:16px; font-weight:700; color:var(--text);"><?= __('Քաշեք և գցեք ֆայլը այստեղ կամ սեղմեք ընտրելու համար') ?></h4>
+          <p style="margin:0; font-size:12px; color:var(--muted);"><?= __('Աջակցվող ձևաչափեր՝ .pptx (PowerPoint սլայդներ), .docx (Word), .txt (Տեքստային), .chordpro') ?></p>
+        </div>
+
+        <div id="bfiParsingSpinner" style="text-align:center; padding:20px;" hidden>
+          <div style="display:inline-block; font-size:14px; font-weight:700; color:var(--primary);">
+            ⏳ <?= __('Ֆայլը մշակվում և վերլուծվում է...') ?>
+          </div>
+        </div>
+
+        <div id="bfiResultsWrap" hidden>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div style="font-weight:700; font-size:14px; color:var(--text);">
+              <?= __('Հայտնաբերված երգեր') ?>: <span id="bfiCount">0</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button type="button" id="bfiSelectAllBtn" class="btn compact-btn" style="background:white; border:1px solid var(--line); font-size:11px;"><?= __('Ընտրել բոլորը') ?></button>
+              <button type="button" id="bfiDeselectAllBtn" class="btn compact-btn" style="background:white; border:1px solid var(--line); font-size:11px;"><?= __('Հանել ընտրությունը') ?></button>
+            </div>
+          </div>
+
+          <div style="max-height:360px; overflow-y:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface);">
+            <table style="width:100%; border-collapse:collapse; font-size:13px;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--line); background:rgba(0,0,0,0.02); text-align:left;">
+                  <th style="padding:10px 14px; width:36px;"></th>
+                  <th style="padding:10px 14px;"><?= __('Վերնագիր') ?></th>
+                  <th style="padding:10px 14px;"><?= __('Կարգավիճակ') ?></th>
+                  <th style="padding:10px 14px; text-align:right;"><?= __('Բառեր') ?></th>
+                </tr>
+              </thead>
+              <tbody id="bfiTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-footer" style="justify-content:space-between;">
+        <span id="bfiStatusMsg" style="font-size:13px; font-weight:600; color:var(--muted); align-self:center;"></span>
+        <button type="button" id="bfiImportBtn" class="btn btn-primary" style="padding:12px 28px; font-weight:700;" disabled>
+          📥 <?= __('Ներմուծել ընտրվածները') ?>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. AI SETTINGS MODAL -->
+  <div id="lyricsAiSettingsModal" class="editor-modal">
+    <div class="editor-drawer" style="width:520px;">
+      <div class="editor-header">
+        <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+          <span>⚙️ <?= __('Gemini AI Կարգավորումներ') ?></span>
+        </h3>
+        <button type="button" class="btn" id="aiSettingsCloseBtn"><?= __('Փակել') ?></button>
+      </div>
+      <div class="editor-body">
+        <p style="margin:0; font-size:13px; color:var(--muted); line-height:1.5;">
+          <?= __('Երգերի բառերի ավտո-որոնման և լուսանկարներից OCR ճանաչման համար անհրաժեշտ է Google Gemini API բանալի։ Կարող եք անվճար ստանալ') ?> 
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:var(--primary); font-weight:700;">Google AI Studio</a>-ից։
+        </p>
+        <div class="form-field">
+          <label><?= __('Gemini API Key') ?></label>
+          <input type="password" id="aiApiKeyInput" placeholder="AIzaSy...">
+          <small id="aiKeyStatusText" style="color:var(--muted); font-size:11px;"></small>
+        </div>
+        <div class="form-field">
+          <label><?= __('Մոդել') ?></label>
+          <select id="aiModelSelect">
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash (Արագ և ճշգրիտ - Խորհուրդ է տրվում)</option>
+            <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+          </select>
+        </div>
+      </div>
+      <div class="editor-footer">
+        <button type="button" id="aiSaveConfigBtn" class="btn btn-primary"><?= __('Պահպանել Բանալին') ?></button>
       </div>
     </div>
   </div>
@@ -1516,8 +1714,11 @@ workspaceTabs.forEach((tab) => {
 
 function updateStats(totalCount, visibleCount) {
   const withLyrics = ALL_SONGS.filter(song => (song.lyrics || '').trim()).length;
+  const withoutLyrics = Math.max(0, totalCount - withLyrics);
   statTotalSongs.textContent = String(totalCount);
   if (statLyricsSongs) statLyricsSongs.textContent = String(withLyrics);
+  const badge = $('statNoLyricsBadge');
+  if (badge) badge.textContent = String(withoutLyrics);
   statVisibleSongs.textContent = String(visibleCount);
   statCurrentMode.textContent = currentEditId !== null ? 'Խմբագրում' : 'Նոր երգ';
 }
@@ -2153,6 +2354,742 @@ window?.addEventListener('beforeunload', (e) => {
   if (!hasUnsavedChanges()) return;
   e.preventDefault();
   e.returnValue = '';
+});
+
+// =========================================================================
+// LYRICS AUTOMATION SYSTEM (Smart Tools, AI Retrieval, OCR, Batch Assistant & File Importer)
+// =========================================================================
+
+// --- 1. SMART TEXT UTILITIES (Option 1) ---
+function splitMixedChordsAndLyrics(raw) {
+  if (!raw || !raw.trim()) return { chords: '', lyrics: '' };
+
+  // Check if ChordPro brackets exist e.g. [C], [Am7], [F#/Bb]
+  const chordBracketRegex = /\[[A-G][b#]?[^\s\]]*\]/g;
+  if (chordBracketRegex.test(raw)) {
+    const chords = raw.trim();
+    const lyrics = raw.replace(/\[[A-G][b#]?[^\]]*\]\s*/g, '').replace(/[ \t]{2,}/g, ' ').trim();
+    return { chords, lyrics };
+  }
+
+  // Check for alternating chord/lyrics lines
+  const lines = raw.split('\n');
+  const chordPattern = /\b[A-G][b#]?(?:m|maj|min|dim|aug|sus[24]?|add\d|\d)*(?:\/[A-G][b#]?)?\b/g;
+  let chordLines = [];
+  let lyricLines = [];
+  let detectedChords = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    if (!trimmed) {
+      chordLines.push('');
+      lyricLines.push('');
+      continue;
+    }
+
+    const matches = trimmed.match(chordPattern) || [];
+    const nonChord = trimmed.replace(chordPattern, '').replace(/[\s\t\-\|\/\(\)\:\.\,\'\"]/g, '');
+    const isChordLine = matches.length > 0 && nonChord.length <= 3 && !hasArmenianText(trimmed);
+
+    if (isChordLine) {
+      detectedChords = true;
+      chordLines.push(line);
+    } else {
+      lyricLines.push(line);
+    }
+  }
+
+  if (detectedChords) {
+    return {
+      chords: chordLines.join('\n').replace(/\n{3,}/g, '\n\n').trim(),
+      lyrics: lyricLines.join('\n').replace(/\n{3,}/g, '\n\n').trim()
+    };
+  }
+
+  return { chords: '', lyrics: raw.trim() };
+}
+
+function formatLyricsStanzas(text) {
+  if (!text || !text.trim()) return '';
+  const lines = text.split('\n').map(l => l.trimRight());
+  let formatted = [];
+  let verseCount = 0;
+
+  const verseHeaderRegex = /^(?:\[?(?:Տուն|Куплет|Verse|Tun)\s*(\d+)\]?|(\d+)[\.\)]\s*$)/i;
+  const chorusHeaderRegex = /^(?:\[?(?:Կրկներգ|Կրկն|Припев|Chorus|Refrain)\]?)/i;
+  const bridgeHeaderRegex = /^(?:\[?(?:Կամուրջ|Мост|Bridge)\]?)/i;
+  const outroHeaderRegex = /^(?:\[?(?:Վերջաբան|Концовка|Outro|Ending)\]?)/i;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) {
+      if (formatted.length > 0 && formatted[formatted.length - 1] !== '') {
+        formatted.push('');
+      }
+      continue;
+    }
+
+    const vm = line.match(verseHeaderRegex);
+    if (vm) {
+      const num = vm[1] || vm[2] || (++verseCount);
+      formatted.push(`[Տուն ${num}]`);
+      continue;
+    }
+
+    if (chorusHeaderRegex.test(line)) {
+      formatted.push('[Կրկներգ]');
+      continue;
+    }
+
+    if (bridgeHeaderRegex.test(line)) {
+      formatted.push('[Կամուրջ]');
+      continue;
+    }
+
+    if (outroHeaderRegex.test(line)) {
+      formatted.push('[Վերջաբան]');
+      continue;
+    }
+
+    formatted.push(lines[i]);
+  }
+
+  let res = formatted.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+
+  // If no headers existed at all, auto-tag stanzas separated by empty lines
+  const hasAnyHeader = /\[(?:Տուն|Կրկներգ|Կամուրջ|Վերջաբան)/.test(res);
+  if (!hasAnyHeader) {
+    const blocks = res.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+    if (blocks.length >= 2) {
+      let vIdx = 1;
+      const tagged = blocks.map((b, idx) => {
+        if (idx === 1 || (idx > 1 && idx % 2 === 1)) {
+          return `[Կրկներգ]\n${b}`;
+        } else {
+          return `[Տուն ${vIdx++}]\n${b}`;
+        }
+      });
+      res = tagged.join('\n\n');
+    }
+  }
+
+  return res;
+}
+
+function expandChorusInLyrics(text) {
+  if (!text || !text.trim()) return text;
+
+  // Extract the first chorus text
+  const chorusMatch = text.match(/\[Կրկներգ\]\s*\n([\s\S]*?)(?=\n\s*\n|\n\s*\[|$)/i);
+  if (!chorusMatch || !chorusMatch[1].trim()) {
+    return text;
+  }
+
+  const chorusBody = chorusMatch[1].trim();
+  const chorusReplacement = `[Կրկներգ]\n${chorusBody}`;
+
+  const shorthandRegex = /^(?:\(|\[)?\s*(?:Կրկն(?:\.|երգ)?|Припев|Chorus)\s*(?:x?\s*2|2x)?\s*(?:\)|\])?$/i;
+  const lines = text.split('\n');
+  let replaced = false;
+  let inOriginalChorus = false;
+
+  const newLines = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (trimmed.toLowerCase() === '[կրկներգ]') {
+      inOriginalChorus = true;
+      newLines.push(line);
+      continue;
+    }
+
+    if (inOriginalChorus) {
+      if (trimmed === '' || /^\[/.test(trimmed)) {
+        inOriginalChorus = false;
+      }
+      newLines.push(line);
+      continue;
+    }
+
+    if (shorthandRegex.test(trimmed)) {
+      newLines.push(chorusReplacement);
+      replaced = true;
+    } else {
+      newLines.push(line);
+    }
+  }
+
+  return replaced ? newLines.join('\n').replace(/\n{3,}/g, '\n\n').trim() : text;
+}
+
+function stripChordsFromText(text) {
+  if (!text) return '';
+  const chordPattern = /\b[A-G][b#]?(?:m|maj|min|dim|aug|sus[24]?|add\d|\d)*(?:\/[A-G][b#]?)?\b/g;
+  return text
+    .replace(/\[[A-G][b#]?[^\]]*\]\s*/g, '')
+    .split('\n')
+    .filter(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return true;
+      const matches = trimmed.match(chordPattern) || [];
+      const nonChord = trimmed.replace(chordPattern, '').replace(/[\s\t\-\|\/\(\)\:\.\,]/g, '');
+      return !(matches.length > 0 && nonChord.length === 0 && !hasArmenianText(trimmed));
+    })
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+// Editor Smart Toolbar Click Handlers
+$('splitMixedLyricsBtn')?.addEventListener('click', () => {
+  const raw = (lyricsI.value || chordsI.value || '').trim();
+  if (!raw) {
+    showNotice('Բառերի կամ ակորդների դաշտը դատարկ է', 'info');
+    return;
+  }
+  const res = splitMixedChordsAndLyrics(raw);
+  if (res.lyrics) lyricsI.value = res.lyrics;
+  if (res.chords) chordsI.value = res.chords;
+  renderPreview();
+  updateWorkspaceState();
+  showNotice(window.I18N?.SmartSplitDone || 'Ակորդներն ու բառերը զատվեցին ✅', 'success');
+});
+
+$('formatStanzasBtn')?.addEventListener('click', () => {
+  const current = lyricsI.value.trim();
+  if (!current) {
+    showNotice('Բառերի դաշտը դատարկ է', 'info');
+    return;
+  }
+  lyricsI.value = formatLyricsStanzas(current);
+  renderPreview();
+  updateWorkspaceState();
+  showNotice(window.I18N?.StanzasFormatted || 'Տները ձևաչափվեցին [Տուն 1], [Կրկներգ] ✅', 'success');
+});
+
+$('expandChorusBtn')?.addEventListener('click', () => {
+  const current = lyricsI.value.trim();
+  if (!current) {
+    showNotice('Բառերի դաշտը դատարկ է', 'info');
+    return;
+  }
+  const expanded = expandChorusInLyrics(current);
+  if (expanded === current) {
+    showNotice('Կրկնվող կրճատումներ չգտնվեցին կամ կրկներգը նշված չէ', 'info');
+  } else {
+    lyricsI.value = expanded;
+    renderPreview();
+    updateWorkspaceState();
+    showNotice(window.I18N?.ChorusExpanded || 'Կրկներգի կրճատումները բացվեցին ✅', 'success');
+  }
+});
+
+$('stripChordsBtn')?.addEventListener('click', () => {
+  const current = lyricsI.value.trim();
+  if (!current) {
+    showNotice('Բառերի դաշտը դատարկ է', 'info');
+    return;
+  }
+  lyricsI.value = stripChordsFromText(current);
+  renderPreview();
+  updateWorkspaceState();
+  showNotice(window.I18N?.ChordsStripped || 'Ակորդները մաքրվեցին բառերից ✅', 'success');
+});
+
+// --- 2. 1-CLICK AI LYRICS & OCR IN EDITOR (Option 2) ---
+const aiFetchLyricsBtn = $('aiFetchLyricsBtn');
+aiFetchLyricsBtn?.addEventListener('click', async () => {
+  const title = (titleI.value || '').trim();
+  const artist = (artistI.value || '').trim();
+  if (!title) {
+    showNotice('Խնդրում ենք նախ լրացնել երգի վերնագիրը', 'error');
+    titleI.focus();
+    return;
+  }
+
+  const origHtml = aiFetchLyricsBtn.innerHTML;
+  aiFetchLyricsBtn.innerHTML = '⏳ Որոնվում է...';
+  aiFetchLyricsBtn.disabled = true;
+
+  try {
+    const res = await fetch('api_lyrics_assistant.php?action=fetch_ai_lyrics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        artist,
+        key: keyI.value,
+        existing_lyrics: lyricsI.value
+      })
+    });
+    const json = await res.json();
+    if (!res.ok || !json.ok) {
+      throw new Error(json.error || 'Չհաջողվեց գտնել բառերը');
+    }
+
+    const data = json.data || {};
+    if (data.lyrics) lyricsI.value = data.lyrics;
+    if (data.suggested_key && !keyI.value) keyI.value = data.suggested_key;
+    if (data.bpm && !bpmI.value) bpmI.value = data.bpm;
+    if (data.title_hy && !titleI.value) titleI.value = data.title_hy;
+    if (data.title_lat && !titleLatI.value) titleLatI.value = data.title_lat;
+    if (data.title_ru && !titleRuI.value) titleRuI.value = data.title_ru;
+    if (data.title_en && !titleEnI.value) titleEnI.value = data.title_en;
+
+    renderPreview();
+    updateWorkspaceState();
+    showNotice(window.I18N?.AiSuccess || 'Բառերը հաջողությամբ գտնվեցին AI-ով ✨', 'success');
+  } catch (err) {
+    showNotice(err.message || 'Սխալ AI հարցման ժամանակ', 'error');
+  } finally {
+    aiFetchLyricsBtn.innerHTML = origHtml;
+    aiFetchLyricsBtn.disabled = false;
+  }
+});
+
+const ocrLyricsBtn = $('ocrLyricsBtn');
+const ocrImageFileInput = $('ocrImageFileInput');
+
+ocrLyricsBtn?.addEventListener('click', () => {
+  ocrImageFileInput?.click();
+});
+
+ocrImageFileInput?.addEventListener('change', async () => {
+  const file = ocrImageFileInput.files?.[0];
+  if (!file) return;
+
+  const origHtml = ocrLyricsBtn.innerHTML;
+  ocrLyricsBtn.innerHTML = '⏳ OCR...';
+  ocrLyricsBtn.disabled = true;
+
+  try {
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const res = await fetch('api_lyrics_assistant.php?action=ocr_image_lyrics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image: base64,
+        mime_type: file.type || 'image/jpeg'
+      })
+    });
+    const json = await res.json();
+    if (!res.ok || !json.ok) {
+      throw new Error(json.error || 'OCR ճանաչման սխալ');
+    }
+
+    const data = json.data || {};
+    if (data.lyrics) {
+      lyricsI.value = (lyricsI.value ? lyricsI.value + '\n\n' : '') + data.lyrics;
+    }
+    if (data.chords && !chordsI.value) chordsI.value = data.chords;
+    if (data.title && !titleI.value) titleI.value = data.title;
+    if (data.artist && !artistI.value) artistI.value = data.artist;
+
+    renderPreview();
+    updateWorkspaceState();
+    showNotice(window.I18N?.OcrSuccess || 'Տեքստը հաջողությամբ ճանաչվեց լուսանկարից 📷✨', 'success');
+  } catch (err) {
+    showNotice(err.message || 'Չհաջողվեց կարդալ լուսանկարը', 'error');
+  } finally {
+    ocrLyricsBtn.innerHTML = origHtml;
+    ocrLyricsBtn.disabled = false;
+    ocrImageFileInput.value = '';
+  }
+});
+
+// --- 3. BATCH LYRICS ASSISTANT DRAWER (Option 3) ---
+const batchLyricsAssistantBtn = $('batchLyricsAssistantBtn');
+const batchLyricsAssistantPane = $('batchLyricsAssistantPane');
+const blaCloseBtn = $('blaCloseBtn');
+const blaSongCounter = $('blaSongCounter');
+const blaSongTitle = $('blaSongTitle');
+const blaSongArtist = $('blaSongArtist');
+const blaFetchAiBtn = $('blaFetchAiBtn');
+const blaFetchStatus = $('blaFetchStatus');
+const blaLyricsText = $('blaLyricsText');
+const blaPrevBtn = $('blaPrevBtn');
+const blaSkipBtn = $('blaSkipBtn');
+const blaSaveNextBtn = $('blaSaveNextBtn');
+
+let blaEmptySongs = [];
+let blaCurrentIndex = 0;
+
+function renderBlaCurrentSong() {
+  if (!blaEmptySongs.length || blaCurrentIndex >= blaEmptySongs.length) {
+    batchLyricsAssistantPane.classList.remove('is-active');
+    showNotice('Բոլոր ընտրված երգերի բառերը լրացվեցին 🎉', 'success');
+    return;
+  }
+
+  const s = blaEmptySongs[blaCurrentIndex];
+  blaSongCounter.textContent = `${blaCurrentIndex + 1} / ${blaEmptySongs.length}`;
+  blaSongTitle.textContent = displayEditorSongTitle(s.title || '') || s.title || 'Անանուն';
+  blaSongArtist.textContent = s.artist || '—';
+  blaLyricsText.value = s.lyrics || '';
+  blaFetchStatus.textContent = '';
+  blaPrevBtn.disabled = blaCurrentIndex === 0;
+}
+
+batchLyricsAssistantBtn?.addEventListener('click', () => {
+  blaEmptySongs = ALL_SONGS.filter(s => !(s.lyrics || '').trim());
+  if (!blaEmptySongs.length) {
+    showNotice('Բոլոր երգերն արդեն ունեն բառեր 🎉', 'info');
+    return;
+  }
+  blaCurrentIndex = 0;
+  batchLyricsAssistantPane.classList.add('is-active');
+  renderBlaCurrentSong();
+});
+
+blaCloseBtn?.addEventListener('click', () => {
+  batchLyricsAssistantPane.classList.remove('is-active');
+});
+
+batchLyricsAssistantPane?.addEventListener('click', (e) => {
+  if (e.target === batchLyricsAssistantPane) {
+    batchLyricsAssistantPane.classList.remove('is-active');
+  }
+});
+
+blaFetchAiBtn?.addEventListener('click', async () => {
+  const s = blaEmptySongs[blaCurrentIndex];
+  if (!s) return;
+
+  const origText = blaFetchAiBtn.innerHTML;
+  blaFetchAiBtn.innerHTML = '⏳ Որոնվում է...';
+  blaFetchAiBtn.disabled = true;
+  blaFetchStatus.textContent = '⏳ AI որոնում...';
+
+  try {
+    const res = await fetch('api_lyrics_assistant.php?action=fetch_ai_lyrics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: s.title,
+        artist: s.artist,
+        key: s.original_key || s.key || '',
+        existing_lyrics: blaLyricsText.value
+      })
+    });
+    const json = await res.json();
+    if (!res.ok || !json.ok) {
+      throw new Error(json.error || 'Չհաջողվեց գտնել');
+    }
+
+    const data = json.data || {};
+    if (data.lyrics) {
+      blaLyricsText.value = data.lyrics;
+      blaFetchStatus.textContent = 'Գտնվեց ✨';
+    }
+  } catch (err) {
+    blaFetchStatus.textContent = 'Սխալ ❌';
+    showNotice(err.message || 'Չհաջողվեց գտնել բառերը', 'error');
+  } finally {
+    blaFetchAiBtn.innerHTML = origText;
+    blaFetchAiBtn.disabled = false;
+  }
+});
+
+blaPrevBtn?.addEventListener('click', () => {
+  if (blaCurrentIndex > 0) {
+    blaCurrentIndex--;
+    renderBlaCurrentSong();
+  }
+});
+
+blaSkipBtn?.addEventListener('click', () => {
+  blaCurrentIndex++;
+  renderBlaCurrentSong();
+});
+
+blaSaveNextBtn?.addEventListener('click', async () => {
+  const s = blaEmptySongs[blaCurrentIndex];
+  if (!s) return;
+  const newLyrics = blaLyricsText.value.trim();
+  if (!newLyrics) {
+    showNotice('Բառերի դաշտը դատարկ է', 'error');
+    return;
+  }
+
+  const origText = blaSaveNextBtn.innerHTML;
+  blaSaveNextBtn.innerHTML = '⏳ Պահպանվում է...';
+  blaSaveNextBtn.disabled = true;
+
+  try {
+    const res = await fetch('api_lyrics_assistant.php?action=batch_import_songs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: [{
+          matched_id: s.id,
+          extracted_title: s.title,
+          extracted_artist: s.artist,
+          extracted_lyrics: newLyrics,
+          action: 'update'
+        }]
+      })
+    });
+    const json = await res.json();
+    if (!res.ok || !json.ok) {
+      throw new Error(json.error || 'Չհաջողվեց պահպանել');
+    }
+
+    // Update locally
+    s.lyrics = newLyrics;
+    const existing = ALL_SONGS.find(item => item.id === s.id);
+    if (existing) existing.lyrics = newLyrics;
+
+    updateStats(ALL_SONGS.length, getFilteredSongs().length);
+    showNotice(`«${s.title}» երգի բառերը պահպանվեցին ✅`, 'success');
+
+    blaCurrentIndex++;
+    renderBlaCurrentSong();
+  } catch (err) {
+    showNotice(err.message || 'Սխալ պահպանելիս', 'error');
+  } finally {
+    blaSaveNextBtn.innerHTML = origText;
+    blaSaveNextBtn.disabled = false;
+  }
+});
+
+// --- 4. BATCH FILE IMPORTER (Option 4) ---
+const batchFileImportBtn = $('batchFileImportBtn');
+const batchFileImportPane = $('batchFileImportPane');
+const bfiCloseBtn = $('bfiCloseBtn');
+const bfiDropzone = $('bfiDropzone');
+const bfiFileInput = $('bfiFileInput');
+const bfiParsingSpinner = $('bfiParsingSpinner');
+const bfiResultsWrap = $('bfiResultsWrap');
+const bfiCount = $('bfiCount');
+const bfiSelectAllBtn = $('bfiSelectAllBtn');
+const bfiDeselectAllBtn = $('bfiDeselectAllBtn');
+const bfiTableBody = $('bfiTableBody');
+const bfiStatusMsg = $('bfiStatusMsg');
+const bfiImportBtn = $('bfiImportBtn');
+
+let bfiParsedSongs = [];
+
+batchFileImportBtn?.addEventListener('click', () => {
+  batchFileImportPane.classList.add('is-active');
+});
+
+bfiCloseBtn?.addEventListener('click', () => {
+  batchFileImportPane.classList.remove('is-active');
+});
+
+batchFileImportPane?.addEventListener('click', (e) => {
+  if (e.target === batchFileImportPane) {
+    batchFileImportPane.classList.remove('is-active');
+  }
+});
+
+bfiDropzone?.addEventListener('click', () => {
+  bfiFileInput?.click();
+});
+
+bfiDropzone?.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  bfiDropzone.style.borderColor = 'var(--primary)';
+  bfiDropzone.style.background = 'rgba(67,24,255,0.06)';
+});
+
+bfiDropzone?.addEventListener('dragleave', () => {
+  bfiDropzone.style.borderColor = 'var(--line)';
+  bfiDropzone.style.background = 'rgba(67,24,255,0.02)';
+});
+
+bfiDropzone?.addEventListener('drop', (e) => {
+  e.preventDefault();
+  bfiDropzone.style.borderColor = 'var(--line)';
+  bfiDropzone.style.background = 'rgba(67,24,255,0.02)';
+  const file = e.dataTransfer?.files?.[0];
+  if (file) handleBfiUpload(file);
+});
+
+bfiFileInput?.addEventListener('change', () => {
+  const file = bfiFileInput.files?.[0];
+  if (file) handleBfiUpload(file);
+});
+
+async function handleBfiUpload(file) {
+  bfiParsingSpinner.hidden = false;
+  bfiResultsWrap.hidden = true;
+  bfiStatusMsg.textContent = '';
+  bfiImportBtn.disabled = true;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch('api_lyrics_assistant.php?action=parse_file_import', {
+      method: 'POST',
+      body: formData
+    });
+    const json = await res.json();
+    if (!res.ok || !json.ok) {
+      throw new Error(json.error || 'Ֆայլի վերլուծման սխալ');
+    }
+
+    bfiParsedSongs = json.songs || [];
+    bfiCount.textContent = String(bfiParsedSongs.length);
+    renderBfiTable();
+    bfiResultsWrap.hidden = false;
+    bfiImportBtn.disabled = bfiParsedSongs.length === 0;
+    bfiStatusMsg.textContent = `Ֆայլը մշակված է: ${json.filename}`;
+  } catch (err) {
+    showNotice(err.message || 'Չհաջողվեց վերլուծել ֆայլը', 'error');
+  } finally {
+    bfiParsingSpinner.hidden = true;
+  }
+}
+
+function renderBfiTable() {
+  bfiTableBody.innerHTML = '';
+  bfiParsedSongs.forEach((song, idx) => {
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid var(--line)';
+
+    const isUpdate = song.action === 'update';
+    const statusPill = isUpdate
+      ? `<span class="badge" style="background:#e8f5e9; color:#2e7d32; font-weight:700;">🔄 Թարմացնել («${escapeHtml(song.matched_title || '')}»)</span>`
+      : `<span class="badge" style="background:#e3f2fd; color:#1565c0; font-weight:700;">➕ Նոր երգ</span>`;
+
+    const lyricsLines = (song.extracted_lyrics || '').split('\n').filter(Boolean).length;
+
+    tr.innerHTML = `
+      <td style="padding:10px 14px; text-align:center;">
+        <input type="checkbox" class="bfi-row-checkbox" data-idx="${idx}" checked>
+      </td>
+      <td style="padding:10px 14px; font-weight:700; color:var(--text);">
+        <div>${escapeHtml(song.extracted_title || 'Անանուն')}</div>
+        <div style="font-size:11px; color:var(--muted); font-weight:500;">${escapeHtml(song.extracted_artist || '—')}</div>
+      </td>
+      <td style="padding:10px 14px;">
+        ${statusPill}
+      </td>
+      <td style="padding:10px 14px; text-align:right; font-size:12px; color:var(--muted);">
+        ${lyricsLines} տող
+      </td>
+    `;
+    bfiTableBody.appendChild(tr);
+  });
+}
+
+bfiSelectAllBtn?.addEventListener('click', () => {
+  document.querySelectorAll('.bfi-row-checkbox').forEach(cb => cb.checked = true);
+});
+
+bfiDeselectAllBtn?.addEventListener('click', () => {
+  document.querySelectorAll('.bfi-row-checkbox').forEach(cb => cb.checked = false);
+});
+
+bfiImportBtn?.addEventListener('click', async () => {
+  const checkboxes = Array.from(document.querySelectorAll('.bfi-row-checkbox:checked'));
+  if (!checkboxes.length) {
+    showNotice('Ընտրեք գոնե մեկ երգ իմպորտի համար', 'error');
+    return;
+  }
+
+  const selectedItems = checkboxes.map(cb => bfiParsedSongs[Number(cb.dataset.idx)]).filter(Boolean);
+
+  const origText = bfiImportBtn.innerHTML;
+  bfiImportBtn.innerHTML = '⏳ Ներմուծվում է...';
+  bfiImportBtn.disabled = true;
+
+  try {
+    const res = await fetch('api_lyrics_assistant.php?action=batch_import_songs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: selectedItems })
+    });
+    const json = await res.json();
+    if (!res.ok || !json.ok) {
+      throw new Error(json.error || 'Ներմուծման սխալ');
+    }
+
+    showNotice(`Հաջողությամբ ներմուծվեց ${json.total} երգ (${json.updated_count} թարմացված, ${json.created_count} նոր) ✅`, 'success');
+    batchFileImportPane.classList.remove('is-active');
+    bfiParsedSongs = [];
+    if (bfiFileInput) bfiFileInput.value = '';
+
+    await fetchSongs();
+  } catch (err) {
+    showNotice(err.message || 'Սխալ ներմուծման ժամանակ', 'error');
+  } finally {
+    bfiImportBtn.innerHTML = origText;
+    bfiImportBtn.disabled = false;
+  }
+});
+
+// --- 5. GEMINI AI SETTINGS MODAL ---
+const lyricsAiSettingsBtn = $('lyricsAiSettingsBtn');
+const lyricsAiSettingsModal = $('lyricsAiSettingsModal');
+const aiSettingsCloseBtn = $('aiSettingsCloseBtn');
+const aiApiKeyInput = $('aiApiKeyInput');
+const aiKeyStatusText = $('aiKeyStatusText');
+const aiModelSelect = $('aiModelSelect');
+const aiSaveConfigBtn = $('aiSaveConfigBtn');
+
+lyricsAiSettingsBtn?.addEventListener('click', async () => {
+  try {
+    const res = await fetch('api_lyrics_assistant.php?action=get_config');
+    const json = await res.json();
+    if (json.ok && json.config) {
+      aiApiKeyInput.value = json.config.gemini_api_key || '';
+      aiModelSelect.value = json.config.model || 'gemini-2.5-flash';
+      aiKeyStatusText.textContent = json.config.has_key
+        ? '✅ API բանալին ակտիվ է'
+        : '⚠️ API բանալին դեռ մուտքագրված չէ';
+    }
+  } catch (_) {}
+  lyricsAiSettingsModal.classList.add('is-active');
+});
+
+aiSettingsCloseBtn?.addEventListener('click', () => {
+  lyricsAiSettingsModal.classList.remove('is-active');
+});
+
+lyricsAiSettingsModal?.addEventListener('click', (e) => {
+  if (e.target === lyricsAiSettingsModal) {
+    lyricsAiSettingsModal.classList.remove('is-active');
+  }
+});
+
+aiSaveConfigBtn?.addEventListener('click', async () => {
+  const gemini_api_key = (aiApiKeyInput.value || '').trim();
+  const model = aiModelSelect.value || 'gemini-2.5-flash';
+
+  const origText = aiSaveConfigBtn.innerHTML;
+  aiSaveConfigBtn.innerHTML = '⏳ Պահպանվում է...';
+  aiSaveConfigBtn.disabled = true;
+
+  try {
+    const res = await fetch('api_lyrics_assistant.php?action=save_config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ gemini_api_key, model })
+    });
+    const json = await res.json();
+    if (!res.ok || !json.ok) {
+      throw new Error(json.error || 'Չհաջողվեց պահպանել');
+    }
+
+    showNotice('AI կարգավորումները հաջողությամբ պահպանվեցին ✅', 'success');
+    lyricsAiSettingsModal.classList.remove('is-active');
+  } catch (err) {
+    showNotice(err.message || 'Սխալ պահպանելիս', 'error');
+  } finally {
+    aiSaveConfigBtn.innerHTML = origText;
+    aiSaveConfigBtn.disabled = false;
+  }
 });
 
 (async function init() {
