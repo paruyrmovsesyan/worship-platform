@@ -4,9 +4,12 @@
   <script>
     (function(){
       var params = new URLSearchParams(window.location.search);
-      var token = params.get('token');
+      var token = params.get('token') || params.get('t') || params.get('share');
+      var id = params.get('id') || params.get('setlist_id');
       if (token) {
         window.location.replace('/setlists/public?token=' + encodeURIComponent(token));
+      } else if (id) {
+        window.location.replace('/setlists/' + encodeURIComponent(id));
       }
     })();
   </script>

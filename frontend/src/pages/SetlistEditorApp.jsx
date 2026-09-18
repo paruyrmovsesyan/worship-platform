@@ -227,12 +227,8 @@ export default function SetlistEditorApp() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (user) {
-      fetchSetlist();
-    } else {
-      setLoading(false);
-    }
-  }, [id, user, authLoading]);
+    fetchSetlist();
+  }, [id, authLoading]);
 
   // Handle /edit route
   useEffect(() => {
@@ -963,8 +959,9 @@ export default function SetlistEditorApp() {
         body: JSON.stringify({ setlist_id: id }),
       });
       const data = await res.json();
-      if (data.ok && data.share_url) {
-        setPublicShareUrl(data.share_url);
+      if (data.ok && (data.share_url || data.token || data.share_token)) {
+        const url = data.share_url || `/setlists/public?token=${data.token || data.share_token}`;
+        setPublicShareUrl(url);
       } else {
         alert(data.error || 'Failed to generate link');
       }
@@ -988,10 +985,28 @@ export default function SetlistEditorApp() {
   };
 
   const handleNativeShare = async () => {
-    let fullUrl = window.location.href;
-    if (publicShareUrl) {
-      fullUrl = window.location.origin + publicShareUrl;
+    let fullUrl = publicShareUrl ? (window.location.origin + publicShareUrl) : null;
+    if (!fullUrl) {
+      try {
+        const res = await fetch('/setlists_api.php?action=generate_share_link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ setlist_id: id }),
+        });
+        const data = await res.json();
+        const token = data?.token || data?.share_token;
+        if (data?.ok && token) {
+          fullUrl = `${window.location.origin}/setlists/public?token=${token}`;
+          setPublicShareUrl(data.share_url || `/setlists/public?token=${token}`);
+        }
+      } catch (err) {
+        console.error(err);
+      }
     }
+    if (!fullUrl) {
+      fullUrl = window.location.origin + `/setlists/${id}`;
+    }
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -1069,11 +1084,29 @@ export default function SetlistEditorApp() {
   if (error || !setlistData) {
     return (
       <div className="sla-page animate-fade-in">
-        <div className="sla-empty-state">
-          <p style={{ color: '#ff6b81' }}>{error}</p>
-          <button className="sla-btn-ghost" onClick={() => navigate('/setlists')} style={{ marginTop: '16px' }}>
-            {t('setlists.goBack', 'Գնալ Հետ')}
-          </button>
+        <div className="sla-empty-state" style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.8 }}>🎵</div>
+          <h3 style={{ marginBottom: '8px', color: '#fff' }}>
+            {error || t('setlists.notFound', 'Երգացանկը չի գտնվել')}
+          </h3>
+          <p style={{ color: 'rgba(255,255,255,0.6)', maxWidth: '420px', margin: '0 auto 20px', fontSize: '14px', lineHeight: '1.5' }}>
+            {!user 
+              ? t('setlists.loginToViewPrivate', 'Եթե այս երգացանկը մասնավոր է, խնդրում ենք մուտք գործել ձեր հաշիվ:')
+              : t('setlists.checkUrlOrAccess', 'Ստուգեք հղումը կամ համոզվեք, որ ունեք մուտքի իրավունք:')}
+          </p>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {!user && (
+              <button 
+                className="sla-btn-primary" 
+                onClick={() => navigate(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`)}
+              >
+                {t('common.login', 'Մուտք')}
+              </button>
+            )}
+            <button className="sla-btn-ghost" onClick={() => navigate('/setlists')}>
+              {t('setlists.goBack', 'Գնալ Հետ')}
+            </button>
+          </div>
         </div>
       </div>
     );

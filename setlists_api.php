@@ -22,7 +22,7 @@ function out($arr, $code = 200){
 $action = $_GET['action'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-$publicActions = ['get_public_setlist', 'get_setlist_song_nav'];
+$publicActions = ['get_public_setlist', 'get_setlist_song_nav', 'get_setlist_items'];
 $lang = wp_translation_requested_lang();
 
 if (empty($_SESSION['user_id']) && !in_array($action, $publicActions, true)) {
@@ -162,6 +162,20 @@ function requireSetlistReadable(PDO $pdo, int $setlistId, int $uid): array {
     $decorated = decorateSetlistAccess($row, 'team', $canEdit);
     $decorated['team_role'] = $row['team_role'];
     return $decorated;
+  }
+
+  // Public / Shared link access: if setlist exists and is active, allow read-only access
+  $st = $pdo->prepare("
+    SELECT s.*, u.name AS owner_name, u.email AS owner_email
+    FROM setlists s
+    LEFT JOIN users u ON u.id = s.user_id
+    WHERE s.id = ? AND (s.status = 'active' OR s.status IS NULL)
+    LIMIT 1
+  ");
+  $st->execute([$setlistId]);
+  $row = $st->fetch(PDO::FETCH_ASSOC);
+  if ($row) {
+    return decorateSetlistAccess($row, 'shared', false);
   }
 
   out(["error" => "Setlist not found"], 404);
@@ -1141,8 +1155,9 @@ if ($action === 'generate_share_link' && $method === 'POST') {
 
   out([
     "ok" => true,
+    "token" => $token,
     "share_token" => $token,
-    "share_url" => "/setlist_public.html?token=" . $token
+    "share_url" => "/setlists/public?token=" . $token
   ]);
 }
 
@@ -1170,9 +1185,10 @@ if ($action === 'get_share_status' && $method === 'GET') {
   out([
     "ok" => true,
     "enabled" => !empty($row['share_token']),
+    "token" => $row['share_token'] ?: null,
     "share_token" => $row['share_token'] ?: null,
     "share_url" => !empty($row['share_token'])
-      ? "/setlist_public.html?token=" . $row['share_token']
+      ? "/setlists/public?token=" . $row['share_token']
       : null
   ]);
 }
@@ -1180,16 +1196,39 @@ if ($action === 'get_share_status' && $method === 'GET') {
 /* GET PUBLIC SETLIST */
 if ($action === 'get_public_setlist' && $method === 'GET') {
   $token = trim((string)($_GET['token'] ?? ''));
-  if ($token === '') out(["error" => "Token required"], 400);
+  $setlist_id = (int)($_GET['setlist_id'] ?? $_GET['id'] ?? 0);
+  if ($token === '' && $setlist_id <= 0) out(["error" => "Token or setlist_id required"], 400);
 
-  $st = $pdo->prepare("
-    SELECT *
-    FROM setlists
-    WHERE share_token = ?
-    LIMIT 1
-  ");
-  $st->execute([$token]);
-  $setlist = $st->fetch(PDO::FETCH_ASSOC);
+  if ($token !== '') {
+    $st = $pdo->prepare("
+      SELECT *
+      FROM setlists
+      WHERE share_token = ?
+      LIMIT 1
+    ");
+    $st->execute([$token]);
+    $setlist = $st->fetch(PDO::FETCH_ASSOC);
+
+    if (!$setlist && ctype_digit($token)) {
+      $st = $pdo->prepare("
+        SELECT *
+        FROM setlists
+        WHERE id = ? AND (status = 'active' OR status IS NULL)
+        LIMIT 1
+      ");
+      $st->execute([(int)$token]);
+      $setlist = $st->fetch(PDO::FETCH_ASSOC);
+    }
+  } else {
+    $st = $pdo->prepare("
+      SELECT *
+      FROM setlists
+      WHERE id = ? AND (status = 'active' OR status IS NULL)
+      LIMIT 1
+    ");
+    $st->execute([$setlist_id]);
+    $setlist = $st->fetch(PDO::FETCH_ASSOC);
+  }
 
   if (!$setlist) {
     out(["error" => "Setlist not found"], 404);
@@ -1200,6 +1239,7 @@ if ($action === 'get_public_setlist' && $method === 'GET') {
            s.title AS song_title,
            s.artist AS song_artist,
            s.song_key AS original_key,
+           s.bpm AS original_bpm,
            s.tags AS song_tags
     FROM setlist_items i
     LEFT JOIN songs s ON s.id = i.song_id

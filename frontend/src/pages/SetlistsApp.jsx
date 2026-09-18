@@ -269,9 +269,10 @@ export default function SetlistsApp() {
         body: JSON.stringify({ setlist_id: list.id, is_editable: false }),
       });
       const data = await res.json();
+      const token = data?.token || data?.share_token;
       let shareUrl = `${window.location.origin}/setlists/${list.id}`;
-      if (data.ok && data.token) {
-        shareUrl = `${window.location.origin}/setlists/public?token=${data.token}`;
+      if (data?.ok && token) {
+        shareUrl = `${window.location.origin}/setlists/public?token=${token}`;
       }
 
       if (navigator.share) {

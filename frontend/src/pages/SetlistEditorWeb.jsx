@@ -160,12 +160,8 @@ export default function SetlistEditorWeb() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (user) {
-      fetchSetlist();
-    } else {
-      setLoading(false);
-    }
-  }, [id, user, authLoading]);
+    fetchSetlist();
+  }, [id, authLoading]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -225,8 +221,9 @@ export default function SetlistEditorWeb() {
         body: JSON.stringify({ setlist_id: id }),
       });
       const data = await res.json();
-      if (data.ok && data.share_url) {
-        setPublicShareUrl(data.share_url);
+      if (data.ok && (data.share_url || data.token || data.share_token)) {
+        const url = data.share_url || `/setlists/public?token=${data.token || data.share_token}`;
+        setPublicShareUrl(url);
       } else {
         alert(data.error || 'Failed to generate link');
       }
@@ -595,11 +592,29 @@ export default function SetlistEditorWeb() {
   if (error || !setlistData) {
     return (
       <div className="setlists-page">
-        <div className="sl-placeholder empty-state animate-fade-in">
-          <p style={{color: 'var(--color-accent-red)'}}>{error}</p>
-          <button className="btn btn-secondary" onClick={() => navigate('/setlists')} style={{marginTop: '16px'}}>
-            {t('setlists.goBack', 'Գնալ Հետ')}
-          </button>
+        <div className="sl-placeholder empty-state animate-fade-in" style={{textAlign: 'center', padding: '60px 20px'}}>
+          <div style={{fontSize: '48px', marginBottom: '16px', opacity: 0.8}}>🎵</div>
+          <h3 style={{marginBottom: '8px', color: 'var(--color-text-primary, #ffffff)'}}>
+            {error || t('setlists.notFound', 'Երգացանկը չի գտնվել')}
+          </h3>
+          <p style={{color: 'var(--color-text-secondary, rgba(255,255,255,0.6))', maxWidth: '420px', margin: '0 auto 20px', fontSize: '14px', lineHeight: '1.5'}}>
+            {!user 
+              ? t('setlists.loginToViewPrivate', 'Եթե այս երգացանկը մասնավոր է, խնդրում ենք մուտք գործել ձեր հաշիվ:')
+              : t('setlists.checkUrlOrAccess', 'Ստուգեք հղումը կամ համոզվեք, որ ունեք մուտքի իրավունք:')}
+          </p>
+          <div style={{display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap'}}>
+            {!user && (
+              <button 
+                className="btn btn-primary" 
+                onClick={() => navigate(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`)}
+              >
+                {t('common.login', 'Մուտք')}
+              </button>
+            )}
+            <button className="btn btn-secondary" onClick={() => navigate('/setlists')}>
+              {t('setlists.goBack', 'Գնալ Հետ')}
+            </button>
+          </div>
         </div>
       </div>
     );

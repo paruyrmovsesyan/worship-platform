@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, useParams, useNavigate, Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { usePageReady } from '../hooks/usePageReady';
@@ -8,6 +8,7 @@ import './SetlistPublicWeb.css';
 
 export default function SetlistPublicWeb() {
   const [searchParams] = useSearchParams();
+  const { id: routeId } = useParams();
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const { user } = useAuth();
@@ -16,6 +17,7 @@ export default function SetlistPublicWeb() {
     || searchParams.get('t')
     || searchParams.get('share')
     || (window.location.hash ? window.location.hash.replace('#', '') : '');
+  const setlistId = routeId || searchParams.get('id') || searchParams.get('setlist_id');
 
   const [setlist, setSetlist] = useState(null);
   const [items, setItems] = useState([]);
@@ -27,13 +29,17 @@ export default function SetlistPublicWeb() {
   usePageReady(isLoading);
 
   useEffect(() => {
-    if (!token) {
+    if (!token && !setlistId) {
       setError(t('setlists.invalidToken', 'Անվավեր կամ բացակայող հղում։'));
       setIsLoading(false);
       return;
     }
 
-    fetch(`/setlists_api.php?action=get_public_setlist&token=${encodeURIComponent(token)}`)
+    const apiUrl = token
+      ? `/setlists_api.php?action=get_public_setlist&token=${encodeURIComponent(token)}`
+      : `/setlists_api.php?action=get_public_setlist&setlist_id=${encodeURIComponent(setlistId)}`;
+
+    fetch(apiUrl)
       .then(res => res.json())
       .then(data => {
         if (data.ok && data.setlist) {
@@ -51,10 +57,12 @@ export default function SetlistPublicWeb() {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [token]);
+  }, [token, setlistId]);
 
   const handleCopyLink = () => {
-    const fullUrl = window.location.origin + `/setlists/public?token=${token}`;
+    const fullUrl = token
+      ? window.location.origin + `/setlists/public?token=${token}`
+      : window.location.origin + `/setlists/${setlist?.id || setlistId}`;
     navigator.clipboard.writeText(fullUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
@@ -136,6 +144,7 @@ export default function SetlistPublicWeb() {
       params.set('capo_mode', '1');
     }
     if (token) params.set('setlist_token', token);
+    else if (setlist?.id || setlistId) params.set('setlist_id', String(setlist?.id || setlistId));
     if (itemId) params.set('setlist_item_id', String(itemId));
     const qStr = params.toString();
     if (qStr) url += `?${qStr}`;
