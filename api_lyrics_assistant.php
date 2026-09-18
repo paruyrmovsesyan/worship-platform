@@ -20,14 +20,20 @@ const WP_LYRICS_CONFIG_FILE = __DIR__ . '/data/lyrics_ai_config.json';
 
 function wp_lyrics_get_config(): array {
     $default = [
+        'provider' => 'gemini', // 'gemini' or 'openai'
         'gemini_api_key' => '',
-        'model' => 'gemini-2.5-flash',
+        'gemini_model' => 'gemini-2.5-flash',
+        'openai_api_key' => '',
+        'openai_model' => 'gpt-4o-mini',
     ];
     if (is_file(WP_LYRICS_CONFIG_FILE) && is_readable(WP_LYRICS_CONFIG_FILE)) {
         $raw = @file_get_contents(WP_LYRICS_CONFIG_FILE);
         if ($raw) {
             $data = @json_decode($raw, true);
             if (is_array($data)) {
+                if (!empty($data['model']) && empty($data['gemini_model'])) {
+                    $data['gemini_model'] = $data['model'];
+                }
                 $default = array_merge($default, $data);
             }
         }
@@ -39,6 +45,18 @@ function wp_lyrics_get_config(): array {
             $default['gemini_api_key'] = $envKey;
         }
     }
+    if (empty($default['openai_api_key'])) {
+        $envKey = wp_runtime_env('OPENAI_API_KEY');
+        if ($envKey) {
+            $default['openai_api_key'] = $envKey;
+        }
+    }
+    // Auto-select provider if only one is configured
+    if ($default['provider'] === 'gemini' && empty($default['gemini_api_key']) && !empty($default['openai_api_key'])) {
+        $default['provider'] = 'openai';
+    } elseif ($default['provider'] === 'openai' && empty($default['openai_api_key']) && !empty($default['gemini_api_key'])) {
+        $default['provider'] = 'gemini';
+    }
     return $default;
 }
 
@@ -48,8 +66,31 @@ function wp_lyrics_save_config(array $newConfig): bool {
         @mkdir($dir, 0775, true);
     }
     $current = wp_lyrics_get_config();
-    $current['gemini_api_key'] = trim((string)($newConfig['gemini_api_key'] ?? $current['gemini_api_key']));
-    $current['model'] = trim((string)($newConfig['model'] ?? $current['model'])) ?: 'gemini-2.5-flash';
+
+    if (isset($newConfig['provider']) && in_array($newConfig['provider'], ['gemini', 'openai'], true)) {
+        $current['provider'] = $newConfig['provider'];
+    }
+    if (isset($newConfig['gemini_api_key'])) {
+        $k = trim((string)$newConfig['gemini_api_key']);
+        if ($k !== '' || !empty($newConfig['allow_empty_gemini'])) {
+            $current['gemini_api_key'] = $k;
+        }
+    }
+    if (isset($newConfig['gemini_model'])) {
+        $current['gemini_model'] = trim((string)$newConfig['gemini_model']) ?: 'gemini-2.5-flash';
+    }
+    if (isset($newConfig['openai_api_key'])) {
+        $k = trim((string)$newConfig['openai_api_key']);
+        if ($k !== '' || !empty($newConfig['allow_empty_openai'])) {
+            $current['openai_api_key'] = $k;
+        }
+    }
+    if (isset($newConfig['openai_model'])) {
+        $current['openai_model'] = trim((string)$newConfig['openai_model']) ?: 'gpt-4o-mini';
+    }
+    // Backward compatibility for legacy readers
+    $current['model'] = $current['gemini_model'];
+
     return (bool)@file_put_contents(WP_LYRICS_CONFIG_FILE, json_encode($current, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 }
 
@@ -82,7 +123,7 @@ function wp_lyrics_gemini_request(string $apiKey, string $model, array $contents
     curl_close($ch);
 
     if ($curlErr) {
-        throw new RuntimeException('Ցանցային սխալ (cURL): ' . $curlErr);
+        throw new RuntimeException('Ցանցային սխալ (Gemini cURL): ' . $curlErr);
     }
 
     $json = @json_decode((string)$response, true);
@@ -95,6 +136,56 @@ function wp_lyrics_gemini_request(string $apiKey, string $model, array $contents
     return ['raw' => $json, 'text' => trim((string)$text)];
 }
 
+function wp_lyrics_openai_request(string $apiKey, string $model, array $messages, ?string $responseFormat = 'json_object'): array {
+    if (empty($apiKey)) {
+        throw new RuntimeException('OpenAI (ChatGPT) API Key-ը նշված չէ։ Խնդրում ենք նշել կարգավորումներում։');
+    }
+
+    $url = 'https://api.openai.com/v1/chat/completions';
+
+    $body = [
+        'model' => $model ?: 'gpt-4o-mini',
+        'messages' => $messages,
+        'temperature' => 0.2,
+    ];
+
+    if ($responseFormat === 'json_object') {
+        $body['response_format'] = ['type' => 'json_object'];
+    }
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $apiKey,
+        ],
+        CURLOPT_POSTFIELDS => json_encode($body, JSON_UNESCAPED_UNICODE),
+        CURLOPT_TIMEOUT => 55,
+        CURLOPT_CONNECTTIMEOUT => 15,
+        CURLOPT_SSL_VERIFYPEER => true,
+    ]);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlErr = curl_error($ch);
+    curl_close($ch);
+
+    if ($curlErr) {
+        throw new RuntimeException('Ցանցային սխալ (OpenAI cURL): ' . $curlErr);
+    }
+
+    $json = @json_decode((string)$response, true);
+    if ($httpCode !== 200) {
+        $msg = $json['error']['message'] ?? ('HTTP Error ' . $httpCode . ': ' . $response);
+        throw new RuntimeException('OpenAI (ChatGPT) API սխալ: ' . $msg);
+    }
+
+    $text = $json['choices'][0]['message']['content'] ?? '';
+    return ['raw' => $json, 'text' => trim((string)$text)];
+}
+
 $action = trim((string)($_GET['action'] ?? $_POST['action'] ?? ''));
 
 // =========================================================================
@@ -102,17 +193,24 @@ $action = trim((string)($_GET['action'] ?? $_POST['action'] ?? ''));
 // =========================================================================
 if ($action === 'get_config') {
     $cfg = wp_lyrics_get_config();
-    $key = $cfg['gemini_api_key'];
-    $masked = '';
-    if (!empty($key)) {
-        $len = strlen($key);
-        $masked = ($len > 8) ? (substr($key, 0, 4) . '...' . substr($key, -4)) : '••••••••';
-    }
+    $mask = static function(string $k): string {
+        $k = trim($k);
+        if (empty($k)) return '';
+        $len = strlen($k);
+        return ($len > 8) ? (substr($k, 0, 4) . '...' . substr($k, -4)) : '••••••••';
+    };
+
     wp_lyrics_out([
         'ok' => true,
-        'has_key' => !empty($key),
-        'masked_key' => $masked,
-        'model' => $cfg['model'] ?? 'gemini-2.5-flash',
+        'provider' => $cfg['provider'] ?? 'gemini',
+        'has_gemini' => !empty($cfg['gemini_api_key']),
+        'has_openai' => !empty($cfg['openai_api_key']),
+        'has_key' => !empty($cfg['gemini_api_key']) || !empty($cfg['openai_api_key']),
+        'masked_gemini' => $mask($cfg['gemini_api_key']),
+        'masked_openai' => $mask($cfg['openai_api_key']),
+        'gemini_model' => $cfg['gemini_model'] ?? 'gemini-2.5-flash',
+        'openai_model' => $cfg['openai_model'] ?? 'gpt-4o-mini',
+        'model' => $cfg['gemini_model'] ?? 'gemini-2.5-flash', // legacy compat
     ]);
 }
 
@@ -122,24 +220,34 @@ if ($action === 'get_config') {
 if ($action === 'save_config') {
     $rawInput = file_get_contents('php://input');
     $data = @json_decode($rawInput, true) ?: $_POST;
-    $apiKey = trim((string)($data['gemini_api_key'] ?? ''));
-    $model = trim((string)($data['model'] ?? 'gemini-2.5-flash'));
+
+    $provider = trim((string)($data['provider'] ?? 'gemini'));
+    $geminiApiKey = trim((string)($data['gemini_api_key'] ?? ''));
+    $geminiModel = trim((string)($data['gemini_model'] ?? $data['model'] ?? 'gemini-2.5-flash'));
+    $openaiApiKey = trim((string)($data['openai_api_key'] ?? ''));
+    $openaiModel = trim((string)($data['openai_model'] ?? 'gpt-4o-mini'));
 
     $current = wp_lyrics_get_config();
-    if ($apiKey === '' && !empty($current['gemini_api_key'])) {
-        // Keep existing key if left blank
-        $apiKey = $current['gemini_api_key'];
+
+    $savePayload = [
+        'provider' => in_array($provider, ['gemini', 'openai'], true) ? $provider : 'gemini',
+        'gemini_model' => $geminiModel,
+        'openai_model' => $openaiModel,
+    ];
+
+    if ($geminiApiKey !== '') {
+        $savePayload['gemini_api_key'] = $geminiApiKey;
+    }
+    if ($openaiApiKey !== '') {
+        $savePayload['openai_api_key'] = $openaiApiKey;
     }
 
-    $saved = wp_lyrics_save_config([
-        'gemini_api_key' => $apiKey,
-        'model' => $model,
-    ]);
+    $saved = wp_lyrics_save_config($savePayload);
 
     if (!$saved) {
         wp_lyrics_out(['ok' => false, 'error' => 'Չհաջողվեց պահպանել կարգավորումները սերվերում'], 500);
     }
-    wp_lyrics_out(['ok' => true, 'message' => 'Կարգավորումները հաջողությամբ պահպանվեցին']);
+    wp_lyrics_out(['ok' => true, 'message' => 'AI կարգավորումները հաջողությամբ պահպանվեցին']);
 }
 
 // =========================================================================
@@ -159,7 +267,16 @@ if ($action === 'fetch_ai_lyrics') {
     }
 
     $cfg = wp_lyrics_get_config();
-    if (empty($cfg['gemini_api_key'])) {
+    $provider = $cfg['provider'] ?? 'gemini';
+
+    if ($provider === 'openai' && empty($cfg['openai_api_key'])) {
+        wp_lyrics_out([
+            'ok' => false,
+            'need_key' => true,
+            'error' => 'OpenAI (ChatGPT) API Key-ը տեղադրված չէ։ Սեղմեք «AI Կարգավորումներ» և մուտքագրեք ձեր բանալին։'
+        ], 400);
+    }
+    if ($provider === 'gemini' && empty($cfg['gemini_api_key'])) {
         wp_lyrics_out([
             'ok' => false,
             'need_key' => true,
@@ -210,23 +327,30 @@ Return ONLY a valid JSON object with these keys:
         $userPrompt .= "\nPartial or existing lyrics reference:\n" . mb_substr($existingLyrics, 0, 500);
     }
 
-    $contents = [
-        [
-            'role' => 'user',
-            'parts' => [
-                ['text' => $systemInstruction . "\n\n" . $userPrompt]
-            ]
-        ]
-    ];
-
-    $genConfig = [
-        'temperature' => 0.2,
-        'topP' => 0.95,
-        'responseMimeType' => 'application/json'
-    ];
-
     try {
-        $result = wp_lyrics_gemini_request($cfg['gemini_api_key'], $cfg['model'], $contents, $genConfig);
+        if ($provider === 'openai') {
+            $messages = [
+                ['role' => 'system', 'content' => $systemInstruction],
+                ['role' => 'user', 'content' => $userPrompt]
+            ];
+            $result = wp_lyrics_openai_request($cfg['openai_api_key'], $cfg['openai_model'] ?: 'gpt-4o-mini', $messages, 'json_object');
+        } else {
+            $contents = [
+                [
+                    'role' => 'user',
+                    'parts' => [
+                        ['text' => $systemInstruction . "\n\n" . $userPrompt]
+                    ]
+                ]
+            ];
+            $genConfig = [
+                'temperature' => 0.2,
+                'topP' => 0.95,
+                'responseMimeType' => 'application/json'
+            ];
+            $result = wp_lyrics_gemini_request($cfg['gemini_api_key'], $cfg['gemini_model'] ?: 'gemini-2.5-flash', $contents, $genConfig);
+        }
+
         $cleanText = $result['text'];
 
         if (preg_match('/```(?:json)?\s*(\{.*\})\s*```/s', $cleanText, $m)) {
@@ -264,11 +388,20 @@ Return ONLY a valid JSON object with these keys:
 // =========================================================================
 if ($action === 'ocr_image_lyrics') {
     $cfg = wp_lyrics_get_config();
-    if (empty($cfg['gemini_api_key'])) {
+    $provider = $cfg['provider'] ?? 'gemini';
+
+    if ($provider === 'openai' && empty($cfg['openai_api_key'])) {
         wp_lyrics_out([
             'ok' => false,
             'need_key' => true,
-            'error' => 'Gemini API Key-ը տեղադրված չէ։ Մուտքագրեք ձեր բանալին AI կարգավորումներում։'
+            'error' => 'OpenAI (ChatGPT) API Key-ը տեղադրված չէ։ Սեղմեք «AI Կարգավորումներ» և մուտքագրեք ձեր բանալին։'
+        ], 400);
+    }
+    if ($provider === 'gemini' && empty($cfg['gemini_api_key'])) {
+        wp_lyrics_out([
+            'ok' => false,
+            'need_key' => true,
+            'error' => 'Gemini API Key-ը տեղադրված չէ։ Սեղմեք «AI Կարգավորումներ» և մուտքագրեք ձեր բանալին։'
         ], 400);
     }
 
@@ -282,7 +415,7 @@ if ($action === 'ocr_image_lyrics') {
     } else {
         $rawInput = file_get_contents('php://input');
         $data = @json_decode($rawInput, true) ?: $_POST;
-        $base64 = trim((string)($data['image_base64'] ?? ''));
+        $base64 = trim((string)($data['image_base64'] ?? $data['image'] ?? ''));
         if ($base64 !== '') {
             if (preg_match('/^data:(image\/[a-zA-Z0-9\-\+\.]+);base64,(.+)$/', $base64, $m)) {
                 $mimeType = $m[1];
@@ -317,28 +450,46 @@ Return ONLY a valid JSON:
   \"chordpro\": \"[C]Lyrics with [G]inline chords if any\"
 }";
 
-    $contents = [
-        [
-            'role' => 'user',
-            'parts' => [
-                [
-                    'inlineData' => [
-                        'mimeType' => $mimeType,
-                        'data' => $base64Data
-                    ]
-                ],
-                ['text' => $prompt]
-            ]
-        ]
-    ];
-
-    $genConfig = [
-        'temperature' => 0.1,
-        'responseMimeType' => 'application/json'
-    ];
-
     try {
-        $result = wp_lyrics_gemini_request($cfg['gemini_api_key'], $cfg['model'], $contents, $genConfig);
+        if ($provider === 'openai') {
+            $messages = [
+                ['role' => 'system', 'content' => $prompt],
+                [
+                    'role' => 'user',
+                    'content' => [
+                        ['type' => 'text', 'text' => "Please transcribe the lyrics and stanzas from this image:"],
+                        [
+                            'type' => 'image_url',
+                            'image_url' => [
+                                'url' => 'data:' . $mimeType . ';base64,' . $base64Data
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+            $result = wp_lyrics_openai_request($cfg['openai_api_key'], $cfg['openai_model'] ?: 'gpt-4o-mini', $messages, 'json_object');
+        } else {
+            $contents = [
+                [
+                    'role' => 'user',
+                    'parts' => [
+                        [
+                            'inlineData' => [
+                                'mimeType' => $mimeType,
+                                'data' => $base64Data
+                            ]
+                        ],
+                        ['text' => $prompt]
+                    ]
+                ]
+            ];
+            $genConfig = [
+                'temperature' => 0.1,
+                'responseMimeType' => 'application/json'
+            ];
+            $result = wp_lyrics_gemini_request($cfg['gemini_api_key'], $cfg['gemini_model'] ?: 'gemini-2.5-flash', $contents, $genConfig);
+        }
+
         $cleanText = $result['text'];
         if (preg_match('/```(?:json)?\s*(\{.*\})\s*```/s', $cleanText, $m)) {
             $cleanText = $m[1];

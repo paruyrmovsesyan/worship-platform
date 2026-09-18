@@ -438,7 +438,7 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
               <?= __('Իմպորտ ֆայլերից (PPTX/Word/TXT)') ?>
             </button>
 
-            <button type="button" id="lyricsAiSettingsBtn" class="btn" style="background:white; border:1px solid var(--line); padding:8px 12px;" title="<?= __('Gemini AI Կարգավորումներ') ?>">
+            <button type="button" id="lyricsAiSettingsBtn" class="btn" style="background:white; border:1px solid var(--line); padding:8px 12px;" title="<?= __('AI Կարգավորումներ (Gemini / ChatGPT)') ?>">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             </button>
           </div>
@@ -793,33 +793,76 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
 
   <!-- 3. AI SETTINGS MODAL -->
   <div id="lyricsAiSettingsModal" class="editor-modal">
-    <div class="editor-drawer" style="width:520px;">
+    <div class="editor-drawer" style="width:580px;">
       <div class="editor-header">
         <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
-          <span>⚙️ <?= __('Gemini AI Կարգավորումներ') ?></span>
+          <span>⚙️ <?= __('AI Կարգավորումներ (Gemini & ChatGPT)') ?></span>
         </h3>
         <button type="button" class="btn" id="aiSettingsCloseBtn"><?= __('Փակել') ?></button>
       </div>
-      <div class="editor-body">
-        <p style="margin:0; font-size:13px; color:var(--muted); line-height:1.5;">
-          <?= __('Երգերի բառերի ավտո-որոնման և լուսանկարներից OCR ճանաչման համար անհրաժեշտ է Google Gemini API բանալի։ Կարող եք անվճար ստանալ') ?> 
-          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:var(--primary); font-weight:700;">Google AI Studio</a>-ից։
-        </p>
-        <div class="form-field">
-          <label><?= __('Gemini API Key') ?></label>
-          <input type="password" id="aiApiKeyInput" placeholder="AIzaSy...">
-          <small id="aiKeyStatusText" style="color:var(--muted); font-size:11px;"></small>
-        </div>
-        <div class="form-field">
-          <label><?= __('Մոդել') ?></label>
-          <select id="aiModelSelect">
-            <option value="gemini-2.5-flash">Gemini 2.5 Flash (Արագ և ճշգրիտ - Խորհուրդ է տրվում)</option>
-            <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+      <div class="editor-body" style="gap:16px;">
+        <div class="form-field" style="background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px; margin:0;">
+          <label style="font-weight:700; font-size:13px;"><?= __('Ակտիվ AI Մատակարար') ?></label>
+          <select id="aiProviderSelect" style="font-weight:700; font-size:13px; margin-top:4px;">
+            <option value="gemini">🌟 Google Gemini (Անվճար & Շատ արագ)</option>
+            <option value="openai">🤖 OpenAI ChatGPT (GPT-4o & GPT-4o Mini)</option>
           </select>
+          <div style="font-size:11px; color:var(--muted); margin-top:6px; line-height:1.4;">
+            <?= __('Ընտրեք, թե որ AI շարժիչով կատարվի երգերի բառերի ավտո-որոնումը և լուսանկարներից տեքստի OCR ճանաչումը։') ?>
+          </div>
+        </div>
+
+        <!-- Gemini Config Block -->
+        <div id="geminiConfigBlock" style="border:1px solid var(--line); border-radius:12px; padding:14px; background:rgba(67,24,255,0.02);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-weight:700; font-size:13px; color:var(--text);">🌟 Google Gemini API</span>
+            <span id="aiKeyStatusText" style="font-size:11px; font-weight:700;"></span>
+          </div>
+          <p style="margin:0 0 10px; font-size:12px; color:var(--muted); line-height:1.4;">
+            <?= __('Gemini API բանալին կարող եք անվճար ստանալ') ?> 
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:var(--primary); font-weight:700;">Google AI Studio</a>-ից։
+          </p>
+          <div class="form-field" style="margin-bottom:10px;">
+            <label style="font-size:12px;"><?= __('Gemini API Key') ?></label>
+            <input type="password" id="aiApiKeyInput" placeholder="AIzaSy...">
+          </div>
+          <div class="form-field" style="margin:0;">
+            <label style="font-size:12px;"><?= __('Gemini Մոդել') ?></label>
+            <select id="aiModelSelect" style="font-size:12px;">
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash (Արագ և ճշգրիտ - Խորհուրդ է տրվում)</option>
+              <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+              <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- OpenAI ChatGPT Config Block -->
+        <div id="openaiConfigBlock" style="border:1px solid var(--line); border-radius:12px; padding:14px; background:rgba(16,163,127,0.03);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-weight:700; font-size:13px; color:var(--text);">🤖 OpenAI (ChatGPT) API</span>
+            <span id="aiOpenaiKeyStatusText" style="font-size:11px; font-weight:700;"></span>
+          </div>
+          <p style="margin:0 0 10px; font-size:12px; color:var(--muted); line-height:1.4;">
+            <?= __('ChatGPT API բանալին կարող եք ստեղծել') ?> 
+            <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" style="color:#10a37f; font-weight:700;">OpenAI Platform</a>-ում։
+          </p>
+          <div class="form-field" style="margin-bottom:10px;">
+            <label style="font-size:12px;"><?= __('OpenAI API Key') ?></label>
+            <input type="password" id="aiOpenaiKeyInput" placeholder="sk-proj-...">
+          </div>
+          <div class="form-field" style="margin:0;">
+            <label style="font-size:12px;"><?= __('ChatGPT Մոդել') ?></label>
+            <select id="aiOpenaiModelSelect" style="font-size:12px;">
+              <option value="gpt-4o-mini">GPT-4o Mini (Շատ արագ, մատչելի & Vision - Խորհուրդ է տրվում)</option>
+              <option value="gpt-4o">GPT-4o (Առավելագույն ճշգրտություն & Vision)</option>
+              <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
+              <option value="gpt-3.5-turbo">GPT-3.5 Turbo (միայն տեքստ)</option>
+            </select>
+          </div>
         </div>
       </div>
       <div class="editor-footer">
-        <button type="button" id="aiSaveConfigBtn" class="btn btn-primary"><?= __('Պահպանել Բանալին') ?></button>
+        <button type="button" id="aiSaveConfigBtn" class="btn btn-primary" style="padding:10px 24px; font-weight:700;"><?= __('Պահպանել Կարգավորումները') ?></button>
       </div>
     </div>
   </div>
@@ -3029,25 +3072,42 @@ bfiImportBtn?.addEventListener('click', async () => {
   }
 });
 
-// --- 5. GEMINI AI SETTINGS MODAL ---
+// --- 5. AI SETTINGS MODAL (Gemini & ChatGPT) ---
 const lyricsAiSettingsBtn = $('lyricsAiSettingsBtn');
 const lyricsAiSettingsModal = $('lyricsAiSettingsModal');
 const aiSettingsCloseBtn = $('aiSettingsCloseBtn');
+const aiProviderSelect = $('aiProviderSelect');
 const aiApiKeyInput = $('aiApiKeyInput');
 const aiKeyStatusText = $('aiKeyStatusText');
 const aiModelSelect = $('aiModelSelect');
+const aiOpenaiKeyInput = $('aiOpenaiKeyInput');
+const aiOpenaiKeyStatusText = $('aiOpenaiKeyStatusText');
+const aiOpenaiModelSelect = $('aiOpenaiModelSelect');
 const aiSaveConfigBtn = $('aiSaveConfigBtn');
 
 lyricsAiSettingsBtn?.addEventListener('click', async () => {
   try {
     const res = await fetch('api_lyrics_assistant.php?action=get_config');
     const json = await res.json();
-    if (json.ok && json.config) {
-      aiApiKeyInput.value = json.config.gemini_api_key || '';
-      aiModelSelect.value = json.config.model || 'gemini-2.5-flash';
-      aiKeyStatusText.textContent = json.config.has_key
-        ? '✅ API բանալին ակտիվ է'
-        : '⚠️ API բանալին դեռ մուտքագրված չէ';
+    if (json.ok) {
+      if (aiProviderSelect) aiProviderSelect.value = json.provider || 'gemini';
+      if (aiApiKeyInput) aiApiKeyInput.value = json.gemini_api_key || '';
+      if (aiModelSelect) aiModelSelect.value = json.gemini_model || 'gemini-2.5-flash';
+      if (aiKeyStatusText) {
+        aiKeyStatusText.textContent = json.has_gemini
+          ? `✅ Բանալին ակտիվ է (${json.masked_gemini || '•••'})`
+          : '⚠️ Բանալին բացակայում է';
+        aiKeyStatusText.style.color = json.has_gemini ? '#2e7d32' : '#d32f2f';
+      }
+
+      if (aiOpenaiKeyInput) aiOpenaiKeyInput.value = json.openai_api_key || '';
+      if (aiOpenaiModelSelect) aiOpenaiModelSelect.value = json.openai_model || 'gpt-4o-mini';
+      if (aiOpenaiKeyStatusText) {
+        aiOpenaiKeyStatusText.textContent = json.has_openai
+          ? `✅ Բանալին ակտիվ է (${json.masked_openai || '•••'})`
+          : '⚠️ Բանալին բացակայում է';
+        aiOpenaiKeyStatusText.style.color = json.has_openai ? '#2e7d32' : '#d32f2f';
+      }
     }
   } catch (_) {}
   lyricsAiSettingsModal.classList.add('is-active');
@@ -3064,8 +3124,11 @@ lyricsAiSettingsModal?.addEventListener('click', (e) => {
 });
 
 aiSaveConfigBtn?.addEventListener('click', async () => {
-  const gemini_api_key = (aiApiKeyInput.value || '').trim();
-  const model = aiModelSelect.value || 'gemini-2.5-flash';
+  const provider = aiProviderSelect ? aiProviderSelect.value : 'gemini';
+  const gemini_api_key = (aiApiKeyInput?.value || '').trim();
+  const gemini_model = aiModelSelect?.value || 'gemini-2.5-flash';
+  const openai_api_key = (aiOpenaiKeyInput?.value || '').trim();
+  const openai_model = aiOpenaiModelSelect?.value || 'gpt-4o-mini';
 
   const origText = aiSaveConfigBtn.innerHTML;
   aiSaveConfigBtn.innerHTML = '⏳ Պահպանվում է...';
@@ -3075,7 +3138,13 @@ aiSaveConfigBtn?.addEventListener('click', async () => {
     const res = await fetch('api_lyrics_assistant.php?action=save_config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ gemini_api_key, model })
+      body: JSON.stringify({
+        provider,
+        gemini_api_key,
+        gemini_model,
+        openai_api_key,
+        openai_model
+      })
     });
     const json = await res.json();
     if (!res.ok || !json.ok) {
