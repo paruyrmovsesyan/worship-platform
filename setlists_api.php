@@ -1082,6 +1082,20 @@ if ($action === 'get_setlist_items' && $method === 'GET') {
   }
   unset($it);
 
+  // Check if the current (non-owner) user has genuinely saved / has access to this setlist
+  $isSavedByCurrentUser = false;
+  if (!$isOwner && $uid > 0) {
+    try {
+      $stCheck = $pdo->prepare("
+        SELECT COUNT(*) FROM setlist_user_access
+        WHERE setlist_id = ? AND grantee_user_id = ? AND revoked_at IS NULL
+          AND (expires_at IS NULL OR expires_at > NOW())
+      ");
+      $stCheck->execute([$setlist_id, $uid]);
+      $isSavedByCurrentUser = (int)$stCheck->fetchColumn() > 0;
+    } catch (Throwable $e) {}
+  }
+
   $setlist = wp_translation_translate_row([
     "id" => (int)$setlist['id'],
     "user_id" => (int)$setlist['user_id'],
@@ -1100,6 +1114,7 @@ if ($action === 'get_setlist_items' && $method === 'GET') {
     "owner_name" => $setlist['owner_name'] ?? null,
     "owner_email" => $setlist['owner_email'] ?? null,
     "team_role" => $setlist['team_role'] ?? null,
+    "is_saved" => $isOwner ? false : $isSavedByCurrentUser,
     "views_count" => $isOwner ? $viewsCount : 0,
     "collaborators_count" => $isOwner ? count($collaborators) : 0,
     "collaborators" => $isOwner ? $collaborators : [],

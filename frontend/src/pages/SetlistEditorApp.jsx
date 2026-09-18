@@ -1410,7 +1410,7 @@ export default function SetlistEditorApp() {
         )}
       </div>
 
-      {!isOwner && (
+      {!isOwner && setlistData.is_saved && (
         <div className="sla-shared-banner animate-fade-in" style={{
           display: 'flex',
           alignItems: 'center',
