@@ -1287,24 +1287,20 @@ export default function SetlistEditorApp() {
               👥 {team.length} անդամ
             </span>
           )}
-          <span className="sla-chip sla-chip--views" title={t('setlists.viewsCountTooltip', 'Դիտումների քանակ հղումով')}>
-            👁 {setlistData.views_count || 0} {t('setlists.viewsCount', 'դիտում')}
-          </span>
-          {isOwner ? (
-            <span
-              className="sla-chip sla-chip--saves sla-chip--clickable"
-              onClick={() => setIsSavesModalOpen(true)}
-              style={{ cursor: 'pointer' }}
-              title={t('setlists.viewWhoSaved', 'Տեսնել ովքեր են պահպանել')}
-            >
-              💾 {setlistData.saves_count || 0} {t('setlists.savesCount', 'պահպանում')}
-            </span>
-          ) : (
-            (setlistData.saves_count > 0) && (
-              <span className="sla-chip sla-chip--saves">
-                💾 {setlistData.saves_count} {t('setlists.savesCount', 'պահպանում')}
+          {isOwner && (
+            <>
+              <span className="sla-chip sla-chip--views" title={t('setlists.viewsCountTooltip', 'Դիտումների քանակ հղումով')}>
+                👁 {setlistData.views_count || 0} {t('setlists.viewsCount', 'դիտում')}
               </span>
-            )
+              <span
+                className="sla-chip sla-chip--saves sla-chip--clickable"
+                onClick={() => setIsSavesModalOpen(true)}
+                style={{ cursor: 'pointer' }}
+                title={t('setlists.viewWhoSaved', 'Տեսնել ովքեր են պահպանել')}
+              >
+                💾 {setlistData.saves_count || 0} {t('setlists.savesCount', 'պահպանում')}
+              </span>
+            </>
           )}
         </div>
         {setlistData.description && (

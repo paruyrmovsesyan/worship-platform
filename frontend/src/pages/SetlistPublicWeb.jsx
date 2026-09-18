@@ -270,20 +270,6 @@ export default function SetlistPublicWeb() {
                 </div>
               </>
             )}
-            <div className="divider"></div>
-            <div className="pub-stat" title={t('setlists.viewsCountTooltip', 'Դիտումների քանակ')}>
-              <span className="val">{setlist?.views_count || 0}</span>
-              <span className="lbl">{t('setlists.statViews', 'Դիտում')}</span>
-            </div>
-            {(setlist?.saves_count > 0) && (
-              <>
-                <div className="divider"></div>
-                <div className="pub-stat" title={t('setlists.savesCountTooltip', 'Պահպանումների քանակ')}>
-                  <span className="val">{setlist.saves_count}</span>
-                  <span className="lbl">{t('setlists.statSaves', 'Պահպանում')}</span>
-                </div>
-              </>
-            )}
           </div>
         </div>
 

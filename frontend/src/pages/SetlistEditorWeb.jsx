@@ -711,25 +711,21 @@ export default function SetlistEditorWeb() {
                   ⏱ {totalDuration} րոպե
                 </span>
               )}
-              <span className="sle-stat-chip" title={t('setlists.viewsCountTooltip', 'Դիտումների քանակ հղումով')}>
-                👁 {setlistData.views_count || 0} {t('setlists.viewsCount', 'դիտում')}
-              </span>
-              {isOwner ? (
-                <button
-                  type="button"
-                  className="sle-stat-chip sle-stat-chip--clickable"
-                  onClick={() => setIsSavesModalOpen(true)}
-                  title={t('setlists.viewWhoSaved', 'Տեսնել ովքեր են պահպանել այս երգացանկը')}
-                >
-                  💾 {setlistData.saves_count || 0} {t('setlists.savesCount', 'պահպանում')}
-                  <span style={{ fontSize: '11px', opacity: 0.8, marginLeft: '2px' }}>👥</span>
-                </button>
-              ) : (
-                (setlistData.saves_count > 0) && (
-                  <span className="sle-stat-chip">
-                    💾 {setlistData.saves_count} {t('setlists.savesCount', 'պահպանում')}
+              {isOwner && (
+                <>
+                  <span className="sle-stat-chip" title={t('setlists.viewsCountTooltip', 'Դիտումների քանակ հղումով')}>
+                    👁 {setlistData.views_count || 0} {t('setlists.viewsCount', 'դիտում')}
                   </span>
-                )
+                  <button
+                    type="button"
+                    className="sle-stat-chip sle-stat-chip--clickable"
+                    onClick={() => setIsSavesModalOpen(true)}
+                    title={t('setlists.viewWhoSaved', 'Տեսնել ովքեր են պահպանել այս երգացանկը')}
+                  >
+                    💾 {setlistData.saves_count || 0} {t('setlists.savesCount', 'պահպանում')}
+                    <span style={{ fontSize: '11px', opacity: 0.8, marginLeft: '2px' }}>👥</span>
+                  </button>
+                </>
               )}
             </div>
           </div>

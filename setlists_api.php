@@ -703,30 +703,35 @@ if ($action === 'get_setlist_items' && $method === 'GET') {
   $setlist = requireSetlistReadable($pdo, $setlist_id, $uid);
   trackSetlistView($pdo, $setlist_id, $uid, (int)$setlist['user_id']);
 
-  $viewsSt = $pdo->prepare("SELECT views_count FROM setlists WHERE id = ? LIMIT 1");
-  $viewsSt->execute([$setlist_id]);
-  $viewsCount = (int)($viewsSt->fetchColumn() ?: 0);
+  $isOwner = ((int)$setlist['user_id'] === $uid && $uid > 0);
 
+  $viewsCount = 0;
   $savedByUsers = [];
-  try {
-    $savedByStmt = $pdo->prepare("
-      SELECT s.id AS save_id, s.user_id, s.created_at, u.name AS user_name, u.email AS user_email
-      FROM setlist_saves s
-      JOIN users u ON u.id = s.user_id
-      WHERE s.setlist_id = ?
-      ORDER BY s.id DESC
-    ");
-    $savedByStmt->execute([$setlist_id]);
-    $rawSaved = $savedByStmt->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($rawSaved as $rs) {
-      $savedByUsers[] = [
-        'user_id' => (int)$rs['user_id'],
-        'user_name' => $rs['user_name'] ?: 'User #' . $rs['user_id'],
-        'user_email' => $rs['user_email'] ?: '',
-        'created_at' => $rs['created_at']
-      ];
-    }
-  } catch (Throwable $e) {}
+  if ($isOwner) {
+    $viewsSt = $pdo->prepare("SELECT views_count FROM setlists WHERE id = ? LIMIT 1");
+    $viewsSt->execute([$setlist_id]);
+    $viewsCount = (int)($viewsSt->fetchColumn() ?: 0);
+
+    try {
+      $savedByStmt = $pdo->prepare("
+        SELECT s.id AS save_id, s.user_id, s.created_at, u.name AS user_name, u.email AS user_email
+        FROM setlist_saves s
+        JOIN users u ON u.id = s.user_id
+        WHERE s.setlist_id = ?
+        ORDER BY s.id DESC
+      ");
+      $savedByStmt->execute([$setlist_id]);
+      $rawSaved = $savedByStmt->fetchAll(PDO::FETCH_ASSOC);
+      foreach ($rawSaved as $rs) {
+        $savedByUsers[] = [
+          'user_id' => (int)$rs['user_id'],
+          'user_name' => $rs['user_name'] ?: 'User #' . $rs['user_id'],
+          'user_email' => $rs['user_email'] ?: '',
+          'created_at' => $rs['created_at']
+        ];
+      }
+    } catch (Throwable $e) {}
+  }
 
   $st = $pdo->prepare("
     SELECT i.*,
@@ -796,9 +801,9 @@ if ($action === 'get_setlist_items' && $method === 'GET') {
     "owner_name" => $setlist['owner_name'] ?? null,
     "owner_email" => $setlist['owner_email'] ?? null,
     "team_role" => $setlist['team_role'] ?? null,
-    "views_count" => $viewsCount,
-    "saves_count" => count($savedByUsers),
-    "saved_by" => $savedByUsers
+    "views_count" => $isOwner ? $viewsCount : 0,
+    "saves_count" => $isOwner ? count($savedByUsers) : 0,
+    "saved_by" => $isOwner ? $savedByUsers : []
   ], [
     'name' => 'setlists.items.setlist_name',
     'description' => 'setlists.items.setlist_description',
@@ -1356,9 +1361,7 @@ if ($action === 'get_public_setlist' && $method === 'GET') {
     "description" => $setlist['description'],
     "service_date" => $setlist['service_date'],
     "service_type" => $setlist['service_type'],
-    "status" => $setlist['status'],
-    "views_count" => $viewsCount,
-    "saves_count" => $savesCount
+    "status" => $setlist['status']
   ], [
     'name' => 'setlists.public.name',
     'description' => 'setlists.public.description',
