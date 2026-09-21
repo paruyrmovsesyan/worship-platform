@@ -193,6 +193,33 @@
   font-weight: 600;
 }
 
+.user-profile-friendship-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 5px 14px;
+  border-radius: 16px;
+  color: #34d399;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.friendship-since-row {
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.friendship-icon-box {
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #10b981 !important;
+}
+
+.highlight-friends-since {
+  color: #34d399 !important;
+}
+
 .user-profile-role-tag .role-icon {
   font-size: 1.15rem;
 }

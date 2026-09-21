@@ -34,6 +34,16 @@ try {
 
 $uid = (int)$_SESSION['user_id'];
 
+try {
+  $pdo->exec("ALTER TABLE chat_messages ADD COLUMN updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+} catch (Throwable $e) {}
+try {
+  $pdo->exec("ALTER TABLE chat_messages ADD COLUMN is_edited TINYINT(1) NOT NULL DEFAULT 0");
+} catch (Throwable $e) {}
+try {
+  $pdo->exec("ALTER TABLE chat_messages ADD COLUMN is_deleted TINYINT(1) NOT NULL DEFAULT 0");
+} catch (Throwable $e) {}
+
 function readJson(){
   $raw = file_get_contents("php://input");
   $d = json_decode($raw, true);
@@ -353,6 +363,7 @@ if ($action === 'badge_summary' && $method === 'GET') {
         JOIN chat_participants cp ON cp.chat_id = m.chat_id
         WHERE cp.user_id = ?
           AND m.user_id != ?
+          AND (m.is_deleted IS NULL OR m.is_deleted = 0)
           AND (cp.cleared_at IS NULL OR m.created_at > cp.cleared_at)
           AND m.id > COALESCE(cp.last_read_message_id, 0)
     ");
@@ -380,10 +391,10 @@ if ($action === 'badge_summary' && $method === 'GET') {
 if ($action === 'list_chats' && $method === 'GET') {
     $st = $pdo->prepare("
         SELECT c.id, c.type, c.name,
-               (SELECT message FROM chat_messages m WHERE m.chat_id = c.id AND (cp.cleared_at IS NULL OR m.created_at > cp.cleared_at) ORDER BY created_at DESC LIMIT 1) as last_message,
-               (SELECT created_at FROM chat_messages m WHERE m.chat_id = c.id AND (cp.cleared_at IS NULL OR m.created_at > cp.cleared_at) ORDER BY created_at DESC LIMIT 1) as last_message_at,
+               (SELECT message FROM chat_messages m WHERE m.chat_id = c.id AND (m.is_deleted IS NULL OR m.is_deleted = 0) AND (cp.cleared_at IS NULL OR m.created_at > cp.cleared_at) ORDER BY created_at DESC LIMIT 1) as last_message,
+               (SELECT created_at FROM chat_messages m WHERE m.chat_id = c.id AND (m.is_deleted IS NULL OR m.is_deleted = 0) AND (cp.cleared_at IS NULL OR m.created_at > cp.cleared_at) ORDER BY created_at DESC LIMIT 1) as last_message_at,
                c.created_at as chat_created_at,
-               (SELECT COUNT(*) FROM chat_messages m WHERE m.chat_id = c.id AND m.user_id != ? AND (cp.cleared_at IS NULL OR m.created_at > cp.cleared_at) AND m.id > COALESCE(cp.last_read_message_id, 0)) as unread_count,
+               (SELECT COUNT(*) FROM chat_messages m WHERE m.chat_id = c.id AND (m.is_deleted IS NULL OR m.is_deleted = 0) AND m.user_id != ? AND (cp.cleared_at IS NULL OR m.created_at > cp.cleared_at) AND m.id > COALESCE(cp.last_read_message_id, 0)) as unread_count,
                (SELECT GROUP_CONCAT(COALESCE(NULLIF(u.name, ''), SUBSTRING_INDEX(u.email, '@', 1)) SEPARATOR ', ') FROM chat_participants cp2 JOIN users u ON cp2.user_id = u.id WHERE cp2.chat_id = c.id AND u.id != ?) as participant_names
         FROM chats c
         JOIN chat_participants cp ON cp.chat_id = c.id
@@ -596,6 +607,7 @@ if ($action === 'get_messages' && $method === 'GET') {
                 m.message, 
                 m.setlist_id, 
                 m.created_at,
+                COALESCE(m.is_edited, 0) as is_edited,
                 s.name as setlist_name,
                 s.service_date as setlist_date,
                 s.service_type as setlist_type,
@@ -604,6 +616,7 @@ if ($action === 'get_messages' && $method === 'GET') {
             JOIN users u ON m.user_id = u.id
             LEFT JOIN setlists s ON m.setlist_id = s.id
             WHERE m.chat_id = :chat_id 
+              AND (m.is_deleted IS NULL OR m.is_deleted = 0)
               AND (:cleared_at1 IS NULL OR m.created_at > :cleared_at2)
               " . ($before_id > 0 ? " AND m.id < :before_id " : "") . "
               " . ($after_id > 0 ? " AND m.id > :after_id " : "") . "
@@ -626,6 +639,47 @@ if ($action === 'get_messages' && $method === 'GET') {
     $st->execute();
     $messages = $st->fetchAll(PDO::FETCH_ASSOC);
 
+    $edited_messages = [];
+    $deleted_ids = [];
+    if ($after_id > 0) {
+        try {
+            $stEdited = $pdo->prepare("
+                SELECT 
+                    m.id, 
+                    m.user_id, 
+                    u.name as user_name, 
+                    m.message, 
+                    m.setlist_id, 
+                    m.created_at,
+                    COALESCE(m.is_edited, 0) as is_edited,
+                    s.name as setlist_name,
+                    s.service_date as setlist_date,
+                    s.service_type as setlist_type,
+                    (SELECT COUNT(*) FROM setlist_items si WHERE si.setlist_id = s.id) as setlist_items_count
+                FROM chat_messages m
+                JOIN users u ON m.user_id = u.id
+                LEFT JOIN setlists s ON m.setlist_id = s.id
+                WHERE m.chat_id = ?
+                  AND m.id <= ?
+                  AND m.is_edited = 1
+                  AND (m.is_deleted IS NULL OR m.is_deleted = 0)
+                  AND m.updated_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE)
+            ");
+            $stEdited->execute([$chat_id, $after_id]);
+            $edited_messages = $stEdited->fetchAll(PDO::FETCH_ASSOC);
+
+            $stDeleted = $pdo->prepare("
+                SELECT m.id
+                FROM chat_messages m
+                WHERE m.chat_id = ?
+                  AND m.is_deleted = 1
+                  AND m.updated_at >= DATE_SUB(NOW(), INTERVAL 2 MINUTE)
+            ");
+            $stDeleted->execute([$chat_id]);
+            $deleted_ids = array_map('intval', $stDeleted->fetchAll(PDO::FETCH_COLUMN));
+        } catch (Throwable $e) {}
+    }
+
     try {
         $stRead = $pdo->prepare("
             SELECT MAX(m.id)
@@ -647,7 +701,13 @@ if ($action === 'get_messages' && $method === 'GET') {
         // Read tracking should not break message loading.
     }
 
-    out(["ok" => true, "chat_info" => $chat_info ?: ["display_name" => "Չաթ"], "messages" => $messages]);
+    out([
+        "ok" => true, 
+        "chat_info" => $chat_info ?: ["display_name" => "Չաթ"], 
+        "messages" => $messages,
+        "edited_messages" => $edited_messages,
+        "deleted_ids" => $deleted_ids
+    ]);
 }
 
 // 5. Send a message
@@ -748,6 +808,92 @@ if ($action === 'send_message' && $method === 'POST') {
         "setlist_date" => $setlist_date,
         "setlist_type" => $setlist_type,
         "setlist_items_count" => $setlist_items_count
+    ]);
+}
+
+// 5.1 Edit message
+if ($action === 'edit_message' && $method === 'POST') {
+    $d = readJson();
+    $message_id = (int)($d['message_id'] ?? 0);
+    $text = trim($d['message'] ?? '');
+
+    if ($message_id <= 0 || $text === '') {
+        out(["error" => "Invalid message or text"], 400);
+    }
+
+    $st = $pdo->prepare("SELECT chat_id, user_id, message, is_deleted FROM chat_messages WHERE id = ?");
+    $st->execute([$message_id]);
+    $msg = $st->fetch(PDO::FETCH_ASSOC);
+    if (!$msg || !empty($msg['is_deleted'])) {
+        out(["error" => "Message not found"], 404);
+    }
+
+    if ((int)$msg['user_id'] !== $uid) {
+        out(["error" => "You can only edit your own messages"], 403);
+    }
+
+    if (strpos($msg['message'], 'CALL:') === 0) {
+        out(["error" => "Call messages cannot be edited"], 400);
+    }
+
+    $st = $pdo->prepare("SELECT 1 FROM chat_participants WHERE chat_id = ? AND user_id = ?");
+    $st->execute([(int)$msg['chat_id'], $uid]);
+    if (!$st->fetch()) {
+        out(["error" => "Access denied"], 403);
+    }
+
+    $st = $pdo->prepare("UPDATE chat_messages SET message = ?, is_edited = 1, updated_at = NOW() WHERE id = ?");
+    $st->execute([$text, $message_id]);
+
+    out([
+        "ok" => true,
+        "id" => $message_id,
+        "chat_id" => (int)$msg['chat_id'],
+        "message" => $text,
+        "is_edited" => 1
+    ]);
+}
+
+// 5.2 Delete message
+if ($action === 'delete_message' && $method === 'POST') {
+    $d = readJson();
+    $message_id = (int)($d['message_id'] ?? 0);
+
+    if ($message_id <= 0) {
+        out(["error" => "Invalid message id"], 400);
+    }
+
+    $st = $pdo->prepare("
+        SELECT m.id, m.chat_id, m.user_id, c.type as chat_type, c.created_by as chat_creator
+        FROM chat_messages m
+        JOIN chats c ON c.id = m.chat_id
+        WHERE m.id = ?
+    ");
+    $st->execute([$message_id]);
+    $msg = $st->fetch(PDO::FETCH_ASSOC);
+    if (!$msg) {
+        out(["error" => "Message not found"], 404);
+    }
+
+    $canDelete = false;
+    if ((int)$msg['user_id'] === $uid) {
+        $canDelete = true;
+    } else if ($msg['chat_type'] === 'group' && (int)$msg['chat_creator'] === $uid) {
+        $canDelete = true;
+    }
+
+    if (!$canDelete) {
+        out(["error" => "Permission denied to delete this message"], 403);
+    }
+
+    $st = $pdo->prepare("UPDATE chat_messages SET is_deleted = 1, updated_at = NOW() WHERE id = ?");
+    $st->execute([$message_id]);
+
+    out([
+        "ok" => true,
+        "id" => $message_id,
+        "chat_id" => (int)$msg['chat_id'],
+        "is_deleted" => 1
     ]);
 }
 

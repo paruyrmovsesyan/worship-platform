@@ -216,6 +216,24 @@ export default function UserProfile() {
     }
   };
 
+  const formatFriendshipDate = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr.replace(' ', 'T'));
+      if (isNaN(d.getTime())) return '';
+      const formatted = d.toLocaleDateString(
+        language === 'am' ? 'hy-AM' : language === 'ru' ? 'ru-RU' : 'en-US',
+        { year: 'numeric', month: 'long', day: 'numeric' }
+      );
+      if (language === 'am') {
+        return `${formatted}-ից`;
+      }
+      return formatted;
+    } catch {
+      return dateStr;
+    }
+  };
+
   const formatLastSeen = (dateStr, seconds) => {
     if (seconds !== null && seconds !== undefined) {
       if (seconds < 120) return t('profile.onlineNow');
@@ -286,6 +304,13 @@ export default function UserProfile() {
               <div className="user-profile-role-tag">
                 <span className="role-icon">{roleObj.icon}</span>
                 <span className="role-label">{roleLabel}</span>
+              </div>
+            )}
+
+            {friendship.status === 'accepted' && friendship.friends_since && (
+              <div className="user-profile-friendship-badge">
+                <span className="friendship-badge-icon">🤝</span>
+                <span>{t('profile.friendsSince')} {formatFriendshipDate(friendship.friends_since)}</span>
               </div>
             )}
           </div>
@@ -401,6 +426,26 @@ export default function UserProfile() {
               <span className="info-value">{roleLabel || t('profile.noTeamRole')}</span>
             </div>
           </div>
+
+          {/* Friendship Since Date */}
+          {friendship.status === 'accepted' && friendship.friends_since && (
+            <div className="user-profile-info-row friendship-since-row">
+              <div className="info-icon-box friendship-icon-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </div>
+              <div className="info-text-group">
+                <span className="info-label">{t('profile.friendsSince')}</span>
+                <span className="info-value highlight-friends-since">
+                  {formatFriendshipDate(friendship.friends_since)}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* User's Setlists Section */}

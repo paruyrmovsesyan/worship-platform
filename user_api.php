@@ -111,10 +111,11 @@ if (($action === 'get_user_profile' || $action === 'get_public_profile') && $met
     $friendship = [
         "status" => "none",
         "is_requester" => false,
+        "friends_since" => null,
     ];
     if ($uid !== $targetId) {
         $stFriend = $pdo->prepare("
-            SELECT user_id_1, user_id_2, status
+            SELECT user_id_1, user_id_2, status, created_at, updated_at
             FROM friends
             WHERE (user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)
             LIMIT 1
@@ -124,6 +125,9 @@ if (($action === 'get_user_profile' || $action === 'get_public_profile') && $met
         if ($fRow) {
             $friendship['status'] = $fRow['status'];
             $friendship['is_requester'] = ((int)$fRow['user_id_1'] === $uid);
+            $friendship['friends_since'] = !empty($fRow['updated_at']) && $fRow['updated_at'] !== '0000-00-00 00:00:00'
+                ? $fRow['updated_at']
+                : ($fRow['created_at'] ?? null);
         }
     } else {
         $friendship['status'] = 'self';

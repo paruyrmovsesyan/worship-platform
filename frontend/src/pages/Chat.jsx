@@ -208,6 +208,14 @@ export default function Chat() {
   const [newGroupName, setNewGroupName] = useState('');
   const [importingSetlistId, setImportingSetlistId] = useState(null);
 
+  // Message edit & delete states (PWA)
+  const [activeActionMessage, setActiveActionMessage] = useState(null);
+  const [editingMessage, setEditingMessage] = useState(null);
+  const [deletingMessage, setDeletingMessage] = useState(null);
+  const [copyToast, setCopyToast] = useState(false);
+  const longPressTimerRef = useRef(null);
+  const isLongPressRef = useRef(false);
+
   const messagesEndRef = useRef(null);
   const containerRef = useRef(null);
   const inputRef = useRef(null);
@@ -462,21 +470,44 @@ export default function Chat() {
         if (data.chat_info) setChatInfo(data.chat_info);
 
         const newMessages = Array.isArray(data.messages) ? data.messages : [];
-        if (newMessages.length === 0) return;
+        const editedMessages = Array.isArray(data.edited_messages) ? data.edited_messages : [];
+        const deletedIds = Array.isArray(data.deleted_ids) ? new Set(data.deleted_ids.map(Number)) : new Set();
+
+        const hasEditsOrDeletes = editedMessages.length > 0 || deletedIds.size > 0;
+        if (newMessages.length === 0 && !hasEditsOrDeletes) return;
         
         const container = containerRef.current;
         const isNearBottom = container && (container.scrollHeight - container.scrollTop <= container.clientHeight + 100);
         
         setMessages(prev => {
-          const validPrev = prev.filter(m => !String(m.id).startsWith('temp-'));
-          const seenIds = new Set(validPrev.map(m => String(m.id)));
-          const uniqueMessages = newMessages.filter(m => !seenIds.has(String(m.id)));
-          const nextMessages = [...validPrev, ...uniqueMessages];
-          messagesRef.current = nextMessages;
-          return nextMessages;
+          let updated = prev;
+          if (deletedIds.size > 0) {
+            updated = updated.filter(m => !deletedIds.has(Number(m.id)));
+          }
+          if (editedMessages.length > 0) {
+            const editMap = new Map(editedMessages.map(em => [Number(em.id), em]));
+            updated = updated.map(m => {
+              const edit = editMap.get(Number(m.id));
+              if (edit) {
+                return { ...m, message: edit.message, is_edited: 1 };
+              }
+              return m;
+            });
+          }
+          if (newMessages.length > 0) {
+            const validPrev = updated.filter(m => !String(m.id).startsWith('temp-'));
+            const seenIds = new Set(validPrev.map(m => String(m.id)));
+            const uniqueMessages = newMessages.filter(m => !seenIds.has(String(m.id)));
+            const nextMessages = [...validPrev, ...uniqueMessages];
+            messagesRef.current = nextMessages;
+            return nextMessages;
+          } else {
+            messagesRef.current = updated;
+            return updated;
+          }
         });
         
-        if (isNearBottom) {
+        if (isNearBottom && newMessages.length > 0) {
           setTimeout(() => {
             messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
           }, 50);
@@ -526,6 +557,94 @@ export default function Chat() {
   const handleScroll = (e) => {
     if (e.target.scrollTop <= 150) {
       fetchOlderMessages();
+    }
+  };
+
+  const handleTouchStart = (m) => {
+    if (!isPWA || String(m.id).startsWith('temp-')) return;
+    isLongPressRef.current = false;
+    longPressTimerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      setActiveActionMessage(m);
+      if (typeof window !== 'undefined' && window.navigator?.vibrate) {
+        try { window.navigator.vibrate(40); } catch (e) {}
+      }
+    }, 450);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleTouchMove = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingMessage) return;
+    const textToSend = inputText.trim();
+    if (!textToSend) return;
+    const editId = editingMessage.id;
+    setEditingMessage(null);
+    setInputText('');
+
+    setMessages(prev => {
+      const nextMessages = prev.map(m => (m.id === editId ? { ...m, message: textToSend, is_edited: 1 } : m));
+      messagesRef.current = nextMessages;
+      return nextMessages;
+    });
+
+    try {
+      const res = await fetch('/chat_api.php?action=edit_message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message_id: editId, message: textToSend })
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        console.error(data.error);
+      }
+      pollNewMessages();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessage(null);
+    setInputText('');
+  };
+
+  const confirmDeleteMessage = async () => {
+    if (!deletingMessage) return;
+    const msgId = deletingMessage.id;
+    setDeletingMessage(null);
+
+    setMessages(prev => {
+      const nextMessages = prev.filter(m => m.id !== msgId);
+      messagesRef.current = nextMessages;
+      return nextMessages;
+    });
+
+    try {
+      const res = await fetch('/chat_api.php?action=delete_message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message_id: msgId })
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        console.error(data.error);
+      }
+      pollNewMessages();
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -920,6 +1039,11 @@ export default function Chat() {
               const isOwn = String(m.user_id) === String(user?.id);
               const isLastOwn = canShowSeenState && String(m.id) === String(lastOwnMessageId);
               const isGroup = chatInfo?.type === 'group';
+              const isTemp = String(m.id).startsWith('temp-');
+              const canEdit = isPWA && isOwn && !m.message?.startsWith('CALL:') && !isTemp;
+              const canDelete = isPWA && !isTemp && (isOwn || (isGroup && String(chatInfo?.created_by) === String(user?.id)));
+              const canCopy = isPWA && !!m.message && !m.message.startsWith('CALL:') && !isTemp;
+              const hasActions = canEdit || canDelete || canCopy;
 
               return (
                 <React.Fragment key={m.id || index}>
@@ -929,8 +1053,37 @@ export default function Chat() {
                     </div>
                   )}
                   <div className={`chat-message-row ${isOwn ? 'me' : 'other'}`}>
+                    {hasActions && isOwn && (
+                      <button
+                        type="button"
+                        className="chat-msg-action-trigger"
+                        aria-label="Actions"
+                        title={t('chat.edit', 'Խմբագրել')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveActionMessage(m);
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                          <circle cx="12" cy="5" r="2.2"/>
+                          <circle cx="12" cy="12" r="2.2"/>
+                          <circle cx="12" cy="19" r="2.2"/>
+                        </svg>
+                      </button>
+                    )}
                     <div className="chat-message-stack">
-                      <div className="chat-bubble">
+                      <div
+                        className="chat-bubble"
+                        onTouchStart={() => hasActions && handleTouchStart(m)}
+                        onTouchEnd={handleTouchEnd}
+                        onTouchMove={handleTouchMove}
+                        onContextMenu={(e) => {
+                          if (hasActions) {
+                            e.preventDefault();
+                            setActiveActionMessage(m);
+                          }
+                        }}
+                      >
                         {isGroup && !isOwn && (
                           <div
                             style={{
@@ -1077,6 +1230,11 @@ export default function Chat() {
                           </div>
                         )}
                         <div className="chat-time">
+                          {Number(m.is_edited) === 1 && (
+                            <span className="chat-edited-label">
+                              {t('chat.edited', 'խմբագրված')}
+                            </span>
+                          )}
                           {m.created_at ? new Date(m.created_at.replace(' ', 'T')).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                         </div>
                       </div>
@@ -1090,6 +1248,24 @@ export default function Chat() {
                         </div>
                       )}
                     </div>
+                    {hasActions && !isOwn && (
+                      <button
+                        type="button"
+                        className="chat-msg-action-trigger"
+                        aria-label="Actions"
+                        title={t('chat.delete', 'Ջնջել')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveActionMessage(m);
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                          <circle cx="12" cy="5" r="2.2"/>
+                          <circle cx="12" cy="12" r="2.2"/>
+                          <circle cx="12" cy="19" r="2.2"/>
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 </React.Fragment>
               );
@@ -1101,6 +1277,28 @@ export default function Chat() {
 
       {/* INPUT AREA */}
       <div className={`chat-input-area ${showGroupInfo ? 'hidden' : ''}`}>
+        {isPWA && editingMessage && (
+          <div className="chat-editing-banner">
+            <div className="chat-editing-banner-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </div>
+            <div className="chat-editing-banner-content">
+              <div className="chat-editing-banner-title">{t('chat.editingMessage', 'Խմբագրվող հաղորդագրություն')}</div>
+              <div className="chat-editing-banner-text">{editingMessage.message}</div>
+            </div>
+            <button
+              type="button"
+              className="chat-editing-banner-cancel"
+              onClick={handleCancelEdit}
+              title={t('chat.cancelEdit', 'Չեղարկել')}
+            >
+              ✕
+            </button>
+          </div>
+        )}
         {extractFirstUrl(inputText) && (
           <div className="chat-input-link-detected">
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -1136,9 +1334,16 @@ export default function Chat() {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === 'Escape' && editingMessage) {
                 e.preventDefault();
-                sendMessage();
+                handleCancelEdit();
+              } else if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (editingMessage) {
+                  handleSaveEdit();
+                } else {
+                  sendMessage();
+                }
               }
             }}
             onFocus={() => {
@@ -1156,11 +1361,22 @@ export default function Chat() {
             enterKeyHint="send"
             rows={1}
           />
-          <button type="button" className="chat-send-btn" disabled={!inputText.trim()} onClick={() => sendMessage()}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'translateX(-1px) translateY(1px)' }}>
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
+          <button
+            type="button"
+            className={`chat-send-btn ${editingMessage ? 'editing' : ''}`}
+            disabled={!inputText.trim()}
+            onClick={() => (editingMessage ? handleSaveEdit() : sendMessage())}
+          >
+            {editingMessage ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'translateX(-1px) translateY(1px)' }}>
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            )}
           </button>
         </div>
       </div>
@@ -1298,7 +1514,7 @@ export default function Chat() {
         </div>
       )}
 
-      {/* DELETE MODAL */}
+      {/* DELETE CHAT MODAL */}
       {showDeleteModal && (
         <div className="chat-modal-overlay" onClick={() => setShowDeleteModal(false)}>
           <div className="chat-modal-content" onClick={e => e.stopPropagation()}>
@@ -1309,6 +1525,93 @@ export default function Chat() {
             <button className="chat-modal-btn cancel" onClick={() => setShowDeleteModal(false)}>{t('chat.cancel')}</button>
           </div>
         </div>
+      )}
+
+      {/* MESSAGE ACTION POPUP (PWA) */}
+      {isPWA && activeActionMessage && (
+        <div className="chat-action-overlay" onClick={() => setActiveActionMessage(null)}>
+          <div className="chat-action-menu" onClick={e => e.stopPropagation()}>
+            <div className="chat-action-preview">
+              {activeActionMessage.message?.startsWith('CALL:')
+                ? '📞 Call'
+                : activeActionMessage.message?.slice(0, 80) + (activeActionMessage.message?.length > 80 ? '…' : '')}
+            </div>
+            {(() => {
+              const m = activeActionMessage;
+              const isOwn = String(m.user_id) === String(user?.id);
+              const isGroup = chatInfo?.type === 'group';
+              const canEdit = isOwn && !m.message?.startsWith('CALL:');
+              const canDelete = isOwn || (isGroup && String(chatInfo?.created_by) === String(user?.id));
+              const canCopy = !!m.message && !m.message.startsWith('CALL:');
+              return (
+                <>
+                  {canCopy && (
+                    <button
+                      className="chat-action-btn"
+                      onClick={() => {
+                        try {
+                          navigator.clipboard.writeText(m.message);
+                          setCopyToast(true);
+                          setTimeout(() => setCopyToast(false), 1800);
+                        } catch (e) {}
+                        setActiveActionMessage(null);
+                      }}
+                    >
+                      <span>📋</span> {t('chat.copy', 'Պատճենել')}
+                    </button>
+                  )}
+                  {canEdit && (
+                    <button
+                      className="chat-action-btn"
+                      onClick={() => {
+                        setEditingMessage(m);
+                        setInputText(m.message || '');
+                        setActiveActionMessage(null);
+                        setTimeout(() => inputRef.current?.focus(), 50);
+                      }}
+                    >
+                      <span>✏️</span> {t('chat.edit', 'Խմբագրել')}
+                    </button>
+                  )}
+                  {canDelete && (
+                    <button
+                      className="chat-action-btn danger"
+                      onClick={() => {
+                        setDeletingMessage(m);
+                        setActiveActionMessage(null);
+                      }}
+                    >
+                      <span>🗑️</span> {t('chat.delete', 'Ջնջել')}
+                    </button>
+                  )}
+                  <button
+                    className="chat-action-btn cancel"
+                    onClick={() => setActiveActionMessage(null)}
+                  >
+                    {t('chat.cancel', 'Չեղարկել')}
+                  </button>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* DELETE MESSAGE CONFIRM MODAL (PWA) */}
+      {isPWA && deletingMessage && (
+        <div className="chat-modal-overlay" onClick={() => setDeletingMessage(null)}>
+          <div className="chat-modal-content" onClick={e => e.stopPropagation()}>
+            <h3 className="chat-modal-title">{t('chat.delete', 'Ջնջել')}</h3>
+            <p className="chat-modal-text">{t('chat.confirmDeleteMessage', 'Վստա՞հ եք, որ ցանկանում եք ջնջել այս հաղորդագրությունը:')}</p>
+            <button className="chat-modal-btn danger" onClick={confirmDeleteMessage}>{t('chat.delete', 'Ջնջել')}</button>
+            <button className="chat-modal-btn cancel" onClick={() => setDeletingMessage(null)}>{t('chat.cancel', 'Չեղարկել')}</button>
+          </div>
+        </div>
+      )}
+
+      {/* COPY TOAST */}
+      {isPWA && copyToast && (
+        <div className="chat-copy-toast">{t('chat.copied', 'Պատճենվեց')}</div>
       )}
 
       {/* GROUP INFO PANEL */}

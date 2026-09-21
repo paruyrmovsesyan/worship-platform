@@ -621,6 +621,7 @@ const translations = {
       rejectRequest: 'Մերժել',
       removeFriend: 'Ջնջել ընկերներից',
       cancelRequest: 'Չեղարկել հարցումը',
+      friendsSince: 'Ընկերություն անում եք՝',
       memberSince: 'Հարթակում է՝',
       teamRoleSection: 'Դերը թիմում',
       noTeamRole: 'Դերը դեռ նշված չէ',
@@ -750,7 +751,15 @@ const translations = {
       deletePrompt: 'Ինչպե՞ս եք ցանկանում ջնջել այս զրույցը:',
       deleteMine: 'Ջնջել միայն ինձ համար',
       deleteEveryone: 'Ջնջել բոլորի համար',
-      cancel: 'Չեղարկել'
+      cancel: 'Չեղարկել',
+      edit: 'Խմբագրել',
+      delete: 'Ջնջել',
+      copy: 'Պատճենել',
+      copied: 'Պատճենվեց',
+      editingMessage: 'Խմբագրվող հաղորդագրություն',
+      cancelEdit: 'Չեղարկել',
+      confirmDeleteMessage: 'Վստա՞հ եք, որ ցանկանում եք ջնջել այս հաղորդագրությունը:',
+      edited: 'խմբագրված'
     },
     call: {
       preparing: 'Միկրոֆոնը պատրաստվում է...',
@@ -1476,6 +1485,7 @@ const translations = {
       rejectRequest: 'Decline',
       removeFriend: 'Remove Friend',
       cancelRequest: 'Cancel Request',
+      friendsSince: 'Friends since',
       memberSince: 'Member since',
       teamRoleSection: 'Team Role',
       noTeamRole: 'No role specified yet',
@@ -1605,7 +1615,15 @@ const translations = {
       deletePrompt: 'How would you like to delete this conversation?',
       deleteMine: 'Delete only for me',
       deleteEveryone: 'Delete for everyone',
-      cancel: 'Cancel'
+      cancel: 'Cancel',
+      edit: 'Edit',
+      delete: 'Delete',
+      copy: 'Copy',
+      copied: 'Copied',
+      editingMessage: 'Editing message',
+      cancelEdit: 'Cancel',
+      confirmDeleteMessage: 'Are you sure you want to delete this message?',
+      edited: 'edited'
     },
     call: {
       preparing: 'Preparing microphone...',
@@ -2332,6 +2350,7 @@ const translations = {
       rejectRequest: 'Отклонить',
       removeFriend: 'Удалить из друзей',
       cancelRequest: 'Отменить запрос',
+      friendsSince: 'В друзьях с',
       memberSince: 'На платформе с',
       teamRoleSection: 'Роль в команде',
       noTeamRole: 'Роль пока не указана',
@@ -2461,7 +2480,15 @@ const translations = {
       deletePrompt: 'Как вы хотите удалить этот чат?',
       deleteMine: 'Удалить только у меня',
       deleteEveryone: 'Удалить у всех',
-      cancel: 'Отмена'
+      cancel: 'Отмена',
+      edit: 'Изменить',
+      delete: 'Удалить',
+      copy: 'Копировать',
+      copied: 'Скопировано',
+      editingMessage: 'Редактирование сообщения',
+      cancelEdit: 'Отмена',
+      confirmDeleteMessage: 'Вы уверены, что хотите удалить это сообщение?',
+      edited: 'изм.'
     },
     call: {
       preparing: 'Подготовка микрофона...',
