@@ -11,6 +11,62 @@ import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
 import { useHorizontalDragScroll } from '../hooks/useHorizontalDragScroll';
 import './MobileHub.css';
 
+function getTodayStr() {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const date = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${date}`;
+}
+
+function getRelativeDateLabel(dateStr, lang) {
+  if (!dateStr) return null;
+  const cleanDate = String(dateStr).slice(0, 10);
+  const target = new Date(cleanDate + 'T00:00:00');
+  if (isNaN(target.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffMs = target.getTime() - today.getTime();
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+  const dict = {
+    am: {
+      today: 'Այսօր',
+      tomorrow: 'Վաղը',
+      yesterday: 'Երեկ',
+      inDays: (n) => `${n} օրից`,
+      daysAgo: (n) => `${n} օր առաջ`,
+    },
+    en: {
+      today: 'Today',
+      tomorrow: 'Tomorrow',
+      yesterday: 'Yesterday',
+      inDays: (n) => `in ${n}d`,
+      daysAgo: (n) => `${n}d ago`,
+    },
+    ru: {
+      today: 'Сегодня',
+      tomorrow: 'Завтра',
+      yesterday: 'Вчера',
+      inDays: (n) => `через ${n} дн.`,
+      daysAgo: (n) => `${n} дн. назад`,
+    },
+  }[lang] || {
+    today: 'Այսօր',
+    tomorrow: 'Վաղը',
+    yesterday: 'Երեկ',
+    inDays: (n) => `${n} օրից`,
+    daysAgo: (n) => `${n} օր առաջ`,
+  };
+
+  if (diffDays === 0) return dict.today;
+  if (diffDays === 1) return dict.tomorrow;
+  if (diffDays === -1) return dict.yesterday;
+  if (diffDays > 1) return dict.inDays(diffDays);
+  if (diffDays < -1) return dict.daysAgo(Math.abs(diffDays));
+  return null;
+}
+
 export default function MobileHub() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -115,15 +171,24 @@ export default function MobileHub() {
 
     // Fetch user specific data
     if (user) {
-      // Fetch setlists
+      // Fetch setlists (find nearest upcoming service whose date has not passed)
       fetch('/setlists_api.php?action=get_setlists')
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data) && data.length > 0) {
-            setUpcomingSetlist(data[0]);
+            const todayStr = getTodayStr();
+            const upcoming = data
+              .filter(s => s.service_date && String(s.service_date).slice(0, 10) >= todayStr && s.status !== 'archived')
+              .sort((a, b) => String(a.service_date).localeCompare(String(b.service_date)))[0];
+            setUpcomingSetlist(upcoming || null);
+          } else {
+            setUpcomingSetlist(null);
           }
         })
-        .catch(err => console.error(err));
+        .catch(err => {
+          console.error(err);
+          setUpcomingSetlist(null);
+        });
 
       // Fetch favorites
       fetch('/user_favorites_api.php?action=get_favorites')
@@ -162,9 +227,24 @@ export default function MobileHub() {
     };
   }, [language]);
 
-  const getFormattedDate = () => {
-    const today = new Date();
-    return today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) + ' | 10:30 AM';
+  const formatSetlistServiceDate = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      const cleanDate = String(dateStr).slice(0, 10);
+      const parts = cleanDate.split('-');
+      if (parts.length === 3) {
+        const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        if (!isNaN(d.getTime())) {
+          const loc = language === 'am' ? 'hy-AM' : language === 'ru' ? 'ru-RU' : 'en-US';
+          const formatted = d.toLocaleDateString(loc, { month: 'long', day: 'numeric', year: 'numeric' });
+          const relLabel = getRelativeDateLabel(cleanDate, language);
+          return relLabel ? `${formatted} • ${relLabel}` : formatted;
+        }
+      }
+      return cleanDate;
+    } catch {
+      return dateStr;
+    }
   };
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -315,7 +395,7 @@ export default function MobileHub() {
             <div className="upcoming-card-content">
               <span className="upcoming-card-label">{t('hub.upcomingService')}</span>
               <h2>{upcomingSetlist.name}</h2>
-              <p>{getFormattedDate()}</p>
+              <p>{formatSetlistServiceDate(upcomingSetlist.service_date)}</p>
             </div>
             <button
               type="button"
