@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { usePageReady } from '../hooks/usePageReady';
 import { useCall } from '../context/CallContext';
+import { useIsPWA } from '../hooks/useIsPWA';
 import './Chat.css';
 
 const URL_REGEX = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s՝։֊]|www\.[^\s<]+[^<.,:;"')\]\s՝։֊])/gi;
@@ -188,6 +189,7 @@ export default function Chat() {
   const { user, loading: authLoading } = useAuth();
   const { t, language } = useLanguage();
   const audioCall = useCall();
+  const isPWA = useIsPWA();
   const [messages, setMessages] = useState([]);
   const [chatInfo, setChatInfo] = useState(null);
   const [inputText, setInputText] = useState('');
@@ -781,13 +783,30 @@ export default function Chat() {
               <path d="M15 18l-6-6 6-6"/>
             </svg>
           </button>
-          <div className="chat-header-avatar">
+          <div
+            className="chat-header-avatar"
+            style={isPWA && chatInfo?.other_user_id ? { cursor: 'pointer' } : undefined}
+            onClick={() => {
+              if (isPWA && chatInfo?.other_user_id) {
+                navigate(`/profile/${chatInfo.other_user_id}`);
+              }
+            }}
+            title={isPWA && chatInfo?.other_user_id ? (chatInfo.display_name || t('profile.userProfile')) : undefined}
+          >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
           </div>
-          <div className="chat-header-info">
+          <div
+            className="chat-header-info"
+            style={isPWA && chatInfo?.type !== 'group' && chatInfo?.other_user_id ? { cursor: 'pointer' } : undefined}
+            onClick={() => {
+              if (isPWA && chatInfo?.type !== 'group' && chatInfo?.other_user_id) {
+                navigate(`/profile/${chatInfo.other_user_id}`);
+              }
+            }}
+          >
             {chatInfo?.type === 'group' ? (
               <>
                 <h2
@@ -913,7 +932,21 @@ export default function Chat() {
                     <div className="chat-message-stack">
                       <div className="chat-bubble">
                         {isGroup && !isOwn && (
-                          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#38bdf8', marginBottom: '2px' }}>
+                          <div
+                            style={{
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              color: '#38bdf8',
+                              marginBottom: '2px',
+                              cursor: isPWA && m.user_id ? 'pointer' : 'default'
+                            }}
+                            onClick={(e) => {
+                              if (isPWA && m.user_id) {
+                                e.stopPropagation();
+                                navigate(`/profile/${m.user_id}`);
+                              }
+                            }}
+                          >
                             {m.user_name || 'Անհայտ'}
                           </div>
                         )}
@@ -1352,7 +1385,15 @@ export default function Chat() {
                   </div>
                   {groupMembers.map(member => (
                     <div key={member.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div
+                        style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: isPWA ? 'pointer' : 'default' }}
+                        onClick={() => {
+                          if (isPWA && member.id) {
+                            setShowGroupInfo(false);
+                            navigate(`/profile/${member.id}`);
+                          }
+                        }}
+                      >
                         <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #38bdf8, #818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: '0.9rem' }}>
                           {(member.name || member.email || '?').charAt(0).toUpperCase()}
                         </div>

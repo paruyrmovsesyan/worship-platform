@@ -47,6 +47,7 @@ import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import Cookies from './pages/Cookies';
 import Profile from './pages/Profile';
+import UserProfile from './pages/UserProfile';
 import Settings from './pages/Settings';
 import SongRequest from './pages/SongRequest';
 import Notifications from './pages/Notifications';
@@ -308,6 +309,8 @@ function App() {
               <Route path="/terms" element={<Terms />} />
               <Route path="/cookies" element={<Cookies />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/:id" element={<UserProfile />} />
+              <Route path="/user/:id" element={<UserProfile />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/song-request" element={<SongRequest />} />
               <Route path="/notifications" element={<Notifications />} />
