@@ -210,11 +210,13 @@ export default function Chat() {
 
   // Message edit & delete states (PWA)
   const [activeActionMessage, setActiveActionMessage] = useState(null);
+  const [actionMenuPos, setActionMenuPos] = useState({ top: 0, left: 0 });
   const [editingMessage, setEditingMessage] = useState(null);
   const [deletingMessage, setDeletingMessage] = useState(null);
   const [copyToast, setCopyToast] = useState(false);
   const longPressTimerRef = useRef(null);
   const isLongPressRef = useRef(false);
+  const touchBubbleRef = useRef(null);
 
   const messagesEndRef = useRef(null);
   const containerRef = useRef(null);
@@ -560,12 +562,42 @@ export default function Chat() {
     }
   };
 
-  const handleTouchStart = (m) => {
+  const showActionMenu = (m, bubbleEl) => {
+    if (!bubbleEl) return;
+    const rect = bubbleEl.getBoundingClientRect();
+    const isOwn = String(m.user_id) === String(user?.id);
+    const menuW = 200;
+    const menuH = 140; // approximate
+
+    // Horizontal: align with bubble edge
+    let left;
+    if (isOwn) {
+      left = Math.max(8, rect.right - menuW);
+    } else {
+      left = Math.min(rect.left, window.innerWidth - menuW - 8);
+    }
+
+    // Vertical: prefer above, else below
+    let top;
+    if (rect.top > menuH + 12) {
+      top = rect.top - menuH - 8;
+    } else {
+      top = rect.bottom + 8;
+    }
+    // Clamp to viewport
+    top = Math.max(60, Math.min(top, window.innerHeight - menuH - 16));
+
+    setActionMenuPos({ top, left });
+    setActiveActionMessage(m);
+  };
+
+  const handleTouchStart = (m, e) => {
     if (!isPWA || String(m.id).startsWith('temp-')) return;
+    touchBubbleRef.current = e.currentTarget;
     isLongPressRef.current = false;
     longPressTimerRef.current = setTimeout(() => {
       isLongPressRef.current = true;
-      setActiveActionMessage(m);
+      showActionMenu(m, touchBubbleRef.current);
       if (typeof window !== 'undefined' && window.navigator?.vibrate) {
         try { window.navigator.vibrate(40); } catch (e) {}
       }
@@ -585,6 +617,7 @@ export default function Chat() {
       longPressTimerRef.current = null;
     }
   };
+
 
   const handleSaveEdit = async () => {
     if (!editingMessage) return;
@@ -1061,7 +1094,9 @@ export default function Chat() {
                         title={t('chat.edit', 'Խմբագրել')}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setActiveActionMessage(m);
+                          const row = e.currentTarget.closest('.chat-message-row');
+                          const bubbleEl = row?.querySelector('.chat-bubble');
+                          showActionMenu(m, bubbleEl || e.currentTarget);
                         }}
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -1074,13 +1109,13 @@ export default function Chat() {
                     <div className="chat-message-stack">
                       <div
                         className="chat-bubble"
-                        onTouchStart={() => hasActions && handleTouchStart(m)}
+                        onTouchStart={(e) => hasActions && handleTouchStart(m, e)}
                         onTouchEnd={handleTouchEnd}
                         onTouchMove={handleTouchMove}
                         onContextMenu={(e) => {
                           if (hasActions) {
                             e.preventDefault();
-                            setActiveActionMessage(m);
+                            showActionMenu(m, e.currentTarget);
                           }
                         }}
                       >
@@ -1256,7 +1291,9 @@ export default function Chat() {
                         title={t('chat.delete', 'Ջնջել')}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setActiveActionMessage(m);
+                          const row = e.currentTarget.closest('.chat-message-row');
+                          const bubbleEl = row?.querySelector('.chat-bubble');
+                          showActionMenu(m, bubbleEl || e.currentTarget);
                         }}
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -1527,75 +1564,84 @@ export default function Chat() {
         </div>
       )}
 
-      {/* MESSAGE ACTION POPUP (PWA) */}
-      {isPWA && activeActionMessage && (
-        <div className="chat-action-overlay" onClick={() => setActiveActionMessage(null)}>
-          <div className="chat-action-menu" onClick={e => e.stopPropagation()}>
-            <div className="chat-action-preview">
-              {activeActionMessage.message?.startsWith('CALL:')
-                ? '📞 Call'
-                : activeActionMessage.message?.slice(0, 80) + (activeActionMessage.message?.length > 80 ? '…' : '')}
+      {/* MESSAGE ACTION POPUP (PWA) — positioned near the bubble */}
+      {isPWA && activeActionMessage && (() => {
+        const m = activeActionMessage;
+        const isOwn = String(m.user_id) === String(user?.id);
+        const isGroup = chatInfo?.type === 'group';
+        const canEdit = isOwn && !m.message?.startsWith('CALL:');
+        const canDelete = isOwn || (isGroup && String(chatInfo?.created_by) === String(user?.id));
+        const canCopy = !!m.message && !m.message.startsWith('CALL:');
+        return (
+          <>
+            {/* Dim background — close on tap */}
+            <div
+              className="chat-action-backdrop"
+              onClick={() => setActiveActionMessage(null)}
+            />
+            {/* Compact floating menu */}
+            <div
+              className="chat-action-popup"
+              style={{ top: actionMenuPos.top, left: actionMenuPos.left }}
+              onClick={e => e.stopPropagation()}
+            >
+              {canCopy && (
+                <button
+                  className="chat-action-popup-btn"
+                  onClick={() => {
+                    try {
+                      navigator.clipboard.writeText(m.message);
+                      setCopyToast(true);
+                      setTimeout(() => setCopyToast(false), 1800);
+                    } catch (e) {}
+                    setActiveActionMessage(null);
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  {t('chat.copy', 'Պatčenel')}
+                </button>
+              )}
+              {canEdit && (
+                <button
+                  className="chat-action-popup-btn"
+                  onClick={() => {
+                    setEditingMessage(m);
+                    setInputText(m.message || '');
+                    setActiveActionMessage(null);
+                    setTimeout(() => inputRef.current?.focus(), 50);
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  {t('chat.edit', 'Xmbaгrel')}
+                </button>
+              )}
+              {canDelete && (
+                <button
+                  className="chat-action-popup-btn danger"
+                  onClick={() => {
+                    setDeletingMessage(m);
+                    setActiveActionMessage(null);
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                    <path d="M10 11v6"></path><path d="M14 11v6"></path>
+                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                  </svg>
+                  {t('chat.delete', 'Jnjel')}
+                </button>
+              )}
             </div>
-            {(() => {
-              const m = activeActionMessage;
-              const isOwn = String(m.user_id) === String(user?.id);
-              const isGroup = chatInfo?.type === 'group';
-              const canEdit = isOwn && !m.message?.startsWith('CALL:');
-              const canDelete = isOwn || (isGroup && String(chatInfo?.created_by) === String(user?.id));
-              const canCopy = !!m.message && !m.message.startsWith('CALL:');
-              return (
-                <>
-                  {canCopy && (
-                    <button
-                      className="chat-action-btn"
-                      onClick={() => {
-                        try {
-                          navigator.clipboard.writeText(m.message);
-                          setCopyToast(true);
-                          setTimeout(() => setCopyToast(false), 1800);
-                        } catch (e) {}
-                        setActiveActionMessage(null);
-                      }}
-                    >
-                      <span>📋</span> {t('chat.copy', 'Պատճենել')}
-                    </button>
-                  )}
-                  {canEdit && (
-                    <button
-                      className="chat-action-btn"
-                      onClick={() => {
-                        setEditingMessage(m);
-                        setInputText(m.message || '');
-                        setActiveActionMessage(null);
-                        setTimeout(() => inputRef.current?.focus(), 50);
-                      }}
-                    >
-                      <span>✏️</span> {t('chat.edit', 'Խմբագրել')}
-                    </button>
-                  )}
-                  {canDelete && (
-                    <button
-                      className="chat-action-btn danger"
-                      onClick={() => {
-                        setDeletingMessage(m);
-                        setActiveActionMessage(null);
-                      }}
-                    >
-                      <span>🗑️</span> {t('chat.delete', 'Ջնջել')}
-                    </button>
-                  )}
-                  <button
-                    className="chat-action-btn cancel"
-                    onClick={() => setActiveActionMessage(null)}
-                  >
-                    {t('chat.cancel', 'Չեղարկել')}
-                  </button>
-                </>
-              );
-            })()}
-          </div>
-        </div>
-      )}
+          </>
+        );
+      })()}
 
       {/* DELETE MESSAGE CONFIRM MODAL (PWA) */}
       {isPWA && deletingMessage && (
