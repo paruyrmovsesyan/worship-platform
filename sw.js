@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v528";
+const CACHE_VERSION = "worship-v529";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -36,8 +36,8 @@ const APP_SHELL = [
   "/app.js",
   "/site_guard.js",
   "/fav_bridge.js",
-  "/assets/index.css?v=528",
-  "/assets/index.js?v=528",
+  "/assets/index.css?v=529",
+  "/assets/index.js?v=529",
   "/manifest.json?v=11",
   "/favicon.png?v=2",
   "/apple-touch-icon-v7.png",
@@ -83,7 +83,10 @@ self.addEventListener("install", function(event) {
     caches.open(STATIC_CACHE).then(async function(cache) {
       for (const item of APP_SHELL) {
         try {
-          await cache.add(item);
+          const response = await fetch(item, { cache: "no-store" });
+          if (isValidStaticAssetResponse(new URL(item, self.location.origin), response)) {
+            await cache.put(item, response);
+          }
         } catch (e) {
           // ignore individual item failure so installation never aborts
         }
@@ -267,6 +270,18 @@ function isStaticAssetRequest(url) {
   return STATIC_ASSET_PATTERN.test(url.pathname) || url.pathname === "/manifest.json";
 }
 
+function isValidStaticAssetResponse(url, response) {
+  if (!response || response.status !== 200 || response.type === "opaque") return false;
+  const contentType = (response.headers.get("Content-Type") || "").toLowerCase();
+  if (/\.(?:js|mjs)$/i.test(url.pathname)) {
+    return /(?:java|ecma)script/.test(contentType);
+  }
+  if (/\.css$/i.test(url.pathname)) {
+    return contentType.includes("text/css");
+  }
+  return true;
+}
+
 function isUserCacheableRequest(url) {
   const action = url.searchParams.get("action") || "";
   if (url.pathname === "/user_favorites_api.php") {
@@ -298,16 +313,28 @@ function fetchWithTimeout(requestOrUrl, timeoutMs) {
 
 async function handleStaticAssetRequest(event) {
   const request = event.request;
+  const url = new URL(request.url);
   const cached = await caches.match(request);
+  const validCached = isValidStaticAssetResponse(url, cached);
+  if (cached && !validCached) {
+    await Promise.all([STATIC_CACHE, RUNTIME_CACHE].map(async function(cacheName) {
+      const cache = await caches.open(cacheName);
+      await cache.delete(request);
+    }));
+  }
   const refreshPromise = fetch(request.url).then(async function(response) {
-    if (response && response.status === 200) {
+    if (isValidStaticAssetResponse(url, response)) {
       const cache = await caches.open(RUNTIME_CACHE);
       await cache.put(request, response.clone());
+      return response;
+    }
+    if (/\.(?:js|mjs|css)$/i.test(url.pathname)) {
+      return new Response("Static asset unavailable", { status: 502, statusText: "Invalid static asset response" });
     }
     return response;
   });
 
-  if (cached) {
+  if (validCached) {
     event.waitUntil(refreshPromise.catch(function() {}));
     return cached;
   }
