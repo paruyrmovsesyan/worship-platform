@@ -572,28 +572,45 @@ export default function Chat() {
         }
       } catch (_) {}
     }
-    const rect = bubbleEl.getBoundingClientRect();
+
     const isOwn = String(m.user_id) === String(user?.id);
-    const menuW = 200;
-    const menuH = 140; // approximate
+    const isGroup = chatInfo?.type === 'group';
+    const canEdit = isOwn && !m.message?.startsWith('CALL:');
+    const canDelete = isOwn || (isGroup && String(chatInfo?.created_by) === String(user?.id));
+    const canCopy = !!m.message && !m.message.startsWith('CALL:');
+
+    let btnCount = 0;
+    if (canCopy) btnCount++;
+    if (canEdit) btnCount++;
+    if (canDelete) btnCount++;
+    if (btnCount === 0) return;
+
+    const rect = bubbleEl.getBoundingClientRect();
+    const menuW = 180;
+    const btnH = 44;
+    const menuH = btnCount * btnH;
+    const margin = 6;
 
     // Horizontal: align with bubble edge
     let left;
     if (isOwn) {
-      left = Math.max(8, rect.right - menuW);
+      left = Math.max(margin, rect.right - menuW);
     } else {
-      left = Math.min(rect.left, window.innerWidth - menuW - 8);
+      left = Math.max(margin, Math.min(rect.left, window.innerWidth - menuW - margin));
     }
 
-    // Vertical: prefer above, else below
+    // Vertical: prefer above bubble if enough space, else below
+    const spaceAbove = rect.top - 60; // header height buffer
+    const spaceBelow = window.innerHeight - 80 - rect.bottom; // input bar buffer
+
     let top;
-    if (rect.top > menuH + 12) {
-      top = rect.top - menuH - 8;
+    if (spaceAbove >= menuH + margin) {
+      top = rect.top - menuH - margin;
+    } else if (spaceBelow >= menuH + margin) {
+      top = rect.bottom + margin;
     } else {
-      top = rect.bottom + 8;
+      top = Math.max(65, Math.min(rect.top - menuH - margin, window.innerHeight - menuH - 85));
     }
-    // Clamp to viewport
-    top = Math.max(60, Math.min(top, window.innerHeight - menuH - 16));
 
     setActionMenuPos({ top, left });
     setActiveActionMessage(m);
