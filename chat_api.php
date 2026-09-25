@@ -395,13 +395,15 @@ if ($action === 'list_chats' && $method === 'GET') {
                (SELECT created_at FROM chat_messages m WHERE m.chat_id = c.id AND (m.is_deleted IS NULL OR m.is_deleted = 0) AND (cp.cleared_at IS NULL OR m.created_at > cp.cleared_at) ORDER BY created_at DESC LIMIT 1) as last_message_at,
                c.created_at as chat_created_at,
                (SELECT COUNT(*) FROM chat_messages m WHERE m.chat_id = c.id AND (m.is_deleted IS NULL OR m.is_deleted = 0) AND m.user_id != ? AND (cp.cleared_at IS NULL OR m.created_at > cp.cleared_at) AND m.id > COALESCE(cp.last_read_message_id, 0)) as unread_count,
-               (SELECT GROUP_CONCAT(COALESCE(NULLIF(u.name, ''), SUBSTRING_INDEX(u.email, '@', 1)) SEPARATOR ', ') FROM chat_participants cp2 JOIN users u ON cp2.user_id = u.id WHERE cp2.chat_id = c.id AND u.id != ?) as participant_names
+               (SELECT GROUP_CONCAT(COALESCE(NULLIF(u.name, ''), SUBSTRING_INDEX(u.email, '@', 1)) SEPARATOR ', ') FROM chat_participants cp2 JOIN users u ON cp2.user_id = u.id WHERE cp2.chat_id = c.id AND u.id != ?) as participant_names,
+               (SELECT u3.avatar_gradient FROM chat_participants cp3 JOIN users u3 ON cp3.user_id = u3.id WHERE cp3.chat_id = c.id AND u3.id != ? LIMIT 1) as avatar_gradient,
+               (SELECT u4.id FROM chat_participants cp4 JOIN users u4 ON cp4.user_id = u4.id WHERE cp4.chat_id = c.id AND u4.id != ? LIMIT 1) as other_user_id
         FROM chats c
         JOIN chat_participants cp ON cp.chat_id = c.id
         WHERE cp.user_id = ?
         ORDER BY COALESCE(last_message_at, c.created_at) DESC
     ");
-    $st->execute([$uid, $uid, $uid]);
+    $st->execute([$uid, $uid, $uid, $uid, $uid]);
     out(["ok" => true, "chats" => $st->fetchAll(PDO::FETCH_ASSOC)]);
 }
 
@@ -566,17 +568,19 @@ if ($action === 'get_messages' && $method === 'GET') {
     $pCount = (int)$stCount->fetchColumn();
 
     if ($chat_info && $chat_info['type'] === 'direct') {
-        $st = $pdo->prepare("SELECT u.id as other_user_id, u.name, u.email, u.last_active_at, TIMESTAMPDIFF(SECOND, u.last_active_at, NOW()) as seconds_since_active FROM chat_participants cp JOIN users u ON cp.user_id = u.id WHERE cp.chat_id = ? AND u.id != ?");
+        $st = $pdo->prepare("SELECT u.id as other_user_id, u.name, u.email, u.avatar_gradient, u.last_active_at, TIMESTAMPDIFF(SECOND, u.last_active_at, NOW()) as seconds_since_active FROM chat_participants cp JOIN users u ON cp.user_id = u.id WHERE cp.chat_id = ? AND u.id != ?");
         $st->execute([$chat_id, $uid]);
         $other = $st->fetch(PDO::FETCH_ASSOC);
         if ($other) {
             $chat_info['other_user_id'] = (int)$other['other_user_id'];
             $chat_info['display_name'] = !empty($other['name']) ? $other['name'] : explode('@', $other['email'])[0];
+            $chat_info['avatar_gradient'] = $other['avatar_gradient'] ?? null;
             $chat_info['last_active_at'] = $other['last_active_at'];
             $chat_info['seconds_since_active'] = $other['seconds_since_active'];
         } else {
             $chat_info['other_user_id'] = 0;
             $chat_info['display_name'] = 'Ընկեր';
+            $chat_info['avatar_gradient'] = null;
         }
 
         try {
@@ -593,6 +597,7 @@ if ($action === 'get_messages' && $method === 'GET') {
         }
     } else if ($chat_info) {
         $chat_info['display_name'] = !empty($chat_info['name']) ? $chat_info['name'] : 'Խումբ';
+        $chat_info['avatar_gradient'] = null;
     }
     
     $before_id = (int)($_GET['before_id'] ?? 0);
@@ -604,6 +609,7 @@ if ($action === 'get_messages' && $method === 'GET') {
                 m.id, 
                 m.user_id, 
                 u.name as user_name, 
+                u.avatar_gradient as user_avatar_gradient,
                 m.message, 
                 m.setlist_id, 
                 m.created_at,
@@ -941,6 +947,7 @@ if ($action === 'get_group_members' && $method === 'GET') {
 
     $st = $pdo->prepare("
         SELECT u.id, COALESCE(NULLIF(u.name,''), SUBSTRING_INDEX(u.email,'@',1)) as name, u.email,
+               u.avatar_gradient,
                IF(u.id = ?, 1, 0) as is_creator
         FROM chat_participants cp
         JOIN users u ON u.id = cp.user_id

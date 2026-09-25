@@ -350,7 +350,7 @@ export default function ChatsList({ isEmbedded = false }) {
               <div className="friends-strip-list">
                 {onlineFriends.map(f => (
                   <div key={f.friend_id} className="friend-strip-chip" onClick={() => startDirectChatWithFriend(f.friend_id)}>
-                    <div className="friend-strip-avatar">
+                    <div className="friend-strip-avatar" style={f.avatar_gradient ? { background: f.avatar_gradient } : undefined}>
                       {(f.name || 'U').charAt(0).toUpperCase()}
                       <span className="online-dot" />
                     </div>
@@ -434,7 +434,7 @@ export default function ChatsList({ isEmbedded = false }) {
                   className={`website-chat-card ${hasUnread ? 'unread' : ''}`}
                   onClick={() => navigate(`/chat/${chat.id}`)}
                 >
-                  <div className={`website-chat-avatar ${chat.type === 'group' ? 'group' : ''}`}>
+                  <div className={`website-chat-avatar ${chat.type === 'group' ? 'group' : ''}`} style={chat.type !== 'group' && chat.avatar_gradient ? { background: chat.avatar_gradient } : undefined}>
                     {getChatAvatar(chat)}
                     {hasUnread && <span className="unread-dot-badge" />}
                   </div>
@@ -556,7 +556,7 @@ export default function ChatsList({ isEmbedded = false }) {
           <div className="pwa-active-friends-row">
             {onlineFriends.map(f => (
               <div key={f.friend_id} className="pwa-active-friend-item" onClick={() => startDirectChatWithFriend(f.friend_id)}>
-                <div className="pwa-active-friend-avatar">
+                <div className="pwa-active-friend-avatar" style={f.avatar_gradient ? { background: f.avatar_gradient } : undefined}>
                   {(f.name || 'U').charAt(0).toUpperCase()}
                   <span className="pwa-active-friend-badge" />
                 </div>
@@ -604,7 +604,7 @@ export default function ChatsList({ isEmbedded = false }) {
 
                 return (
                   <div key={u.id} className="pwa-user-search-card">
-                    <div className="pwa-user-search-avatar">
+                    <div className="pwa-user-search-avatar" style={u.avatar_gradient ? { background: u.avatar_gradient } : undefined}>
                       {(u.name || u.username || 'U').charAt(0).toUpperCase()}
                     </div>
                     <div className="pwa-user-search-info">
@@ -695,7 +695,7 @@ export default function ChatsList({ isEmbedded = false }) {
                   className={`glass-panel chat-list-card ${hasUnread ? 'unread' : ''}`}
                   onClick={() => navigate(`/chat/${chat.id}`)}
                 >
-                  <div className={`chat-list-avatar ${chat.type === 'group' ? 'group' : ''}`}>
+                  <div className={`chat-list-avatar ${chat.type === 'group' ? 'group' : ''}`} style={chat.type !== 'group' && chat.avatar_gradient ? { background: chat.avatar_gradient } : undefined}>
                     {getChatAvatar(chat)}
                     {hasUnread && <span className="chat-list-dot" aria-hidden="true"></span>}
                   </div>

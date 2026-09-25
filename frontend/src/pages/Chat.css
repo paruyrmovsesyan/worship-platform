@@ -99,7 +99,11 @@ body.wp-standalone-app:not(.is-ios) .chat-header {
   align-items: center;
   justify-content: center;
   color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .chat-header-info {

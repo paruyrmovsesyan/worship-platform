@@ -87,7 +87,7 @@ if ($action === 'search_users' && $method === 'GET') {
         out(["ok" => true, "users" => []]);
     }
     
-    $st = $pdo->prepare("SELECT id, name, email FROM users WHERE (name LIKE ? OR email LIKE ?) AND id != ? LIMIT 20");
+    $st = $pdo->prepare("SELECT id, name, email, avatar_gradient FROM users WHERE (name LIKE ? OR email LIKE ?) AND id != ? LIMIT 20");
     $lk = "%" . $q . "%";
     $st->execute([$lk, $lk, $uid]);
     $users = $st->fetchAll(PDO::FETCH_ASSOC);
@@ -116,6 +116,7 @@ if (($action === 'list' || $action === 'get_friends') && $method === 'GET') {
                IF(f.user_id_1 = :uid1, u2.id, u1.id) as friend_id,
                IF(f.user_id_1 = :uid2, u2.name, u1.name) as name,
                IF(f.user_id_1 = :uid3, u2.email, u1.email) as email,
+               IF(f.user_id_1 = :uid_ag, u2.avatar_gradient, u1.avatar_gradient) as avatar_gradient,
                f.user_id_1 as requester_id,
                IF((SELECT MAX(last_seen) FROM web_activity WHERE user_id = IF(f.user_id_1 = :uid4, u2.id, u1.id)) >= DATE_SUB(NOW(), INTERVAL 5 MINUTE), 1, 0) as is_online
         FROM friends f
@@ -127,6 +128,7 @@ if (($action === 'list' || $action === 'get_friends') && $method === 'GET') {
         'uid1' => $uid,
         'uid2' => $uid,
         'uid3' => $uid,
+        'uid_ag' => $uid,
         'uid4' => $uid,
         'uid5' => $uid,
         'uid6' => $uid,

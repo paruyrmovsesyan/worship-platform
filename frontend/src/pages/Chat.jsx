@@ -970,7 +970,12 @@ export default function Chat() {
           </button>
           <div
             className="chat-header-avatar"
-            style={isPWA && chatInfo?.other_user_id ? { cursor: 'pointer' } : undefined}
+            style={{
+              ...(isPWA && chatInfo?.other_user_id ? { cursor: 'pointer' } : {}),
+              ...(chatInfo?.type !== 'group' && chatInfo?.avatar_gradient
+                ? { background: chatInfo.avatar_gradient }
+                : {})
+            }}
             onClick={() => {
               if (isPWA && chatInfo?.other_user_id) {
                 navigate(`/profile/${chatInfo.other_user_id}`);
@@ -978,10 +983,16 @@ export default function Chat() {
             }}
             title={isPWA && chatInfo?.other_user_id ? (chatInfo.display_name || t('profile.userProfile')) : undefined}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
+            {chatInfo?.type === 'group' ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            ) : (
+              (chatInfo?.display_name || 'U').charAt(0).toUpperCase()
+            )}
           </div>
           <div
             className="chat-header-info"
@@ -1783,7 +1794,7 @@ export default function Chat() {
                           }
                         }}
                       >
-                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #38bdf8, #818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: '0.9rem' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: member.avatar_gradient || 'linear-gradient(135deg, #38bdf8, #818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: '0.9rem' }}>
                           {(member.name || member.email || '?').charAt(0).toUpperCase()}
                         </div>
                         <div>
