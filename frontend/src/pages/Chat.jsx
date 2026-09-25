@@ -564,6 +564,14 @@ export default function Chat() {
 
   const showActionMenu = (m, bubbleEl) => {
     if (!bubbleEl) return;
+    if (typeof window !== 'undefined' && window.getSelection) {
+      try {
+        const sel = window.getSelection();
+        if (sel && sel.removeAllRanges) {
+          sel.removeAllRanges();
+        }
+      } catch (_) {}
+    }
     const rect = bubbleEl.getBoundingClientRect();
     const isOwn = String(m.user_id) === String(user?.id);
     const menuW = 200;
@@ -597,6 +605,14 @@ export default function Chat() {
     isLongPressRef.current = false;
     longPressTimerRef.current = setTimeout(() => {
       isLongPressRef.current = true;
+      if (typeof window !== 'undefined' && window.getSelection) {
+        try {
+          const sel = window.getSelection();
+          if (sel && sel.removeAllRanges) {
+            sel.removeAllRanges();
+          }
+        } catch (_) {}
+      }
       showActionMenu(m, touchBubbleRef.current);
       if (typeof window !== 'undefined' && window.navigator?.vibrate) {
         try { window.navigator.vibrate(40); } catch (e) {}
@@ -1108,10 +1124,17 @@ export default function Chat() {
                     )}
                     <div className="chat-message-stack">
                       <div
-                        className="chat-bubble"
+                        className={`chat-bubble ${isPWA ? 'pwa-bubble' : ''}`}
                         onTouchStart={(e) => hasActions && handleTouchStart(m, e)}
                         onTouchEnd={handleTouchEnd}
                         onTouchMove={handleTouchMove}
+                        onClickCapture={(e) => {
+                          if (isLongPressRef.current) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            isLongPressRef.current = false;
+                          }
+                        }}
                         onContextMenu={(e) => {
                           if (hasActions) {
                             e.preventDefault();

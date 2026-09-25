@@ -237,6 +237,20 @@ body.wp-standalone-app:not(.is-ios) .chat-header {
   word-wrap: break-word;
 }
 
+.chat-bubble.pwa-bubble,
+.chat-bubble.pwa-bubble * {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.chat-bubble.pwa-bubble::selection,
+.chat-bubble.pwa-bubble *::selection {
+  background: transparent !important;
+  color: inherit !important;
+}
+
 .chat-message-row.me .chat-bubble {
   background: linear-gradient(135deg, #3A2DFF 0%, #2A1DDF 100%);
   color: #fff;
