@@ -131,21 +131,49 @@
       const { userId, userEmail } = getUserMeta();
 
       if (isResourceError) {
-        const sourceUrl = event.target.src || event.target.href || '';
+        const resourceElement = event.target;
+        const resourceTag = resourceElement.tagName.toLowerCase();
+        const sourceUrl = resourceElement.src || resourceElement.href || '';
         // Only log local application asset failures
         if (sourceUrl && (sourceUrl.includes(window.location.host) || sourceUrl.startsWith('/'))) {
-          sendErrorReport({
-            level: 'warning',
-            environment: isStandaloneApp() ? 'app' : 'web',
-            message: `Resource failed to load: <${event.target.tagName.toLowerCase()}> ${sourceUrl}`,
-            file: sourceUrl,
-            line: null,
-            url: window.location.href,
-            stack_trace: null,
-            user_id: userId,
-            user_email: userEmail,
-            device_info: getDeviceInfo(),
-          });
+          const reportResourceError = function() {
+            sendErrorReport({
+              level: 'warning',
+              environment: isStandaloneApp() ? 'app' : 'web',
+              message: `Resource failed to load: <${resourceTag}> ${sourceUrl}`,
+              file: sourceUrl,
+              line: null,
+              url: window.location.href,
+              stack_trace: null,
+              user_id: userId,
+              user_email: userEmail,
+              device_info: getDeviceInfo(),
+            });
+          };
+
+          if (resourceTag !== 'img' || resourceElement.dataset.wpResourceRetried === '1') {
+            reportResourceError();
+            return;
+          }
+
+          // A cancelled navigation or brief mobile-network drop can emit an
+          // image error even though the asset is healthy. Confirm availability
+          // and retry the image once before logging it as an active problem.
+          fetch(sourceUrl, {
+            method: 'HEAD',
+            cache: 'no-store',
+            credentials: 'same-origin',
+          }).then(function(response) {
+            if (!response.ok) {
+              reportResourceError();
+              return;
+            }
+
+            resourceElement.dataset.wpResourceRetried = '1';
+            const retryUrl = new URL(sourceUrl, window.location.href);
+            retryUrl.searchParams.set('_wp_retry', String(Date.now()));
+            resourceElement.src = retryUrl.href;
+          }).catch(reportResourceError);
         }
         return;
       }

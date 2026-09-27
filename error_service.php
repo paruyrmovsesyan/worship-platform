@@ -456,6 +456,29 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         }
     }
 
+    // Browser resource warnings store an absolute URL in `file`. Resolve the
+    // warning when that same-origin asset is present in the deployed web root.
+    if (stripos($message, 'Resource failed to load:') !== false && $file !== '') {
+        $resourcePath = parse_url($file, PHP_URL_PATH);
+        if (is_string($resourcePath) && $resourcePath !== '') {
+            $resourcePath = rawurldecode($resourcePath);
+            $resourceRoot = realpath(__DIR__);
+            $resourceFile = realpath(__DIR__ . '/' . ltrim($resourcePath, '/'));
+            if ($resourceRoot !== false &&
+                $resourceFile !== false &&
+                str_starts_with($resourceFile, $resourceRoot . DIRECTORY_SEPARATOR) &&
+                @is_file($resourceFile)) {
+                $reason = 'Ստատիկ ռեսուրսը հասանելի է սերվերում՝ ' . $resourcePath;
+                wp_error_save_resolution($fingerprint, true, $reason, 'auto_resource_check');
+                $item['is_resolved'] = 1;
+                $item['resolved_at'] = date('Y-m-d H:i:s');
+                $item['resolved_by'] = 'auto_resource_check';
+                $item['resolution_reason'] = $reason;
+                return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+            }
+        }
+    }
+
     // 2. Database verification check
     if ($env === 'db' || stripos($message, 'PDOException') !== false || stripos($message, 'SQLSTATE') !== false || stripos($message, 'database') !== false || stripos($message, 'Connection timed out') !== false) {
         try {
@@ -1071,4 +1094,3 @@ function wp_error_register_shutdown_handler(): void {
 
 // Auto-register shutdown handler
 wp_error_register_shutdown_handler();
-

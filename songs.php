@@ -2752,7 +2752,7 @@ ocrImageFileInput?.addEventListener('change', async () => {
 const batchLyricsAssistantBtn = $('batchLyricsAssistantBtn');
 const batchLyricsAssistantPane = $('batchLyricsAssistantPane');
 const blaCloseBtn = $('blaCloseBtn');
-const blaSongCounter = $('blaSongCounter');
+const blaProgressBadge = $('blaProgressBadge');
 const blaSongTitle = $('blaSongTitle');
 const blaSongArtist = $('blaSongArtist');
 const blaFetchAiBtn = $('blaFetchAiBtn');
@@ -2773,7 +2773,7 @@ function renderBlaCurrentSong() {
   }
 
   const s = blaEmptySongs[blaCurrentIndex];
-  blaSongCounter.textContent = `${blaCurrentIndex + 1} / ${blaEmptySongs.length}`;
+  blaProgressBadge.textContent = `${blaCurrentIndex + 1} / ${blaEmptySongs.length}`;
   blaSongTitle.textContent = displayEditorSongTitle(s.title || '') || s.title || 'Անանուն';
   blaSongArtist.textContent = s.artist || '—';
   blaLyricsText.value = s.lyrics || '';
