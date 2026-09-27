@@ -371,17 +371,35 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
     // 1. PHP Server / Backend file verification
     $cleanFilePath = null;
     $isLocalPath = ($file !== '' && !preg_match('#^[a-zA-Z0-9+.-]+://|^[a-zA-Z0-9+.-]+:#', $file));
-    if ($isLocalPath) {
-        $base = basename($file);
-        $candidates = [
-            $file,
-            __DIR__ . '/' . $base,
-            __DIR__ . '/' . ltrim(preg_replace('#^.*?worship\.pmstudio\.am/#', '', $file), '/'),
-            dirname(__DIR__) . '/' . $base,
-        ];
+    $fileLookupPath = $file;
+    $fileScheme = strtolower((string)parse_url($file, PHP_URL_SCHEME));
+    $fileHost = strtolower((string)parse_url($file, PHP_URL_HOST));
+    $pageHost = strtolower((string)parse_url((string)($item['url'] ?? ''), PHP_URL_HOST));
+    $isSameOriginUrl = in_array($fileScheme, ['http', 'https'], true) &&
+        $fileHost !== '' && $pageHost !== '' && hash_equals($pageHost, $fileHost);
+
+    if ($isSameOriginUrl) {
+        $urlPath = parse_url($file, PHP_URL_PATH);
+        $fileLookupPath = is_string($urlPath) ? rawurldecode($urlPath) : '';
+    }
+
+    if ($isLocalPath || ($isSameOriginUrl && $fileLookupPath !== '')) {
+        $base = basename($fileLookupPath);
+        $candidates = $isSameOriginUrl
+            ? [__DIR__ . '/' . ltrim($fileLookupPath, '/')]
+            : [
+                $fileLookupPath,
+                __DIR__ . '/' . $base,
+                __DIR__ . '/' . ltrim($fileLookupPath, '/'),
+                dirname(__DIR__) . '/' . $base,
+            ];
+        $projectRoot = realpath(__DIR__);
         foreach ($candidates as $cand) {
-            if (!preg_match('#^[a-zA-Z0-9+.-]+://#', $cand) && @is_file($cand)) {
-                $cleanFilePath = realpath($cand);
+            $candidatePath = !preg_match('#^[a-zA-Z0-9+.-]+://#', $cand) ? realpath($cand) : false;
+            $isInsideProject = $projectRoot !== false && $candidatePath !== false &&
+                ($candidatePath === $projectRoot || str_starts_with($candidatePath, $projectRoot . DIRECTORY_SEPARATOR));
+            if ($candidatePath !== false && @is_file($candidatePath) && (!$isSameOriginUrl || $isInsideProject)) {
+                $cleanFilePath = $candidatePath;
                 break;
             }
         }
@@ -402,6 +420,22 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
 
         $fileMtime = @filemtime($cleanFilePath) ?: 0;
         $fileContent = @file_get_contents($cleanFilePath) ?: '';
+
+        // Safari reports a missing DOM binding as "null is not an object".
+        // If the obsolete identifier no longer exists in the deployed source,
+        // the recorded incident belongs to an older version of that file.
+        if (preg_match("/null is not an object \\(evaluating ['\"]([A-Za-z_$][A-Za-z0-9_$]*)\\./i", $message, $m)) {
+            $missingIdentifier = $m[1];
+            if (strpos($fileContent, $missingIdentifier) === false) {
+                $reason = "Հին DOM հղումը ($missingIdentifier) այլևս չկա " . basename($cleanFilePath) . '-ում';
+                wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+                $item['is_resolved'] = 1;
+                $item['resolved_at'] = date('Y-m-d H:i:s');
+                $item['resolved_by'] = 'auto_code_analysis';
+                $item['resolution_reason'] = $reason;
+                return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+            }
+        }
 
         // Case: Call to a member function prepare() on null / Undefined variable $conn
         if (stripos($message, 'Undefined variable $conn') !== false || stripos($message, 'Call to a member function prepare() on null') !== false) {
