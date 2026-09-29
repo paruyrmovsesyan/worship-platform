@@ -1,6 +1,6 @@
 const SHARPS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const FLATS = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
-const CHORD_REGEX = /(^|[\s([|])((?:[A-G](?:#|b)?)(?:maj7|maj9|maj|min7|min9|min|m7b5|m7|m9|m|dim7|dim|aug(?:[0-9]+)?|sus2|sus4|sus7|sus|add9|add2|add4|add|no5|no3|2|4|5|6|7|9|11|13)?(?:\([#b0-9+\-]+\))?(?:\/[A-G](?:#|b)?)?)(?=[\s)\],:;|]|$)/g;
+const CHORD_REGEX = /(^|[\s([|])((?:[A-G](?:#|b)?)(?:maj7|maj9|maj|min7|min9|min|m7b5|m7|m9|m|dim7|dim|aug(?:[0-9]+)?|\+(?:[0-9]+)?|sus2|sus4|sus7|sus|add9|add2|add4|add|no5|no3|2|4|5|6|7|9|11|13)?(?:\([#b0-9+\-]+\))?(?:\/[A-G](?:#|b)?)?)(?=[\s)\],:;|]|$)/g;
 
 export function noteIndex(note) {
   if (note === 'Cb') return 11;

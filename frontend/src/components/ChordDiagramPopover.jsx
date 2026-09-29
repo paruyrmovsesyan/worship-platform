@@ -94,6 +94,30 @@ function getGuitarShape(chordStr) {
   const rootStr = match[1].toUpperCase() + (match[2] || '');
   const quality = (match[3] || '').toLowerCase();
   const isMinor = quality.startsWith('m') && !quality.startsWith('maj');
+  const isAugmented = quality.includes('aug') || quality.includes('+');
+  const isNinth = /(?:^|[^0-9])9(?:$|[^0-9])/.test(quality);
+  const isDominantNinth = isNinth && !isMinor && !quality.startsWith('maj') && !quality.startsWith('add');
+
+  const rootSemis = noteIndex(rootStr);
+  if (rootSemis < 0) return GUITAR_SHAPES.C;
+
+  // 5th-string movable voicings: A9 = x02423, Aaug9 = x03423.
+  // They retain the 3rd, 7th, 9th, and the appropriate fifth when transposed.
+  if (isDominantNinth) {
+    const fretOffset = (rootSemis - 9 + 12) % 12;
+    return {
+      muted: [0],
+      open: fretOffset === 0 ? [1] : [],
+      fingers: [
+        [1, fretOffset],
+        [2, fretOffset + (isAugmented ? 3 : 2)],
+        [3, fretOffset + 4],
+        [4, fretOffset + 2],
+        [5, fretOffset + 3],
+      ].filter(([, fret]) => fret > 0),
+      ...(fretOffset > 0 ? { base: fretOffset } : {}),
+    };
+  }
 
   // Try Root + 'm' or Root
   const baseKey = `${rootStr}${isMinor ? 'm' : ''}`;
@@ -102,9 +126,6 @@ function getGuitarShape(chordStr) {
   }
 
   // 4. Algorithmic Barre Transposition fallback from E-shape / A-shape
-  const rootSemis = noteIndex(rootStr);
-  if (rootSemis < 0) return GUITAR_SHAPES.C;
-
   // E-string based barre (root on E string = string 0)
   // E is at index 4
   let fretOffset = (rootSemis - 4 + 12) % 12;
@@ -177,7 +198,10 @@ function PianoDiagram({ chord }) {
       const isSus4 = qualityStr.includes('sus4') || qualityStr.includes('sus');
       const isSus2 = qualityStr.includes('sus2');
       const is7 = qualityStr.includes('7');
-      const isMaj7 = qualityStr.includes('maj7') || qualityStr.includes('m7');
+      const isNinth = /(?:^|[^0-9])9(?:$|[^0-9])/.test(qualityStr);
+      const isAdd9 = qualityStr.includes('add9');
+      const isMaj7 = /maj(?:7|9|11|13)/.test(qualityStr);
+      const hasSeventh = is7 || (isNinth && !isAdd9);
 
       // Root
       activeSet.add(rootIndex);
@@ -205,8 +229,12 @@ function PianoDiagram({ chord }) {
       // Seventh
       if (isMaj7) {
         activeSet.add((rootIndex + 11) % 12);
-      } else if (is7) {
+      } else if (hasSeventh) {
         activeSet.add((rootIndex + 10) % 12);
+      }
+
+      if (isNinth) {
+        activeSet.add((rootIndex + 2) % 12);
       }
     }
 
