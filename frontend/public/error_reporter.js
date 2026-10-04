@@ -1,0 +1,350 @@
+/**
+ * Worship Platform — Real-Time Error Reporter
+ * Automatically captures frontend JavaScript errors, React crashes,
+ * unhandled promise rejections, console.error logs, and failed network/API calls,
+ * sending them to /error_api.php for instant real-time admin monitoring.
+ */
+(function() {
+  'use strict';
+
+  if (window.__wp_error_reporter_initialized) return;
+  window.__wp_error_reporter_initialized = true;
+
+  const ENDPOINT = '/error_api.php';
+  const recentErrors = new Map();
+  let errorCount = 0;
+  let errorWindowStart = Date.now();
+
+  function isStandaloneApp() {
+    try {
+      return (
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true ||
+        document.referrer.includes('android-app://') ||
+        sessionStorage.getItem('wp_active_app_source') === 'pwa'
+      );
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function getUserMeta() {
+    let userId = null;
+    let userEmail = null;
+    try {
+      const rawUser = localStorage.getItem('user') || localStorage.getItem('auth_user') || localStorage.getItem('worship_user');
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        if (parsed) {
+          userId = parsed.id || parsed.user_id || null;
+          userEmail = parsed.email || null;
+        }
+      }
+    } catch (_) {}
+    return { userId, userEmail };
+  }
+
+  function getDeviceInfo() {
+    try {
+      return {
+        screen: `${window.screen.width}x${window.screen.height}`,
+        viewport: `${window.innerWidth}x${window.innerHeight}`,
+        devicePixelRatio: window.devicePixelRatio || 1,
+        online: navigator.onLine !== false,
+        platform: navigator.platform || '',
+        language: navigator.language || '',
+      };
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function sendErrorReport(payload) {
+    try {
+      if (!payload) return;
+      const rawMsg = String(payload.message || '');
+      const rawStack = String(payload.stack_trace || '');
+      // Ignore background version manifest polling glitches and ServiceWorker registration rejections
+      if (
+        rawMsg.includes('version_manifest') ||
+        rawMsg.includes('Version manifest check') ||
+        rawStack.includes('version-check.js') ||
+        rawMsg.includes('Service worker registration') ||
+        rawMsg.includes('service worker registration') ||
+        rawMsg.includes('Failed to register a ServiceWorker') ||
+        rawMsg.includes('Failed to update a ServiceWorker') ||
+        rawMsg.includes('ServiceWorker') ||
+        rawStack.includes('ServiceWorkerContainer')
+      ) {
+        return;
+      }
+
+      const now = Date.now();
+      // Rate limiting: max 10 errors per 10 seconds
+      if (now - errorWindowStart > 10000) {
+        errorCount = 0;
+        errorWindowStart = now;
+      }
+      if (++errorCount > 10) {
+        return;
+      }
+
+      // Deduplicate identical errors within 25 seconds
+      const dedupKey = `${payload.level}|${payload.message}|${payload.file || ''}|${payload.line || 0}`;
+      const lastSent = recentErrors.get(dedupKey);
+      if (lastSent && (now - lastSent) < 25000) {
+        return;
+      }
+      recentErrors.set(dedupKey, now);
+
+      if (recentErrors.size > 80) {
+        for (const [k, t] of recentErrors.entries()) {
+          if (now - t > 50000) recentErrors.delete(k);
+        }
+      }
+
+      const body = JSON.stringify(payload);
+
+      if (typeof navigator.sendBeacon === 'function') {
+        const blob = new Blob([body], { type: 'application/json' });
+        const sent = navigator.sendBeacon(ENDPOINT, blob);
+        if (sent) return;
+      }
+
+      fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body,
+        keepalive: true,
+      }).catch(function() {});
+    } catch (_) {}
+  }
+
+  // 1. Uncaught JS Runtime Errors (Event listener)
+  window.addEventListener('error', function(event) {
+    try {
+      if (event.message === 'Script error.' && !event.filename) {
+        return;
+      }
+
+      const isResourceError = event.target && (event.target.tagName === 'IMG' || event.target.tagName === 'SCRIPT' || event.target.tagName === 'LINK');
+      const { userId, userEmail } = getUserMeta();
+
+      if (isResourceError) {
+        const resourceElement = event.target;
+        const resourceTag = resourceElement.tagName.toLowerCase();
+        const sourceUrl = resourceElement.src || resourceElement.href || '';
+        // Only log local application asset failures
+        if (sourceUrl && (sourceUrl.includes(window.location.host) || sourceUrl.startsWith('/'))) {
+          const reportResourceError = function() {
+            sendErrorReport({
+              level: 'warning',
+              environment: isStandaloneApp() ? 'app' : 'web',
+              message: `Resource failed to load: <${resourceTag}> ${sourceUrl}`,
+              file: sourceUrl,
+              line: null,
+              url: window.location.href,
+              stack_trace: null,
+              user_id: userId,
+              user_email: userEmail,
+              device_info: getDeviceInfo(),
+            });
+          };
+
+          if (resourceTag !== 'img' || resourceElement.dataset.wpResourceRetried === '1') {
+            reportResourceError();
+            return;
+          }
+
+          // A cancelled navigation or brief mobile-network drop can emit an
+          // image error even though the asset is healthy. Confirm availability
+          // and retry the image once before logging it as an active problem.
+          fetch(sourceUrl, {
+            method: 'HEAD',
+            cache: 'no-store',
+            credentials: 'same-origin',
+          }).then(function(response) {
+            if (!response.ok) {
+              reportResourceError();
+              return;
+            }
+
+            resourceElement.dataset.wpResourceRetried = '1';
+            const retryUrl = new URL(sourceUrl, window.location.href);
+            retryUrl.searchParams.set('_wp_retry', String(Date.now()));
+            resourceElement.src = retryUrl.href;
+          }).catch(reportResourceError);
+        }
+        return;
+      }
+
+      const errorObj = event.error || {};
+      sendErrorReport({
+        level: 'error',
+        environment: isStandaloneApp() ? 'app' : 'web',
+        message: event.message || (errorObj.message ? String(errorObj.message) : 'Uncaught JavaScript error'),
+        file: event.filename || null,
+        line: event.lineno || null,
+        url: window.location.href,
+        stack_trace: errorObj.stack || null,
+        user_id: userId,
+        user_email: userEmail,
+        device_info: getDeviceInfo(),
+      });
+    } catch (_) {}
+  }, true);
+
+  // 2. Unhandled Promise Rejections
+  window.addEventListener('unhandledrejection', function(event) {
+    try {
+      const reason = event.reason;
+      let message = 'Unhandled Promise Rejection';
+      let stack = null;
+      let file = null;
+      let line = null;
+
+      if (reason instanceof Error) {
+        message = `Unhandled Promise Rejection: ${reason.message || reason.name}`;
+        stack = reason.stack || null;
+      } else if (typeof reason === 'string') {
+        message = `Unhandled Promise Rejection: ${reason}`;
+      } else if (reason && typeof reason === 'object') {
+        try {
+          message = `Unhandled Promise Rejection: ${JSON.stringify(reason)}`;
+        } catch (_) {
+          message = 'Unhandled Promise Rejection: [Object]';
+        }
+      }
+
+      // Ignore transient ServiceWorker background update/registration network drops & version manifest polling
+      if (
+        message.includes('Failed to update a ServiceWorker') ||
+        message.includes('Failed to register a ServiceWorker') ||
+        message.includes('An unknown error occurred when fetching the script') ||
+        message.includes('The Service Worker script failed to load') ||
+        message.includes('service worker registration') ||
+        message.includes('version_manifest') ||
+        message.includes('Version manifest check')
+      ) {
+        return;
+      }
+
+      const { userId, userEmail } = getUserMeta();
+
+      sendErrorReport({
+        level: 'promise',
+        environment: isStandaloneApp() ? 'app' : 'web',
+        message: message,
+        file: file,
+        line: line,
+        url: window.location.href,
+        stack_trace: stack,
+        user_id: userId,
+        user_email: userEmail,
+        device_info: getDeviceInfo(),
+      });
+    } catch (_) {}
+  });
+
+  // 3. Intercept console.error (Captures React errors and third-party failures)
+  const origConsoleError = console.error;
+  console.error = function(...args) {
+    try {
+      origConsoleError.apply(console, args);
+      const text = args.map(a => {
+        if (a instanceof Error) return (a.message || '') + '\n' + (a.stack || '');
+        if (typeof a === 'object' && a !== null) {
+          try { return JSON.stringify(a); } catch (_) { return String(a); }
+        }
+        return String(a);
+      }).join(' ');
+
+      // Ignore normal dev warnings, version manifest polling & service worker registration notices
+      if (
+        text &&
+        !text.includes('Download the React DevTools') &&
+        !text.includes('[Fast Refresh]') &&
+        !text.includes('React Router Future Flag Warning') &&
+        !text.includes('version_manifest') &&
+        !text.includes('Version manifest check') &&
+        !text.includes('Service worker registration') &&
+        !text.includes('service worker registration') &&
+        !text.includes('ServiceWorkerContainer') &&
+        !text.includes('Failed to register a ServiceWorker')
+      ) {
+        const firstErr = args.find(a => a instanceof Error);
+        const { userId, userEmail } = getUserMeta();
+        sendErrorReport({
+          level: 'error',
+          environment: isStandaloneApp() ? 'app' : 'web',
+          message: text.length > 500 ? text.slice(0, 500) + '...' : text,
+          file: firstErr?.fileName || window.location.pathname,
+          line: firstErr?.lineNumber || null,
+          url: window.location.href,
+          stack_trace: firstErr?.stack || text,
+          user_id: userId,
+          user_email: userEmail,
+          device_info: getDeviceInfo(),
+        });
+      }
+    } catch (_) {}
+  };
+
+  // 4. Intercept fetch to report 500 server crashes and network failures
+  if (typeof window.fetch === 'function') {
+    const origFetch = window.fetch;
+    window.fetch = function(...args) {
+      return origFetch.apply(this, args).then(function(res) {
+        try {
+          const reqUrl = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
+          const isOfflineResponse =
+            navigator.onLine === false ||
+            res.statusText === 'Offline' ||
+            res.headers?.get('X-SW-Offline') === '1' ||
+            res.headers?.get('x-sw-offline') === '1';
+
+          // Only report real server crashes (5xx), ignoring simulated offline SW responses
+          if (!res.ok && res.status >= 500 && !reqUrl.includes('error_api.php') && !isOfflineResponse) {
+            const { userId, userEmail } = getUserMeta();
+            sendErrorReport({
+              level: 'fatal',
+              environment: isStandaloneApp() ? 'app' : 'web',
+              message: `HTTP Server Error ${res.status} ${res.statusText} on ${reqUrl}`,
+              file: reqUrl,
+              line: null,
+              url: window.location.href,
+              stack_trace: `Failed endpoint: ${reqUrl}\nStatus: ${res.status} (${res.statusText})`,
+              user_id: userId,
+              user_email: userEmail,
+              device_info: getDeviceInfo(),
+            });
+          }
+        } catch (_) {}
+        return res;
+      });
+    };
+  }
+
+  // 5. Global manual reporter
+  window.reportAppError = function(error, context) {
+    try {
+      const { userId, userEmail } = getUserMeta();
+      const message = (error instanceof Error) ? error.message : String(error);
+      const stack = (error instanceof Error) ? error.stack : null;
+
+      sendErrorReport({
+        level: (context && context.level) || 'error',
+        environment: isStandaloneApp() ? 'app' : 'web',
+        message: context?.prefix ? `[${context.prefix}] ${message}` : message,
+        file: context?.file || null,
+        line: context?.line || null,
+        url: window.location.href,
+        stack_trace: stack || (context?.stack ? String(context.stack) : null),
+        user_id: userId,
+        user_email: userEmail,
+        device_info: Object.assign(getDeviceInfo(), context || {}),
+      });
+    } catch (_) {}
+  };
+
+})();

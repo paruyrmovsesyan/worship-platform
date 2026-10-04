@@ -7,6 +7,12 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { APP_THEMES, applyAppTheme, getStoredAppTheme } from '../utils/appTheme';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import {
+  getBiometricStatus,
+  isBiometricLoginEnabled,
+  hasSavedBiometricCredentials,
+  setBiometricEnabled,
+} from '../utils/biometricAuth';
 import './Settings.css';
 
 const hasWhitespace = (value) => /\s/u.test(String(value));
@@ -96,6 +102,33 @@ export default function Settings() {
   // Danger States
   const [delPass, setDelPass] = useState('');
   const [showDelModal, setShowDelModal] = useState(false);
+
+  // Biometric States (Face ID / Touch ID)
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricLabel, setBiometricLabel] = useState('Face ID');
+  const [biometricEnabled, setBiometricActive] = useState(false);
+  const [hasBiometricCreds, setHasBiometricCreds] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const checkBio = async () => {
+      const status = await getBiometricStatus();
+      if (!cancelled && status.available) {
+        setBiometricAvailable(true);
+        if (status.label) setBiometricLabel(status.label);
+        const [isEnabled, hasCreds] = await Promise.all([
+          isBiometricLoginEnabled(),
+          hasSavedBiometricCredentials(),
+        ]);
+        if (!cancelled) {
+          setBiometricActive(isEnabled);
+          setHasBiometricCreds(hasCreds);
+        }
+      }
+    };
+    checkBio();
+    return () => { cancelled = true; };
+  }, []);
 
   const showMsg = useCallback((text, type = 'ok') => {
     setMsg({ text, type });
@@ -924,6 +957,48 @@ export default function Settings() {
         {/* SECURITY TAB */}
         {user && activeTab === 'security' && (
           <div className="settings-sections fade-in">
+            {biometricAvailable && (
+              <div className="settings-card mb-4" style={{ marginBottom: '1.5rem' }}>
+                <div className="card-header-flex" style={{ marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span className="menu-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                        <path d="M9 10h.01M15 10h.01M9.5 15a3.5 3.5 0 0 0 5 0" />
+                      </svg>
+                    </span>
+                    <h3 style={{ marginBottom: 0 }}>Մուտք {biometricLabel}-ով</h3>
+                  </div>
+                  <span className={`badge ${biometricEnabled ? 'badge-success' : 'badge-warning'}`}>
+                    {biometricEnabled ? t('settings.app.enabled', 'Միացված է') : t('settings.app.disabled', 'Անջատված է')}
+                  </span>
+                </div>
+                <p className="text-muted" style={{ marginBottom: '1.25rem' }}>
+                  Օգտագործեք {biometricLabel}-ը հավելված արագ և ապահով մուտք գործելու համար՝ առանց ամեն անգամ գաղտնաբառ մուտքագրելու։
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                  <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)' }}>
+                    {biometricEnabled
+                      ? `${biometricLabel} մուտքն ակտիվ է այս սարքում:`
+                      : hasBiometricCreds
+                        ? `${biometricLabel} մուտքն անջատված է:`
+                        : `Մուտքի տվյալները կպահպանվեն առաջիկա մուտքի ժամանակ:`}
+                  </span>
+                  <button
+                    className={`settings-btn ${biometricEnabled ? 'secondary' : 'primary'} small`}
+                    onClick={async () => {
+                      const nextState = !biometricEnabled;
+                      await setBiometricEnabled(nextState);
+                      setBiometricActive(nextState);
+                      showMsg(nextState ? `${biometricLabel} մուտքը միացվեց` : `${biometricLabel} մուտքն անջատվեց`);
+                    }}
+                  >
+                    {biometricEnabled ? t('settings.app.disable', 'Անջատել') : t('settings.app.enable', 'Միացնել')}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="settings-card">
               <div className="card-header-flex" style={{ marginBottom: '1rem' }}>
                 <h3>{t('settings.security.changePassword')}</h3>

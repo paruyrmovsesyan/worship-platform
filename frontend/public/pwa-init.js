@@ -1491,10 +1491,10 @@
         return {
           supported: false,
           enabledBySite: false,
-          permission: 'denied',
+          permission: 'default',
           subscribed: false,
           suppressed: false,
-          userDisabled: true,
+          userDisabled: false,
           accountDisabled: false,
           adminRemoved: false
         };

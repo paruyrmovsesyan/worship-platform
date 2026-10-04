@@ -4,6 +4,12 @@ import { useIsPWA } from '../hooks/useIsPWA';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import {
+  getBiometricStatus,
+  isBiometricLoginEnabled,
+  saveBiometricCredentials,
+  performBiometricLogin,
+} from '../utils/biometricAuth';
 import './Login.css';
 
 const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
@@ -25,10 +31,28 @@ const Login = () => {
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [googleEnabled, setGoogleEnabled] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricLabel, setBiometricLabel] = useState('Face ID');
+  const [biometricReady, setBiometricReady] = useState(false);
   const [viewMode, setViewMode] = useState(() => {
     if (searchParams.get('mode') === 'login') return 'login';
     return isPWA ? 'welcome' : 'login';
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    const checkBio = async () => {
+      const status = await getBiometricStatus();
+      if (!cancelled && status.available) {
+        setBiometricAvailable(true);
+        if (status.label) setBiometricLabel(status.label);
+        const hasSaved = await isBiometricLoginEnabled();
+        if (!cancelled) setBiometricReady(hasSaved);
+      }
+    };
+    checkBio();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     const socialError = searchParams.get('social_error');
@@ -155,6 +179,9 @@ const Login = () => {
         if (data.user) {
           setUser(data.user);
         }
+        if (rememberMe) {
+          saveBiometricCredentials(login.trim(), password).catch(() => {});
+        }
         navigate(next, { replace: true });
         checkAuth().catch(() => {});
         return;
@@ -174,6 +201,66 @@ const Login = () => {
       setIsLoading(false);
     } finally {
       isSubmittingRef.current = false;
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    if (isLoading) return;
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const creds = await performBiometricLogin(`Մուտք ${biometricLabel}-ով`);
+      if (!creds?.login || !creds?.password) {
+        throw new Error('Պահպանված տվյալները թերի են');
+      }
+
+      const response = await fetch('/login_api.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        cache: 'no-store',
+        body: JSON.stringify({
+          login: creds.login,
+          password: creds.password,
+          remember_me: true,
+          source,
+        }),
+      });
+
+      const rawText = await response.text();
+      let data = null;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        if (response.ok) {
+          const u = await checkAuth();
+          if (u) {
+            navigate(next, { replace: true });
+            return;
+          }
+        }
+        throw new Error(t('auth.networkError'));
+      }
+
+      if (response.ok && data && (data.ok || data.success)) {
+        if (data.user) setUser(data.user);
+        navigate(next, { replace: true });
+        checkAuth().catch(() => {});
+        return;
+      }
+
+      setError(data?.error || data?.message || t('auth.invalidLogin'));
+    } catch (bioErr) {
+      console.warn('Biometric login failed:', bioErr);
+      const msg = bioErr?.message || '';
+      if (!msg.includes('cancel') && !msg.includes('Cancel') && !msg.includes('userCancel')) {
+        setError(msg || `${biometricLabel} մուտքը չհաջողվեց`);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -254,6 +341,16 @@ const Login = () => {
 
               {/* Action Buttons */}
               <div className="welcome-actions-stack">
+                {biometricAvailable && biometricReady && (
+                  <button type="button" className="btn-welcome-biometric" onClick={handleBiometricLogin} disabled={isLoading}>
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                      <path d="M9 10h.01M15 10h.01M9.5 15a3.5 3.5 0 0 0 5 0" />
+                    </svg>
+                    <span>Մուտք {biometricLabel}-ով</span>
+                  </button>
+                )}
+
                 <button type="button" className="btn-welcome-primary" onClick={() => setViewMode('login')}>
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" strokeWidth="2.2" /></svg>
                   <span>{t('auth.guestLogin')}</span>
@@ -360,6 +457,21 @@ const Login = () => {
                 <button type="submit" className="login-btn-primary" disabled={isLoading}>
                   {isLoading ? t('auth.pleaseWait') : t('auth.loginBtn')}
                 </button>
+
+                {biometricAvailable && biometricReady && (
+                  <button
+                    type="button"
+                    className="login-btn-biometric"
+                    onClick={handleBiometricLogin}
+                    disabled={isLoading}
+                  >
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                      <path d="M9 10h.01M15 10h.01M9.5 15a3.5 3.5 0 0 0 5 0" />
+                    </svg>
+                    <span>Մուտք {biometricLabel}-ով</span>
+                  </button>
+                )}
               </form>
 
               <div className="login-social-sep">{t('auth.orContinue')}</div>

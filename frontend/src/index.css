@@ -196,14 +196,14 @@ main { flex: 1; }
   /* Website Mobile uses top Navbar, needs top padding */
   body.website-theme main { padding-top: var(--nav-height); }
 
-  /* iOS 27 Standalone PWA Safe-Area & Blur Protection */
-  body.is-pwa.is-ios #root,
-  body.wp-standalone-app.is-ios #root {
+  /* iOS Standalone PWA Safe-Area & Blur Protection (browser PWA only, native handles status bar) */
+  body.is-pwa.is-ios:not(.is-native) #root,
+  body.wp-standalone-app.is-ios:not(.is-native) #root {
     padding-top: max(env(safe-area-inset-top, 0px), 44px);
   }
 
-  body.is-pwa.is-ios .page-container,
-  body.wp-standalone-app.is-ios .page-container {
+  body.is-pwa.is-ios:not(.is-native) .page-container,
+  body.wp-standalone-app.is-ios:not(.is-native) .page-container {
     padding-top: 36px !important;
   }
 
@@ -244,11 +244,38 @@ main { flex: 1; }
   body.is-pwa main > *,
   body.is-pwa * {
     overflow-anchor: none !important;
-    -webkit-overflow-scrolling: touch;
   }
   
   .desktop-only { display: none !important; }
   .hide-mobile { display: none !important; }
+}
+
+/* ── Clean Native Mobile Spacing (iOS & Android Native Apps) ──
+   In native Capacitor apps, the OS status bar / Dynamic Island notch requires
+   safe-area-inset-top so header elements don't get covered by the camera notch,
+   while removing the extra artificial browser PWA padding (36px/44px). */
+body.is-native #root {
+  padding-top: env(safe-area-inset-top, 0px) !important;
+}
+
+body.is-native .page-container,
+body.is-native .songs-page,
+body.is-native .setlists-page,
+body.is-native .chats-list-page,
+body.is-native .chat-header,
+body.is-native .sll-header,
+body.is-native .friends-page,
+body.is-native .sla-page,
+body.is-native .song-view-page {
+  padding-top: 6px !important;
+}
+
+body.is-native main {
+  padding-top: 0 !important;
+}
+
+body.is-native .hub-header {
+  padding-top: 8px !important;
 }
 
 @media (min-width: 901px) {

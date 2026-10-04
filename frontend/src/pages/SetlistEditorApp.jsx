@@ -8,6 +8,7 @@ import { getSongCoverStyle } from '../utils/songCover';
 import { usePageReady } from '../hooks/usePageReady';
 import { renderWithChords } from '../utils/chordTransposer';
 import PrintStudio from '../components/PrintStudio';
+import { nativeShare, triggerHaptic } from '../utils/nativeFeatures';
 import './Setlists.css';
 import './SongsApp.css';
 import './SetlistEditorApp.css';
@@ -1065,17 +1066,14 @@ export default function SetlistEditorApp() {
       fullUrl = window.location.origin + `/setlists/${id}`;
     }
 
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: setlistData?.name || 'Երգացանկ',
-          text: `🎵 Երգացանկ՝ ${setlistData?.name || ''}`,
-          url: fullUrl
-        });
-      } catch (err) {
-        if (err.name !== 'AbortError') console.error(err);
-      }
-    } else {
+    const shareRes = await nativeShare({
+      title: setlistData?.name || 'Երգացանկ',
+      text: `🎵 Երգացանկ՝ ${setlistData?.name || ''}`,
+      url: fullUrl,
+      dialogTitle: setlistData?.name || 'Երգացանկ'
+    });
+
+    if (shareRes === 'copied') {
       handleCopyPublicLink();
     }
   };

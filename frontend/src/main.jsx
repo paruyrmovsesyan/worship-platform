@@ -8,6 +8,9 @@ import { CallProvider } from './context/CallContext.jsx'
 import App from './App.jsx'
 import './index.css'
 import './styles/LightTheme.css'
+import { setupNativeNetwork } from './utils/nativeNetwork.js'
+
+setupNativeNetwork();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

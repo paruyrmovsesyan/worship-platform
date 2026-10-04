@@ -40,13 +40,23 @@ function readJson(){
 
 /* GET USER PROFILE & PLAN */
 if ($action === 'get_profile' && $method === 'GET') {
-    $st = $pdo->prepare("SELECT id, name, username, email, plan_type FROM users WHERE id=? LIMIT 1");
+    try {
+        $pdo->exec("ALTER TABLE users ADD COLUMN notifications_enabled TINYINT(1) DEFAULT 1");
+    } catch (Throwable $e) {}
+
+    $st = $pdo->prepare("SELECT id, name, username, email, plan_type, COALESCE(notifications_enabled, 1) AS notifications_enabled FROM users WHERE id=? LIMIT 1");
     $st->execute([$uid]);
     $user = $st->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
         out(["error" => "User not found"], 404);
     }
+
+    $stPush = $pdo->prepare("SELECT COUNT(*) FROM push_subscriptions WHERE user_id = ? AND is_active = 1 AND permission_state = 'granted'");
+    $stPush->execute([$uid]);
+    $hasActivePush = ((int)$stPush->fetchColumn()) > 0;
+
+    $notifEnabled = ((int)$user['notifications_enabled'] === 1) || $hasActivePush;
 
     out([
         "ok" => true,
@@ -55,8 +65,32 @@ if ($action === 'get_profile' && $method === 'GET') {
             "name" => $user['name'],
             "username" => $user['username'] ?? '',
             "email" => $user['email'],
-            "plan_type" => $user['plan_type'] ?: 'free'
+            "plan_type" => $user['plan_type'] ?: 'free',
+            "notifications_enabled" => $notifEnabled
         ]
+    ]);
+}
+
+/* TOGGLE NOTIFICATIONS */
+if ($action === 'toggle_notifications' && $method === 'POST') {
+    $d = readJson();
+    $enabled = !empty($d['enabled']) ? 1 : 0;
+
+    try {
+        $pdo->exec("ALTER TABLE users ADD COLUMN notifications_enabled TINYINT(1) DEFAULT 1");
+    } catch (Throwable $e) {}
+
+    $st = $pdo->prepare("UPDATE users SET notifications_enabled = ? WHERE id = ?");
+    $st->execute([$enabled, $uid]);
+
+    try {
+        $stPush = $pdo->prepare("UPDATE push_subscriptions SET is_active = ? WHERE user_id = ?");
+        $stPush->execute([$enabled, $uid]);
+    } catch (Throwable $e) {}
+
+    out([
+        "ok" => true,
+        "notifications_enabled" => (bool)$enabled
     ]);
 }
 

@@ -54,6 +54,7 @@ import Notifications from './pages/Notifications';
 import ChatsList from './pages/ChatsList';
 import TransposeTool from './pages/TransposeTool';
 import InstallApp from './pages/InstallApp';
+import { Capacitor } from '@capacitor/core';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useIsPWA } from './hooks/useIsPWA';
 import ScrollToTop from './components/ScrollToTop';
@@ -98,8 +99,12 @@ function App() {
   const { t } = useLanguage();
 
   useEffect(() => {
-    document.body.classList.remove('mobile-theme', 'app-desktop-theme', 'website-theme', 'is-pwa', 'is-ios', 'is-android');
+    document.body.classList.remove('mobile-theme', 'app-desktop-theme', 'website-theme', 'is-pwa', 'is-ios', 'is-android', 'is-native');
     
+    if (Capacitor.isNativePlatform()) {
+      document.body.classList.add('is-native');
+    }
+
     if (isPWA) {
       document.body.classList.add('is-pwa');
       if (isIOSMobile) {

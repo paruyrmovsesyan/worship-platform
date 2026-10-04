@@ -89,6 +89,16 @@ if (!empty($_SESSION['user_id'])) {
       $userData["birth_date"] = !empty($u["birth_date"]) && $u["birth_date"] !== '0000-00-00' ? (string)$u["birth_date"] : '';
       $userData["gender"] = !empty($u["gender"]) ? (string)$u["gender"] : '';
       $userData["phone_number"] = !empty($u["phone_number"]) ? (string)$u["phone_number"] : '';
+
+      $hasActivePush = false;
+      try {
+        $stPush = $pdo->prepare("SELECT COUNT(*) FROM push_subscriptions WHERE user_id = ? AND is_active = 1 AND permission_state = 'granted'");
+        $stPush->execute([$u['id']]);
+        $hasActivePush = ((int)$stPush->fetchColumn()) > 0;
+      } catch (Throwable $e) {}
+
+      $notifCol = isset($u["notifications_enabled"]) ? (int)$u["notifications_enabled"] : 1;
+      $userData["notifications_enabled"] = ($notifCol === 1) || $hasActivePush;
     } else {
       wp_auth_force_local_logout(true);
       respond([

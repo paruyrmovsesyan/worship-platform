@@ -149,59 +149,64 @@ export default function Profile() {
     }
   };
 
-  const [pushEnabled, setPushEnabled] = useState(false);
-  const [pushSupported, setPushSupported] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(() => {
+    return user?.notifications_enabled !== false;
+  });
+  const [pushSupported, setPushSupported] = useState(true);
+
+  useEffect(() => {
+    if (typeof user?.notifications_enabled !== 'undefined') {
+      setPushEnabled(!!user.notifications_enabled);
+    }
+  }, [user?.notifications_enabled]);
 
   useEffect(() => {
     let interval;
     const checkPush = () => {
       if (!window.WPPushManager) return;
       window.WPPushManager.getStatus().then(status => {
-        setPushEnabled(
-          !!status &&
-          status.supported &&
-          status.enabledBySite &&
-          status.permission === 'granted' &&
-          status.subscribed &&
-          !status.userDisabled &&
-          !status.accountDisabled &&
-          !status.adminRemoved
-        );
-        setPushSupported(!!status && status.supported && status.enabledBySite && !status.adminRemoved);
+        if (!status) return;
+        setPushSupported(!!status.supported && status.enabledBySite && !status.adminRemoved);
+        if (status.adminRemoved || status.accountDisabled) {
+          setPushEnabled(false);
+        } else if (status.subscribed && status.permission === 'granted') {
+          setPushEnabled(true);
+        }
       }).catch(console.error);
     };
-    interval = setInterval(checkPush, 2000);
+    interval = setInterval(checkPush, 3000);
     checkPush();
     
     return () => clearInterval(interval);
   }, []);
 
   const togglePush = async () => {
-    if (!window.WPPushManager) {
-      alert(t('profile.pushMissingManager'));
-      return;
-    }
     try {
-      if (pushEnabled) {
+      const nextState = !pushEnabled;
+      if (!nextState) {
         const shouldDisable = window.confirm(t('profile.pushDisableConfirm'));
         if (!shouldDisable) {
           return;
         }
-        await window.WPPushManager.disable();
-        setPushEnabled(false);
-      } else {
-        if (window.WPPushManager.clearSuppression) {
-          window.WPPushManager.clearSuppression();
-        }
-        const res = await window.WPPushManager.enable();
-        if (res && res.ok) {
-          setPushEnabled(true);
-        } else {
-          if (res && res.error === 'not_supported') {
-            alert(t('profile.pushNotSupported'));
-          } else {
-            alert(t('profile.pushEnableError'));
+      }
+
+      setPushEnabled(nextState);
+
+      // Persist to user account on server
+      fetch('/user_api.php?action=toggle_notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: nextState })
+      }).catch(console.error);
+
+      if (window.WPPushManager) {
+        if (nextState) {
+          if (window.WPPushManager.clearSuppression) {
+            window.WPPushManager.clearSuppression();
           }
+          await window.WPPushManager.enable().catch(() => {});
+        } else {
+          await window.WPPushManager.disable().catch(() => {});
         }
       }
     } catch (err) {
@@ -247,7 +252,12 @@ export default function Profile() {
 
     fetch('/user_api.php?action=get_profile')
       .then(res => res.json())
-      .then(() => {
+      .then((data) => {
+        if (data?.ok && data.user) {
+          if (typeof data.user.notifications_enabled !== 'undefined') {
+            setPushEnabled(!!data.user.notifications_enabled);
+          }
+        }
         setLoading(false);
       })
       .catch(err => {

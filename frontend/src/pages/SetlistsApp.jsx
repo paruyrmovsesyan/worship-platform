@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { usePageReady } from '../hooks/usePageReady';
 import { getSongCoverStyle } from '../utils/songCover';
+import { nativeShare } from '../utils/nativeFeatures';
 import './Setlists.css';
 
 const VIEW_MODE_KEY = 'pwa_setlists_view_mode_v1';
@@ -288,21 +289,14 @@ export default function SetlistsApp() {
         shareUrl = `${window.location.origin}/setlists/public?token=${token}`;
       }
 
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: list.name,
-            text: `Worship Setlist: ${list.name}`,
-            url: shareUrl,
-          });
-          return;
-        } catch (shareErr) {
-          if (shareErr.name === 'AbortError') return;
-        }
-      }
+      const shareResult = await nativeShare({
+        title: list.name,
+        text: `Worship Setlist: ${list.name}`,
+        url: shareUrl,
+        dialogTitle: list.name
+      });
 
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(shareUrl);
+      if (shareResult === 'copied') {
         showToast(
           language === 'am'
             ? 'Հղումը պատճենվեց'
@@ -310,8 +304,6 @@ export default function SetlistsApp() {
             ? 'Ссылка скопирована'
             : 'Link copied'
         );
-      } else {
-        prompt('Copy link:', shareUrl);
       }
     } catch (err) {
       console.error(err);

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+import { Capacitor } from '@capacitor/core';
+
 const LEGACY_PWA_SESSION_KEY = 'wp_active_app_source';
 
 function clearLegacyAppSource() {
@@ -12,6 +14,10 @@ function clearLegacyAppSource() {
 
 function detectPwaMode() {
   if (typeof window === 'undefined') return false;
+
+  if (Capacitor.isNativePlatform()) {
+    return true;
+  }
 
   const browserMode = window.matchMedia('(display-mode: browser)').matches;
   const nativeApp = !browserMode && (

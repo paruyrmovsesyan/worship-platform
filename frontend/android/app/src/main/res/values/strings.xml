@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Worship Platform</string>
+    <string name="title_activity_main">Worship Platform</string>
+    <string name="package_name">am.pmstudio.worship</string>
+    <string name="custom_url_scheme">am.pmstudio.worship</string>
+</resources>

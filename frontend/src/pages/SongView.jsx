@@ -14,6 +14,7 @@ import SongViewWebTools from '../components/SongViewWebTools';
 import PrintStudio from '../components/PrintStudio';
 import ChordDiagramPopover from '../components/ChordDiagramPopover';
 import { useIsPWA } from '../hooks/useIsPWA';
+import { nativeShare } from '../utils/nativeFeatures';
 
 function getYouTubeEmbedUrl(url) {
   if (!url) return null;
@@ -213,19 +214,27 @@ export default function SongView() {
 
   const copyShareLink = async () => {
     try {
-      const url = new URL(window.location.href);
-      if (targetKey) url.searchParams.set('tkey', targetKey);
-      else url.searchParams.delete('tkey');
-      
-      if (capo > 0) url.searchParams.set('capo', String(capo));
-      else url.searchParams.delete('capo');
-      
-      url.searchParams.set('view', viewMode);
-      url.searchParams.set('font', String(fontSize));
-      
-      await navigator.clipboard.writeText(url.toString());
-      setFavMsg(t('songView.linkCopied', 'Հղումը պատճենված է'));
-      setTimeout(() => setFavMsg(''), 2000);
+      const shareUrl = `https://worship.pmstudio.am/song/${id}`;
+      const urlObj = new URL(shareUrl);
+      if (targetKey) urlObj.searchParams.set('tkey', targetKey);
+      if (capo > 0) urlObj.searchParams.set('capo', String(capo));
+      if (viewMode && viewMode !== 'all') urlObj.searchParams.set('view', viewMode);
+
+      const songTitle = song?.title ? getLocalizedTitle(song.title, language) : 'Song';
+      const shareResult = await nativeShare({
+        title: songTitle,
+        text: `${songTitle} — Worship Platform`,
+        url: urlObj.toString(),
+        dialogTitle: t('songView.share', 'Կիսվել')
+      });
+
+      if (shareResult === 'copied') {
+        setFavMsg(t('songView.linkCopied', 'Հղումը պատճենված է'));
+        setTimeout(() => setFavMsg(''), 2000);
+      } else if (shareResult) {
+        setFavMsg(t('songView.shared', 'Կիսված է'));
+        setTimeout(() => setFavMsg(''), 2000);
+      }
     } catch (e) {
       setFavMsg(t('songView.linkCopyError', 'Սխալ պատճենման ժամանակ'));
       setTimeout(() => setFavMsg(''), 2000);

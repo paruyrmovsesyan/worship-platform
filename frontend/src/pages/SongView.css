@@ -155,10 +155,22 @@
 /* Default (Web) UI */
 .sv-control-panel { display: none; }
 
-/* PWA UI */
+/* PWA / Native App UI */
 @media all and (display-mode: standalone) {
   .sv-inline-controls { display: none !important; }
   .sv-control-panel { display: block; }
+}
+
+body.is-pwa .sv-inline-controls,
+body.mobile-theme .sv-inline-controls,
+body.wp-main-app.song-view-active .sv-inline-controls {
+  display: none !important;
+}
+
+body.is-pwa .sv-control-panel,
+body.mobile-theme .sv-control-panel,
+body.wp-main-app.song-view-active .sv-control-panel {
+  display: block !important;
 }
 
 /* Inline Controls (Old Web UI) */
@@ -633,8 +645,12 @@ body.wp-standalone-app .song-view-page {
   box-sizing: border-box !important;
 }
 
-body.is-pwa.is-ios .song-view-page {
+body.is-pwa.is-ios:not(.is-native) .song-view-page {
   padding-top: 20px !important;
+}
+
+body.is-native .song-view-page {
+  padding-top: 4px !important;
 }
 
 body.mobile-theme .song-view-page .sv-segment-control,

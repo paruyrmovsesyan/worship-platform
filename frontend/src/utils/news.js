@@ -1,3 +1,5 @@
+import { API_BASE_URL } from './nativeNetwork';
+
 const fallbackNewsByLanguage = {
   am: [
     {
@@ -137,10 +139,12 @@ export const getWebNewsImageUrl = (value) => {
   const looksMalformed = url.includes('](') || url.includes('/Users/') || url.includes('\\');
   if (looksMalformed) {
     const filenames = url.match(/[A-Za-z0-9._-]+\.(?:jpe?g|png|webp|gif)/gi);
-    return filenames?.length ? `/uploads/news/${filenames[filenames.length - 1]}` : '';
+    return filenames?.length ? `${API_BASE_URL}/uploads/news/${filenames[filenames.length - 1]}` : '';
   }
 
-  return /^(?:https?:\/\/|\/)/i.test(url) ? url : '';
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith('/')) return `${API_BASE_URL}${url}`;
+  return '';
 };
 
 export const getNewsImageUrl = (article) => {

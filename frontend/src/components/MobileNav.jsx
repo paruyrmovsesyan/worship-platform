@@ -130,9 +130,21 @@ export default function MobileNav() {
     return null;
   }
 
+  const handleNavClick = (path, e) => {
+    if (!guardPath(path)) {
+      e.preventDefault();
+      return;
+    }
+    if (typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()) {
+      import('@capacitor/haptics').then(({ Haptics, ImpactStyle }) => {
+        Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+      }).catch(() => {});
+    }
+  };
+
   return createPortal(
     <nav id="wpAppDock" className={`mobile-bottom-nav ${isKeyboardOpen ? 'keyboard-hidden' : ''}`}>
-      <NavLink to="/" end onClick={(e) => { if (!guardPath('/')) e.preventDefault(); }} className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+      <NavLink to="/" end onClick={(e) => handleNavClick('/', e)} className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
           <polyline points="9 22 9 12 15 12 15 22"></polyline>
@@ -140,7 +152,7 @@ export default function MobileNav() {
         <span>{t('nav.home')}</span>
       </NavLink>
 
-      <NavLink to="/songs" onClick={(e) => { if (!guardPath('/songs')) e.preventDefault(); }} className={({isActive}) => isActive || location.pathname === '/transpose' ? 'nav-item active' : 'nav-item'}>
+      <NavLink to="/songs" onClick={(e) => handleNavClick('/songs', e)} className={({isActive}) => isActive || location.pathname === '/transpose' ? 'nav-item active' : 'nav-item'}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -150,7 +162,7 @@ export default function MobileNav() {
 
       <NavLink
         to="/chats"
-        onClick={(e) => { if (!guardPath('/chats')) e.preventDefault(); }}
+        onClick={(e) => handleNavClick('/chats', e)}
         className={({isActive}) => (isActive || location.pathname.startsWith('/chat/')) ? 'nav-item active' : 'nav-item'}
       >
         <span className="nav-icon-wrap">
@@ -167,7 +179,7 @@ export default function MobileNav() {
       </NavLink>
 
       {user ? (
-        <NavLink to="/profile" onClick={(e) => { if (!guardPath('/profile')) e.preventDefault(); }} className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+        <NavLink to="/profile" onClick={(e) => handleNavClick('/profile', e)} className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
@@ -175,7 +187,7 @@ export default function MobileNav() {
           <span>{t('profile.title')}</span>
         </NavLink>
       ) : (
-        <NavLink to="/login" className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
+        <NavLink to="/login" onClick={() => { if (typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()) { import('@capacitor/haptics').then(({ Haptics, ImpactStyle }) => Haptics.impact({ style: ImpactStyle.Light }).catch(() => {})).catch(() => {}); } }} className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
             <polyline points="10 17 15 12 10 7"></polyline>

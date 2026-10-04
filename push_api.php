@@ -43,6 +43,32 @@ try {
             'publicKey' => (string)($config['vapid_public_key'] ?? ''),
         ]);
     }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($action === 'user_status' || $action === 'status')) {
+        $uid = (int)($_SESSION['user_id'] ?? 0);
+        $accountEnabled = false;
+        if ($uid > 0) {
+            $pdo = wp_runtime_open_pdo();
+            $stPush = $pdo->prepare("SELECT COUNT(*) FROM push_subscriptions WHERE user_id = ? AND is_active = 1 AND permission_state = 'granted'");
+            $stPush->execute([$uid]);
+            $hasActivePush = ((int)$stPush->fetchColumn()) > 0;
+
+            try {
+                $stUser = $pdo->prepare("SELECT notifications_enabled FROM users WHERE id = ?");
+                $stUser->execute([$uid]);
+                $userRow = $stUser->fetch(PDO::FETCH_ASSOC);
+                $notifCol = $userRow ? (int)($userRow['notifications_enabled'] ?? 1) : 1;
+            } catch (Throwable $e) {
+                $notifCol = 1;
+            }
+            $accountEnabled = ($notifCol === 1) || $hasActivePush;
+        }
+        wp_push_api_response([
+            'ok' => true,
+            'enabled' => $accountEnabled,
+            'user_id' => $uid,
+        ]);
+    }
 } catch (Throwable $err) {
     wp_push_api_response(['ok' => false, 'error' => $err->getMessage(), 'file' => $err->getFile(), 'line' => $err->getLine()], 500);
 }
