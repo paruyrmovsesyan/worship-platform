@@ -9,6 +9,7 @@ import {
   isBiometricLoginEnabled,
   saveBiometricCredentials,
   performBiometricLogin,
+  getBiometricAccount,
 } from '../utils/biometricAuth';
 import './Login.css';
 
@@ -34,6 +35,8 @@ const Login = () => {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricLabel, setBiometricLabel] = useState('Face ID');
   const [biometricReady, setBiometricReady] = useState(false);
+  const [biometricAccount, setBiometricAccount] = useState('');
+  const [biometricConfirmOpen, setBiometricConfirmOpen] = useState(false);
   const [viewMode, setViewMode] = useState(() => {
     if (searchParams.get('mode') === 'login') return 'login';
     return isPWA ? 'welcome' : 'login';
@@ -47,7 +50,11 @@ const Login = () => {
         setBiometricAvailable(true);
         if (status.label) setBiometricLabel(status.label);
         const hasSaved = await isBiometricLoginEnabled();
-        if (!cancelled) setBiometricReady(hasSaved);
+        const savedAccount = hasSaved ? await getBiometricAccount() : '';
+        if (!cancelled) {
+          setBiometricReady(hasSaved);
+          setBiometricAccount(savedAccount);
+        }
       }
     };
     checkBio();
@@ -233,6 +240,11 @@ const Login = () => {
     }
   };
 
+  const openBiometricConfirmation = () => {
+    setError('');
+    setBiometricConfirmOpen(true);
+  };
+
   const googleAuthUrl = `/social_auth.php?provider=google&mode=login&next=${encodeURIComponent(next)}&source=${encodeURIComponent(source)}&remember=${rememberMe ? '1' : '0'}`;
   const handleGoogleClick = (event) => {
     event.preventDefault();
@@ -279,7 +291,61 @@ const Login = () => {
       {/* Form Section */}
       <div className="login-form-section">
         <div className="login-form-container">
-          {viewMode === 'welcome' ? (
+          {biometricConfirmOpen ? (
+            <section className="biometric-confirmation" aria-labelledby="biometric-confirm-title">
+              <button
+                type="button"
+                className="biometric-confirm-back"
+                onClick={() => setBiometricConfirmOpen(false)}
+                disabled={isLoading}
+                aria-label="Վերադառնալ"
+              >
+                <span aria-hidden="true">‹</span>
+              </button>
+
+              <div className={`biometric-face-orb ${isLoading ? 'is-scanning' : ''}`} aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none">
+                  <path d="M19 8H12a4 4 0 0 0-4 4v7M45 8h7a4 4 0 0 1 4 4v7M56 45v7a4 4 0 0 1-4 4h-7M19 56h-7a4 4 0 0 1-4-4v-7" />
+                  <path d="M23 27h.01M41 27h.01M24 40c5 4 11 4 16 0" />
+                </svg>
+              </div>
+
+              <div className="biometric-profile-avatar">
+                {(biometricAccount || 'W').trim().charAt(0).toUpperCase()}
+              </div>
+              <span className="biometric-confirm-eyebrow">ԱՆՎՏԱՆԳ ՄՈՒՏՔ</span>
+              <h1 id="biometric-confirm-title">Հաստատեք մուտքը</h1>
+              <p className="biometric-confirm-copy">
+                Օգտագործեք {biometricLabel}-ը՝ ձեր պրոֆիլ անվտանգ մուտք գործելու համար։
+              </p>
+
+              <div className="biometric-account-card">
+                <span>Պրոֆիլ</span>
+                <strong>{biometricAccount || 'Worship Platform'}</strong>
+                <small>Միայն այս սարքում</small>
+              </div>
+
+              {error && <div className="login-error-msg biometric-confirm-error">{error}</div>}
+
+              <button
+                type="button"
+                className="biometric-confirm-button"
+                onClick={handleBiometricLogin}
+                disabled={isLoading}
+              >
+                <span>{isLoading ? 'Հաստատվում է…' : `Հաստատել ${biometricLabel}-ով`}</span>
+                {!isLoading && <span aria-hidden="true">→</span>}
+              </button>
+              <button
+                type="button"
+                className="biometric-password-button"
+                onClick={() => { setBiometricConfirmOpen(false); setViewMode('login'); }}
+                disabled={isLoading}
+              >
+                Մուտք գործել գաղտնաբառով
+              </button>
+            </section>
+          ) : viewMode === 'welcome' ? (
             <div className="welcome-landing-wrap">
               <div className="welcome-intro">
                 <img src="/user_uploaded_logo.png" alt="Worship Platform" className="welcome-app-logo" />
@@ -311,7 +377,7 @@ const Login = () => {
               {/* Action Buttons */}
               <div className="welcome-actions-stack">
                 {biometricAvailable && biometricReady && (
-                  <button type="button" className="btn-welcome-biometric" onClick={handleBiometricLogin} disabled={isLoading}>
+                  <button type="button" className="btn-welcome-biometric" onClick={openBiometricConfirmation} disabled={isLoading}>
                     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
                       <path d="M9 10h.01M15 10h.01M9.5 15a3.5 3.5 0 0 0 5 0" />
@@ -431,7 +497,7 @@ const Login = () => {
                   <button
                     type="button"
                     className="login-btn-biometric"
-                    onClick={handleBiometricLogin}
+                    onClick={openBiometricConfirmation}
                     disabled={isLoading}
                   >
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

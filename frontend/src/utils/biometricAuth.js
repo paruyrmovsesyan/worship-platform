@@ -96,6 +96,16 @@ export async function hasSavedBiometricCredentials() {
   }
 }
 
+export async function getBiometricAccount() {
+  if (!Capacitor.isNativePlatform()) return '';
+  try {
+    const { value } = await Preferences.get({ key: BIOMETRIC_ACCOUNT_KEY });
+    return String(value || '');
+  } catch {
+    return '';
+  }
+}
+
 /**
  * Toggles biometric login on or off.
  */
