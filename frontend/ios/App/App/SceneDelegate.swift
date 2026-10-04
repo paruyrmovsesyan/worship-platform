@@ -58,6 +58,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneWillResignActive(_ scene: UIScene) {
+        // Face ID, Control Center, and other system overlays temporarily make
+        // the scene inactive while it is still visible. Do not cover the app
+        // here, otherwise the biometric confirmation page flashes to black.
+    }
+
+    func sceneDidEnterBackground(_ scene: UIScene) {
         guard let window, privacyView == nil else { return }
         let cover = UIView(frame: window.bounds)
         cover.autoresizingMask = [.flexibleWidth, .flexibleHeight]
