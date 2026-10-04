@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { useIsAppMode } from '../hooks/useIsPWA';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { APP_THEMES, applyAppTheme, getStoredAppTheme } from '../utils/appTheme';
@@ -12,6 +12,7 @@ import {
   isBiometricLoginEnabled,
   hasSavedBiometricCredentials,
   setBiometricEnabled,
+  registerBiometricLogin,
 } from '../utils/biometricAuth';
 import './Settings.css';
 
@@ -46,7 +47,7 @@ export default function Settings() {
   const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
-  const isPWA = useIsPWA();
+  const isPWA = useIsAppMode();
   const isMobile = useMediaQuery('(max-width: 900px)');
 
   const [activeTab, setActiveTab] = useState(() => {
@@ -988,9 +989,17 @@ export default function Settings() {
                     className={`settings-btn ${biometricEnabled ? 'secondary' : 'primary'} small`}
                     onClick={async () => {
                       const nextState = !biometricEnabled;
-                      await setBiometricEnabled(nextState);
-                      setBiometricActive(nextState);
-                      showMsg(nextState ? `${biometricLabel} մուտքը միացվեց` : `${biometricLabel} մուտքն անջատվեց`);
+                      try {
+                        if (nextState) {
+                          await registerBiometricLogin(user?.email || user?.username || user?.name || '');
+                        } else {
+                          await setBiometricEnabled(false);
+                        }
+                        setBiometricActive(nextState);
+                        showMsg(nextState ? `${biometricLabel} մուտքը միացվեց` : `${biometricLabel} մուտքն անջատվեց`);
+                      } catch (error) {
+                        showMsg(error?.message || `${biometricLabel} մուտքը չհաջողվեց միացնել`);
+                      }
                     }}
                   >
                     {biometricEnabled ? t('settings.app.disable', 'Անջատել') : t('settings.app.enable', 'Միացնել')}

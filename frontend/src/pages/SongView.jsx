@@ -13,7 +13,7 @@ import './SongViewWebPro.css';
 import SongViewWebTools from '../components/SongViewWebTools';
 import PrintStudio from '../components/PrintStudio';
 import ChordDiagramPopover from '../components/ChordDiagramPopover';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { useIsAppMode } from '../hooks/useIsPWA';
 import { nativeShare } from '../utils/nativeFeatures';
 
 function getYouTubeEmbedUrl(url) {
@@ -147,7 +147,7 @@ export default function SongView() {
   const [keySavedFeedback, setKeySavedFeedback] = useState(false);
 
   // Web-Pro state (website desktop only)
-  const isPWA = useIsPWA();
+  const isPWA = useIsAppMode();
   const [isPrintOpen, setIsPrintOpen] = useState(false);
   const [autoScrollActive, setAutoScrollActive] = useState(false);
   const [autoScrollSpeed, setAutoScrollSpeed] = useState(1);

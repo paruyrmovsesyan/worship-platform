@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { useIsAppMode } from '../hooks/useIsPWA';
 import { getFallbackNews, getCachedNewsList, fetchNewsList, formatNewsDate, formatNewsVersion, getNewsImageUrl } from '../utils/news';
 import './News.css';
 
@@ -63,7 +63,7 @@ function SearchIcon() {
 
 export default function News() {
   const { t, language } = useLanguage();
-  const isPWA = useIsPWA();
+  const isPWA = useIsAppMode();
   const [articles, setArticles] = useState(() => getCachedNewsList(language));
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');

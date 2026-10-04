@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { useIsAppMode } from '../hooks/useIsPWA';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -11,7 +11,7 @@ const hasWhitespace = (value) => /\s/u.test(String(value));
 
 const Register = () => {
   const navigate = useNavigate();
-  const isPWA = useIsPWA();
+  const isPWA = useIsAppMode();
   const { user, setUser, checkAuth } = useAuth();
   const isSubmittingRef = useRef(false);
   const [searchParams] = useSearchParams();

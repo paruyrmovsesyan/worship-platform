@@ -523,7 +523,7 @@ body.oled-mode .pwa-login-page.is-welcome {
 
 .pwa-login-page.is-welcome .login-form-section {
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: clip;
   padding: 0 18px;
   -webkit-overflow-scrolling: touch;
 }

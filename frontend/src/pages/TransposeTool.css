@@ -3,7 +3,8 @@
   margin: 0 auto;
   padding: 24px 20px calc(var(--bottom-nav-total-offset, 88px) + 40px);
   box-sizing: border-box;
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .transpose-header {

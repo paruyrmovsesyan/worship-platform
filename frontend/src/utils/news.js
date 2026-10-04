@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './nativeNetwork';
+import { API_BASE_URL } from './nativeConfig';
 
 const fallbackNewsByLanguage = {
   am: [

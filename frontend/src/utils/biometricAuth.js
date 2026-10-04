@@ -2,8 +2,14 @@ import { Capacitor } from '@capacitor/core';
 import { BiometricAuth, BiometryType } from '@aparajita/capacitor-biometric-auth';
 import { Preferences } from '@capacitor/preferences';
 
-const BIOMETRIC_CREDENTIALS_KEY = 'wp_biometric_credentials';
+const LEGACY_BIOMETRIC_CREDENTIALS_KEY = 'wp_biometric_credentials';
 const BIOMETRIC_ENABLED_KEY = 'wp_biometric_enabled';
+const BIOMETRIC_ACCOUNT_KEY = 'wp_biometric_account';
+const BIOMETRIC_TOKEN_KEY = 'wp_biometric_token';
+
+async function removeLegacyPassword() {
+  await Preferences.remove({ key: LEGACY_BIOMETRIC_CREDENTIALS_KEY });
+}
 
 /**
  * Checks if device hardware supports biometric authentication (Face ID / Touch ID / Fingerprint)
@@ -35,47 +41,56 @@ export async function getBiometricStatus() {
 }
 
 /**
- * Checks if user has previously saved credentials for biometric login.
+ * Checks whether biometric session unlock is enabled for this device.
  */
 export async function isBiometricLoginEnabled() {
   if (!Capacitor.isNativePlatform()) return false;
   try {
     const { value: enabled } = await Preferences.get({ key: BIOMETRIC_ENABLED_KEY });
     if (enabled !== 'true') return false;
-    const { value: creds } = await Preferences.get({ key: BIOMETRIC_CREDENTIALS_KEY });
-    return Boolean(creds);
+    await removeLegacyPassword();
+    const [{ value: account }, { value: token }] = await Promise.all([
+      Preferences.get({ key: BIOMETRIC_ACCOUNT_KEY }),
+      Preferences.get({ key: BIOMETRIC_TOKEN_KEY }),
+    ]);
+    return Boolean(account && token);
   } catch {
     return false;
   }
 }
 
 /**
- * Saves login credentials for biometric quick login upon successful manual login.
+ * Records the account associated with the native session. Passwords are never stored.
  */
-export async function saveBiometricCredentials(login, password) {
+export async function saveBiometricCredentials(login, token = '') {
   if (!Capacitor.isNativePlatform()) return;
   try {
+    await removeLegacyPassword();
     await Preferences.set({
-      key: BIOMETRIC_CREDENTIALS_KEY,
-      value: JSON.stringify({ login, password }),
+      key: BIOMETRIC_ACCOUNT_KEY,
+      value: String(login || ''),
     });
-    await Preferences.set({
-      key: BIOMETRIC_ENABLED_KEY,
-      value: 'true',
-    });
+    if (token) {
+      await Preferences.set({ key: BIOMETRIC_TOKEN_KEY, value: String(token) });
+      await setBiometricEnabled(true);
+    }
   } catch (err) {
     console.warn('Failed to save biometric credentials:', err);
   }
 }
 
 /**
- * Checks if user has stored credentials on device.
+ * Checks if a native account has been associated with biometric unlock.
  */
 export async function hasSavedBiometricCredentials() {
   if (!Capacitor.isNativePlatform()) return false;
   try {
-    const { value: creds } = await Preferences.get({ key: BIOMETRIC_CREDENTIALS_KEY });
-    return Boolean(creds);
+    await removeLegacyPassword();
+    const [{ value: account }, { value: token }] = await Promise.all([
+      Preferences.get({ key: BIOMETRIC_ACCOUNT_KEY }),
+      Preferences.get({ key: BIOMETRIC_TOKEN_KEY }),
+    ]);
+    return Boolean(account && token);
   } catch {
     return false;
   }
@@ -96,19 +111,40 @@ export async function setBiometricEnabled(enabled) {
   }
 }
 
+export async function registerBiometricLogin(account = '') {
+  if (!Capacitor.isNativePlatform()) return false;
+  const response = await fetch('/native_biometric_api.php?action=issue', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    cache: 'no-store',
+    body: JSON.stringify({ account: String(account || '') }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data?.ok || !data?.token) {
+    throw new Error(data?.error || 'Biometric մուտքը չհաջողվեց կարգավորել');
+  }
+  await saveBiometricCredentials(data.account || account, data.token);
+  return true;
+}
+
 /**
- * Clears saved biometric credentials (e.g. on full logout or disabled setting).
+ * Clears the biometric account association and any legacy stored password.
  */
 export async function clearBiometricCredentials() {
   if (!Capacitor.isNativePlatform()) return;
   try {
-    await Preferences.remove({ key: BIOMETRIC_CREDENTIALS_KEY });
+    await removeLegacyPassword();
+    await Preferences.remove({ key: BIOMETRIC_ACCOUNT_KEY });
+    await Preferences.remove({ key: BIOMETRIC_TOKEN_KEY });
     await Preferences.remove({ key: BIOMETRIC_ENABLED_KEY });
-  } catch (err) {}
+  } catch {
+    // Best-effort cleanup for device-local state.
+  }
 }
 
 /**
- * Prompts user for biometric auth (Face ID / Touch ID) and returns saved credentials on success.
+ * Prompts for biometric auth and exchanges the device's revocable token for
+ * a fresh server session. Passwords are never persisted on the device.
  */
 export async function performBiometricLogin(reason = 'Մուտք գործելու համար հաստատեք ձեր ինքնությունը') {
   if (!Capacitor.isNativePlatform()) {
@@ -122,11 +158,29 @@ export async function performBiometricLogin(reason = 'Մուտք գործելո�
     allowDeviceCredential: true,
   });
 
-  // 2. Retrieve credentials
-  const { value } = await Preferences.get({ key: BIOMETRIC_CREDENTIALS_KEY });
-  if (!value) {
-    throw new Error('Պահպանված մուտքի տվյալներ չեն գտնվել');
+  await removeLegacyPassword();
+  const [{ value: account }, { value: token }] = await Promise.all([
+    Preferences.get({ key: BIOMETRIC_ACCOUNT_KEY }),
+    Preferences.get({ key: BIOMETRIC_TOKEN_KEY }),
+  ]);
+  if (!account || !token) {
+    throw new Error('Այս սարքում biometric մուտքը կարգավորված չէ');
   }
 
-  return JSON.parse(value);
+  const response = await fetch('/native_biometric_api.php?action=login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    cache: 'no-store',
+    body: JSON.stringify({ token }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data?.ok || !data?.user) {
+    if (response.status === 401) await clearBiometricCredentials();
+    throw new Error(data?.error || 'Face ID մուտքը չհաջողվեց');
+  }
+
+  if (data.token && data.token !== token) {
+    await Preferences.set({ key: BIOMETRIC_TOKEN_KEY, value: data.token });
+  }
+  return { authenticated: true, account, user: data.user };
 }

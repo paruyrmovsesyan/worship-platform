@@ -20,6 +20,11 @@
     },
     "CapacitorHttp": {
       "enabled": true
+    },
+    "Keyboard": {
+      "resize": "none",
+      "style": "DARK",
+      "resizeOnFullScreen": false
     }
   }
 }

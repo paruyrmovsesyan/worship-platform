@@ -1,12 +1,12 @@
 import React from 'react';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { useIsAppMode } from '../hooks/useIsPWA';
 import SongsApp from './SongsApp';
 import SongsWeb from './SongsWeb';
 
 export default function Songs() {
-  const isPWA = useIsPWA();
+  const isAppMode = useIsAppMode();
   
-  if (isPWA) {
+  if (isAppMode) {
     return <SongsApp />;
   }
   

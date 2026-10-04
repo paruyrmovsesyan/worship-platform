@@ -4,7 +4,14 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
+import { triggerHaptic } from '../utils/nativeFeatures';
 import './MobileNav.css';
+
+// Glass bubble vertical expansion sizes (matching native iOS App Store tab lens)
+// X scale remains 1.0 so the lens never exceeds dock left/right borders and stays 100% centered
+// Y scale expands vertically above and below dock
+const LENS_SCALE_Y = 1.28;
+const DRAG_SCALE_Y = 1.18;
 
 export default function MobileNav() {
   const { user } = useAuth();
@@ -16,13 +23,18 @@ export default function MobileNav() {
 
   const [chatBadgeCount, setChatBadgeCount] = useState(0);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-  const [showQuickMenu, setShowQuickMenu] = useState(false);
-  const [scrubIndex, setScrubIndex] = useState(null);
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  const [isLongPressReady, setIsLongPressReady] = useState(false);
+  const [pressedIndex, setPressedIndex] = useState(null);
+  const [scrubPosition, setScrubPosition] = useState(null);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
 
   const dockRef = useRef(null);
   const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
   const isScrubbingRef = useRef(false);
+  const isLongPressReadyRef = useRef(false);
   const longPressTimerRef = useRef(null);
+  const lastHoveredIndexRef = useRef(null);
 
   useEffect(() => {
     const handleFocusIn = (e) => {
@@ -31,7 +43,6 @@ export default function MobileNav() {
         const type = e.target?.type?.toLowerCase();
         if (type !== 'checkbox' && type !== 'radio' && type !== 'button' && type !== 'submit') {
           setIsKeyboardOpen(true);
-          setShowQuickMenu(false);
           document.body.classList.add('keyboard-open');
         }
       }
@@ -52,7 +63,6 @@ export default function MobileNav() {
         const isShrunk = window.visualViewport.height < window.innerHeight * 0.8;
         setIsKeyboardOpen(isShrunk);
         if (isShrunk) {
-          setShowQuickMenu(false);
           document.body.classList.add('keyboard-open');
         } else {
           document.body.classList.remove('keyboard-open');
@@ -138,14 +148,6 @@ export default function MobileNav() {
     };
   }, [user]);
 
-  const triggerHaptic = (style = 'Light') => {
-    if (typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()) {
-      import('@capacitor/haptics').then(({ Haptics, ImpactStyle }) => {
-        Haptics.impact({ style: ImpactStyle[style] || ImpactStyle.Light }).catch(() => {});
-      }).catch(() => {});
-    }
-  };
-
   const getActiveIndex = () => {
     const path = location.pathname;
     if (path === '/') return 0;
@@ -156,7 +158,6 @@ export default function MobileNav() {
   };
 
   const activeIndex = getActiveIndex();
-  const displayIndex = scrubIndex !== null ? scrubIndex : activeIndex;
 
   const mainTabs = [
     {
@@ -207,111 +208,169 @@ export default function MobileNav() {
     }
   ];
 
-  const quickPages = user ? [
-    { path: '/', label: t('nav.home', 'Գլխավոր'), icon: '🏠' },
-    { path: '/songs', label: t('nav.songs', 'Երգեր'), icon: '🎼' },
-    { path: '/chats', label: t('chats.chats', 'Չաթեր'), icon: '💬' },
-    { path: '/favorites', label: t('favorites.title', 'Սիրվածներ'), icon: '⭐' },
-    { path: '/profile', label: t('profile.title', 'Պրոֆիլ'), icon: '👤' },
-    { path: '/settings', label: t('profile.accountSettings', 'Կարգավորումներ'), icon: '⚙️' },
-  ] : [
-    { path: '/', label: t('nav.home', 'Գլխավոր'), icon: '🏠' },
-    { path: '/songs', label: t('nav.songs', 'Երգեր'), icon: '🎼' },
-    { path: '/login', label: t('nav.login', 'Մուտք'), icon: '🔑' },
-    { path: '/register', label: t('auth.register', 'Գրանցվել'), icon: '✨' },
-  ];
+  // Helper to compute dock pill position from touch X
+  // Ensure the indicator NEVER crosses the dock's left or right borders
+  const computePillFromTouch = (clientX) => {
+    if (!dockRef.current) return { clampedPillLeft: 0, currentTab: 0 };
+    const rect = dockRef.current.getBoundingClientRect();
+    const padding = 5;
+    const innerWidth = rect.width - padding * 2;
+    const tabWidth = innerWidth / 4;
+
+    const fingerRelativeX = clientX - rect.left - padding;
+    const currentTab = Math.max(0, Math.min(3, Math.floor(fingerRelativeX / tabWidth)));
+
+    const minLeft = 0;
+    const maxLeft = innerWidth - tabWidth;
+
+    const targetPillLeft = fingerRelativeX - tabWidth / 2;
+    const clampedPillLeft = Math.max(minLeft, Math.min(maxLeft, targetPillLeft));
+
+    return { clampedPillLeft, currentTab };
+  };
+
+  const clearLongPressTimer = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
 
   const handleNavClick = (path, e) => {
-    if (isScrubbingRef.current) {
-      e?.preventDefault?.();
+    e?.preventDefault?.();
+    if (isScrubbingRef.current || isLongPressReadyRef.current) {
       return;
     }
     if (!guardPath(path)) {
-      e?.preventDefault?.();
       return;
     }
     triggerHaptic('Light');
+    if (location.pathname !== path) {
+      startTransition(() => {
+        navigate(path);
+      });
+    }
   };
 
-  const navigateTo = (path) => {
-    if (!guardPath(path)) return;
-    triggerHaptic('Medium');
-    startTransition(() => {
-      navigate(path);
-    });
-    setShowQuickMenu(false);
-  };
-
-  // Press-and-hold (long press) and scrub (drag across tabs) handlers
+  // Touch scrubbing and Long Press across bottom dock tabs (iOS Stock Style)
   const onTouchStart = (e) => {
+    if (e.touches.length !== 1) return;
     const touch = e.touches[0];
     touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
     isScrubbingRef.current = false;
+    isLongPressReadyRef.current = false;
 
-    // Start 320ms long-press timer to open quick page switcher
-    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    // Detect which tab was pressed down
+    const { currentTab } = computePillFromTouch(touch.clientX);
+    setPressedIndex(currentTab);
+
+    clearLongPressTimer();
+
+    // Start iOS long-press timer (~280ms): lens expands on that tab
+    // We do NOT set scrubPosition here to avoid any offset jumps: it stays anchored to currentTab
     longPressTimerRef.current = setTimeout(() => {
+      isLongPressReadyRef.current = true;
+      setIsLongPressReady(true);
+      setHoveredIndex(currentTab);
+      lastHoveredIndexRef.current = currentTab;
       triggerHaptic('Medium');
-      setShowQuickMenu(true);
-    }, 320);
+    }, 280);
   };
 
   const onTouchMove = (e) => {
+    if (e.touches.length !== 1) return;
     const touch = e.touches[0];
     const dx = touch.clientX - touchStartRef.current.x;
     const dy = touch.clientY - touchStartRef.current.y;
 
-    // If moved horizontally, cancel long-press and start interactive scrubbing
-    if (Math.abs(dx) > 12 || Math.abs(dy) > 12) {
-      if (longPressTimerRef.current) {
-        clearTimeout(longPressTimerRef.current);
-        longPressTimerRef.current = null;
-      }
+    // If user moved finger noticeably before long press timer fired, treat as scrubbing gesture
+    if (!isLongPressReadyRef.current && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+      clearLongPressTimer();
+    }
+
+    // If user dragged far vertically away (> 75px up or down), cancel gracefully
+    if (isScrubbingRef.current && (dy < -75 || dy > 55)) {
+      clearLongPressTimer();
+      isScrubbingRef.current = false;
+      isLongPressReadyRef.current = false;
+      setIsScrubbing(false);
+      setIsLongPressReady(false);
+      setPressedIndex(null);
+      setScrubPosition(null);
+      setHoveredIndex(null);
+      return;
+    }
+
+    // Activate scrubbing after horizontal drag threshold
+    if (!isScrubbingRef.current && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+      clearLongPressTimer();
       isScrubbingRef.current = true;
+      setIsScrubbing(true);
+      triggerHaptic('Light');
     }
 
     if (isScrubbingRef.current && dockRef.current) {
-      const rect = dockRef.current.getBoundingClientRect();
-      const relativeX = touch.clientX - rect.left;
-      const ratio = Math.max(0, Math.min(1, relativeX / rect.width));
-      const newIndex = Math.min(3, Math.floor(ratio * 4));
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+      const { clampedPillLeft, currentTab } = computePillFromTouch(touch.clientX);
 
-      if (newIndex !== scrubIndex) {
-        setScrubIndex(newIndex);
+      setScrubPosition(clampedPillLeft);
+
+      if (currentTab !== lastHoveredIndexRef.current) {
+        lastHoveredIndexRef.current = currentTab;
+        setHoveredIndex(currentTab);
         triggerHaptic('Light');
       }
     }
   };
 
   const onTouchEnd = () => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
+    clearLongPressTimer();
 
-    if (isScrubbingRef.current && scrubIndex !== null) {
-      const targetTab = mainTabs[scrubIndex];
+    if (isScrubbingRef.current || isLongPressReadyRef.current) {
+      const finalTabIdx = lastHoveredIndexRef.current !== null
+        ? lastHoveredIndexRef.current
+        : (pressedIndex !== null ? pressedIndex : activeIndex);
+      const targetTab = mainTabs[finalTabIdx];
+
+      setIsScrubbing(false);
+      setIsLongPressReady(false);
+      setPressedIndex(null);
+      setScrubPosition(null);
+      setHoveredIndex(null);
+
       if (targetTab && guardPath(targetTab.path)) {
-        triggerHaptic('Light');
+        triggerHaptic('Medium');
         startTransition(() => {
           navigate(targetTab.path);
         });
       }
-    }
 
-    setScrubIndex(null);
-    setTimeout(() => {
-      isScrubbingRef.current = false;
-    }, 50);
+      setTimeout(() => {
+        isScrubbingRef.current = false;
+        isLongPressReadyRef.current = false;
+        lastHoveredIndexRef.current = null;
+      }, 60);
+    } else {
+      setIsScrubbing(false);
+      setIsLongPressReady(false);
+      setPressedIndex(null);
+      setScrubPosition(null);
+      setHoveredIndex(null);
+    }
   };
 
   const onTouchCancel = () => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-    setScrubIndex(null);
+    clearLongPressTimer();
     isScrubbingRef.current = false;
+    isLongPressReadyRef.current = false;
+    setIsScrubbing(false);
+    setIsLongPressReady(false);
+    setPressedIndex(null);
+    setScrubPosition(null);
+    setHoveredIndex(null);
+    lastHoveredIndexRef.current = null;
   };
 
   if (isKeyboardOpen) {
@@ -320,73 +379,47 @@ export default function MobileNav() {
 
   return createPortal(
     <>
-      {/* iOS Liquid Glass Quick Page Switcher Menu on Long-Press */}
-      {showQuickMenu && (
-        <>
-          <div
-            className="nav-quick-menu-backdrop"
-            onClick={() => setShowQuickMenu(false)}
-            aria-hidden="true"
-          />
-          <div className="nav-quick-menu animate-pop-in" role="dialog" aria-modal="true">
-            <div className="nav-quick-menu-header">
-              <span className="nav-quick-menu-title">{t('nav.quickSwitch', 'Արագ անցում')}</span>
-              <button
-                type="button"
-                className="nav-quick-menu-close"
-                onClick={() => setShowQuickMenu(false)}
-                aria-label="Փակել"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="nav-quick-menu-grid">
-              {quickPages.map((page) => {
-                const isCurrent = location.pathname === page.path;
-                return (
-                  <button
-                    key={page.path}
-                    type="button"
-                    className={`nav-quick-menu-item ${isCurrent ? 'active' : ''}`}
-                    onClick={() => navigateTo(page.path)}
-                  >
-                    <span className="nav-quick-menu-icon">{page.icon}</span>
-                    <span className="nav-quick-menu-label">{page.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </>
-      )}
-
       {/* iOS Liquid Glass Bottom Dock */}
       <nav
         id="wpAppDock"
         ref={dockRef}
-        className={`mobile-bottom-nav ${isKeyboardOpen ? 'keyboard-hidden' : ''}`}
+        className={`mobile-bottom-nav ${isKeyboardOpen ? 'keyboard-hidden' : ''} ${isScrubbing ? 'is-scrubbing' : ''} ${isLongPressReady ? 'is-long-press' : ''}`}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         onTouchCancel={onTouchCancel}
+        onContextMenu={(e) => e.preventDefault()}
       >
         <div
-          className="nav-liquid-indicator"
+          className={`nav-liquid-indicator ${isScrubbing ? 'is-dragging' : ''} ${isLongPressReady ? 'is-lens' : ''}`}
           style={{
-            transform: `translate3d(${displayIndex * 100}%, 0, 0)`
+            transform: isScrubbing && scrubPosition !== null
+              ? `translate3d(${scrubPosition}px, 0, 0)`
+              : `translate3d(${(isLongPressReady && hoveredIndex !== null ? hoveredIndex : activeIndex) * 100}%, 0, 0)`,
+            transformOrigin: 'center center',
+            scale: isScrubbing
+              ? `1 ${DRAG_SCALE_Y}`
+              : isLongPressReady
+                ? `1 ${LENS_SCALE_Y}`
+                : '1 1'
           }}
           aria-hidden="true"
         />
 
         {mainTabs.map((tab, idx) => {
           const isCurrent = activeIndex === idx;
+          const isHovered = (isScrubbing || isLongPressReady) && (hoveredIndex === idx || (hoveredIndex === null && pressedIndex === idx));
+
           return (
-            <NavLink
+            <button
               key={tab.path}
-              to={tab.path}
-              end={tab.path === '/'}
+              type="button"
+              role="tab"
+              aria-selected={isCurrent}
+              aria-label={tab.label}
               onClick={(e) => handleNavClick(tab.path, e)}
-              className={isCurrent ? 'nav-item active' : 'nav-item'}
+              onContextMenu={(e) => e.preventDefault()}
+              className={`nav-item ${isCurrent && !isScrubbing ? 'active' : ''} ${isHovered ? 'scrub-hovered active' : ''}`}
             >
               <span className="nav-icon-wrap">
                 {tab.icon}
@@ -397,7 +430,7 @@ export default function MobileNav() {
                 )}
               </span>
               <span className="nav-label">{tab.label}</span>
-            </NavLink>
+            </button>
           );
         })}
       </nav>

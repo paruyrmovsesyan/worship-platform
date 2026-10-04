@@ -1,8 +1,6 @@
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
-
-export const API_BASE_URL = Capacitor.isNativePlatform()
-  ? 'https://worship.pmstudio.am'
-  : '';
+import { readNativeResponseCache, writeNativeResponseCache } from './nativeOffline';
+import { API_BASE_URL } from './nativeConfig';
 
 /**
  * Universal Native Network Bridge:
@@ -64,19 +62,28 @@ export function setupNativeNetwork() {
       }
     }
 
+    // Allows the server to expose native-only authentication features without
+    // changing the website/PWA contract.
+    headers['X-Worship-Native'] = '1';
+    headers['X-Worship-Platform'] = Capacitor.getPlatform();
+
     // Body processing
     let data = init.body;
     if (data === undefined && input instanceof Request) {
       try {
         data = await input.clone().text();
-      } catch {}
+      } catch {
+        // Keep the original body when it is not valid JSON.
+      }
     }
 
     // Parse JSON data if header specifies application/json and body is string
     if (typeof data === 'string' && (headers['Content-Type'] || headers['content-type'] || '').includes('application/json')) {
       try {
         data = JSON.parse(data);
-      } catch {}
+    } catch {
+      // Leave non-JSON payloads untouched.
+    }
     }
 
     try {
@@ -100,6 +107,14 @@ export function setupNativeNetwork() {
         responseBody = String(responseBody);
       }
 
+      if (method === 'GET' && response.status >= 200 && response.status < 300) {
+        writeNativeResponseCache(url, {
+          body: responseBody,
+          status: response.status || 200,
+          headers: response.headers || {},
+        }).catch(() => {});
+      }
+
       return new Response(responseBody, {
         status: response.status || 200,
         statusText: response.status === 200 ? 'OK' : '',
@@ -107,6 +122,15 @@ export function setupNativeNetwork() {
       });
     } catch (err) {
       console.warn('[NativeHttp] Native request failed, falling back to original fetch:', err);
+      if (method === 'GET') {
+        const cached = await readNativeResponseCache(url);
+        if (cached) {
+          return new Response(cached.body || '', {
+            status: cached.status || 200,
+            headers: new Headers({ ...cached.headers, 'X-Worship-Native-Cache': 'HIT' }),
+          });
+        }
+      }
       return originalFetch.call(this, input, init);
     }
   };

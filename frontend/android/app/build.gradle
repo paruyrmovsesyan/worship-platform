@@ -1,5 +1,17 @@
 apply plugin: 'com.android.application'
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+def releaseStoreFile = System.getenv('WORSHIP_ANDROID_KEYSTORE') ?: keystoreProperties.getProperty('storeFile')
+def releaseStorePassword = System.getenv('WORSHIP_ANDROID_STORE_PASSWORD') ?: keystoreProperties.getProperty('storePassword')
+def releaseKeyAlias = System.getenv('WORSHIP_ANDROID_KEY_ALIAS') ?: keystoreProperties.getProperty('keyAlias')
+def releaseKeyPassword = System.getenv('WORSHIP_ANDROID_KEY_PASSWORD') ?: keystoreProperties.getProperty('keyPassword')
+def hasReleaseSigning = releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
+
 android {
     namespace = "am.pmstudio.worship"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -17,16 +29,20 @@ android {
         }
     }
     signingConfigs {
-        release {
-            storeFile file('release-key.jks')
-            storePassword 'worship2026pass'
-            keyAlias 'worship-key'
-            keyPassword 'worship2026pass'
+        if (hasReleaseSigning) {
+            release {
+                storeFile rootProject.file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
         }
     }
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

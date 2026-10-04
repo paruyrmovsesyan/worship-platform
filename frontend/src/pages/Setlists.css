@@ -5,7 +5,8 @@
   margin: 0 auto;
   padding-bottom: 100px;
   box-sizing: border-box;
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 /* Header */
@@ -753,18 +754,18 @@ body.wp-standalone-app > .sla-modal-overlay {
 
 /* PWA Padding Scoping */
 body.wp-standalone-app .setlists-page.sl-pwa-enhanced,
-body.is-pwa .setlists-page.sl-pwa-enhanced {
+body.is-app .setlists-page.sl-pwa-enhanced {
   padding: 16px 16px calc(var(--bottom-nav-total-offset, 84px) + 24px) !important;
   padding-top: 18px !important;
   max-width: 860px;
 }
 
-body.is-pwa.is-ios .setlists-page.sl-pwa-enhanced,
+body.is-app.is-ios .setlists-page.sl-pwa-enhanced,
 body.wp-standalone-app.is-ios .setlists-page.sl-pwa-enhanced {
   padding-top: 36px !important;
 }
 
-body.is-pwa.is-android .setlists-page.sl-pwa-enhanced,
+body.is-app.is-android .setlists-page.sl-pwa-enhanced,
 body.wp-standalone-app:not(.is-ios) .setlists-page.sl-pwa-enhanced {
   padding-top: 14px !important;
 }

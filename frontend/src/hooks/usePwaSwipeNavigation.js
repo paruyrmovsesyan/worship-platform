@@ -163,25 +163,38 @@ export function usePwaSwipeNavigation({
       horizontalIntent = false;
       startX = touch.clientX;
       startY = touch.clientY;
+
+      if (tracking) {
+        document.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
+      }
+    };
+
+    const stopTracking = () => {
+      if (tracking) {
+        document.removeEventListener('touchmove', onTouchMove, true);
+      }
+      tracking = false;
+      horizontalIntent = false;
     };
 
     const onTouchMove = (event) => {
-      if (!tracking || event.touches.length !== 1) return;
+      if (!tracking || event.touches.length !== 1) {
+        stopTracking();
+        return;
+      }
 
       const touch = event.touches[0];
       const dx = touch.clientX - startX;
       const dy = touch.clientY - startY;
 
-      // If vertical movement dominates, this is a page scroll: immediately stop tracking
-      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 6) {
-        tracking = false;
-        horizontalIntent = false;
+      // If vertical movement dominates, this is a page scroll: immediately stop tracking and detach listener
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 5) {
+        stopTracking();
         return;
       }
 
       if (isHorizontalScrollTarget(event.target)) {
-        tracking = false;
-        horizontalIntent = false;
+        stopTracking();
         return;
       }
 
@@ -195,11 +208,14 @@ export function usePwaSwipeNavigation({
     };
 
     const onTouchEnd = (event) => {
-      if (!tracking || navigationLocked) return;
+      if (!tracking || navigationLocked) {
+        stopTracking();
+        return;
+      }
       const touch = event.changedTouches[0];
       const dx = touch.clientX - startX;
       const dy = touch.clientY - startY;
-      tracking = false;
+      stopTracking();
 
       if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * VERTICAL_TOLERANCE) {
         return;
@@ -218,18 +234,16 @@ export function usePwaSwipeNavigation({
     };
 
     const onTouchCancel = () => {
-      tracking = false;
-      horizontalIntent = false;
+      stopTracking();
     };
 
     document.addEventListener('touchstart', onTouchStart, { passive: true, capture: true });
-    document.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
     document.addEventListener('touchend', onTouchEnd, { passive: true });
     document.addEventListener('touchcancel', onTouchCancel, { passive: true });
 
     return () => {
+      stopTracking();
       document.removeEventListener('touchstart', onTouchStart, true);
-      document.removeEventListener('touchmove', onTouchMove, true);
       document.removeEventListener('touchend', onTouchEnd);
       document.removeEventListener('touchcancel', onTouchCancel);
     };

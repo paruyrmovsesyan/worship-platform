@@ -14,7 +14,9 @@ export default class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     console.error("Uncaught error in React ErrorBoundary:", error, errorInfo);
     try {
-      const isApp = window.matchMedia('(display-mode: standalone)').matches ||
+      const isNativeApp = window.Capacitor?.isNativePlatform?.() === true;
+      const isApp = isNativeApp ||
+                    window.matchMedia('(display-mode: standalone)').matches ||
                     window.navigator.standalone === true ||
                     document.referrer.includes('android-app://') ||
                     sessionStorage.getItem('wp_active_app_source') === 'pwa';

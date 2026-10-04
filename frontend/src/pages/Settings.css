@@ -963,7 +963,7 @@ body.mobile-theme .btn-row button {
 
 /* PWA/mobile settings menu should be edge-to-edge, matching the app shell. */
 body.mobile-theme .settings-page.settings-menu-screen,
-body.is-pwa .settings-page.settings-menu-screen,
+body.is-app .settings-page.settings-menu-screen,
 .settings-page.settings-menu-screen,
 .settings-page.pwa-mode.settings-menu-screen {
   width: 100%;
@@ -973,7 +973,7 @@ body.is-pwa .settings-page.settings-menu-screen,
 }
 
 body.mobile-theme .settings-page.settings-menu-screen .settings-layout,
-body.is-pwa .settings-page.settings-menu-screen .settings-layout,
+body.is-app .settings-page.settings-menu-screen .settings-layout,
 .settings-page.settings-menu-screen .settings-layout,
 .settings-page.pwa-mode.settings-menu-screen .settings-layout {
   width: 100%;
@@ -982,7 +982,7 @@ body.is-pwa .settings-page.settings-menu-screen .settings-layout,
 }
 
 body.mobile-theme .settings-page.settings-menu-screen .settings-sidebar,
-body.is-pwa .settings-page.settings-menu-screen .settings-sidebar,
+body.is-app .settings-page.settings-menu-screen .settings-sidebar,
 .settings-page.settings-menu-screen .settings-sidebar,
 .settings-page.pwa-mode.settings-menu-screen .settings-sidebar {
   width: 100%;
@@ -990,7 +990,7 @@ body.is-pwa .settings-page.settings-menu-screen .settings-sidebar,
 }
 
 body.mobile-theme .settings-page.settings-menu-screen .settings-menu-title,
-body.is-pwa .settings-page.settings-menu-screen .settings-menu-title,
+body.is-app .settings-page.settings-menu-screen .settings-menu-title,
 .settings-page.settings-menu-screen .settings-menu-title,
 .settings-page.pwa-mode.settings-menu-screen .settings-menu-title {
   padding-left: 16px;
@@ -998,7 +998,7 @@ body.is-pwa .settings-page.settings-menu-screen .settings-menu-title,
 }
 
 body.mobile-theme .settings-page.settings-menu-screen .settings-menu-list,
-body.is-pwa .settings-page.settings-menu-screen .settings-menu-list,
+body.is-app .settings-page.settings-menu-screen .settings-menu-list,
 .settings-page.settings-menu-screen .settings-menu-list,
 .settings-page.pwa-mode.settings-menu-screen .settings-menu-list {
   width: calc(100% - 32px);

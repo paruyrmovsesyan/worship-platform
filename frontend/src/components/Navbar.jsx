@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { useIsAppMode } from '../hooks/useIsPWA';
 import LanguageSwitcher from './LanguageSwitcher';
 import './Navbar.css';
 
@@ -12,7 +12,7 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const isPWA = useIsPWA();
+  const isPWA = useIsAppMode();
 
   const [scrolled, setScrolled]       = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

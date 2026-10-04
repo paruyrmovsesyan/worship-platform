@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useCall } from '../context/CallContext';
 import { usePageReady } from '../hooks/usePageReady';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { useIsAppMode } from '../hooks/useIsPWA';
 import './UserProfile.css';
 
 const WORSHIP_ROLES = [
@@ -24,7 +24,7 @@ export default function UserProfile() {
   const { user, loading: authLoading } = useAuth();
   const { t, language } = useLanguage();
   const audioCall = useCall();
-  const isPWA = useIsPWA();
+  const isPWA = useIsAppMode();
 
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState(null);

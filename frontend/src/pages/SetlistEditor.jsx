@@ -1,15 +1,15 @@
 import React from 'react';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { useIsAppMode } from '../hooks/useIsPWA';
 import { useAuth } from '../context/AuthContext';
 import SetlistEditorApp from './SetlistEditorApp';
 import SetlistEditorWeb from './SetlistEditorWeb';
 import SetlistPublicWeb from './SetlistPublicWeb';
 
 export default function SetlistEditor() {
-  const isPWA = useIsPWA();
+  const isAppMode = useIsAppMode();
   const { user, loading: authLoading } = useAuth();
 
-  if (isPWA) {
+  if (isAppMode) {
     return <SetlistEditorApp />;
   }
 

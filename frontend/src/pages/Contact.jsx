@@ -1,12 +1,12 @@
 import React from 'react';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { useIsAppMode } from '../hooks/useIsPWA';
 import SupportContactApp from './SupportContactApp';
 import ContactWeb from './ContactWeb';
 
 export default function Contact() {
-  const isPWA = useIsPWA();
+  const isAppMode = useIsAppMode();
 
-  if (isPWA) {
+  if (isAppMode) {
     return <SupportContactApp initialTab="contact" />;
   }
 

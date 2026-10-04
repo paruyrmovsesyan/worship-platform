@@ -8,20 +8,21 @@
   max-width: 800px;
   margin: 0 auto;
   box-sizing: border-box;
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
-body.is-pwa .songs-page,
+body.is-app .songs-page,
 body.wp-standalone-app .songs-page {
   padding-top: 14px;
 }
 
-body.is-pwa.is-ios .songs-page,
+body.is-app.is-ios .songs-page,
 body.wp-standalone-app.is-ios .songs-page {
   padding-top: 36px !important;
 }
 
-body.is-pwa.is-android .songs-page,
+body.is-app.is-android .songs-page,
 body.wp-standalone-app:not(.is-ios) .songs-page {
   padding-top: 14px !important;
 }
@@ -61,7 +62,7 @@ body.songs-modal-open .app-bottom-nav {
 }
 
 body.wp-standalone-app > .songs-back-to-top,
-body.is-pwa > .songs-back-to-top {
+body.is-app > .songs-back-to-top {
   position: fixed;
   z-index: 2147483647;
 }

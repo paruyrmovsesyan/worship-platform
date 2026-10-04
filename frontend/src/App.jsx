@@ -56,7 +56,7 @@ import TransposeTool from './pages/TransposeTool';
 import InstallApp from './pages/InstallApp';
 import { Capacitor } from '@capacitor/core';
 import { useMediaQuery } from './hooks/useMediaQuery';
-import { useIsPWA } from './hooks/useIsPWA';
+import { useIsNativeApp, useIsPWA } from './hooks/useIsPWA';
 import ScrollToTop from './components/ScrollToTop';
 import TopLoader from './components/TopLoader';
 import PullToRefresh from './components/PullToRefresh';
@@ -67,6 +67,8 @@ import { useLanguage } from './context/LanguageContext';
 import { applyAppTheme, getStoredAppTheme } from './utils/appTheme';
 import WebCommandPalette from './components/WebCommandPalette';
 import CreateAccountReminder from './components/CreateAccountReminder';
+import NativeAppLock from './components/NativeAppLock';
+import NativePlatformServices from './components/NativePlatformServices';
 
 function App() {
   const mediaQueryMatch = useMediaQuery('(max-width: 900px)');
@@ -89,6 +91,8 @@ function App() {
   }, []);
   const isMobile = mediaQueryMatch || isIOSMobile || isAndroidMobile;
   const isPWA = useIsPWA();
+  const isNativeApp = useIsNativeApp();
+  const isAppMode = isPWA || isNativeApp;
   const { isOffline, canAccessPath } = usePwaOfflineGuard();
   const location = useLocation();
   const navigate = useNavigate();
@@ -101,14 +105,15 @@ function App() {
   const { t } = useLanguage();
 
   useEffect(() => {
-    document.body.classList.remove('mobile-theme', 'app-desktop-theme', 'website-theme', 'is-pwa', 'is-ios', 'is-android', 'is-native');
+    document.body.classList.remove('mobile-theme', 'app-desktop-theme', 'website-theme', 'is-app', 'is-pwa', 'is-ios', 'is-android', 'is-native');
     
-    if (Capacitor.isNativePlatform()) {
-      document.body.classList.add('is-native');
+    if (isNativeApp) {
+      document.body.classList.add('is-native', 'is-app', 'mobile-theme');
+      document.body.classList.add(Capacitor.getPlatform() === 'ios' ? 'is-ios' : 'is-android');
     }
 
     if (isPWA) {
-      document.body.classList.add('is-pwa');
+      document.body.classList.add('is-pwa', 'is-app');
       if (isIOSMobile) {
         document.body.classList.add('is-ios');
       } else {
@@ -119,13 +124,13 @@ function App() {
       } else {
         document.body.classList.add('app-desktop-theme');
       }
-    } else {
+    } else if (!isNativeApp) {
       document.body.classList.add('website-theme');
       if (isMobile) {
         document.body.classList.add('mobile-theme');
       }
     }
-  }, [isMobile, isPWA, isIOSMobile]);
+  }, [isMobile, isNativeApp, isPWA, isIOSMobile]);
 
   useEffect(() => {
     const syncThemeColor = () => {
@@ -159,6 +164,8 @@ function App() {
 
   // Listen for push notification navigation from service worker
   useEffect(() => {
+    if (!isPWA) return undefined;
+
     const handleSWMessage = (event) => {
       if (event.data && event.data.type === 'PUSH_NAVIGATE' && event.data.path) {
         navigate(event.data.path);
@@ -166,7 +173,7 @@ function App() {
     };
     navigator.serviceWorker?.addEventListener('message', handleSWMessage);
     return () => navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
-  }, [navigate]);
+  }, [isPWA, navigate]);
 
   useEffect(() => {
     if (!isPWA || !isOffline) return;
@@ -222,7 +229,7 @@ function App() {
     setRememberPromptSaving(true);
     setRememberPromptError('');
     try {
-      const source = isPWA ? 'pwa' : 'web';
+      const source = isAppMode ? 'pwa' : 'web';
       const response = await fetch('/account_api.php?action=enable_remember_me', {
         method: 'POST',
         headers: {
@@ -241,7 +248,7 @@ function App() {
       setRememberPromptSaving(false);
       setRememberPromptError(error?.message || t('auth.saveLoginError'));
     }
-  }, [handleRememberPromptClose, isPWA, t]);
+  }, [handleRememberPromptClose, isAppMode, t]);
 
   const handleSoftRefresh = () => {
     setRefreshKey(prev => prev + 1);
@@ -249,7 +256,7 @@ function App() {
 
   const renderNav = () => {
     const isChatPage = location.pathname.startsWith('/chat/');
-    if (isPWA) {
+    if (isAppMode) {
       return isMobile ? (isChatPage ? null : <MobileNav />) : <Sidebar />;
     }
     return <Navbar />;
@@ -269,16 +276,24 @@ function App() {
 
   return (
     <PullToRefresh onRefresh={handleSoftRefresh} disabled={isChatPage}>
-    <div className={`app-container ${isPWA && !isMobile ? 'with-sidebar' : ''}`}>
-      <TopLoader />
+    <div className={`app-container ${isAppMode && !isMobile ? 'with-sidebar' : ''}`}>
+      {isNativeApp ? null : <TopLoader />}
+      {isNativeApp ? (
+        <>
+          <NativeAppLock />
+          <NativePlatformServices />
+        </>
+      ) : null}
       <ScrollToTop />
       {renderNav()}
       <main
-        className={isPWA && !isMobile ? 'main-with-sidebar' : ''}
+        className={isAppMode && !isMobile ? 'main-with-sidebar' : ''}
         style={{
-          opacity: isLoading ? 0 : 1,
+          // Never hide the entire native view while an API request is pending.
+          // A stalled request previously left only the bottom navigation visible.
+          opacity: isLoading && !isNativeApp ? 0 : 1,
           transition: 'opacity 0.4s ease',
-          pointerEvents: isLoading ? 'none' : 'auto',
+          pointerEvents: isLoading && !isNativeApp ? 'none' : 'auto',
         }}
       >
         <div ref={transitionRef} className="route-animate">
@@ -426,8 +441,8 @@ function App() {
         </div>
       )}
       <CreateAccountReminder />
-      {isPWA ? null : <Footer />}
-      {isPWA ? null : <WebCommandPalette />}
+      {isAppMode ? null : <Footer />}
+      {isAppMode ? null : <WebCommandPalette />}
     </div>
     </PullToRefresh>
   );

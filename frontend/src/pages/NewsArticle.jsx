@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { useIsAppMode } from '../hooks/useIsPWA';
 import { getFallbackNews, fetchNewsDetail, formatNewsDate, formatNewsVersion, getNewsImageUrl } from '../utils/news';
 import './News.css';
 
@@ -162,7 +162,7 @@ export default function NewsArticle() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { language, t } = useLanguage();
-  const isPWA = useIsPWA();
+  const isPWA = useIsAppMode();
   const progressRef = useRef(null);
   const articleBodyRef = useRef(null);
   const mobileContentsRef = useRef(null);

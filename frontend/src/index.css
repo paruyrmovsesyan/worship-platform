@@ -45,10 +45,16 @@
 }
 
 html {
-  /* Start with gradient that matches #app-loader - prevents any flash */
-  background: linear-gradient(135deg, #3A2DFF 0%, #00D4FF 100%);
-  background-color: var(--color-bg);
-  overflow-x: clip;
+  background: #05050A !important;
+  background-color: #05050A !important;
+  color-scheme: dark;
+  -webkit-overflow-scrolling: touch;
+}
+
+html[data-theme="light"] {
+  background: #f4f7fb !important;
+  background-color: #f4f7fb !important;
+  color-scheme: light;
 }
 
 
@@ -66,24 +72,31 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  min-height: 100vh;
+  min-height: 100%;
+  overflow-x: clip;
+  overflow-y: visible;
   transition: background-color 0.5s ease, background 0.5s ease;
   -ms-overflow-style: none;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
-body.is-pwa {
+body.is-app,
+body.wp-standalone-app {
+  min-height: 100%;
+  overflow-x: clip !important;
+  overflow-y: visible !important;
   overscroll-behavior-x: none;
   overflow-anchor: none !important;
 }
 
-body.is-pwa *,
+body.is-app *,
 html.wp-standalone-app *,
 body.wp-standalone-app * {
   overflow-anchor: none !important;
 }
 
-body.is-pwa main {
+body.is-app main {
   overscroll-behavior-x: none;
 }
 
@@ -106,6 +119,8 @@ body.is-pwa main {
 .transpose-page,
 .song-request-page,
 .page-container {
+  overflow-x: clip;
+  overflow-y: visible;
   overflow-anchor: none !important;
   -webkit-overflow-scrolling: touch;
 }
@@ -197,52 +212,54 @@ main { flex: 1; }
   body.website-theme main { padding-top: var(--nav-height); }
 
   /* iOS Standalone PWA Safe-Area & Blur Protection (browser PWA only, native handles status bar) */
-  body.is-pwa.is-ios:not(.is-native) #root,
+  body.is-app.is-ios:not(.is-native) #root,
   body.wp-standalone-app.is-ios:not(.is-native) #root {
     padding-top: max(env(safe-area-inset-top, 0px), 44px);
   }
 
-  body.is-pwa.is-ios:not(.is-native) .page-container,
+  body.is-app.is-ios:not(.is-native) .page-container,
   body.wp-standalone-app.is-ios:not(.is-native) .page-container {
     padding-top: 36px !important;
   }
 
   /* Android Standalone PWA Spacing: native status bar is rendered above webview */
-  body.is-pwa.is-android #root,
+  body.is-app.is-android #root,
   body.wp-standalone-app:not(.is-ios) #root {
     padding-top: env(safe-area-inset-top, 0px);
   }
 
-  body.is-pwa.is-android .page-container,
+  body.is-app.is-android .page-container,
   body.wp-standalone-app:not(.is-ios) .page-container {
     padding-top: 14px !important;
   }
 
-  /* Enforce strict viewport width bounds to prevent horizontal overflow/clipping on Android */
-  body.is-pwa,
+  /* Enforce strict viewport width bounds to prevent horizontal overflow/clipping on Android and PWA */
+  body.is-app,
   body.wp-standalone-app {
     max-width: 100vw;
-    overflow-x: hidden;
+    overflow-x: clip;
+    overflow-y: visible !important;
   }
 
-  body.is-pwa #root,
+  body.is-app #root,
   body.wp-standalone-app #root,
-  body.is-pwa .app-container,
+  body.is-app .app-container,
   body.wp-standalone-app .app-container,
-  body.is-pwa main,
+  body.is-app main,
   body.wp-standalone-app main {
     width: 100%;
     max-width: 100vw;
-    overflow-x: hidden;
+    overflow-x: clip;
+    overflow-y: visible;
     box-sizing: border-box;
   }
 
-  /* Disable scroll anchoring and enforce smooth touch scrolling completely on PWA */
-  body.is-pwa,
-  body.is-pwa #root,
-  body.is-pwa main,
-  body.is-pwa main > *,
-  body.is-pwa * {
+  /* Disable scroll anchoring completely on PWA */
+  body.is-app,
+  body.is-app #root,
+  body.is-app main,
+  body.is-app main > *,
+  body.is-app * {
     overflow-anchor: none !important;
   }
   
@@ -276,6 +293,16 @@ body.is-native main {
 
 body.is-native .hub-header {
   padding-top: 8px !important;
+}
+
+/* WKWebView can occasionally leave fill-mode entrance animations on their
+   first (transparent) frame. Native screens must always remain visible. */
+body.is-native .route-animate,
+body.is-native .animate-fade-in,
+body.is-native .mobile-hub.animate-fade-in {
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
 }
 
 @media (min-width: 901px) {

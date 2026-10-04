@@ -120,8 +120,12 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
           hasVibratedRef.current = false;
         }
       } else {
-        pullDistanceRef.current = 0;
-        setPullDistance(0);
+        // User is scrolling downward into content: immediately invalidate to let native scroll take over
+        isValidPull.current = false;
+        if (pullDistanceRef.current !== 0) {
+          pullDistanceRef.current = 0;
+          setPullDistance(0);
+        }
       }
     };
 

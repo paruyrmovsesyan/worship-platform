@@ -7,11 +7,11 @@ import { getLocalizedTitle } from '../utils/titleParser';
 import { getSongCoverStyle } from '../utils/songCover';
 import { DEFAULT_SAVED_SONG_SORT, normalizeSavedSongSort, sortSavedSongs } from '../utils/savedSongs';
 import { usePageReady } from '../hooks/usePageReady';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { useIsAppMode } from '../hooks/useIsPWA';
 import './Favorites.css';
 
 export default function Favorites() {
-  const isPWA = useIsPWA();
+  const isPWA = useIsAppMode();
   const [songs, setSongs] = useState([]);
   const [activeKeyFilter, setActiveKeyFilter] = useState('all');
   const [sortBy, setSortBy] = useState(() => normalizeSavedSongSort(localStorage.getItem('favorites_sort') || DEFAULT_SAVED_SONG_SORT));

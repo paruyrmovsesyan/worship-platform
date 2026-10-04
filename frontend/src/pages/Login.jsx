@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { useIsAppMode } from '../hooks/useIsPWA';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -16,7 +16,7 @@ const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).
 
 const Login = () => {
   const navigate = useNavigate();
-  const isPWA = useIsPWA();
+  const isPWA = useIsAppMode();
   const { user, setUser, checkAuth } = useAuth();
   const isSubmittingRef = useRef(false);
   const [searchParams] = useSearchParams();
@@ -180,7 +180,9 @@ const Login = () => {
           setUser(data.user);
         }
         if (rememberMe) {
-          saveBiometricCredentials(login.trim(), password).catch(() => {});
+          if (data.biometric_token) {
+            saveBiometricCredentials(login.trim(), data.biometric_token).catch(() => {});
+          }
         }
         navigate(next, { replace: true });
         checkAuth().catch(() => {});
@@ -210,49 +212,16 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const creds = await performBiometricLogin(`Մուտք ${biometricLabel}-ով`);
-      if (!creds?.login || !creds?.password) {
-        throw new Error('Պահպանված տվյալները թերի են');
-      }
-
-      const response = await fetch('/login_api.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        cache: 'no-store',
-        body: JSON.stringify({
-          login: creds.login,
-          password: creds.password,
-          remember_me: true,
-          source,
-        }),
-      });
-
-      const rawText = await response.text();
-      let data = null;
-      try {
-        data = JSON.parse(rawText);
-      } catch {
-        if (response.ok) {
-          const u = await checkAuth();
-          if (u) {
-            navigate(next, { replace: true });
-            return;
-          }
+      const result = await performBiometricLogin(`Մուտք ${biometricLabel}-ով`);
+      if (result?.authenticated) {
+        const activeUser = result.user || await checkAuth();
+        if (!activeUser) {
+          throw new Error('Նիստն ավարտվել է։ Մուտքագրեք գաղտնաբառը մեկ անգամ՝ այն վերականգնելու համար։');
         }
-        throw new Error(t('auth.networkError'));
-      }
-
-      if (response.ok && data && (data.ok || data.success)) {
-        if (data.user) setUser(data.user);
+        setUser(activeUser);
         navigate(next, { replace: true });
-        checkAuth().catch(() => {});
         return;
       }
-
-      setError(data?.error || data?.message || t('auth.invalidLogin'));
     } catch (bioErr) {
       console.warn('Biometric login failed:', bioErr);
       const msg = bioErr?.message || '';

@@ -16,7 +16,7 @@ function detectPwaMode() {
   if (typeof window === 'undefined') return false;
 
   if (Capacitor.isNativePlatform()) {
-    return true;
+    return false;
   }
 
   const browserMode = window.matchMedia('(display-mode: browser)').matches;
@@ -32,6 +32,15 @@ function detectPwaMode() {
 
   clearLegacyAppSource();
   return false;
+}
+
+export function useIsNativeApp() {
+  return Capacitor.isNativePlatform();
+}
+
+export function useIsAppMode() {
+  const isPWA = useIsPWA();
+  return isPWA || Capacitor.isNativePlatform();
 }
 
 export function useIsPWA() {

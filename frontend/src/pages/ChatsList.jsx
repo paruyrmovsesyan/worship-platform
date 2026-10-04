@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { useIsAppMode } from '../hooks/useIsPWA';
 import { usePageReady } from '../hooks/usePageReady';
 import './ChatsList.css';
 
@@ -11,7 +11,7 @@ export default function ChatsList({ isEmbedded = false }) {
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const isPWA = useIsPWA();
+  const isPWA = useIsAppMode();
 
   const [chats, setChats] = useState([]);
   const [friends, setFriends] = useState([]);

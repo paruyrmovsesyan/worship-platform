@@ -54,15 +54,16 @@ export async function nativeShare({ title, text, url, dialogTitle }) {
  * - In Web / PWA: uses navigator.vibrate
  */
 export function triggerHaptic(style = 'light') {
+  const normStyle = String(style).toLowerCase();
   if (Capacitor.isNativePlatform()) {
     try {
-      if (style === 'medium') {
+      if (normStyle === 'medium') {
         Haptics.impact({ style: ImpactStyle.Medium });
-      } else if (style === 'heavy') {
+      } else if (normStyle === 'heavy') {
         Haptics.impact({ style: ImpactStyle.Heavy });
-      } else if (style === 'success') {
+      } else if (normStyle === 'success') {
         Haptics.notification({ type: NotificationType.Success });
-      } else if (style === 'warning') {
+      } else if (normStyle === 'warning') {
         Haptics.notification({ type: NotificationType.Warning });
       } else {
         Haptics.impact({ style: ImpactStyle.Light });
@@ -74,7 +75,7 @@ export function triggerHaptic(style = 'light') {
   // PWA / Browser vibration fallback
   if (typeof navigator !== 'undefined' && navigator.vibrate) {
     try {
-      const duration = style === 'heavy' ? 30 : style === 'medium' ? 20 : 12;
+      const duration = normStyle === 'heavy' ? 30 : normStyle === 'medium' ? 20 : 12;
       navigator.vibrate(duration);
     } catch {}
   }

@@ -194,7 +194,7 @@ body.favorites-reorder-open .app-bottom-nav {
 /* pwa-init gives every direct body child position: relative. The filter is
    portalled to body, so restore viewport positioning above everything. */
 body.wp-standalone-app > .fav-filter-backdrop,
-body.is-pwa > .fav-filter-backdrop {
+body.is-app > .fav-filter-backdrop {
   position: fixed !important;
   inset: 0 !important;
   z-index: 2147483600 !important;

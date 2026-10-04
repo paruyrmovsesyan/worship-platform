@@ -27,10 +27,9 @@
   align-items: center;
   z-index: 2147482000 !important;
   padding: 5px;
-  contain: layout paint;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  touch-action: manipulation;
+  touch-action: none;
   -webkit-tap-highlight-color: transparent;
 
   /* Specular depth & glass illumination */
@@ -41,8 +40,16 @@
     inset 0 -1px 2px 0 rgba(0, 0, 0, 0.4);
 
   transition:
-    transform 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 0.25s ease,
     opacity 0.28s ease;
+}
+
+/* While scrubbing the dock itself stays still (iOS behaviour) – only the lens moves */
+.mobile-bottom-nav.is-scrubbing {
+  box-shadow:
+    0 28px 56px -6px rgba(0, 0, 0, 0.85),
+    0 12px 28px -2px rgba(0, 0, 0, 0.55),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.35);
 }
 
 /* Liquid Glass Top Highlight */
@@ -62,7 +69,7 @@
 
 /* The PWA shell gives direct body children relative positioning. MobileNav is
    portaled to body, so keep the dock explicitly attached to the viewport. */
-body.is-pwa > #wpAppDock,
+body.is-app > #wpAppDock,
 body.wp-standalone-app > #wpAppDock {
   position: fixed !important;
   z-index: 2147482000 !important;
@@ -76,7 +83,7 @@ body.keyboard-open #wpAppDock {
   transform: translateY(200px) !important;
 }
 
-/* Liquid Sliding Indicator Pill */
+/* Liquid Sliding Indicator Pill (single clean glass edge) */
 .nav-liquid-indicator {
   position: absolute;
   top: 5px;
@@ -84,26 +91,52 @@ body.keyboard-open #wpAppDock {
   left: 5px;
   width: calc((100% - 10px) / 4);
   border-radius: 999px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.24) 0%,
-    rgba(255, 255, 255, 0.09) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-top: 1px solid rgba(255, 255, 255, 0.38);
-  box-shadow:
-    0 4px 14px -2px rgba(0, 0, 0, 0.35),
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.36),
-    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.2);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.14);
+  border: 0.5px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 4px 14px -4px rgba(0, 0, 0, 0.35);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
   pointer-events: none;
   z-index: 0;
-  will-change: transform;
-  transition: transform 0.44s cubic-bezier(0.32, 1.25, 0.4, 1);
+  will-change: transform, scale;
+  transform-origin: center center;
+  scale: 1 1;
+  transition:
+    transform 0.42s cubic-bezier(0.25, 1.2, 0.4, 1),
+    scale 0.42s cubic-bezier(0.34, 1.4, 0.64, 1),
+    background-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+/* 1:1 finger tracking for position, spring only for the size */
+.nav-liquid-indicator.is-dragging {
+  transition:
+    scale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 26px -6px rgba(0, 0, 0, 0.55);
+}
+
+/* Held (lens) state: sleek, elevated liquid glass lens – matching iOS tab bars */
+.nav-liquid-indicator.is-lens {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 10px 24px -4px rgba(0, 0, 0, 0.5),
+    0 0 14px rgba(255, 255, 255, 0.18),
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.45);
 }
 
 /* Nav Item: Symmetrical, rock-solid iOS Tab */
+.mobile-bottom-nav,
+.mobile-bottom-nav * {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+}
+
 .mobile-bottom-nav .nav-item {
   position: relative;
   z-index: 1;
@@ -119,18 +152,29 @@ body.keyboard-open #wpAppDock {
   border-radius: 999px;
   text-decoration: none;
   background: transparent;
+  border: none;
+  outline: none;
   gap: 2px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  user-select: none;
-  -webkit-user-select: none;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
   transition: color 0.22s ease, transform 0.14s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
-/* Smooth Tap Press Feedback */
-.mobile-bottom-nav .nav-item:active {
+/* Smooth Tap Press Feedback (only for quick taps, not while holding/scrubbing) */
+.mobile-bottom-nav:not(.is-scrubbing) .nav-item:active {
   transform: scale(0.92);
   transition: transform 0.1s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+/* Desktop navbar shares the .nav-item class – kill its turquoise active underline here */
+.mobile-bottom-nav .nav-item::after,
+.mobile-bottom-nav .nav-item::before,
+.mobile-bottom-nav .nav-item.active::after {
+  content: none !important;
+  display: none !important;
 }
 
 .mobile-bottom-nav .nav-item svg {
@@ -177,6 +221,47 @@ body.keyboard-open #wpAppDock {
 .mobile-bottom-nav .nav-item.active .nav-label {
   font-weight: 700;
   color: #ffffff;
+}
+
+/* Dynamic Interactive Scrubbing Feedback (iOS Stock Magnification) */
+.mobile-bottom-nav.is-scrubbing .nav-item,
+.mobile-bottom-nav.is-long-press .nav-item {
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+/* Tabs under the bubble get brighter and sharper */
+.mobile-bottom-nav .nav-item.scrub-hovered {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+.mobile-bottom-nav .nav-item.scrub-hovered svg {
+  transform: scale(1.12);
+  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.4));
+  color: #ffffff !important;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mobile-bottom-nav .nav-item.scrub-hovered .nav-label {
+  font-weight: 700 !important;
+  color: #ffffff !important;
+}
+
+/* iOS Native Liquid Glass Bubble expansion on hold */
+.mobile-bottom-nav.is-long-press .nav-liquid-indicator {
+  transform-origin: center center;
+  background: rgba(255, 255, 255, 0.22) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  box-shadow:
+    0 10px 24px -4px rgba(0, 0, 0, 0.5),
+    0 0 14px rgba(255, 255, 255, 0.18),
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Inactive tabs slightly dim during interaction to let the active bubble shine */
+.mobile-bottom-nav.is-scrubbing .nav-item:not(.scrub-hovered),
+.mobile-bottom-nav.is-long-press .nav-item:not(.scrub-hovered) {
+  opacity: 0.55;
 }
 
 .mobile-bottom-nav .nav-icon-wrap {
@@ -252,149 +337,4 @@ body.keyboard-open #wpAppDock {
   .mobile-bottom-nav .nav-label {
     font-size: 0.62rem;
   }
-}
-
-/* ── iOS Liquid Glass Quick Page Switcher (Long-Press) ── */
-.nav-quick-menu-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 2147481997;
-  background: rgba(0, 0, 0, 0.42);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  animation: navBackdropFade 0.22s ease forwards;
-}
-
-@keyframes navBackdropFade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.nav-quick-menu {
-  position: fixed;
-  bottom: calc(var(--bottom-nav-safe-gap, max(24px, env(safe-area-inset-bottom, 24px))) + 76px);
-  left: 50%;
-  transform: translateX(-50%) scale(1);
-  width: min(360px, calc(100vw - 32px));
-  z-index: 2147481998;
-
-  /* iOS Liquid Glass Card */
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.16) 0%,
-    rgba(26, 26, 32, 0.85) 25%,
-    rgba(14, 14, 18, 0.94) 100%
-  );
-  -webkit-backdrop-filter: blur(36px) saturate(210%) contrast(105%);
-  backdrop-filter: blur(36px) saturate(210%) contrast(105%);
-  border-radius: 26px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-top: 1px solid rgba(255, 255, 255, 0.38);
-  padding: 14px;
-  box-shadow:
-    0 28px 56px -10px rgba(0, 0, 0, 0.82),
-    0 10px 24px -4px rgba(0, 0, 0, 0.5),
-    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.3);
-  animation: iosQuickPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  transform-origin: center bottom;
-}
-
-@keyframes iosQuickPop {
-  0% {
-    opacity: 0;
-    transform: translateX(-50%) scale(0.85) translateY(18px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(-50%) scale(1) translateY(0);
-  }
-}
-
-.nav-quick-menu-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  padding: 0 4px;
-}
-
-.nav-quick-menu-title {
-  font-size: 0.76rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(235, 235, 245, 0.65);
-}
-
-.nav-quick-menu-close {
-  background: rgba(255, 255, 255, 0.1);
-  border: 0;
-  color: rgba(255, 255, 255, 0.7);
-  width: 26px;
-  height: 26px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.nav-quick-menu-close:active {
-  background: rgba(255, 255, 255, 0.2);
-  transform: scale(0.9);
-}
-
-.nav-quick-menu-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.nav-quick-menu-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 12px 6px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.88);
-  cursor: pointer;
-  text-decoration: none;
-  font-size: 0.74rem;
-  font-weight: 600;
-  transition: all 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-}
-
-.nav-quick-menu-item:active {
-  transform: scale(0.92);
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.nav-quick-menu-item.active {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.26) 0%,
-    rgba(255, 255, 255, 0.12) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-top: 1px solid rgba(255, 255, 255, 0.4);
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.3);
-}
-
-.nav-quick-menu-icon {
-  font-size: 1.35rem;
-  line-height: 1;
-}
-
-.nav-quick-menu-label {
-  letter-spacing: -0.01em;
-  white-space: nowrap;
 }

@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "version": "1.0.0",
+    "minimumVersion": "1.0.0",
+    "storeUrl": ""
+  },
+  "android": {
+    "version": "1.0.0",
+    "minimumVersion": "1.0.0",
+    "storeUrl": "https://play.google.com/store/apps/details?id=am.pmstudio.worship"
+  }
+}

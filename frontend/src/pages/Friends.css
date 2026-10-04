@@ -2,17 +2,17 @@
   padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 108px);
 }
 
-body.is-pwa .friends-page,
+body.is-app .friends-page,
 body.wp-standalone-app .friends-page {
   padding-top: 18px !important;
 }
 
-body.is-pwa.is-ios .friends-page,
+body.is-app.is-ios .friends-page,
 body.wp-standalone-app.is-ios .friends-page {
   padding-top: 36px !important;
 }
 
-body.is-pwa.is-android .friends-page,
+body.is-app.is-android .friends-page,
 body.wp-standalone-app:not(.is-ios) .friends-page {
   padding-top: 14px !important;
 }
@@ -700,7 +700,7 @@ body.wp-standalone-app:not(.is-ios) .friends-page {
 }
 
 body.mobile-theme .friends-page,
-body.is-pwa .friends-page {
+body.is-app .friends-page {
   width: 100vw;
   max-width: none;
   margin-left: calc(50% - 50vw);
@@ -709,13 +709,13 @@ body.is-pwa .friends-page {
 }
 
 body.mobile-theme .friends-page-header,
-body.is-pwa .friends-page-header {
+body.is-app .friends-page-header {
   display: block;
   margin-bottom: 10px;
 }
 
 body.mobile-theme .friends-page .page-title,
-body.is-pwa .friends-page .page-title {
+body.is-app .friends-page .page-title {
   font-size: 2.05rem;
   line-height: 1.05;
   font-weight: 850;
@@ -724,17 +724,17 @@ body.is-pwa .friends-page .page-title {
 }
 
 body.mobile-theme .friends-title-row,
-body.is-pwa .friends-title-row {
+body.is-app .friends-title-row {
   min-height: 44px;
 }
 
 body.mobile-theme .friends-header-actions,
-body.is-pwa .friends-header-actions {
+body.is-app .friends-header-actions {
   gap: 7px;
 }
 
 body.mobile-theme .friends-icon-btn,
-body.is-pwa .friends-icon-btn {
+body.is-app .friends-icon-btn {
   width: 42px;
   height: 42px;
   background: rgba(255, 255, 255, 0.052);
@@ -743,12 +743,12 @@ body.is-pwa .friends-icon-btn {
 }
 
 body.mobile-theme .friends-icon-btn.active,
-body.is-pwa .friends-icon-btn.active {
+body.is-app .friends-icon-btn.active {
   background: rgba(255, 255, 255, 0.12);
 }
 
 body.mobile-theme .friends-search-pill,
-body.is-pwa .friends-search-pill {
+body.is-app .friends-search-pill {
   min-height: 44px;
   margin-top: 8px;
   border-radius: 15px;
@@ -758,7 +758,7 @@ body.is-pwa .friends-search-pill {
 }
 
 body.mobile-theme .friends-request-banner,
-body.is-pwa .friends-request-banner {
+body.is-app .friends-request-banner {
   min-height: 48px;
   margin-top: 10px;
   border-radius: 16px;
@@ -766,20 +766,20 @@ body.is-pwa .friends-request-banner {
 }
 
 body.mobile-theme .friends-avatar-strip,
-body.is-pwa .friends-avatar-strip {
+body.is-app .friends-avatar-strip {
   margin: 9px -16px 0;
   padding: 1px 16px 4px;
   gap: 14px;
 }
 
 body.mobile-theme .friends-avatar-chip,
-body.is-pwa .friends-avatar-chip {
+body.is-app .friends-avatar-chip {
   width: 62px;
   gap: 6px;
 }
 
 body.mobile-theme .friends-avatar-chip .friend-avatar,
-body.is-pwa .friends-avatar-chip .friend-avatar {
+body.is-app .friends-avatar-chip .friend-avatar {
   width: 54px;
   height: 54px;
   border: 2px solid rgba(255, 255, 255, 0.1);
@@ -787,24 +787,24 @@ body.is-pwa .friends-avatar-chip .friend-avatar {
 }
 
 body.mobile-theme .friends-avatar-chip small,
-body.is-pwa .friends-avatar-chip small {
+body.is-app .friends-avatar-chip small {
   color: rgba(255, 255, 255, 0.68);
   font-size: 0.72rem;
 }
 
 body.mobile-theme .friends-summary,
-body.is-pwa .friends-summary {
+body.is-app .friends-summary {
   display: none;
 }
 
 body.mobile-theme .friends-view-switcher,
-body.is-pwa .friends-view-switcher {
+body.is-app .friends-view-switcher {
   gap: 9px;
   margin: 0 0 14px;
 }
 
 body.mobile-theme .friends-view-btn,
-body.is-pwa .friends-view-btn {
+body.is-app .friends-view-btn {
   min-height: 48px;
   padding: 0 12px;
   border-radius: 16px;
@@ -814,25 +814,25 @@ body.is-pwa .friends-view-btn {
 }
 
 body.mobile-theme .friends-view-btn span,
-body.is-pwa .friends-view-btn span {
+body.is-app .friends-view-btn span {
   font-size: 0.9rem;
 }
 
 body.mobile-theme .friends-view-btn strong,
-body.is-pwa .friends-view-btn strong {
+body.is-app .friends-view-btn strong {
   min-width: 28px;
   height: 28px;
   font-size: 0.82rem;
 }
 
 body.mobile-theme .friends-view-btn.active,
-body.is-pwa .friends-view-btn.active {
+body.is-app .friends-view-btn.active {
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.105);
 }
 
 body.mobile-theme .friends-inline-back,
-body.is-pwa .friends-inline-back {
+body.is-app .friends-inline-back {
   min-height: 34px;
   margin-bottom: 10px;
   padding: 0 12px;
@@ -840,7 +840,7 @@ body.is-pwa .friends-inline-back {
 }
 
 body.mobile-theme .friends-shell-panel,
-body.is-pwa .friends-shell-panel {
+body.is-app .friends-shell-panel {
   padding: 0;
   background: transparent;
   border: 0;
@@ -849,7 +849,7 @@ body.is-pwa .friends-shell-panel {
 }
 
 body.mobile-theme .friends-panel,
-body.is-pwa .friends-panel {
+body.is-app .friends-panel {
   padding: 0;
   background: transparent;
   border: 0;
@@ -858,14 +858,14 @@ body.is-pwa .friends-panel {
 }
 
 body.mobile-theme .friend-list,
-body.is-pwa .friend-list,
+body.is-app .friend-list,
 body.mobile-theme .embedded-chats,
-body.is-pwa .embedded-chats {
+body.is-app .embedded-chats {
   gap: 8px;
 }
 
 body.mobile-theme .friend-list-row,
-body.is-pwa .friend-list-row {
+body.is-app .friend-list-row {
   align-items: center;
   flex-wrap: nowrap;
   padding: 13px 0;
@@ -876,7 +876,7 @@ body.is-pwa .friend-list-row {
 }
 
 body.mobile-theme .friend-avatar,
-body.is-pwa .friend-avatar {
+body.is-app .friend-avatar {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -885,17 +885,17 @@ body.is-pwa .friend-avatar {
 }
 
 body.mobile-theme .friend-main strong,
-body.is-pwa .friend-main strong {
+body.is-app .friend-main strong {
   font-size: 1rem;
 }
 
 body.mobile-theme .friend-main span,
-body.is-pwa .friend-main span {
+body.is-app .friend-main span {
   font-size: 0.84rem;
 }
 
 body.mobile-theme .friend-row-actions,
-body.is-pwa .friend-row-actions {
+body.is-app .friend-row-actions {
   width: auto;
   padding-left: 0;
   gap: 6px;
@@ -903,7 +903,7 @@ body.is-pwa .friend-row-actions {
 }
 
 body.mobile-theme .friend-row-actions .btn,
-body.is-pwa .friend-row-actions .btn {
+body.is-app .friend-row-actions .btn {
   flex: 0 0 auto;
   min-width: 0;
   padding: 8px 11px;
@@ -912,32 +912,32 @@ body.is-pwa .friend-row-actions .btn {
 }
 
 body.mobile-theme .friends-section-head,
-body.is-pwa .friends-section-head {
+body.is-app .friends-section-head {
   margin-bottom: 12px;
 }
 
 body.mobile-theme .friends-section-head h3,
-body.is-pwa .friends-section-head h3,
+body.is-app .friends-section-head h3,
 body.mobile-theme .friends-section-title,
-body.is-pwa .friends-section-title {
+body.is-app .friends-section-title {
   font-size: 1.05rem;
 }
 
 body.mobile-theme .friends-search-input,
-body.is-pwa .friends-search-input {
+body.is-app .friends-search-input {
   min-height: 48px;
   border-radius: 16px;
   margin-bottom: 12px;
 }
 
 body.mobile-theme .embedded-chats-toolbar,
-body.is-pwa .embedded-chats-toolbar {
+body.is-app .embedded-chats-toolbar {
   justify-content: flex-end;
   margin: -2px 0 8px;
 }
 
 body.mobile-theme .embedded-chats-toolbar .btn,
-body.is-pwa .embedded-chats-toolbar .btn {
+body.is-app .embedded-chats-toolbar .btn {
   border-radius: 999px;
   padding: 8px 13px;
   min-height: 36px;
@@ -948,7 +948,7 @@ body.is-pwa .embedded-chats-toolbar .btn {
 }
 
 body.mobile-theme .chat-list-card,
-body.is-pwa .chat-list-card {
+body.is-app .chat-list-card {
   min-height: 74px;
   padding: 12px 12px !important;
   border-radius: 18px !important;
@@ -960,14 +960,14 @@ body.is-pwa .chat-list-card {
 }
 
 body.mobile-theme .chat-list-card.unread,
-body.is-pwa .chat-list-card.unread {
+body.is-app .chat-list-card.unread {
   background: linear-gradient(135deg, rgba(0, 212, 255, 0.09), rgba(58, 45, 255, 0.07)) !important;
   border-color: rgba(0, 212, 255, 0.14) !important;
   border-bottom-color: rgba(0, 212, 255, 0.14) !important;
 }
 
 body.mobile-theme .chat-list-avatar,
-body.is-pwa .chat-list-avatar {
+body.is-app .chat-list-avatar {
   width: 48px !important;
   height: 48px !important;
   border-radius: 50% !important;
@@ -976,29 +976,29 @@ body.is-pwa .chat-list-avatar {
 }
 
 body.mobile-theme .chat-list-items,
-body.is-pwa .chat-list-items {
+body.is-app .chat-list-items {
   gap: 4px;
 }
 
 body.mobile-theme .chat-list-title,
-body.is-pwa .chat-list-title {
+body.is-app .chat-list-title {
   font-size: 1rem;
   font-weight: 820;
 }
 
 body.mobile-theme .chat-list-preview,
-body.is-pwa .chat-list-preview {
+body.is-app .chat-list-preview {
   font-size: 0.92rem;
   color: rgba(255, 255, 255, 0.66);
 }
 
 body.mobile-theme .chat-list-time,
-body.is-pwa .chat-list-time {
+body.is-app .chat-list-time {
   color: rgba(255, 255, 255, 0.68);
 }
 
 body.mobile-theme .chat-group-builder,
-body.is-pwa .chat-group-builder {
+body.is-app .chat-group-builder {
   padding: 16px;
   margin-bottom: 12px;
   border-radius: 20px;
@@ -1006,12 +1006,12 @@ body.is-pwa .chat-group-builder {
 }
 
 body.mobile-theme .chat-group-builder-actions,
-body.is-pwa .chat-group-builder-actions {
+body.is-app .chat-group-builder-actions {
   justify-content: stretch;
 }
 
 body.mobile-theme .chat-group-builder-actions .btn,
-body.is-pwa .chat-group-builder-actions .btn {
+body.is-app .chat-group-builder-actions .btn {
   flex: 1;
 }
 

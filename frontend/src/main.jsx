@@ -5,25 +5,29 @@ import { AuthProvider } from './context/AuthContext.jsx'
 import { LanguageProvider } from './context/LanguageContext.jsx'
 import { PageLoadingProvider } from './context/PageLoadingContext.jsx'
 import { CallProvider } from './context/CallContext.jsx'
+import { Capacitor } from '@capacitor/core'
 import App from './App.jsx'
 import './index.css'
 import './styles/LightTheme.css'
-import { setupNativeNetwork } from './utils/nativeNetwork.js'
 
-setupNativeNetwork();
+const prepareNativeRuntime = Capacitor.isNativePlatform()
+  ? import('./utils/nativeNetwork.js').then(({ setupNativeNetwork }) => setupNativeNetwork())
+  : Promise.resolve();
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <LanguageProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <CallProvider>
-            <PageLoadingProvider>
-              <App />
-            </PageLoadingProvider>
-          </CallProvider>
-        </BrowserRouter>
-      </AuthProvider>
-    </LanguageProvider>
-  </React.StrictMode>,
-)
+prepareNativeRuntime.finally(() => {
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      <LanguageProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <CallProvider>
+              <PageLoadingProvider>
+                <App />
+              </PageLoadingProvider>
+            </CallProvider>
+          </BrowserRouter>
+        </AuthProvider>
+      </LanguageProvider>
+    </React.StrictMode>,
+  );
+});

@@ -5,7 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { usePageReady } from '../hooks/usePageReady';
 import { useCall } from '../context/CallContext';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { useIsAppMode } from '../hooks/useIsPWA';
+import { triggerHaptic } from '../utils/nativeFeatures';
 import './Chat.css';
 
 const URL_REGEX = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s՝։֊]|www\.[^\s<]+[^<.,:;"')\]\s՝։֊])/gi;
@@ -117,7 +118,7 @@ function renderLinkPreview(text, isOwn, navigate, language) {
         className="chat-link-preview-card"
         onClick={(e) => {
           e.stopPropagation();
-          navigate(`/songs/${songId}`);
+          navigate(`/song/${songId}`);
         }}
       >
         <div className="chat-link-icon-box">🎶</div>
@@ -189,7 +190,7 @@ export default function Chat() {
   const { user, loading: authLoading } = useAuth();
   const { t, language } = useLanguage();
   const audioCall = useCall();
-  const isPWA = useIsPWA();
+  const isPWA = useIsAppMode();
   const [messages, setMessages] = useState([]);
   const [chatInfo, setChatInfo] = useState(null);
   const [inputText, setInputText] = useState('');
@@ -226,6 +227,15 @@ export default function Chat() {
   const groupOverlayRef = useRef(null);
   const dragStartY = useRef(null);
   const dragCurrentY = useRef(0);
+
+  const scrollToBottom = (instant = false) => {
+    if (containerRef.current) {
+      containerRef.current.scrollTo({
+        top: containerRef.current.scrollHeight,
+        behavior: instant ? 'instant' : 'smooth'
+      });
+    }
+  };
 
   const handleImportSetlist = async (setlistId) => {
     if (!setlistId || importingSetlistId) return;
@@ -349,10 +359,13 @@ export default function Chat() {
     const applyChatViewport = () => {
       const viewport = window.visualViewport;
       const height = viewport ? viewport.height : window.innerHeight;
+      const offsetTop = viewport ? viewport.offsetTop : 0;
 
       root.style.setProperty('--chat-vh', `${Math.round(height)}px`);
+      root.style.setProperty('--chat-viewport-offset', `${Math.round(offsetTop)}px`);
+
       if (window.scrollY !== 0) {
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       }
     };
 
@@ -361,15 +374,41 @@ export default function Chat() {
     window.visualViewport?.addEventListener('scroll', applyChatViewport);
     window.addEventListener('resize', applyChatViewport);
     window.addEventListener('orientationchange', applyChatViewport);
-    window.addEventListener('scroll', applyChatViewport);
+
+    let removeShow = null;
+    let removeHide = null;
+    if (typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()) {
+      import('@capacitor/keyboard').then(({ Keyboard }) => {
+        Keyboard.addListener('keyboardWillShow', (info) => {
+          const kbHeight = info.keyboardHeight || 0;
+          const h = window.innerHeight - kbHeight;
+          if (h > 150) {
+            root.style.setProperty('--chat-vh', `${Math.round(h)}px`);
+          }
+          if (window.scrollY !== 0) {
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+          }
+          scrollToBottom(true);
+        }).then((sub) => { removeShow = sub; }).catch(() => {});
+
+        Keyboard.addListener('keyboardWillHide', () => {
+          root.style.setProperty('--chat-vh', `${window.innerHeight}px`);
+          if (window.scrollY !== 0) {
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+          }
+        }).then((sub) => { removeHide = sub; }).catch(() => {});
+      }).catch(() => {});
+    }
 
     return () => {
       window.visualViewport?.removeEventListener('resize', applyChatViewport);
       window.visualViewport?.removeEventListener('scroll', applyChatViewport);
       window.removeEventListener('resize', applyChatViewport);
       window.removeEventListener('orientationchange', applyChatViewport);
-      window.removeEventListener('scroll', applyChatViewport);
+      removeShow?.remove?.();
+      removeHide?.remove?.();
       root.style.removeProperty('--chat-vh');
+      root.style.removeProperty('--chat-viewport-offset');
     };
   }, []);
 
@@ -444,8 +483,8 @@ export default function Chat() {
         if (data.chat_info) setChatInfo(data.chat_info);
         if (data.messages && data.messages.length < 50) setHasMore(false);
         setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
-        }, 50);
+          scrollToBottom(true);
+        }, 30);
       } else if (data.error === 'Access denied') {
         alert(t('chat.deletedOrUnavailable'));
         navigate('/chats', { replace: true });
@@ -511,8 +550,8 @@ export default function Chat() {
         
         if (isNearBottom && newMessages.length > 0) {
           setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-          }, 50);
+            scrollToBottom(false);
+          }, 30);
         }
       }
     } catch (e) {
@@ -630,11 +669,9 @@ export default function Chat() {
           }
         } catch (_) {}
       }
+      triggerHaptic('medium');
       showActionMenu(m, touchBubbleRef.current);
-      if (typeof window !== 'undefined' && window.navigator?.vibrate) {
-        try { window.navigator.vibrate(40); } catch (e) {}
-      }
-    }, 450);
+    }, 380);
   };
 
   const handleTouchEnd = () => {
@@ -721,6 +758,7 @@ export default function Chat() {
     if (explicitText === undefined) {
       setInputText('');
     }
+    triggerHaptic('light');
     inputRef.current?.focus();
     
     const optimisticMsg = {
@@ -736,8 +774,8 @@ export default function Chat() {
       return nextMessages;
     });
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 50);
+      scrollToBottom(false);
+    }, 30);
 
     try {
       const res = await fetch('/chat_api.php?action=send_message', {
@@ -1435,11 +1473,10 @@ export default function Chat() {
               }
             }}
             onFocus={() => {
-              window.scrollTo(0, 0);
-              setTimeout(() => {
-                window.scrollTo(0, 0);
-                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-              }, 200);
+              if (window.scrollY !== 0) {
+                window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+              }
+              scrollToBottom(true);
             }}
             autoComplete="off"
             autoCorrect="off"
@@ -1642,6 +1679,7 @@ export default function Chat() {
                   onClick={() => {
                     try {
                       navigator.clipboard.writeText(m.message);
+                      triggerHaptic('light');
                       setCopyToast(true);
                       setTimeout(() => setCopyToast(false), 1800);
                     } catch (e) {}
@@ -1652,13 +1690,14 @@ export default function Chat() {
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                   </svg>
-                  {t('chat.copy', 'Պatčenel')}
+                  {t('chat.copy', 'Պատճենել')}
                 </button>
               )}
               {canEdit && (
                 <button
                   className="chat-action-popup-btn"
                   onClick={() => {
+                    triggerHaptic('light');
                     setEditingMessage(m);
                     setInputText(m.message || '');
                     setActiveActionMessage(null);
@@ -1669,13 +1708,14 @@ export default function Chat() {
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                   </svg>
-                  {t('chat.edit', 'Xmbaгrel')}
+                  {t('chat.edit', 'Խմբագրել')}
                 </button>
               )}
               {canDelete && (
                 <button
                   className="chat-action-popup-btn danger"
                   onClick={() => {
+                    triggerHaptic('medium');
                     setDeletingMessage(m);
                     setActiveActionMessage(null);
                   }}
@@ -1686,7 +1726,7 @@ export default function Chat() {
                     <path d="M10 11v6"></path><path d="M14 11v6"></path>
                     <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
                   </svg>
-                  {t('chat.delete', 'Jnjel')}
+                  {t('chat.delete', 'Ջնջել')}
                 </button>
               )}
             </div>

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { usePageReady } from '../hooks/usePageReady';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { useIsAppMode } from '../hooks/useIsPWA';
 import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
 import './Profile.css';
 
@@ -12,7 +12,7 @@ export default function Profile() {
   const { user, logout, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { t, language, setLanguage } = useLanguage();
-  const isPWA = useIsPWA();
+  const isPWA = useIsAppMode();
   const { guardPath } = usePwaOfflineGuard();
   const [loading, setLoading] = useState(true);
   usePageReady(loading || authLoading);

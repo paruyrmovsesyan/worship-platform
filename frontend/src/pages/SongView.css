@@ -161,13 +161,13 @@
   .sv-control-panel { display: block; }
 }
 
-body.is-pwa .sv-inline-controls,
+body.is-app .sv-inline-controls,
 body.mobile-theme .sv-inline-controls,
 body.wp-main-app.song-view-active .sv-inline-controls {
   display: none !important;
 }
 
-body.is-pwa .sv-control-panel,
+body.is-app .sv-control-panel,
 body.mobile-theme .sv-control-panel,
 body.wp-main-app.song-view-active .sv-control-panel {
   display: block !important;
@@ -427,7 +427,8 @@ body.wp-main-app.song-view-active .sv-control-panel {
   padding: 24px;
   width: 100%;
   box-sizing: border-box;
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 @media (max-width: 900px) {
@@ -475,9 +476,9 @@ body.wp-main-app.song-view-active .sv-control-panel {
 body.wp-standalone-app > .seq-nav,
 body.wp-standalone-app .seq-nav,
 body.mobile-theme .seq-nav,
-body.is-pwa .seq-nav,
+body.is-app .seq-nav,
 body.mobile-theme .song-view-page .seq-nav,
-body.is-pwa .song-view-page .seq-nav {
+body.is-app .song-view-page .seq-nav {
   position: fixed !important;
   left: 50% !important;
   right: auto !important;
@@ -591,7 +592,7 @@ body.is-pwa .song-view-page .seq-nav {
 
 /* Mobile/PWA song view should use one stable full-width layout. */
 body.mobile-theme .song-view-page,
-body.is-pwa .song-view-page,
+body.is-app .song-view-page,
 body.wp-main-app.song-view-active .song-view-page {
   width: 100vw;
   max-width: none;
@@ -603,7 +604,7 @@ body.wp-main-app.song-view-active .song-view-page {
 body.wp-standalone-app .song-view-page.has-seq-nav,
 body.wp-main-app .song-view-page.has-seq-nav,
 body.mobile-theme .song-view-page.has-seq-nav,
-body.is-pwa .song-view-page.has-seq-nav,
+body.is-app .song-view-page.has-seq-nav,
 .song-view-page.has-seq-nav {
   padding-bottom: 24px !important;
 }
@@ -620,13 +621,14 @@ body.song-view-active.is-pwa main {
   margin-right: 0 !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 body.mobile-theme .song-view-page .sv-header,
 body.mobile-theme .song-view-page .sv-meta-row,
-body.is-pwa .song-view-page .sv-header,
-body.is-pwa .song-view-page .sv-meta-row,
+body.is-app .song-view-page .sv-header,
+body.is-app .song-view-page .sv-meta-row,
 body.wp-main-app.song-view-active .song-view-page .sv-header,
 body.wp-main-app.song-view-active .song-view-page .sv-meta-row {
   padding-left: 16px;
@@ -635,17 +637,18 @@ body.wp-main-app.song-view-active .song-view-page .sv-meta-row {
   max-width: 100% !important;
 }
 
-body.is-pwa .song-view-page,
+body.is-app .song-view-page,
 body.wp-standalone-app .song-view-page {
   width: 100% !important;
   max-width: 100% !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
-  overflow-x: hidden !important;
+  overflow-x: clip !important;
+  overflow-y: visible !important;
   box-sizing: border-box !important;
 }
 
-body.is-pwa.is-ios:not(.is-native) .song-view-page {
+body.is-app.is-ios:not(.is-native) .song-view-page {
   padding-top: 20px !important;
 }
 
@@ -657,10 +660,10 @@ body.mobile-theme .song-view-page .sv-segment-control,
 body.mobile-theme .song-view-page .sv-sheet,
 body.mobile-theme .song-view-page .sv-control-panel,
 body.mobile-theme .song-view-page .sv-inline-controls,
-body.is-pwa .song-view-page .sv-segment-control,
-body.is-pwa .song-view-page .sv-sheet,
-body.is-pwa .song-view-page .sv-control-panel,
-body.is-pwa .song-view-page .sv-inline-controls,
+body.is-app .song-view-page .sv-segment-control,
+body.is-app .song-view-page .sv-sheet,
+body.is-app .song-view-page .sv-control-panel,
+body.is-app .song-view-page .sv-inline-controls,
 body.wp-main-app.song-view-active .song-view-page .sv-segment-control,
 body.wp-main-app.song-view-active .song-view-page .sv-sheet,
 body.wp-main-app.song-view-active .song-view-page .sv-control-panel,
@@ -672,15 +675,15 @@ body.wp-main-app.song-view-active .song-view-page .sv-inline-controls {
 }
 
 body.mobile-theme .song-view-page .sv-sheet,
-body.is-pwa .song-view-page .sv-sheet,
+body.is-app .song-view-page .sv-sheet,
 body.wp-main-app.song-view-active .song-view-page .sv-sheet {
   padding: 16px;
 }
 
 body.mobile-theme .song-view-page .sv-control-panel,
 body.mobile-theme .song-view-page .sv-inline-controls,
-body.is-pwa .song-view-page .sv-control-panel,
-body.is-pwa .song-view-page .sv-inline-controls,
+body.is-app .song-view-page .sv-control-panel,
+body.is-app .song-view-page .sv-inline-controls,
 body.wp-main-app.song-view-active .song-view-page .sv-control-panel,
 body.wp-main-app.song-view-active .song-view-page .sv-inline-controls {
   padding-left: 16px;
@@ -688,7 +691,7 @@ body.wp-main-app.song-view-active .song-view-page .sv-inline-controls {
 }
 
 body.mobile-theme .song-view-page.has-seq-nav .sv-control-panel,
-body.is-pwa .song-view-page.has-seq-nav .sv-control-panel {
+body.is-app .song-view-page.has-seq-nav .sv-control-panel {
   margin-bottom: 18px;
 }
 
@@ -744,7 +747,8 @@ body.is-pwa .song-view-page.has-seq-nav .sv-control-panel {
     margin-right: 0 !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
-    overflow-x: hidden;
+    overflow-x: clip;
+    overflow-y: visible;
   }
 }
 
@@ -1197,7 +1201,7 @@ body.wp-standalone-app > .sv-modal-overlay,
 }
 
 body.mobile-theme .song-view-page .sv-pwa-media-section,
-body.is-pwa .song-view-page .sv-pwa-media-section {
+body.is-app .song-view-page .sv-pwa-media-section {
   max-width: none;
   margin-left: 16px;
   margin-right: 16px;

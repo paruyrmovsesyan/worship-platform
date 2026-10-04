@@ -255,7 +255,12 @@ if($user && $pwMatch){
 
   wp_auth_sync_install_identity($user, $source);
 
-  out([
+  $isNativeRequest = trim((string)($_SERVER['HTTP_X_WORSHIP_NATIVE'] ?? '')) === '1';
+  $biometricToken = ($isNativeRequest && $remember && !empty($selector) && !empty($validator))
+    ? $selector . ':' . $validator
+    : null;
+
+  $response = [
       "ok"      => true,
       "success" => true,
       "user"    => [
@@ -263,7 +268,11 @@ if($user && $pwMatch){
           "name"  => $display,
           "email" => $user['email']
       ]
-  ]);
+  ];
+  if ($biometricToken !== null) {
+    $response['biometric_token'] = $biometricToken;
+  }
+  out($response);
 
 } else {
   out(["ok" => false, "success" => false, "error" => "Սխալ էլ. փոստ կամ գաղտնաբառ"], 401);

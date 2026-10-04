@@ -1,9 +1,9 @@
 import LandingPage from './LandingPage';
 import MobileHub from './MobileHub';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { useIsAppMode } from '../hooks/useIsPWA';
 
 export default function Home() {
-  const isPWA = useIsPWA();
+  const isAppMode = useIsAppMode();
 
-  return isPWA ? <MobileHub /> : <LandingPage />;
+  return isAppMode ? <MobileHub /> : <LandingPage />;
 }
