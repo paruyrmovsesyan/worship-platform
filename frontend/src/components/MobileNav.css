@@ -1,10 +1,10 @@
 .mobile-bottom-nav {
   position: fixed !important;
   bottom: var(--bottom-nav-safe-gap, max(24px, env(safe-area-inset-bottom, 24px)));
-  left: max(24px, env(safe-area-inset-left, 0px));
-  right: max(24px, env(safe-area-inset-right, 0px));
+  left: max(20px, env(safe-area-inset-left, 0px));
+  right: max(20px, env(safe-area-inset-right, 0px));
   width: auto;
-  max-width: 400px;
+  max-width: 392px;
   height: 64px;
   margin-inline: auto;
   transform: none !important;
@@ -12,12 +12,12 @@
   /* iOS Liquid Glass Effect */
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.12) 0%,
     rgba(28, 28, 34, 0.72) 25%,
     rgba(16, 16, 20, 0.82) 100%
   );
-  -webkit-backdrop-filter: blur(32px) saturate(210%) contrast(105%);
-  backdrop-filter: blur(32px) saturate(210%) contrast(105%);
+  -webkit-backdrop-filter: blur(34px) saturate(210%) contrast(105%);
+  backdrop-filter: blur(34px) saturate(210%) contrast(105%);
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-top: 1px solid rgba(255, 255, 255, 0.32);
@@ -26,7 +26,7 @@
   justify-content: space-between;
   align-items: center;
   z-index: 2147482000 !important;
-  padding: 0 8px;
+  padding: 5px;
   contain: layout paint;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
@@ -35,15 +35,14 @@
 
   /* Specular depth & glass illumination */
   box-shadow:
-    0 24px 48px -8px rgba(0, 0, 0, 0.7),
-    0 8px 20px -4px rgba(0, 0, 0, 0.4),
+    0 24px 48px -8px rgba(0, 0, 0, 0.75),
+    0 8px 20px -4px rgba(0, 0, 0, 0.45),
     inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.28),
-    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.35);
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.4);
 
   transition:
     transform 0.4s cubic-bezier(0.32, 0.72, 0, 1),
-    opacity 0.28s ease,
-    background 0.3s ease;
+    opacity 0.28s ease;
 }
 
 /* Liquid Glass Top Highlight */
@@ -77,39 +76,61 @@ body.keyboard-open #wpAppDock {
   transform: translateY(200px) !important;
 }
 
+/* Liquid Sliding Indicator Pill */
+.nav-liquid-indicator {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 5px;
+  width: calc((100% - 10px) / 4);
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.24) 0%,
+    rgba(255, 255, 255, 0.09) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.38);
+  box-shadow:
+    0 4px 14px -2px rgba(0, 0, 0, 0.35),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.36),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.2);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+  transition: transform 0.44s cubic-bezier(0.32, 1.25, 0.4, 1);
+}
+
+/* Nav Item: Symmetrical, rock-solid iOS Tab */
 .mobile-bottom-nav .nav-item {
   position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 48px;
-  padding: 0 14px;
-  color: rgba(235, 235, 245, 0.6);
+  height: 100%;
+  padding: 4px 0;
+  color: rgba(235, 235, 245, 0.55);
   border-radius: 999px;
   text-decoration: none;
   background: transparent;
-  gap: 8px;
-  overflow: hidden;
+  gap: 2px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   -webkit-user-select: none;
-
-  /* Smooth iOS Spring Timing */
-  transition:
-    padding 0.4s cubic-bezier(0.32, 0.72, 0, 1),
-    background 0.35s cubic-bezier(0.2, 0.9, 0.3, 1),
-    color 0.28s cubic-bezier(0.2, 0.9, 0.3, 1),
-    transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1),
-    box-shadow 0.35s cubic-bezier(0.2, 0.9, 0.3, 1),
-    border-color 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
+  transition: color 0.22s ease, transform 0.14s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
 /* Smooth Tap Press Feedback */
 .mobile-bottom-nav .nav-item:active {
   transform: scale(0.92);
-  transition: transform 0.12s cubic-bezier(0.2, 0.9, 0.3, 1);
+  transition: transform 0.1s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
 .mobile-bottom-nav .nav-item svg {
@@ -117,23 +138,18 @@ body.keyboard-open #wpAppDock {
   height: 22px;
   flex-shrink: 0;
   transition:
-    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-    color 0.24s ease,
+    transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    color 0.22s ease,
     filter 0.3s ease;
 }
 
-.mobile-bottom-nav .nav-item > span:not(.nav-icon-wrap) {
-  font-size: 0.88rem;
-  font-weight: 600;
+.mobile-bottom-nav .nav-label {
+  font-size: 0.68rem;
+  font-weight: 500;
   letter-spacing: -0.015em;
   white-space: nowrap;
-  opacity: 0;
-  max-width: 0;
-  transform: translateX(-6px);
-  transition:
-    opacity 0.26s cubic-bezier(0.2, 0.9, 0.3, 1),
-    max-width 0.4s cubic-bezier(0.32, 0.72, 0, 1),
-    transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+  line-height: 1.1;
+  transition: color 0.22s ease, font-weight 0.2s ease;
   display: block;
 }
 
@@ -141,34 +157,26 @@ body.keyboard-open #wpAppDock {
   color: rgba(255, 255, 255, 0.88);
 }
 
-/* Active Pill: Liquid Glass Capsule */
+/* Active State: Apple spring bounce and specular glow */
 .mobile-bottom-nav .nav-item.active {
   color: #ffffff;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.24) 0%,
-    rgba(255, 255, 255, 0.10) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-top: 1px solid rgba(255, 255, 255, 0.36);
-  padding: 0 20px;
-  box-shadow:
-    0 4px 14px -2px rgba(0, 0, 0, 0.35),
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.2);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
 }
 
 .mobile-bottom-nav .nav-item.active svg {
   transform: scale(1.08);
-  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.35));
+  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.38));
+  animation: iosTabBounce 0.44s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.mobile-bottom-nav .nav-item.active > span:not(.nav-icon-wrap) {
-  opacity: 1;
-  max-width: 100px;
-  transform: translateX(0);
+@keyframes iosTabBounce {
+  0% { transform: scale(0.88); }
+  50% { transform: scale(1.18); }
+  100% { transform: scale(1.08); }
+}
+
+.mobile-bottom-nav .nav-item.active .nav-label {
+  font-weight: 700;
+  color: #ffffff;
 }
 
 .mobile-bottom-nav .nav-icon-wrap {
@@ -181,22 +189,22 @@ body.keyboard-open #wpAppDock {
 
 .mobile-bottom-nav .nav-count-badge {
   position: absolute;
-  top: -7px;
+  top: -6px;
   right: -10px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
   border-radius: 999px;
   background: #ff453a;
   color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0;
-  box-shadow: 0 0 0 2px #1c1c1e;
+  box-shadow: 0 0 0 2px rgba(20, 20, 24, 0.85);
 }
 
 .nav-transition-veil {
@@ -233,17 +241,160 @@ body.keyboard-open #wpAppDock {
   .mobile-bottom-nav {
     left: max(12px, env(safe-area-inset-left, 0px));
     right: max(12px, env(safe-area-inset-right, 0px));
-    padding: 0 4px;
+    padding: 4px;
   }
-  .mobile-bottom-nav .nav-item {
-    padding: 0 10px;
-    gap: 6px;
+  .nav-liquid-indicator {
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc((100% - 8px) / 4);
   }
-  .mobile-bottom-nav .nav-item.active {
-    padding: 0 14px;
+  .mobile-bottom-nav .nav-label {
+    font-size: 0.62rem;
   }
-  .mobile-bottom-nav .nav-item.active > span:not(.nav-icon-wrap) {
-    max-width: 85px;
-    font-size: 0.85rem;
+}
+
+/* ── iOS Liquid Glass Quick Page Switcher (Long-Press) ── */
+.nav-quick-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2147481997;
+  background: rgba(0, 0, 0, 0.42);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  animation: navBackdropFade 0.22s ease forwards;
+}
+
+@keyframes navBackdropFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.nav-quick-menu {
+  position: fixed;
+  bottom: calc(var(--bottom-nav-safe-gap, max(24px, env(safe-area-inset-bottom, 24px))) + 76px);
+  left: 50%;
+  transform: translateX(-50%) scale(1);
+  width: min(360px, calc(100vw - 32px));
+  z-index: 2147481998;
+
+  /* iOS Liquid Glass Card */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(26, 26, 32, 0.85) 25%,
+    rgba(14, 14, 18, 0.94) 100%
+  );
+  -webkit-backdrop-filter: blur(36px) saturate(210%) contrast(105%);
+  backdrop-filter: blur(36px) saturate(210%) contrast(105%);
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-top: 1px solid rgba(255, 255, 255, 0.38);
+  padding: 14px;
+  box-shadow:
+    0 28px 56px -10px rgba(0, 0, 0, 0.82),
+    0 10px 24px -4px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.3);
+  animation: iosQuickPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  transform-origin: center bottom;
+}
+
+@keyframes iosQuickPop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.85) translateY(18px);
   }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1) translateY(0);
+  }
+}
+
+.nav-quick-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.nav-quick-menu-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(235, 235, 245, 0.65);
+}
+
+.nav-quick-menu-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: 0;
+  color: rgba(255, 255, 255, 0.7);
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-quick-menu-close:active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0.9);
+}
+
+.nav-quick-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.nav-quick-menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 6px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.88);
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 0.74rem;
+  font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.nav-quick-menu-item:active {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.nav-quick-menu-item.active {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.26) 0%,
+    rgba(255, 255, 255, 0.12) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+.nav-quick-menu-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.nav-quick-menu-label {
+  letter-spacing: -0.01em;
+  white-space: nowrap;
 }

@@ -716,8 +716,13 @@ body.oled-mode {
 
 /* ─── CHORD CUSTOMIZATION ─── */
 :root {
-  --sv-accent: var(--color-accent-gold);
-  --sv-accent-glow: var(--color-accent-gold-glow);
+  --sv-accent: #FFFFFF;
+  --sv-accent-glow: rgba(255, 255, 255, 0.15);
+}
+
+body.light-mode {
+  --sv-accent: #111827;
+  --sv-accent-glow: rgba(17, 24, 39, 0.15);
 }
 
 body.chord-color-gold { --sv-accent: #3A2DFF; --sv-accent-glow: rgba(58, 45, 255, 0.15); }

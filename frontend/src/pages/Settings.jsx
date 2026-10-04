@@ -71,7 +71,7 @@ export default function Settings() {
   const [keepAwake, setKeepAwake] = useState(localStorage.getItem('keepAwake') === 'true');
   const [reduceMotion, setReduceMotion] = useState(localStorage.getItem('reduceMotion') === 'true');
   const [oledMode, setOledMode] = useState(localStorage.getItem('oledMode') === 'true');
-  const [chordColor, setChordColor] = useState(localStorage.getItem('chordColor') || 'gold');
+  const [chordColor, setChordColor] = useState(localStorage.getItem('chordColor') || 'white');
   const [outlinedChords, setOutlinedChords] = useState(localStorage.getItem('outlinedChords') === 'true');
   const [appInfo, setAppInfo] = useState(getCachedAppInfo);
 
@@ -855,8 +855,8 @@ export default function Settings() {
                         const oldC = chordColor;
                         setChordColor(c.id);
                         localStorage.setItem('chordColor', c.id);
-                        if (oldC && oldC !== 'gold') document.body.classList.remove(`chord-color-${oldC}`);
-                        if (c.id !== 'gold') document.body.classList.add(`chord-color-${c.id}`);
+                        if (oldC) document.body.classList.remove(`chord-color-${oldC}`);
+                        document.body.classList.add(`chord-color-${c.id}`);
                         showMsg(t('settings.app.saved', 'Պահպանված է'));
                       }}
                     >

@@ -81,8 +81,10 @@ function App() {
     if (localStorage.getItem('outlinedChords') === 'true') document.body.classList.add('outlined-chords');
     
     const cColor = localStorage.getItem('chordColor');
-    if (cColor && cColor !== 'gold') {
+    if (cColor) {
       document.body.classList.add(`chord-color-${cColor}`);
+    } else {
+      document.body.classList.add('chord-color-white');
     }
   }, []);
   const isMobile = mediaQueryMatch || isIOSMobile || isAndroidMobile;
