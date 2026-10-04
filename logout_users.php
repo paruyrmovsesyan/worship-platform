@@ -14,20 +14,24 @@ $https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
 $logoutUserId = !empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
 $logoutUserAgent = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
 $logoutIpAddress = function_exists('wp_runtime_remote_ip') ? wp_runtime_remote_ip() : (string)($_SERVER['REMOTE_ADDR'] ?? '');
+$isNativeAppLogout = trim((string)($_SERVER['HTTP_X_WORSHIP_NATIVE'] ?? '')) === '1';
 
 try {
     $pdo = wp_runtime_open_pdo();
 
     $currentSessionId = session_id();
 
-    if (!empty($_SESSION['user_id'])) {
+    // Native logout clears the active PHP session/cookies but intentionally
+    // keeps the revocable remembered row used after Face ID / biometrics.
+    // Website and PWA logout behavior remains unchanged.
+    if (!$isNativeAppLogout && !empty($_SESSION['user_id'])) {
         $uid = (int)$_SESSION['user_id'];
 
         $st = $pdo->prepare("DELETE FROM user_sessions WHERE user_id = ? AND session_key = ?");
         $st->execute([$uid, $currentSessionId]);
     }
 
-    if (!empty($_COOKIE['remember_me'])) {
+    if (!$isNativeAppLogout && !empty($_COOKIE['remember_me'])) {
         $parts = explode(':', (string)$_COOKIE['remember_me'], 2);
         $selector = $parts[0] ?? '';
 
