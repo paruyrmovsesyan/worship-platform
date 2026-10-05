@@ -41,8 +41,10 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
             wv.backgroundColor = darkBg
             wv.scrollView.backgroundColor = darkBg
             wv.scrollView.decelerationRate = .normal
-            wv.scrollView.bounces = true
-            wv.scrollView.alwaysBounceVertical = true
+            // Pull-to-refresh is rendered by the app. Native rubber-band
+            // overscroll can expose the dark WKWebView host as a black screen.
+            wv.scrollView.bounces = false
+            wv.scrollView.alwaysBounceVertical = false
             wv.scrollView.showsVerticalScrollIndicator = false
             wv.scrollView.showsHorizontalScrollIndicator = false
         }

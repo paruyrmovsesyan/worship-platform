@@ -108,6 +108,9 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
       currentY.current = touch.clientY;
 
       if (diffY > 0) {
+        // The native WebView must not perform its own rubber-band overscroll
+        // underneath our indicator; that exposes the black host background.
+        if (isNativeApp && e.cancelable) e.preventDefault();
         // Deep pull friction: requiring deep downward swipe to trigger refresh
         const distance = Math.min(diffY * 0.45, maxPull);
         pullDistanceRef.current = distance;
@@ -164,7 +167,7 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
     };
 
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
-    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: !isNativeApp });
     document.addEventListener('touchend', handleTouchEnd);
     document.addEventListener('touchcancel', handleTouchEnd);
 
