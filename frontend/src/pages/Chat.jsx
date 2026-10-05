@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { usePageReady } from '../hooks/usePageReady';
 import { useCall } from '../context/CallContext';
-import { useIsAppMode } from '../hooks/useIsPWA';
+import { useIsAppMode, useIsNativeApp } from '../hooks/useIsPWA';
 import { triggerHaptic } from '../utils/nativeFeatures';
 import './Chat.css';
 
@@ -191,6 +191,7 @@ export default function Chat() {
   const { t, language } = useLanguage();
   const audioCall = useCall();
   const isPWA = useIsAppMode();
+  const isNativeApp = useIsNativeApp();
   const [messages, setMessages] = useState([]);
   const [chatInfo, setChatInfo] = useState(null);
   const [inputText, setInputText] = useState('');
@@ -453,6 +454,38 @@ export default function Chat() {
       document.removeEventListener('touchmove', blockTouchMove);
     };
   }, []);
+
+  // WKWebView can show the system Copy/Look Up/Translate menu before our
+  // long-press action popup. Keep selection available in the composer, but
+  // suppress it on rendered message bubbles in the installed native apps.
+  useEffect(() => {
+    if (!isNativeApp) return undefined;
+
+    const isMessageBubbleTarget = (target) => {
+      const element = target instanceof Element ? target : target?.parentElement;
+      return Boolean(element?.closest?.('.chat-bubble'));
+    };
+
+    const clearBubbleSelection = () => {
+      const selection = window.getSelection?.();
+      if (!selection || selection.rangeCount === 0) return;
+      if (isMessageBubbleTarget(selection.anchorNode)) selection.removeAllRanges();
+    };
+
+    const preventBubbleSelection = (event) => {
+      if (!isMessageBubbleTarget(event.target)) return;
+      event.preventDefault();
+      window.getSelection?.()?.removeAllRanges?.();
+    };
+
+    document.addEventListener('selectstart', preventBubbleSelection, true);
+    document.addEventListener('selectionchange', clearBubbleSelection);
+
+    return () => {
+      document.removeEventListener('selectstart', preventBubbleSelection, true);
+      document.removeEventListener('selectionchange', clearBubbleSelection);
+    };
+  }, [isNativeApp]);
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -1204,9 +1237,11 @@ export default function Chat() {
                         onContextMenu={(e) => {
                           if (hasActions) {
                             e.preventDefault();
+                            window.getSelection?.()?.removeAllRanges?.();
                             showActionMenu(m, e.currentTarget);
                           }
                         }}
+                        onDragStart={(e) => isNativeApp && e.preventDefault()}
                       >
                         {isGroup && !isOwn && (
                           <div

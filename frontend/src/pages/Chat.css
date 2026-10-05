@@ -255,6 +255,22 @@ body.wp-standalone-app:not(.is-ios) .chat-header {
   color: inherit !important;
 }
 
+/* Native chat uses its own long-press actions. Prevent the iOS text loupe and
+   Copy/Look Up/Translate menu from appearing underneath that popup. */
+body.is-native .chat-bubble,
+body.is-native .chat-bubble * {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+}
+
+body.is-native .chat-bubble::selection,
+body.is-native .chat-bubble *::selection {
+  background: transparent !important;
+  color: inherit !important;
+}
+
 .chat-message-row.me .chat-bubble {
   background: linear-gradient(135deg, #3A2DFF 0%, #2A1DDF 100%);
   color: #fff;
