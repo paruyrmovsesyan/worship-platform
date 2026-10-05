@@ -1,0 +1,75 @@
+.native-route-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 2147481500;
+  display: grid;
+  place-items: center;
+  padding: env(safe-area-inset-top, 0) 20px env(safe-area-inset-bottom, 0);
+  background: rgba(4, 4, 10, 0.42);
+  -webkit-backdrop-filter: blur(9px) saturate(125%);
+  backdrop-filter: blur(9px) saturate(125%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 140ms ease, visibility 0s linear 140ms;
+}
+
+.native-route-loader.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 140ms ease;
+}
+
+.native-route-loader__card {
+  display: flex;
+  min-width: 132px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 22px;
+  color: #fff;
+  background: rgba(20, 20, 29, 0.88);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.3), 0 0 24px rgba(0, 224, 255, 0.08);
+}
+
+.native-route-loader__mark {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border: 2px solid rgba(116, 101, 255, 0.3);
+  border-top-color: #22d3ee;
+  border-right-color: #7465ff;
+  border-radius: 50%;
+  animation: native-route-loader-spin 700ms linear infinite;
+}
+
+.native-route-loader__mark span {
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7465ff, #19d3ee);
+  box-shadow: 0 0 12px rgba(25, 211, 238, 0.42);
+}
+
+.native-route-loader__label {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+@keyframes native-route-loader-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .native-route-loader,
+  .native-route-loader__mark {
+    transition: none;
+    animation: none;
+  }
+}

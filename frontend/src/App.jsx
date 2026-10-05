@@ -69,6 +69,7 @@ import WebCommandPalette from './components/WebCommandPalette';
 import CreateAccountReminder from './components/CreateAccountReminder';
 import NativeAppLock from './components/NativeAppLock';
 import NativePlatformServices from './components/NativePlatformServices';
+import NativeRouteLoader from './components/NativeRouteLoader';
 
 function App() {
   const mediaQueryMatch = useMediaQuery('(max-width: 900px)');
@@ -282,6 +283,7 @@ function App() {
         <>
           <NativeAppLock />
           <NativePlatformServices />
+          <NativeRouteLoader />
         </>
       ) : null}
       <ScrollToTop />
