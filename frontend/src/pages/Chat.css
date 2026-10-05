@@ -501,6 +501,10 @@ body.wp-standalone-app .chat-input-area {
   margin-bottom: 0 !important;
 }
 
+body.is-native .chat-input-area {
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)) !important;
+}
+
 body.mobile-theme .chat-input-area.hidden,
 body.is-app .chat-input-area.hidden,
 body.wp-standalone-app .chat-input-area.hidden {

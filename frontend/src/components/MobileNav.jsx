@@ -373,7 +373,10 @@ export default function MobileNav() {
     lastHoveredIndexRef.current = null;
   };
 
-  if (isKeyboardOpen) {
+  // A conversation owns the entire viewport and its composer must always sit
+  // directly above the device safe area. Never leave the app dock mounted
+  // behind it, even during route-transition frames.
+  if (location.pathname.startsWith('/chat/') || isKeyboardOpen) {
     return null;
   }
 

@@ -44,6 +44,12 @@
     opacity 0.28s ease;
 }
 
+/* Native conversation pages are full-screen and provide their own footer. */
+body.is-native.chat-active .mobile-bottom-nav {
+  display: none !important;
+  pointer-events: none !important;
+}
+
 /* While scrubbing the dock itself stays still (iOS behaviour) – only the lens moves */
 .mobile-bottom-nav.is-scrubbing {
   box-shadow:
