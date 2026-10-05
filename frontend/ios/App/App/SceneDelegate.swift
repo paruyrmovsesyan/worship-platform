@@ -4,6 +4,10 @@ import WebKit
 
 class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
     private var textInteractionHandlerInstalled = false
+    private var runtimeHandlerInstalled = false
+    private var lastRuntimeHeartbeat = Date()
+    private var runtimeWatchdog: Timer?
+    private var lastAutomaticReload = Date.distantPast
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -28,6 +32,11 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
                 wv.configuration.userContentController.add(self, name: "nativeTextInteraction")
                 textInteractionHandlerInstalled = true
             }
+            if !runtimeHandlerInstalled {
+                wv.configuration.userContentController.add(self, name: "nativeRuntime")
+                runtimeHandlerInstalled = true
+                startRuntimeWatchdog()
+            }
             wv.isOpaque = false
             wv.backgroundColor = darkBg
             wv.scrollView.backgroundColor = darkBg
@@ -40,6 +49,11 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        if message.name == "nativeRuntime" {
+            lastRuntimeHeartbeat = Date()
+            return
+        }
+
         guard message.name == "nativeTextInteraction",
               let enabled = message.body as? Bool else { return }
         guard let webView else { return }
@@ -51,6 +65,33 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
             .compactMap { $0 as? UILongPressGestureRecognizer }
             .forEach { $0.isEnabled = enabled }
         view.subviews.forEach { setSystemLongPressEnabled(enabled, in: $0) }
+    }
+
+    private func startRuntimeWatchdog() {
+        runtimeWatchdog?.invalidate()
+        runtimeWatchdog = Timer.scheduledTimer(withTimeInterval: 8, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            guard UIApplication.shared.applicationState == .active else {
+                self.lastRuntimeHeartbeat = Date()
+                return
+            }
+            guard Date().timeIntervalSince(self.lastRuntimeHeartbeat) > 24 else { return }
+            guard Date().timeIntervalSince(self.lastAutomaticReload) > 60 else { return }
+
+            self.lastAutomaticReload = Date()
+            self.lastRuntimeHeartbeat = Date()
+            self.webView?.reload()
+        }
+    }
+
+    deinit {
+        runtimeWatchdog?.invalidate()
+        if textInteractionHandlerInstalled {
+            webView?.configuration.userContentController.removeScriptMessageHandler(forName: "nativeTextInteraction")
+        }
+        if runtimeHandlerInstalled {
+            webView?.configuration.userContentController.removeScriptMessageHandler(forName: "nativeRuntime")
+        }
     }
 }
 

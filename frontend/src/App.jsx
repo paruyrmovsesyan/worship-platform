@@ -70,6 +70,7 @@ import CreateAccountReminder from './components/CreateAccountReminder';
 import NativeAppLock from './components/NativeAppLock';
 import NativePlatformServices from './components/NativePlatformServices';
 import NativeRouteLoader from './components/NativeRouteLoader';
+import NativeRuntimeGuard from './components/NativeRuntimeGuard';
 
 function App() {
   const mediaQueryMatch = useMediaQuery('(max-width: 900px)');
@@ -284,6 +285,7 @@ function App() {
           <NativeAppLock />
           <NativePlatformServices />
           <NativeRouteLoader />
+          <NativeRuntimeGuard />
         </>
       ) : null}
       <ScrollToTop />
