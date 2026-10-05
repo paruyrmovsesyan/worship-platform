@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useIsPWA } from '../hooks/useIsPWA';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { useIsAppMode, useIsNativeApp } from '../hooks/useIsPWA';
 
 const PullToRefresh = ({ children, onRefresh, disabled }) => {
-  const isPWA = useIsPWA();
+  const isAppMode = useIsAppMode();
+  const isNativeApp = useIsNativeApp();
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const startX = useRef(0);
@@ -15,7 +17,7 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
   const pullDistanceRef = useRef(0);
 
   useEffect(() => {
-    if (!isPWA || disabled) return;
+    if (!isAppMode || disabled) return;
 
     const shouldIgnoreTouch = (target) => {
       if (!target) return false;
@@ -113,7 +115,9 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
 
         if (distance >= refreshThreshold && !hasVibratedRef.current) {
           hasVibratedRef.current = true;
-          if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          if (isNativeApp) {
+            Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+          } else if (typeof navigator !== 'undefined' && navigator.vibrate) {
             try { navigator.vibrate(18); } catch {}
           }
         } else if (distance < refreshThreshold) {
@@ -170,9 +174,9 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
       document.removeEventListener('touchend', handleTouchEnd);
       document.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [isPWA, isRefreshing, disabled]);
+  }, [isAppMode, isNativeApp, isRefreshing, disabled, onRefresh]);
 
-  if (!isPWA || disabled) {
+  if (!isAppMode || disabled) {
     return <>{children}</>;
   }
 
