@@ -1,7 +1,10 @@
 import UIKit
 import Capacitor
+import WebKit
 
-class AppBridgeViewController: CAPBridgeViewController {
+class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
+    private var textInteractionHandlerInstalled = false
+
     override func viewDidLoad() {
         super.viewDidLoad()
         configureScrollView()
@@ -21,6 +24,10 @@ class AppBridgeViewController: CAPBridgeViewController {
         let darkBg = UIColor(red: 5.0/255.0, green: 5.0/255.0, blue: 10.0/255.0, alpha: 1.0)
         view.backgroundColor = darkBg
         if let wv = webView {
+            if !textInteractionHandlerInstalled {
+                wv.configuration.userContentController.add(self, name: "nativeTextInteraction")
+                textInteractionHandlerInstalled = true
+            }
             wv.isOpaque = false
             wv.backgroundColor = darkBg
             wv.scrollView.backgroundColor = darkBg
@@ -30,6 +37,20 @@ class AppBridgeViewController: CAPBridgeViewController {
             wv.scrollView.showsVerticalScrollIndicator = false
             wv.scrollView.showsHorizontalScrollIndicator = false
         }
+    }
+
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard message.name == "nativeTextInteraction",
+              let enabled = message.body as? Bool else { return }
+        guard let webView else { return }
+        setSystemLongPressEnabled(enabled, in: webView)
+    }
+
+    private func setSystemLongPressEnabled(_ enabled: Bool, in view: UIView) {
+        view.gestureRecognizers?
+            .compactMap { $0 as? UILongPressGestureRecognizer }
+            .forEach { $0.isEnabled = enabled }
+        view.subviews.forEach { setSystemLongPressEnabled(enabled, in: $0) }
     }
 }
 

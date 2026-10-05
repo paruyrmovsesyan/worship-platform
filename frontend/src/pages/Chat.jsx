@@ -238,6 +238,13 @@ export default function Chat() {
     }
   };
 
+  const setNativeTextInteraction = (enabled) => {
+    if (!isNativeApp) return;
+    try {
+      window.webkit?.messageHandlers?.nativeTextInteraction?.postMessage(enabled);
+    } catch (_) {}
+  };
+
   const handleImportSetlist = async (setlistId) => {
     if (!setlistId || importingSetlistId) return;
     const confirmPrompt =
@@ -690,6 +697,7 @@ export default function Chat() {
 
   const handleTouchStart = (m, e) => {
     if (!isPWA || String(m.id).startsWith('temp-')) return;
+    setNativeTextInteraction(false);
     touchBubbleRef.current = e.currentTarget;
     isLongPressRef.current = false;
     longPressTimerRef.current = setTimeout(() => {
@@ -712,6 +720,7 @@ export default function Chat() {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
+    window.setTimeout(() => setNativeTextInteraction(true), 80);
   };
 
   const handleTouchMove = () => {
@@ -719,6 +728,7 @@ export default function Chat() {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
+    setNativeTextInteraction(true);
   };
 
 
