@@ -100,6 +100,7 @@ function App() {
   const navigate = useNavigate();
   const transitionRef = React.useRef(null);
   const [refreshKey, setRefreshKey] = React.useState(0);
+  const [nativeRefreshing, setNativeRefreshing] = React.useState(false);
   const [rememberPromptOpen, setRememberPromptOpen] = React.useState(false);
   const [rememberPromptSaving, setRememberPromptSaving] = React.useState(false);
   const [rememberPromptError, setRememberPromptError] = React.useState('');
@@ -253,8 +254,26 @@ function App() {
   }, [handleRememberPromptClose, isAppMode, t]);
 
   const handleSoftRefresh = () => {
+    if (isNativeApp) setNativeRefreshing(true);
     setRefreshKey(prev => prev + 1);
   };
+
+  useEffect(() => {
+    if (!nativeRefreshing) return undefined;
+
+    const startedAt = Date.now();
+    const finishWhenReady = window.setInterval(() => {
+      const hasRenderedPage = Boolean(transitionRef.current?.firstElementChild);
+      const minimumTimePassed = Date.now() - startedAt >= 650;
+      const timedOut = Date.now() - startedAt >= 8_000;
+      if ((hasRenderedPage && minimumTimePassed) || timedOut) {
+        window.clearInterval(finishWhenReady);
+        setNativeRefreshing(false);
+      }
+    }, 100);
+
+    return () => window.clearInterval(finishWhenReady);
+  }, [nativeRefreshing, refreshKey]);
 
   const renderNav = () => {
     const isChatPage = location.pathname.startsWith('/chat/');
@@ -284,7 +303,7 @@ function App() {
         <>
           <NativeAppLock />
           <NativePlatformServices />
-          <NativeRouteLoader />
+          <NativeRouteLoader refreshing={nativeRefreshing} />
           <NativeRuntimeGuard />
         </>
       ) : null}

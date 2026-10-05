@@ -4,7 +4,7 @@ import './NativeRouteLoader.css';
 
 const TRANSITION_DURATION_MS = 480;
 
-export default function NativeRouteLoader() {
+export default function NativeRouteLoader({ refreshing = false }) {
   const location = useLocation();
   const firstRender = useRef(true);
   const timerRef = useRef(null);
@@ -25,17 +25,19 @@ export default function NativeRouteLoader() {
     return () => window.clearTimeout(timerRef.current);
   }, [location.key]);
 
+  const isVisible = visible || refreshing;
+
   return (
     <div
-      className={`native-route-loader${visible ? ' is-visible' : ''}`}
-      aria-hidden={!visible}
+      className={`native-route-loader${isVisible ? ' is-visible' : ''}${refreshing ? ' is-refreshing' : ''}`}
+      aria-hidden={!isVisible}
       aria-live="polite"
     >
       <div className="native-route-loader__card" role="status">
         <div className="native-route-loader__mark" aria-hidden="true">
           <span />
         </div>
-        <span className="native-route-loader__label">Բացվում է…</span>
+        <span className="native-route-loader__label">{refreshing ? 'Թարմացվում է…' : 'Բացվում է…'}</span>
       </div>
     </div>
   );

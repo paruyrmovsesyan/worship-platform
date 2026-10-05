@@ -21,6 +21,14 @@
   transition: opacity 140ms ease;
 }
 
+.native-route-loader.is-refreshing {
+  background:
+    radial-gradient(circle at 50% 38%, rgba(72, 65, 190, 0.2), transparent 38%),
+    #05050a;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
 .native-route-loader__card {
   display: flex;
   min-width: 132px;
