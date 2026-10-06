@@ -22,11 +22,11 @@
 }
 
 .native-route-loader.is-refreshing {
-  background:
-    radial-gradient(circle at 50% 38%, rgba(72, 65, 190, 0.2), transparent 38%),
-    #05050a;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+  /* Keep the current native screen visible while its route data remounts.
+     An opaque background here looked like a frozen black WebView. */
+  background: rgba(5, 5, 10, 0.12);
+  -webkit-backdrop-filter: blur(1.5px) saturate(105%);
+  backdrop-filter: blur(1.5px) saturate(105%);
 }
 
 .native-route-loader__card {
