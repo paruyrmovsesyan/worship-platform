@@ -55,7 +55,6 @@ import ChatsList from './pages/ChatsList';
 import TransposeTool from './pages/TransposeTool';
 import InstallApp from './pages/InstallApp';
 import { Capacitor } from '@capacitor/core';
-import { SplashScreen } from '@capacitor/splash-screen';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useIsNativeApp, useIsPWA } from './hooks/useIsPWA';
 import ScrollToTop from './components/ScrollToTop';
@@ -257,8 +256,9 @@ function App() {
   const handleSoftRefresh = async () => {
     if (isNativeApp) {
       setNativeRefreshing(true);
-      await SplashScreen.show({ autoHide: false, fadeInDuration: 120 }).catch(() => {});
-      window.setTimeout(() => window.location.reload(), 120);
+      // Remount only the active route. Reloading the whole native WebView
+      // briefly destroys its document and exposes the black host background.
+      setRefreshKey(prev => prev + 1);
       return;
     }
     setRefreshKey(prev => prev + 1);
