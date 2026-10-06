@@ -15,19 +15,23 @@ const prepareNativeRuntime = Capacitor.isNativePlatform()
   : Promise.resolve();
 
 prepareNativeRuntime.finally(() => {
+  const app = (
+    <LanguageProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <CallProvider>
+            <PageLoadingProvider>
+              <App />
+            </PageLoadingProvider>
+          </CallProvider>
+        </BrowserRouter>
+      </AuthProvider>
+    </LanguageProvider>
+  );
+
+  // React StrictMode intentionally mounts effects twice in development. In a
+  // native WebView that duplicates Capacitor listeners and plugin setup.
   ReactDOM.createRoot(document.getElementById('root')).render(
-    <React.StrictMode>
-      <LanguageProvider>
-        <AuthProvider>
-          <BrowserRouter>
-            <CallProvider>
-              <PageLoadingProvider>
-                <App />
-              </PageLoadingProvider>
-            </CallProvider>
-          </BrowserRouter>
-        </AuthProvider>
-      </LanguageProvider>
-    </React.StrictMode>,
+    Capacitor.isNativePlatform() ? app : <React.StrictMode>{app}</React.StrictMode>,
   );
 });

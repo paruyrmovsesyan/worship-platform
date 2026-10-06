@@ -55,6 +55,7 @@ import ChatsList from './pages/ChatsList';
 import TransposeTool from './pages/TransposeTool';
 import InstallApp from './pages/InstallApp';
 import { Capacitor } from '@capacitor/core';
+import { SplashScreen } from '@capacitor/splash-screen';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useIsNativeApp, useIsPWA } from './hooks/useIsPWA';
 import ScrollToTop from './components/ScrollToTop';
@@ -253,8 +254,13 @@ function App() {
     }
   }, [handleRememberPromptClose, isAppMode, t]);
 
-  const handleSoftRefresh = () => {
-    if (isNativeApp) setNativeRefreshing(true);
+  const handleSoftRefresh = async () => {
+    if (isNativeApp) {
+      setNativeRefreshing(true);
+      await SplashScreen.show({ autoHide: false, fadeInDuration: 120 }).catch(() => {});
+      window.setTimeout(() => window.location.reload(), 120);
+      return;
+    }
     setRefreshKey(prev => prev + 1);
   };
 

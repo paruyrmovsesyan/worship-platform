@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { SplashScreen } from '@capacitor/splash-screen';
 
 const HEARTBEAT_INTERVAL_MS = 4_000;
 
@@ -22,6 +23,11 @@ export default function NativeRuntimeGuard() {
     };
 
     pingNativeHost();
+    // Explicitly hide the launch screen once React and the native guard are
+    // mounted. This also completes pull-to-refresh reloads deterministically.
+    window.requestAnimationFrame(() => {
+      SplashScreen.hide({ fadeOutDuration: 180 }).catch(() => {});
+    });
     const heartbeat = window.setInterval(pingNativeHost, HEARTBEAT_INTERVAL_MS);
     document.addEventListener('visibilitychange', restoreDocument);
     window.addEventListener('pageshow', restoreDocument);
