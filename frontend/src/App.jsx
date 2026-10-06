@@ -256,9 +256,12 @@ function App() {
   const handleSoftRefresh = async () => {
     if (isNativeApp) {
       setNativeRefreshing(true);
-      // Remount only the active route. Reloading the whole native WebView
-      // briefly destroys its document and exposes the black host background.
-      setRefreshKey(prev => prev + 1);
+      // Never remount the native route tree here. WebKit can race React's DOM
+      // cleanup during a keyed remount and throw NotFoundError, leaving the
+      // content area empty while the persistent navigation stays visible.
+      window.dispatchEvent(new CustomEvent('wp-native-refresh', {
+        detail: { pathname: location.pathname, requestedAt: Date.now() },
+      }));
       return;
     }
     setRefreshKey(prev => prev + 1);
