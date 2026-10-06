@@ -219,6 +219,7 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
       ? 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, border-color 0.2s ease, box-shadow 0.2s ease'
       : 'border-color 0.15s ease, box-shadow 0.15s ease',
     opacity: isRefreshing ? 1 : (pullDistance > 0 ? Math.min(pullDistance / 24, 1) : 0),
+    visibility: isVisible ? 'visible' : 'hidden',
     pointerEvents: 'none'
   };
 
@@ -233,14 +234,15 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
 
   return (
     <>
-      {isVisible && (
-        <div style={spinnerStyle} aria-hidden="true">
-          <svg style={svgStyle} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-            <polyline points="21 3 21 8 16 8" />
-          </svg>
-        </div>
-      )}
+      {/* Keep this node mounted. Removing it after a native touch gesture can
+          race WebKit's gesture DOM bookkeeping and make React's removeChild
+          throw NotFoundError, which empties the application root. */}
+      <div style={spinnerStyle} aria-hidden={!isVisible}>
+        <svg style={svgStyle} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+          <polyline points="21 3 21 8 16 8" />
+        </svg>
+      </div>
       <style>
         {`
           @keyframes ptr-spin {
