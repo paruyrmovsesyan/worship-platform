@@ -44,6 +44,8 @@
 	</dict>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Օգտագործվում է Face ID / Touch ID-ով արագ և ապահով մուտք գործելու համար։</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Միկրոֆոնն օգտագործվում է չաթում աուդիոզանգեր կատարելու և ընդունելու համար։</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

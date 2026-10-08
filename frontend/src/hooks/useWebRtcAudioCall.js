@@ -10,6 +10,14 @@ let callConfigPromise = null;
 let ringtoneCtx = null;
 let ringtoneInterval = null;
 
+function setNativeCallAudioSession(active) {
+  try {
+    window.webkit?.messageHandlers?.nativeAudioSession?.postMessage(active ? 'start' : 'stop');
+  } catch (error) {
+    console.warn('Native audio session update failed', error);
+  }
+}
+
 async function loadCallConfig() {
   if (!callConfigPromise) {
     callConfigPromise = fetch('/chat_api.php?action=call_config', {
@@ -271,12 +279,14 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
 
   const stopLocalStream = useCallback(() => {
     const stream = localStreamRef.current;
-    if (!stream) return;
-    stream.getTracks().forEach((track) => {
-      track.onended = null;
-      track.stop();
-    });
+    if (stream) {
+      stream.getTracks().forEach((track) => {
+        track.onended = null;
+        track.stop();
+      });
+    }
     localStreamRef.current = null;
+    setNativeCallAudioSession(false);
     setIsMuted(false);
   }, []);
 
@@ -331,6 +341,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     }
 
     try {
+      setNativeCallAudioSession(true);
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -356,6 +367,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       refreshAudioOutputs();
       return stream;
     } catch (error) {
+      setNativeCallAudioSession(false);
       const microphoneError = new Error(error?.message || 'Microphone failed', { cause: error });
       microphoneError.code = error?.name === 'NotAllowedError' ? 'microphone_denied' : 'microphone_failed';
       throw microphoneError;

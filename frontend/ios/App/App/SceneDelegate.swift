@@ -1,10 +1,12 @@
 import UIKit
 import Capacitor
 import WebKit
+import AVFoundation
 
 class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
     private var textInteractionHandlerInstalled = false
     private var runtimeHandlerInstalled = false
+    private var audioSessionHandlerInstalled = false
     private var lastRuntimeHeartbeat = Date()
     private var runtimeWatchdog: Timer?
     private var lastAutomaticReload = Date.distantPast
@@ -37,6 +39,10 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
                 runtimeHandlerInstalled = true
                 startRuntimeWatchdog()
             }
+            if !audioSessionHandlerInstalled {
+                wv.configuration.userContentController.add(self, name: "nativeAudioSession")
+                audioSessionHandlerInstalled = true
+            }
             wv.isOpaque = false
             wv.backgroundColor = darkBg
             wv.scrollView.backgroundColor = darkBg
@@ -56,10 +62,33 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
             return
         }
 
+        if message.name == "nativeAudioSession", let command = message.body as? String {
+            setCallAudioSession(active: command == "start")
+            return
+        }
+
         guard message.name == "nativeTextInteraction",
               let enabled = message.body as? Bool else { return }
         guard let webView else { return }
         setSystemLongPressEnabled(enabled, in: webView)
+    }
+
+    private func setCallAudioSession(active: Bool) {
+        let session = AVAudioSession.sharedInstance()
+        do {
+            if active {
+                try session.setCategory(
+                    .playAndRecord,
+                    mode: .voiceChat,
+                    options: [.defaultToSpeaker, .allowBluetoothHFP]
+                )
+                try session.setActive(true)
+            } else {
+                try session.setActive(false, options: .notifyOthersOnDeactivation)
+            }
+        } catch {
+            print("Native call audio session error: \(error.localizedDescription)")
+        }
     }
 
     private func setSystemLongPressEnabled(_ enabled: Bool, in view: UIView) {
@@ -93,6 +122,9 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
         }
         if runtimeHandlerInstalled {
             webView?.configuration.userContentController.removeScriptMessageHandler(forName: "nativeRuntime")
+        }
+        if audioSessionHandlerInstalled {
+            webView?.configuration.userContentController.removeScriptMessageHandler(forName: "nativeAudioSession")
         }
     }
 }
