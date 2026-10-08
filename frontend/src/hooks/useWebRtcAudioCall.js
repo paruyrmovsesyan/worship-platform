@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 
 const FALLBACK_ICE_SERVERS = [
   { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
@@ -16,6 +17,13 @@ function setNativeCallAudioSession(active) {
   } catch (error) {
     console.warn('Native audio session update failed', error);
   }
+}
+
+function waitForNativeCallPaint() {
+  if (!Capacitor.isNativePlatform()) return Promise.resolve();
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
+  });
 }
 
 async function loadCallConfig() {
@@ -751,6 +759,9 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     });
 
     try {
+      // Let React commit and WebKit paint the call screen before opening the
+      // native microphone permission/session flow, which can pause rendering.
+      await waitForNativeCallPaint();
       await ensureLocalStream();
       const data = await callApi('start_call', { chat_id: activeChatId, target_id: targetId });
       if (cancelPendingStartRef.current) {

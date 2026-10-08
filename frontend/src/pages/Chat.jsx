@@ -1107,6 +1107,7 @@ export default function Chat() {
         </div>
         <div className="chat-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
+            type="button"
             className="chat-btn-icon"
             onClick={() => audioCall.startCall(chatInfo?.other_user_id || 0, chatInfo?.display_name || chatInfo?.name || '', id)}
             title="ԱուդիոԶանգ"

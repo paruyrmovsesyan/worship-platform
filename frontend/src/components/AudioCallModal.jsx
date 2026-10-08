@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Capacitor } from '@capacitor/core';
 import { useLanguage } from '../context/LanguageContext';
 import './AudioCallModal.css';
 
@@ -57,7 +59,7 @@ export default function AudioCallModal({
 
   const avatarStyle = callAvatarGradient ? { background: callAvatarGradient } : undefined;
 
-  return (
+  const content = (
     <>
       <audio ref={remoteAudioRef} autoPlay playsInline className="audio-call-remote-audio" />
 
@@ -156,6 +158,10 @@ export default function AudioCallModal({
       )}
     </>
   );
+
+  // Native WebViews may clip fixed descendants while their page containers
+  // are scrolling or transformed. Render the call surface at body level.
+  return Capacitor.isNativePlatform() ? createPortal(content, document.body) : content;
 }
 
 function CallActionButton({ kind, label, onClick, children }) {
