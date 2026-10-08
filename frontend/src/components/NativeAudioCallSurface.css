@@ -1,0 +1,42 @@
+.native-call-audio { position: fixed; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.native-call-screen { position: fixed; inset: 0; z-index: 2147483647; display: flex; flex-direction: column; overflow: hidden; padding: max(18px, env(safe-area-inset-top)) 22px max(24px, env(safe-area-inset-bottom)); box-sizing: border-box; color: #fff; background: radial-gradient(circle at 50% 15%, #18233c 0, #0c1120 34%, #05070d 72%); }
+.native-call-glow { position: absolute; width: 320px; height: 320px; left: 50%; top: 10%; transform: translateX(-50%); border-radius: 50%; background: rgba(38, 115, 255, .16); filter: blur(72px); pointer-events: none; }
+.native-call-screen header { position: relative; display: flex; justify-content: space-between; align-items: center; min-height: 44px; }
+.native-call-screen header button { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.1); border-radius: 50%; color: #fff; background: rgba(255,255,255,.07); }
+.native-call-screen svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.native-call-secure { padding: 7px 11px; border: 1px solid rgba(255,255,255,.09); border-radius: 999px; color: rgba(255,255,255,.58); background: rgba(255,255,255,.045); font-size: 11px; letter-spacing: .04em; }
+.native-call-person { position: relative; display: grid; justify-items: center; padding-top: clamp(52px, 11dvh, 108px); text-align: center; }
+.native-call-avatar-shell { position: relative; width: clamp(116px, 34vw, 148px); height: clamp(116px, 34vw, 148px); }
+.native-call-avatar { position: relative; z-index: 2; width: 100%; height: 100%; display: grid; place-items: center; border-radius: 50%; background: linear-gradient(145deg,#0cc5ff,#4d56ff 55%,#25ca87); box-shadow: 0 20px 60px rgba(34,102,255,.3); font-size: 52px; font-weight: 800; }
+.native-call-avatar-shell i { position: absolute; inset: -10px; border: 2px solid rgba(77,164,255,.5); border-radius: 50%; animation: nativeCallPulse 1.8s ease-out infinite; }
+@keyframes nativeCallPulse { from { transform: scale(.9); opacity: .9; } to { transform: scale(1.28); opacity: 0; } }
+.native-call-person h1 { max-width: 92vw; margin: 26px 0 7px; overflow-wrap: anywhere; font-size: 29px; line-height: 1.15; }
+.native-call-person p { margin: 0; color: rgba(255,255,255,.62); font-size: 15px; }
+.native-call-person em { margin-top: 12px; padding: 5px 10px; border-radius: 999px; color: #78e1b2; background: rgba(62,211,142,.1); font-size: 11px; font-style: normal; }
+.native-call-person em.quality-fair { color: #f4ca6a; background: rgba(244,202,106,.1); }
+.native-call-person em.quality-poor { color: #ff8996; background: rgba(255,87,105,.1); }
+.native-call-bottom { position: relative; margin-top: auto; }
+.native-call-controls, .native-call-incoming-actions { display: flex; justify-content: space-around; align-items: flex-start; gap: 14px; }
+.native-call-incoming-actions { padding-inline: 28px; }
+.native-call-control { width: 92px; display: grid; justify-items: center; gap: 10px; border: 0; color: rgba(255,255,255,.72); background: transparent; }
+.native-call-control > span { width: 66px; height: 66px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: rgba(255,255,255,.12); backdrop-filter: blur(14px); }
+.native-call-control small { font-size: 12px; }
+.native-call-control.active > span { background: #2979ff; }
+.native-call-control.danger > span { background: #ef4055; }
+.native-call-control.accept > span { background: #22bd72; }
+.native-call-control.neutral > span { background: rgba(255,255,255,.12); }
+.native-call-control:active > span { transform: scale(.92); }
+.native-call-control:disabled { opacity: .45; }
+.native-call-error { margin-bottom: 16px; padding: 12px 14px; border: 1px solid rgba(255,86,106,.25); border-radius: 14px; color: #ffabb4; background: rgba(255,70,90,.1); font-size: 13px; text-align: center; }
+.native-call-resume { width: 100%; min-height: 44px; margin-bottom: 16px; border: 1px solid rgba(74,158,255,.3); border-radius: 14px; color: #8bc5ff; background: rgba(42,117,255,.12); }
+.native-call-mini { position: fixed; left: 14px; right: 14px; bottom: calc(92px + env(safe-area-inset-bottom)); z-index: 2147483646; min-height: 72px; display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid rgba(255,255,255,.12); border-radius: 22px; color: #fff; background: rgba(13,17,29,.96); box-shadow: 0 18px 50px rgba(0,0,0,.45); backdrop-filter: blur(18px); }
+.native-call-mini-main { min-width: 0; flex: 1; display: flex; align-items: center; gap: 10px; border: 0; color: #fff; background: transparent; text-align: left; }
+.native-call-mini-main > span:last-child { min-width: 0; display: grid; gap: 3px; }
+.native-call-mini-main strong, .native-call-mini-main small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.native-call-mini-main small { color: #71dca9; }
+.native-call-mini-avatar { width: 48px; height: 48px; flex: 0 0 48px; display: grid; place-items: center; border-radius: 50%; background: linear-gradient(145deg,#0cc5ff,#4d56ff); font-weight: 800; }
+.native-call-mini > button:not(.native-call-mini-main) { width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; color: #fff; background: rgba(255,255,255,.1); }
+.native-call-mini > button.active { background: #2979ff; }
+.native-call-mini > button.danger { background: #ef4055; }
+.native-call-mini svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; }
+@media (max-height: 680px) { .native-call-person { padding-top: 34px; } .native-call-avatar-shell { width: 96px; height: 96px; } .native-call-person h1 { margin-top: 18px; font-size: 24px; } }

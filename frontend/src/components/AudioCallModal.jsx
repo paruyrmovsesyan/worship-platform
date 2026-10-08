@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Capacitor } from '@capacitor/core';
 import { useLanguage } from '../context/LanguageContext';
+import NativeAudioCallSurface from './NativeAudioCallSurface';
 import './AudioCallModal.css';
 
 function formatDuration(seconds) {
@@ -36,6 +36,16 @@ export default function AudioCallModal({
 }) {
   const { t } = useLanguage();
   const [minimizedCallId, setMinimizedCallId] = useState(0);
+
+  if (Capacitor.isNativePlatform()) {
+    return <NativeAudioCallSurface {...{
+      callState, callInfo, callDisplayName, callAvatarGradient, isMuted, isSpeakerOn,
+      callDurationSec, connectionQuality, callError, audioOutputs, selectedOutputId,
+      remoteAudioBlocked, remoteAudioRef, acceptCall, declineCall, endCall,
+      retryConnection, toggleMute, toggleSpeaker, selectAudioOutput,
+      resumeRemoteAudio, dismissCall,
+    }} />;
+  }
 
   if (!callState || callState === 'idle') return null;
 
@@ -161,7 +171,7 @@ export default function AudioCallModal({
 
   // Native WebViews may clip fixed descendants while their page containers
   // are scrolling or transformed. Render the call surface at body level.
-  return Capacitor.isNativePlatform() ? createPortal(content, document.body) : content;
+  return content;
 }
 
 function CallActionButton({ kind, label, onClick, children }) {

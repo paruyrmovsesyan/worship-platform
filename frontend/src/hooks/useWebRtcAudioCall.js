@@ -252,6 +252,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
   const wakeLockRef = useRef(null);
   const resetTimerRef = useRef(null);
   const restartConnectionRef = useRef(null);
+  const nativeActionInFlightRef = useRef('');
 
   const setCallStateStable = useCallback((nextState) => {
     callStateRef.current = nextState;
@@ -384,6 +385,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     lastHeartbeatAtRef.current = 0;
     lastSignalIdRef.current = 0;
     signalCallIdRef.current = 0;
+    nativeActionInFlightRef.current = '';
     setCallInfoStable(null);
     setCallStateStable('idle');
     setCallDurationSec(0);
@@ -886,6 +888,8 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
   }, [chatId, currentUserId, ensureLocalStream, resetCall, setCallInfoStable, setCallStateStable, stopLocalStream]);
 
   const endCall = useCallback(async () => {
+    if (Capacitor.isNativePlatform() && nativeActionInFlightRef.current) return;
+    if (Capacitor.isNativePlatform()) nativeActionInFlightRef.current = 'end';
     const info = callInfoRef.current;
     if (pendingStartRef.current && !info?.id) {
       cancelPendingStartRef.current = true;
@@ -894,6 +898,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       setCallStateStable('idle');
       setCallDurationSec(0);
       setCallError(null);
+      nativeActionInFlightRef.current = '';
       return;
     }
     if (!info?.id) {
@@ -906,11 +911,14 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     setCallStateStable('ended');
     cleanupWebRtc();
     scheduleReset(900);
+    nativeActionInFlightRef.current = '';
   }, [cleanupWebRtc, resetCall, scheduleReset, setCallInfoStable, setCallStateStable]);
 
   const acceptCall = useCallback(async () => {
+    if (Capacitor.isNativePlatform() && nativeActionInFlightRef.current) return;
     const info = callInfoRef.current;
     if (!info?.id || callStateRef.current !== 'ringing') return;
+    if (Capacitor.isNativePlatform()) nativeActionInFlightRef.current = 'accept';
     setCallStateStable('connecting');
     setCallError(null);
     try {
@@ -927,18 +935,23 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       setCallStateStable('failed');
       closePeerConnection();
       stopLocalStream();
+    } finally {
+      nativeActionInFlightRef.current = '';
     }
   }, [closePeerConnection, createPeerConnection, currentUserId, setCallInfoStable, setCallStateStable, startDurationTimer, stopLocalStream]);
 
   const declineCall = useCallback(async () => {
+    if (Capacitor.isNativePlatform() && nativeActionInFlightRef.current) return;
     const info = callInfoRef.current;
     if (!info?.id) return resetCall();
+    if (Capacitor.isNativePlatform()) nativeActionInFlightRef.current = 'decline';
     try { await callApi('respond_call', { call_id: info.id, response: 'decline' }); }
     catch (error) { console.warn('Call decline failed', error); }
     setCallStateStable('ended');
     closeCallNotifications(info.id);
     cleanupWebRtc();
     scheduleReset(700);
+    nativeActionInFlightRef.current = '';
   }, [cleanupWebRtc, resetCall, scheduleReset, setCallStateStable]);
 
   useEffect(() => {
