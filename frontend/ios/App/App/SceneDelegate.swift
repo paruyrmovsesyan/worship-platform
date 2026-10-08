@@ -93,13 +93,16 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
                     options: [.allowBluetoothHFP]
                 )
                 try session.setActive(true)
-                try session.overrideOutputAudioPort(callUsesSpeaker ? .speaker : .none)
+                enforceCallAudioRoute()
+                scheduleCallAudioRouteEnforcement()
             case "speaker":
                 callUsesSpeaker = true
-                try session.overrideOutputAudioPort(.speaker)
+                enforceCallAudioRoute()
+                scheduleCallAudioRouteEnforcement()
             case "earpiece":
                 callUsesSpeaker = false
-                try session.overrideOutputAudioPort(.none)
+                enforceCallAudioRoute()
+                scheduleCallAudioRouteEnforcement()
             case "stop":
                 callAudioActive = false
                 callUsesSpeaker = false
@@ -110,6 +113,27 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
             }
         } catch {
             print("Native call audio session error: \(error.localizedDescription)")
+        }
+    }
+
+    private func enforceCallAudioRoute() {
+        guard callAudioActive else { return }
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setActive(true)
+            try session.overrideOutputAudioPort(callUsesSpeaker ? .speaker : .none)
+        } catch {
+            print("Native call route error: \(error.localizedDescription)")
+        }
+    }
+
+    private func scheduleCallAudioRouteEnforcement() {
+        // WKWebView's WebRTC audio unit can reset the output shortly after
+        // getUserMedia/ontrack. Re-apply the user's route after it settles.
+        for delay in [0.15, 0.6, 1.2] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.enforceCallAudioRoute()
+            }
         }
     }
 

@@ -7,6 +7,8 @@ import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
@@ -21,6 +23,7 @@ public class MainActivity extends BridgeActivity {
     private AudioFocusRequest callAudioFocusRequest;
     private boolean callAudioActive = false;
     private boolean callUsesSpeaker = false;
+    private final Handler callAudioHandler = new Handler(Looper.getMainLooper());
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -89,6 +92,7 @@ public class MainActivity extends BridgeActivity {
                 audioManager.setSpeakerphoneOn(false);
             }
             abandonCallAudioFocus(audioManager);
+            callAudioHandler.removeCallbacksAndMessages(null);
             audioManager.setMode(AudioManager.MODE_NORMAL);
             return;
         }
@@ -98,6 +102,12 @@ public class MainActivity extends BridgeActivity {
         requestCallAudioFocus(audioManager);
         if ("speaker".equals(command)) callUsesSpeaker = true;
         if ("earpiece".equals(command)) callUsesSpeaker = false;
+        applyCallAudioRoute(audioManager);
+        scheduleCallAudioRouteEnforcement(audioManager);
+    }
+
+    private void applyCallAudioRoute(AudioManager audioManager) {
+        if (!callAudioActive) return;
         boolean useSpeaker = callUsesSpeaker;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             AudioDeviceInfo currentDevice = audioManager.getCommunicationDevice();
@@ -107,12 +117,20 @@ public class MainActivity extends BridgeActivity {
                 : AudioDeviceInfo.TYPE_BUILTIN_EARPIECE;
             for (AudioDeviceInfo device : audioManager.getAvailableCommunicationDevices()) {
                 if (device.getType() == targetType) {
-                    audioManager.setCommunicationDevice(device);
-                    return;
+                    if (audioManager.setCommunicationDevice(device)) return;
+                    break;
                 }
             }
-        } else {
-            audioManager.setSpeakerphoneOn(useSpeaker);
+            if (!useSpeaker) audioManager.clearCommunicationDevice();
+        }
+        audioManager.setSpeakerphoneOn(useSpeaker);
+    }
+
+    private void scheduleCallAudioRouteEnforcement(AudioManager audioManager) {
+        callAudioHandler.removeCallbacksAndMessages(null);
+        long[] delays = {150L, 600L, 1200L};
+        for (long delay : delays) {
+            callAudioHandler.postDelayed(() -> applyCallAudioRoute(audioManager), delay);
         }
     }
 
@@ -128,7 +146,10 @@ public class MainActivity extends BridgeActivity {
                     .setAcceptsDelayedFocusGain(true)
                     .setOnAudioFocusChangeListener(focus -> {
                         if (focus == AudioManager.AUDIOFOCUS_GAIN && callAudioActive) {
-                            runOnUiThread(() -> updateCallAudioMode(callUsesSpeaker ? "speaker" : "earpiece"));
+                            runOnUiThread(() -> {
+                                AudioManager manager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                                if (manager != null) applyCallAudioRoute(manager);
+                            });
                         }
                     })
                     .build();
