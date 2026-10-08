@@ -6,6 +6,7 @@ import AVFoundation
 class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
     private var textInteractionHandlerInstalled = false
     private var runtimeHandlerInstalled = false
+    private var navigationHandlerInstalled = false
     private var audioSessionHandlerInstalled = false
     private var lastRuntimeHeartbeat = Date()
     private var runtimeWatchdog: Timer?
@@ -43,6 +44,10 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
                 runtimeHandlerInstalled = true
                 startRuntimeWatchdog()
             }
+            if !navigationHandlerInstalled {
+                wv.configuration.userContentController.add(self, name: "nativeNavigation")
+                navigationHandlerInstalled = true
+            }
             if !audioSessionHandlerInstalled {
                 wv.configuration.userContentController.add(self, name: "nativeAudioSession")
                 audioSessionHandlerInstalled = true
@@ -66,13 +71,23 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
             // Restore the native iOS left-edge interactive back gesture.
             // This is intentionally enabled only in the packaged WKWebView;
             // the PWA keeps its own navigation policy.
-            wv.allowsBackForwardNavigationGestures = true
+            // The React route bridge enables this only on secondary screens.
+            // Primary bottom-nav tabs are peers and must not swipe into one
+            // another through WKWebView's browser history.
+            wv.allowsBackForwardNavigationGestures = false
         }
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         if message.name == "nativeRuntime" {
             lastRuntimeHeartbeat = Date()
+            return
+        }
+
+        if message.name == "nativeNavigation",
+           let payload = message.body as? [String: Any],
+           let allowsBack = payload["allowsBack"] as? Bool {
+            webView?.allowsBackForwardNavigationGestures = allowsBack
             return
         }
 
@@ -230,6 +245,9 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
         }
         if runtimeHandlerInstalled {
             webView?.configuration.userContentController.removeScriptMessageHandler(forName: "nativeRuntime")
+        }
+        if navigationHandlerInstalled {
+            webView?.configuration.userContentController.removeScriptMessageHandler(forName: "nativeNavigation")
         }
         if audioSessionHandlerInstalled {
             webView?.configuration.userContentController.removeScriptMessageHandler(forName: "nativeAudioSession")

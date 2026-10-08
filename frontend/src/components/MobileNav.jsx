@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
 import { triggerHaptic } from '../utils/nativeFeatures';
+import { Capacitor } from '@capacitor/core';
 import './MobileNav.css';
 
 // Glass bubble vertical expansion sizes (matching native iOS App Store tab lens)
@@ -20,6 +21,7 @@ export default function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const [, startTransition] = useTransition();
+  const isNativeApp = Capacitor.isNativePlatform();
 
   const [chatBadgeCount, setChatBadgeCount] = useState(0);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
@@ -247,7 +249,10 @@ export default function MobileNav() {
     triggerHaptic('Light');
     if (location.pathname !== path) {
       startTransition(() => {
-        navigate(path);
+        // Native bottom navigation behaves as independent app tabs: switching
+        // tabs must not add entries that the system Back gesture can revisit.
+        // Keep the existing PWA history behaviour unchanged.
+        navigate(path, { replace: isNativeApp });
       });
     }
   };
@@ -343,7 +348,7 @@ export default function MobileNav() {
       if (targetTab && guardPath(targetTab.path)) {
         triggerHaptic('Medium');
         startTransition(() => {
-          navigate(targetTab.path);
+          navigate(targetTab.path, { replace: isNativeApp });
         });
       }
 

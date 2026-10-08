@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
@@ -48,6 +48,14 @@ function nativeBackFallback(pathname) {
   return '/';
 }
 
+function isNativePrimaryTab(pathname) {
+  return pathname === '/' ||
+    pathname === '/songs' ||
+    pathname === '/chats' ||
+    pathname === '/profile' ||
+    pathname === '/login';
+}
+
 async function nativeDeviceId() {
   const existing = await Preferences.get({ key: DEVICE_ID_KEY });
   if (existing.value) return existing.value;
@@ -73,6 +81,7 @@ async function registerPushToken(token, userId) {
 
 export default function NativePlatformServices() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, checkAuth } = useAuth();
   const [update, setUpdate] = useState(null);
   const [isConnected, setIsConnected] = useState(true);
@@ -87,6 +96,19 @@ export default function NativePlatformServices() {
   userRef.current = user;
 
   const pushTokenRef = useRef(null);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    // iOS must expose its interactive edge-back gesture only for screens that
+    // were opened from a primary tab. Primary tabs themselves are peers, like
+    // Instagram tabs, rather than pages in one back stack.
+    try {
+      window.webkit?.messageHandlers?.nativeNavigation?.postMessage({
+        allowsBack: !isNativePrimaryTab(location.pathname),
+      });
+    } catch (_) {}
+  }, [location.pathname]);
 
   // Sync push token with current user ID when user changes
   useEffect(() => {
@@ -126,13 +148,18 @@ export default function NativePlatformServices() {
           return;
         }
 
+        const pathname = window.location.pathname;
+        if (isNativePrimaryTab(pathname)) {
+          CapacitorApp.minimizeApp().catch(() => {});
+          return;
+        }
+
         const historyIndex = Number(window.history.state?.idx || 0);
         if (canGoBack && historyIndex > 0) {
           window.history.back();
           return;
         }
 
-        const pathname = window.location.pathname;
         if (pathname !== '/') {
           navigateRef.current(nativeBackFallback(pathname), { replace: true });
           return;
