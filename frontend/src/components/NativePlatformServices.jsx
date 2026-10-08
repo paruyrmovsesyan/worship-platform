@@ -38,6 +38,16 @@ function notificationPath(data = {}) {
   }
 }
 
+function nativeBackFallback(pathname) {
+  if (pathname.startsWith('/chat/')) return '/chats';
+  if (pathname.startsWith('/song/')) return '/songs';
+  if (pathname.startsWith('/setlists/')) return '/setlists';
+  if (pathname.startsWith('/news/')) return '/news';
+  if (pathname === '/settings' || pathname === '/notifications') return '/profile';
+  if (pathname === '/chats') return '/friends';
+  return '/';
+}
+
 async function nativeDeviceId() {
   const existing = await Preferences.get({ key: DEVICE_ID_KEY });
   if (existing.value) return existing.value;
@@ -107,6 +117,30 @@ export default function NativePlatformServices() {
       checkAuthRef.current?.().catch?.(() => {});
       window.dispatchEvent(new CustomEvent('wp-native-resume'));
     }));
+
+    if (Capacitor.getPlatform() === 'android') {
+      addHandle(CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+        // Let full-screen native surfaces consume Back before changing route.
+        if (document.querySelector('.native-call-screen')) {
+          window.dispatchEvent(new CustomEvent('wp-native-back-request'));
+          return;
+        }
+
+        const historyIndex = Number(window.history.state?.idx || 0);
+        if (canGoBack && historyIndex > 0) {
+          window.history.back();
+          return;
+        }
+
+        const pathname = window.location.pathname;
+        if (pathname !== '/') {
+          navigateRef.current(nativeBackFallback(pathname), { replace: true });
+          return;
+        }
+
+        CapacitorApp.minimizeApp().catch(() => {});
+      }));
+    }
 
     addHandle(Network.addListener('networkStatusChange', (status) => {
       setIsConnected(status.connected);

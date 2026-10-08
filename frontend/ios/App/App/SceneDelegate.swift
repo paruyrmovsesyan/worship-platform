@@ -61,6 +61,10 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
             wv.scrollView.alwaysBounceVertical = false
             wv.scrollView.showsVerticalScrollIndicator = false
             wv.scrollView.showsHorizontalScrollIndicator = false
+            // Restore the native iOS left-edge interactive back gesture.
+            // This is intentionally enabled only in the packaged WKWebView;
+            // the PWA keeps its own navigation policy.
+            wv.allowsBackForwardNavigationGestures = true
         }
     }
 

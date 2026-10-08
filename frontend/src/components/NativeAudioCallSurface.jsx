@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
 import './NativeAudioCallSurface.css';
@@ -41,13 +41,22 @@ export default function NativeAudioCallSurface(props) {
     resumeRemoteAudio, dismissCall,
   } = props;
 
-  if (!callState || callState === 'idle') return null;
   const name = callDisplayName || 'Օգտատեր';
   const connected = callState === 'connected';
   const canMinimize = ['connected', 'connecting', 'reconnecting'].includes(callState);
   const status = connected ? durationLabel(callDurationSec) : t(`call.${callState}`, t('call.failed'));
   const error = callError ? t(`call.errors.${callError}`, t('call.errors.default')) : '';
   const canRetry = callState === 'failed' && Number(callInfo?.id || 0) > 0;
+
+  useEffect(() => {
+    const handleNativeBack = () => {
+      if (canMinimize) setMinimized(true);
+    };
+    window.addEventListener('wp-native-back-request', handleNativeBack);
+    return () => window.removeEventListener('wp-native-back-request', handleNativeBack);
+  }, [canMinimize]);
+
+  if (!callState || callState === 'idle') return null;
 
   const content = (
     <>
