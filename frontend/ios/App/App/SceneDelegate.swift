@@ -63,7 +63,7 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
         }
 
         if message.name == "nativeAudioSession", let command = message.body as? String {
-            setCallAudioSession(active: command == "start")
+            updateCallAudioSession(command: command)
             return
         }
 
@@ -73,18 +73,27 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
         setSystemLongPressEnabled(enabled, in: webView)
     }
 
-    private func setCallAudioSession(active: Bool) {
+    private func updateCallAudioSession(command: String) {
         let session = AVAudioSession.sharedInstance()
         do {
-            if active {
+            switch command {
+            case "start":
                 try session.setCategory(
                     .playAndRecord,
                     mode: .voiceChat,
-                    options: [.defaultToSpeaker, .allowBluetoothHFP]
+                    options: [.allowBluetoothHFP]
                 )
                 try session.setActive(true)
-            } else {
+                try session.overrideOutputAudioPort(.none)
+            case "speaker":
+                try session.overrideOutputAudioPort(.speaker)
+            case "earpiece":
+                try session.overrideOutputAudioPort(.none)
+            case "stop":
+                try session.overrideOutputAudioPort(.none)
                 try session.setActive(false, options: .notifyOthersOnDeactivation)
+            default:
+                break
             }
         } catch {
             print("Native call audio session error: \(error.localizedDescription)")

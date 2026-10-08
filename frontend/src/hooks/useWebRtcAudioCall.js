@@ -11,9 +11,10 @@ let callConfigPromise = null;
 let ringtoneCtx = null;
 let ringtoneInterval = null;
 
-function setNativeCallAudioSession(active) {
+function updateNativeCallAudio(command) {
   try {
-    window.webkit?.messageHandlers?.nativeAudioSession?.postMessage(active ? 'start' : 'stop');
+    window.webkit?.messageHandlers?.nativeAudioSession?.postMessage(command);
+    window.NativeAudio?.setCallAudioMode?.(command);
   } catch (error) {
     console.warn('Native audio session update failed', error);
   }
@@ -231,7 +232,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     releaseWakeLock();
   }, [releaseWakeLock]);
 
-  const isSpeakerOnRef = useRef(true);
+  const isSpeakerOnRef = useRef(!Capacitor.isNativePlatform());
   const audioOutputsRef = useRef([]);
   const selectedOutputIdRef = useRef('');
 
@@ -244,6 +245,9 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
   }, [selectedOutputId]);
 
   const applySpeakerRouting = useCallback((isSpeaker) => {
+    if (Capacitor.isNativePlatform()) {
+      updateNativeCallAudio(isSpeaker ? 'speaker' : 'earpiece');
+    }
     const audio = remoteAudioRef.current;
     if (audio) {
       audio.volume = isSpeaker ? 1.0 : 0.35;
@@ -294,7 +298,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       });
     }
     localStreamRef.current = null;
-    setNativeCallAudioSession(false);
+    updateNativeCallAudio('stop');
     setIsMuted(false);
   }, []);
 
@@ -349,7 +353,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     }
 
     try {
-      setNativeCallAudioSession(true);
+      updateNativeCallAudio('start');
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -375,7 +379,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       refreshAudioOutputs();
       return stream;
     } catch (error) {
-      setNativeCallAudioSession(false);
+      updateNativeCallAudio('stop');
       const microphoneError = new Error(error?.message || 'Microphone failed', { cause: error });
       microphoneError.code = error?.name === 'NotAllowedError' ? 'microphone_denied' : 'microphone_failed';
       throw microphoneError;
@@ -864,7 +868,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     });
   }, []);
 
-  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
+  const [isSpeakerOn, setIsSpeakerOn] = useState(() => !Capacitor.isNativePlatform());
 
   const toggleSpeaker = useCallback(() => {
     setIsSpeakerOn((prevSpeaker) => {
