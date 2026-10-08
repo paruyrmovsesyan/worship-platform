@@ -6,6 +6,7 @@ const FALLBACK_ICE_SERVERS = [
 ];
 const TERMINAL_CALL_STATES = new Set(['ended', 'declined', 'missed']);
 const MAX_RECONNECT_ATTEMPTS = 3;
+const CALL_REQUEST_TIMEOUT_MS = 15_000;
 
 let callConfigPromise = null;
 let ringtoneCtx = null;
@@ -53,22 +54,50 @@ async function loadCallConfig() {
 }
 
 async function callApi(action, body, options = {}) {
-  const response = await fetch(`/chat_api.php?action=${encodeURIComponent(action)}`, {
-    method: options.method || 'POST',
-    credentials: 'same-origin',
-    cache: 'no-store',
-    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body),
-    signal: options.signal,
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || data.ok === false || data.error) {
-    const error = new Error(data.error || `Call request failed (${response.status})`);
-    error.code = data.code || `http_${response.status}`;
-    error.status = response.status;
-    throw error;
+  if (!Capacitor.isNativePlatform()) {
+    const response = await fetch(`/chat_api.php?action=${encodeURIComponent(action)}`, {
+      method: options.method || 'POST',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: options.signal,
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.ok === false || data.error) {
+      const error = new Error(data.error || `Call request failed (${response.status})`);
+      error.code = data.code || `http_${response.status}`;
+      error.status = response.status;
+      throw error;
+    }
+    return data;
   }
-  return data;
+
+  const controller = new AbortController();
+  const relayAbort = () => controller.abort(options.signal?.reason);
+  options.signal?.addEventListener('abort', relayAbort, { once: true });
+  const timeout = window.setTimeout(() => controller.abort('call_request_timeout'), CALL_REQUEST_TIMEOUT_MS);
+  try {
+    const response = await fetch(`/chat_api.php?action=${encodeURIComponent(action)}`, {
+      method: options.method || 'POST',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: controller.signal,
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.ok === false || data.error) {
+      const error = new Error(data.error || `Call request failed (${response.status})`);
+      error.code = data.code || `http_${response.status}`;
+      error.status = response.status;
+      throw error;
+    }
+    return data;
+  } finally {
+    if (timeout) window.clearTimeout(timeout);
+    options.signal?.removeEventListener('abort', relayAbort);
+  }
 }
 
 function parseServerDate(value) {
@@ -185,6 +214,8 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
   const reconnectTimerRef = useRef(null);
   const reconnectAttemptsRef = useRef(0);
   const lastHeartbeatAtRef = useRef(0);
+  const lastSignalIdRef = useRef(0);
+  const signalCallIdRef = useRef(0);
   const wakeLockRef = useRef(null);
   const resetTimerRef = useRef(null);
   const restartConnectionRef = useRef(null);
@@ -318,6 +349,8 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     pendingStartRef.current = false;
     cancelPendingStartRef.current = false;
     lastHeartbeatAtRef.current = 0;
+    lastSignalIdRef.current = 0;
+    signalCallIdRef.current = 0;
     setCallInfoStable(null);
     setCallStateStable('idle');
     setCallDurationSec(0);
@@ -468,7 +501,8 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     };
 
     pc.ontrack = (event) => {
-      const stream = event.streams?.[0];
+      const stream = event.streams?.[0]
+        || (Capacitor.isNativePlatform() && event.track ? new MediaStream([event.track]) : null);
       if (!remoteAudioRef.current || !stream) return;
       remoteAudioRef.current.srcObject = stream;
       remoteAudioRef.current.play()
@@ -608,6 +642,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     if (!uid) return undefined;
     let stopped = false;
     let timer = null;
+    let pollTimeout = null;
     let inFlight = false;
 
     const schedule = (delay) => {
@@ -630,12 +665,21 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       const info = callInfoRef.current;
       const callId = Number(info?.id || 0);
       const activeChatId = Number(info?.chat_id || chatId || 0);
+      if (callId !== signalCallIdRef.current) {
+        signalCallIdRef.current = callId;
+        lastSignalIdRef.current = 0;
+      }
       pollAbortRef.current?.abort();
       pollAbortRef.current = new AbortController();
+      if (Capacitor.isNativePlatform()) {
+        pollTimeout = window.setTimeout(() => {
+          pollAbortRef.current?.abort('call_poll_timeout');
+        }, CALL_REQUEST_TIMEOUT_MS);
+      }
 
       try {
         const response = await fetch(
-          `/chat_api.php?action=poll_call_status&chat_id=${activeChatId}&call_id=${callId}&last_signal_id=0`,
+          `/chat_api.php?action=poll_call_status&chat_id=${activeChatId}&call_id=${callId}&last_signal_id=${Capacitor.isNativePlatform() ? lastSignalIdRef.current : 0}`,
           { cache: 'no-store', credentials: 'same-origin', signal: pollAbortRef.current.signal },
         );
         const data = await response.json().catch(() => ({}));
@@ -679,7 +723,11 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
         for (const signal of Array.isArray(data.signals) ? data.signals : []) {
           try {
             await processSignal(signal, currentCall, otherUserId);
-            acknowledged.push(Number(signal.id));
+            const signalId = Number(signal.id);
+            acknowledged.push(signalId);
+            if (Capacitor.isNativePlatform()) {
+              lastSignalIdRef.current = Math.max(lastSignalIdRef.current, signalId);
+            }
           } catch (error) {
             console.warn('WebRTC signal will be retried', signal.id, error);
             break;
@@ -698,6 +746,8 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
           }
         }
       } finally {
+        if (pollTimeout) window.clearTimeout(pollTimeout);
+        pollTimeout = null;
         inFlight = false;
         const config = await loadCallConfig();
         const isIdle = callStateRef.current === 'idle';
@@ -722,26 +772,28 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       if (timer) window.clearTimeout(timer);
       schedule(0);
     };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') wakePoll();
+    };
     pollWakeRef.current = (action) => {
       if (action === 'accept') window.dispatchEvent(new CustomEvent('wp-call-auto-accept'));
       wakePoll();
     };
     window.addEventListener('online', wakePoll);
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        wakePoll();
-      }
-    });
+    window.addEventListener('wp-native-resume', wakePoll);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     poll();
 
     return () => {
       stopped = true;
       if (timer) window.clearTimeout(timer);
+      if (pollTimeout) window.clearTimeout(pollTimeout);
       pollAbortRef.current?.abort();
       pollAbortRef.current = null;
       pollWakeRef.current = null;
       window.removeEventListener('online', wakePoll);
-      document.removeEventListener('visibilitychange', wakePoll);
+      window.removeEventListener('wp-native-resume', wakePoll);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [acknowledgeSignals, chatId, cleanupWebRtc, createAndSendOffer, currentUserId, markConnected, processSignal, scheduleReset, setCallInfoStable, setCallStateStable]);
 
@@ -749,6 +801,11 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     if (callStateRef.current !== 'idle') return;
     const activeChatId = Number(customChatId || chatId || 0);
     const targetId = Number(targetUserId || 0);
+    if (Capacitor.isNativePlatform() && activeChatId <= 0 && targetId <= 0) {
+      setCallError('invalid_target');
+      setCallStateStable('failed');
+      return;
+    }
     cancelPendingStartRef.current = false;
     pendingStartRef.current = true;
     setCallError(null);
@@ -767,6 +824,10 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       // native microphone permission/session flow, which can pause rendering.
       await waitForNativeCallPaint();
       await ensureLocalStream();
+      if (Capacitor.isNativePlatform() && cancelPendingStartRef.current) {
+        resetCall();
+        return;
+      }
       const data = await callApi('start_call', { chat_id: activeChatId, target_id: targetId });
       if (cancelPendingStartRef.current) {
         await callApi('end_call', { call_id: data.call_id }).catch(() => {});
