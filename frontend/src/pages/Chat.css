@@ -542,6 +542,18 @@ body.wp-standalone-app.chat-active {
   touch-action: none !important;
 }
 
+/* Native chat owns a real nested scroller. Allow the OS to hand vertical
+   gestures directly to it instead of waiting on the fixed page ancestor. */
+body.is-native.chat-active {
+  touch-action: manipulation !important;
+}
+
+body.is-native .chat-messages-container {
+  touch-action: pan-y !important;
+  overscroll-behavior-y: none !important;
+  scroll-behavior: auto !important;
+}
+
 /* ============================================================
    Date Separators
    ============================================================ */

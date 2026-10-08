@@ -424,6 +424,16 @@ export default function Chat() {
   useEffect(() => {
     document.body.classList.add('chat-active');
     document.documentElement.classList.add('chat-active');
+
+    // Native WebViews already have host-level rubber-band overscroll disabled.
+    // A non-passive document touchmove listener delays/steals the first scroll
+    // gestures from the actual message scroller, especially on iOS.
+    if (isNativeApp) {
+      return () => {
+        document.body.classList.remove('chat-active');
+        document.documentElement.classList.remove('chat-active');
+      };
+    }
     
     const blockTouchMove = (e) => {
       const container = document.querySelector('.chat-messages-container');
@@ -460,7 +470,7 @@ export default function Chat() {
       document.removeEventListener('touchstart', recordStart);
       document.removeEventListener('touchmove', blockTouchMove);
     };
-  }, []);
+  }, [isNativeApp]);
 
   // WKWebView can show the system Copy/Look Up/Translate menu before our
   // long-press action popup. Keep selection available in the composer, but
