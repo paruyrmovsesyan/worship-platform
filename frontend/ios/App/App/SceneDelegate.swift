@@ -10,6 +10,8 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
     private var lastRuntimeHeartbeat = Date()
     private var runtimeWatchdog: Timer?
     private var lastAutomaticReload = Date.distantPast
+    private var runtimeHealthCheckInFlight = false
+    private var consecutiveRuntimeHealthCheckFailures = 0
     private var callAudioActive = false
     private var callUsesSpeaker = false
 
@@ -166,14 +168,57 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
             guard let self else { return }
             guard UIApplication.shared.applicationState == .active else {
                 self.lastRuntimeHeartbeat = Date()
+                self.consecutiveRuntimeHealthCheckFailures = 0
                 return
             }
-            guard Date().timeIntervalSince(self.lastRuntimeHeartbeat) > 24 else { return }
-            guard Date().timeIntervalSince(self.lastAutomaticReload) > 60 else { return }
+            // JavaScript timers may legitimately be delayed while the chat is
+            // busy with scrolling, the keyboard, media or WebRTC. A missing
+            // heartbeat alone must never reload a healthy WKWebView: doing so
+            // was the source of the intermittent black chat screen.
+            guard Date().timeIntervalSince(self.lastRuntimeHeartbeat) > 40 else { return }
+            self.checkRuntimeHealth()
+        }
+    }
 
+    private func checkRuntimeHealth() {
+        guard !runtimeHealthCheckInFlight, let webView else { return }
+        runtimeHealthCheckInFlight = true
+
+        let healthProbe = """
+        (() => {
+          const root = document.getElementById('root');
+          const healthy = Boolean(root && root.childElementCount > 0);
+          if (healthy) {
+            document.documentElement.style.removeProperty('opacity');
+            document.body.style.removeProperty('opacity');
+            document.body.style.removeProperty('pointer-events');
+            window.dispatchEvent(new CustomEvent('wp-native-resume'));
+          }
+          return healthy;
+        })()
+        """
+
+        webView.evaluateJavaScript(healthProbe) { [weak self] result, error in
+            guard let self else { return }
+            self.runtimeHealthCheckInFlight = false
+
+            if error == nil, (result as? Bool) == true {
+                self.lastRuntimeHeartbeat = Date()
+                self.consecutiveRuntimeHealthCheckFailures = 0
+                return
+            }
+
+            self.consecutiveRuntimeHealthCheckFailures += 1
+            guard self.consecutiveRuntimeHealthCheckFailures >= 3 else { return }
+            guard Date().timeIntervalSince(self.lastAutomaticReload) > 120 else { return }
+
+            // Reload only after the DOM has failed several direct probes. This
+            // keeps genuine WebContent crashes recoverable without interrupting
+            // a responsive chat merely because its timer was throttled.
             self.lastAutomaticReload = Date()
             self.lastRuntimeHeartbeat = Date()
-            self.webView?.reload()
+            self.consecutiveRuntimeHealthCheckFailures = 0
+            webView.reload()
         }
     }
 
@@ -244,6 +289,16 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneDidBecomeActive(_ scene: UIScene) {
+        removePrivacyCover()
+    }
+
+    func sceneWillEnterForeground(_ scene: UIScene) {
+        // Remove the cover as early as possible. This is a second safeguard for
+        // interrupted transitions (Face ID, calls and app switching).
+        removePrivacyCover()
+    }
+
+    private func removePrivacyCover() {
         privacyView?.removeFromSuperview()
         privacyView = nil
     }
