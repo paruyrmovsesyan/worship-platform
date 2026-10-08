@@ -147,6 +147,12 @@ export default function NativePlatformServices() {
       }));
       addHandle(PushNotifications.addListener('pushNotificationReceived', async (notification) => {
         if (Capacitor.getPlatform() === 'android') return;
+        // The in-app call screen owns the foreground ringtone. Scheduling a
+        // second local notification here makes two call sounds overlap.
+        if (notification?.data?.type === 'call') {
+          window.dispatchEvent(new CustomEvent('wp-native-resume'));
+          return;
+        }
         const localPermission = await LocalNotifications.checkPermissions().catch(() => ({ display: 'denied' }));
         if (localPermission.display !== 'granted') return;
         await LocalNotifications.schedule({

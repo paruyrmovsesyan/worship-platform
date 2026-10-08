@@ -128,12 +128,12 @@ function playPhoneRingtone(type = 'incoming') {
 
       const startAt = ringtoneCtx.currentTime;
       const first = ringtoneCtx.createOscillator();
-      const second = ringtoneCtx.createOscillator();
+      const second = Capacitor.isNativePlatform() ? null : ringtoneCtx.createOscillator();
       const gain = ringtoneCtx.createGain();
       first.frequency.setValueAtTime(440, startAt);
-      second.frequency.setValueAtTime(480, startAt);
+      second?.frequency.setValueAtTime(480, startAt);
       first.type = 'sine';
-      second.type = 'sine';
+      if (second) second.type = 'sine';
 
       const duration = type === 'incoming' ? 1.6 : 1.2;
       const maxGain = type === 'incoming' ? 0.3 : 0.15;
@@ -142,12 +142,12 @@ function playPhoneRingtone(type = 'incoming') {
       gain.gain.setValueAtTime(maxGain, startAt + duration - 0.05);
       gain.gain.linearRampToValueAtTime(0.001, startAt + duration);
       first.connect(gain);
-      second.connect(gain);
+      second?.connect(gain);
       gain.connect(ringtoneCtx.destination);
       first.start(startAt);
-      second.start(startAt);
+      second?.start(startAt);
       first.stop(startAt + duration);
-      second.stop(startAt + duration);
+      second?.stop(startAt + duration);
 
       if (type === 'incoming' && navigator.vibrate) {
         try { navigator.vibrate([500, 250, 500, 250, 500]); } catch { /* unsupported */ }
