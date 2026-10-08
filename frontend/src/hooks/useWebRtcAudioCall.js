@@ -1053,15 +1053,26 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
         requestWakeLock();
       }
     };
+    const handleNativeResume = () => {
+      if (!Capacitor.isNativePlatform()) return;
+      if (!['connected', 'connecting', 'reconnecting'].includes(callStateRef.current)) return;
+      updateNativeCallAudio('start');
+      applySpeakerRouting(isSpeakerOnRef.current);
+      if (remoteAudioRef.current?.paused) {
+        remoteAudioRef.current.play().catch(() => setRemoteAudioBlocked(true));
+      }
+    };
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    window.addEventListener('wp-native-resume', handleNativeResume);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('wp-native-resume', handleNativeResume);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [requestWakeLock, retryConnection, setCallStateStable]);
+  }, [applySpeakerRouting, requestWakeLock, retryConnection, setCallStateStable]);
 
   useEffect(() => () => cleanupWebRtc(), [cleanupWebRtc]);
 

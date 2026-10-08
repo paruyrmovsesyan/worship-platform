@@ -10,6 +10,8 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
     private var lastRuntimeHeartbeat = Date()
     private var runtimeWatchdog: Timer?
     private var lastAutomaticReload = Date.distantPast
+    private var callAudioActive = false
+    private var callUsesSpeaker = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -42,6 +44,12 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
             if !audioSessionHandlerInstalled {
                 wv.configuration.userContentController.add(self, name: "nativeAudioSession")
                 audioSessionHandlerInstalled = true
+                NotificationCenter.default.addObserver(
+                    self,
+                    selector: #selector(handleAudioSessionInterruption(_:)),
+                    name: AVAudioSession.interruptionNotification,
+                    object: AVAudioSession.sharedInstance()
+                )
             }
             wv.isOpaque = false
             wv.backgroundColor = darkBg
@@ -78,18 +86,23 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
         do {
             switch command {
             case "start":
+                callAudioActive = true
                 try session.setCategory(
                     .playAndRecord,
                     mode: .voiceChat,
                     options: [.allowBluetoothHFP]
                 )
                 try session.setActive(true)
-                try session.overrideOutputAudioPort(.none)
+                try session.overrideOutputAudioPort(callUsesSpeaker ? .speaker : .none)
             case "speaker":
+                callUsesSpeaker = true
                 try session.overrideOutputAudioPort(.speaker)
             case "earpiece":
+                callUsesSpeaker = false
                 try session.overrideOutputAudioPort(.none)
             case "stop":
+                callAudioActive = false
+                callUsesSpeaker = false
                 try session.overrideOutputAudioPort(.none)
                 try session.setActive(false, options: .notifyOthersOnDeactivation)
             default:
@@ -97,6 +110,18 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
             }
         } catch {
             print("Native call audio session error: \(error.localizedDescription)")
+        }
+    }
+
+    @objc private func handleAudioSessionInterruption(_ notification: Notification) {
+        guard callAudioActive,
+              let rawType = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? NSNumber,
+              let type = AVAudioSession.InterruptionType(rawValue: rawType.uintValue),
+              type == .ended else { return }
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.callAudioActive else { return }
+            self.updateCallAudioSession(command: "start")
         }
     }
 
@@ -126,6 +151,7 @@ class AppBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
 
     deinit {
         runtimeWatchdog?.invalidate()
+        NotificationCenter.default.removeObserver(self)
         if textInteractionHandlerInstalled {
             webView?.configuration.userContentController.removeScriptMessageHandler(forName: "nativeTextInteraction")
         }
