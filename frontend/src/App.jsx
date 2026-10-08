@@ -62,6 +62,7 @@ import TopLoader from './components/TopLoader';
 import PullToRefresh from './components/PullToRefresh';
 import { usePwaOfflineGuard } from './hooks/usePwaOfflineGuard';
 import { usePwaSwipeNavigation } from './hooks/usePwaSwipeNavigation';
+import { useNativeBackGesture } from './hooks/useNativeBackGesture';
 import { showPwaOfflineBlockedNotice } from './utils/pwaOfflineGuard';
 import { useLanguage } from './context/LanguageContext';
 import { applyAppTheme, getStoredAppTheme } from './utils/appTheme';
@@ -301,6 +302,13 @@ function App() {
     navigate,
     canAccessPath,
     onBlocked: showPwaOfflineBlockedNotice,
+    user,
+  });
+
+  useNativeBackGesture({
+    enabled: isNativeApp && Capacitor.getPlatform() === 'ios' && isMobile,
+    pathname: location.pathname,
+    navigate,
     user,
   });
 

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
@@ -81,7 +81,6 @@ async function registerPushToken(token, userId) {
 
 export default function NativePlatformServices() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user, checkAuth } = useAuth();
   const [update, setUpdate] = useState(null);
   const [isConnected, setIsConnected] = useState(true);
@@ -96,19 +95,6 @@ export default function NativePlatformServices() {
   userRef.current = user;
 
   const pushTokenRef = useRef(null);
-
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-
-    // iOS must expose its interactive edge-back gesture only for screens that
-    // were opened from a primary tab. Primary tabs themselves are peers, like
-    // Instagram tabs, rather than pages in one back stack.
-    try {
-      window.webkit?.messageHandlers?.nativeNavigation?.postMessage({
-        allowsBack: !isNativePrimaryTab(location.pathname),
-      });
-    } catch (_) {}
-  }, [location.pathname]);
 
   // Sync push token with current user ID when user changes
   useEffect(() => {
