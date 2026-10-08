@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Capacitor } from '@capacitor/core';
 import { useLanguage } from '../context/LanguageContext';
+import { IS_NATIVE_RUNTIME } from '../utils/runtimePlatform';
 import NativeAudioCallSurface from './NativeAudioCallSurface';
 import './AudioCallModal.css';
 
@@ -37,7 +37,7 @@ export default function AudioCallModal({
   const { t } = useLanguage();
   const [minimizedCallId, setMinimizedCallId] = useState(0);
 
-  if (Capacitor.isNativePlatform()) {
+  if (IS_NATIVE_RUNTIME) {
     return <NativeAudioCallSurface {...{
       callState, callInfo, callDisplayName, callAvatarGradient, isMuted, isSpeakerOn,
       callDurationSec, connectionQuality, callError, audioOutputs, selectedOutputId,

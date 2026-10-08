@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-import { Capacitor } from '@capacitor/core';
+import { IS_NATIVE_RUNTIME } from '../utils/runtimePlatform';
 
 const LEGACY_PWA_SESSION_KEY = 'wp_active_app_source';
 
@@ -15,7 +15,7 @@ function clearLegacyAppSource() {
 function detectPwaMode() {
   if (typeof window === 'undefined') return false;
 
-  if (Capacitor.isNativePlatform()) {
+  if (IS_NATIVE_RUNTIME) {
     return false;
   }
 
@@ -35,12 +35,12 @@ function detectPwaMode() {
 }
 
 export function useIsNativeApp() {
-  return Capacitor.isNativePlatform();
+  return IS_NATIVE_RUNTIME;
 }
 
 export function useIsAppMode() {
   const isPWA = useIsPWA();
-  return isPWA || Capacitor.isNativePlatform();
+  return isPWA || IS_NATIVE_RUNTIME;
 }
 
 export function useIsPWA() {

@@ -16,7 +16,7 @@ html = html
   .replace('Override pwa-init.js standalone styles', 'Legacy standalone style safeguards')
   .replace(
     '<head>',
-    '<head>\n    <meta name="worship-runtime" content="native">\n    <script>document.documentElement.classList.add("wp-native-bundle");</script>',
+    '<head>\n    <meta name="worship-runtime" content="native">\n    <script>window.__WORSHIP_RUNTIME__="native";document.documentElement.classList.add("wp-native-bundle");if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then(function(items){items.forEach(function(item){item.unregister();});});}</script>',
   );
 
 await writeFile(indexPath, html, 'utf8');

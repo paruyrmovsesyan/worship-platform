@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Capacitor } from '@capacitor/core';
+import { IS_NATIVE_RUNTIME } from '../utils/runtimePlatform';
 
 const FALLBACK_ICE_SERVERS = [
   { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
@@ -22,7 +22,7 @@ function updateNativeCallAudio(command) {
 }
 
 function waitForNativeCallPaint() {
-  if (!Capacitor.isNativePlatform()) return Promise.resolve();
+  if (!IS_NATIVE_RUNTIME) return Promise.resolve();
   return new Promise((resolve) => {
     window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
   });
@@ -54,7 +54,7 @@ async function loadCallConfig() {
 }
 
 async function callApi(action, body, options = {}) {
-  if (!Capacitor.isNativePlatform()) {
+  if (!IS_NATIVE_RUNTIME) {
     const response = await fetch(`/chat_api.php?action=${encodeURIComponent(action)}`, {
       method: options.method || 'POST',
       credentials: 'same-origin',
@@ -127,7 +127,7 @@ function playPhoneRingtone(type = 'incoming') {
       if (ringtoneCtx.state === 'suspended') ringtoneCtx.resume().catch(() => {});
 
       const startAt = ringtoneCtx.currentTime;
-      if (Capacitor.isNativePlatform()) {
+      if (IS_NATIVE_RUNTIME) {
         const notes = type === 'incoming'
           ? [
               { frequency: 659.25, offset: 0, duration: 0.18 },
@@ -297,7 +297,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     releaseWakeLock();
   }, [releaseWakeLock]);
 
-  const isSpeakerOnRef = useRef(!Capacitor.isNativePlatform());
+  const isSpeakerOnRef = useRef(!IS_NATIVE_RUNTIME);
   const audioOutputsRef = useRef([]);
   const selectedOutputIdRef = useRef('');
 
@@ -310,7 +310,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
   }, [selectedOutputId]);
 
   const applySpeakerRouting = useCallback((isSpeaker) => {
-    if (Capacitor.isNativePlatform()) {
+    if (IS_NATIVE_RUNTIME) {
       updateNativeCallAudio(isSpeaker ? 'speaker' : 'earpiece');
     }
     const audio = remoteAudioRef.current;
@@ -537,7 +537,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
 
     pc.ontrack = (event) => {
       const stream = event.streams?.[0]
-        || (Capacitor.isNativePlatform() && event.track ? new MediaStream([event.track]) : null);
+        || (IS_NATIVE_RUNTIME && event.track ? new MediaStream([event.track]) : null);
       if (!remoteAudioRef.current || !stream) return;
       remoteAudioRef.current.srcObject = stream;
       remoteAudioRef.current.play()
@@ -706,7 +706,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       }
       pollAbortRef.current?.abort();
       pollAbortRef.current = new AbortController();
-      if (Capacitor.isNativePlatform()) {
+      if (IS_NATIVE_RUNTIME) {
         pollTimeout = window.setTimeout(() => {
           pollAbortRef.current?.abort('call_poll_timeout');
         }, CALL_REQUEST_TIMEOUT_MS);
@@ -714,7 +714,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
 
       try {
         const response = await fetch(
-          `/chat_api.php?action=poll_call_status&chat_id=${activeChatId}&call_id=${callId}&last_signal_id=${Capacitor.isNativePlatform() ? lastSignalIdRef.current : 0}`,
+          `/chat_api.php?action=poll_call_status&chat_id=${activeChatId}&call_id=${callId}&last_signal_id=${IS_NATIVE_RUNTIME ? lastSignalIdRef.current : 0}`,
           { cache: 'no-store', credentials: 'same-origin', signal: pollAbortRef.current.signal },
         );
         const data = await response.json().catch(() => ({}));
@@ -760,7 +760,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
             await processSignal(signal, currentCall, otherUserId);
             const signalId = Number(signal.id);
             acknowledged.push(signalId);
-            if (Capacitor.isNativePlatform()) {
+            if (IS_NATIVE_RUNTIME) {
               lastSignalIdRef.current = Math.max(lastSignalIdRef.current, signalId);
             }
           } catch (error) {
@@ -836,7 +836,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     if (callStateRef.current !== 'idle') return;
     const activeChatId = Number(customChatId || chatId || 0);
     const targetId = Number(targetUserId || 0);
-    if (Capacitor.isNativePlatform() && activeChatId <= 0 && targetId <= 0) {
+    if (IS_NATIVE_RUNTIME && activeChatId <= 0 && targetId <= 0) {
       setCallError('invalid_target');
       setCallStateStable('failed');
       return;
@@ -859,7 +859,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       // native microphone permission/session flow, which can pause rendering.
       await waitForNativeCallPaint();
       await ensureLocalStream();
-      if (Capacitor.isNativePlatform() && cancelPendingStartRef.current) {
+      if (IS_NATIVE_RUNTIME && cancelPendingStartRef.current) {
         resetCall();
         return;
       }
@@ -888,8 +888,8 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
   }, [chatId, currentUserId, ensureLocalStream, resetCall, setCallInfoStable, setCallStateStable, stopLocalStream]);
 
   const endCall = useCallback(async () => {
-    if (Capacitor.isNativePlatform() && nativeActionInFlightRef.current) return;
-    if (Capacitor.isNativePlatform()) nativeActionInFlightRef.current = 'end';
+    if (IS_NATIVE_RUNTIME && nativeActionInFlightRef.current) return;
+    if (IS_NATIVE_RUNTIME) nativeActionInFlightRef.current = 'end';
     const info = callInfoRef.current;
     if (pendingStartRef.current && !info?.id) {
       cancelPendingStartRef.current = true;
@@ -915,10 +915,10 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
   }, [cleanupWebRtc, resetCall, scheduleReset, setCallInfoStable, setCallStateStable]);
 
   const acceptCall = useCallback(async () => {
-    if (Capacitor.isNativePlatform() && nativeActionInFlightRef.current) return;
+    if (IS_NATIVE_RUNTIME && nativeActionInFlightRef.current) return;
     const info = callInfoRef.current;
     if (!info?.id || callStateRef.current !== 'ringing') return;
-    if (Capacitor.isNativePlatform()) nativeActionInFlightRef.current = 'accept';
+    if (IS_NATIVE_RUNTIME) nativeActionInFlightRef.current = 'accept';
     setCallStateStable('connecting');
     setCallError(null);
     try {
@@ -941,10 +941,10 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
   }, [closePeerConnection, createPeerConnection, currentUserId, setCallInfoStable, setCallStateStable, startDurationTimer, stopLocalStream]);
 
   const declineCall = useCallback(async () => {
-    if (Capacitor.isNativePlatform() && nativeActionInFlightRef.current) return;
+    if (IS_NATIVE_RUNTIME && nativeActionInFlightRef.current) return;
     const info = callInfoRef.current;
     if (!info?.id) return resetCall();
-    if (Capacitor.isNativePlatform()) nativeActionInFlightRef.current = 'decline';
+    if (IS_NATIVE_RUNTIME) nativeActionInFlightRef.current = 'decline';
     try { await callApi('respond_call', { call_id: info.id, response: 'decline' }); }
     catch (error) { console.warn('Call decline failed', error); }
     setCallStateStable('ended');
@@ -975,7 +975,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
     });
   }, []);
 
-  const [isSpeakerOn, setIsSpeakerOn] = useState(() => !Capacitor.isNativePlatform());
+  const [isSpeakerOn, setIsSpeakerOn] = useState(() => !IS_NATIVE_RUNTIME);
 
   const toggleSpeaker = useCallback(() => {
     setIsSpeakerOn((prevSpeaker) => {
@@ -1100,7 +1100,7 @@ export function useWebRtcAudioCall(chatId, currentUserId) {
       }
     };
     const handleNativeResume = () => {
-      if (!Capacitor.isNativePlatform()) return;
+      if (!IS_NATIVE_RUNTIME) return;
       if (!['connected', 'connecting', 'reconnecting'].includes(callStateRef.current)) return;
       updateNativeCallAudio('start');
       applySpeakerRouting(isSpeakerOnRef.current);
