@@ -108,9 +108,10 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
       currentY.current = touch.clientY;
 
       if (diffY > 0) {
-        // The native WebView must not perform its own rubber-band overscroll
-        // underneath our indicator; that exposes the black host background.
-        if (isNativeApp && e.cancelable) e.preventDefault();
+        // Native rubber-band overscroll is already disabled by SceneDelegate.
+        // Do not cancel document touchmove here: a non-passive global handler
+        // forces iOS to wait for JavaScript before every scroll frame and makes
+        // normal vertical paging feel abrupt.
         // Deep pull friction: requiring deep downward swipe to trigger refresh
         const distance = Math.min(diffY * 0.45, maxPull);
         pullDistanceRef.current = distance;
@@ -167,7 +168,7 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
     };
 
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
-    document.addEventListener('touchmove', handleTouchMove, { passive: !isNativeApp });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
     document.addEventListener('touchend', handleTouchEnd);
     document.addEventListener('touchcancel', handleTouchEnd);
 
