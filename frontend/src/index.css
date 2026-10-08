@@ -295,14 +295,29 @@ body.is-native .hub-header {
   padding-top: 8px !important;
 }
 
-/* WKWebView can occasionally leave fill-mode entrance animations on their
-   first (transparent) frame. Native screens must always remain visible. */
-body.is-native .route-animate,
+/* Native-safe transitions. Never begin at opacity: 0 because WKWebView can
+   occasionally retain that compositor frame, but keep a subtle app-like
+   entrance so navigation and content changes do not feel abrupt. */
+@keyframes nativeRouteEnter {
+  from { opacity: 0.96; transform: translate3d(0, 8px, 0) scale(0.998); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes nativeContentEnter {
+  from { opacity: 0.92; transform: translate3d(0, 5px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+body.is-native .route-animate {
+  opacity: 1 !important;
+  animation: nativeRouteEnter 220ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
+  will-change: transform, opacity;
+}
+
 body.is-native .animate-fade-in,
 body.is-native .mobile-hub.animate-fade-in {
   opacity: 1 !important;
-  transform: none !important;
-  animation: none !important;
+  animation: nativeContentEnter 180ms ease-out both !important;
 }
 
 @media (min-width: 901px) {
