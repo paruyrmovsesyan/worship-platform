@@ -100,6 +100,7 @@ function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const transitionRef = React.useRef(null);
+  const previousNativePathRef = React.useRef(location.pathname);
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [nativeRefreshing, setNativeRefreshing] = React.useState(false);
   const [rememberPromptOpen, setRememberPromptOpen] = React.useState(false);
@@ -197,11 +198,31 @@ function App() {
 
   useEffect(() => {
     if (transitionRef.current) {
-      transitionRef.current.classList.remove('route-animate');
+      const primaryTabs = ['/', '/songs', '/chats', '/profile', '/login'];
+      const previousPath = previousNativePathRef.current;
+      const currentPath = location.pathname;
+      const previousIsPrimary = primaryTabs.includes(previousPath);
+      const currentIsPrimary = primaryTabs.includes(currentPath);
+      let nativeTransition = 'native-push-transition';
+
+      if (previousIsPrimary && currentIsPrimary) {
+        nativeTransition = 'native-tab-transition';
+      } else if (!previousIsPrimary && currentIsPrimary) {
+        nativeTransition = 'native-pop-transition';
+      }
+
+      transitionRef.current.classList.remove(
+        'route-animate',
+        'native-tab-transition',
+        'native-push-transition',
+        'native-pop-transition'
+      );
       void transitionRef.current.offsetWidth;
+      if (isNativeApp) transitionRef.current.classList.add(nativeTransition);
       transitionRef.current.classList.add('route-animate');
+      previousNativePathRef.current = currentPath;
     }
-  }, [location.pathname]);
+  }, [isNativeApp, location.pathname]);
 
   useEffect(() => {
     if (authLoading) return;
