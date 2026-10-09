@@ -13,6 +13,30 @@ import './Setlists.css';
 import './SongsApp.css'; // ensure track-list styles are loaded
 import './SetlistEditorWebPro.css';
 
+const TEAM_ROLES = [
+  'Առաջնորդ',
+  'Վոկալ',
+  'Բեք վոկալ',
+  'Ակուստիկ կիթառ',
+  'Էլեկտրո կիթառ',
+  'Բաս կիթառ',
+  'Կիթառ',
+  'Բաս',
+  'Ստեղնաշարային',
+  'Դաշնամուր',
+  'Հարվածային',
+  'Պերկուսիա',
+  'Ջութակ',
+  'Թավջութակ',
+  'Սաքսոֆոն',
+  'Ֆլեյտա',
+  'Հնչյունային օպերատոր',
+  'Մեդիա / Պրոյեկտոր',
+  'Լուսային օպերատոր',
+  'Հաղորդավար',
+  'Այլ'
+];
+
 export default function SetlistEditorWeb() {
   const { t, language } = useLanguage();
   const { id } = useParams();
@@ -41,6 +65,9 @@ export default function SetlistEditorWeb() {
   
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [team, setTeam] = useState([]);
+  const [teamSaving, setTeamSaving] = useState(false);
+  const [friendsList, setFriendsList] = useState([]);
+  const [friendsLoading, setFriendsLoading] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userSearchResults, setUserSearchResults] = useState([]);
   
@@ -203,6 +230,7 @@ export default function SetlistEditorWeb() {
         if (data.error) throw new Error(data.error);
         setSetlistData(data.setlist);
         setItems(data.items || []);
+        if (Array.isArray(data.team)) setTeam(data.team);
         setLoading(false);
       })
       .catch(err => {
@@ -415,20 +443,32 @@ export default function SetlistEditorWeb() {
   };
 
   const openTeamModal = async (e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     setIsTeamModalOpen(true);
+    setUserSearchQuery('');
+    setUserSearchResults([]);
+    setFriendsLoading(true);
     try {
-       const res = await fetch(`/setlists_api.php?action=get_setlist_team&setlist_id=${id}`);
-       const data = await res.json();
-       if (data.ok) setTeam(data.team || []);
+      const [teamRes, friendsRes] = await Promise.all([
+        fetch(`/setlists_api.php?action=get_setlist_team&setlist_id=${id}`),
+        fetch('/friends_api.php?action=list_friends')
+      ]);
+      const [teamData, friendsData] = await Promise.all([teamRes.json(), friendsRes.json()]);
+      if (teamData.ok) setTeam(teamData.team || []);
+      if (friendsData.ok) setFriendsList(friendsData.friends || []);
     } catch (err) {
-       console.error(err);
+      console.error(err);
+    } finally {
+      setFriendsLoading(false);
     }
   };
 
   const handleUserSearch = async (e) => {
-    e.preventDefault();
-    if (!userSearchQuery.trim()) return;
+    if (e) e.preventDefault();
+    if (!userSearchQuery.trim()) {
+      setUserSearchResults([]);
+      return;
+    }
     try {
       const res = await fetch(`/friends_api.php?action=search_users&q=${encodeURIComponent(userSearchQuery)}`);
       const data = await res.json();
@@ -439,21 +479,25 @@ export default function SetlistEditorWeb() {
   };
 
   const addTeamMember = (u) => {
-    if (team.find(t => t.user_id === u.id)) return;
-    setTeam([...team, { user_id: u.id, user_name: u.name, role_name: 'Վոկալ' }]);
+    const uid = Number(u.id || u.user_id || u.friend_id || 0);
+    if (!uid) return;
+    if (team.some(t => Number(t.user_id) === uid)) return;
+    const name = u.name || u.username || 'Անդամ';
+    setTeam(prev => [...prev, { user_id: uid, user_name: name, role_name: 'Վոկալ' }]);
     setUserSearchResults([]);
     setUserSearchQuery('');
   };
 
   const removeTeamMember = (userId) => {
-    setTeam(team.filter(t => t.user_id !== userId));
+    setTeam(prev => prev.filter(t => Number(t.user_id) !== Number(userId)));
   };
 
   const updateTeamRole = (userId, role) => {
-    setTeam(team.map(t => t.user_id === userId ? { ...t, role_name: role } : t));
+    setTeam(prev => prev.map(t => Number(t.user_id) === Number(userId) ? { ...t, role_name: role } : t));
   };
 
   const handleSaveTeam = async () => {
+    setTeamSaving(true);
     try {
       const res = await fetch('/setlists_api.php?action=manage_setlist_team', {
         method: 'POST',
@@ -461,32 +505,52 @@ export default function SetlistEditorWeb() {
         body: JSON.stringify({ setlist_id: id, team })
       });
       const data = await res.json();
-      if (data.ok) {
-        setIsTeamModalOpen(false);
-        if (data.new_users && data.new_users.length > 0) {
-            for (const userId of data.new_users) {
-               const chatRes = await fetch('/chat_api.php?action=get_direct_chat', {
-                  method: 'POST', 
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ target_user_id: userId })
-               });
-               const chatData = await chatRes.json();
-               if (chatData.ok) {
-                   await fetch('/chat_api.php?action=send_message', {
-                       method: 'POST', 
-                       headers: { 'Content-Type': 'application/json' },
-                       body: JSON.stringify({
-                           chat_id: chatData.chat.id,
-                           message: `🔔 Դուք նշանակված եք ծառայության այս երգացանկում՝ ${setlistData.name}:`,
-                           setlist_id: id
-                       })
-                   });
-               }
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || 'Failed to save team');
+      }
+
+      // Re-fetch to ensure fresh synchronized state
+      const verifyRes = await fetch(`/setlists_api.php?action=get_setlist_team&setlist_id=${id}`);
+      const verifyData = await verifyRes.json();
+      if (verifyData.ok) {
+        setTeam(verifyData.team || []);
+      }
+
+      // Try sending direct chat messages to new members if available
+      if (data.new_users && data.new_users.length > 0) {
+        for (const userId of data.new_users) {
+          try {
+            const chatRes = await fetch('/chat_api.php?action=get_direct_chat', {
+              method: 'POST', 
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ user_id: userId })
+            });
+            const chatData = await chatRes.json();
+            const chatId = chatData.chat_id || chatData.chat?.id;
+            if (chatRes.ok && chatData.ok && chatId) {
+              await fetch('/chat_api.php?action=send_message', {
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: chatId,
+                  message: `🔔 Դուք նշանակված եք ծառայության այս երգացանկում՝ ${setlistData?.name || 'Երգացանկ'}:`,
+                  setlist_id: id
+                })
+              });
             }
+          } catch (chatErr) {
+            console.warn('Chat notification skipped:', chatErr);
+          }
         }
       }
+
+      setIsTeamModalOpen(false);
+      alert(language === 'am' ? '✓ Թիմը հաջողությամբ պահպանվեց' : '✓ Team successfully saved');
     } catch (err) {
       console.error(err);
+      alert(language === 'am' ? `Չհաջողվեց պահպանել թիմը․ ${err.message}` : `Could not save team: ${err.message}`);
+    } finally {
+      setTeamSaving(false);
     }
   };
 
@@ -820,6 +884,16 @@ export default function SetlistEditorWeb() {
                   ⏱ {totalDuration} րոպե
                 </span>
               )}
+              {team.length > 0 && (
+                <button
+                  type="button"
+                  className="sle-stat-chip sle-stat-chip--clickable"
+                  onClick={openTeamModal}
+                  title="Երգացանկի թիմը"
+                >
+                  👥 {team.length} {t('setlists.teamMembersCount', 'թիմի անդամ')}
+                </button>
+              )}
               {isOwner && (
                 <>
                   <span className="sle-stat-chip" title={t('setlists.viewsCountTooltip', 'Դիտումների քանակ հղումով')}>
@@ -846,7 +920,7 @@ export default function SetlistEditorWeb() {
           <div className="sle-controls-row">
             <button className="btn btn-secondary sle-btn" onClick={openTeamModal}>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-              Թիմ
+              Թիմ {team.length > 0 ? `(${team.length})` : ''}
             </button>
             <button className="btn btn-secondary sle-btn" onClick={addSection}>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12h16M4 6h16M4 18h16"></path></svg>
@@ -1304,61 +1378,168 @@ export default function SetlistEditorWeb() {
       {/* Team Modal */}
       {isTeamModalOpen && createPortal(
         <div className="sl-modal-overlay" onClick={() => setIsTeamModalOpen(false)}>
-          <div className="sl-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+          <div className="sl-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px' }}>
             <div className="sl-modal-header">
-              <h3 className="sl-modal-title">Երգացանկի Թիմ</h3>
-              <button className="sl-modal-close" onClick={() => setIsTeamModalOpen(false)}>
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              <h3 className="sl-modal-title" style={{ margin: 0, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                👥 Երգացանկի Թիմ
+              </h3>
+              <button type="button" className="sl-modal-close" onClick={() => setIsTeamModalOpen(false)}>
+                ✕
               </button>
             </div>
             
-            <div style={{ padding: '16px' }}>
-              <div style={{ marginBottom: '16px' }}>
-                <form onSubmit={handleUserSearch} style={{ display: 'flex', gap: '8px' }}>
-                  <input type="text" className="sl-input" value={userSearchQuery} onChange={e => setUserSearchQuery(e.target.value)} placeholder="Որոնել օգտատեր..." />
-                  <button type="submit" className="sl-btn sl-btn-primary" style={{ padding: '0 16px' }}>Որոնել</button>
-                </form>
-                {userSearchResults.length > 0 && (
-                  <div style={{ background: 'var(--color-surface-hover)', borderRadius: '8px', marginTop: '8px', maxHeight: '150px', overflowY: 'auto' }}>
-                    {userSearchResults.map(u => (
-                       <div key={u.id} style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-surface)' }}>
-                         <span>{u.name}</span>
-                         <button className="sl-btn sl-btn-secondary" style={{ padding: '4px 8px', fontSize: '0.8rem' }} onClick={() => addTeamMember(u)}>Ավելացնել</button>
-                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+            <div style={{ padding: '4px 0 16px 0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {canEdit && (
+                <div>
+                  <form onSubmit={handleUserSearch} style={{ display: 'flex', gap: '8px' }}>
+                    <input 
+                      type="text" 
+                      className="sl-input" 
+                      value={userSearchQuery} 
+                      onChange={e => setUserSearchQuery(e.target.value)} 
+                      placeholder="Որոնել օգտատեր (անուն կամ @username)..." 
+                    />
+                    <button type="submit" className="sl-btn sl-btn-primary" style={{ padding: '0 16px', whiteSpace: 'nowrap' }}>
+                      Որոնել
+                    </button>
+                  </form>
+
+                  {userSearchResults.length > 0 && (
+                    <div style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', marginTop: '10px', maxHeight: '180px', overflowY: 'auto' }}>
+                      {userSearchResults.map(u => {
+                        const uid = Number(u.id || u.user_id || 0);
+                        const isAdded = team.some(t => Number(t.user_id) === uid);
+                        return (
+                          <div key={uid} style={{ padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div className="sl-team-avatar">
+                                {(u.name || u.username || '?').charAt(0).toUpperCase()}
+                              </div>
+                              <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>{u.name || u.username}</span>
+                            </div>
+                            {isAdded ? (
+                              <span style={{ fontSize: '0.8rem', color: '#2ecc71', fontWeight: 600 }}>✓ Ավելացված է</span>
+                            ) : (
+                              <button type="button" className="sl-btn sl-btn-secondary" style={{ padding: '6px 12px', fontSize: '0.82rem' }} onClick={() => addTeamMember(u)}>
+                                + Ավելացնել
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Friends Quick Add */}
+                  {friendsList.length > 0 && !userSearchQuery && (
+                    <div style={{ marginTop: '12px' }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-tertiary)', marginBottom: '6px' }}>
+                        Ընկերներ (Արագ ավելացում)
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', maxHeight: '100px', overflowY: 'auto' }}>
+                        {friendsList
+                          .filter(f => !team.some(t => Number(t.user_id) === Number(f.friend_id || f.id)))
+                          .slice(0, 10)
+                          .map(f => {
+                            const fid = Number(f.friend_id || f.id);
+                            return (
+                              <button
+                                key={fid}
+                                type="button"
+                                className="sl-btn sl-btn-secondary"
+                                style={{ padding: '4px 10px', fontSize: '0.78rem', borderRadius: '8px' }}
+                                onClick={() => addTeamMember(f)}
+                              >
+                                + {f.name || f.username}
+                              </button>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: '1rem', color: 'var(--color-text-secondary)' }}>Ներկայիս Թիմը</h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
+                    Ներկայիս Թիմը ({team.length})
+                  </h4>
+                </div>
+
                 {team.length === 0 ? (
-                  <div style={{ color: 'var(--color-text-tertiary)', fontSize: '0.9rem' }}>Դեռ թիմի անդամներ չկան:</div>
+                  <div style={{ color: 'var(--color-text-tertiary)', fontSize: '0.9rem', textAlign: 'center', padding: '24px 0', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '12px', border: '1px dashed rgba(255, 255, 255, 0.08)' }}>
+                    Դեռ թիմի անդամներ չկան: {canEdit ? 'Որոնեք և ավելացրեք մասնակիցներին:' : ''}
+                  </div>
                 ) : (
-                  team.map(t => (
-                    <div key={t.user_id} style={{ background: 'var(--color-surface)', padding: '12px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                       <div style={{ flex: 1, fontWeight: '500' }}>{t.user_name}</div>
-                       <select className="sl-input" value={t.role_name} onChange={e => updateTeamRole(t.user_id, e.target.value)} style={{ width: '120px', padding: '6px', fontSize: '0.85rem' }}>
-                         <option value="Առաջնորդ">Առաջնորդ</option>
-                         <option value="Վոկալ">Վոկալ</option>
-                         <option value="Կիթառ">Կիթառ</option>
-                         <option value="Բաս">Բաս</option>
-                         <option value="Ստեղնաշարային">Ստեղնաշարային</option>
-                         <option value="Հարվածային">Հարվածային</option>
-                         <option value="Այլ">Այլ</option>
-                       </select>
-                       <button onClick={() => removeTeamMember(t.user_id)} style={{ background: 'none', border: 'none', color: 'var(--color-danger)', cursor: 'pointer' }}>
-                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                       </button>
-                    </div>
-                  ))
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '280px', overflowY: 'auto' }}>
+                    {team.map(t => {
+                      const uid = Number(t.user_id);
+                      return (
+                        <div key={uid} className="sl-team-member-item">
+                          <div className="sl-team-avatar">
+                            {(t.user_name || '?').charAt(0).toUpperCase()}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '0.92rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {t.user_name}
+                            </div>
+                          </div>
+
+                          {canEdit ? (
+                            <>
+                              <select 
+                                className="sl-input" 
+                                value={t.role_name || 'Վոկալ'} 
+                                onChange={e => updateTeamRole(uid, e.target.value)} 
+                                style={{ width: '140px', padding: '6px 10px', fontSize: '0.84rem', borderRadius: '8px' }}
+                              >
+                                {t.role_name && !TEAM_ROLES.includes(t.role_name) && (
+                                  <option value={t.role_name}>{t.role_name}</option>
+                                )}
+                                {TEAM_ROLES.map(role => (
+                                  <option key={role} value={role}>{role}</option>
+                                ))}
+                              </select>
+                              <button 
+                                type="button" 
+                                onClick={() => removeTeamMember(uid)} 
+                                style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#f87171', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background 0.15s' }}
+                                title="Հեռացնել"
+                              >
+                                ✕
+                              </button>
+                            </>
+                          ) : (
+                            <span className="sl-team-role-badge">
+                              {t.role_name || 'Անդամ'}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </div>
             
-            <div className="sl-modal-actions">
-              <button className="sl-btn sl-btn-secondary" onClick={() => setIsTeamModalOpen(false)}>Չեղարկել</button>
-              <button className="sl-btn sl-btn-primary" onClick={handleSaveTeam}>Պահպանել</button>
+            <div className="sl-modal-actions" style={{ marginTop: '16px' }}>
+              {canEdit ? (
+                <div style={{ display: 'flex', gap: '10px', width: '100%', justifyContent: 'flex-end' }}>
+                  <button type="button" className="sl-btn sl-btn-secondary" onClick={() => setIsTeamModalOpen(false)}>
+                    Չեղարկել
+                  </button>
+                  <button type="button" className="sl-btn sl-btn-primary" disabled={teamSaving} onClick={handleSaveTeam}>
+                    {teamSaving ? 'Պահպանվում է...' : 'Պահպանել թիմը'}
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end' }}>
+                  <button type="button" className="sl-btn sl-btn-secondary" onClick={() => setIsTeamModalOpen(false)}>
+                    Փակել
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>,

@@ -183,7 +183,7 @@ function requireSetlistReadable(PDO $pdo, int $setlistId, int $uid): array {
     ]);
   }
 
-  // Check Team Access
+  // Check Team Access (Groups)
   $st = $pdo->prepare("
     SELECT s.*, u.name AS owner_name, u.email AS owner_email, m.role AS team_role
     FROM setlists s
@@ -196,6 +196,24 @@ function requireSetlistReadable(PDO $pdo, int $setlistId, int $uid): array {
   $row = $st->fetch(PDO::FETCH_ASSOC);
   if ($row) {
     $canEdit = ($row['team_role'] === 'owner' || $row['team_role'] === 'admin');
+    $decorated = decorateSetlistAccess($row, 'team', $canEdit);
+    $decorated['team_role'] = $row['team_role'];
+    return $decorated;
+  }
+
+  // Check Setlist Assignment Team Access
+  $st = $pdo->prepare("
+    SELECT s.*, u.name AS owner_name, u.email AS owner_email, a.role_name AS team_role
+    FROM setlists s
+    JOIN setlist_assignments a ON a.setlist_id = s.id
+    LEFT JOIN users u ON u.id = s.user_id
+    WHERE s.id = ? AND a.user_id = ? AND s.status = 'active'
+    LIMIT 1
+  ");
+  $st->execute([$setlistId, $uid]);
+  $row = $st->fetch(PDO::FETCH_ASSOC);
+  if ($row) {
+    $canEdit = ($row['team_role'] === 'Առաջնորդ');
     $decorated = decorateSetlistAccess($row, 'team', $canEdit);
     $decorated['team_role'] = $row['team_role'];
     return $decorated;
@@ -359,6 +377,28 @@ if ($action === 'get_setlists' && $method === 'GET') {
         ");
         $teamSt->execute([$uid, $uid]);
         $rows = array_merge($rows, $teamSt->fetchAll(PDO::FETCH_ASSOC));
+      } catch (PDOException $e) {
+      }
+
+      try {
+        $asgnTeamSt = $pdo->prepare("
+          SELECT s.*,
+            NULL AS access_id,
+            NULL AS access_expires_at,
+            u.name AS owner_name,
+            u.email AS owner_email,
+            'team' AS access_role,
+            IF(a.role_name = 'Առաջնորդ', 1, 0) AS can_edit,
+            (SELECT COUNT(*) FROM setlist_items i WHERE i.setlist_id = s.id) AS items_count,
+            a.role_name AS team_role,
+            CONCAT('Թիմ (', COALESCE(NULLIF(a.role_name, ''), 'Անդամ'), ')') AS team_name
+          FROM setlists s
+          JOIN setlist_assignments a ON a.setlist_id = s.id
+          LEFT JOIN users u ON u.id = s.user_id
+          WHERE a.user_id = ? AND s.user_id != ? AND s.status = 'active'
+        ");
+        $asgnTeamSt->execute([$uid, $uid]);
+        $rows = array_merge($rows, $asgnTeamSt->fetchAll(PDO::FETCH_ASSOC));
       } catch (PDOException $e) {
       }
 
@@ -1122,9 +1162,25 @@ if ($action === 'get_setlist_items' && $method === 'GET') {
     'song_title' => 'setlists.items.song_title',
   ], $lang);
 
+  $teamMembers = [];
+  try {
+    $teamSt = $pdo->prepare("
+        SELECT a.id, a.user_id, a.role_name, a.status, 
+               COALESCE(NULLIF(TRIM(u.name), ''), u.username, u.email) as user_name,
+               u.avatar_gradient
+        FROM setlist_assignments a
+        JOIN users u ON a.user_id = u.id
+        WHERE a.setlist_id = ?
+    ");
+    $teamSt->execute([$setlist_id]);
+    $teamMembers = $teamSt->fetchAll(PDO::FETCH_ASSOC);
+  } catch (Throwable $e) {}
+
   out([
+    "ok" => true,
     "setlist" => $setlist,
-    "items" => $items
+    "items" => $items,
+    "team" => $teamMembers
   ]);
 }
 
@@ -1761,10 +1817,9 @@ if ($action === 'manage_setlist_team' && $method === 'POST') {
       
       $pdo->commit();
 
-      // Native apps must notify every newly assigned member even when a
-      // direct chat cannot be created yet (for example, friend request pending).
+      // Notify every newly assigned member via in-app notifications and push
       $notificationResults = [];
-      if ($isNativeAppRequest && $newUsers) {
+      if (!empty($newUsers)) {
           $setlistName = trim((string)($setlist['name'] ?? 'Երգացանկ'));
           $senderName = trim((string)($_SESSION['name'] ?? $_SESSION['username'] ?? ''));
           if ($senderName === '') {

@@ -1824,3 +1824,77 @@ body.quick-drawer-open .mobile-bottom-nav {
   color: #00d4ff;
 }
 
+/* Modal Buttons & Team Components */
+.sl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  outline: none;
+}
+.sl-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.sl-btn-primary {
+  background: var(--color-primary, #00d4ff);
+  color: #080a10;
+}
+.sl-btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.sl-btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-primary, #fff);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.sl-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.sl-team-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00d4ff, #0066ff);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.sl-team-member-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.15s ease;
+}
+.sl-team-member-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+.sl-team-role-badge {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(0, 212, 255, 0.12);
+  color: #00d4ff;
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  white-space: nowrap;
+}
+

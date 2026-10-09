@@ -410,7 +410,7 @@ if ($action === 'list_chats' && $method === 'GET') {
 // 2. Get or create direct chat with a friend
 if ($action === 'get_direct_chat' && $method === 'POST') {
     $d = readJson();
-    $friend_id = (int)($d['user_id'] ?? 0);
+    $friend_id = (int)($d['user_id'] ?? $d['target_user_id'] ?? 0);
     
     // Check if they are friends
     $st = $pdo->prepare("SELECT status FROM friends WHERE ((user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)) AND status = 'accepted'");
@@ -441,7 +441,11 @@ if ($action === 'get_direct_chat' && $method === 'POST') {
         $pdo->commit();
     }
     
-    out(["ok" => true, "chat_id" => (int)$chat_id]);
+    out([
+        "ok" => true,
+        "chat_id" => (int)$chat_id,
+        "chat" => ["id" => (int)$chat_id]
+    ]);
 }
 
 if ($action === 'import_shared_setlist' && $method === 'POST') {
