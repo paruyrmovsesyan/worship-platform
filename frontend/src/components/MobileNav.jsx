@@ -266,11 +266,31 @@ export default function MobileNav() {
       document.body.appendChild(outgoingLayer);
     }
 
+    document.body.classList.add('native-tab-switching');
     flushSync(performNavigation);
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => outgoingLayer?.classList.add('is-leaving'));
-    });
-    window.setTimeout(() => outgoingLayer?.remove(), 360);
+
+    const startedAt = performance.now();
+    const revealWhenReady = () => {
+      const nextRoute = document.querySelector('main .route-animate');
+      const contentReady = Boolean(nextRoute?.firstElementChild);
+      const timedOut = performance.now() - startedAt > 4_000;
+
+      if (!contentReady && !timedOut) {
+        window.requestAnimationFrame(revealWhenReady);
+        return;
+      }
+
+      nextRoute?.classList.add('native-tab-content-ready');
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => outgoingLayer?.classList.add('is-leaving'));
+      });
+      window.setTimeout(() => {
+        outgoingLayer?.remove();
+        nextRoute?.classList.remove('native-tab-content-ready');
+        document.body.classList.remove('native-tab-switching');
+      }, 340);
+    };
+    window.requestAnimationFrame(revealWhenReady);
   };
 
   const handleNavClick = (path, e) => {
