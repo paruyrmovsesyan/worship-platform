@@ -5,6 +5,10 @@ Thumbs.db
 # Build & packaging artifacts
 *.apk
 *.aab
+DerivedData/
+DerivedDataNative/
+frontend/ios/App/DerivedDataNative/
+frontend/dist-map/
 
 # Keystores & sensitive credentials
 *.jks

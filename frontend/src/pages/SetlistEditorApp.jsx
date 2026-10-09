@@ -78,6 +78,9 @@ export default function SetlistEditorApp() {
   const [team, setTeam] = useState([]);
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userSearchResults, setUserSearchResults] = useState([]);
+  const [friendsList, setFriendsList] = useState([]);
+  const [friendsLoading, setFriendsLoading] = useState(false);
+  const [userSearching, setUserSearching] = useState(false);
   const [teamSaving, setTeamSaving] = useState(false);
   const [isSavesModalOpen, setIsSavesModalOpen] = useState(false);
 
@@ -458,7 +461,7 @@ export default function SetlistEditorApp() {
   };
 
   // Find closest drop target element using vertical center distance
-  const findDropTargetAtY = (clientY) => {
+  const findDropTargetAtY = (clientY, activeId) => {
     const cards = document.querySelectorAll('.sla-item-list [data-item-id]');
     if (!cards || !cards.length) return null;
     let closestId = null;
@@ -466,12 +469,17 @@ export default function SetlistEditorApp() {
 
     for (let i = 0; i < cards.length; i++) {
       const card = cards[i];
+      const id = card.getAttribute('data-item-id');
+      if (activeId && String(id) === String(activeId)) continue;
       const rect = card.getBoundingClientRect();
+      if (clientY >= rect.top && clientY <= rect.bottom) {
+        return id;
+      }
       const centerY = rect.top + rect.height / 2;
       const distance = Math.abs(clientY - centerY);
       if (distance < minDistance) {
         minDistance = distance;
-        closestId = card.getAttribute('data-item-id');
+        closestId = id;
       }
     }
     return closestId;
@@ -508,13 +516,11 @@ export default function SetlistEditorApp() {
 
       if (scrollSpeed !== 0) {
         window.scrollBy({ top: scrollSpeed, behavior: 'auto' });
-        const newTargetId = findDropTargetAtY(currentY);
+        const newTargetId = findDropTargetAtY(currentY, activeId);
         if (newTargetId && newTargetId !== touchDragStateRef.current.currentTargetId) {
           touchDragStateRef.current.currentTargetId = newTargetId;
           setTouchDropTargetId(newTargetId);
-          if (typeof navigator !== 'undefined' && navigator.vibrate) {
-            try { navigator.vibrate(12); } catch {}
-          }
+          triggerHaptic('Light');
         }
       }
 
@@ -524,17 +530,92 @@ export default function SetlistEditorApp() {
     autoScrollFrameRef.current = requestAnimationFrame(scrollLoop);
   };
 
-  useEffect(() => {
-    return () => {
-      stopAutoScroll();
+  const handleTouchMoveReorder = (e) => {
+    const { activeId, startY } = touchDragStateRef.current;
+    if (!activeId) return;
+    const touch = e.touches ? e.touches[0] : e;
+    if (!touch) return;
+
+    if (e.cancelable) {
+      e.preventDefault();
+    }
+
+    const deltaY = touch.clientY - startY;
+    if (Math.abs(deltaY) > 5) {
+      touchDragStateRef.current.didMove = true;
+    }
+
+    touchDragStateRef.current.currentY = touch.clientY;
+    touchDragStateRef.current.currentX = touch.clientX;
+
+    // Real-time hardware-accelerated visual translation of the dragging card
+    if (draggedCardElementRef.current) {
+      draggedCardElementRef.current.style.transform = `translate3d(0, ${deltaY}px, 0) scale(1.035)`;
+      draggedCardElementRef.current.style.zIndex = '9999';
+      draggedCardElementRef.current.style.transition = 'none';
+    }
+
+    const targetId = findDropTargetAtY(touch.clientY, activeId);
+    if (targetId && targetId !== touchDragStateRef.current.currentTargetId) {
+      touchDragStateRef.current.currentTargetId = targetId;
+      setTouchDropTargetId(targetId);
+      triggerHaptic('Light');
+    }
+  };
+
+  const handleTouchEndReorder = () => {
+    window.removeEventListener('touchmove', handleTouchMoveReorder);
+    window.removeEventListener('touchend', handleTouchEndReorder);
+    window.removeEventListener('touchcancel', handleTouchEndReorder);
+
+    stopAutoScroll();
+
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+
+    if (draggedCardElementRef.current) {
+      draggedCardElementRef.current.style.transform = '';
+      draggedCardElementRef.current.style.zIndex = '';
+      draggedCardElementRef.current.style.transition = '';
+      draggedCardElementRef.current = null;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.__wpIsDragging = false;
+      document.body.classList.remove('is-touch-dragging-active');
+    }
+
+    const { activeId, currentTargetId, didMove } = touchDragStateRef.current;
+    if (didMove) {
+      dragCooldownRef.current = Date.now() + 500;
+    }
+    if (activeId && currentTargetId && String(activeId) !== String(currentTargetId)) {
+      triggerHaptic('Medium');
+      reorderByItemId(activeId, currentTargetId);
+    }
+    touchDragStateRef.current = {
+      activeId: null,
+      startY: 0,
+      currentY: 0,
+      currentX: 0,
+      currentTargetId: null,
+      didMove: false,
     };
-  }, []);
+    setTouchDraggingId(null);
+    setTouchDropTargetId(null);
+  };
 
   // Touch reorder handlers for mobile drag & drop
   const handleTouchStartReorder = (e, itemId, explicitCardEl = null) => {
     if (!canEdit) return;
     const touch = e.touches ? e.touches[0] : e;
     if (!touch) return;
+
+    if (e.cancelable) {
+      e.preventDefault();
+    }
 
     const cardEl = explicitCardEl || (e.currentTarget ? e.currentTarget.closest('[data-item-id]') : null);
     draggedCardElementRef.current = cardEl;
@@ -555,87 +636,31 @@ export default function SetlistEditorApp() {
     setTouchDraggingId(itemId);
     setTouchDropTargetId(itemId);
 
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      try { navigator.vibrate(30); } catch {}
-    }
+    triggerHaptic('Medium');
+
+    window.removeEventListener('touchmove', handleTouchMoveReorder);
+    window.removeEventListener('touchend', handleTouchEndReorder);
+    window.removeEventListener('touchcancel', handleTouchEndReorder);
+    window.addEventListener('touchmove', handleTouchMoveReorder, { passive: false });
+    window.addEventListener('touchend', handleTouchEndReorder, { passive: false });
+    window.addEventListener('touchcancel', handleTouchEndReorder, { passive: false });
 
     startAutoScroll();
   };
 
-  const handleTouchMoveReorder = (e) => {
-    if (!touchDragStateRef.current.activeId) return;
-    const touch = e.touches ? e.touches[0] : e;
-    if (!touch) return;
-
-    if (e.cancelable) {
-      e.preventDefault();
-    }
-
-    const deltaY = touch.clientY - touchDragStateRef.current.startY;
-    if (Math.abs(deltaY) > 5) {
-      touchDragStateRef.current.didMove = true;
-    }
-
-    touchDragStateRef.current.currentY = touch.clientY;
-    touchDragStateRef.current.currentX = touch.clientX;
-
-    // Real-time hardware-accelerated visual translation of the dragging card!
-    if (draggedCardElementRef.current) {
-      draggedCardElementRef.current.style.transform = `translate3d(0, ${deltaY}px, 0) scale(1.035)`;
-      draggedCardElementRef.current.style.zIndex = '9999';
-      draggedCardElementRef.current.style.transition = 'none';
-      draggedCardElementRef.current.style.pointerEvents = 'none';
-    }
-
-    const targetId = findDropTargetAtY(touch.clientY);
-    if (targetId && targetId !== touchDragStateRef.current.currentTargetId) {
-      touchDragStateRef.current.currentTargetId = targetId;
-      setTouchDropTargetId(targetId);
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        try { navigator.vibrate(15); } catch {}
+  useEffect(() => {
+    return () => {
+      stopAutoScroll();
+      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+      window.removeEventListener('touchmove', handleTouchMoveReorder);
+      window.removeEventListener('touchend', handleTouchEndReorder);
+      window.removeEventListener('touchcancel', handleTouchEndReorder);
+      if (typeof window !== 'undefined') {
+        window.__wpIsDragging = false;
+        document.body.classList.remove('is-touch-dragging-active');
       }
-    }
-  };
-
-  const handleTouchEndReorder = () => {
-    stopAutoScroll();
-
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-
-    if (draggedCardElementRef.current) {
-      draggedCardElementRef.current.style.transform = '';
-      draggedCardElementRef.current.style.zIndex = '';
-      draggedCardElementRef.current.style.transition = '';
-      draggedCardElementRef.current.style.pointerEvents = '';
-      draggedCardElementRef.current = null;
-    }
-
-    if (typeof window !== 'undefined') {
-      window.__wpIsDragging = false;
-      document.body.classList.remove('is-touch-dragging-active');
-    }
-
-    const { activeId, currentTargetId, didMove } = touchDragStateRef.current;
-    if (didMove) {
-      dragCooldownRef.current = Date.now() + 450;
-    }
-    if (activeId && currentTargetId && String(activeId) !== String(currentTargetId)) {
-      reorderByItemId(activeId, currentTargetId);
-    }
-    touchDragStateRef.current = {
-      activeId: null,
-      startY: 0,
-      currentY: 0,
-      currentX: 0,
-      currentTargetId: null,
-      didMove: false,
     };
-    setTouchDraggingId(null);
-    setTouchDropTargetId(null);
-  };
+  }, []);
 
   // Card-level touch handler supporting press-and-hold (long-press) drag
   const handleCardTouchStart = (e, item) => {
@@ -652,17 +677,15 @@ export default function SetlistEditorApp() {
     };
 
     if (isReorderMode) {
+      if (e.cancelable) e.preventDefault();
       handleTouchStartReorder(e, item.id, cardEl);
       return;
     }
 
     clearTimeout(longPressTimerRef.current);
     longPressTimerRef.current = setTimeout(() => {
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        try { navigator.vibrate([25, 30, 25]); } catch {}
-      }
       handleTouchStartReorder(e, item.id, cardEl);
-    }, 240);
+    }, 220);
   };
 
   const handleCardTouchMove = (e) => {
@@ -670,7 +693,6 @@ export default function SetlistEditorApp() {
     if (!touch) return;
 
     if (touchDragStateRef.current.activeId) {
-      handleTouchMoveReorder(e);
       return;
     }
 
@@ -900,36 +922,81 @@ export default function SetlistEditorApp() {
   // Team Modal Handlers
   const openTeamModal = async () => {
     setIsTeamModalOpen(true);
+    setUserSearchQuery('');
+    setUserSearchResults([]);
+    setFriendsLoading(true);
     try {
-      const res = await fetch(`/setlists_api.php?action=get_setlist_team&setlist_id=${id}`);
-      const data = await res.json();
-      if (data.ok) setTeam(data.team || []);
+      const [teamRes, friendsRes] = await Promise.all([
+        fetch(`/setlists_api.php?action=get_setlist_team&setlist_id=${id}`),
+        fetch('/friends_api.php?action=get_friends')
+      ]);
+      const teamData = await teamRes.json();
+      const friendsData = await friendsRes.json();
+      if (teamData.ok) setTeam(teamData.team || []);
+      if (friendsData.ok) setFriendsList(friendsData.friends || []);
     } catch (err) {
       console.error(err);
+    } finally {
+      setFriendsLoading(false);
     }
   };
 
+  // Live auto-search with debounce as user types
+  useEffect(() => {
+    if (!isTeamModalOpen) return;
+    const q = userSearchQuery.trim();
+    if (!q) {
+      setUserSearchResults([]);
+      setUserSearching(false);
+      return;
+    }
+
+    setUserSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/friends_api.php?action=search_users&q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (data.ok) {
+          setUserSearchResults(data.users || []);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setUserSearching(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [userSearchQuery, isTeamModalOpen]);
+
   const handleUserSearch = async (e) => {
-    e.preventDefault();
-    if (!userSearchQuery.trim()) return;
+    if (e && e.preventDefault) e.preventDefault();
+    const q = userSearchQuery.trim();
+    if (!q) return;
+    setUserSearching(true);
     try {
-      const res = await fetch(`/friends_api.php?action=search_users&q=${encodeURIComponent(userSearchQuery)}`);
+      const res = await fetch(`/friends_api.php?action=search_users&q=${encodeURIComponent(q)}`);
       const data = await res.json();
       if (data.ok) setUserSearchResults(data.users || []);
     } catch (err) {
       console.error(err);
+    } finally {
+      setUserSearching(false);
     }
   };
 
   const addTeamMember = (u) => {
-    if (team.find(tItem => tItem.user_id === u.id)) return;
-    setTeam([...team, { user_id: u.id, user_name: u.name, role_name: 'Վոկալ' }]);
-    setUserSearchResults([]);
-    setUserSearchQuery('');
+    const userId = Number(u.id || u.friend_id || 0);
+    if (!userId) return;
+    const userName = u.name || u.username || u.email || 'Անանուն';
+    if (team.some(tItem => Number(tItem.user_id) === userId)) return;
+    setTeam(prev => [...prev, { user_id: userId, user_name: userName, role_name: 'Վոկալ' }]);
+    triggerHaptic('Light');
   };
 
   const removeTeamMember = (userId) => {
-    setTeam(team.filter(tItem => tItem.user_id !== userId));
+    setTeam(prev => prev.filter(tItem => Number(tItem.user_id) !== Number(userId)));
+    triggerHaptic('Light');
   };
 
   const updateTeamRole = (userId, role) => {
@@ -1657,12 +1724,11 @@ export default function SetlistEditorApp() {
                         title="Քաշել վերադասավորելու համար"
                         onTouchStart={(e) => {
                           e.stopPropagation();
+                          if (e.cancelable) e.preventDefault();
                           if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
-                          handleTouchStartReorder(e, item.id);
+                          const cardEl = e.currentTarget.closest('[data-item-id]');
+                          handleTouchStartReorder(e, item.id, cardEl);
                         }}
-                        onTouchMove={handleTouchMoveReorder}
-                        onTouchEnd={handleTouchEndReorder}
-                        onTouchCancel={handleTouchEndReorder}
                       >
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                           <circle cx="9" cy="5" r="1.7" />
@@ -1808,12 +1874,11 @@ export default function SetlistEditorApp() {
                         title="Քաշել վերադասավորելու համար"
                         onTouchStart={(e) => {
                           e.stopPropagation();
+                          if (e.cancelable) e.preventDefault();
                           if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
-                          handleTouchStartReorder(e, item.id);
+                          const cardEl = e.currentTarget.closest('[data-item-id]');
+                          handleTouchStartReorder(e, item.id, cardEl);
                         }}
-                        onTouchMove={handleTouchMoveReorder}
-                        onTouchEnd={handleTouchEndReorder}
-                        onTouchCancel={handleTouchEndReorder}
                       >
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                           <circle cx="9" cy="5" r="1.7" />
@@ -2156,36 +2221,126 @@ export default function SetlistEditorApp() {
             </div>
             <div className="sla-sheet-body">
               {/* User search bar */}
-              <form onSubmit={handleUserSearch} className="sla-team-search-bar">
-                <input
-                  type="text"
-                  className="sla-input"
-                  placeholder="Փնտրել մասնակից..."
-                  value={userSearchQuery}
-                  onChange={e => setUserSearchQuery(e.target.value)}
-                />
-                <button type="submit" className="sla-btn-ghost" style={{ padding: '0 18px' }}>
-                  Որոնել
+              <form onSubmit={handleUserSearch} className="sla-team-search-bar" style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <input
+                    type="text"
+                    className="sla-input"
+                    placeholder="Փնտրել մասնակից..."
+                    value={userSearchQuery}
+                    onChange={e => setUserSearchQuery(e.target.value)}
+                    style={{ width: '100%', paddingRight: userSearchQuery ? '32px' : '12px' }}
+                  />
+                  {userSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => { setUserSearchQuery(''); setUserSearchResults([]); }}
+                      style={{
+                        position: 'absolute',
+                        right: '8px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'rgba(255,255,255,0.5)',
+                        fontSize: '16px',
+                        cursor: 'pointer',
+                        padding: '4px'
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                <button type="submit" className="sla-btn-ghost" style={{ padding: '0 16px', flexShrink: 0 }}>
+                  {userSearching ? '...' : 'Որոնել'}
                 </button>
               </form>
 
-              {userSearchResults.length > 0 && (
-                <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '14px', padding: '8px', marginBottom: '16px' }}>
-                  <div style={{ fontSize: '0.78rem', color: '#8fa0b5', padding: '4px 8px 8px' }}>Գտնված օգտատերեր՝</div>
-                  {userSearchResults.map(u => (
-                    <div key={u.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <span style={{ color: '#fff', fontWeight: 600 }}>{u.name}</span>
-                      <button
-                        type="button"
-                        className="sla-btn-ghost"
-                        style={{ height: '32px', padding: '0 12px', fontSize: '0.8rem', color: '#00d4ff' }}
-                        onClick={() => addTeamMember(u)}
-                      >
-                        + Ավելացնել
-                      </button>
+              {/* Search Results (if typing) */}
+              {userSearchQuery.trim().length > 0 ? (
+                <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '14px', padding: '10px', marginBottom: '16px' }}>
+                  <div style={{ fontSize: '0.78rem', color: '#8fa0b5', padding: '2px 4px 8px' }}>
+                    {userSearching ? 'Որոնվում է...' : `Որոնման արդյունքներ (${userSearchResults.length})`}
+                  </div>
+                  {userSearchResults.length === 0 && !userSearching ? (
+                    <div style={{ textAlign: 'center', padding: '14px', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
+                      Օգտատեր չգտնվեց
                     </div>
-                  ))}
+                  ) : (
+                    userSearchResults.map(u => {
+                      const uid = Number(u.id || 0);
+                      const isAdded = team.some(tItem => Number(tItem.user_id) === uid);
+                      return (
+                        <div key={uid} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 4px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div className="sla-team-avatar" style={{ width: '32px', height: '32px', fontSize: '13px' }}>
+                              {(u.name || u.username || '?').charAt(0).toUpperCase()}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ color: '#fff', fontWeight: 600, fontSize: '0.9rem' }}>{u.name || u.username}</span>
+                              {u.username && u.name !== u.username && (
+                                <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.75rem' }}>@{u.username}</span>
+                              )}
+                            </div>
+                          </div>
+                          {isAdded ? (
+                            <span style={{ color: '#00d4ff', fontSize: '0.8rem', fontWeight: 600, padding: '4px 8px' }}>
+                              ✓ Ավելացված է
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="sla-btn-ghost"
+                              style={{ height: '32px', padding: '0 12px', fontSize: '0.8rem', color: '#00d4ff', borderColor: 'rgba(0, 212, 255, 0.4)' }}
+                              onClick={() => addTeamMember(u)}
+                            >
+                              + Ավելացնել
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
+              ) : (
+                /* Friends List when search query is empty */
+                friendsList.length > 0 && (
+                  <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '14px', padding: '10px', marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.78rem', color: '#8fa0b5', padding: '2px 4px 8px', display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Ընկերներ ({friendsList.length})</span>
+                      <span style={{ fontSize: '0.72rem', opacity: 0.7 }}>Արագ ավելացում</span>
+                    </div>
+                    <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
+                      {friendsList.map(f => {
+                        const fid = Number(f.friend_id || f.id || 0);
+                        const isAdded = team.some(tItem => Number(tItem.user_id) === fid);
+                        return (
+                          <div key={fid} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 4px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div className="sla-team-avatar" style={{ width: '28px', height: '28px', fontSize: '12px' }}>
+                                {(f.name || f.username || '?').charAt(0).toUpperCase()}
+                              </div>
+                              <span style={{ color: '#fff', fontSize: '0.86rem', fontWeight: 500 }}>{f.name || f.username}</span>
+                            </div>
+                            {isAdded ? (
+                              <span style={{ color: '#00d4ff', fontSize: '0.76rem', fontWeight: 600 }}>✓ Ավելացված է</span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="sla-btn-ghost"
+                                style={{ height: '28px', padding: '0 10px', fontSize: '0.76rem', color: '#00d4ff' }}
+                                onClick={() => addTeamMember(f)}
+                              >
+                                + Ավելացնել
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )
               )}
 
               {/* Current team */}

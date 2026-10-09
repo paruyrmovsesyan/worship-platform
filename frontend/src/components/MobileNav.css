@@ -44,8 +44,9 @@
     opacity 0.28s ease;
 }
 
-/* Native conversation pages are full-screen and provide their own footer. */
-body.is-native.chat-active .mobile-bottom-nav {
+/* Any active conversation page is full-screen and provides its own footer. */
+body.chat-active .mobile-bottom-nav,
+body.chat-active #wpAppDock {
   display: none !important;
   pointer-events: none !important;
 }

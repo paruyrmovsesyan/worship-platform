@@ -83,13 +83,24 @@ function wp_friends_ensure_direct_chat(PDO $pdo, int $firstUserId, int $secondUs
 
 if ($action === 'search_users' && $method === 'GET') {
     $q = trim($_GET['q'] ?? '');
-    if (strlen($q) < 2) {
+    if (str_starts_with($q, '@')) {
+        $q = substr($q, 1);
+    }
+    if (mb_strlen($q, 'UTF-8') < 1) {
         out(["ok" => true, "users" => []]);
     }
     
-    $st = $pdo->prepare("SELECT id, name, email, avatar_gradient FROM users WHERE (name LIKE ? OR email LIKE ?) AND id != ? LIMIT 20");
+    $st = $pdo->prepare("
+        SELECT id, 
+               COALESCE(NULLIF(TRIM(name), ''), username, email) as name, 
+               username, email, phone_number, avatar_gradient 
+        FROM users 
+        WHERE (name LIKE ? OR username LIKE ? OR email LIKE ? OR phone_number LIKE ?) 
+          AND id != ? 
+        LIMIT 30
+    ");
     $lk = "%" . $q . "%";
-    $st->execute([$lk, $lk, $uid]);
+    $st->execute([$lk, $lk, $lk, $lk, $uid]);
     $users = $st->fetchAll(PDO::FETCH_ASSOC);
     
     // Check friend status for each
@@ -114,8 +125,9 @@ if (($action === 'list' || $action === 'get_friends') && $method === 'GET') {
     $st = $pdo->prepare("
         SELECT f.user_id_1, f.user_id_2, f.status,
                IF(f.user_id_1 = :uid1, u2.id, u1.id) as friend_id,
-               IF(f.user_id_1 = :uid2, u2.name, u1.name) as name,
+               IF(f.user_id_1 = :uid2, COALESCE(NULLIF(TRIM(u2.name), ''), u2.username, u2.email), COALESCE(NULLIF(TRIM(u1.name), ''), u1.username, u1.email)) as name,
                IF(f.user_id_1 = :uid3, u2.email, u1.email) as email,
+               IF(f.user_id_1 = :uid_un, u2.username, u1.username) as username,
                IF(f.user_id_1 = :uid_ag, u2.avatar_gradient, u1.avatar_gradient) as avatar_gradient,
                f.user_id_1 as requester_id,
                IF((SELECT MAX(last_seen) FROM web_activity WHERE user_id = IF(f.user_id_1 = :uid4, u2.id, u1.id)) >= DATE_SUB(NOW(), INTERVAL 5 MINUTE), 1, 0) as is_online
@@ -128,6 +140,7 @@ if (($action === 'list' || $action === 'get_friends') && $method === 'GET') {
         'uid1' => $uid,
         'uid2' => $uid,
         'uid3' => $uid,
+        'uid_un' => $uid,
         'uid_ag' => $uid,
         'uid4' => $uid,
         'uid5' => $uid,

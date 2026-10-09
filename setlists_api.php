@@ -1710,7 +1710,9 @@ if ($action === 'get_setlist_team' && $method === 'GET') {
   $setlist = requireSetlistReadable($pdo, $setlist_id, $uid);
   
   $st = $pdo->prepare("
-      SELECT a.id, a.user_id, a.role_name, a.status, u.name as user_name
+      SELECT a.id, a.user_id, a.role_name, a.status, 
+             COALESCE(NULLIF(TRIM(u.name), ''), u.username, u.email) as user_name,
+             u.avatar_gradient
       FROM setlist_assignments a
       JOIN users u ON a.user_id = u.id
       WHERE a.setlist_id = ?
