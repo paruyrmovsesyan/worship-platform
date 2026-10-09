@@ -359,12 +359,16 @@ export default function SetlistEditorApp() {
   }, [isQuickDrawerOpen, quickQuery]);
 
   // Add Song
-  const handleAddSong = async (songId) => {
+  const handleAddSong = async (songId, songKey = null) => {
     try {
       const res = await fetch('/setlists_api.php?action=add_song_to_setlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ setlist_id: id, song_id: songId })
+        body: JSON.stringify({
+          setlist_id: id,
+          song_id: songId,
+          target_key: songKey || null
+        })
       });
       const data = await res.json();
       if (data.ok) {
@@ -2154,7 +2158,7 @@ export default function SetlistEditorApp() {
                           className={`sla-drawer-add-btn ${isAdded ? 'is-added' : ''}`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleAddSong(song.id);
+                            handleAddSong(song.id, song.song_key);
                           }}
                         >
                           {isAdded ? '✓ Ավելացված է' : '+ Ավելացնել'}

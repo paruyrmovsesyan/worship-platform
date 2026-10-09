@@ -1143,12 +1143,15 @@ if ($action === 'add_song_to_setlist' && $method === 'POST') {
 
   requireSetlistEditable($pdo, $setlist_id, $uid);
 
-  $songSt = $pdo->prepare("SELECT id, bpm FROM songs WHERE id=? LIMIT 1");
+  $songSt = $pdo->prepare("SELECT id, bpm, song_key FROM songs WHERE id=? LIMIT 1");
   $songSt->execute([$song_id]);
   $songData = $songSt->fetch(PDO::FETCH_ASSOC);
   if (!$songData) out(["error" => "Song not found"], 404);
   
   $songBpm = isset($songData['bpm']) && $songData['bpm'] !== null ? (int)$songData['bpm'] : null;
+  if ($target_key === null || $target_key === '') {
+    $target_key = normalizeNullable($songData['song_key'] ?? '');
+  }
 
   $posSt = $pdo->prepare("SELECT COALESCE(MAX(position), 0) + 1 FROM setlist_items WHERE setlist_id=?");
   $posSt->execute([$setlist_id]);

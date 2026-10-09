@@ -466,7 +466,6 @@ body.website-theme .setlist-editor-pro .sle-pro-item:hover .sl-actions-wrap {
   gap: 4px;
 }
 
-.quick-song-copy strong,
 .quick-song-copy small {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -476,6 +475,10 @@ body.website-theme .setlist-editor-pro .sle-pro-item:hover .sl-actions-wrap {
 .quick-song-copy strong {
   font-size: .79rem;
   font-weight: 650;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
 }
 
 .quick-song-copy small {

@@ -252,23 +252,22 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
     $activeTab = 'overview';
 }
 ?>
-<!DOCTYPE html>
-<html lang="<?= htmlspecialchars($adminLang) ?>" data-theme="dark">
+<!doctype html>
+<html lang="<?= htmlspecialchars($adminLang, ENT_QUOTES) ?>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title><?= htmlspecialchars($t['page_title']) ?></title>
+  <?php wp_admin_render_pwa_head($t['page_title']); ?>
   <?php include __DIR__ . '/admin_shared_css.php'; ?>
   <style>
     .mobile-hub-container {
-      max-width: 1320px;
-      margin: 0 auto;
-      padding: 24px;
+      width: 100%;
     }
     .m-hero {
-      background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 20px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
       padding: 28px;
       margin-bottom: 24px;
       display: flex;
@@ -278,6 +277,7 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
       gap: 20px;
       position: relative;
       overflow: hidden;
+      box-shadow: var(--shadow-sm);
     }
     .m-hero::after {
       content: '';
@@ -286,20 +286,20 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
       top: -80px;
       width: 260px;
       height: 260px;
-      background: radial-gradient(circle, rgba(0, 212, 255, 0.12) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(58, 45, 255, 0.08) 0%, transparent 70%);
       pointer-events: none;
     }
     .m-hero-title {
       font-size: 1.65rem;
       font-weight: 800;
-      color: #fff;
+      color: var(--text);
       display: flex;
       align-items: center;
       gap: 12px;
       margin-bottom: 6px;
     }
     .m-hero-sub {
-      color: #94a3b8;
+      color: var(--muted);
       font-size: 0.92rem;
       max-width: 600px;
     }
@@ -311,19 +311,20 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
     .m-tabs-nav {
       display: flex;
       gap: 6px;
-      background: rgba(15, 23, 42, 0.6);
+      background: var(--surface);
       padding: 6px;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
       margin-bottom: 24px;
       overflow-x: auto;
+      box-shadow: var(--shadow-sm);
     }
     .m-tab-btn {
       padding: 10px 18px;
       border-radius: 10px;
       font-weight: 600;
       font-size: 0.88rem;
-      color: #94a3b8;
+      color: var(--muted);
       background: transparent;
       border: none;
       cursor: pointer;
@@ -335,13 +336,13 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
       white-space: nowrap;
     }
     .m-tab-btn:hover {
-      color: #fff;
-      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      background: var(--bg);
     }
     .m-tab-btn.active {
       color: #fff;
-      background: #0284c7;
-      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+      background: var(--primary);
+      box-shadow: 0 4px 14px rgba(58, 45, 255, 0.28);
     }
     .m-stat-grid {
       display: grid;
@@ -350,17 +351,18 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
       margin-bottom: 24px;
     }
     .m-stat-card {
-      background: #111827;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
       padding: 20px;
       display: flex;
       flex-direction: column;
       position: relative;
+      box-shadow: var(--shadow-sm);
     }
     .m-stat-card .m-stat-label {
       font-size: 0.8rem;
-      color: #94a3b8;
+      color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
       font-weight: 700;
@@ -372,14 +374,14 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
     .m-stat-card .m-stat-value {
       font-size: 1.8rem;
       font-weight: 800;
-      color: #fff;
+      color: var(--text);
       display: flex;
       align-items: baseline;
       gap: 8px;
     }
     .m-stat-card .m-stat-sub {
       font-size: 0.82rem;
-      color: #64748b;
+      color: var(--muted);
       margin-top: 6px;
     }
     .badge {
@@ -392,18 +394,19 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
       font-weight: 700;
       text-transform: uppercase;
     }
-    .badge--live { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
-    .badge--review { background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
-    .badge--maint { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-    .badge--fatal { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
-    .badge--error { background: rgba(249, 115, 22, 0.2); color: #fdba74; }
-    .badge--warn { background: rgba(234, 179, 8, 0.2); color: #fde047; }
+    .badge--live { background: var(--success-bg); color: var(--success); border: 1px solid rgba(5, 205, 153, 0.3); }
+    .badge--review { background: var(--warning-bg); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge--maint { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(238, 93, 80, 0.3); }
+    .badge--fatal { background: var(--danger-bg); color: var(--danger); font-weight: 800; }
+    .badge--error { background: rgba(249, 115, 22, 0.15); color: #ea580c; }
+    .badge--warn { background: var(--warning-bg); color: #d97706; }
     .m-form-card {
-      background: #111827;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 18px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
       padding: 24px;
       margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
     }
     .m-card-header {
       display: flex;
@@ -411,12 +414,12 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
       align-items: center;
       margin-bottom: 20px;
       padding-bottom: 14px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      border-bottom: 1px solid var(--line);
     }
     .m-card-title {
       font-size: 1.15rem;
       font-weight: 700;
-      color: #fff;
+      color: var(--text);
       display: flex;
       align-items: center;
       gap: 10px;
@@ -435,30 +438,30 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
     .m-label {
       font-size: 0.82rem;
       font-weight: 600;
-      color: #cbd5e1;
+      color: var(--text);
     }
     .m-input, .m-select, .m-textarea {
-      background: #1e293b;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: var(--bg);
+      border: 1px solid var(--line);
       border-radius: 10px;
       padding: 10px 14px;
-      color: #fff;
+      color: var(--text);
       font-size: 0.9rem;
       font-family: inherit;
       outline: none;
       transition: border-color 0.2s;
     }
     .m-input:focus, .m-select:focus, .m-textarea:focus {
-      border-color: #00d4ff;
+      border-color: var(--primary);
     }
     .m-toggle-wrap {
       display: flex;
       align-items: center;
       gap: 12px;
       padding: 12px 16px;
-      background: rgba(30, 41, 59, 0.5);
+      background: var(--bg);
       border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
     }
     .m-switch {
       position: relative;
@@ -472,7 +475,7 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
       position: absolute;
       cursor: pointer;
       inset: 0;
-      background-color: #475569;
+      background-color: var(--muted);
       transition: .3s;
       border-radius: 34px;
     }
@@ -487,7 +490,7 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
       transition: .3s;
       border-radius: 50%;
     }
-    input:checked + .m-slider { background-color: #0284c7; }
+    input:checked + .m-slider { background-color: var(--primary); }
     input:checked + .m-slider:before { transform: translateX(20px); }
     .m-btn {
       padding: 10px 20px;
@@ -503,21 +506,22 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
       transition: all 0.2s;
     }
     .m-btn--primary {
-      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      background: var(--primary);
       color: #fff;
     }
     .m-btn--primary:hover { opacity: 0.92; transform: translateY(-1px); }
     .m-btn--secondary {
-      background: #334155;
-      color: #f1f5f9;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--line);
     }
-    .m-btn--secondary:hover { background: #475569; }
+    .m-btn--secondary:hover { background: #e2e8f0; }
     .m-btn--danger {
-      background: rgba(239, 68, 68, 0.15);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.3);
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid rgba(238, 93, 80, 0.3);
     }
-    .m-btn--danger:hover { background: rgba(239, 68, 68, 0.25); }
+    .m-btn--danger:hover { background: rgba(238, 93, 80, 0.25); }
     .m-table {
       width: 100%;
       border-collapse: collapse;
@@ -526,24 +530,24 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
     .m-table th {
       text-align: left;
       padding: 12px 14px;
-      color: #94a3b8;
+      color: var(--muted);
       font-weight: 600;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid var(--line);
       font-size: 0.8rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     .m-table td {
       padding: 14px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      color: #e2e8f0;
+      border-bottom: 1px solid var(--line);
+      color: var(--text);
     }
     .m-table tr:hover td {
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(67, 24, 255, 0.02);
     }
     .m-error-card {
-      background: #1e293b;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: var(--surface);
+      border: 1px solid var(--line);
       border-radius: 12px;
       padding: 14px 18px;
       margin-bottom: 12px;
@@ -561,11 +565,11 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
     .m-error-msg {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 0.84rem;
-      color: #f87171;
-      background: rgba(15, 23, 42, 0.6);
+      color: var(--danger);
+      background: var(--danger-bg);
       padding: 8px 12px;
       border-radius: 8px;
-      border: 1px solid rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(238, 93, 80, 0.2);
       word-break: break-all;
     }
     .alert-flash {
@@ -576,57 +580,61 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
       display: flex;
       align-items: center;
       gap: 10px;
-      background: rgba(34, 197, 94, 0.15);
-      border: 1px solid rgba(34, 197, 94, 0.3);
-      color: #4ade80;
+      background: var(--success-bg);
+      border: 1px solid rgba(5, 205, 153, 0.3);
+      color: var(--success);
     }
   </style>
 </head>
-<body class="admin-body">
+<body class="wp-admin-app">
+<div class="app-layout">
 
-<?php 
-$activePage = 'mobile';
-include __DIR__ . '/admin_sidebar.php'; 
-?>
+  <?php 
+    $activePage = 'mobile';
+    include __DIR__ . '/admin_sidebar.php'; 
+  ?>
 
-<div class="admin-main">
-  <?php include __DIR__ . '/admin_topbar.php'; ?>
+  <main class="app-main">
+    <?php 
+      $searchPlaceholder = 'Որոնել...';
+      include __DIR__ . '/admin_topbar.php'; 
+    ?>
 
-  <div class="mobile-hub-container">
+    <div style="padding: 28px 40px 60px; max-width: 1400px; width:100%;">
 
-    <?php if ($flashMessage !== ''): ?>
-      <div class="alert-flash">
-        ✓ <?= htmlspecialchars($flashMessage) ?>
-      </div>
-    <?php endif; ?>
-
-    <!-- HERO HEADER -->
-    <div class="m-hero">
-      <div>
-        <div class="m-hero-title">
-          <span>📱</span> <?= htmlspecialchars($t['title']) ?>
+      <?php if ($flashMessage !== ''): ?>
+        <div class="alert-flash">
+          ✓ <?= htmlspecialchars($flashMessage) ?>
         </div>
-        <div class="m-hero-sub">
-          <?= htmlspecialchars($t['subtitle']) ?>
+      <?php endif; ?>
+
+      <!-- HERO HEADER -->
+      <div class="m-hero">
+        <div>
+          <div class="m-hero-title">
+            <span>📱</span> <?= htmlspecialchars($t['title']) ?>
+          </div>
+          <div class="m-hero-sub">
+            <?= htmlspecialchars($t['subtitle']) ?>
+          </div>
+        </div>
+        <div class="m-hero-actions">
+          <form method="POST" style="display:inline;">
+            <input type="hidden" name="form_action" value="inject_test_error">
+            <input type="hidden" name="test_platform" value="ios">
+            <button type="submit" class="m-btn m-btn--secondary" title="Փորձարկել iOS սխալ">
+              🧪 <?= htmlspecialchars($t['test_error_ios']) ?>
+            </button>
+          </form>
+          <form method="POST" style="display:inline;">
+            <input type="hidden" name="form_action" value="inject_test_error">
+            <input type="hidden" name="test_platform" value="android">
+            <button type="submit" class="m-btn m-btn--secondary" title="Փորձարկել Android սխալ">
+              🧪 <?= htmlspecialchars($t['test_error_android']) ?>
+            </button>
+          </form>
         </div>
       </div>
-      <div class="m-hero-actions">
-        <form method="POST" style="display:inline;">
-          <input type="hidden" name="form_action" value="inject_test_error">
-          <input type="hidden" name="test_platform" value="ios">
-          <button type="submit" class="m-btn m-btn--secondary" title="Փորձարկել iOS սխալ">
-            🧪 <?= htmlspecialchars($t['test_error_ios']) ?>
-          </button>
-        </form>
-        <form method="POST" style="display:inline;">
-          <input type="hidden" name="form_action" value="inject_test_error">
-          <input type="hidden" name="test_platform" value="android">
-          <button type="submit" class="m-btn m-btn--secondary" title="Փորձարկել Android սխալ">
-            🧪 <?= htmlspecialchars($t['test_error_android']) ?>
-          </button>
-        </form>
-      </div>
-    </div>
 
     <!-- TABS NAVIGATION -->
     <div class="m-tabs-nav">
@@ -1217,7 +1225,8 @@ include __DIR__ . '/admin_sidebar.php';
       </div>
     <?php endif; ?>
 
-  </div>
+    </div>
+  </main>
 </div>
 
 </body>

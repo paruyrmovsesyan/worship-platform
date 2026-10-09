@@ -178,8 +178,16 @@ try {
     wp_song_material_out(['error' => 'Տվյալների բազային միանալ չհաջողվեց'], 500);
 }
 
+$config = function_exists('wp_version_load') ? wp_version_load() : [];
 $adminUser = wp_admin_get_current_user();
-$sessionUserId = (int)($_SESSION['user_id'] ?? 0);
+if (!$adminUser && !wp_admin_has_logout_lock(null)) {
+    $restoredUser = wp_admin_restore_user_from_access_cookie();
+    if ($restoredUser && wp_admin_is_authorized($restoredUser, $config)) {
+        wp_admin_sign_user_in($restoredUser, false);
+        $adminUser = wp_admin_get_current_user() ?: $restoredUser;
+    }
+}
+$sessionUserId = (int)($_SESSION['user_id'] ?? ($adminUser['id'] ?? 0));
 if (!$adminUser && $sessionUserId <= 0) {
     wp_song_material_out(['error' => 'Մուտք գործեք համակարգ'], 401);
 }

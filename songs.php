@@ -293,7 +293,7 @@ tbody tr:hover { background:#f8faff; }
 }
 .song-material-controls .btn { min-height:42px; justify-content:center; white-space:nowrap; }
 .song-material-note { grid-column:1 / -1; margin:0; color:var(--muted); font-size:11px; line-height:1.5; }
-.song-materials.is-locked .song-material-controls { opacity:.48; pointer-events:none; }
+.song-materials-hint { grid-column:1 / -1; }
 
 @media (max-width: 640px) {
   .song-materials { padding:16px; }
@@ -582,7 +582,7 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
           <input type="file" id="ocrImageFileInput" accept="image/*" style="display:none;">
         </div>
 
-        <section id="songMaterials" class="song-materials is-locked" aria-labelledby="songMaterialsTitle">
+        <section id="songMaterials" class="song-materials" aria-labelledby="songMaterialsTitle">
           <div class="song-materials-header">
             <div>
               <h4 id="songMaterialsTitle"><?= __('Մեդիա և նյութեր') ?></h4>
@@ -591,10 +591,10 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
             <span id="songMaterialsCount" class="song-materials-count">0</span>
           </div>
 
-          <div id="songMaterialsLock" class="song-materials-lock">
-            <?= __('Նախ պահպանեք երգը, ապա կարող եք դրան մեդիա և նյութեր կցել։') ?>
+          <div id="songMaterialsHint" class="song-materials-hint" style="font-size:12px; color:var(--muted); margin-bottom:8px; line-height:1.4;" hidden>
+            💡 <?= __('Նոր երգ ստեղծելիս կցված նյութերը ավտոմատ կպահպանվեն երգի պահպանման հետ միասին։') ?>
           </div>
-          <div id="songMaterialsList" class="song-materials-list" hidden></div>
+          <div id="songMaterialsList" class="song-materials-list"></div>
 
           <div class="song-material-controls">
             <div class="form-field">
@@ -1032,6 +1032,7 @@ let selectedTargetKey = '';
 let ALL_SONGS = [];
 let currentEditId = null;
 let currentSongAttachments = [];
+const pendingMaterialFiles = new Map();
 let visibleSongsCount = 10;
 let lastSavedSnapshot = '';
 const SONGS_PAGE_SIZE = 10;
@@ -1197,15 +1198,16 @@ function renderSongMaterials() {
   if (!songMaterialsSection) return;
 
   const editing = currentEditId !== null;
-  songMaterialsSection.classList.toggle('is-locked', !editing);
-  songMaterialsLock.hidden = editing;
-  songMaterialsList.hidden = !editing;
-  songMaterialsCount.textContent = String(currentSongAttachments.length);
+  songMaterialsSection.classList.remove('is-locked');
+  if (songMaterialsLock) songMaterialsLock.hidden = true;
 
-  if (!editing) {
-    songMaterialsList.innerHTML = '';
-    return;
+  const hintEl = $('songMaterialsHint');
+  if (hintEl) {
+    hintEl.hidden = editing;
   }
+
+  songMaterialsCount.textContent = String(currentSongAttachments.length);
+  songMaterialsList.hidden = false;
 
   if (!currentSongAttachments.length) {
     songMaterialsList.innerHTML = '<div class="song-materials-empty">Այս երգին դեռ նյութ կցված չէ։</div>';
@@ -1226,20 +1228,36 @@ function renderSongMaterials() {
     copy.className = 'song-material-copy';
     const title = document.createElement('strong');
     title.textContent = attachment.title || 'Անանուն նյութ';
+    if (attachment.is_pending || attachment.is_pending_file) {
+      const badge = document.createElement('span');
+      badge.style.cssText = 'background:rgba(67,24,255,0.08); color:var(--primary); font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; margin-left:6px; vertical-align:middle;';
+      badge.textContent = 'Կպահպանվի երգի հետ';
+      title.appendChild(badge);
+    }
+
     const caption = document.createElement('small');
-    caption.textContent = `${meta.label} • ${materialUrlCaption(attachment.url)}`;
+    let captionText = `${meta.label} • `;
+    if (attachment.is_pending_file) {
+      captionText += (attachment.file_name || 'Ֆայլ') + (attachment.file_size ? ` (${Math.round(attachment.file_size / 1024)} ԿԲ)` : '');
+    } else {
+      captionText += materialUrlCaption(attachment.url);
+    }
+    caption.textContent = captionText;
     copy.append(title, caption);
 
     const actions = document.createElement('div');
     actions.className = 'song-material-actions';
-    const open = document.createElement('a');
-    open.className = 'song-material-action';
-    open.href = attachment.url;
-    open.target = '_blank';
-    open.rel = 'noopener noreferrer';
-    open.title = 'Բացել նյութը';
-    open.setAttribute('aria-label', 'Բացել նյութը');
-    open.textContent = '↗';
+    if (attachment.url && !attachment.is_pending_file) {
+      const open = document.createElement('a');
+      open.className = 'song-material-action';
+      open.href = attachment.url;
+      open.target = '_blank';
+      open.rel = 'noopener noreferrer';
+      open.title = 'Բացել նյութը';
+      open.setAttribute('aria-label', 'Բացել նյութը');
+      open.textContent = '↗';
+      actions.appendChild(open);
+    }
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'song-material-action is-danger';
@@ -1247,7 +1265,7 @@ function renderSongMaterials() {
     remove.title = 'Հեռացնել նյութը';
     remove.setAttribute('aria-label', 'Հեռացնել նյութը');
     remove.textContent = '×';
-    actions.append(open, remove);
+    actions.appendChild(remove);
 
     item.append(icon, copy, actions);
     songMaterialsList.appendChild(item);
@@ -1274,17 +1292,37 @@ function setMaterialControlsBusy(busy) {
 }
 
 async function addSongMaterialLink() {
-  if (currentEditId === null) {
-    showNotice('Նախ պահպանեք երգը', 'error');
-    return;
-  }
   const title = songMaterialTitleI.value.trim();
-  const url = songMaterialUrlI.value.trim();
+  let url = songMaterialUrlI.value.trim();
   if (!title || !url) {
     showNotice('Լրացրեք նյութի անվանումը և հղումը', 'error');
     return;
   }
 
+  if (!/^https?:\/\//i.test(url)) {
+    url = 'https://' + url.replace(/^\/+/, '');
+  }
+
+  // If creating a new song, stage it in memory
+  if (currentEditId === null) {
+    const tempId = 'pending_link_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    currentSongAttachments.push({
+      id: tempId,
+      title,
+      url,
+      type: songMaterialTypeI.value,
+      is_pending: true
+    });
+    songMaterialTitleI.value = '';
+    songMaterialUrlI.value = '';
+    songMaterialTypeI.value = 'link';
+    renderSongMaterials();
+    updateWorkspaceState();
+    showNotice('Հղումը կցված է (կպահպանվի երգի հետ) ✅', 'success');
+    return;
+  }
+
+  // If editing an existing song, save immediately to backend
   setMaterialControlsBusy(true);
   try {
     const response = await fetch('song_attachments_api.php?action=add', {
@@ -1308,6 +1346,7 @@ async function addSongMaterialLink() {
     songMaterialUrlI.value = '';
     songMaterialTypeI.value = 'link';
     renderSongMaterials();
+    updateWorkspaceState();
     showNotice('Նյութի հղումը ավելացված է', 'success');
   } finally {
     setMaterialControlsBusy(false);
@@ -1315,20 +1354,51 @@ async function addSongMaterialLink() {
 }
 
 async function uploadSongMaterial() {
-  if (currentEditId === null) {
-    showNotice('Նախ պահպանեք երգը', 'error');
-    return;
-  }
   const file = songMaterialFileI.files?.[0];
   if (!file) {
     showNotice('Ընտրեք վերբեռնվող ֆայլը', 'error');
     return;
   }
 
+  if (file.size > 40 * 1024 * 1024) {
+    showNotice('Ֆայլը չպետք է գերազանցի 40 ՄԲ-ը', 'error');
+    return;
+  }
+
+  const title = songMaterialTitleI.value.trim() || file.name.replace(/\.[^.]+$/, '');
+  const type = songMaterialTypeI.value;
+
+  // If creating a new song, stage file in memory
+  if (currentEditId === null) {
+    const tempId = 'pending_file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    pendingMaterialFiles.set(tempId, {
+      file,
+      title,
+      type
+    });
+    currentSongAttachments.push({
+      id: tempId,
+      title,
+      url: '',
+      type,
+      is_pending_file: true,
+      file_name: file.name,
+      file_size: file.size
+    });
+    songMaterialTitleI.value = '';
+    songMaterialFileI.value = '';
+    songMaterialTypeI.value = 'link';
+    renderSongMaterials();
+    updateWorkspaceState();
+    showNotice('Ֆայլը կցված է (կվերբեռնվի երգի պահպանման ժամանակ) ✅', 'success');
+    return;
+  }
+
+  // If editing an existing song, upload immediately to backend
   const formData = new FormData();
   formData.append('song_id', String(currentEditId));
-  formData.append('title', songMaterialTitleI.value.trim() || file.name.replace(/\.[^.]+$/, ''));
-  formData.append('type', songMaterialTypeI.value);
+  formData.append('title', title);
+  formData.append('type', type);
   formData.append('file', file);
 
   setMaterialControlsBusy(true);
@@ -1343,24 +1413,37 @@ async function uploadSongMaterial() {
     songMaterialFileI.value = '';
     songMaterialTypeI.value = 'link';
     renderSongMaterials();
+    updateWorkspaceState();
     showNotice('Ֆայլը վերբեռնված և կցված է երգին', 'success');
   } finally {
     setMaterialControlsBusy(false);
   }
 }
 
-async function removeSongMaterial(id) {
+async function removeSongMaterial(rawId) {
+  const idStr = String(rawId);
+  const isPending = idStr.startsWith('pending_') || pendingMaterialFiles.has(idStr);
+  if (isPending) {
+    pendingMaterialFiles.delete(idStr);
+    currentSongAttachments = currentSongAttachments.filter(item => String(item.id) !== idStr);
+    renderSongMaterials();
+    updateWorkspaceState();
+    showNotice('Կցված նյութը հեռացված է', 'info');
+    return;
+  }
+
   if (!confirm('Հեռացնե՞լ այս նյութը երգից։')) return;
   setMaterialControlsBusy(true);
   try {
     const response = await fetch('song_attachments_api.php?action=remove', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id })
+      body: JSON.stringify({ id: Number(rawId) })
     });
     await parseMaterialResponse(response);
-    currentSongAttachments = currentSongAttachments.filter(item => Number(item.id) !== Number(id));
+    currentSongAttachments = currentSongAttachments.filter(item => String(item.id) !== idStr);
     renderSongMaterials();
+    updateWorkspaceState();
     showNotice('Նյութը հեռացված է', 'success');
   } finally {
     setMaterialControlsBusy(false);
@@ -1382,7 +1465,7 @@ songMaterialFileI?.addEventListener('change', () => {
 songMaterialsList?.addEventListener('click', (event) => {
   const button = event.target.closest('[data-remove-material]');
   if (!button) return;
-  removeSongMaterial(Number(button.dataset.removeMaterial))
+  removeSongMaterial(button.dataset.removeMaterial)
     .catch(err => showNotice(err.message || 'Նյութը հեռացնել չհաջողվեց', 'error'));
 });
 

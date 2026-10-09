@@ -995,14 +995,17 @@ body.wp-standalone-app > .sla-modal-overlay > .sla-sheet,
   font-size: 0.92rem;
   font-weight: 700;
   color: #ffffff;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .sla-drawer-item-sub {
   font-size: 0.76rem;
   color: #8c9cb0;
+  margin-top: 3px;
+  line-height: 1.3;
 }
 
 .sla-drawer-add-btn {
@@ -1021,6 +1024,7 @@ body.wp-standalone-app > .sla-modal-overlay > .sla-sheet,
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .sla-drawer-add-btn.is-added {
