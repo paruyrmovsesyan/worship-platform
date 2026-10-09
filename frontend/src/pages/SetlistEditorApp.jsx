@@ -508,22 +508,22 @@ export default function SetlistEditorApp() {
     if (autoScrollFrameRef.current) return;
 
     const scrollLoop = () => {
-      const { activeId, currentY } = touchDragStateRef.current;
-      if (!activeId) {
+      const { activeId, currentY, didMove } = touchDragStateRef.current;
+      if (!activeId || !didMove) {
         autoScrollFrameRef.current = null;
         return;
       }
 
-      const threshold = 120;
+      const threshold = 50;
       const viewHeight = window.innerHeight;
       let scrollSpeed = 0;
 
-      if (currentY > 0 && currentY < threshold) {
+      if (currentY > 0 && currentY < threshold && window.scrollY > 0) {
         const factor = (threshold - currentY) / threshold;
-        scrollSpeed = -Math.max(4, Math.round(factor * 18));
+        scrollSpeed = -Math.max(2, Math.round(factor * 10));
       } else if (currentY > viewHeight - threshold) {
         const factor = (currentY - (viewHeight - threshold)) / threshold;
-        scrollSpeed = Math.max(4, Math.round(factor * 18));
+        scrollSpeed = Math.max(2, Math.round(factor * 10));
       }
 
       if (scrollSpeed !== 0) {
@@ -553,8 +553,11 @@ export default function SetlistEditorApp() {
     }
 
     const deltaY = touch.clientY - startY;
-    if (Math.abs(deltaY) > 5) {
-      touchDragStateRef.current.didMove = true;
+    if (Math.abs(deltaY) > 6) {
+      if (!touchDragStateRef.current.didMove) {
+        touchDragStateRef.current.didMove = true;
+        startAutoScroll();
+      }
     }
 
     touchDragStateRef.current.currentY = touch.clientY;
@@ -656,8 +659,6 @@ export default function SetlistEditorApp() {
     window.addEventListener('touchmove', handleTouchMoveReorder, { passive: false });
     window.addEventListener('touchend', handleTouchEndReorder, { passive: false });
     window.addEventListener('touchcancel', handleTouchEndReorder, { passive: false });
-
-    startAutoScroll();
   };
 
   useEffect(() => {

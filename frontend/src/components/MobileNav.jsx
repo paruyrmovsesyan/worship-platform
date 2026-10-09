@@ -247,47 +247,40 @@ export default function MobileNav() {
       return;
     }
 
-    const tabOrder = ['/', '/songs', '/chats', '/profile'];
-    const normalizedCurrent = location.pathname === '/login' ? '/profile' : location.pathname;
-    const normalizedNext = path === '/login' ? '/profile' : path;
-    const direction = tabOrder.indexOf(normalizedNext) >= tabOrder.indexOf(normalizedCurrent)
-      ? 'forward'
-      : 'backward';
-    const currentRoute = document.querySelector('main .route-animate');
-    const outgoing = currentRoute?.cloneNode(true);
-    if (outgoing) {
-      outgoing.classList.add('native-tab-still-frame');
-      outgoing.setAttribute('aria-hidden', 'true');
-      if (window.scrollY > 0) {
-        outgoing.style.top = `${-window.scrollY}px`;
-        outgoing.style.height = `${window.innerHeight + window.scrollY}px`;
-      }
-      document.body.appendChild(outgoing);
-    }
-    tabTransitionRef.current = outgoing || true;
-    document.body.classList.add('native-tab-switching', `native-tab-${direction}`);
+    tabTransitionRef.current = true;
+    document.body.classList.add('native-tab-switching');
     flushSync(performNavigation);
     const incoming = document.querySelector('main .route-animate');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
       document.body.classList.contains('reduce-motion');
-    const animation = incoming?.animate([
-      { transform: `translate3d(${direction === 'forward' ? '100%' : '-100%'}, 0, 0)` },
-      { transform: 'translate3d(0, 0, 0)' },
-    ], {
-      duration: reducedMotion ? 0 : 290,
-      easing: 'cubic-bezier(0.32, 0.72, 0, 1)',
-    });
     let finished = false;
+    let activeAnimation = null;
     const finish = () => {
       if (finished) return;
       finished = true;
-      outgoing?.remove();
-      document.body.classList.remove('native-tab-switching', `native-tab-${direction}`);
+      if (incoming) {
+        incoming.style.opacity = '';
+        incoming.style.transform = '';
+      }
+      activeAnimation?.cancel();
+      document.body.classList.remove('native-tab-switching');
       tabTransitionRef.current = null;
     };
-    if (animation) animation.finished.then(finish, finish);
-    else finish();
-    window.setTimeout(finish, 450);
+    if (incoming && !reducedMotion) {
+      activeAnimation = incoming.animate([
+        { opacity: 0.94 },
+        { opacity: 1 },
+      ], {
+        duration: 160,
+        easing: 'ease-out',
+        fill: 'forwards',
+      });
+      if (activeAnimation) activeAnimation.finished.then(finish, finish);
+      else finish();
+    } else {
+      finish();
+    }
+    window.setTimeout(finish, 300);
   };
 
   useEffect(() => {

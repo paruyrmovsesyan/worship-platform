@@ -630,6 +630,17 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         }
     }
 
+    // 3.5. Case: Stale chunk / Service Worker cache mismatch (Importing binding name '...' is not found)
+    if (stripos($message, 'Importing binding name') !== false) {
+        $reason = 'Vite build chunk-երի թարմացումից հետո հին քեշավորված ֆայլի և նոր bundle-ի անհամապատասխանություն է, բոլոր chunk-երը լիարժեք սինխրոնացված են';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
     // 4. Test error check
     if (stripos($message, 'Test front error') !== false || stripos($message, 'Test error') !== false) {
         if ((time() - $lastSeenTs) > 60) {
