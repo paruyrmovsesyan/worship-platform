@@ -1852,7 +1852,10 @@ function updateStats(totalCount, visibleCount) {
 function setEditMode(song = null) {
   currentEditId = song ? Number(song.id) : null;
   const editing = currentEditId !== null;
-  if (!editing) currentSongAttachments = [];
+  if (!editing) {
+    currentSongAttachments = [];
+    pendingMaterialFiles.clear();
+  }
   saveBtn.textContent = editing ? (window.I18N?.Update || 'Թարմացնել') : (window.I18N?.Save || 'Պահպանել');
   cancelEditBtn.hidden = !editing;
   editingBadge.textContent = editing ? `Խմբագրվում է․ ${displayEditorSongTitle(song.title || '') || 'Անանուն'}` : 'Խմբագրվում է․ ոչինչ';
@@ -1866,7 +1869,8 @@ function createSongSnapshot() {
     id: currentEditId,
     form: getFormData(),
     selectedTargetKey: selectedTargetKey || '',
-    useFlats: !!useFlatsI.checked
+    useFlats: !!useFlatsI.checked,
+    attachmentsCount: currentSongAttachments.length
   });
 }
 
@@ -1993,6 +1997,7 @@ function clearForm() {
   chordsI.value = '';
   lyricsI.value = '';
   currentSongAttachments = [];
+  pendingMaterialFiles.clear();
   songMaterialTitleI.value = '';
   songMaterialUrlI.value = '';
   songMaterialFileI.value = '';
@@ -2187,6 +2192,7 @@ async function saveCurrentSong() {
     return { raw, json };
   };
 
+  let savedSongId = currentEditId;
   if (currentEditId !== null) {
     const res = await fetch('api.php?id=' + encodeURIComponent(currentEditId), {
       method: 'PUT',
@@ -2198,7 +2204,6 @@ async function saveCurrentSong() {
       const detail = result?.details?.message || result?.error || raw || 'Չհաջողվեց թարմացնել երգը';
       throw new Error(detail);
     }
-    showNotice(window.I18N?.Saved || 'Երգը պահպանված է ✅', 'success');
   } else {
     const res = await fetch('api.php', {
       method: 'POST',
@@ -2210,9 +2215,48 @@ async function saveCurrentSong() {
       const detail = result?.details?.message || result?.error || raw || 'Չհաջողվեց պահպանել երգը';
       throw new Error(detail);
     }
-    showNotice(window.I18N?.Saved || 'Երգը պահպանված է ✅', 'success');
+    savedSongId = Number(result.id);
   }
 
+  // Upload/attach any pending materials for this song
+  const pendingLinks = currentSongAttachments.filter(item => item.is_pending);
+  if (savedSongId && (pendingLinks.length > 0 || pendingMaterialFiles.size > 0)) {
+    for (const pl of pendingLinks) {
+      try {
+        await fetch('song_attachments_api.php?action=add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            song_id: savedSongId,
+            title: pl.title,
+            url: pl.url,
+            type: pl.type
+          })
+        });
+      } catch (err) {
+        console.error('Failed to attach pending link:', err);
+      }
+    }
+
+    for (const [tempId, pf] of pendingMaterialFiles.entries()) {
+      try {
+        const fd = new FormData();
+        fd.append('song_id', String(savedSongId));
+        fd.append('title', pf.title);
+        fd.append('type', pf.type);
+        fd.append('file', pf.file);
+        await fetch('song_attachments_api.php?action=upload', {
+          method: 'POST',
+          body: fd
+        });
+      } catch (err) {
+        console.error('Failed to upload pending file:', err);
+      }
+    }
+    pendingMaterialFiles.clear();
+  }
+
+  showNotice(window.I18N?.Saved || 'Երգը և կցված նյութերը պահպանված են ✅', 'success');
   clearForm();
   await fetchSongs();
   activateWorkspaceTab('libraryPane');
