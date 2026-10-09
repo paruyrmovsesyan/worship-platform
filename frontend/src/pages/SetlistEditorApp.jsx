@@ -1055,29 +1055,6 @@ export default function SetlistEditorApp() {
       }
       setTeam(verifyData.team || []);
 
-      if (Capacitor.isNativePlatform() && data.new_users?.length > 0) {
-          for (const userId of data.new_users) {
-            const chatRes = await fetch('/chat_api.php?action=get_direct_chat', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ user_id: userId })
-            });
-            const chatData = await chatRes.json();
-            if (chatRes.ok && chatData.ok && chatData.chat_id) {
-              const messageRes = await fetch('/chat_api.php?action=send_message', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  chat_id: chatData.chat_id,
-                  message: `🔔 Դուք նշանակված եք ծառայության այս երգացանկում՝ ${setlistData.name}:`,
-                  setlist_id: id
-                })
-              });
-              if (!messageRes.ok) console.warn('Team assignment chat message failed', await messageRes.text());
-            }
-          }
-      }
-
       setIsTeamModalOpen(false);
       showToast(language === 'am'
         ? '✓ Թիմը պահպանվեց, նոր անդամները ծանուցվեցին'

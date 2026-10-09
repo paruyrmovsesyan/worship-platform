@@ -412,9 +412,20 @@ if ($action === 'get_direct_chat' && $method === 'POST') {
     $d = readJson();
     $friend_id = (int)($d['user_id'] ?? $d['target_user_id'] ?? 0);
     
-    // Check if they are friends
-    $st = $pdo->prepare("SELECT status FROM friends WHERE ((user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)) AND status = 'accepted'");
-    $st->execute([$uid, $friend_id, $friend_id, $uid]);
+    // Check if they are friends or teammates in any setlist
+    $st = $pdo->prepare("
+        SELECT 1 FROM friends WHERE ((user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?))
+        UNION
+        SELECT 1 FROM setlist_assignments a1
+        JOIN setlist_assignments a2 ON a1.setlist_id = a2.setlist_id
+        WHERE a1.user_id = ? AND a2.user_id = ?
+        UNION
+        SELECT 1 FROM setlists s
+        JOIN setlist_assignments a ON a.setlist_id = s.id
+        WHERE (s.user_id = ? AND a.user_id = ?) OR (s.user_id = ? AND a.user_id = ?)
+        LIMIT 1
+    ");
+    $st->execute([$uid, $friend_id, $friend_id, $uid, $uid, $friend_id, $uid, $friend_id, $friend_id, $uid]);
     if (!$st->fetch()) {
         out(["error" => "Not friends"], 403);
     }

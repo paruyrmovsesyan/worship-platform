@@ -516,36 +516,8 @@ export default function SetlistEditorWeb() {
         setTeam(verifyData.team || []);
       }
 
-      // Try sending direct chat messages to new members if available
-      if (data.new_users && data.new_users.length > 0) {
-        for (const userId of data.new_users) {
-          try {
-            const chatRes = await fetch('/chat_api.php?action=get_direct_chat', {
-              method: 'POST', 
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ user_id: userId })
-            });
-            const chatData = await chatRes.json();
-            const chatId = chatData.chat_id || chatData.chat?.id;
-            if (chatRes.ok && chatData.ok && chatId) {
-              await fetch('/chat_api.php?action=send_message', {
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  chat_id: chatId,
-                  message: `🔔 Դուք նշանակված եք ծառայության այս երգացանկում՝ ${setlistData?.name || 'Երգացանկ'}:`,
-                  setlist_id: id
-                })
-              });
-            }
-          } catch (chatErr) {
-            console.warn('Chat notification skipped:', chatErr);
-          }
-        }
-      }
-
       setIsTeamModalOpen(false);
-      alert(language === 'am' ? '✓ Թիմը հաջողությամբ պահպանվեց' : '✓ Team successfully saved');
+      alert(language === 'am' ? '✓ Թիմը հաջողությամբ պահպանվեց, նոր անդամները ծանուցվեցին' : '✓ Team successfully saved and new members notified');
     } catch (err) {
       console.error(err);
       alert(language === 'am' ? `Չհաջողվեց պահպանել թիմը․ ${err.message}` : `Could not save team: ${err.message}`);
