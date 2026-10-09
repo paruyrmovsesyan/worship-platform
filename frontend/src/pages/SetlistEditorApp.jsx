@@ -25,14 +25,24 @@ const SECTION_PRESETS = [
 const TEAM_ROLES = [
   'Առաջնորդ',
   'Վոկալ',
+  'Դաշնամուր',
+  'Սինթեզատոր',
   'Ակուստիկ կիթառ',
   'Էլեկտրական կիթառ',
-  'Բաս',
-  'Ստեղնաշարային',
-  'Հարվածային',
+  'Բաս կիթառ',
+  'Հարվածայիններ',
+  'Պերկուսիա',
+  'Ջութակ',
+  'Թավջութակ',
+  'Սաքսոֆոն',
+  'Ֆլեյտա',
+  'Շեփոր',
+  'Կլարնետ',
+  'Դուդուկ',
+  'Քանոն',
+  'Ակորդեոն',
   'Ձայնային օպերատոր',
-  'Պրոյեկցիա / Մեդիա',
-  'Այլ'
+  'Պրոյեկցիա / Մեդիա'
 ];
 
 export default function SetlistEditorApp() {
@@ -81,6 +91,7 @@ export default function SetlistEditorApp() {
   const [friendsList, setFriendsList] = useState([]);
   const [friendsLoading, setFriendsLoading] = useState(false);
   const [userSearching, setUserSearching] = useState(false);
+  const [customRoleIds, setCustomRoleIds] = useState(new Set());
   const [teamSaving, setTeamSaving] = useState(false);
   const [isSavesModalOpen, setIsSavesModalOpen] = useState(false);
 
@@ -2362,31 +2373,76 @@ export default function SetlistEditorApp() {
                   Դեռևս ոչ մի մասնակից ավելացված չէ: Որոնեք և նշանակեք թիմի անդամներին:
                 </div>
               ) : (
-                team.map(tMember => (
-                  <div key={tMember.user_id} className="sla-team-member-card">
-                    <div className="sla-team-avatar">
-                      {tMember.user_name?.charAt(0)?.toUpperCase() || '👤'}
+                team.map(tMember => {
+                  const isCustom = customRoleIds.has(tMember.user_id) || (Boolean(tMember.role_name) && !TEAM_ROLES.includes(tMember.role_name));
+                  return (
+                    <div key={tMember.user_id} className="sla-team-member-card">
+                      <div className="sla-team-avatar">
+                        {tMember.user_name?.charAt(0)?.toUpperCase() || '👤'}
+                      </div>
+                      <span className="sla-team-name">{tMember.user_name}</span>
+
+                      {isCustom ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0 }}>
+                          <input
+                            type="text"
+                            className="sla-input"
+                            style={{ height: '34px', padding: '0 10px', fontSize: '0.84rem', flex: 1, minWidth: '90px' }}
+                            placeholder="Գրեք դերը / գործիքը..."
+                            value={tMember.role_name || ''}
+                            autoFocus
+                            onChange={e => updateTeamRole(tMember.user_id, e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            className="sla-btn-ghost"
+                            style={{ height: '34px', padding: '0 8px', fontSize: '0.74rem', flexShrink: 0, color: '#8fa0b5' }}
+                            title="Ընտրել ցանկից"
+                            onClick={() => {
+                              setCustomRoleIds(prev => {
+                                const next = new Set(prev);
+                                next.delete(tMember.user_id);
+                                return next;
+                              });
+                              if (!TEAM_ROLES.includes(tMember.role_name)) {
+                                updateTeamRole(tMember.user_id, 'Վոկալ');
+                              }
+                            }}
+                          >
+                            Ցանկ
+                          </button>
+                        </div>
+                      ) : (
+                        <select
+                          className="sla-team-role-select"
+                          value={tMember.role_name}
+                          onChange={e => {
+                            if (e.target.value === '__custom__') {
+                              setCustomRoleIds(prev => new Set([...prev, tMember.user_id]));
+                              updateTeamRole(tMember.user_id, '');
+                            } else {
+                              updateTeamRole(tMember.user_id, e.target.value);
+                            }
+                          }}
+                        >
+                          {TEAM_ROLES.map(role => (
+                            <option key={role} value={role}>{role}</option>
+                          ))}
+                          <option value="__custom__">✏️ Այլ (գրել ձեռքով...)</option>
+                        </select>
+                      )}
+
+                      <button
+                        type="button"
+                        className="sla-icon-action-btn sla-icon-action-btn--delete"
+                        onClick={() => removeTeamMember(tMember.user_id)}
+                        title="Հեռացնել"
+                      >
+                        ✕
+                      </button>
                     </div>
-                    <span className="sla-team-name">{tMember.user_name}</span>
-                    <select
-                      className="sla-team-role-select"
-                      value={tMember.role_name}
-                      onChange={e => updateTeamRole(tMember.user_id, e.target.value)}
-                    >
-                      {TEAM_ROLES.map(role => (
-                        <option key={role} value={role}>{role}</option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="sla-icon-action-btn sla-icon-action-btn--delete"
-                      onClick={() => removeTeamMember(tMember.user_id)}
-                      title="Հեռացնել"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))
+                  );
+                })
               )}
 
               <div style={{ fontSize: '0.78rem', color: '#718096', marginTop: '12px', lineHeight: 1.4 }}>
