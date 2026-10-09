@@ -41,26 +41,18 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
 
     const performLayeredBack = () => {
       const currentRoute = document.querySelector('main .route-animate');
-      // Chat and a few native detail screens are fixed-position children, so
-      // their route wrapper has a zero-height rectangle. Clone the actual
-      // fullscreen surface or the transition layer would be visually empty.
-      const visualSource = currentRoute?.querySelector('.chat-page-container') || currentRoute;
-      const rect = visualSource?.getBoundingClientRect();
-      const outgoingLayer = visualSource?.cloneNode(true);
+      const routeSnapshot = currentRoute?.cloneNode(true);
+      let outgoingLayer = null;
 
-      if (outgoingLayer && rect) {
+      if (routeSnapshot) {
+        // Animate a viewport-sized surface, not the route's measured box.
+        // Several detail routes are fixed or initially have zero height;
+        // animating that box exposed the WebView's black background.
+        outgoingLayer = document.createElement('div');
+        outgoingLayer.className = 'native-pop-outgoing-layer';
         outgoingLayer.setAttribute('aria-hidden', 'true');
-        // Keep the page's original class names. Detail pages (notably Chat)
-        // rely on their root class for their background, sizing and children;
-        // replacing it made the outgoing snapshot transparent/invisible.
-        outgoingLayer.classList.add('native-pop-outgoing-layer');
-        Object.assign(outgoingLayer.style, {
-          position: 'fixed',
-          top: `${rect.top}px`,
-          left: `${rect.left}px`,
-          width: `${rect.width}px`,
-          height: `${rect.height}px`,
-        });
+        routeSnapshot.classList.add('native-pop-outgoing-content');
+        outgoingLayer.appendChild(routeSnapshot);
         document.body.appendChild(outgoingLayer);
       }
 

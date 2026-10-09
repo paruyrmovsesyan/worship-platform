@@ -333,10 +333,6 @@ body.is-native.native-tab-switching .route-animate.native-tab-transition {
   animation: none !important;
 }
 
-body.is-native.native-tab-switching .route-animate.native-tab-transition.native-tab-content-ready {
-  animation: nativeTabEnter 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both !important;
-}
-
 body.is-native .route-animate.native-push-transition {
   animation: nativePushEnter 300ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
 }
@@ -346,19 +342,25 @@ body.is-native .route-animate.native-pop-transition {
 }
 
 body.is-native .native-tab-outgoing-layer {
+  position: fixed;
+  inset: 0;
   z-index: 9000;
   overflow: hidden;
   pointer-events: none;
   opacity: 1;
   background: var(--color-bg, #05050A);
   transform: translate3d(0, 0, 0);
-  transition: opacity 260ms ease, transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  will-change: opacity, transform;
+  transition: opacity 160ms ease-out;
+  will-change: opacity;
+  contain: paint;
+}
+
+body.is-native .native-tab-outgoing-content {
+  min-height: 100%;
 }
 
 body.is-native .native-tab-outgoing-layer.is-leaving {
   opacity: 0;
-  transform: translate3d(-10px, 0, 0);
 }
 
 body.is-native.native-pop-switching .route-animate.native-pop-transition {
@@ -368,6 +370,8 @@ body.is-native.native-pop-switching .route-animate.native-pop-transition {
 }
 
 body.is-native .native-pop-outgoing-layer {
+  position: fixed;
+  inset: 0;
   z-index: 9000;
   overflow: hidden;
   pointer-events: none;
@@ -376,6 +380,11 @@ body.is-native .native-pop-outgoing-layer {
   transform: translate3d(0, 0, 0);
   transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
+  contain: paint;
+}
+
+body.is-native .native-pop-outgoing-content {
+  min-height: 100%;
 }
 
 body.is-native .native-pop-outgoing-layer.is-leaving {

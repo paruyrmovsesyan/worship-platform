@@ -245,24 +245,19 @@ export default function MobileNav() {
       return;
     }
 
-    // WKWebView support for the View Transition API varies by iOS version.
-    // Keep a visual copy of the outgoing route instead, then render the next
-    // tab beneath it. This guarantees a real two-layer transition everywhere.
+    // Use a short full-viewport crossfade. A positional slide between root
+    // tabs feels like history navigation and combining it with the incoming
+    // route animation caused a heavy double animation in WKWebView.
     const currentRoute = document.querySelector('main .route-animate');
-    const rect = currentRoute?.getBoundingClientRect();
-    const outgoingLayer = currentRoute?.cloneNode(true);
+    const routeSnapshot = currentRoute?.cloneNode(true);
+    let outgoingLayer = null;
 
-    if (outgoingLayer && rect) {
-      outgoingLayer.removeAttribute('ref');
+    if (routeSnapshot) {
+      outgoingLayer = document.createElement('div');
       outgoingLayer.setAttribute('aria-hidden', 'true');
       outgoingLayer.className = 'native-tab-outgoing-layer';
-      Object.assign(outgoingLayer.style, {
-        position: 'fixed',
-        top: `${rect.top}px`,
-        left: `${rect.left}px`,
-        width: `${rect.width}px`,
-        height: `${rect.height}px`,
-      });
+      routeSnapshot.classList.add('native-tab-outgoing-content');
+      outgoingLayer.appendChild(routeSnapshot);
       document.body.appendChild(outgoingLayer);
     }
 
@@ -280,15 +275,13 @@ export default function MobileNav() {
         return;
       }
 
-      nextRoute?.classList.add('native-tab-content-ready');
       window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => outgoingLayer?.classList.add('is-leaving'));
       });
       window.setTimeout(() => {
         outgoingLayer?.remove();
-        nextRoute?.classList.remove('native-tab-content-ready');
         document.body.classList.remove('native-tab-switching');
-      }, 340);
+      }, 190);
     };
     window.requestAnimationFrame(revealWhenReady);
   };
