@@ -245,9 +245,12 @@ export default function MobileNav() {
       return;
     }
 
-    // Use a short full-viewport crossfade. A positional slide between root
-    // tabs feels like history navigation and combining it with the incoming
-    // route animation caused a heavy double animation in WKWebView.
+    const tabOrder = ['/', '/songs', '/chats', '/profile'];
+    const normalizedCurrent = location.pathname === '/login' ? '/profile' : location.pathname;
+    const normalizedNext = path === '/login' ? '/profile' : path;
+    const direction = tabOrder.indexOf(normalizedNext) >= tabOrder.indexOf(normalizedCurrent)
+      ? 'forward'
+      : 'backward';
     const currentRoute = document.querySelector('main .route-animate');
     const routeSnapshot = currentRoute?.cloneNode(true);
     let outgoingLayer = null;
@@ -255,13 +258,13 @@ export default function MobileNav() {
     if (routeSnapshot) {
       outgoingLayer = document.createElement('div');
       outgoingLayer.setAttribute('aria-hidden', 'true');
-      outgoingLayer.className = 'native-tab-outgoing-layer';
+      outgoingLayer.className = `native-tab-outgoing-layer is-${direction}`;
       routeSnapshot.classList.add('native-tab-outgoing-content');
       outgoingLayer.appendChild(routeSnapshot);
       document.body.appendChild(outgoingLayer);
     }
 
-    document.body.classList.add('native-tab-switching');
+    document.body.classList.add('native-tab-switching', `native-tab-${direction}`);
     flushSync(performNavigation);
 
     const startedAt = performance.now();
@@ -275,13 +278,18 @@ export default function MobileNav() {
         return;
       }
 
+      nextRoute?.classList.add('native-tab-content-ready');
       window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => outgoingLayer?.classList.add('is-leaving'));
+        window.requestAnimationFrame(() => {
+          outgoingLayer?.classList.add('is-leaving');
+          nextRoute?.classList.add('is-entering');
+        });
       });
       window.setTimeout(() => {
         outgoingLayer?.remove();
-        document.body.classList.remove('native-tab-switching');
-      }, 190);
+        nextRoute?.classList.remove('native-tab-content-ready', 'is-entering');
+        document.body.classList.remove('native-tab-switching', `native-tab-${direction}`);
+      }, 330);
     };
     window.requestAnimationFrame(revealWhenReady);
   };

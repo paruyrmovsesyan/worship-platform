@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 import { usePageLoading } from './context/PageLoadingContext';
 import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 
@@ -101,6 +101,7 @@ function App() {
   const navigate = useNavigate();
   const transitionRef = React.useRef(null);
   const previousNativePathRef = React.useRef(location.pathname);
+  const pendingNativeSnapshotRef = React.useRef(null);
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [nativeRefreshing, setNativeRefreshing] = React.useState(false);
   const [rememberPromptOpen, setRememberPromptOpen] = React.useState(false);
@@ -197,6 +198,23 @@ function App() {
   }, [location.hash, location.pathname, location.search, navigate]);
 
   useEffect(() => {
+    if (!isNativeApp) return undefined;
+
+    const captureCurrentRoute = () => {
+      const route = transitionRef.current;
+      if (!route || document.body.classList.contains('native-route-switching')) return;
+      pendingNativeSnapshotRef.current = {
+        route: route.cloneNode(true),
+        nav: document.querySelector('.mobile-bottom-nav')?.cloneNode(true) || null,
+        capturedAt: performance.now(),
+      };
+    };
+
+    document.addEventListener('click', captureCurrentRoute, true);
+    return () => document.removeEventListener('click', captureCurrentRoute, true);
+  }, [isNativeApp]);
+
+  useLayoutEffect(() => {
     if (transitionRef.current) {
       const primaryTabs = ['/', '/songs', '/chats', '/profile', '/login'];
       const previousPath = previousNativePathRef.current;
@@ -220,6 +238,38 @@ function App() {
       void transitionRef.current.offsetWidth;
       if (isNativeApp) transitionRef.current.classList.add(nativeTransition);
       transitionRef.current.classList.add('route-animate');
+
+      const pendingSnapshot = pendingNativeSnapshotRef.current;
+      const canAnimatePush = isNativeApp && previousIsPrimary && !currentIsPrimary &&
+        pendingSnapshot && performance.now() - pendingSnapshot.capturedAt < 1_200;
+
+      if (canAnimatePush) {
+        const underlay = document.createElement('div');
+        underlay.className = 'native-push-underlay';
+        underlay.setAttribute('aria-hidden', 'true');
+        pendingSnapshot.route.classList.add('native-push-underlay-content');
+        underlay.appendChild(pendingSnapshot.route);
+        if (pendingSnapshot.nav) {
+          pendingSnapshot.nav.classList.add('native-push-underlay-nav');
+          underlay.appendChild(pendingSnapshot.nav);
+        }
+        document.body.appendChild(underlay);
+        document.body.classList.add('native-route-switching');
+        transitionRef.current.classList.add('native-push-active');
+
+        window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+          underlay.classList.add('is-under');
+          transitionRef.current?.classList.add('is-entered');
+        }));
+
+        window.setTimeout(() => {
+          underlay.remove();
+          transitionRef.current?.classList.remove('native-push-active', 'is-entered');
+          document.body.classList.remove('native-route-switching');
+        }, 360);
+      }
+
+      pendingNativeSnapshotRef.current = null;
       previousNativePathRef.current = currentPath;
     }
   }, [isNativeApp, location.pathname]);

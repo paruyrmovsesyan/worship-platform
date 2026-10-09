@@ -329,8 +329,26 @@ body.is-native .route-animate.native-tab-transition {
 
 body.is-native.native-tab-switching .route-animate.native-tab-transition {
   opacity: 1 !important;
-  transform: none !important;
   animation: none !important;
+}
+
+body.is-native.native-tab-switching.native-tab-forward .route-animate.native-tab-content-ready {
+  transform: translate3d(100vw, 0, 0) !important;
+}
+
+body.is-native.native-tab-switching.native-tab-backward .route-animate.native-tab-content-ready {
+  transform: translate3d(-100vw, 0, 0) !important;
+}
+
+body.is-native.native-tab-switching .route-animate.native-tab-content-ready {
+  position: relative;
+  z-index: 9001;
+  transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1) !important;
+  will-change: transform;
+}
+
+body.is-native.native-tab-switching .route-animate.native-tab-content-ready.is-entering {
+  transform: translate3d(0, 0, 0) !important;
 }
 
 body.is-native .route-animate.native-push-transition {
@@ -350,8 +368,8 @@ body.is-native .native-tab-outgoing-layer {
   opacity: 1;
   background: var(--color-bg, #05050A);
   transform: translate3d(0, 0, 0);
-  transition: opacity 160ms ease-out;
-  will-change: opacity;
+  transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
   contain: paint;
 }
 
@@ -360,7 +378,59 @@ body.is-native .native-tab-outgoing-content {
 }
 
 body.is-native .native-tab-outgoing-layer.is-leaving {
-  opacity: 0;
+  opacity: 1;
+}
+
+body.is-native .native-tab-outgoing-layer.is-forward.is-leaving {
+  transform: translate3d(-100vw, 0, 0);
+}
+
+body.is-native .native-tab-outgoing-layer.is-backward.is-leaving {
+  transform: translate3d(100vw, 0, 0);
+}
+
+body.is-native .native-push-underlay {
+  position: fixed;
+  inset: 0;
+  z-index: 8998;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--color-bg, #05050A);
+  transform: translate3d(0, 0, 0);
+  transition: transform 340ms cubic-bezier(0.32, 0.72, 0, 1), filter 340ms ease;
+  will-change: transform, filter;
+  contain: paint;
+}
+
+body.is-native .native-push-underlay.is-under {
+  transform: translate3d(-12vw, 0, 0);
+  filter: brightness(0.82);
+}
+
+body.is-native .native-push-underlay-content {
+  min-height: 100%;
+}
+
+body.is-native .native-push-underlay .native-push-underlay-nav {
+  z-index: 2 !important;
+}
+
+body.is-native .route-animate.native-push-active {
+  position: relative;
+  z-index: 8999;
+  min-height: 100dvh;
+  background: var(--color-bg, #05050A);
+  transform: translate3d(100vw, 0, 0) !important;
+  border-radius: 22px 0 0 22px;
+  overflow: hidden;
+  animation: none !important;
+  transition: transform 340ms cubic-bezier(0.32, 0.72, 0, 1), border-radius 340ms ease !important;
+  will-change: transform;
+}
+
+body.is-native .route-animate.native-push-active.is-entered {
+  transform: translate3d(0, 0, 0) !important;
+  border-radius: 0;
 }
 
 body.is-native.native-pop-switching .route-animate.native-pop-transition {
