@@ -205,6 +205,28 @@ if ($action === 'test') {
     $testEnv = trim((string)($postData['environment'] ?? 'app'));
 
     $sampleErrors = [
+        'ios' => [
+            'level' => 'error',
+            'environment' => 'ios',
+            'message' => 'WebKitBlobResource error 1: NotAllowedError: Failed to play audio in iOS Safari WebAudio engine',
+            'file' => '/assets/audio-player.js',
+            'line' => 88,
+            'url' => 'https://worship.pmstudio.am/songs',
+            'stack_trace' => "NotAllowedError: The request is not allowed by the user agent or the platform in the current context, possibly because the user denied permission.\n    at playAudioContext (https://worship.pmstudio.am/assets/audio-player.js:88:24)\n    at HTMLButtonElement.dispatch (https://worship.pmstudio.am/assets/index.js:312:12)",
+            'user_agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+            'device_info' => ['screen' => '393x852', 'platform' => 'iPhone', 'os' => 'iOS 17.5', 'standalone' => true],
+        ],
+        'android' => [
+            'level' => 'error',
+            'environment' => 'android',
+            'message' => 'Android WebView Chromium exception: OutOfMemoryError in Canvas hardware renderer',
+            'file' => '/assets/chord-sheet.js',
+            'line' => 215,
+            'url' => 'https://worship.pmstudio.am/songs',
+            'stack_trace' => "Error: Canvas rendering context allocation failed on Android WebView\n    at renderSheet (https://worship.pmstudio.am/assets/chord-sheet.js:215:9)\n    at initViewport (https://worship.pmstudio.am/assets/index.js:450:18)",
+            'user_agent' => 'Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/UD1A.230803.041; wv) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.82 Mobile Safari/537.36',
+            'device_info' => ['screen' => '412x915', 'platform' => 'Android', 'os' => 'Android 14', 'standalone' => true],
+        ],
         'frontend_js' => [
             'level' => 'error',
             'environment' => $testEnv,
@@ -290,6 +312,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $result = wp_error_log_record([
         'level' => $level,
         'environment' => $environment,
+        'platform' => $postData['platform'] ?? ($postData['os'] ?? null),
         'message' => $message,
         'file' => $file,
         'line' => $line,

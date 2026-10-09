@@ -211,6 +211,16 @@ function wp_error_log_record(array $data): array {
     $userAgent = isset($data['user_agent']) ? mb_substr(trim((string)$data['user_agent']), 0, 255) : mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
     $deviceInfo = isset($data['device_info']) ? (is_array($data['device_info']) ? json_encode($data['device_info']) : (string)$data['device_info']) : null;
 
+    // Auto-detect iOS and Android from User-Agent or device_info if environment is generic
+    if ($env === 'web' || $env === 'app') {
+        $incomingPlatform = strtolower(trim((string)($data['platform'] ?? ($data['os'] ?? ''))));
+        if ($incomingPlatform === 'ios' || preg_match('/(iPhone|iPad|iPod)/i', $userAgent) || ($deviceInfo && stripos($deviceInfo, '"os":"iOS"') !== false)) {
+            $env = 'ios';
+        } elseif ($incomingPlatform === 'android' || preg_match('/Android/i', $userAgent) || ($deviceInfo && stripos($deviceInfo, '"os":"Android"') !== false)) {
+            $env = 'android';
+        }
+    }
+
     $now = date('Y-m-d H:i:s');
     $fingerprint = wp_error_make_fingerprint($level, $env, $message, $file, $line);
 

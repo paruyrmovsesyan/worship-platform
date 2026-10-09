@@ -28,6 +28,22 @@
     }
   }
 
+  function getPlatformEnvironment() {
+    try {
+      const ua = navigator.userAgent || '';
+      const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isAndroid = /Android/i.test(ua);
+      const isCapacitor = !!(window.Capacitor || window.CapacitorWeb || window._capacitor);
+
+      if (isIOS) return 'ios';
+      if (isAndroid) return 'android';
+      if (isCapacitor) return 'app';
+      return isStandaloneApp() ? 'app' : 'web';
+    } catch (_) {
+      return 'web';
+    }
+  }
+
   function getUserMeta() {
     let userId = null;
     let userEmail = null;
@@ -46,12 +62,23 @@
 
   function getDeviceInfo() {
     try {
+      const ua = navigator.userAgent || '';
+      let os = 'Unknown OS';
+      if (/iPad|iPhone|iPod/.test(ua)) os = 'iOS';
+      else if (/Macintosh|Mac OS X/.test(ua) && navigator.maxTouchPoints > 1) os = 'iPadOS';
+      else if (/Android/i.test(ua)) os = 'Android';
+      else if (/Mac OS X/.test(ua)) os = 'macOS';
+      else if (/Windows/i.test(ua)) os = 'Windows';
+      else if (/Linux/i.test(ua)) os = 'Linux';
+
       return {
         screen: `${window.screen.width}x${window.screen.height}`,
         viewport: `${window.innerWidth}x${window.innerHeight}`,
         devicePixelRatio: window.devicePixelRatio || 1,
         online: navigator.onLine !== false,
         platform: navigator.platform || '',
+        os: os,
+        standalone: isStandaloneApp(),
         language: navigator.language || '',
       };
     } catch (_) {
@@ -139,7 +166,7 @@
           const reportResourceError = function() {
             sendErrorReport({
               level: 'warning',
-              environment: isStandaloneApp() ? 'app' : 'web',
+              environment: getPlatformEnvironment(),
               message: `Resource failed to load: <${resourceTag}> ${sourceUrl}`,
               file: sourceUrl,
               line: null,
@@ -181,7 +208,7 @@
       const errorObj = event.error || {};
       sendErrorReport({
         level: 'error',
-        environment: isStandaloneApp() ? 'app' : 'web',
+        environment: getPlatformEnvironment(),
         message: event.message || (errorObj.message ? String(errorObj.message) : 'Uncaught JavaScript error'),
         file: event.filename || null,
         line: event.lineno || null,
@@ -233,7 +260,7 @@
 
       sendErrorReport({
         level: 'promise',
-        environment: isStandaloneApp() ? 'app' : 'web',
+        environment: getPlatformEnvironment(),
         message: message,
         file: file,
         line: line,
@@ -276,7 +303,7 @@
         const { userId, userEmail } = getUserMeta();
         sendErrorReport({
           level: 'error',
-          environment: isStandaloneApp() ? 'app' : 'web',
+          environment: getPlatformEnvironment(),
           message: text.length > 500 ? text.slice(0, 500) + '...' : text,
           file: firstErr?.fileName || window.location.pathname,
           line: firstErr?.lineNumber || null,
@@ -308,7 +335,7 @@
             const { userId, userEmail } = getUserMeta();
             sendErrorReport({
               level: 'fatal',
-              environment: isStandaloneApp() ? 'app' : 'web',
+              environment: getPlatformEnvironment(),
               message: `HTTP Server Error ${res.status} ${res.statusText} on ${reqUrl}`,
               file: reqUrl,
               line: null,
@@ -334,7 +361,7 @@
 
       sendErrorReport({
         level: (context && context.level) || 'error',
-        environment: isStandaloneApp() ? 'app' : 'web',
+        environment: context?.environment || getPlatformEnvironment(),
         message: context?.prefix ? `[${context.prefix}] ${message}` : message,
         file: context?.file || null,
         line: context?.line || null,

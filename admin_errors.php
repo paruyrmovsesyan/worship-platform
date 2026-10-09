@@ -22,7 +22,7 @@ $i18n = [
     'hy' => [
         'page_title' => 'Սխալների Մոնիտոր — Worship Platform Admin',
         'title' => 'Սխալների Մոնիտորինգ',
-        'subtitle' => 'Կայքի, PWA հավելվածի և սերվերի սխալները իրական ժամանակում',
+        'subtitle' => 'Կայքի, iOS, Android, PWA հավելվածների և սերվերի սխալները իրական ժամանակում',
         'live' => 'ՈՒՂԻՂ ԵԹԵՐ (LIVE)',
         'stream_active' => 'Սթրիմն ակտիվ է',
         'stream_paused' => 'Դադարեցված է',
@@ -44,14 +44,16 @@ $i18n = [
         'interval' => 'Թարմացում՝',
         // Hero
         'hero_ok_title' => 'Բոլոր համակարգերն աշխատում են անխափան',
-        'hero_ok_sub' => 'Կայքում, PWA ծրագրում և սերվերում ակտիվ սխալներ չկան:',
+        'hero_ok_sub' => 'Կայքում, iOS/Android հավելվածներում, PWA ծրագրում և սերվերում ակտիվ սխալներ չկան:',
         'hero_all_resolved_title' => 'Բոլոր հայտնաբերված խնդիրները լուծված են',
-        'hero_all_resolved_sub' => 'Համակարգն ավտոմատ ստուգել է ծրագրի, կայքի և սերվերի սխալները: Ակտիվ խնդիրներ չկան:',
+        'hero_all_resolved_sub' => 'Համակարգն ավտոմատ ստուգել է iOS, Android, Web և սերվերի սխալները: Ակտիվ խնդիրներ չկան:',
         'hero_err_title' => 'Հայտնաբերվել են %d ակտիվ համակարգային սխալներ',
         'hero_err_sub' => 'Գրանցվել են ակտիվ սխալներ, որոնք պահանջում են ադմինիստրատորի ուշադրությունը:',
         // Stats
         'total_errors' => 'Ընդհանուր սխալներ',
         'today_errors' => 'Այսօր (24 ժամ)',
+        'ios_errors' => 'iOS Համակարգ',
+        'android_errors' => 'Android Համակարգ',
         'app_errors' => 'Ծրագիր (PWA)',
         'web_errors' => 'Կայք (Web)',
         'server_errors' => 'Սերվեր (PHP / DB)',
@@ -62,9 +64,11 @@ $i18n = [
         'status_active' => '🔴 Ակտիվ սխալներ',
         'status_resolved' => '🟢 Լուծված խնդիրներ',
         'env_all' => 'Բոլոր հարթակները',
-        'env_app' => 'PWA Ծրագիր',
-        'env_web' => 'Կայք (Web)',
-        'env_server' => 'Սերվեր (Backend)',
+        'env_ios' => '🍏 iOS App',
+        'env_android' => '🤖 Android App',
+        'env_app' => '📱 PWA Ծրագիր',
+        'env_web' => '🌐 Կայք (Web)',
+        'env_server' => '🖥️ Սերվեր (Backend)',
         'level_all' => 'Բոլոր մակարդակները',
         'level_fatal' => 'Fatal (Կրիտիկական)',
         'level_error' => 'Error (Սովորական)',
@@ -75,7 +79,7 @@ $i18n = [
         'inspect' => 'Մանրամասն',
         'occurrences' => 'կրկնություն',
         'empty_title' => 'Սխալներ չեն գրանցվել',
-        'empty_desc' => 'Համակարգը, կայքը և PWA ծրագիրն աշխատում են անխափան։ Ցանկացած նոր սխալ կհայտնվի այստեղ ակնթարթորեն:',
+        'empty_desc' => 'Համակարգը, կայքը, iOS/Android հավելվածները և PWA ծրագիրն աշխատում են անխափան։ Ցանկացած նոր սխալ կհայտնվի այստեղ ակնթարթորեն:',
         'modal_title' => 'Սխալի Մանրամասն Զննում (Inspector)',
         'close' => 'Փակել',
         'copy_stack' => 'Պատճենել Stack Trace',
@@ -85,7 +89,7 @@ $i18n = [
     'ru' => [
         'page_title' => 'Монитор ошибок — Worship Platform Admin',
         'title' => 'Мониторинг Ошибок',
-        'subtitle' => 'Ошибки сайта, PWA-приложения и сервера в реальном времени',
+        'subtitle' => 'Ошибки сайта, iOS, Android, PWA-приложения и сервера в реальном времени',
         'live' => 'ПРЯМОЙ ЭФИР (LIVE)',
         'stream_active' => 'Стрим активен',
         'stream_paused' => 'Приостановлен',
@@ -107,14 +111,16 @@ $i18n = [
         'interval' => 'Обновление:',
         // Hero
         'hero_ok_title' => 'Все системы работают стабильно',
-        'hero_ok_sub' => 'В приложении, на сайте и сервере активных сбоев нет.',
+        'hero_ok_sub' => 'В iOS/Android приложениях, на сайте и сервере активных сбоев нет.',
         'hero_all_resolved_title' => 'Все обнаруженные проблемы устранены',
-        'hero_all_resolved_sub' => 'Система автоматически проверила ошибки приложения, сайта и сервера. Активных сбоев нет.',
+        'hero_all_resolved_sub' => 'Система проверила ошибки iOS, Android, сайта и сервера. Активных сбоев нет.',
         'hero_err_title' => 'Обнаружено %d активных системных ошибок',
         'hero_err_sub' => 'Зафиксированы сбои, требующие внимания администратора.',
         // Stats
         'total_errors' => 'Всего ошибок',
         'today_errors' => 'Сегодня (24 часа)',
+        'ios_errors' => 'iOS Приложение',
+        'android_errors' => 'Android Приложение',
         'app_errors' => 'Приложение (PWA)',
         'web_errors' => 'Сайт (Web)',
         'server_errors' => 'Сервер (PHP / DB)',
@@ -125,9 +131,11 @@ $i18n = [
         'status_active' => '🔴 Активные ошибки',
         'status_resolved' => '🟢 Исправленные',
         'env_all' => 'Все платформы',
-        'env_app' => 'PWA Приложение',
-        'env_web' => 'Сайт (Web)',
-        'env_server' => 'Сервер (Backend)',
+        'env_ios' => '🍏 iOS Приложение',
+        'env_android' => '🤖 Android Приложение',
+        'env_app' => '📱 PWA Приложение',
+        'env_web' => '🌐 Сайт (Web)',
+        'env_server' => '🖥️ Сервер (Backend)',
         'level_all' => 'Все уровни',
         'level_fatal' => 'Fatal (Критические)',
         'level_error' => 'Error (Обычные)',
@@ -138,7 +146,7 @@ $i18n = [
         'inspect' => 'Подробнее',
         'occurrences' => 'повторений',
         'empty_title' => 'Ошибок не зафиксировано',
-        'empty_desc' => 'Платформа, сайт и приложение работают стабильно. Все новые сбои отобразятся здесь мгновенно.',
+        'empty_desc' => 'Платформа, сайт, iOS/Android приложения работают стабильно. Все новые сбои отобразятся здесь мгновенно.',
         'modal_title' => 'Детальный аудит ошибки',
         'close' => 'Закрыть',
         'copy_stack' => 'Копировать Stack Trace',
@@ -148,7 +156,7 @@ $i18n = [
     'en' => [
         'page_title' => 'Error Monitor — Worship Platform Admin',
         'title' => 'Real-Time Error Monitor',
-        'subtitle' => 'Live runtime monitoring for Web, PWA App, and Server backend',
+        'subtitle' => 'Live runtime monitoring for iOS, Android, Web, PWA App, and Server backend',
         'live' => 'LIVE STREAM',
         'stream_active' => 'Stream active',
         'stream_paused' => 'Stream paused',
@@ -170,14 +178,16 @@ $i18n = [
         'interval' => 'Interval:',
         // Hero
         'hero_ok_title' => 'All Systems Operating Normally',
-        'hero_ok_sub' => 'No critical exceptions detected in Web, App, or Server runtimes.',
+        'hero_ok_sub' => 'No critical exceptions detected in iOS, Android, Web, App, or Server runtimes.',
         'hero_all_resolved_title' => 'All Detected Issues Are Resolved',
-        'hero_all_resolved_sub' => 'The system automatically verified Web, App, and Server errors. No active issues detected.',
+        'hero_all_resolved_sub' => 'The system verified iOS, Android, Web, App, and Server errors. No active issues detected.',
         'hero_err_title' => '%d Active System Errors Detected',
         'hero_err_sub' => 'Active errors recorded that require administrator review.',
         // Stats
         'total_errors' => 'Total Errors',
         'today_errors' => 'Today (24h)',
+        'ios_errors' => 'iOS App',
+        'android_errors' => 'Android App',
         'app_errors' => 'PWA App',
         'web_errors' => 'Web Browser',
         'server_errors' => 'Server Backend',
@@ -188,9 +198,11 @@ $i18n = [
         'status_active' => '🔴 Active Issues',
         'status_resolved' => '🟢 Resolved Issues',
         'env_all' => 'All Platforms',
-        'env_app' => 'PWA App',
-        'env_web' => 'Web Browser',
-        'env_server' => 'Server (PHP/DB)',
+        'env_ios' => '🍏 iOS App',
+        'env_android' => '🤖 Android App',
+        'env_app' => '📱 PWA App',
+        'env_web' => '🌐 Web Browser',
+        'env_server' => '🖥️ Server (PHP/DB)',
         'level_all' => 'All Levels',
         'level_fatal' => 'Fatal',
         'level_error' => 'Error',
@@ -201,7 +213,7 @@ $i18n = [
         'inspect' => 'Inspect',
         'occurrences' => 'hits',
         'empty_title' => 'No Errors Recorded',
-        'empty_desc' => 'Everything is running cleanly across Web, App, and Server. Any incoming issues will appear here in real time.',
+        'empty_desc' => 'Everything is running cleanly across iOS, Android, Web, App, and Server. Any incoming issues will appear here in real time.',
         'modal_title' => 'Error Inspector & Stack Trace',
         'close' => 'Close',
         'copy_stack' => 'Copy Stack Trace',
@@ -371,6 +383,8 @@ $activePage = 'errors';
       line-height: 1;
     }
     .kpi-card.critical .kpi-number { color: #dc2626; }
+    .kpi-card.ios .kpi-number { color: #0284c7; }
+    .kpi-card.android .kpi-number { color: #16a34a; }
     .kpi-card.app .kpi-number { color: #7c3aed; }
     .kpi-card.web .kpi-number { color: #2563eb; }
     .kpi-card.server .kpi-number { color: #d97706; }
@@ -609,10 +623,35 @@ $activePage = 'errors';
       text-transform: uppercase;
       letter-spacing: 0.3px;
     }
-    .env-chip.app { background: #ede9fe; color: #5b21b6; }
-    .env-chip.web { background: #e0f2fe; color: #0369a1; }
-    .env-chip.server, .env-chip.db { background: #fef3c7; color: #92400e; }
-    .env-chip.api { background: #fce7f3; color: #9d174d; }
+    .env-chip.ios { background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; }
+    .env-chip.android { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .env-chip.app { background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; }
+    .env-chip.web { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .env-chip.server, .env-chip.db { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .env-chip.api { background: #fce7f3; color: #9d174d; border: 1px solid #fbcfe8; }
+
+    .test-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 9px 14px;
+      text-align: left;
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .test-menu-item:last-child {
+      border-bottom: none;
+    }
+    .test-menu-item:hover {
+      background: var(--bg);
+    }
 
     .hits-badge {
       background: #f1f5f9;
@@ -846,27 +885,35 @@ $activePage = 'errors';
 
       <!-- KPI Grid Cards -->
       <div class="kpi-row">
-        <div class="kpi-card">
+        <div class="kpi-card" onclick="window.filterByKpi('all')" style="cursor:pointer;" title="Ցուցադրել բոլորը">
           <div class="kpi-title"><?= htmlspecialchars($t['total_errors']) ?></div>
           <div class="kpi-number" id="kpiTotal"><?= (int)$initialStats['total'] ?></div>
         </div>
-        <div class="kpi-card <?= $hasActiveErrors ? 'critical' : '' ?>" id="kpiCardActive">
+        <div class="kpi-card <?= $hasActiveErrors ? 'critical' : '' ?>" id="kpiCardActive" onclick="window.filterByKpi('active')" style="cursor:pointer;" title="Ֆիլտրել ակտիվ սխալները">
           <div class="kpi-title"><?= htmlspecialchars($t['stat_active']) ?></div>
           <div class="kpi-number" id="kpiActive" style="<?= $hasActiveErrors ? 'color:#dc2626;' : 'color:#10b981;' ?>"><?= $activeCount ?></div>
         </div>
-        <div class="kpi-card" style="border-left: 4px solid #10b981;">
+        <div class="kpi-card" style="border-left: 4px solid #10b981; cursor:pointer;" onclick="window.filterByKpi('resolved')" title="Ֆիլտրել լուծվածները">
           <div class="kpi-title" style="color:#059669;"><?= htmlspecialchars($t['stat_resolved']) ?></div>
           <div class="kpi-number" id="kpiResolved" style="color:#059669;"><?= $resolvedCount ?></div>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card" onclick="window.filterByKpi('all')" style="cursor:pointer;">
           <div class="kpi-title"><?= htmlspecialchars($t['today_errors']) ?></div>
           <div class="kpi-number" id="kpiToday"><?= (int)$initialStats['today'] ?></div>
         </div>
-        <div class="kpi-card app">
+        <div class="kpi-card ios" onclick="window.filterByKpi('env:ios')" style="cursor:pointer;" title="Ֆիլտրել iOS սխալները">
+          <div class="kpi-title">🍏 <?= htmlspecialchars($t['ios_errors']) ?></div>
+          <div class="kpi-number" id="kpiIos"><?= (int)($initialStats['ios'] ?? 0) ?></div>
+        </div>
+        <div class="kpi-card android" onclick="window.filterByKpi('env:android')" style="cursor:pointer;" title="Ֆիլտրել Android սխալները">
+          <div class="kpi-title">🤖 <?= htmlspecialchars($t['android_errors']) ?></div>
+          <div class="kpi-number" id="kpiAndroid"><?= (int)($initialStats['android'] ?? 0) ?></div>
+        </div>
+        <div class="kpi-card app" onclick="window.filterByKpi('env:app')" style="cursor:pointer;" title="Ֆիլտրել PWA սխալները">
           <div class="kpi-title"><?= htmlspecialchars($t['app_errors']) ?></div>
           <div class="kpi-number" id="kpiApp"><?= (int)$initialStats['app'] ?></div>
         </div>
-        <div class="kpi-card server">
+        <div class="kpi-card server" onclick="window.filterByKpi('env:server')" style="cursor:pointer;" title="Ֆիլտրել սերվերի սխալները">
           <div class="kpi-title"><?= htmlspecialchars($t['server_errors']) ?></div>
           <div class="kpi-number" id="kpiServer"><?= (int)$initialStats['server'] ?></div>
         </div>
@@ -888,8 +935,8 @@ $activePage = 'errors';
 
           <select class="select-ctrl" id="filterEnv">
             <option value="all"><?= htmlspecialchars($t['env_all']) ?></option>
-            <option value="ios">🍏 iOS App</option>
-            <option value="android">🤖 Android App</option>
+            <option value="ios"><?= htmlspecialchars($t['env_ios']) ?></option>
+            <option value="android"><?= htmlspecialchars($t['env_android']) ?></option>
             <option value="app"><?= htmlspecialchars($t['env_app']) ?></option>
             <option value="web"><?= htmlspecialchars($t['env_web']) ?></option>
             <option value="server"><?= htmlspecialchars($t['env_server']) ?></option>
@@ -917,10 +964,18 @@ $activePage = 'errors';
         </div>
 
         <div class="filter-right">
-          <button class="btn-tool" id="btnTestError" title="Simulate sending a test error">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
-            <?= htmlspecialchars($t['test_error']) ?>
-          </button>
+          <div style="position:relative; display:inline-block;">
+            <button class="btn-tool" id="btnTestError" title="Simulate sending a test error" onclick="window.toggleTestMenu(event)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+              <?= htmlspecialchars($t['test_error']) ?> ▾
+            </button>
+            <div id="testMenuDropdown" style="display:none; position:absolute; right:0; top:calc(100% + 4px); background:var(--card); border:1px solid var(--line); border-radius:var(--radius-sm); box-shadow:var(--shadow-md); z-index:100; min-width:210px; overflow:hidden;">
+              <button type="button" class="test-menu-item" onclick="window.triggerTestError('ios')">🍏 iOS Test Error</button>
+              <button type="button" class="test-menu-item" onclick="window.triggerTestError('android')">🤖 Android Test Error</button>
+              <button type="button" class="test-menu-item" onclick="window.triggerTestError('frontend_js')">📱 PWA Test Error</button>
+              <button type="button" class="test-menu-item" onclick="window.triggerTestError('server')">🖥️ Server Test Error</button>
+            </div>
+          </div>
 
           <button class="btn-tool" id="btnExport" title="Export all logs as JSON">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -1125,6 +1180,20 @@ $activePage = 'errors';
       .replace(/"/g, '&quot;');
   }
 
+  function renderEnvBadge(env) {
+    const e = (env || 'web').toLowerCase();
+    let label = e.toUpperCase();
+    let icon = '';
+    if (e === 'ios') { icon = '🍏 '; label = 'iOS'; }
+    else if (e === 'android') { icon = '🤖 '; label = 'Android'; }
+    else if (e === 'app') { icon = '📱 '; label = 'PWA'; }
+    else if (e === 'web') { icon = '🌐 '; label = 'Web'; }
+    else if (e === 'server') { icon = '🖥️ '; label = 'Server'; }
+    else if (e === 'db') { icon = '🗄️ '; label = 'DB'; }
+    else if (e === 'api') { icon = '⚡ '; label = 'API'; }
+    return `<span class="env-chip ${escapeHtml(e)}">${icon}${escapeHtml(label)}</span>`;
+  }
+
   function renderErrorList(logs, newlyAddedIds) {
     const container = document.getElementById('errorStreamContainer');
     const emptyState = document.getElementById('emptyState');
@@ -1156,7 +1225,7 @@ $activePage = 'errors';
                 : `<span class="status-chip active"><span class="pulse-dot-sm"></span> ${escapeHtml(t.active_badge)}</span>`
               }
               <span class="level-chip ${escapeHtml(level)}">${escapeHtml(level)}</span>
-              <span class="env-chip ${escapeHtml(env)}">${escapeHtml(env)}</span>
+              ${renderEnvBadge(env)}
               ${occ > 1 ? `<span class="hits-badge">${occ} ${escapeHtml(t.occurrences)}</span>` : ''}
               <span style="flex:1;"></span>
               <span class="error-stamp" title="${escapeHtml(item.last_seen)}">${formatRelativeTime(item.last_seen)}</span>
@@ -1248,6 +1317,8 @@ $activePage = 'errors';
     if (kpiResolved) kpiResolved.textContent = resolvedVal;
 
     document.getElementById('kpiToday').textContent = stats.today || 0;
+    if (document.getElementById('kpiIos')) document.getElementById('kpiIos').textContent = stats.ios || 0;
+    if (document.getElementById('kpiAndroid')) document.getElementById('kpiAndroid').textContent = stats.android || 0;
     document.getElementById('kpiApp').textContent = stats.app || 0;
     document.getElementById('kpiServer').textContent = stats.server || 0;
 
@@ -1423,8 +1494,19 @@ $activePage = 'errors';
 
     document.getElementById('mLevel').textContent = (item.level || 'error').toUpperCase();
     document.getElementById('mLevel').className = 'level-chip ' + (item.level || 'error').toLowerCase();
-    document.getElementById('mEnv').textContent = (item.environment || 'web').toUpperCase();
-    document.getElementById('mEnv').className = 'env-chip ' + (item.environment || 'web').toLowerCase();
+    
+    const mEnvEl = document.getElementById('mEnv');
+    const itemEnv = (item.environment || 'web').toLowerCase();
+    mEnvEl.className = 'env-chip ' + itemEnv;
+    let envLabel = itemEnv.toUpperCase();
+    let envIcon = '';
+    if (itemEnv === 'ios') { envIcon = '🍏 '; envLabel = 'iOS'; }
+    else if (itemEnv === 'android') { envIcon = '🤖 '; envLabel = 'Android'; }
+    else if (itemEnv === 'app') { envIcon = '📱 '; envLabel = 'PWA App'; }
+    else if (itemEnv === 'web') { envIcon = '🌐 '; envLabel = 'Web'; }
+    else if (itemEnv === 'server') { envIcon = '🖥️ '; envLabel = 'Server'; }
+    mEnvEl.textContent = envIcon + envLabel;
+
     document.getElementById('mHits').textContent = (item.occurrences || 1) + ' ' + t.occurrences;
 
     document.getElementById('mMessage').textContent = item.message || '';
@@ -1501,22 +1583,60 @@ $activePage = 'errors';
     dlAnchor.remove();
   });
 
-  document.getElementById('btnTestError').addEventListener('click', async function() {
+  window.filterByKpi = function(type) {
+    if (type === 'all') {
+      document.getElementById('filterStatus').value = 'all';
+      document.getElementById('filterEnv').value = 'all';
+    } else if (type === 'active') {
+      document.getElementById('filterStatus').value = 'active';
+    } else if (type === 'resolved') {
+      document.getElementById('filterStatus').value = 'resolved';
+    } else if (type.startsWith('env:')) {
+      const targetEnv = type.split(':')[1];
+      document.getElementById('filterEnv').value = targetEnv;
+    }
+    applyFilters();
+  };
+
+  window.toggleTestMenu = function(e) {
+    e.stopPropagation();
+    const dropdown = document.getElementById('testMenuDropdown');
+    if (dropdown) {
+      dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+    }
+  };
+
+  document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('testMenuDropdown');
+    if (dropdown && !e.target.closest('#btnTestError')) {
+      dropdown.style.display = 'none';
+    }
+  });
+
+  window.triggerTestError = async function(type) {
+    const dropdown = document.getElementById('testMenuDropdown');
+    if (dropdown) dropdown.style.display = 'none';
+
+    let env = 'app';
+    if (type === 'ios') env = 'ios';
+    else if (type === 'android') env = 'android';
+    else if (type === 'server') env = 'server';
+
     try {
       const resp = await fetch('/error_api.php?action=test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: 'frontend_js',
-          environment: 'app',
+          type: type,
+          environment: env,
           level: 'error'
         })
       });
       if (resp.ok) {
-        fetchLatestErrors();
+        await fetchLatestErrors();
       }
     } catch (_) {}
-  });
+  };
 
   document.getElementById('btnCopyStack').addEventListener('click', function() {
     if (!activeInspectItem || !activeInspectItem.stack_trace) return;
