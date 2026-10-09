@@ -226,7 +226,7 @@ const Register = () => {
       {/* Form Section */}
       <div className="register-form-section">
         <div className="register-form-container">
-          <button className="register-back-link" type="button" onClick={() => navigate(-1)}>
+          <button className="register-back-link" type="button" data-native-route-back="true" onClick={() => navigate(-1)}>
             &larr; {t('auth.back', 'Վերադառնալ')}
           </button>
 

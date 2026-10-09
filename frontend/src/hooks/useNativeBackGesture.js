@@ -25,6 +25,8 @@ const isBlockedTarget = (target) => Boolean(target?.closest?.(
   'input, textarea, select, [contenteditable="true"], .no-swipe-nav, [data-no-swipe]'
 ));
 
+const NATIVE_BACK_SELECTOR = '[data-native-route-back="true"]';
+
 export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
   useEffect(() => {
     if (!enabled || isPrimaryTab(pathname)) return undefined;
@@ -48,7 +50,10 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
 
       if (outgoingLayer && rect) {
         outgoingLayer.setAttribute('aria-hidden', 'true');
-        outgoingLayer.className = 'native-pop-outgoing-layer';
+        // Keep the page's original class names. Detail pages (notably Chat)
+        // rely on their root class for their background, sizing and children;
+        // replacing it made the outgoing snapshot transparent/invisible.
+        outgoingLayer.classList.add('native-pop-outgoing-layer');
         Object.assign(outgoingLayer.style, {
           position: 'fixed',
           top: `${rect.top}px`,
@@ -107,16 +112,25 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
 
     const onBackRequest = () => performLayeredBack();
 
+    const onNativeBackClick = (event) => {
+      if (!event.target?.closest?.(NATIVE_BACK_SELECTOR)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      performLayeredBack();
+    };
+
     document.addEventListener('touchstart', onTouchStart, { passive: true, capture: true });
     document.addEventListener('touchend', onTouchEnd, { passive: true, capture: true });
     document.addEventListener('touchcancel', reset, { passive: true, capture: true });
     window.addEventListener('wp-native-page-back', onBackRequest);
+    document.addEventListener('click', onNativeBackClick, true);
 
     return () => {
       document.removeEventListener('touchstart', onTouchStart, true);
       document.removeEventListener('touchend', onTouchEnd, true);
       document.removeEventListener('touchcancel', reset, true);
       window.removeEventListener('wp-native-page-back', onBackRequest);
+      document.removeEventListener('click', onNativeBackClick, true);
     };
   }, [enabled, navigate, pathname, user]);
 }

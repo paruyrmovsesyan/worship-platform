@@ -176,7 +176,7 @@ export default function UserProfile() {
     return (
       <div className="user-profile-page">
         <div className="user-profile-header-bar">
-          <button className="user-profile-back-btn" onClick={() => navigate(-1)}>
+          <button className="user-profile-back-btn" data-native-route-back="true" onClick={() => navigate(-1)}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 18l-6-6 6-6"/>
             </svg>
@@ -262,7 +262,7 @@ export default function UserProfile() {
     <div className={`user-profile-page ${isPWA ? 'pwa-view' : 'web-view'}`}>
       {/* Top App Header */}
       <div className="user-profile-header-bar">
-        <button className="user-profile-back-btn" onClick={() => navigate(-1)} aria-label={t('auth.back')}>
+        <button className="user-profile-back-btn" data-native-route-back="true" onClick={() => navigate(-1)} aria-label={t('auth.back')}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6"/>
           </svg>

@@ -989,7 +989,7 @@ export default function SongView() {
       <div className="song-view-page">
         <div className="sl-placeholder empty-state animate-fade-in">
           <p style={{color: 'var(--color-accent-red)'}}>{error}</p>
-          <button className="btn btn-secondary" onClick={handleSongBack} style={{marginTop: '16px'}}>{t('songView.back')}</button>
+          <button className="btn btn-secondary" data-native-route-back="true" onClick={handleSongBack} style={{marginTop: '16px'}}>{t('songView.back')}</button>
         </div>
       </div>
     );
@@ -1031,7 +1031,7 @@ export default function SongView() {
       {/* Top Header */}
       <div className="sv-header">
         <div className="sv-header-left">
-          <button className="icon-btn" onClick={handleSongBack} style={{ background: 'rgba(255,255,255,0.05)', padding: '8px', borderRadius: '12px' }}>
+          <button className="icon-btn" data-native-route-back="true" onClick={handleSongBack} style={{ background: 'rgba(255,255,255,0.05)', padding: '8px', borderRadius: '12px' }}>
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
           <div className="sv-title-area">

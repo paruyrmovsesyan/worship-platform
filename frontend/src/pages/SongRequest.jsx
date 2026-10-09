@@ -143,7 +143,7 @@ export default function SongRequest() {
   return (
     <div className="song-request-container animate-fade-in">
       <div className="song-request-header">
-        <button className="song-request-back-btn" onClick={() => navigate(-1)} aria-label="Go back">
+        <button className="song-request-back-btn" data-native-route-back="true" onClick={() => navigate(-1)} aria-label="Go back">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>

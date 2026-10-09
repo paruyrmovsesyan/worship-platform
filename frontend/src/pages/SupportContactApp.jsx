@@ -552,6 +552,7 @@ export default function SupportContactApp({ initialTab }) {
         <button
           type="button"
           className="sca-back-btn"
+          data-native-route-back="true"
           onClick={handleBack}
           aria-label={txt.back}
           title={txt.back}

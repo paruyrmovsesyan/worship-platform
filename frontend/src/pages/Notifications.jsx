@@ -376,7 +376,7 @@ export default function Notifications() {
       <div className="notif-header">
         <div className="notif-header-top">
           <div className="notif-header-title-group">
-            <button className="notif-back-btn" onClick={() => navigate(-1)} title="Back">
+            <button className="notif-back-btn" data-native-route-back="true" onClick={() => navigate(-1)} title="Back">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6"></polyline>
               </svg>

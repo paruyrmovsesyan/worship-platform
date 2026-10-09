@@ -483,6 +483,7 @@ export default function Settings() {
         {isMobile && (
           <button
             className="settings-back-btn"
+            data-native-route-back="true"
             onClick={() => {
               if (window.history.state && window.history.state.idx > 0) {
                 navigate(-1);
