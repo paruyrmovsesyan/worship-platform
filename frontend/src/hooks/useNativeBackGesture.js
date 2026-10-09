@@ -39,8 +39,12 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
 
     const performLayeredBack = () => {
       const currentRoute = document.querySelector('main .route-animate');
-      const rect = currentRoute?.getBoundingClientRect();
-      const outgoingLayer = currentRoute?.cloneNode(true);
+      // Chat and a few native detail screens are fixed-position children, so
+      // their route wrapper has a zero-height rectangle. Clone the actual
+      // fullscreen surface or the transition layer would be visually empty.
+      const visualSource = currentRoute?.querySelector('.chat-page-container') || currentRoute;
+      const rect = visualSource?.getBoundingClientRect();
+      const outgoingLayer = visualSource?.cloneNode(true);
 
       if (outgoingLayer && rect) {
         outgoingLayer.setAttribute('aria-hidden', 'true');
@@ -68,15 +72,13 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
           return;
         }
 
-        nextRoute?.classList.add('native-pop-content-ready');
         window.requestAnimationFrame(() => {
           window.requestAnimationFrame(() => outgoingLayer?.classList.add('is-leaving'));
         });
         window.setTimeout(() => {
           outgoingLayer?.remove();
-          nextRoute?.classList.remove('native-pop-content-ready');
           document.body.classList.remove('native-pop-switching');
-        }, 360);
+        }, 380);
       };
       window.requestAnimationFrame(revealWhenReady);
     };
