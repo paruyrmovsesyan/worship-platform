@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
+import { Capacitor } from '@capacitor/core';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
@@ -1029,35 +1030,58 @@ export default function SetlistEditorApp() {
       const res = await fetch('/setlists_api.php?action=manage_setlist_team', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ setlist_id: id, team })
+        body: JSON.stringify({
+          setlist_id: id,
+          team,
+          native_app: Capacitor.isNativePlatform()
+        })
       });
       const data = await res.json();
-      if (data.ok) {
-        setIsTeamModalOpen(false);
-        if (data.new_users && data.new_users.length > 0) {
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || 'Failed to save team');
+      }
+
+      // Read the saved value back before reporting success. This prevents the
+      // modal from closing on a response that did not actually persist.
+      const verifyRes = await fetch(`/setlists_api.php?action=get_setlist_team&setlist_id=${id}`);
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok || !verifyData.ok) {
+        throw new Error(verifyData.error || 'Team was saved but could not be reloaded');
+      }
+      setTeam(verifyData.team || []);
+
+      if (Capacitor.isNativePlatform() && data.new_users?.length > 0) {
           for (const userId of data.new_users) {
             const chatRes = await fetch('/chat_api.php?action=get_direct_chat', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ target_user_id: userId })
+              body: JSON.stringify({ user_id: userId })
             });
             const chatData = await chatRes.json();
-            if (chatData.ok) {
-              await fetch('/chat_api.php?action=send_message', {
+            if (chatRes.ok && chatData.ok && chatData.chat_id) {
+              const messageRes = await fetch('/chat_api.php?action=send_message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  chat_id: chatData.chat.id,
+                  chat_id: chatData.chat_id,
                   message: `🔔 Դուք նշանակված եք ծառայության այս երգացանկում՝ ${setlistData.name}:`,
                   setlist_id: id
                 })
               });
+              if (!messageRes.ok) console.warn('Team assignment chat message failed', await messageRes.text());
             }
           }
-        }
       }
+
+      setIsTeamModalOpen(false);
+      showToast(language === 'am'
+        ? '✓ Թիմը պահպանվեց, նոր անդամները ծանուցվեցին'
+        : '✓ Team saved and new members notified');
     } catch (err) {
       console.error(err);
+      showToast(language === 'am'
+        ? `Չհաջողվեց պահպանել թիմը․ ${err.message}`
+        : `Could not save team: ${err.message}`);
     } finally {
       setTeamSaving(false);
     }

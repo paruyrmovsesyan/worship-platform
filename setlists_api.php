@@ -1727,6 +1727,7 @@ if ($action === 'get_setlist_team' && $method === 'GET') {
 if ($action === 'manage_setlist_team' && $method === 'POST') {
   $d = readJson();
   $setlist_id = (int)($d['setlist_id'] ?? 0);
+  $isNativeAppRequest = !empty($d['native_app']);
   if ($setlist_id <= 0) out(["error" => "Invalid setlist_id"], 400);
 
   $setlist = requireSetlistEditable($pdo, $setlist_id, $uid);
@@ -1767,9 +1768,62 @@ if ($action === 'manage_setlist_team' && $method === 'POST') {
       }
       
       $pdo->commit();
-      out(["ok" => true, "new_users" => $newUsers]);
-  } catch (Exception $e) {
-      $pdo->rollBack();
+
+      // Native apps must notify every newly assigned member even when a
+      // direct chat cannot be created yet (for example, friend request pending).
+      $notificationResults = [];
+      if ($isNativeAppRequest && $newUsers) {
+          $setlistName = trim((string)($setlist['name'] ?? 'Երգացանկ'));
+          $senderName = trim((string)($_SESSION['name'] ?? $_SESSION['username'] ?? ''));
+          if ($senderName === '') {
+              $senderSt = $pdo->prepare("SELECT COALESCE(NULLIF(name, ''), NULLIF(username, ''), email) FROM users WHERE id = ? LIMIT 1");
+              $senderSt->execute([$uid]);
+              $senderName = trim((string)$senderSt->fetchColumn()) ?: 'Worship Platform';
+          }
+
+          require_once __DIR__ . '/push_service.php';
+          $notificationText = $senderName . '–ը Ձեզ ավելացրել է «' . $setlistName . '» երգացանկի թիմում։';
+          $actionLink = '/setlists/' . $setlist_id;
+          $notifSt = $pdo->prepare("
+              INSERT INTO user_notifications (user_id, sender_id, type, content, action_link)
+              VALUES (?, ?, 'setlist_assignment', ?, ?)
+          ");
+
+          foreach ($newUsers as $newUserId) {
+              try {
+                  $notifSt->execute([
+                      $newUserId,
+                      $uid,
+                      json_encode(['text' => $notificationText], JSON_UNESCAPED_UNICODE),
+                      $actionLink,
+                  ]);
+                  $pushResult = wp_push_send_to_user(
+                      $pdo,
+                      (int)$newUserId,
+                      'Նոր թիմային նշանակում',
+                      $notificationText,
+                      $actionLink
+                  );
+                  $notificationResults[] = [
+                      'user_id' => (int)$newUserId,
+                      'notification' => true,
+                      'push' => !empty($pushResult['ok']),
+                  ];
+              } catch (Throwable $notificationError) {
+                  error_log('Setlist team notification failed: ' . $notificationError->getMessage());
+                  $notificationResults[] = [
+                      'user_id' => (int)$newUserId,
+                      'notification' => false,
+                      'push' => false,
+                  ];
+              }
+          }
+      }
+
+      out(["ok" => true, "new_users" => $newUsers, "notifications" => $notificationResults]);
+  } catch (Throwable $e) {
+      if ($pdo->inTransaction()) $pdo->rollBack();
+      error_log('Failed to update setlist team: ' . $e->getMessage());
       out(["error" => "Failed to update team"], 500);
   }
 }
