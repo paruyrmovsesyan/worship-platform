@@ -335,6 +335,44 @@ body.is-native .route-animate.native-pop-transition {
   animation: nativePopEnter 280ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
 }
 
+/* Real two-layer tab transition: WebKit snapshots both the outgoing and the
+   incoming React trees while the fixed native dock stays visually stable. */
+html.native-tab-view-transition::view-transition-old(root) {
+  animation: nativeTabOld 210ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+html.native-tab-view-transition::view-transition-new(root) {
+  animation: nativeTabNew 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+body.is-native .mobile-bottom-nav {
+  view-transition-name: native-bottom-dock;
+}
+
+html.native-tab-view-transition::view-transition-old(native-bottom-dock) {
+  opacity: 0;
+  animation: none;
+}
+
+html.native-tab-view-transition::view-transition-new(native-bottom-dock) {
+  opacity: 1;
+  animation: none;
+}
+
+html.native-tab-view-transition body.is-native .route-animate.native-tab-transition {
+  animation: none !important;
+}
+
+@keyframes nativeTabOld {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0.56; transform: scale(0.985); }
+}
+
+@keyframes nativeTabNew {
+  from { opacity: 0.42; transform: scale(1.012); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 body.is-native .animate-fade-in,
 body.is-native .mobile-hub.animate-fade-in {
   opacity: 1 !important;

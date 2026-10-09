@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useTransition } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -238,6 +238,24 @@ export default function MobileNav() {
     }
   };
 
+  const switchNativeTab = (path) => {
+    const performNavigation = () => navigate(path, { replace: true });
+    if (!isNativeApp || typeof document.startViewTransition !== 'function') {
+      performNavigation();
+      return;
+    }
+
+    document.documentElement.classList.add('native-tab-view-transition');
+    const transition = document.startViewTransition(() => {
+      // The View Transition API must capture the updated React tree inside its
+      // callback; flushSync prevents it from snapshotting the same tab twice.
+      flushSync(performNavigation);
+    });
+    transition.finished.finally(() => {
+      document.documentElement.classList.remove('native-tab-view-transition');
+    });
+  };
+
   const handleNavClick = (path, e) => {
     e?.preventDefault?.();
     if (isScrubbingRef.current || isLongPressReadyRef.current) {
@@ -248,12 +266,12 @@ export default function MobileNav() {
     }
     triggerHaptic('Light');
     if (location.pathname !== path) {
-      startTransition(() => {
-        // Native bottom navigation behaves as independent app tabs: switching
-        // tabs must not add entries that the system Back gesture can revisit.
-        // Keep the existing PWA history behaviour unchanged.
-        navigate(path, { replace: isNativeApp });
-      });
+      if (isNativeApp) {
+        // Native bottom navigation behaves as independent persistent tabs.
+        switchNativeTab(path);
+      } else {
+        startTransition(() => navigate(path));
+      }
     }
   };
 
@@ -347,9 +365,11 @@ export default function MobileNav() {
 
       if (targetTab && guardPath(targetTab.path)) {
         triggerHaptic('Medium');
-        startTransition(() => {
-          navigate(targetTab.path, { replace: isNativeApp });
-        });
+        if (isNativeApp) {
+          switchNativeTab(targetTab.path);
+        } else {
+          startTransition(() => navigate(targetTab.path));
+        }
       }
 
       setTimeout(() => {
