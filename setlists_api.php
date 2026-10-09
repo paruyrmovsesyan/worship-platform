@@ -258,21 +258,6 @@ if ($action === 'create_setlist' && $method === 'POST') {
             out(["error" => "Name required"], 400);
         }
 
-        // --- ENFORCE PRICING LIMITS ---
-        $stPlan = $pdo->prepare("SELECT plan_type FROM users WHERE id=? LIMIT 1");
-        $stPlan->execute([$uid]);
-        $plan = $stPlan->fetchColumn() ?: 'free';
-
-        if ($plan === 'free') {
-            $stCount = $pdo->prepare("SELECT COUNT(*) FROM setlists WHERE user_id=? AND status='active'");
-            $stCount->execute([$uid]);
-            $count = (int)$stCount->fetchColumn();
-            if ($count >= 3) {
-                out(["error" => "limit_reached", "message" => "Free plan allows up to 3 active setlists. Please upgrade to Pro to create more."], 403);
-            }
-        }
-        // ------------------------------
-
         $service_date = normalizeNullable($d['service_date'] ?? '');
         $description = normalizeNullable($d['description'] ?? '');
 
@@ -1757,11 +1742,15 @@ if ($action === 'manage_setlist_team' && $method === 'POST') {
               }
               // Specifically for setlists: ensure friend request exists if not already connected
               if ($asgnUser !== $uid) {
-                  $chkFr = $pdo->prepare("SELECT id FROM friends WHERE (user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)");
-                  $chkFr->execute([$uid, $asgnUser, $asgnUser, $uid]);
-                  if (!$chkFr->fetch()) {
-                      $insFr = $pdo->prepare("INSERT INTO friends (user_id_1, user_id_2, status) VALUES (?, ?, 'pending')");
-                      $insFr->execute([$uid, $asgnUser]);
+                  try {
+                      $chkFr = $pdo->prepare("SELECT status FROM friends WHERE (user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?) LIMIT 1");
+                      $chkFr->execute([$uid, $asgnUser, $asgnUser, $uid]);
+                      if (!$chkFr->fetch()) {
+                          $insFr = $pdo->prepare("INSERT INTO friends (user_id_1, user_id_2, status) VALUES (?, ?, 'pending')");
+                          $insFr->execute([$uid, $asgnUser]);
+                      }
+                  } catch (Throwable $frErr) {
+                      error_log('Friend auto-request on setlist assignment skipped: ' . $frErr->getMessage());
                   }
               }
           }

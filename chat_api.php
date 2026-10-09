@@ -458,19 +458,6 @@ if ($action === 'import_shared_setlist' && $method === 'POST') {
 
         $newName = $orig['name'] . ' (' . __('Պատճեն') . ')';
 
-        // Check if already reached limit
-        $stPlan = $pdo->prepare("SELECT plan_type FROM users WHERE id=? LIMIT 1");
-        $stPlan->execute([$uid]);
-        $plan = $stPlan->fetchColumn() ?: 'free';
-        if ($plan === 'free') {
-            $stCount = $pdo->prepare("SELECT COUNT(*) FROM setlists WHERE user_id=? AND status='active'");
-            $stCount->execute([$uid]);
-            $count = (int)$stCount->fetchColumn();
-            if ($count >= 3) {
-                out(["error" => "limit_reached", "message" => "Free plan allows up to 3 active setlists. Please upgrade to Pro."], 403);
-            }
-        }
-
         $pdo->beginTransaction();
 
         $stInsert = $pdo->prepare("INSERT INTO setlists (user_id, team_id, name, service_date, service_type, description) VALUES (?, NULL, ?, ?, ?, ?)");

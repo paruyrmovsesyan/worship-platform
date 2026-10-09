@@ -888,6 +888,8 @@ $activePage = 'errors';
 
           <select class="select-ctrl" id="filterEnv">
             <option value="all"><?= htmlspecialchars($t['env_all']) ?></option>
+            <option value="ios">🍏 iOS App</option>
+            <option value="android">🤖 Android App</option>
             <option value="app"><?= htmlspecialchars($t['env_app']) ?></option>
             <option value="web"><?= htmlspecialchars($t['env_web']) ?></option>
             <option value="server"><?= htmlspecialchars($t['env_server']) ?></option>

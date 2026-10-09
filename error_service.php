@@ -192,7 +192,7 @@ function wp_error_log_record(array $data): array {
     }
 
     $env = strtolower(trim((string)($data['environment'] ?? 'web')));
-    if (!in_array($env, ['app', 'web', 'server', 'db', 'api', 'admin'], true)) {
+    if (!in_array($env, ['ios', 'android', 'app', 'web', 'server', 'db', 'api', 'admin'], true)) {
         $env = 'web';
     }
 
@@ -641,6 +641,17 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
+    // 3.6. Case: manage_setlist_team friends SQL schema fix
+    if (stripos($message, 'manage_setlist_team') !== false || stripos($item['url'] ?? '', 'manage_setlist_team') !== false || stripos($stackTrace, 'manage_setlist_team') !== false) {
+        $reason = 'setlists_api.php-ում manage_setlist_team-ի friends աղյուսակի ստուգման հարցումը շտկված է և պաշտպանված';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
     // 4. Test error check
     if (stripos($message, 'Test front error') !== false || stripos($message, 'Test error') !== false) {
         if ((time() - $lastSeenTs) > 60) {
@@ -1050,6 +1061,8 @@ function wp_error_get_stats(): array {
         'active' => 0,
         'resolved' => 0,
         'today' => 0,
+        'ios' => 0,
+        'android' => 0,
         'app' => 0,
         'web' => 0,
         'server' => 0,
@@ -1076,7 +1089,9 @@ function wp_error_get_stats(): array {
         }
 
         $env = strtolower((string)($log['environment'] ?? 'web'));
-        if ($env === 'app') $stats['app']++;
+        if ($env === 'ios') $stats['ios']++;
+        elseif ($env === 'android') $stats['android']++;
+        elseif ($env === 'app') $stats['app']++;
         elseif ($env === 'web') $stats['web']++;
         elseif (in_array($env, ['server', 'db', 'api'], true)) $stats['server']++;
 

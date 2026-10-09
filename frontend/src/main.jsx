@@ -11,7 +11,10 @@ import './index.css'
 import './styles/LightTheme.css'
 
 const prepareNativeRuntime = Capacitor.isNativePlatform()
-  ? import('./utils/nativeNetwork.js').then(({ setupNativeNetwork }) => setupNativeNetwork())
+  ? Promise.all([
+      import('./utils/nativeNetwork.js').then(({ setupNativeNetwork }) => setupNativeNetwork()),
+      import('./utils/nativeCrashReporter.js').then(({ initNativeCrashReporter }) => initNativeCrashReporter()),
+    ])
   : Promise.resolve();
 
 prepareNativeRuntime.finally(() => {
