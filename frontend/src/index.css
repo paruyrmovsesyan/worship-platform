@@ -329,7 +329,38 @@ body.is-native .route-animate.native-tab-transition {
 
 body.is-native.native-tab-switching .route-animate.native-tab-transition {
   opacity: 1 !important;
-  animation: nativeTabEnter 210ms cubic-bezier(0.2, 0.8, 0.2, 1) both !important;
+  animation: none !important;
+  position: relative;
+  z-index: 9001;
+  min-height: 100dvh;
+  background: var(--color-bg, #05050A);
+}
+
+body.is-native.native-tab-switching main {
+  position: relative;
+  z-index: 9001;
+}
+
+body.is-native .native-tab-still-frame {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--color-bg, #05050A);
+  transform: none !important;
+  animation: none !important;
+  contain: paint;
+}
+
+body.is-native .route-animate.native-tab-still-frame {
+  animation: none !important;
+}
+
+body.is-native.native-tab-switching .animate-fade-in,
+body.is-native.native-tab-switching .mobile-hub.animate-fade-in {
+  animation: none !important;
+  opacity: 1 !important;
 }
 
 body.is-native .route-animate.native-push-transition {

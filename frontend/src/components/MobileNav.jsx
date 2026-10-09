@@ -37,6 +37,7 @@ export default function MobileNav() {
   const isLongPressReadyRef = useRef(false);
   const longPressTimerRef = useRef(null);
   const lastHoveredIndexRef = useRef(null);
+  const tabTransitionRef = useRef(null);
 
   useEffect(() => {
     const handleFocusIn = (e) => {
@@ -239,6 +240,7 @@ export default function MobileNav() {
   };
 
   const switchNativeTab = (path) => {
+    if (path === location.pathname || tabTransitionRef.current) return;
     const performNavigation = () => navigate(path, { replace: true });
     if (!isNativeApp) {
       performNavigation();
@@ -251,12 +253,82 @@ export default function MobileNav() {
     const direction = tabOrder.indexOf(normalizedNext) >= tabOrder.indexOf(normalizedCurrent)
       ? 'forward'
       : 'backward';
+    const currentRoute = document.querySelector('main .route-animate');
+    const outgoing = currentRoute?.cloneNode(true);
+    if (outgoing) {
+      outgoing.classList.add('native-tab-still-frame');
+      outgoing.setAttribute('aria-hidden', 'true');
+      if (window.scrollY > 0) {
+        outgoing.style.top = `${-window.scrollY}px`;
+        outgoing.style.height = `${window.innerHeight + window.scrollY}px`;
+      }
+      document.body.appendChild(outgoing);
+    }
+    tabTransitionRef.current = outgoing || true;
     document.body.classList.add('native-tab-switching', `native-tab-${direction}`);
     flushSync(performNavigation);
-    window.setTimeout(() => {
+    const incoming = document.querySelector('main .route-animate');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+      document.body.classList.contains('reduce-motion');
+    const animation = incoming?.animate([
+      { transform: `translate3d(${direction === 'forward' ? '100%' : '-100%'}, 0, 0)` },
+      { transform: 'translate3d(0, 0, 0)' },
+    ], {
+      duration: reducedMotion ? 0 : 290,
+      easing: 'cubic-bezier(0.32, 0.72, 0, 1)',
+    });
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      outgoing?.remove();
       document.body.classList.remove('native-tab-switching', `native-tab-${direction}`);
-    }, 240);
+      tabTransitionRef.current = null;
+    };
+    if (animation) animation.finished.then(finish, finish);
+    else finish();
+    window.setTimeout(finish, 450);
   };
+
+  useEffect(() => {
+    if (!isNativeApp || !['/', '/songs', '/chats', '/profile', '/login'].includes(location.pathname)) {
+      return undefined;
+    }
+    let start = null;
+    const isHorizontalScroller = (target) => {
+      for (let node = target; node && node !== document.body; node = node.parentElement) {
+        if (!(node instanceof HTMLElement)) continue;
+        const overflow = getComputedStyle(node).overflowX;
+        if ((overflow === 'auto' || overflow === 'scroll') && node.scrollWidth > node.clientWidth + 8) return true;
+      }
+      return false;
+    };
+    const onStart = (event) => {
+      if (event.touches.length !== 1 || tabTransitionRef.current ||
+        event.target.closest('input, textarea, select, button, a, [contenteditable], [data-no-swipe], .no-swipe-nav, .mobile-bottom-nav') ||
+        isHorizontalScroller(event.target)) return;
+      const touch = event.touches[0];
+      start = { x: touch.clientX, y: touch.clientY };
+    };
+    const onEnd = (event) => {
+      if (!start || event.changedTouches.length !== 1) return;
+      const touch = event.changedTouches[0];
+      const dx = touch.clientX - start.x;
+      const dy = touch.clientY - start.y;
+      start = null;
+      if (Math.abs(dx) < 80 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      const tabs = ['/', '/songs', '/chats', user ? '/profile' : '/login'];
+      const index = tabs.indexOf(location.pathname);
+      const target = tabs[index + (dx < 0 ? 1 : -1)];
+      if (target && guardPath(target)) switchNativeTab(target);
+    };
+    document.addEventListener('touchstart', onStart, { passive: true });
+    document.addEventListener('touchend', onEnd, { passive: true });
+    return () => {
+      document.removeEventListener('touchstart', onStart);
+      document.removeEventListener('touchend', onEnd);
+    };
+  }, [isNativeApp, location.pathname, user, guardPath]);
 
   const handleNavClick = (path, e) => {
     e?.preventDefault?.();
