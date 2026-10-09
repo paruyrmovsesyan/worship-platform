@@ -251,47 +251,11 @@ export default function MobileNav() {
     const direction = tabOrder.indexOf(normalizedNext) >= tabOrder.indexOf(normalizedCurrent)
       ? 'forward'
       : 'backward';
-    const currentRoute = document.querySelector('main .route-animate');
-    const routeSnapshot = currentRoute?.cloneNode(true);
-    let outgoingLayer = null;
-
-    if (routeSnapshot) {
-      outgoingLayer = document.createElement('div');
-      outgoingLayer.setAttribute('aria-hidden', 'true');
-      outgoingLayer.className = `native-tab-outgoing-layer is-${direction}`;
-      routeSnapshot.classList.add('native-tab-outgoing-content');
-      outgoingLayer.appendChild(routeSnapshot);
-      document.body.appendChild(outgoingLayer);
-    }
-
     document.body.classList.add('native-tab-switching', `native-tab-${direction}`);
     flushSync(performNavigation);
-
-    const startedAt = performance.now();
-    const revealWhenReady = () => {
-      const nextRoute = document.querySelector('main .route-animate');
-      const contentReady = Boolean(nextRoute?.firstElementChild);
-      const timedOut = performance.now() - startedAt > 4_000;
-
-      if (!contentReady && !timedOut) {
-        window.requestAnimationFrame(revealWhenReady);
-        return;
-      }
-
-      nextRoute?.classList.add('native-tab-content-ready');
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => {
-          outgoingLayer?.classList.add('is-leaving');
-          nextRoute?.classList.add('is-entering');
-        });
-      });
-      window.setTimeout(() => {
-        outgoingLayer?.remove();
-        nextRoute?.classList.remove('native-tab-content-ready', 'is-entering');
-        document.body.classList.remove('native-tab-switching', `native-tab-${direction}`);
-      }, 330);
-    };
-    window.requestAnimationFrame(revealWhenReady);
+    window.setTimeout(() => {
+      document.body.classList.remove('native-tab-switching', `native-tab-${direction}`);
+    }, 240);
   };
 
   const handleNavClick = (path, e) => {
