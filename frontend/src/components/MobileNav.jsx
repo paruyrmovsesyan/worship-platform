@@ -240,20 +240,37 @@ export default function MobileNav() {
 
   const switchNativeTab = (path) => {
     const performNavigation = () => navigate(path, { replace: true });
-    if (!isNativeApp || typeof document.startViewTransition !== 'function') {
+    if (!isNativeApp) {
       performNavigation();
       return;
     }
 
-    document.documentElement.classList.add('native-tab-view-transition');
-    const transition = document.startViewTransition(() => {
-      // The View Transition API must capture the updated React tree inside its
-      // callback; flushSync prevents it from snapshotting the same tab twice.
-      flushSync(performNavigation);
+    // WKWebView support for the View Transition API varies by iOS version.
+    // Keep a visual copy of the outgoing route instead, then render the next
+    // tab beneath it. This guarantees a real two-layer transition everywhere.
+    const currentRoute = document.querySelector('main .route-animate');
+    const rect = currentRoute?.getBoundingClientRect();
+    const outgoingLayer = currentRoute?.cloneNode(true);
+
+    if (outgoingLayer && rect) {
+      outgoingLayer.removeAttribute('ref');
+      outgoingLayer.setAttribute('aria-hidden', 'true');
+      outgoingLayer.className = 'native-tab-outgoing-layer';
+      Object.assign(outgoingLayer.style, {
+        position: 'fixed',
+        top: `${rect.top}px`,
+        left: `${rect.left}px`,
+        width: `${rect.width}px`,
+        height: `${rect.height}px`,
+      });
+      document.body.appendChild(outgoingLayer);
+    }
+
+    flushSync(performNavigation);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => outgoingLayer?.classList.add('is-leaving'));
     });
-    transition.finished.finally(() => {
-      document.documentElement.classList.remove('native-tab-view-transition');
-    });
+    window.setTimeout(() => outgoingLayer?.remove(), 360);
   };
 
   const handleNavClick = (path, e) => {

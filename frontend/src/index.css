@@ -324,7 +324,7 @@ body.is-native .route-animate {
 }
 
 body.is-native .route-animate.native-tab-transition {
-  animation: nativeTabEnter 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both !important;
+  animation: nativeTabEnter 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both !important;
 }
 
 body.is-native .route-animate.native-push-transition {
@@ -335,42 +335,21 @@ body.is-native .route-animate.native-pop-transition {
   animation: nativePopEnter 280ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
 }
 
-/* Real two-layer tab transition: WebKit snapshots both the outgoing and the
-   incoming React trees while the fixed native dock stays visually stable. */
-html.native-tab-view-transition::view-transition-old(root) {
-  animation: nativeTabOld 210ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-html.native-tab-view-transition::view-transition-new(root) {
-  animation: nativeTabNew 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-body.is-native .mobile-bottom-nav {
-  view-transition-name: native-bottom-dock;
-}
-
-html.native-tab-view-transition::view-transition-old(native-bottom-dock) {
-  opacity: 0;
-  animation: none;
-}
-
-html.native-tab-view-transition::view-transition-new(native-bottom-dock) {
+body.is-native .native-tab-outgoing-layer {
+  z-index: 9000;
+  overflow: hidden;
+  pointer-events: none;
   opacity: 1;
-  animation: none;
+  background: var(--color-bg, #05050A);
+  transform: scale(1) translateZ(0);
+  transform-origin: 50% 50%;
+  transition: opacity 260ms ease, transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: opacity, transform;
 }
 
-html.native-tab-view-transition body.is-native .route-animate.native-tab-transition {
-  animation: none !important;
-}
-
-@keyframes nativeTabOld {
-  from { opacity: 1; transform: scale(1); }
-  to { opacity: 0.56; transform: scale(0.985); }
-}
-
-@keyframes nativeTabNew {
-  from { opacity: 0.42; transform: scale(1.012); }
-  to { opacity: 1; transform: scale(1); }
+body.is-native .native-tab-outgoing-layer.is-leaving {
+  opacity: 0;
+  transform: scale(0.965) translateZ(0);
 }
 
 body.is-native .animate-fade-in,
