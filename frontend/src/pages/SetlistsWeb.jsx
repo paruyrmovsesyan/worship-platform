@@ -154,6 +154,27 @@ export default function SetlistsWeb() {
 
   useEffect(() => {
     if (!user) return undefined;
+    const handleSync = () => {
+      fetchSetlists();
+      fetchTeams();
+    };
+
+    window.addEventListener('focus', handleSync);
+    window.addEventListener('worship:setlists-changed', handleSync);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') handleSync();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleSync);
+      window.removeEventListener('worship:setlists-changed', handleSync);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [user, fetchSetlists, fetchTeams]);
+
+  useEffect(() => {
+    if (!user) return undefined;
     const openCreateModal = () => setShowCreateModal(true);
     window.addEventListener('worship:create-setlist', openCreateModal);
     return () => window.removeEventListener('worship:create-setlist', openCreateModal);
@@ -259,7 +280,9 @@ export default function SetlistsWeb() {
     e.stopPropagation();
     setActiveMenuId(null);
     const listId = typeof listOrId === 'object' ? listOrId.id : listOrId;
-    const isOwner = typeof listOrId === 'object' ? listOrId.access_role === 'owner' : true;
+    const isOwner = typeof listOrId === 'object' 
+      ? (Boolean(listOrId.is_owner) || Number(listOrId.user_id) === Number(user?.id) || listOrId.access_role === 'owner') 
+      : true;
 
     const confirmMsg = isOwner
       ? t('setlists.confirmDelete', 'Վստա՞հ եք, որ ցանկանում եք ջնջել այս երգացանկը:')

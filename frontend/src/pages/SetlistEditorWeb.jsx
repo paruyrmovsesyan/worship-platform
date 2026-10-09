@@ -240,10 +240,39 @@ export default function SetlistEditorWeb() {
       });
   };
 
+  const fetchTeam = useCallback(() => {
+    if (!id) return;
+    fetch(`/setlists_api.php?action=get_setlist_team&setlist_id=${id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.ok) setTeam(data.team || []);
+      })
+      .catch(() => {});
+  }, [id]);
+
   useEffect(() => {
     if (authLoading) return;
     fetchSetlist();
-  }, [id, authLoading]);
+    fetchTeam();
+  }, [id, authLoading, fetchTeam]);
+
+  useEffect(() => {
+    const handleSync = () => {
+      fetchSetlist();
+      fetchTeam();
+    };
+    window.addEventListener('focus', handleSync);
+    window.addEventListener('worship:setlists-changed', handleSync);
+    const handleVis = () => {
+      if (document.visibilityState === 'visible') handleSync();
+    };
+    document.addEventListener('visibilitychange', handleVis);
+    return () => {
+      window.removeEventListener('focus', handleSync);
+      window.removeEventListener('worship:setlists-changed', handleSync);
+      document.removeEventListener('visibilitychange', handleVis);
+    };
+  }, [fetchTeam]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -451,7 +480,7 @@ export default function SetlistEditorWeb() {
     try {
       const [teamRes, friendsRes] = await Promise.all([
         fetch(`/setlists_api.php?action=get_setlist_team&setlist_id=${id}`),
-        fetch('/friends_api.php?action=list_friends')
+        fetch('/friends_api.php?action=get_friends')
       ]);
       const [teamData, friendsData] = await Promise.all([teamRes.json(), friendsRes.json()]);
       if (teamData.ok) setTeam(teamData.team || []);
@@ -517,6 +546,7 @@ export default function SetlistEditorWeb() {
       }
 
       setIsTeamModalOpen(false);
+      window.dispatchEvent(new CustomEvent('worship:setlists-changed', { detail: { setlist_id: id } }));
       alert(language === 'am' ? '✓ Թիմը հաջողությամբ պահպանվեց, նոր անդամները ծանուցվեցին' : '✓ Team successfully saved and new members notified');
     } catch (err) {
       console.error(err);

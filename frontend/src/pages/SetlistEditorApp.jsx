@@ -300,6 +300,31 @@ export default function SetlistEditorApp() {
     fetchSetlist();
   }, [id, authLoading]);
 
+  useEffect(() => {
+    const handleSync = () => {
+      fetchSetlist();
+      if (id) {
+        fetch(`/setlists_api.php?action=get_setlist_team&setlist_id=${id}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.ok) setTeam(data.team || []);
+          })
+          .catch(() => {});
+      }
+    };
+    window.addEventListener('focus', handleSync);
+    window.addEventListener('worship:setlists-changed', handleSync);
+    const handleVis = () => {
+      if (document.visibilityState === 'visible') handleSync();
+    };
+    document.addEventListener('visibilitychange', handleVis);
+    return () => {
+      window.removeEventListener('focus', handleSync);
+      window.removeEventListener('worship:setlists-changed', handleSync);
+      document.removeEventListener('visibilitychange', handleVis);
+    };
+  }, [id]);
+
   // Handle /edit route
   useEffect(() => {
     if (!isEditRoute) return;
@@ -1056,6 +1081,7 @@ export default function SetlistEditorApp() {
       setTeam(verifyData.team || []);
 
       setIsTeamModalOpen(false);
+      window.dispatchEvent(new CustomEvent('worship:setlists-changed', { detail: { setlist_id: id } }));
       showToast(language === 'am'
         ? '✓ Թիմը պահպանվեց, նոր անդամները ծանուցվեցին'
         : '✓ Team saved and new members notified');

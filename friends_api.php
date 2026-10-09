@@ -121,7 +121,7 @@ if ($action === 'search_users' && $method === 'GET') {
     out(["ok" => true, "users" => $users]);
 }
 
-if (($action === 'list' || $action === 'get_friends') && $method === 'GET') {
+if (($action === 'list' || $action === 'get_friends' || $action === 'list_friends') && $method === 'GET') {
     $st = $pdo->prepare("
         SELECT f.user_id_1, f.user_id_2, f.status,
                IF(f.user_id_1 = :uid1, u2.id, u1.id) as friend_id,
@@ -148,7 +148,7 @@ if (($action === 'list' || $action === 'get_friends') && $method === 'GET') {
     ]);
     $list = $st->fetchAll(PDO::FETCH_ASSOC);
 
-    if ($action === 'get_friends') {
+    if ($action === 'get_friends' || $action === 'list_friends') {
         $list = array_values(array_filter($list, static function ($row) {
             return (string)($row['status'] ?? '') === 'accepted';
         }));

@@ -162,6 +162,30 @@ export default function SetlistsApp() {
       .catch(() => {});
   }, [user, fetchSetlists]);
 
+  useEffect(() => {
+    if (!user) return undefined;
+    const handleSync = () => {
+      fetchSetlists();
+      fetch('/teams_api.php?action=get_teams')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => setTeams(data?.ok ? data.teams : []))
+        .catch(() => {});
+    };
+
+    window.addEventListener('focus', handleSync);
+    window.addEventListener('worship:setlists-changed', handleSync);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') handleSync();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleSync);
+      window.removeEventListener('worship:setlists-changed', handleSync);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [user, fetchSetlists]);
+
   // Close menus on outside click
   useEffect(() => {
     const handleDocClick = () => setActiveMenuId(null);
@@ -225,7 +249,9 @@ export default function SetlistsApp() {
       return;
     }
     const listId = typeof listOrId === 'object' ? listOrId.id : listOrId;
-    const isOwner = typeof listOrId === 'object' ? listOrId.access_role === 'owner' : true;
+    const isOwner = typeof listOrId === 'object' 
+      ? (Boolean(listOrId.is_owner) || Number(listOrId.user_id) === Number(user?.id) || listOrId.access_role === 'owner') 
+      : true;
 
     const confirmMsg = isOwner
       ? (t('setlists.confirmDelete') ||

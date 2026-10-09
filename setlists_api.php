@@ -309,10 +309,24 @@ if ($action === 'get_setlists' && $method === 'GET') {
           NULL AS access_expires_at,
           NULL AS owner_name,
           NULL AS owner_email,
-          'owner' AS access_role,
+          CASE
+            WHEN s.team_id IS NOT NULL AND s.team_id > 0 THEN 'team'
+            WHEN (SELECT COUNT(*) FROM setlist_assignments a WHERE a.setlist_id = s.id) > 0 THEN 'team'
+            ELSE 'owner'
+          END AS access_role,
+          1 AS is_owner,
           1 AS can_edit,
-          (SELECT COUNT(*) FROM setlist_items i WHERE i.setlist_id = s.id) AS items_count
+          (SELECT COUNT(*) FROM setlist_items i WHERE i.setlist_id = s.id) AS items_count,
+          COALESCE(
+            t.name,
+            CASE 
+              WHEN (SELECT COUNT(*) FROM setlist_assignments a WHERE a.setlist_id = s.id) > 0 
+              THEN CONCAT('Թիմ (', (SELECT COUNT(*) FROM setlist_assignments a WHERE a.setlist_id = s.id), ')')
+              ELSE NULL
+            END
+          ) AS team_name
         FROM setlists s
+        LEFT JOIN teams t ON t.id = s.team_id
         WHERE s.user_id = ? AND s.status = ?
         ORDER BY s.updated_at DESC, s.id DESC
       ");
@@ -325,11 +339,25 @@ if ($action === 'get_setlists' && $method === 'GET') {
           NULL AS access_expires_at,
           NULL AS owner_name,
           NULL AS owner_email,
-          'owner' AS access_role,
+          CASE
+            WHEN s.team_id IS NOT NULL AND s.team_id > 0 THEN 'team'
+            WHEN (SELECT COUNT(*) FROM setlist_assignments a WHERE a.setlist_id = s.id) > 0 THEN 'team'
+            ELSE 'owner'
+          END AS access_role,
+          1 AS is_owner,
           1 AS can_edit,
-          (SELECT COUNT(*) FROM setlist_items i WHERE i.setlist_id = s.id) AS items_count
+          (SELECT COUNT(*) FROM setlist_items i WHERE i.setlist_id = s.id) AS items_count,
+          COALESCE(
+            t.name,
+            CASE 
+              WHEN (SELECT COUNT(*) FROM setlist_assignments a WHERE a.setlist_id = s.id) > 0 
+              THEN CONCAT('Թիմ (', (SELECT COUNT(*) FROM setlist_assignments a WHERE a.setlist_id = s.id), ' անդամ)')
+              ELSE NULL
+            END
+          ) AS team_name
         FROM setlists s
-        WHERE s.user_id = ?
+        LEFT JOIN teams t ON t.id = s.team_id
+        WHERE s.user_id = ? AND (s.status = 'active' OR s.status IS NULL)
       ");
       $st->execute([$uid]);
       $rows = $st->fetchAll(PDO::FETCH_ASSOC);
@@ -451,6 +479,7 @@ if ($action === 'get_setlists' && $method === 'GET') {
       $r['items_count'] = (int)$r['items_count'];
       $r['access_id'] = $r['access_id'] !== null ? (int)$r['access_id'] : null;
       $r['can_edit'] = (int)($r['can_edit'] ?? 0);
+      $r['is_owner'] = (int)($r['user_id'] === $uid ? 1 : 0);
     }
     unset($r);
 
@@ -1739,10 +1768,22 @@ if ($action === 'get_public_setlist' && $method === 'GET') {
     'song_title' => 'setlists.public.song_title',
   ], $lang);
 
+  $stTeam = $pdo->prepare("
+      SELECT a.id, a.user_id, a.role_name, a.status, 
+             COALESCE(NULLIF(TRIM(u.name), ''), u.username, u.email) as user_name,
+             u.avatar_gradient
+      FROM setlist_assignments a
+      JOIN users u ON a.user_id = u.id
+      WHERE a.setlist_id = ?
+  ");
+  $stTeam->execute([$setlist_id]);
+  $team = $stTeam->fetchAll(PDO::FETCH_ASSOC);
+
   out([
     "ok" => true,
     "setlist" => $setlist,
-    "items" => $items
+    "items" => $items,
+    "team" => $team
   ]);
 }
 
