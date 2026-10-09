@@ -299,17 +299,17 @@ body.is-native .hub-header {
    occasionally retain that compositor frame, but keep a subtle app-like
    entrance so navigation and content changes do not feel abrupt. */
 @keyframes nativeTabEnter {
-  from { opacity: 0.9; transform: scale(0.996); }
+  from { opacity: 0.72; transform: scale(0.985); }
   to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes nativePushEnter {
-  from { opacity: 0.96; transform: translate3d(18px, 0, 0); }
+  from { opacity: 0.86; transform: translate3d(42px, 0, 0); }
   to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
 @keyframes nativePopEnter {
-  from { opacity: 0.96; transform: translate3d(-14px, 0, 0); }
+  from { opacity: 0.86; transform: translate3d(-32px, 0, 0); }
   to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
@@ -324,15 +324,15 @@ body.is-native .route-animate {
 }
 
 body.is-native .route-animate.native-tab-transition {
-  animation: nativeTabEnter 150ms ease-out both !important;
+  animation: nativeTabEnter 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both !important;
 }
 
 body.is-native .route-animate.native-push-transition {
-  animation: nativePushEnter 230ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
+  animation: nativePushEnter 300ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
 }
 
 body.is-native .route-animate.native-pop-transition {
-  animation: nativePopEnter 210ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
+  animation: nativePopEnter 280ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
 }
 
 body.is-native .animate-fade-in,
