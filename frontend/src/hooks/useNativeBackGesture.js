@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { flushSync } from 'react-dom';
 
 const EDGE_WIDTH = 32;
 const MIN_SWIPE_DISTANCE = 58;
@@ -36,6 +37,50 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
       tracking = false;
     };
 
+    const performLayeredBack = () => {
+      const currentRoute = document.querySelector('main .route-animate');
+      const rect = currentRoute?.getBoundingClientRect();
+      const outgoingLayer = currentRoute?.cloneNode(true);
+
+      if (outgoingLayer && rect) {
+        outgoingLayer.setAttribute('aria-hidden', 'true');
+        outgoingLayer.className = 'native-pop-outgoing-layer';
+        Object.assign(outgoingLayer.style, {
+          position: 'fixed',
+          top: `${rect.top}px`,
+          left: `${rect.left}px`,
+          width: `${rect.width}px`,
+          height: `${rect.height}px`,
+        });
+        document.body.appendChild(outgoingLayer);
+      }
+
+      document.body.classList.add('native-pop-switching');
+      flushSync(() => navigate(fallbackPath(pathname, user), { replace: true }));
+
+      const startedAt = performance.now();
+      const revealWhenReady = () => {
+        const nextRoute = document.querySelector('main .route-animate');
+        const ready = Boolean(nextRoute?.firstElementChild);
+        const timedOut = performance.now() - startedAt > 4_000;
+        if (!ready && !timedOut) {
+          window.requestAnimationFrame(revealWhenReady);
+          return;
+        }
+
+        nextRoute?.classList.add('native-pop-content-ready');
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => outgoingLayer?.classList.add('is-leaving'));
+        });
+        window.setTimeout(() => {
+          outgoingLayer?.remove();
+          nextRoute?.classList.remove('native-pop-content-ready');
+          document.body.classList.remove('native-pop-switching');
+        }, 360);
+      };
+      window.requestAnimationFrame(revealWhenReady);
+    };
+
     const onTouchStart = (event) => {
       if (event.touches.length !== 1 || isBlockedTarget(event.target)) return;
       const touch = event.touches[0];
@@ -55,17 +100,21 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
       if (dx < MIN_SWIPE_DISTANCE || dx < Math.abs(dy) * DIRECTION_RATIO) return;
       // A deterministic parent route avoids WKWebView's blank same-document
       // history snapshots and cannot accidentally traverse primary app tabs.
-      navigate(fallbackPath(pathname, user), { replace: true });
+      performLayeredBack();
     };
+
+    const onBackRequest = () => performLayeredBack();
 
     document.addEventListener('touchstart', onTouchStart, { passive: true, capture: true });
     document.addEventListener('touchend', onTouchEnd, { passive: true, capture: true });
     document.addEventListener('touchcancel', reset, { passive: true, capture: true });
+    window.addEventListener('wp-native-page-back', onBackRequest);
 
     return () => {
       document.removeEventListener('touchstart', onTouchStart, true);
       document.removeEventListener('touchend', onTouchEnd, true);
       document.removeEventListener('touchcancel', reset, true);
+      window.removeEventListener('wp-native-page-back', onBackRequest);
     };
   }, [enabled, navigate, pathname, user]);
 }
