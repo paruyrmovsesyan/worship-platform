@@ -992,6 +992,15 @@ export default function SetlistEditorApp() {
     if (team.some(tItem => Number(tItem.user_id) === userId)) return;
     setTeam(prev => [...prev, { user_id: userId, user_name: userName, role_name: 'Վոկալ' }]);
     triggerHaptic('Light');
+
+    // Automatically send a friend request if not already friends
+    fetch('/friends_api.php?action=add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId })
+    }).catch(() => {});
+
+    showToast(language === 'am' ? `✓ ${userName} ավելացվեց (ընկերության հայտը ուղարկված է)` : `✓ Added ${userName} (friend request sent)`);
   };
 
   const removeTeamMember = (userId) => {

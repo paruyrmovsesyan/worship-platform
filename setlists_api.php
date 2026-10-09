@@ -1754,6 +1754,15 @@ if ($action === 'manage_setlist_team' && $method === 'POST') {
               if (!in_array($asgnUser, $oldUsers)) {
                   $newUsers[] = $asgnUser;
               }
+              // Specifically for setlists: ensure friend request exists if not already connected
+              if ($asgnUser !== $uid) {
+                  $chkFr = $pdo->prepare("SELECT id FROM friends WHERE (user_id_1 = ? AND user_id_2 = ?) OR (user_id_1 = ? AND user_id_2 = ?)");
+                  $chkFr->execute([$uid, $asgnUser, $asgnUser, $uid]);
+                  if (!$chkFr->fetch()) {
+                      $insFr = $pdo->prepare("INSERT INTO friends (user_id_1, user_id_2, status) VALUES (?, ?, 'pending')");
+                      $insFr->execute([$uid, $asgnUser]);
+                  }
+              }
           }
       }
       
