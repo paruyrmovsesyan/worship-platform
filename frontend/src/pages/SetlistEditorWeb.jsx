@@ -65,6 +65,7 @@ export default function SetlistEditorWeb() {
   
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [team, setTeam] = useState([]);
+  const [teamChatId, setTeamChatId] = useState(null);
   const [teamSaving, setTeamSaving] = useState(false);
   const [friendsList, setFriendsList] = useState([]);
   const [friendsLoading, setFriendsLoading] = useState(false);
@@ -231,6 +232,8 @@ export default function SetlistEditorWeb() {
         setSetlistData(data.setlist);
         setItems(data.items || []);
         if (Array.isArray(data.team)) setTeam(data.team);
+        if (data.chat_id) setTeamChatId(data.chat_id);
+        else if (data.chat_id === 0) setTeamChatId(null);
         setLoading(false);
       })
       .catch(err => {
@@ -245,7 +248,11 @@ export default function SetlistEditorWeb() {
     fetch(`/setlists_api.php?action=get_setlist_team&setlist_id=${id}`)
       .then(res => res.json())
       .then(data => {
-        if (data.ok) setTeam(data.team || []);
+        if (data.ok) {
+          setTeam(data.team || []);
+          if (data.chat_id) setTeamChatId(data.chat_id);
+          else if (data.chat_id === 0) setTeamChatId(null);
+        }
       })
       .catch(() => {});
   }, [id]);
@@ -483,7 +490,11 @@ export default function SetlistEditorWeb() {
         fetch('/friends_api.php?action=get_friends')
       ]);
       const [teamData, friendsData] = await Promise.all([teamRes.json(), friendsRes.json()]);
-      if (teamData.ok) setTeam(teamData.team || []);
+      if (teamData.ok) {
+        setTeam(teamData.team || []);
+        if (teamData.chat_id) setTeamChatId(teamData.chat_id);
+        else if (teamData.chat_id === 0) setTeamChatId(null);
+      }
       if (friendsData.ok) setFriendsList(friendsData.friends || []);
     } catch (err) {
       console.error(err);
@@ -537,17 +548,20 @@ export default function SetlistEditorWeb() {
       if (!res.ok || !data.ok) {
         throw new Error(data.error || 'Failed to save team');
       }
+      if (data.chat_id) setTeamChatId(data.chat_id);
 
       // Re-fetch to ensure fresh synchronized state
       const verifyRes = await fetch(`/setlists_api.php?action=get_setlist_team&setlist_id=${id}`);
       const verifyData = await verifyRes.json();
       if (verifyData.ok) {
         setTeam(verifyData.team || []);
+        if (verifyData.chat_id) setTeamChatId(verifyData.chat_id);
+        else if (verifyData.chat_id === 0) setTeamChatId(null);
       }
 
       setIsTeamModalOpen(false);
       window.dispatchEvent(new CustomEvent('worship:setlists-changed', { detail: { setlist_id: id } }));
-      alert(language === 'am' ? '✓ Թիմը հաջողությամբ պահպանվեց, նոր անդամները ծանուցվեցին' : '✓ Team successfully saved and new members notified');
+      alert(language === 'am' ? '✓ Թիմը հաջողությամբ պահպանվեց, նոր անդամները ծանուցվեցին խմբային չաթում' : '✓ Team successfully saved and notified in team group chat');
     } catch (err) {
       console.error(err);
       alert(language === 'am' ? `Չհաջողվեց պահպանել թիմը․ ${err.message}` : `Could not save team: ${err.message}`);
@@ -896,6 +910,17 @@ export default function SetlistEditorWeb() {
                   👥 {team.length} {t('setlists.teamMembersCount', 'թիմի անդամ')}
                 </button>
               )}
+              {teamChatId && (
+                <button
+                  type="button"
+                  className="sle-stat-chip sle-stat-chip--clickable"
+                  onClick={() => navigate(`/chat/${teamChatId}`)}
+                  style={{ color: '#818cf8', borderColor: 'rgba(129, 140, 248, 0.4)' }}
+                  title="Բացել թիմային չաթը"
+                >
+                  💬 Թիմի չաթ
+                </button>
+              )}
               {isOwner && (
                 <>
                   <span className="sle-stat-chip" title={t('setlists.viewsCountTooltip', 'Դիտումների քանակ հղումով')}>
@@ -924,6 +949,18 @@ export default function SetlistEditorWeb() {
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
               Թիմ {team.length > 0 ? `(${team.length})` : ''}
             </button>
+            {teamChatId && (
+              <button
+                type="button"
+                className="btn btn-secondary sle-btn"
+                onClick={() => navigate(`/chat/${teamChatId}`)}
+                style={{ color: '#818cf8', borderColor: 'rgba(129, 140, 248, 0.4)' }}
+                title="Բացել թիմային չաթը"
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                Թիմի չաթ
+              </button>
+            )}
             <button className="btn btn-secondary sle-btn" onClick={addSection}>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12h16M4 6h16M4 18h16"></path></svg>
               Ավելացնել Բաժին
@@ -1522,6 +1559,43 @@ export default function SetlistEditorWeb() {
                     })}
                   </div>
                 )}
+
+                {teamChatId && (
+                  <div style={{
+                    marginTop: '14px',
+                    padding: '12px 14px',
+                    background: 'rgba(99, 102, 241, 0.08)',
+                    border: '1px solid rgba(99, 102, 241, 0.25)',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '10px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '1.3rem' }}>💬</span>
+                      <div>
+                        <div style={{ color: '#fff', fontSize: '0.92rem', fontWeight: 600 }}>Թիմային Չաթ</div>
+                        <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.78rem' }}>Խմբային քննարկում թիմի հետ</div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="sl-btn sl-btn-secondary"
+                      style={{ fontSize: '0.82rem', padding: '6px 14px', color: '#818cf8', borderColor: 'rgba(129, 140, 248, 0.4)' }}
+                      onClick={() => {
+                        setIsTeamModalOpen(false);
+                        navigate(`/chat/${teamChatId}`);
+                      }}
+                    >
+                      Բացել չաթը ➔
+                    </button>
+                  </div>
+                )}
+
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)', marginTop: '12px', lineHeight: 1.4 }}>
+                  💡 Թիմի համար ավտոմատ ստեղծվում է խմբային չաթ, որտեղ բոլոր անդամները կստանան երգացանկը:
+                </div>
               </div>
             </div>
             

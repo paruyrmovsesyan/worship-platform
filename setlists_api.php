@@ -262,6 +262,11 @@ function ensureTeamArchitectureUpdates(PDO $pdo): void {
   try {
       $pdo->exec("ALTER TABLE songs ADD COLUMN team_id INT UNSIGNED NULL DEFAULT NULL AFTER id");
   } catch (Exception $e) {}
+  // Add setlist_id to chats for team group chats
+  try {
+      $pdo->exec("ALTER TABLE chats ADD COLUMN setlist_id INT UNSIGNED NULL DEFAULT NULL");
+      $pdo->exec("ALTER TABLE chats ADD INDEX idx_chats_setlist (setlist_id)");
+  } catch (Throwable $e) {}
 }
 ensureTeamArchitectureUpdates($pdo);
 
@@ -755,6 +760,10 @@ if ($action === 'update_setlist' && $method === 'POST') {
     WHERE id=?
   ");
   $st->execute([$name, $description, $service_date, $service_type, $setlist_id]);
+
+  try {
+    $pdo->prepare("UPDATE chats SET name = ? WHERE type = 'group' AND setlist_id = ?")->execute(["«{$name}» (Թիմ)", $setlist_id]);
+  } catch (Throwable $chatUpdateErr) {}
 
   out(["ok" => true]);
 }
@@ -1779,11 +1788,19 @@ if ($action === 'get_public_setlist' && $method === 'GET') {
   $stTeam->execute([$setlist_id]);
   $team = $stTeam->fetchAll(PDO::FETCH_ASSOC);
 
+  $chatId = 0;
+  try {
+    $stChat = $pdo->prepare("SELECT id FROM chats WHERE type = 'group' AND setlist_id = ? LIMIT 1");
+    $stChat->execute([$setlist_id]);
+    $chatId = (int)($stChat->fetchColumn() ?: 0);
+  } catch (Throwable $e) {}
+
   out([
     "ok" => true,
     "setlist" => $setlist,
     "items" => $items,
-    "team" => $team
+    "team" => $team,
+    "chat_id" => $chatId
   ]);
 }
 
@@ -1804,8 +1821,15 @@ if ($action === 'get_setlist_team' && $method === 'GET') {
   ");
   $st->execute([$setlist_id]);
   $team = $st->fetchAll(PDO::FETCH_ASSOC);
+
+  $chatId = 0;
+  try {
+    $stChat = $pdo->prepare("SELECT id FROM chats WHERE type = 'group' AND setlist_id = ? LIMIT 1");
+    $stChat->execute([$setlist_id]);
+    $chatId = (int)($stChat->fetchColumn() ?: 0);
+  } catch (Throwable $e) {}
   
-  out(["ok" => true, "team" => $team]);
+  out(["ok" => true, "team" => $team, "chat_id" => $chatId]);
 }
 
 /* MANAGE SETLIST TEAM */
@@ -1826,11 +1850,12 @@ if ($action === 'manage_setlist_team' && $method === 'POST') {
       // Keep old users to see who is new
       $oldSt = $pdo->prepare("SELECT user_id FROM setlist_assignments WHERE setlist_id = ?");
       $oldSt->execute([$setlist_id]);
-      $oldUsers = $oldSt->fetchAll(PDO::FETCH_COLUMN);
+      $oldUsers = array_map('intval', $oldSt->fetchAll(PDO::FETCH_COLUMN));
 
       $pdo->prepare("DELETE FROM setlist_assignments WHERE setlist_id = ?")->execute([$setlist_id]);
       
       $ins = $pdo->prepare("INSERT INTO setlist_assignments (setlist_id, user_id, role_name) VALUES (?, ?, ?)");
+      $allTeamUserIds = [];
       $newUsersInfo = [];
       $newUsers = [];
       foreach ($d['team'] as $t) {
@@ -1838,7 +1863,8 @@ if ($action === 'manage_setlist_team' && $method === 'POST') {
           $asgnRole = normalizeNullable($t['role_name'] ?? '');
           if ($asgnUser > 0) {
               $ins->execute([$setlist_id, $asgnUser, $asgnRole]);
-              if (!in_array($asgnUser, $oldUsers)) {
+              $allTeamUserIds[] = $asgnUser;
+              if (!in_array($asgnUser, $oldUsers, true)) {
                   $newUsers[] = $asgnUser;
                   $newUsersInfo[] = [
                       'id' => $asgnUser,
@@ -1861,67 +1887,15 @@ if ($action === 'manage_setlist_team' && $method === 'POST') {
           }
       }
       
-      $pdo->commit();
+      $allTeamUserIds = array_values(array_unique($allTeamUserIds));
 
-      // Automatically send direct chat message, in-app notification, and push to every newly assigned member
-      $notificationResults = [];
-      if (!empty($newUsersInfo)) {
-          $setlistName = trim((string)($setlist['name'] ?? 'Երգացանկ'));
-          $senderName = trim((string)($_SESSION['name'] ?? $_SESSION['username'] ?? ''));
-          if ($senderName === '') {
-              $senderSt = $pdo->prepare("SELECT COALESCE(NULLIF(name, ''), NULLIF(username, ''), email) FROM users WHERE id = ? LIMIT 1");
-              $senderSt->execute([$uid]);
-              $senderName = trim((string)$senderSt->fetchColumn()) ?: 'Worship Platform';
-          }
-
-          require_once __DIR__ . '/push_service.php';
-          $notifSt = $pdo->prepare("
-              INSERT INTO user_notifications (user_id, sender_id, type, content, action_link)
-              VALUES (?, ?, 'setlist_assignment', ?, ?)
-          ");
-
-          foreach ($newUsersInfo as $member) {
-              $newUserId = (int)$member['id'];
-              $memberRole = (string)$member['role'];
-              if ($newUserId <= 0 || $newUserId === $uid) continue;
-
-              $roleText = $memberRole !== '' ? " որպես «{$memberRole}»" : '';
-              $chatMessageText = "🔔 Դուք ավելացվել եք «{$setlistName}» երգացանկի թիմում{$roleText}։";
-              $chatId = 0;
-
-              // 1. Ensure direct chat exists between $uid and $newUserId
+      // Grant setlist access to all team members
+      foreach ($d['team'] as $t) {
+          $asgnUser = (int)($t['user_id'] ?? 0);
+          $asgnRole = (string)($t['role_name'] ?? '');
+          if ($asgnUser > 0 && $asgnUser !== $uid) {
+              $canEditRole = ($asgnRole === 'Առաջնորդ');
               try {
-                  $stChat = $pdo->prepare("
-                      SELECT c.id FROM chats c
-                      JOIN chat_participants cp1 ON cp1.chat_id = c.id AND cp1.user_id = ?
-                      JOIN chat_participants cp2 ON cp2.chat_id = c.id AND cp2.user_id = ?
-                      WHERE c.type = 'direct'
-                      LIMIT 1
-                  ");
-                  $stChat->execute([$uid, $newUserId]);
-                  $chatId = (int)($stChat->fetchColumn() ?: 0);
-
-                  if ($chatId <= 0) {
-                      $stInsChat = $pdo->prepare("INSERT INTO chats (type, created_by, created_at) VALUES ('direct', ?, NOW())");
-                      $stInsChat->execute([$uid]);
-                      $chatId = (int)$pdo->lastInsertId();
-
-                      $stInsPart = $pdo->prepare("INSERT INTO chat_participants (chat_id, user_id) VALUES (?, ?), (?, ?)");
-                      $stInsPart->execute([$chatId, $uid, $chatId, $newUserId]);
-                  }
-
-                  // 2. Insert direct chat message with attached setlist_id!
-                  $stMsg = $pdo->prepare("
-                      INSERT INTO chat_messages (chat_id, user_id, message, setlist_id, created_at)
-                      VALUES (?, ?, ?, ?, NOW())
-                  ");
-                  $stMsg->execute([$chatId, $uid, $chatMessageText, $setlist_id]);
-
-                  // Make sure chat is visible for both users
-                  $pdo->prepare("UPDATE chat_participants SET cleared_at = NULL WHERE chat_id = ?")->execute([$chatId]);
-
-                  // 3. Grant access to setlist
-                  $canEditRole = ($memberRole === 'Առաջնորդ');
                   $stAccess = $pdo->prepare("
                       INSERT INTO setlist_user_access 
                         (setlist_id, owner_user_id, grantee_user_id, grantee_email, expires_at, revoked_at, can_edit) 
@@ -1933,52 +1907,157 @@ if ($action === 'manage_setlist_team' && $method === 'POST') {
                         can_edit = VALUES(can_edit),
                         updated_at = NOW()
                   ");
-                  $stAccess->execute([$setlist_id, $uid, $newUserId, $canEditRole ? 1 : 0, $newUserId]);
-              } catch (Throwable $chatError) {
-                  error_log('Automatic direct message for setlist team failed: ' . $chatError->getMessage());
-              }
-
-              // 4. In-app notification & Push
-              $actionLink = $chatId > 0 ? '/chat/' . $chatId : '/setlists/' . $setlist_id;
-              try {
-                  $notifSt->execute([
-                      $newUserId,
-                      $uid,
-                      json_encode(['text' => $chatMessageText, 'setlist_id' => $setlist_id], JSON_UNESCAPED_UNICODE),
-                      $actionLink,
-                  ]);
-
-                  $pushResult = wp_push_send_to_user(
-                      $pdo,
-                      $newUserId,
-                      'Նոր թիմային նշանակում',
-                      $chatMessageText,
-                      $actionLink
-                  );
-
-                  $notificationResults[] = [
-                      'user_id' => $newUserId,
-                      'chat_id' => $chatId,
-                      'notification' => true,
-                      'push' => !empty($pushResult['ok']),
-                  ];
-              } catch (Throwable $notificationError) {
-                  error_log('Setlist team notification failed: ' . $notificationError->getMessage());
-                  $notificationResults[] = [
-                      'user_id' => $newUserId,
-                      'chat_id' => $chatId,
-                      'notification' => false,
-                      'push' => false,
-                  ];
+                  $stAccess->execute([$setlist_id, $uid, $asgnUser, $canEditRole ? 1 : 0, $asgnUser]);
+              } catch (Throwable $accErr) {
+                  error_log('Setlist user access grant failed: ' . $accErr->getMessage());
               }
           }
       }
 
-      out(["ok" => true, "new_users" => $newUsers, "notifications" => $notificationResults]);
+      // Group chat creation / synchronization for this setlist
+      $setlistName = trim((string)($setlist['name'] ?? 'Երգացանկ'));
+      $groupChatName = "«{$setlistName}» (Թիմ)";
+      $chatId = 0;
+      $isNewGroup = false;
+
+      // Check existing group chat for this setlist
+      $stChat = $pdo->prepare("SELECT id, name FROM chats WHERE type = 'group' AND setlist_id = ? LIMIT 1");
+      $stChat->execute([$setlist_id]);
+      $existingChat = $stChat->fetch(PDO::FETCH_ASSOC);
+
+      if ($existingChat) {
+          $chatId = (int)$existingChat['id'];
+          if ($existingChat['name'] !== $groupChatName) {
+              $pdo->prepare("UPDATE chats SET name = ? WHERE id = ?")->execute([$groupChatName, $chatId]);
+          }
+      } else if (!empty($allTeamUserIds)) {
+          $stInsChat = $pdo->prepare("INSERT INTO chats (type, name, created_by, setlist_id, created_at) VALUES ('group', ?, ?, ?, NOW())");
+          $stInsChat->execute([$groupChatName, $uid, $setlist_id]);
+          $chatId = (int)$pdo->lastInsertId();
+          $isNewGroup = true;
+      }
+
+      $notificationResults = [];
+
+      if ($chatId > 0) {
+          // All users who must be participants: current user $uid, setlist owner, and all assigned team users
+          $setlistOwnerId = (int)($setlist['user_id'] ?? $uid);
+          $allGroupUserIds = array_values(array_unique(array_filter(
+              array_merge([$uid, $setlistOwnerId], $allTeamUserIds),
+              function($idVal) { return (int)$idVal > 0; }
+          )));
+
+          // Add / activate participants in chat_participants
+          $insPart = $pdo->prepare("INSERT INTO chat_participants (chat_id, user_id, cleared_at) VALUES (?, ?, NULL) ON DUPLICATE KEY UPDATE cleared_at = NULL");
+          foreach ($allGroupUserIds as $partUid) {
+              $insPart->execute([$chatId, $partUid]);
+          }
+
+          // Remove users no longer in the team (excluding owner & current user)
+          if (!empty($allGroupUserIds)) {
+              $inPlaceholders = implode(',', array_fill(0, count($allGroupUserIds), '?'));
+              $delPart = $pdo->prepare("DELETE FROM chat_participants WHERE chat_id = ? AND user_id NOT IN ($inPlaceholders)");
+              $delPart->execute(array_merge([$chatId], $allGroupUserIds));
+          }
+
+          // Post announcement in group chat and determine who to notify
+          $usersToNotify = [];
+          if ($isNewGroup) {
+              $groupMsgText = "👋 Բարև բոլորին։ Ստեղծվել է «{$setlistName}» երգացանկի թիմային խումբը։";
+              $stMsg = $pdo->prepare("
+                  INSERT INTO chat_messages (chat_id, user_id, message, setlist_id, created_at)
+                  VALUES (?, ?, ?, ?, NOW())
+              ");
+              $stMsg->execute([$chatId, $uid, $groupMsgText, $setlist_id]);
+
+              // Notify all members except the creator
+              $usersToNotify = array_diff($allGroupUserIds, [$uid]);
+          } else if (!empty($newUsersInfo)) {
+              $addedNames = [];
+              foreach ($newUsersInfo as $nu) {
+                  $stU = $pdo->prepare("SELECT COALESCE(NULLIF(TRIM(name), ''), username, email) FROM users WHERE id = ?");
+                  $stU->execute([$nu['id']]);
+                  $uName = trim((string)$stU->fetchColumn()) ?: 'Անդամ';
+                  $rName = (string)$nu['role'];
+                  $addedNames[] = $rName !== '' ? "{$uName} ({$rName})" : $uName;
+              }
+              $groupMsgText = "🔔 Թիմին միացան նոր մասնակիցներ՝ " . implode(', ', $addedNames);
+              $stMsg = $pdo->prepare("
+                  INSERT INTO chat_messages (chat_id, user_id, message, setlist_id, created_at)
+                  VALUES (?, ?, ?, ?, NOW())
+              ");
+              $stMsg->execute([$chatId, $uid, $groupMsgText, $setlist_id]);
+
+              // Notify newly added users (except $uid)
+              $usersToNotify = array_diff(array_column($newUsersInfo, 'id'), [$uid]);
+          }
+
+          // Send in-app notification & push to target members
+          if (!empty($usersToNotify)) {
+              require_once __DIR__ . '/push_service.php';
+              $notifSt = $pdo->prepare("
+                  INSERT INTO user_notifications (user_id, sender_id, type, content, action_link)
+                  VALUES (?, ?, 'setlist_team_group', ?, ?)
+              ");
+              $actionLink = '/chat/' . $chatId;
+              $notifText = "🔔 Դուք ավելացվել եք «{$setlistName}» երգացանկի թիմային խմբում:";
+              $pushTitle = "Թիմային խումբ: {$setlistName}";
+
+              foreach ($usersToNotify as $targetUid) {
+                  $targetUid = (int)$targetUid;
+                  if ($targetUid <= 0 || $targetUid === $uid) continue;
+
+                  try {
+                      $notifSt->execute([
+                          $targetUid,
+                          $uid,
+                          json_encode([
+                              'text' => $notifText,
+                              'setlist_id' => $setlist_id,
+                              'chat_id' => $chatId
+                          ], JSON_UNESCAPED_UNICODE),
+                          $actionLink
+                      ]);
+
+                      $pushResult = wp_push_send_to_user(
+                          $pdo,
+                          $targetUid,
+                          $pushTitle,
+                          $notifText,
+                          $actionLink
+                      );
+
+                      $notificationResults[] = [
+                          'user_id' => $targetUid,
+                          'chat_id' => $chatId,
+                          'notification' => true,
+                          'push' => !empty($pushResult['ok']),
+                      ];
+                  } catch (Throwable $notifErr) {
+                      error_log("Failed to notify user {$targetUid}: " . $notifErr->getMessage());
+                      $notificationResults[] = [
+                          'user_id' => $targetUid,
+                          'chat_id' => $chatId,
+                          'notification' => false,
+                          'push' => false,
+                      ];
+                  }
+              }
+          }
+      }
+      
+      $pdo->commit();
+
+      out([
+          "ok" => true,
+          "chat_id" => $chatId,
+          "new_users" => $newUsers,
+          "notifications" => $notificationResults
+      ]);
   } catch (Throwable $e) {
       if ($pdo->inTransaction()) $pdo->rollBack();
       error_log('Failed to update setlist team: ' . $e->getMessage());
-      out(["error" => "Failed to update team"], 500);
+      out(["error" => "Failed to update team: " . $e->getMessage()], 500);
   }
 }
 
