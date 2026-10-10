@@ -38,16 +38,6 @@ function notificationPath(data = {}) {
   }
 }
 
-function nativeBackFallback(pathname) {
-  if (pathname.startsWith('/chat/')) return '/chats';
-  if (pathname.startsWith('/song/')) return '/songs';
-  if (pathname.startsWith('/setlists/')) return '/setlists';
-  if (pathname.startsWith('/news/')) return '/news';
-  if (pathname === '/settings' || pathname === '/notifications') return '/profile';
-  if (pathname === '/chats') return '/friends';
-  return '/';
-}
-
 function isNativePrimaryTab(pathname) {
   return pathname === '/' ||
     pathname === '/songs' ||
@@ -127,7 +117,7 @@ export default function NativePlatformServices() {
     }));
 
     if (Capacitor.getPlatform() === 'android') {
-      addHandle(CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+      addHandle(CapacitorApp.addListener('backButton', () => {
         // Let full-screen native surfaces consume Back before changing route.
         if (document.querySelector('.native-call-screen')) {
           window.dispatchEvent(new CustomEvent('wp-native-back-request'));
@@ -140,14 +130,8 @@ export default function NativePlatformServices() {
           return;
         }
 
-        const historyIndex = Number(window.history.state?.idx || 0);
-        if (canGoBack && historyIndex > 0) {
-          window.history.back();
-          return;
-        }
-
         if (pathname !== '/') {
-          navigateRef.current(nativeBackFallback(pathname), { replace: true });
+          window.dispatchEvent(new CustomEvent('wp-native-page-back'));
           return;
         }
 

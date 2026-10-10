@@ -25,7 +25,14 @@ const isBlockedTarget = target => Boolean(target?.closest?.(
   'input, textarea, select, [contenteditable="true"], .no-swipe-nav, [data-no-swipe]'
 ));
 
-const NATIVE_BACK_SELECTOR = '[data-native-route-back="true"]';
+const NATIVE_BACK_SELECTOR = [
+  '[data-native-route-back="true"]',
+  '.chat-btn-back',
+  '.news-reader-back',
+  '.song-request-back-btn',
+  '.user-profile-back-btn',
+  '.notif-back-btn',
+].join(', ');
 
 export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
   useEffect(() => {
@@ -60,6 +67,10 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
       const parentPath = fallbackPath(pathname, user);
       const snapshot = window.__wpNativeRouteSnapshots?.get(parentPath)?.cloneNode(true);
       if (!snapshot) return null;
+      const snapshotScrollY = Number(snapshot.dataset.nativeScrollY || 0);
+      if (snapshotScrollY > 0) {
+        snapshot.style.transform = `translate3d(0, -${snapshotScrollY}px, 0)`;
+      }
       const layer = document.createElement('div');
       layer.className = 'native-pop-underlay-layer';
       layer.setAttribute('aria-hidden', 'true');
@@ -148,6 +159,7 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
         activeRoute = null;
         underlayLayer = null;
         window.__wpNativePopTransitionPending = true;
+        window.__wpNativeRestoreScrollPath = fallbackPath(pathname, user);
         document.body.classList.add('native-pop-switching');
         flushSync(() => navigate(fallbackPath(pathname, user), { replace: true }));
 

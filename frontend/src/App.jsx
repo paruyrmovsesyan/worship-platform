@@ -228,6 +228,10 @@ function App() {
     if (isNativeApp && nativeTransition === 'native-push-transition') {
       const previousSnapshot = window.__wpNativeRouteSnapshots?.get(previousPath)?.cloneNode(true);
       if (previousSnapshot) {
+        const snapshotScrollY = Number(previousSnapshot.dataset.nativeScrollY || 0);
+        if (snapshotScrollY > 0) {
+          previousSnapshot.style.transform = `translate3d(0, -${snapshotScrollY}px, 0)`;
+        }
         outgoingLayer = document.createElement('div');
         outgoingLayer.className = 'native-push-outgoing-layer';
         outgoingLayer.setAttribute('aria-hidden', 'true');
@@ -303,8 +307,11 @@ function App() {
       }
       if (!route?.firstElementChild) return;
       if (!window.__wpNativeRouteSnapshots) window.__wpNativeRouteSnapshots = new Map();
+      const snapshot = route.cloneNode(true);
+      const scrollY = Number(window.__wpNativeScrollPositions?.get(location.pathname) || window.scrollY || 0);
+      snapshot.dataset.nativeScrollY = String(scrollY);
       window.__wpNativeRouteSnapshots.delete(location.pathname);
-      window.__wpNativeRouteSnapshots.set(location.pathname, route.cloneNode(true));
+      window.__wpNativeRouteSnapshots.set(location.pathname, snapshot);
       while (window.__wpNativeRouteSnapshots.size > 8) {
         const oldestPath = window.__wpNativeRouteSnapshots.keys().next().value;
         window.__wpNativeRouteSnapshots.delete(oldestPath);
