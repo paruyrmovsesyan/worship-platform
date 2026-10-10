@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 
@@ -21,7 +21,16 @@ export default function ScrollToTop() {
   const { pathname } = useLocation();
   const isNativeApp = Capacitor.isNativePlatform();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!isNativeApp || !('scrollRestoration' in window.history)) return undefined;
+    const previousMode = window.history.scrollRestoration;
+    window.history.scrollRestoration = 'manual';
+    return () => {
+      window.history.scrollRestoration = previousMode;
+    };
+  }, [isNativeApp]);
+
+  useLayoutEffect(() => {
     if (!isNativeApp) return undefined;
     if (!window.__wpNativeScrollPositions) window.__wpNativeScrollPositions = new Map();
     const recordPosition = () => {
@@ -31,7 +40,13 @@ export default function ScrollToTop() {
       if (snapshot) snapshot.dataset.nativeScrollY = String(scrollY);
     };
     window.addEventListener('scroll', recordPosition, { passive: true });
-    return () => window.removeEventListener('scroll', recordPosition);
+    return () => {
+      // Layout-effect cleanup runs before the destination route resets scroll.
+      // Save once more here, then detach so that destination scroll events can
+      // never overwrite the route we are leaving with y=0.
+      recordPosition();
+      window.removeEventListener('scroll', recordPosition);
+    };
   }, [isNativeApp, pathname]);
 
   useLayoutEffect(() => {
@@ -55,6 +70,7 @@ export default function ScrollToTop() {
     const targetY = Number(window.__wpNativeScrollPositions?.get(pathname) || 0);
     let cancelled = false;
     let frame = null;
+    let stableFrames = 0;
     const startedAt = performance.now();
     document.body.classList.add('native-scroll-restoring');
 
@@ -70,7 +86,11 @@ export default function ScrollToTop() {
       if (cancelled) return;
       scrollImmediately(targetY);
       const maxScroll = Math.max(0, (document.scrollingElement?.scrollHeight || 0) - window.innerHeight);
-      if (targetY > maxScroll + 1 && performance.now() - startedAt < 1200) {
+      const targetIsReachable = targetY <= maxScroll + 1;
+      const targetIsApplied = Math.abs(getScrollY() - Math.min(targetY, maxScroll)) <= 1;
+      stableFrames = targetIsReachable && targetIsApplied ? stableFrames + 1 : 0;
+      const elapsed = performance.now() - startedAt;
+      if (elapsed < 1200 && (elapsed < 120 || stableFrames < 2)) {
         frame = window.requestAnimationFrame(restore);
         return;
       }
