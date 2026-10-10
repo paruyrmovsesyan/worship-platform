@@ -1,8 +1,9 @@
 /**
- * Worship Platform — Real-Time Error Reporter
- * Automatically captures frontend JavaScript errors, React crashes,
- * unhandled promise rejections, console.error logs, and failed network/API calls,
+ * Worship Platform — Deep Real-Time Error Reporter
+ * Automatically captures frontend JavaScript runtime errors, React crashes,
+ * unhandled promise rejections, console.error logs, failed API calls, and user breadcrumbs,
  * sending them to /error_api.php for instant real-time admin monitoring.
+ * Fully optimized and resilient for Web, PWA, iOS, and Android.
  */
 (function() {
   'use strict';
@@ -11,10 +12,89 @@
   window.__wp_error_reporter_initialized = true;
 
   const ENDPOINT = '/error_api.php';
+  const OFFLINE_QUEUE_KEY = '__wp_offline_errors_queue';
   const recentErrors = new Map();
   let errorCount = 0;
   let errorWindowStart = Date.now();
 
+  // ── 1. BREADCRUMBS BUFFER ──
+  const MAX_BREADCRUMBS = 12;
+  const breadcrumbs = [];
+
+  function addBreadcrumb(type, category, message, data) {
+    try {
+      breadcrumbs.push({
+        t: new Date().toISOString().substring(11, 19),
+        type: type || 'default',
+        category: category || 'app',
+        message: String(message || '').slice(0, 160),
+        data: data || null
+      });
+      if (breadcrumbs.length > MAX_BREADCRUMBS) {
+        breadcrumbs.shift();
+      }
+    } catch (_) {}
+  }
+
+  window.__wp_add_breadcrumb = addBreadcrumb;
+
+  // Track initial navigation
+  let lastKnownUrl = window.location.pathname + window.location.search;
+  addBreadcrumb('nav', 'route', lastKnownUrl);
+
+  // Auto-track URL changes
+  try {
+    const origPushState = history.pushState;
+    if (typeof origPushState === 'function') {
+      history.pushState = function(...args) {
+        const res = origPushState.apply(this, args);
+        try {
+          const nextUrl = window.location.pathname + window.location.search;
+          if (nextUrl !== lastKnownUrl) {
+            lastKnownUrl = nextUrl;
+            addBreadcrumb('nav', 'route', nextUrl);
+          }
+        } catch (_) {}
+        return res;
+      };
+    }
+
+    const origReplaceState = history.replaceState;
+    if (typeof origReplaceState === 'function') {
+      history.replaceState = function(...args) {
+        const res = origReplaceState.apply(this, args);
+        try {
+          const nextUrl = window.location.pathname + window.location.search;
+          if (nextUrl !== lastKnownUrl) {
+            lastKnownUrl = nextUrl;
+            addBreadcrumb('nav', 'route', nextUrl);
+          }
+        } catch (_) {}
+        return res;
+      };
+    }
+
+    window.addEventListener('popstate', function() {
+      try {
+        const nextUrl = window.location.pathname + window.location.search;
+        lastKnownUrl = nextUrl;
+        addBreadcrumb('nav', 'route', nextUrl);
+      } catch (_) {}
+    });
+  } catch (_) {}
+
+  // Auto-track UI interactions (clicks on buttons/links)
+  window.addEventListener('click', function(e) {
+    try {
+      const target = e.target ? (e.target.closest('button, a, [role="button"], input[type="submit"]') || e.target) : null;
+      if (!target || !target.tagName) return;
+      const tag = target.tagName.toLowerCase();
+      let label = target.innerText ? target.innerText.trim().slice(0, 35) : (target.getAttribute('aria-label') || target.getAttribute('title') || target.id || target.className || '');
+      addBreadcrumb('ui', 'click', `${tag}${target.id ? '#' + target.id : ''}${label ? ` ("${label}")` : ''}`);
+    } catch (_) {}
+  }, { capture: true, passive: true });
+
+  // ── 2. PLATFORM & USER DETECTION ──
   function isStandaloneApp() {
     try {
       return (
@@ -28,16 +108,22 @@
     }
   }
 
+  function isNativeCapacitor() {
+    try {
+      return !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform());
+    } catch (_) {
+      return false;
+    }
+  }
+
   function getPlatformEnvironment() {
     try {
-      const ua = navigator.userAgent || '';
-      const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      const isAndroid = /Android/i.test(ua);
-      const isCapacitor = !!(window.Capacitor || window.CapacitorWeb || window._capacitor);
-
-      if (isIOS) return 'ios';
-      if (isAndroid) return 'android';
-      if (isCapacitor) return 'app';
+      if (isNativeCapacitor()) {
+        const plat = window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : '';
+        if (plat === 'ios') return 'ios';
+        if (plat === 'android') return 'android';
+        return 'app';
+      }
       return isStandaloneApp() ? 'app' : 'web';
     } catch (_) {
       return 'web';
@@ -79,6 +165,7 @@
         platform: navigator.platform || '',
         os: os,
         standalone: isStandaloneApp(),
+        native: isNativeCapacitor(),
         language: navigator.language || '',
       };
     } catch (_) {
@@ -86,12 +173,43 @@
     }
   }
 
-  function sendErrorReport(payload) {
+  // ── 3. OFFLINE QUEUE RESILIENCE ──
+  function queueOfflineError(payload) {
+    try {
+      const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
+      const queue = raw ? JSON.parse(raw) : [];
+      queue.push(payload);
+      if (queue.length > 10) queue.shift();
+      localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+    } catch (_) {}
+  }
+
+  function flushOfflineErrors() {
+    if (navigator.onLine === false) return;
+    try {
+      const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
+      if (!raw) return;
+      localStorage.removeItem(OFFLINE_QUEUE_KEY);
+      const queue = JSON.parse(raw);
+      if (Array.isArray(queue) && queue.length > 0) {
+        queue.forEach(function(item) {
+          sendErrorReport(item, true);
+        });
+      }
+    } catch (_) {}
+  }
+
+  window.addEventListener('online', flushOfflineErrors);
+  setTimeout(flushOfflineErrors, 3500);
+
+  // ── 4. ERROR DISPATCHER ──
+  function sendErrorReport(payload, isFlushingQueue = false) {
     try {
       if (!payload) return;
       const rawMsg = String(payload.message || '');
       const rawStack = String(payload.stack_trace || '');
-      // Ignore background version manifest polling glitches and ServiceWorker registration rejections
+
+      // Ignore transient background update polling drops and ServiceWorker registration notices
       if (
         rawMsg.includes('version_manifest') ||
         rawMsg.includes('Version manifest check') ||
@@ -112,14 +230,14 @@
         errorCount = 0;
         errorWindowStart = now;
       }
-      if (++errorCount > 10) {
+      if (++errorCount > 10 && !isFlushingQueue) {
         return;
       }
 
       // Deduplicate identical errors within 25 seconds
       const dedupKey = `${payload.level}|${payload.message}|${payload.file || ''}|${payload.line || 0}`;
       const lastSent = recentErrors.get(dedupKey);
-      if (lastSent && (now - lastSent) < 25000) {
+      if (lastSent && (now - lastSent) < 25000 && !isFlushingQueue) {
         return;
       }
       recentErrors.set(dedupKey, now);
@@ -128,6 +246,18 @@
         for (const [k, t] of recentErrors.entries()) {
           if (now - t > 50000) recentErrors.delete(k);
         }
+      }
+
+      // Attach breadcrumbs snapshot & native flag
+      if (!payload.breadcrumbs && breadcrumbs.length > 0) {
+        payload.breadcrumbs = breadcrumbs.slice();
+      }
+      payload.is_native = isNativeCapacitor();
+
+      // If user is offline, save to queue and flush when back online
+      if (navigator.onLine === false && !isFlushingQueue) {
+        queueOfflineError(payload);
+        return;
       }
 
       const body = JSON.stringify(payload);
@@ -143,11 +273,17 @@
         headers: { 'Content-Type': 'application/json' },
         body: body,
         keepalive: true,
-      }).catch(function() {});
+      }).catch(function() {
+        if (!isFlushingQueue) {
+          queueOfflineError(payload);
+        }
+      });
     } catch (_) {}
   }
 
-  // 1. Uncaught JS Runtime Errors (Event listener)
+  // ── 5. GLOBAL EVENT LISTENERS ──
+
+  // A. Uncaught JS Runtime Errors (Event listener)
   window.addEventListener('error', function(event) {
     try {
       if (event.message === 'Script error.' && !event.filename) {
@@ -175,6 +311,7 @@
         // Only log local application asset failures
         if (sourceUrl && (sourceUrl.includes(window.location.host) || sourceUrl.startsWith('/'))) {
           const reportResourceError = function() {
+            addBreadcrumb('resource', 'error', `<${resourceTag}> ${sourceUrl}`);
             sendErrorReport({
               level: 'warning',
               environment: getPlatformEnvironment(),
@@ -217,10 +354,13 @@
       }
 
       const errorObj = event.error || {};
+      const errMsg = event.message || (errorObj.message ? String(errorObj.message) : 'Uncaught JavaScript error');
+      addBreadcrumb('error', 'uncaught', errMsg);
+
       sendErrorReport({
         level: 'error',
         environment: getPlatformEnvironment(),
-        message: event.message || (errorObj.message ? String(errorObj.message) : 'Uncaught JavaScript error'),
+        message: errMsg,
         file: event.filename || null,
         line: event.lineno || null,
         url: window.location.href,
@@ -232,7 +372,7 @@
     } catch (_) {}
   }, true);
 
-  // 2. Unhandled Promise Rejections
+  // B. Unhandled Promise Rejections
   window.addEventListener('unhandledrejection', function(event) {
     try {
       const reason = event.reason;
@@ -268,6 +408,7 @@
       }
 
       const { userId, userEmail } = getUserMeta();
+      addBreadcrumb('error', 'promise', message);
 
       sendErrorReport({
         level: 'promise',
@@ -284,7 +425,7 @@
     } catch (_) {}
   });
 
-  // 3. Intercept console.error (Captures React errors and third-party failures)
+  // C. Intercept console.error (Captures React errors and third-party failures)
   const origConsoleError = console.error;
   console.error = function(...args) {
     try {
@@ -312,6 +453,8 @@
       ) {
         const firstErr = args.find(a => a instanceof Error);
         const { userId, userEmail } = getUserMeta();
+        addBreadcrumb('console', 'error', text.slice(0, 120));
+
         sendErrorReport({
           level: 'error',
           environment: getPlatformEnvironment(),
@@ -328,13 +471,20 @@
     } catch (_) {}
   };
 
-  // 4. Intercept fetch to report 500 server crashes and network failures
+  // D. Intercept fetch to track breadcrumbs and report 500 server crashes
   if (typeof window.fetch === 'function') {
     const origFetch = window.fetch;
     window.fetch = function(...args) {
+      const reqUrl = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
+      const reqMethod = (args[1] && args[1].method ? args[1].method : 'GET').toUpperCase();
+
       return origFetch.apply(this, args).then(function(res) {
         try {
-          const reqUrl = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
+          if (!reqUrl.includes('error_api.php')) {
+            const cleanUrl = reqUrl.split('?')[0];
+            addBreadcrumb('http', 'fetch', `${reqMethod} ${cleanUrl} [${res.status}]`);
+          }
+
           const isOfflineResponse =
             navigator.onLine === false ||
             res.statusText === 'Offline' ||
@@ -359,16 +509,25 @@
           }
         } catch (_) {}
         return res;
+      }).catch(function(err) {
+        try {
+          if (!reqUrl.includes('error_api.php')) {
+            addBreadcrumb('http', 'failed', `${reqMethod} ${reqUrl.split('?')[0]} (${err.message || 'Failed'})`);
+          }
+        } catch (_) {}
+        throw err;
       });
     };
   }
 
-  // 5. Global manual reporter
+  // E. Global manual reporter
   window.reportAppError = function(error, context) {
     try {
       const { userId, userEmail } = getUserMeta();
       const message = (error instanceof Error) ? error.message : String(error);
       const stack = (error instanceof Error) ? error.stack : null;
+
+      addBreadcrumb('manual', 'report', message);
 
       sendErrorReport({
         level: (context && context.level) || 'error',
@@ -381,6 +540,7 @@
         user_id: userId,
         user_email: userEmail,
         device_info: Object.assign(getDeviceInfo(), context || {}),
+        breadcrumbs: breadcrumbs.slice(),
       });
     } catch (_) {}
   };

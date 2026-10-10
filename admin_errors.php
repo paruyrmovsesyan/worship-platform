@@ -1060,6 +1060,13 @@ $activePage = 'errors';
         </div>
       </div>
 
+      <div id="breadcrumbsSection" style="margin-top:14px; display:none;">
+        <label style="font-size:12px; font-weight:700; color:var(--muted); margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+          <span>🐾 ԳՈՐԾՈՂՈՒԹՅՈՒՆՆԵՐԻ ՀԵՏՔ (BREADCRUMBS)</span>
+        </label>
+        <div id="mBreadcrumbsList" style="background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto; font-family:monospace; font-size:12px;"></div>
+      </div>
+
       <div id="stackTraceSection">
         <label style="font-size:12px; font-weight:700; color:var(--muted); margin-bottom:6px; display:block;">STACK TRACE</label>
         <pre class="code-trace" id="mStack"></pre>
@@ -1525,6 +1532,36 @@ $activePage = 'errors';
       } catch (_) {}
     }
     document.getElementById('mUserAgent').textContent = uaDetails;
+
+    const bcSection = document.getElementById('breadcrumbsSection');
+    const bcList = document.getElementById('mBreadcrumbsList');
+    let bcs = [];
+    if (item.breadcrumbs) {
+      try {
+        bcs = typeof item.breadcrumbs === 'string' ? JSON.parse(item.breadcrumbs) : item.breadcrumbs;
+      } catch (_) {}
+    }
+    if (Array.isArray(bcs) && bcs.length > 0) {
+      bcSection.style.display = 'block';
+      bcList.innerHTML = bcs.map((b) => {
+        let icon = '🔹';
+        if (b.type === 'nav') icon = '🧭';
+        else if (b.type === 'ui') icon = '👆';
+        else if (b.type === 'http') icon = '🌐';
+        else if (b.type === 'console') icon = '📝';
+        else if (b.type === 'native' || b.type === 'lifecycle') icon = '📱';
+        else if (b.type === 'error') icon = '💥';
+
+        return `<div style="display:flex; align-items:center; gap:8px; padding:6px 10px; background:rgba(255,255,255,0.03); border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
+          <span style="opacity:0.6; font-size:11px; flex-shrink:0;">${escapeHtml(b.t || '')}</span>
+          <span style="font-size:13px;">${icon}</span>
+          <span style="color:var(--text); word-break:break-all;">${escapeHtml(b.message || '')}</span>
+        </div>`;
+      }).join('');
+    } else {
+      bcSection.style.display = 'none';
+      bcList.innerHTML = '';
+    }
 
     const stackSection = document.getElementById('stackTraceSection');
     if (item.stack_trace && item.stack_trace.trim() !== '') {

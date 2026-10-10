@@ -59,6 +59,7 @@ function wp_error_init_table(): bool {
                 'resolved_by' => 'VARCHAR(100) NULL',
                 'resolution_reason' => 'VARCHAR(255) NULL',
                 'auto_checked_at' => 'DATETIME NULL',
+                'breadcrumbs' => 'TEXT NULL',
             ];
             foreach ($neededCols as $col => $def) {
                 if (!in_array($col, $cols, true)) {
@@ -209,16 +210,32 @@ function wp_error_log_record(array $data): array {
     $userEmail = isset($data['user_email']) && $data['user_email'] !== '' ? mb_substr(trim((string)$data['user_email']), 0, 190) : null;
     $ip = isset($data['ip_address']) ? trim((string)$data['ip_address']) : (function_exists('wp_runtime_remote_ip') ? wp_runtime_remote_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'));
     $userAgent = isset($data['user_agent']) ? mb_substr(trim((string)$data['user_agent']), 0, 255) : mb_substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
-    $deviceInfo = isset($data['device_info']) ? (is_array($data['device_info']) ? json_encode($data['device_info']) : (string)$data['device_info']) : null;
+    $deviceInfo = isset($data['device_info']) ? (is_array($data['device_info']) ? json_encode($data['device_info'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : (string)$data['device_info']) : null;
+    $breadcrumbs = null;
+    if (!empty($data['breadcrumbs'])) {
+        $breadcrumbs = is_array($data['breadcrumbs']) ? json_encode(array_slice($data['breadcrumbs'], -15), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : (string)$data['breadcrumbs'];
+    }
 
-    // Auto-detect iOS and Android from User-Agent or device_info if environment is generic
-    if ($env === 'web' || $env === 'app') {
-        $incomingPlatform = strtolower(trim((string)($data['platform'] ?? ($data['os'] ?? ''))));
-        if ($incomingPlatform === 'ios' || preg_match('/(iPhone|iPad|iPod)/i', $userAgent) || ($deviceInfo && stripos($deviceInfo, '"os":"iOS"') !== false)) {
-            $env = 'ios';
-        } elseif ($incomingPlatform === 'android' || preg_match('/Android/i', $userAgent) || ($deviceInfo && stripos($deviceInfo, '"os":"Android"') !== false)) {
-            $env = 'android';
-        }
+    // Precise environment detection:
+    // 'ios': Native iOS Capacitor app
+    // 'android': Native Android Capacitor app
+    // 'app': Standalone PWA app
+    // 'web': Standard Web browser (desktop or mobile)
+    // 'server': PHP/Server/CLI
+    $incomingEnv = strtolower(trim((string)($data['environment'] ?? '')));
+    $incomingPlatform = strtolower(trim((string)($data['platform'] ?? ($data['os'] ?? ''))));
+    $isNativeCapacitor = ($incomingPlatform === 'ios' || $incomingPlatform === 'android' || !empty($data['is_native']));
+
+    if ($isNativeCapacitor) {
+        $env = ($incomingPlatform === 'android' || $incomingEnv === 'android') ? 'android' : 'ios';
+    } elseif ($incomingEnv === 'app') {
+        $env = 'app';
+    } elseif ($incomingEnv === 'ios' && (stripos($userAgent, 'Capacitor') !== false || !empty($data['is_native']))) {
+        $env = 'ios';
+    } elseif ($incomingEnv === 'android' && (stripos($userAgent, 'Capacitor') !== false || !empty($data['is_native']))) {
+        $env = 'android';
+    } elseif (in_array($incomingEnv, ['ios', 'android', 'app', 'web', 'server', 'db', 'api', 'admin'], true)) {
+        $env = $incomingEnv;
     }
 
     $now = date('Y-m-d H:i:s');
@@ -234,8 +251,8 @@ function wp_error_log_record(array $data): array {
             $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
             if ($existing) {
-                $updateStmt = $pdo->prepare("UPDATE system_error_logs SET occurrences = occurrences + 1, last_seen = ?, is_resolved = 0, resolved_at = NULL, resolution_reason = 'Վերաբացվել է (նոր սխալ)', url = COALESCE(?, url), user_id = COALESCE(?, user_id), user_email = COALESCE(?, user_email) WHERE id = ?");
-                $updateStmt->execute([$now, $url, $userId, $userEmail, (int)$existing['id']]);
+                $updateStmt = $pdo->prepare("UPDATE system_error_logs SET occurrences = occurrences + 1, last_seen = ?, is_resolved = 0, resolved_at = NULL, resolution_reason = 'Վերաբացվել է (նոր սխալ)', url = COALESCE(?, url), user_id = COALESCE(?, user_id), user_email = COALESCE(?, user_email), breadcrumbs = COALESCE(?, breadcrumbs) WHERE id = ?");
+                $updateStmt->execute([$now, $url, $userId, $userEmail, $breadcrumbs, (int)$existing['id']]);
                 wp_error_save_resolution($fingerprint, false, 'Վերաբացվել է (նոր սխալ)', 'reopen');
                 return [
                     'id' => (int)$existing['id'],
@@ -246,10 +263,10 @@ function wp_error_log_record(array $data): array {
             }
 
             $insertStmt = $pdo->prepare("INSERT INTO system_error_logs 
-                (fingerprint, level, environment, message, file, line, url, stack_trace, user_id, user_email, ip_address, user_agent, device_info, occurrences, is_resolved, first_seen, last_seen, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?, ?)");
+                (fingerprint, level, environment, message, file, line, url, stack_trace, user_id, user_email, ip_address, user_agent, device_info, breadcrumbs, occurrences, is_resolved, first_seen, last_seen, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?, ?)");
             $insertStmt->execute([
-                $fingerprint, $level, $env, $message, $file, $line, $url, $stack, $userId, $userEmail, $ip, $userAgent, $deviceInfo, $now, $now, $now
+                $fingerprint, $level, $env, $message, $file, $line, $url, $stack, $userId, $userEmail, $ip, $userAgent, $deviceInfo, $breadcrumbs, $now, $now, $now
             ]);
             $newId = (int)$pdo->lastInsertId();
 
@@ -288,6 +305,7 @@ function wp_error_log_record(array $data): array {
         if ($url) $store[$foundIndex]['url'] = $url;
         if ($userId) $store[$foundIndex]['user_id'] = $userId;
         if ($userEmail) $store[$foundIndex]['user_email'] = $userEmail;
+        if ($breadcrumbs) $store[$foundIndex]['breadcrumbs'] = $breadcrumbs;
         $updatedItem = $store[$foundIndex];
         array_splice($store, $foundIndex, 1);
         array_unshift($store, $updatedItem);
@@ -317,6 +335,7 @@ function wp_error_log_record(array $data): array {
         'ip_address' => $ip,
         'user_agent' => $userAgent,
         'device_info' => $deviceInfo,
+        'breadcrumbs' => $breadcrumbs,
         'occurrences' => 1,
         'is_resolved' => 0,
         'resolved_at' => null,

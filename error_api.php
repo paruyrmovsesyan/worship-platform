@@ -313,6 +313,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         'level' => $level,
         'environment' => $environment,
         'platform' => $postData['platform'] ?? ($postData['os'] ?? null),
+        'is_native' => !empty($postData['is_native']),
         'message' => $message,
         'file' => $file,
         'line' => $line,
@@ -323,6 +324,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         'ip_address' => $ip,
         'user_agent' => $userAgent,
         'device_info' => $deviceInfo,
+        'breadcrumbs' => $postData['breadcrumbs'] ?? null,
     ]);
 
     echo json_encode(['ok' => true, 'result' => $result]);

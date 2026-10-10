@@ -15,11 +15,18 @@ export default class ErrorBoundary extends React.Component {
     console.error("Uncaught error in React ErrorBoundary:", error, errorInfo);
     try {
       const isNativeApp = window.Capacitor?.isNativePlatform?.() === true;
-      const isApp = isNativeApp ||
-                    window.matchMedia('(display-mode: standalone)').matches ||
+      const nativePlatform = isNativeApp ? window.Capacitor.getPlatform() : null;
+      const isPwa = window.matchMedia('(display-mode: standalone)').matches ||
                     window.navigator.standalone === true ||
                     document.referrer.includes('android-app://') ||
                     sessionStorage.getItem('wp_active_app_source') === 'pwa';
+
+      let environment = 'web';
+      if (isNativeApp && (nativePlatform === 'ios' || nativePlatform === 'android')) {
+        environment = nativePlatform;
+      } else if (isPwa) {
+        environment = 'app';
+      }
       
       let userId = null;
       let userEmail = null;
@@ -37,7 +44,8 @@ export default class ErrorBoundary extends React.Component {
       const fullStack = (error?.stack || String(error)) + (errorInfo?.componentStack ? '\n\nReact Component Stack:\n' + errorInfo.componentStack : '');
       const payload = {
         level: 'fatal',
-        environment: isApp ? 'app' : 'web',
+        environment: environment,
+        is_native: isNativeApp,
         message: 'React Error: ' + (error?.message || String(error)),
         file: error?.fileName || window.location.pathname,
         line: error?.lineNumber || null,
