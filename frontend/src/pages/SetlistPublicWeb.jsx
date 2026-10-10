@@ -44,7 +44,7 @@ export default function SetlistPublicWeb() {
       .then(data => {
         if (data.ok && data.setlist) {
           setSetlist(data.setlist);
-          setItems(Array.isArray(data.items) ? data.items : []);
+          setItems(Array.isArray(data.items) ? data.items.filter(Boolean) : []);
           setError(null);
         } else {
           setError(data.error || t('setlists.notFound', 'Երգացանկը չի գտնվել'));
@@ -118,9 +118,9 @@ export default function SetlistPublicWeb() {
     navigate(url);
   };
 
-  const songsCount = items.filter(i => i.item_type !== 'section').length;
-  const sectionsCount = items.filter(i => i.item_type === 'section').length;
-  const requiredCount = items.filter(i => i.item_type !== 'section' && Number(i.is_required)).length;
+  const songsCount = items.filter(i => i && i.item_type !== 'section').length;
+  const sectionsCount = items.filter(i => i && i.item_type === 'section').length;
+  const requiredCount = items.filter(i => i && i.item_type !== 'section' && Number(i.is_required)).length;
 
   if (error && !isLoading) {
     return (
@@ -287,6 +287,7 @@ export default function SetlistPublicWeb() {
           ) : (
             <div className="pub-items-list">
               {items.map((item, idx) => {
+                if (!item) return null;
                 if (item.item_type === 'section') {
                   return (
                     <div key={item.id || idx} className="pub-section-header animate-fade-in">

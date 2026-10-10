@@ -1777,6 +1777,7 @@ if ($action === 'get_public_setlist' && $method === 'GET') {
     'song_title' => 'setlists.public.song_title',
   ], $lang);
 
+  $targetSetlistId = (int)$setlist['id'];
   $stTeam = $pdo->prepare("
       SELECT a.id, a.user_id, a.role_name, a.status, 
              COALESCE(NULLIF(TRIM(u.name), ''), u.username, u.email) as user_name,
@@ -1785,13 +1786,13 @@ if ($action === 'get_public_setlist' && $method === 'GET') {
       JOIN users u ON a.user_id = u.id
       WHERE a.setlist_id = ?
   ");
-  $stTeam->execute([$setlist_id]);
+  $stTeam->execute([$targetSetlistId]);
   $team = $stTeam->fetchAll(PDO::FETCH_ASSOC);
 
   $chatId = 0;
   try {
     $stChat = $pdo->prepare("SELECT id FROM chats WHERE type = 'group' AND setlist_id = ? LIMIT 1");
-    $stChat->execute([$setlist_id]);
+    $stChat->execute([$targetSetlistId]);
     $chatId = (int)($stChat->fetchColumn() ?: 0);
   } catch (Throwable $e) {}
 

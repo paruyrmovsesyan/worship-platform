@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v533";
+const CACHE_VERSION = "worship-v534";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -20,7 +20,8 @@ const SETLIST_READ_ACTIONS = new Set([
   "get_setlist_items",
   "get_setlist_song_nav",
   "get_setlist_songs",
-  "get_share_status"
+  "get_share_status",
+  "get_public_setlist"
 ]);
 
 const APP_SHELL = [
@@ -36,8 +37,8 @@ const APP_SHELL = [
   "/app.js",
   "/site_guard.js",
   "/fav_bridge.js",
-  "/assets/index.css?v=532",
-  "/assets/index.js?v=532",
+  "/assets/index.css?v=534",
+  "/assets/index.js?v=534",
   "/manifest.json?v=12",
   "/favicon.png?v=2",
   "/apple-touch-icon-v8.png",
