@@ -197,66 +197,90 @@ function App() {
   }, [location.hash, location.pathname, location.search, navigate]);
 
   useLayoutEffect(() => {
-    if (transitionRef.current) {
-      const primaryTabs = ['/', '/songs', '/chats', '/profile', '/login'];
-      const previousPath = previousNativePathRef.current;
-      const currentPath = location.pathname;
-      const previousIsPrimary = primaryTabs.includes(previousPath);
-      const currentIsPrimary = primaryTabs.includes(currentPath);
-      let nativeTransition = 'native-push-transition';
-      const hasSharedElementTransition = isNativeApp && window.__wpNativeSharedTransitionPending;
-      const hasInteractivePopTransition = isNativeApp && window.__wpNativePopTransitionPending;
-      let outgoingLayer = null;
+    const route = transitionRef.current;
+    if (!route) return undefined;
+    const primaryTabs = ['/', '/songs', '/chats', '/profile', '/login'];
+    const previousPath = previousNativePathRef.current;
+    const currentPath = location.pathname;
+    const previousIsPrimary = primaryTabs.includes(previousPath);
+    const currentIsPrimary = primaryTabs.includes(currentPath);
+    let nativeTransition = 'native-push-transition';
+    const hasSharedElementTransition = isNativeApp && window.__wpNativeSharedTransitionPending;
+    const hasInteractivePopTransition = isNativeApp && window.__wpNativePopTransitionPending;
+    let outgoingLayer = null;
+    let frame = null;
+    let cleanupTimer = null;
+    let cancelled = false;
 
-      if (hasInteractivePopTransition) {
-        nativeTransition = 'native-pop-transition';
-        window.__wpNativePopTransitionPending = false;
-      } else if (hasSharedElementTransition) {
-        nativeTransition = 'native-tab-transition';
-        window.__wpNativeSharedTransitionPending = false;
-      } else if (previousIsPrimary && currentIsPrimary) {
-        nativeTransition = 'native-tab-transition';
-      } else if (!previousIsPrimary && currentIsPrimary) {
-        nativeTransition = 'native-pop-transition';
-      }
-
-      if (isNativeApp && nativeTransition === 'native-push-transition') {
-        const previousSnapshot = window.__wpNativeRouteSnapshots?.get(previousPath)?.cloneNode(true);
-        if (previousSnapshot) {
-          outgoingLayer = document.createElement('div');
-          outgoingLayer.className = 'native-push-outgoing-layer';
-          outgoingLayer.setAttribute('aria-hidden', 'true');
-          previousSnapshot.classList.add('native-push-outgoing-content');
-          outgoingLayer.appendChild(previousSnapshot);
-          document.body.appendChild(outgoingLayer);
-          document.body.classList.add('native-push-switching');
-        }
-      }
-
-      transitionRef.current.classList.remove(
-        'route-animate',
-        'native-tab-transition',
-        'native-push-transition',
-        'native-pop-transition'
-      );
-      void transitionRef.current.offsetWidth;
-      if (isNativeApp) transitionRef.current.classList.add(nativeTransition);
-      transitionRef.current.classList.add('route-animate');
-
-      if (outgoingLayer) {
-        window.requestAnimationFrame(() => outgoingLayer.classList.add('is-shifting'));
-        window.setTimeout(() => {
-          outgoingLayer.remove();
-          document.body.classList.remove('native-push-switching');
-        }, 330);
-      }
-
-      previousNativePathRef.current = currentPath;
+    if (hasInteractivePopTransition) {
+      nativeTransition = 'native-pop-transition';
+      window.__wpNativePopTransitionPending = false;
+    } else if (hasSharedElementTransition) {
+      nativeTransition = 'native-tab-transition';
+      window.__wpNativeSharedTransitionPending = false;
+    } else if (previousIsPrimary && currentIsPrimary) {
+      nativeTransition = 'native-tab-transition';
+    } else if (!previousIsPrimary && currentIsPrimary) {
+      nativeTransition = 'native-pop-transition';
     }
+
+    if (isNativeApp && nativeTransition === 'native-push-transition') {
+      const previousSnapshot = window.__wpNativeRouteSnapshots?.get(previousPath)?.cloneNode(true);
+      if (previousSnapshot) {
+        outgoingLayer = document.createElement('div');
+        outgoingLayer.className = 'native-push-outgoing-layer';
+        outgoingLayer.setAttribute('aria-hidden', 'true');
+        previousSnapshot.classList.add('native-push-outgoing-content');
+        outgoingLayer.appendChild(previousSnapshot);
+        document.body.appendChild(outgoingLayer);
+        document.body.classList.add('native-push-switching');
+      }
+    }
+
+    route.classList.remove(
+      'route-animate', 'native-tab-transition',
+      'native-push-transition', 'native-pop-transition'
+    );
+    route.classList.add('route-animate');
+
+    if (isNativeApp && nativeTransition === 'native-push-transition') {
+      route.style.visibility = 'hidden';
+      const startedAt = performance.now();
+      const beginPush = () => {
+        if (cancelled) return;
+        if (!route.firstElementChild && performance.now() - startedAt < 1200) {
+          frame = window.requestAnimationFrame(beginPush);
+          return;
+        }
+        route.style.visibility = '';
+        void route.offsetWidth;
+        route.classList.add('native-push-transition');
+        outgoingLayer?.classList.add('is-shifting');
+        cleanupTimer = window.setTimeout(() => {
+          outgoingLayer?.remove();
+          document.body.classList.remove('native-push-switching');
+        }, 310);
+      };
+      frame = window.requestAnimationFrame(beginPush);
+    } else if (isNativeApp) {
+      route.classList.add(nativeTransition);
+    }
+
+    previousNativePathRef.current = currentPath;
+    return () => {
+      cancelled = true;
+      if (frame !== null) window.cancelAnimationFrame(frame);
+      if (cleanupTimer !== null) window.clearTimeout(cleanupTimer);
+      route.style.visibility = '';
+      outgoingLayer?.remove();
+      document.body.classList.remove('native-push-switching');
+    };
   }, [isNativeApp, location.pathname]);
 
   useEffect(() => {
     if (!isNativeApp) return undefined;
+    const snapshotPaths = new Set(['/', '/songs', '/chats', '/profile', '/login', '/setlists', '/news', '/friends']);
+    if (!snapshotPaths.has(location.pathname)) return undefined;
     let cancelled = false;
     const startedAt = performance.now();
     const captureRoute = () => {
@@ -270,7 +294,7 @@ function App() {
       if (!window.__wpNativeRouteSnapshots) window.__wpNativeRouteSnapshots = new Map();
       window.__wpNativeRouteSnapshots.delete(location.pathname);
       window.__wpNativeRouteSnapshots.set(location.pathname, route.cloneNode(true));
-      while (window.__wpNativeRouteSnapshots.size > 12) {
+      while (window.__wpNativeRouteSnapshots.size > 8) {
         const oldestPath = window.__wpNativeRouteSnapshots.keys().next().value;
         window.__wpNativeRouteSnapshots.delete(oldestPath);
       }
