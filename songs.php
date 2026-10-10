@@ -1353,6 +1353,15 @@ async function addSongMaterialLink() {
   }
 }
 
+function detectMaterialTypeFromFilename(filename) {
+  const ext = (filename || '').split('.').pop().toLowerCase();
+  if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) return 'image';
+  if (['mp3', 'm4a', 'wav', 'ogg'].includes(ext)) return 'audio';
+  if (['mp4', 'webm', 'mov'].includes(ext)) return 'video';
+  if (['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt'].includes(ext)) return 'document';
+  return 'link';
+}
+
 async function uploadSongMaterial() {
   const file = songMaterialFileI.files?.[0];
   if (!file) {
@@ -1365,8 +1374,13 @@ async function uploadSongMaterial() {
     return;
   }
 
+  const detectedType = detectMaterialTypeFromFilename(file.name);
+  let type = songMaterialTypeI.value;
+  if (type === 'link' && detectedType !== 'link') {
+    type = detectedType;
+    songMaterialTypeI.value = detectedType;
+  }
   const title = songMaterialTitleI.value.trim() || file.name.replace(/\.[^.]+$/, '');
-  const type = songMaterialTypeI.value;
 
   // If creating a new song, stage file in memory
   if (currentEditId === null) {
@@ -1390,7 +1404,7 @@ async function uploadSongMaterial() {
     songMaterialTypeI.value = 'link';
     renderSongMaterials();
     updateWorkspaceState();
-    showNotice('Ֆայլը կցված է (կվերբեռնվի երգի պահպանման ժամանակ) ✅', 'success');
+    showNotice('Ֆայլը կցված է (կպահպանվի երգի հետ) ✅', 'success');
     return;
   }
 
@@ -1414,7 +1428,7 @@ async function uploadSongMaterial() {
     songMaterialTypeI.value = 'link';
     renderSongMaterials();
     updateWorkspaceState();
-    showNotice('Ֆայլը վերբեռնված և կցված է երգին', 'success');
+    showNotice('Ֆայլը վերբեռնված և կցված է երգին ✅', 'success');
   } finally {
     setMaterialControlsBusy(false);
   }
@@ -1458,9 +1472,15 @@ uploadSongMaterialBtn?.addEventListener('click', () => {
 });
 songMaterialFileI?.addEventListener('change', () => {
   const file = songMaterialFileI.files?.[0];
-  if (file && !songMaterialTitleI.value.trim()) {
+  if (!file) return;
+  if (!songMaterialTitleI.value.trim()) {
     songMaterialTitleI.value = file.name.replace(/\.[^.]+$/, '');
   }
+  const detectedType = detectMaterialTypeFromFilename(file.name);
+  if (songMaterialTypeI.value === 'link' && detectedType !== 'link') {
+    songMaterialTypeI.value = detectedType;
+  }
+  uploadSongMaterial().catch(err => showNotice(err.message || 'Ֆայլը կցել չհաջողվեց', 'error'));
 });
 songMaterialsList?.addEventListener('click', (event) => {
   const button = event.target.closest('[data-remove-material]');
@@ -2192,6 +2212,49 @@ async function saveCurrentSong() {
     return { raw, json };
   };
 
+  // Stage any uncommitted file sitting in the file input
+  if (songMaterialFileI?.files?.[0]) {
+    const uncommittedFile = songMaterialFileI.files[0];
+    const uncommittedType = detectMaterialTypeFromFilename(uncommittedFile.name);
+    const uncommittedTitle = songMaterialTitleI?.value?.trim() || uncommittedFile.name.replace(/\.[^.]+$/, '');
+    const tempId = 'pending_file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    pendingMaterialFiles.set(tempId, {
+      file: uncommittedFile,
+      title: uncommittedTitle,
+      type: uncommittedType
+    });
+    currentSongAttachments.push({
+      id: tempId,
+      title: uncommittedTitle,
+      type: uncommittedType,
+      is_pending_file: true,
+      file_name: uncommittedFile.name,
+      file_size: uncommittedFile.size
+    });
+    songMaterialFileI.value = '';
+    if (songMaterialTitleI) songMaterialTitleI.value = '';
+  }
+
+  // Stage any uncommitted link sitting in the URL input
+  const uncommittedUrl = songMaterialUrlI?.value?.trim();
+  if (uncommittedUrl) {
+    let finalUrl = uncommittedUrl;
+    if (!/^https?:\/\//i.test(finalUrl)) {
+      finalUrl = 'https://' + finalUrl.replace(/^\/+/, '');
+    }
+    const uncommittedTitle = songMaterialTitleI?.value?.trim() || 'Հղում';
+    const uncommittedType = songMaterialTypeI?.value || 'link';
+    currentSongAttachments.push({
+      id: 'pending_link_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+      title: uncommittedTitle,
+      url: finalUrl,
+      type: uncommittedType,
+      is_pending: true
+    });
+    songMaterialUrlI.value = '';
+    if (songMaterialTitleI) songMaterialTitleI.value = '';
+  }
+
   let savedSongId = currentEditId;
   if (currentEditId !== null) {
     const res = await fetch('api.php?id=' + encodeURIComponent(currentEditId), {
@@ -2220,10 +2283,11 @@ async function saveCurrentSong() {
 
   // Upload/attach any pending materials for this song
   const pendingLinks = currentSongAttachments.filter(item => item.is_pending);
+  const uploadErrors = [];
   if (savedSongId && (pendingLinks.length > 0 || pendingMaterialFiles.size > 0)) {
     for (const pl of pendingLinks) {
       try {
-        await fetch('song_attachments_api.php?action=add', {
+        const res = await fetch('song_attachments_api.php?action=add', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -2233,8 +2297,15 @@ async function saveCurrentSong() {
             type: pl.type
           })
         });
+        const resText = await res.text();
+        let resJson = {};
+        try { resJson = JSON.parse(resText); } catch (_) { resJson = { error: resText }; }
+        if (!res.ok || !resJson.ok) {
+          uploadErrors.push(resJson.error || 'Հղումը կցել չհաջողվեց');
+        }
       } catch (err) {
         console.error('Failed to attach pending link:', err);
+        uploadErrors.push(err.message || 'Հղումը կցել չհաջողվեց');
       }
     }
 
@@ -2245,18 +2316,31 @@ async function saveCurrentSong() {
         fd.append('title', pf.title);
         fd.append('type', pf.type);
         fd.append('file', pf.file);
-        await fetch('song_attachments_api.php?action=upload', {
+        const upRes = await fetch('song_attachments_api.php?action=upload', {
           method: 'POST',
           body: fd
         });
+        const upText = await upRes.text();
+        let upJson = {};
+        try { upJson = JSON.parse(upText); } catch (_) { upJson = { error: upText }; }
+        if (!upRes.ok || !upJson.ok) {
+          const errMsg = upJson?.error || `Սխալ (${upRes.status})`;
+          console.error('Failed to upload pending file:', errMsg);
+          uploadErrors.push((pf.file?.name || 'Ֆայլ') + ': ' + errMsg);
+        }
       } catch (err) {
         console.error('Failed to upload pending file:', err);
+        uploadErrors.push((pf.file?.name || 'Ֆայլ') + ': ' + (err.message || 'Սխալ'));
       }
     }
     pendingMaterialFiles.clear();
   }
 
-  showNotice(window.I18N?.Saved || 'Երգը և կցված նյութերը պահպանված են ✅', 'success');
+  if (uploadErrors.length > 0) {
+    showNotice('Երգը պահպանվեց, սակայն ֆայլը կցելիս առաջացավ խնդիր: ' + uploadErrors.join('; '), 'error');
+  } else {
+    showNotice(window.I18N?.Saved || 'Երգը և կցված նյութերը պահպանված են ✅', 'success');
+  }
   clearForm();
   await fetchSongs();
   activateWorkspaceTab('libraryPane');
