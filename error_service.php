@@ -594,6 +594,17 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
+    // 3.0.1. SetlistEditorWeb useCallback (Can't find variable: useCallback / useCallback is not defined)
+    if (stripos($message, 'useCallback') !== false || stripos($stackTrace, 'useCallback') !== false) {
+        $reason = 'SetlistEditorWeb.jsx-ում useCallback-ի import-ը ավելացված է և bundle-ը վերակառուցված (commit 68a5009)';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
     // 3.1. Notification in WebViews / CriOS (restorePromptAfterExternalDisable, Notification is not defined)
     if (stripos($message, 'Notification is not defined') !== false || 
         stripos($message, 'Can\'t find variable: Notification') !== false || 
