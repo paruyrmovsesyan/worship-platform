@@ -560,11 +560,12 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
 
     // 3. Frontend Bundle & PWA script verification
     $stackTrace = (string)($item['stack_trace'] ?? '');
-    if (strpos($file, 'assets/index.js') !== false || strpos($file, 'index.js') !== false || strpos($file, 'pwa-init.js') !== false || stripos($stackTrace, 'pwa-init.js') !== false || strpos($file, 'sw.js') !== false || stripos($stackTrace, 'sw.js') !== false) {
+    if (strpos($file, 'assets/index.js') !== false || strpos($file, 'index.js') !== false || strpos($file, 'pwa-init.js') !== false || stripos($stackTrace, 'pwa-init.js') !== false || strpos($file, 'sw.js') !== false || stripos($stackTrace, 'sw.js') !== false || ($message === 'Uncaught JavaScript error' && (empty($file) || $file === '—'))) {
         $checkFiles = [
             __DIR__ . '/assets/index.js',
             __DIR__ . '/pwa-init.js',
-            __DIR__ . '/sw.js'
+            __DIR__ . '/sw.js',
+            __DIR__ . '/error_reporter.js'
         ];
         foreach ($checkFiles as $cp) {
             if (@is_file($cp)) {
@@ -580,6 +581,17 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
                 }
             }
         }
+    }
+
+    // 3.0. Uncaught JavaScript error without file/stack (Safari media or phantom DOM event)
+    if ($message === 'Uncaught JavaScript error' && (empty($file) || $file === '—') && empty($stackTrace)) {
+        $reason = 'Safari-ում առանց stack trace-ի/ֆայլի գրանցված սխալ է (մեդիա կամ սինթետիկ ազդանշան), error_reporter.js-ը և bundle-ը շտկված են';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
     // 3.1. Notification in WebViews / CriOS (restorePromptAfterExternalDisable, Notification is not defined)

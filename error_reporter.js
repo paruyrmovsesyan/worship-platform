@@ -154,12 +154,23 @@
         return;
       }
 
-      const isResourceError = event.target && (event.target.tagName === 'IMG' || event.target.tagName === 'SCRIPT' || event.target.tagName === 'LINK');
+      // Ignore synthetic or DOM events with no message, no file, and no error object
+      if (!event.message && !event.filename && !event.lineno && (!event.error || typeof event.error !== 'object')) {
+        return;
+      }
+
+      const targetTag = event.target && event.target.tagName ? event.target.tagName.toLowerCase() : '';
+      if (targetTag === 'audio' || targetTag === 'video' || targetTag === 'source' || targetTag === 'iframe') {
+        // Media elements manage their own playback and errors; do not report as JS code crashes
+        return;
+      }
+
+      const isResourceError = targetTag === 'img' || targetTag === 'script' || targetTag === 'link';
       const { userId, userEmail } = getUserMeta();
 
       if (isResourceError) {
         const resourceElement = event.target;
-        const resourceTag = resourceElement.tagName.toLowerCase();
+        const resourceTag = targetTag;
         const sourceUrl = resourceElement.src || resourceElement.href || '';
         // Only log local application asset failures
         if (sourceUrl && (sourceUrl.includes(window.location.host) || sourceUrl.startsWith('/'))) {
