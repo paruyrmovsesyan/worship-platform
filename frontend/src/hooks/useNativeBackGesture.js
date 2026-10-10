@@ -2,9 +2,10 @@ import { useEffect } from 'react';
 import { flushSync } from 'react-dom';
 
 const EDGE_WIDTH = 32;
-const MIN_SWIPE_DISTANCE = 58;
+const MIN_SWIPE_DISTANCE = 44;
 const DIRECTION_RATIO = 1.35;
-const COMMIT_PROGRESS = 0.28;
+const COMMIT_PROGRESS = 0.22;
+const COMMIT_VELOCITY = 0.42;
 
 const isPrimaryTab = (pathname) => pathname === '/' ||
   pathname === '/songs' ||
@@ -37,6 +38,28 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
     let startY = 0;
     let dragLayer = null;
     let dragX = 0;
+    let underlayLayer = null;
+    let underlayX = 0;
+    let lastMoveX = 0;
+    let lastMoveTime = 0;
+    let velocityX = 0;
+
+    const createUnderlayLayer = () => {
+      if (underlayLayer) return underlayLayer;
+      const parentPath = fallbackPath(pathname, user);
+      const parentSnapshot = window.__wpNativeRouteSnapshots?.get(parentPath)?.cloneNode(true);
+      if (!parentSnapshot) return null;
+      const layer = document.createElement('div');
+      layer.className = 'native-pop-underlay-layer';
+      layer.setAttribute('aria-hidden', 'true');
+      parentSnapshot.classList.add('native-pop-underlay-content');
+      layer.appendChild(parentSnapshot);
+      document.body.appendChild(layer);
+      underlayLayer = layer;
+      underlayX = -window.innerWidth * 0.18;
+      layer.style.transform = `translate3d(${underlayX}px, 0, 0)`;
+      return layer;
+    };
 
     const createOutgoingLayer = () => {
       if (dragLayer) return dragLayer;
@@ -44,6 +67,7 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
       const routeSnapshot = currentRoute?.cloneNode(true);
       if (!routeSnapshot) return null;
 
+      createUnderlayLayer();
       const layer = document.createElement('div');
       layer.className = 'native-pop-outgoing-layer is-interactive';
       layer.setAttribute('aria-hidden', 'true');
@@ -61,9 +85,12 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
 
     const performLayeredBack = (interactiveLayer = null, initialX = 0) => {
       const outgoingLayer = interactiveLayer || createOutgoingLayer();
+      const revealedUnderlay = underlayLayer;
       dragLayer = null;
+      underlayLayer = null;
 
       document.body.classList.add('native-pop-switching');
+      window.__wpNativePopTransitionPending = true;
       flushSync(() => navigate(fallbackPath(pathname, user), { replace: true }));
 
       const startedAt = performance.now();
@@ -88,6 +115,16 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
           });
           animation.finished.catch(() => {}).finally(() => outgoingLayer.remove());
         }
+        if (revealedUnderlay) {
+          revealedUnderlay.animate([
+            { transform: `translate3d(${underlayX}px, 0, 0)` },
+            { transform: 'translate3d(0, 0, 0)' },
+          ], {
+            duration: Math.max(150, 300 * (1 - initialX / Math.max(window.innerWidth, 1))),
+            easing: 'cubic-bezier(0.32, 0.72, 0, 1)',
+            fill: 'forwards',
+          }).finished.catch(() => {}).finally(() => revealedUnderlay.remove());
+        }
         window.setTimeout(() => {
           outgoingLayer?.remove();
           document.body.classList.remove('native-pop-switching');
@@ -98,8 +135,11 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
 
     const cancelInteractiveBack = () => {
       const layer = dragLayer;
+      const underlay = underlayLayer;
       const initialX = dragX;
+      const initialUnderlayX = underlayX;
       dragLayer = null;
+      underlayLayer = null;
       tracking = false;
       dragX = 0;
       if (!layer) return;
@@ -111,6 +151,15 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
         easing: 'cubic-bezier(0.32, 0.72, 0, 1)',
       });
       animation.finished.catch(() => {}).finally(() => layer.remove());
+      if (underlay) {
+        underlay.animate([
+          { transform: `translate3d(${initialUnderlayX}px, 0, 0)` },
+          { transform: 'translate3d(-18vw, 0, 0)' },
+        ], {
+          duration: 180,
+          easing: 'cubic-bezier(0.32, 0.72, 0, 1)',
+        }).finished.catch(() => {}).finally(() => underlay.remove());
+      }
     };
 
     const onTouchStart = (event) => {
@@ -120,6 +169,9 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
       tracking = true;
       startX = touch.clientX;
       startY = touch.clientY;
+      lastMoveX = touch.clientX;
+      lastMoveTime = performance.now();
+      velocityX = 0;
     };
 
     const onTouchMove = (event) => {
@@ -135,9 +187,19 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
       if (dx < 6) return;
       const layer = createOutgoingLayer();
       if (!layer) return;
+      const now = performance.now();
+      const elapsed = Math.max(now - lastMoveTime, 1);
+      velocityX = (touch.clientX - lastMoveX) / elapsed;
+      lastMoveX = touch.clientX;
+      lastMoveTime = now;
       dragX = Math.min(dx, window.innerWidth);
       layer.style.transform = `translate3d(${dragX}px, 0, 0)`;
       layer.style.boxShadow = `${Math.max(-18, -18 + dragX / 24)}px 0 30px rgba(0,0,0,.28)`;
+      if (underlayLayer) {
+        const progress = dragX / Math.max(window.innerWidth, 1);
+        underlayX = -window.innerWidth * 0.18 * (1 - progress);
+        underlayLayer.style.transform = `translate3d(${underlayX}px, 0, 0)`;
+      }
       event.preventDefault();
     };
 
@@ -148,7 +210,7 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
       const dy = touch.clientY - startY;
       const shouldCommit = dx >= MIN_SWIPE_DISTANCE &&
         dx >= Math.abs(dy) * DIRECTION_RATIO &&
-        dx / Math.max(window.innerWidth, 1) >= COMMIT_PROGRESS;
+        (dx / Math.max(window.innerWidth, 1) >= COMMIT_PROGRESS || velocityX >= COMMIT_VELOCITY);
       const layer = dragLayer;
       const currentX = dragX;
       reset();
@@ -186,6 +248,7 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
       document.removeEventListener('touchend', onTouchEnd, true);
       document.removeEventListener('touchcancel', cancelInteractiveBack, true);
       dragLayer?.remove();
+      underlayLayer?.remove();
       window.removeEventListener('wp-native-page-back', onBackRequest);
       document.removeEventListener('click', onNativeBackClick, true);
     };

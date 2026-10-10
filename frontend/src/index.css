@@ -320,6 +320,42 @@ body.is-native .route-animate.native-push-transition {
   animation: nativePushEnter 280ms cubic-bezier(0.32, 0.72, 0, 1) both !important;
 }
 
+body.is-native.native-push-switching main {
+  position: relative;
+  z-index: 8999;
+}
+
+body.is-native .native-push-outgoing-layer,
+body.is-native .native-pop-underlay-layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--color-bg, #05050A);
+  contain: paint;
+}
+
+body.is-native .native-push-outgoing-layer {
+  z-index: 8998;
+  transform: translate3d(0, 0, 0);
+  transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+body.is-native .native-push-outgoing-layer.is-shifting {
+  transform: translate3d(-18vw, 0, 0);
+}
+
+body.is-native .native-push-outgoing-content,
+body.is-native .native-pop-underlay-content {
+  min-height: 100%;
+  animation: none !important;
+}
+
+body.is-native .native-pop-underlay-layer {
+  z-index: 8999;
+  will-change: transform;
+}
+
 body.is-native .route-animate.native-pop-transition {
   animation: none !important;
 }

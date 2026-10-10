@@ -205,14 +205,32 @@ function App() {
       const currentIsPrimary = primaryTabs.includes(currentPath);
       let nativeTransition = 'native-push-transition';
       const hasSharedElementTransition = isNativeApp && window.__wpNativeSharedTransitionPending;
+      const hasInteractivePopTransition = isNativeApp && window.__wpNativePopTransitionPending;
+      let outgoingLayer = null;
 
-      if (hasSharedElementTransition) {
+      if (hasInteractivePopTransition) {
+        nativeTransition = 'native-pop-transition';
+        window.__wpNativePopTransitionPending = false;
+      } else if (hasSharedElementTransition) {
         nativeTransition = 'native-tab-transition';
         window.__wpNativeSharedTransitionPending = false;
       } else if (previousIsPrimary && currentIsPrimary) {
         nativeTransition = 'native-tab-transition';
       } else if (!previousIsPrimary && currentIsPrimary) {
         nativeTransition = 'native-pop-transition';
+      }
+
+      if (isNativeApp && nativeTransition === 'native-push-transition') {
+        const previousSnapshot = window.__wpNativeRouteSnapshots?.get(previousPath)?.cloneNode(true);
+        if (previousSnapshot) {
+          outgoingLayer = document.createElement('div');
+          outgoingLayer.className = 'native-push-outgoing-layer';
+          outgoingLayer.setAttribute('aria-hidden', 'true');
+          previousSnapshot.classList.add('native-push-outgoing-content');
+          outgoingLayer.appendChild(previousSnapshot);
+          document.body.appendChild(outgoingLayer);
+          document.body.classList.add('native-push-switching');
+        }
       }
 
       transitionRef.current.classList.remove(
@@ -225,8 +243,43 @@ function App() {
       if (isNativeApp) transitionRef.current.classList.add(nativeTransition);
       transitionRef.current.classList.add('route-animate');
 
+      if (outgoingLayer) {
+        window.requestAnimationFrame(() => outgoingLayer.classList.add('is-shifting'));
+        window.setTimeout(() => {
+          outgoingLayer.remove();
+          document.body.classList.remove('native-push-switching');
+        }, 330);
+      }
+
       previousNativePathRef.current = currentPath;
     }
+  }, [isNativeApp, location.pathname]);
+
+  useEffect(() => {
+    if (!isNativeApp) return undefined;
+    let cancelled = false;
+    const startedAt = performance.now();
+    const captureRoute = () => {
+      if (cancelled) return;
+      const route = transitionRef.current;
+      if (!route?.firstElementChild && performance.now() - startedAt < 2500) {
+        window.requestAnimationFrame(captureRoute);
+        return;
+      }
+      if (!route?.firstElementChild) return;
+      if (!window.__wpNativeRouteSnapshots) window.__wpNativeRouteSnapshots = new Map();
+      window.__wpNativeRouteSnapshots.delete(location.pathname);
+      window.__wpNativeRouteSnapshots.set(location.pathname, route.cloneNode(true));
+      while (window.__wpNativeRouteSnapshots.size > 12) {
+        const oldestPath = window.__wpNativeRouteSnapshots.keys().next().value;
+        window.__wpNativeRouteSnapshots.delete(oldestPath);
+      }
+    };
+    const frame = window.requestAnimationFrame(captureRoute);
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+    };
   }, [isNativeApp, location.pathname]);
 
   useEffect(() => {
