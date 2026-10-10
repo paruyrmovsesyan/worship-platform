@@ -247,52 +247,13 @@ export default function MobileNav() {
       return;
     }
 
+    // Primary tabs are persistent destinations, not pushed pages. Instagram's
+    // tab bar swaps them immediately; only the dock indicator moves.
     tabTransitionRef.current = true;
-    document.body.classList.add('native-tab-switching');
     flushSync(performNavigation);
-    const incoming = document.querySelector('main .route-animate');
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
-      document.body.classList.contains('reduce-motion');
-    let finished = false;
-    let activeAnimation = null;
-    let readyFrame = null;
-    const finish = () => {
-      if (finished) return;
-      finished = true;
-      if (readyFrame !== null) window.cancelAnimationFrame(readyFrame);
-      if (incoming) {
-        incoming.style.opacity = '';
-        incoming.style.transform = '';
-      }
-      activeAnimation?.cancel();
-      document.body.classList.remove('native-tab-switching');
+    window.requestAnimationFrame(() => {
       tabTransitionRef.current = null;
-    };
-    if (incoming && !reducedMotion) {
-      const startedAt = performance.now();
-      const animateWhenReady = () => {
-        if (finished) return;
-        // Some tabs render nothing while their initial data loads. Animating an
-        // empty route makes the real content pop in after the transition.
-        if (!incoming.firstElementChild && performance.now() - startedAt < 3000) {
-          readyFrame = window.requestAnimationFrame(animateWhenReady);
-          return;
-        }
-        activeAnimation = incoming.animate([
-          { opacity: 0.985 },
-          { opacity: 1 },
-        ], {
-          duration: 130,
-          easing: 'ease-out',
-          fill: 'forwards',
-        });
-        activeAnimation.finished.then(finish, finish);
-      };
-      readyFrame = window.requestAnimationFrame(animateWhenReady);
-    } else {
-      finish();
-    }
-    window.setTimeout(finish, 3500);
+    });
   };
 
   useEffect(() => {

@@ -225,6 +225,25 @@ body.keyboard-open #wpAppDock {
   100% { transform: scale(1.08); }
 }
 
+/* Native primary tabs stay quick and stable: the indicator moves, icons do
+   not run a second spring animation on top of the route change. */
+body.is-native .nav-liquid-indicator {
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+              background-color 150ms ease,
+              box-shadow 150ms ease;
+}
+
+body.is-native .mobile-bottom-nav .nav-item,
+body.is-native .mobile-bottom-nav .nav-item svg,
+body.is-native .mobile-bottom-nav .nav-label {
+  transition-duration: 140ms;
+}
+
+body.is-native .mobile-bottom-nav .nav-item.active svg {
+  animation: none !important;
+  transform: scale(1.04);
+}
+
 .mobile-bottom-nav .nav-item.active .nav-label {
   font-weight: 700;
   color: #ffffff;
