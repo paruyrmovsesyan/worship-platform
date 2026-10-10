@@ -204,8 +204,12 @@ function App() {
       const previousIsPrimary = primaryTabs.includes(previousPath);
       const currentIsPrimary = primaryTabs.includes(currentPath);
       let nativeTransition = 'native-push-transition';
+      const hasSharedElementTransition = isNativeApp && window.__wpNativeSharedTransitionPending;
 
-      if (previousIsPrimary && currentIsPrimary) {
+      if (hasSharedElementTransition) {
+        nativeTransition = 'native-tab-transition';
+        window.__wpNativeSharedTransitionPending = false;
+      } else if (previousIsPrimary && currentIsPrimary) {
         nativeTransition = 'native-tab-transition';
       } else if (!previousIsPrimary && currentIsPrimary) {
         nativeTransition = 'native-pop-transition';
@@ -328,7 +332,7 @@ function App() {
   });
 
   useNativeBackGesture({
-    enabled: isNativeApp && Capacitor.getPlatform() === 'ios' && isMobile,
+    enabled: isNativeApp && isMobile,
     pathname: location.pathname,
     navigate,
     user,

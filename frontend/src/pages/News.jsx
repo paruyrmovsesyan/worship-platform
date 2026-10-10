@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useIsAppMode } from '../hooks/useIsPWA';
 import { getFallbackNews, getCachedNewsList, fetchNewsList, formatNewsDate, formatNewsVersion, getNewsImageUrl } from '../utils/news';
+import { navigateWithNativeSharedElement } from '../utils/nativeSharedElement';
 import './News.css';
 
 const copyByLanguage = {
@@ -63,6 +64,7 @@ function SearchIcon() {
 
 export default function News() {
   const { t, language } = useLanguage();
+  const navigate = useNavigate();
   const isPWA = useIsAppMode();
   const [articles, setArticles] = useState(() => getCachedNewsList(language));
   const [loading, setLoading] = useState(false);
@@ -111,6 +113,17 @@ export default function News() {
   const featuredArticle = showFeatured ? filteredArticles[0] : null;
   const listArticles = featuredArticle ? filteredArticles.slice(1) : filteredArticles;
 
+  const openArticle = (event, item) => {
+    if (!document.body.classList.contains('is-native') || !item.image_url) return;
+    event.preventDefault();
+    navigateWithNativeSharedElement({
+      source: event.currentTarget.querySelector('.news-card-media'),
+      targetSelector: '.news-reader-media',
+      navigate,
+      to: `/news/${item.slug}`,
+    });
+  };
+
   if (isPWA) {
     return (
       <div className="news-page">
@@ -124,7 +137,7 @@ export default function News() {
           <div className="news-list-grid">
             {articles.map((item, index) => (
               <article key={item.slug || item.id} className={`news-list-card ${index === 0 ? 'featured' : ''}`}>
-                <Link to={`/news/${item.slug}`} className="news-pwa-card-link">
+                <Link to={`/news/${item.slug}`} className="news-pwa-card-link" onClick={event => openArticle(event, item)}>
                   <div className="news-card-media" style={item.image_url ? { backgroundImage: `url("${getNewsImageUrl(item)}")` } : undefined} />
                   <div className="news-card-body">
                     <div className="news-card-meta">

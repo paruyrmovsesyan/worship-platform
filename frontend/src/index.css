@@ -344,6 +344,11 @@ body.is-native .native-pop-outgoing-layer {
   contain: paint;
 }
 
+body.is-native .native-pop-outgoing-layer.is-interactive {
+  transition: none !important;
+  touch-action: none;
+}
+
 body.is-native .native-pop-outgoing-content {
   min-height: 100%;
 }
