@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect } from 'react';
 import { usePageLoading } from './context/PageLoadingContext';
-import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate, useNavigationType, Navigate } from 'react-router-dom';
 
 const LegacySongRedirect = () => {
   const params = new URLSearchParams(window.location.search);
@@ -73,6 +73,63 @@ import NativePlatformServices from './components/NativePlatformServices';
 import NativeRouteLoader from './components/NativeRouteLoader';
 import NativeRuntimeGuard from './components/NativeRuntimeGuard';
 
+const NATIVE_PRIMARY_PATHS = new Set(['/', '/songs', '/chats', '/profile', '/login']);
+const NATIVE_ROUTE_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)';
+const NATIVE_ROUTE_DURATION = 300;
+
+const nativeMotionIsReduced = () => document.body.classList.contains('reduce-motion') ||
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+const createNativeSnapshotLayer = (pathname, layerClass, contentClass) => {
+  const snapshots = window.__wpNativeRouteSnapshots;
+  const snapshot = snapshots?.get(pathname);
+  if (!snapshot) return null;
+
+  // Move the prepared snapshot instead of cloning a long page during an
+  // active transition frame. The destination captures a fresh copy later.
+  snapshots.delete(pathname);
+  snapshot.classList.remove('native-tab-transition', 'native-push-transition', 'native-pop-transition');
+  snapshot.classList.add(contentClass);
+  snapshot.style.visibility = '';
+  const scrollY = Number(snapshot.dataset.nativeScrollY || 0);
+  snapshot.style.transform = scrollY > 0 ? `translate3d(0, -${scrollY}px, 0)` : 'translate3d(0, 0, 0)';
+  snapshot.setAttribute('inert', '');
+
+  const layer = document.createElement('div');
+  layer.className = layerClass;
+  layer.dataset.nativeParentPath = pathname;
+  layer.setAttribute('aria-hidden', 'true');
+  layer.appendChild(snapshot);
+  const nestedScrollY = Number(snapshot.dataset.nativeNestedScrollY || 0);
+  if (nestedScrollY > 0) {
+    const nestedScroller = snapshot.matches('.chat-page-container')
+      ? snapshot.querySelector('.chat-messages-container')
+      : null;
+    if (nestedScroller) nestedScroller.scrollTop = nestedScrollY;
+  }
+  return layer;
+};
+
+const cacheNativePopLayer = (detailPath, parentPath, layer) => {
+  if (!layer) return;
+  if (!window.__wpNativePreparedPopLayers) window.__wpNativePreparedPopLayers = new Map();
+  const cache = window.__wpNativePreparedPopLayers;
+  cache.get(detailPath)?.remove();
+  layer.remove();
+  layer.className = 'native-pop-underlay-layer';
+  layer.dataset.nativeParentPath = parentPath;
+  layer.style.transform = 'translate3d(-18vw, 0, 0)';
+  const content = layer.firstElementChild;
+  content?.classList.remove('native-push-outgoing-content');
+  content?.classList.add('native-pop-underlay-content');
+  cache.set(detailPath, layer);
+  while (cache.size > 4) {
+    const oldestPath = cache.keys().next().value;
+    cache.get(oldestPath)?.remove();
+    cache.delete(oldestPath);
+  }
+};
+
 function App() {
   const mediaQueryMatch = useMediaQuery('(max-width: 900px)');
   const isIOSMobile = /iPhone|iPod/.test(navigator.userAgent);
@@ -99,6 +156,7 @@ function App() {
   const { isOffline, canAccessPath } = usePwaOfflineGuard();
   const location = useLocation();
   const navigate = useNavigate();
+  const navigationType = useNavigationType();
   const transitionRef = React.useRef(null);
   const previousNativePathRef = React.useRef(location.pathname);
   const [refreshKey, setRefreshKey] = React.useState(0);
@@ -199,21 +257,25 @@ function App() {
   useLayoutEffect(() => {
     const route = transitionRef.current;
     if (!route) return undefined;
-    const primaryTabs = ['/', '/songs', '/chats', '/profile', '/login'];
     const previousPath = previousNativePathRef.current;
     const currentPath = location.pathname;
-    const previousIsPrimary = primaryTabs.includes(previousPath);
-    const currentIsPrimary = primaryTabs.includes(currentPath);
+    const previousIsPrimary = NATIVE_PRIMARY_PATHS.has(previousPath);
+    const currentIsPrimary = NATIVE_PRIMARY_PATHS.has(currentPath);
     let nativeTransition = 'native-push-transition';
     const hasSharedElementTransition = isNativeApp && window.__wpNativeSharedTransitionPending;
     const hasInteractivePopTransition = isNativeApp && window.__wpNativePopTransitionPending;
     let outgoingLayer = null;
     let frame = null;
-    let cleanupTimer = null;
+    let transitionTimer = null;
     let cancelled = false;
     let animatedSurface = route;
+    let routeAnimations = [];
+    let ownsTransitionLock = false;
+    let pushFinished = false;
 
-    if (hasInteractivePopTransition) {
+    if (previousPath === currentPath) {
+      nativeTransition = 'native-tab-transition';
+    } else if (hasInteractivePopTransition) {
       nativeTransition = 'native-pop-transition';
       window.__wpNativePopTransitionPending = false;
     } else if (hasSharedElementTransition) {
@@ -225,18 +287,26 @@ function App() {
       nativeTransition = 'native-pop-transition';
     }
 
+    if (isNativeApp && nativeTransition === 'native-push-transition' && previousPath !== currentPath) {
+      if (!window.__wpNativeParentRoutes) window.__wpNativeParentRoutes = new Map();
+      window.__wpNativeParentRoutes.set(currentPath, {
+        pathname: previousPath,
+        canUseHistoryBack: navigationType === 'PUSH',
+      });
+    }
+
     if (isNativeApp && nativeTransition === 'native-push-transition') {
-      const previousSnapshot = window.__wpNativeRouteSnapshots?.get(previousPath)?.cloneNode(true);
-      if (previousSnapshot) {
-        const snapshotScrollY = Number(previousSnapshot.dataset.nativeScrollY || 0);
-        if (snapshotScrollY > 0) {
-          previousSnapshot.style.transform = `translate3d(0, -${snapshotScrollY}px, 0)`;
-        }
-        outgoingLayer = document.createElement('div');
-        outgoingLayer.className = 'native-push-outgoing-layer';
-        outgoingLayer.setAttribute('aria-hidden', 'true');
-        previousSnapshot.classList.add('native-push-outgoing-content');
-        outgoingLayer.appendChild(previousSnapshot);
+      // Lock before waiting for an async/portaled destination. A second tab or
+      // link tap in this gap previously interrupted the first transition.
+      window.__wpNativeTransitionInFlight = true;
+      document.body.classList.add('native-transition-running');
+      ownsTransitionLock = true;
+      outgoingLayer = createNativeSnapshotLayer(
+        previousPath,
+        'native-push-outgoing-layer',
+        'native-push-outgoing-content',
+      );
+      if (outgoingLayer) {
         document.body.appendChild(outgoingLayer);
         document.body.classList.add('native-push-switching');
       }
@@ -250,7 +320,7 @@ function App() {
 
     if (isNativeApp && nativeTransition === 'native-push-transition') {
       const usesPortalSurface = currentPath.startsWith('/chat/');
-      if (!usesPortalSurface) route.style.visibility = 'hidden';
+      if (usesPortalSurface) document.body.classList.add('native-push-awaiting-portal');
       const startedAt = performance.now();
       const beginPush = () => {
         if (cancelled) return;
@@ -258,24 +328,82 @@ function App() {
           ? document.querySelector('body > .chat-page-container')
           : null;
         const surfaceReady = usesPortalSurface ? Boolean(portalSurface) : Boolean(route.firstElementChild);
-        if (!surfaceReady && performance.now() - startedAt < 1200) {
+        if (!surfaceReady && performance.now() - startedAt < 5000) {
           frame = window.requestAnimationFrame(beginPush);
           return;
         }
-        animatedSurface = portalSurface || route;
-        route.style.visibility = '';
-        animatedSurface.classList.remove('native-push-transition');
-        animatedSurface.classList.add('native-route-surface');
-        void animatedSurface.offsetWidth;
-        animatedSurface.classList.add('native-push-transition');
-        outgoingLayer?.classList.add('is-shifting');
-        cleanupTimer = window.setTimeout(() => {
+        animatedSurface = portalSurface || (surfaceReady ? route : null);
+        document.body.classList.remove('native-push-awaiting-portal');
+        if (!animatedSurface) {
           outgoingLayer?.remove();
-          animatedSurface.classList.remove('native-route-surface', 'native-push-transition');
+          outgoingLayer = null;
           document.body.classList.remove('native-push-switching');
-        }, 310);
+          if (ownsTransitionLock) {
+            ownsTransitionLock = false;
+            document.body.classList.remove('native-transition-running');
+            window.__wpNativeTransitionInFlight = false;
+            window.dispatchEvent(new CustomEvent('wp-native-transition-idle'));
+          }
+          return;
+        }
+
+        animatedSurface.classList.add('native-route-surface');
+
+        const finishPush = () => {
+          if (cancelled || pushFinished) return;
+          pushFinished = true;
+          if (transitionTimer !== null) {
+            window.clearTimeout(transitionTimer);
+            transitionTimer = null;
+          }
+          routeAnimations.forEach(animation => animation.cancel());
+          routeAnimations = [];
+          animatedSurface?.classList.remove('native-route-surface');
+          document.body.classList.remove('native-push-switching');
+          if (ownsTransitionLock) {
+            ownsTransitionLock = false;
+            document.body.classList.remove('native-transition-running');
+            window.__wpNativeTransitionInFlight = false;
+            window.dispatchEvent(new CustomEvent('wp-native-transition-idle'));
+          }
+          if (outgoingLayer) {
+            cacheNativePopLayer(currentPath, previousPath, outgoingLayer);
+            outgoingLayer = null;
+          }
+        };
+
+        if (nativeMotionIsReduced()) {
+          finishPush();
+          return;
+        }
+
+        const incomingAnimation = animatedSurface.animate([
+          { transform: 'translate3d(100vw, 0, 0)' },
+          { transform: 'translate3d(0, 0, 0)' },
+        ], {
+          duration: NATIVE_ROUTE_DURATION,
+          easing: NATIVE_ROUTE_EASING,
+          fill: 'both',
+        });
+        routeAnimations.push(incomingAnimation);
+        if (outgoingLayer) {
+          const outgoingAnimation = outgoingLayer.animate([
+            { transform: 'translate3d(0, 0, 0)' },
+            { transform: 'translate3d(-18vw, 0, 0)' },
+          ], {
+            duration: NATIVE_ROUTE_DURATION,
+            easing: NATIVE_ROUTE_EASING,
+            fill: 'both',
+          });
+          routeAnimations.push(outgoingAnimation);
+        }
+        // WebKit can leave Animation.finished pending when a deep link or app
+        // lifecycle event interrupts its document timeline. Always reveal the
+        // live route even if that promise is never settled.
+        transitionTimer = window.setTimeout(finishPush, NATIVE_ROUTE_DURATION + 180);
+        Promise.allSettled(routeAnimations.map(animation => animation.finished)).then(finishPush);
       };
-      frame = window.requestAnimationFrame(beginPush);
+      beginPush();
     } else if (isNativeApp) {
       route.classList.add(nativeTransition);
     }
@@ -284,43 +412,119 @@ function App() {
     return () => {
       cancelled = true;
       if (frame !== null) window.cancelAnimationFrame(frame);
-      if (cleanupTimer !== null) window.clearTimeout(cleanupTimer);
-      route.style.visibility = '';
-      animatedSurface?.classList.remove('native-route-surface', 'native-push-transition');
+      if (transitionTimer !== null) window.clearTimeout(transitionTimer);
+      routeAnimations.forEach(animation => animation.cancel());
+      routeAnimations = [];
+      animatedSurface?.classList.remove('native-route-surface');
       outgoingLayer?.remove();
-      document.body.classList.remove('native-push-switching');
+      document.body.classList.remove(
+        'native-push-switching',
+        'native-push-awaiting-portal',
+      );
+      if (ownsTransitionLock) {
+        ownsTransitionLock = false;
+        document.body.classList.remove('native-transition-running');
+        window.__wpNativeTransitionInFlight = false;
+      }
     };
-  }, [isNativeApp, location.pathname]);
+  }, [isNativeApp, location.pathname, navigationType]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isNativeApp) return undefined;
-    const snapshotPaths = new Set(['/', '/songs', '/chats', '/profile', '/login', '/setlists', '/news', '/friends']);
-    if (!snapshotPaths.has(location.pathname)) return undefined;
     let cancelled = false;
+    let frame = null;
+    let captureTimer = null;
+    let observer = null;
+    let waitingForTransition = false;
+    let scrollSurface = null;
     const startedAt = performance.now();
+
+    const getSnapshotSurface = () => location.pathname.startsWith('/chat/')
+      ? document.querySelector('body > .chat-page-container')
+      : transitionRef.current;
+
     const captureRoute = () => {
       if (cancelled) return;
-      const route = transitionRef.current;
-      if (!route?.firstElementChild && performance.now() - startedAt < 2500) {
-        window.requestAnimationFrame(captureRoute);
+      if (window.__wpNativeTransitionInFlight) {
+        if (!waitingForTransition) {
+          waitingForTransition = true;
+          window.addEventListener('wp-native-transition-idle', scheduleCapture, { once: true });
+        }
         return;
       }
-      if (!route?.firstElementChild) return;
+      const route = getSnapshotSurface();
+      const routeIsReady = location.pathname.startsWith('/chat/')
+        ? Boolean(route)
+        : Boolean(route?.firstElementChild);
+      if (!routeIsReady) return;
       if (!window.__wpNativeRouteSnapshots) window.__wpNativeRouteSnapshots = new Map();
       const snapshot = route.cloneNode(true);
+      snapshot.classList.remove('native-tab-transition', 'native-push-transition', 'native-pop-transition', 'native-route-surface');
+      snapshot.style.visibility = '';
+      snapshot.style.transform = '';
       const scrollY = Number(window.__wpNativeScrollPositions?.get(location.pathname) || window.scrollY || 0);
       snapshot.dataset.nativeScrollY = String(scrollY);
+      if (location.pathname.startsWith('/chat/')) {
+        snapshot.dataset.nativeNestedScrollY = String(route.querySelector('.chat-messages-container')?.scrollTop || 0);
+      }
+      window.__wpNativeRouteSnapshots.get(location.pathname)?.remove();
       window.__wpNativeRouteSnapshots.delete(location.pathname);
       window.__wpNativeRouteSnapshots.set(location.pathname, snapshot);
       while (window.__wpNativeRouteSnapshots.size > 8) {
         const oldestPath = window.__wpNativeRouteSnapshots.keys().next().value;
+        window.__wpNativeRouteSnapshots.get(oldestPath)?.remove();
         window.__wpNativeRouteSnapshots.delete(oldestPath);
       }
     };
-    const frame = window.requestAnimationFrame(captureRoute);
+
+    const scheduleCapture = () => {
+      waitingForTransition = false;
+      if (captureTimer !== null) window.clearTimeout(captureTimer);
+      captureTimer = window.setTimeout(captureRoute, 120);
+    };
+
+    const recordNestedScroll = () => {
+      if (!location.pathname.startsWith('/chat/')) return;
+      const snapshot = window.__wpNativeRouteSnapshots?.get(location.pathname);
+      if (snapshot && scrollSurface) {
+        snapshot.dataset.nativeNestedScrollY = String(scrollSurface.scrollTop || 0);
+      }
+    };
+
+    frame = window.requestAnimationFrame(() => {
+      const startCapture = () => {
+        if (cancelled) return;
+        const currentRoute = getSnapshotSurface();
+        const routeIsReady = location.pathname.startsWith('/chat/')
+          ? Boolean(currentRoute)
+          : Boolean(currentRoute?.firstElementChild);
+        if (!routeIsReady && performance.now() - startedAt < 5000) {
+          frame = window.requestAnimationFrame(startCapture);
+          return;
+        }
+        if (!routeIsReady) return;
+        captureRoute();
+        observer = new MutationObserver(scheduleCapture);
+        observer.observe(currentRoute, { childList: true, subtree: true, characterData: true });
+        scrollSurface = location.pathname.startsWith('/chat/')
+          ? currentRoute.querySelector('.chat-messages-container')
+          : null;
+        scrollSurface?.addEventListener('scroll', recordNestedScroll, { passive: true });
+      };
+      startCapture();
+    });
+
     return () => {
+      if (frame !== null) window.cancelAnimationFrame(frame);
+      if (captureTimer !== null) window.clearTimeout(captureTimer);
+      observer?.disconnect();
+      scrollSurface?.removeEventListener('scroll', recordNestedScroll);
+      if (waitingForTransition) {
+        window.removeEventListener('wp-native-transition-idle', scheduleCapture);
+      }
+      // Never clone a potentially long route in the navigation layout frame.
+      // The latest settled snapshot remains preferable to a dropped frame.
       cancelled = true;
-      window.cancelAnimationFrame(frame);
     };
   }, [isNativeApp, location.pathname]);
 

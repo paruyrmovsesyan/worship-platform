@@ -251,6 +251,46 @@ if ($action === 'save_config') {
 }
 
 // =========================================================================
+// ACTION: test_connection
+// =========================================================================
+if ($action === 'test_connection') {
+    $rawInput = file_get_contents('php://input');
+    $data = @json_decode($rawInput, true) ?: $_POST;
+    $cfg = wp_lyrics_get_config();
+
+    $provider = trim((string)($data['provider'] ?? $cfg['provider'] ?? 'gemini'));
+    $provider = in_array($provider, ['gemini', 'openai'], true) ? $provider : 'gemini';
+
+    try {
+        if ($provider === 'openai') {
+            $apiKey = trim((string)($data['openai_api_key'] ?? '')) ?: ($cfg['openai_api_key'] ?? '');
+            $model = trim((string)($data['openai_model'] ?? '')) ?: ($cfg['openai_model'] ?? 'gpt-4o-mini');
+            if (empty($apiKey)) {
+                wp_lyrics_out(['ok' => false, 'error' => 'OpenAI API Key-ը լրացված չէ։'], 400);
+            }
+            $messages = [
+                ['role' => 'user', 'content' => 'Please respond with single word: Connected']
+            ];
+            $res = wp_lyrics_openai_request($apiKey, $model, $messages, null);
+            wp_lyrics_out(['ok' => true, 'provider' => 'openai', 'model' => $model, 'response' => $res['text'] ?: 'Connected']);
+        } else {
+            $apiKey = trim((string)($data['gemini_api_key'] ?? '')) ?: ($cfg['gemini_api_key'] ?? '');
+            $model = trim((string)($data['gemini_model'] ?? '')) ?: ($cfg['gemini_model'] ?? 'gemini-2.5-flash');
+            if (empty($apiKey)) {
+                wp_lyrics_out(['ok' => false, 'error' => 'Gemini API Key-ը լրացված չէ։'], 400);
+            }
+            $contents = [
+                ['role' => 'user', 'parts' => [['text' => 'Please respond with single word: Connected']]]
+            ];
+            $res = wp_lyrics_gemini_request($apiKey, $model, $contents);
+            wp_lyrics_out(['ok' => true, 'provider' => 'gemini', 'model' => $model, 'response' => $res['text'] ?: 'Connected']);
+        }
+    } catch (Throwable $e) {
+        wp_lyrics_out(['ok' => false, 'error' => $e->getMessage()], 400);
+    }
+}
+
+// =========================================================================
 // ACTION: fetch_ai_lyrics
 // =========================================================================
 if ($action === 'fetch_ai_lyrics') {

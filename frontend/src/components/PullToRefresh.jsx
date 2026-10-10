@@ -180,13 +180,16 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
     };
   }, [isAppMode, isNativeApp, isRefreshing, disabled, onRefresh]);
 
-  if (!isAppMode || disabled) {
+  if (!isAppMode || (disabled && !isNativeApp)) {
     return <>{children}</>;
   }
 
   const isPastThreshold = pullDistance >= refreshThreshold;
   const progress = Math.min(pullDistance / refreshThreshold, 1);
-  const isVisible = pullDistance > 0 || isRefreshing;
+  // Native chat disables the gesture but keeps the wrapper nodes mounted.
+  // Removing these siblings in the same commit that mounts Chat's body portal
+  // can make WKWebView/React remove a node from the wrong parent (NotFoundError).
+  const isVisible = !disabled && (pullDistance > 0 || isRefreshing);
 
   // Base position starts safely below the notch / Dynamic Island and status bar
   // On iPhone 14 Pro / 15 / 16 safe-area-inset-top is ~54-59px.

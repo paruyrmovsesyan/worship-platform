@@ -295,14 +295,6 @@ body.is-native .hub-header {
   padding-top: 8px !important;
 }
 
-/* Native-safe transitions. Never begin at opacity: 0 because WKWebView can
-   occasionally retain that compositor frame, but keep a subtle app-like
-   entrance so navigation and content changes do not feel abrupt. */
-@keyframes nativePushEnter {
-  from { transform: translate3d(100vw, 0, 0); }
-  to { transform: translate3d(0, 0, 0); }
-}
-
 body.is-native .route-animate {
   opacity: 1 !important;
   animation: none !important;
@@ -313,17 +305,34 @@ body.is-native .route-animate.native-tab-transition {
   animation: none !important;
 }
 
-body.is-native .route-animate.native-push-transition,
-body.is-native .native-route-surface.native-push-transition {
+body.is-native .native-route-surface,
+body.is-native .native-route-interactive {
   min-height: 100dvh;
   background: var(--color-bg, #05050A);
   will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: flat;
+  contain: paint;
   box-shadow: -14px 0 28px rgba(0, 0, 0, 0.28);
-  animation: nativePushEnter 280ms cubic-bezier(0.32, 0.72, 0, 1) both !important;
+  animation: none !important;
 }
 
 body.is-native .native-route-surface {
+  position: relative !important;
   z-index: 9000 !important;
+}
+
+body.is-native .native-route-interactive {
+  position: relative !important;
+  z-index: 9000 !important;
+}
+
+/* Chat is portaled outside <main> and must stay a viewport-fixed surface while
+   it receives the same compositor transform as ordinary routes. */
+body.is-native .chat-page-container.native-route-surface,
+body.is-native .chat-page-container.native-route-interactive {
+  position: fixed !important;
 }
 
 body.is-native.native-push-switching main {
@@ -332,34 +341,64 @@ body.is-native.native-push-switching main {
 }
 
 body.is-native .native-push-outgoing-layer,
-body.is-native .native-pop-underlay-layer {
+body.is-native .native-pop-underlay-layer,
+body.is-native .native-tab-cover-layer {
   position: fixed;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
   background: var(--color-bg, #05050A);
   contain: paint;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 body.is-native .native-push-outgoing-layer {
   z-index: 8998;
   transform: translate3d(0, 0, 0);
-  transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-body.is-native .native-push-outgoing-layer.is-shifting {
-  transform: translate3d(-18vw, 0, 0);
+  will-change: transform;
 }
 
 body.is-native .native-push-outgoing-content,
-body.is-native .native-pop-underlay-content {
+body.is-native .native-pop-underlay-content,
+body.is-native .native-tab-cover-content {
   min-height: 100%;
   animation: none !important;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 body.is-native .native-pop-underlay-layer {
   z-index: 8999;
   will-change: transform;
+}
+
+body.is-native .native-tab-cover-layer {
+  z-index: 8999;
+  transform: translate3d(0, 0, 0);
+}
+
+body.is-native.native-push-awaiting-portal .route-animate {
+  visibility: hidden !important;
+}
+
+body.is-native.native-transition-running {
+  overscroll-behavior: none;
+}
+
+body.is-native.native-transition-running .mobile-bottom-nav {
+  pointer-events: none !important;
+}
+
+/* Ignore a second tap while a non-interactive route swap is settling. The
+   interactive edge-swipe remains touchable because it uses its own class. */
+body.is-native.native-push-switching main,
+body.is-native.native-push-switching > .chat-page-container,
+body.is-native.native-pop-switching main,
+body.is-native.native-pop-switching > .chat-page-container,
+body.is-native.native-tab-switching main,
+body.is-native.native-tab-switching > .chat-page-container {
+  pointer-events: none !important;
 }
 
 body.is-native .route-animate.native-pop-transition {
@@ -386,6 +425,17 @@ body.is-native .route-animate > * {
    Child fade/scale effects otherwise compound into flicker in WKWebView. */
 body.is-native .route-animate * {
   animation-delay: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.is-native .native-route-surface,
+  body.is-native .native-route-interactive,
+  body.is-native .native-push-outgoing-layer,
+  body.is-native .native-pop-underlay-layer,
+  body.is-native .native-tab-cover-layer {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 @keyframes nativeSheetEnter {

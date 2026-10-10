@@ -32,6 +32,9 @@ $adminSectionRegistry = wp_version_admin_section_registry();
 $pageAppRegistry = wp_version_page_app_registry();
 $pageWebRegistry = wp_version_page_web_registry();
 $adminSectionPermissions = $access['permissions'] ?? wp_version_default_admin_permissions();
+if (!isset($adminSectionPermissions['ai_settings'])) {
+    $adminSectionPermissions['ai_settings'] = true;
+}
 $releaseTypes = wp_version_release_types();
 $packageModes = wp_version_package_modes();
 $pageAppRegistry = wp_version_page_app_registry();
@@ -153,6 +156,7 @@ function wp_admin_updates_action_section(string $action): ?string {
         'save_site_info', 'save_site_info_draft' => 'site_info',
         'approve_song_request', 'reject_song_request' => 'moderation',
         'update_translation_cache_entry', 'delete_translation_cache_entry', 'clear_translation_cache', 'save_song_title_translations' => 'translations',
+        'save_ai_settings' => 'ai_settings',
         default => null,
     };
 }
@@ -1454,6 +1458,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Չհաջողվեց ջնջել push պատմությունը։';
             $messageType = 'error';
         }
+    } elseif ($action === 'save_ai_settings') {
+        $aiConfigFile = __DIR__ . '/data/lyrics_ai_config.json';
+        $currentAi = [
+            'provider' => 'gemini',
+            'gemini_api_key' => '',
+            'gemini_model' => 'gemini-2.5-flash',
+            'openai_api_key' => '',
+            'openai_model' => 'gpt-4o-mini',
+        ];
+        if (is_file($aiConfigFile)) {
+            $parsed = @json_decode((string)@file_get_contents($aiConfigFile), true);
+            if (is_array($parsed)) {
+                $currentAi = array_merge($currentAi, $parsed);
+            }
+        }
+        $prov = trim((string)($_POST['ai_provider'] ?? 'gemini'));
+        $currentAi['provider'] = in_array($prov, ['gemini', 'openai'], true) ? $prov : 'gemini';
+        $gk = trim((string)($_POST['gemini_api_key'] ?? ''));
+        if ($gk !== '') $currentAi['gemini_api_key'] = $gk;
+        $gm = trim((string)($_POST['gemini_model'] ?? ''));
+        if ($gm !== '') $currentAi['gemini_model'] = $gm;
+        $okey = trim((string)($_POST['openai_api_key'] ?? ''));
+        if ($okey !== '') $currentAi['openai_api_key'] = $okey;
+        $om = trim((string)($_POST['openai_model'] ?? ''));
+        if ($om !== '') $currentAi['openai_model'] = $om;
+        $currentAi['model'] = $currentAi['gemini_model'];
+
+        $saved = (bool)@file_put_contents($aiConfigFile, json_encode($currentAi, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        if ($saved) {
+            $message = 'AI (Gemini & ChatGPT) կարգավորումները հաջողությամբ պահպանվեցին։';
+        } else {
+            $message = 'Չհաջողվեց պահպանել AI կարգավորումները սերվերում։';
+            $messageType = 'error';
+        }
     } elseif ($action === 'rollback') {
         $historyId = trim((string)($_POST['history_id'] ?? ''));
         $historyItem = wp_version_history_find($historyId);
@@ -1666,6 +1704,26 @@ $pushHistory = wp_push_history_load(50);
 $apnsCredentialAvailable = wp_push_credential_is_available('apns');
 $firebaseCredentialAvailable = wp_push_credential_is_available('firebase');
 $csrfToken = wp_admin_updates_csrf_token($adminUser);
+
+$aiConfigFile = __DIR__ . '/data/lyrics_ai_config.json';
+$aiConfig = [
+    'provider' => 'gemini',
+    'gemini_api_key' => '',
+    'gemini_model' => 'gemini-2.5-flash',
+    'openai_api_key' => '',
+    'openai_model' => 'gpt-4o-mini',
+];
+if (is_file($aiConfigFile)) {
+    $rawAi = @file_get_contents($aiConfigFile);
+    if ($rawAi) {
+        $parsedAi = @json_decode($rawAi, true);
+        if (is_array($parsedAi)) {
+            $aiConfig = array_merge($aiConfig, $parsedAi);
+        }
+    }
+}
+$aiHasGemini = !empty($aiConfig['gemini_api_key']);
+$aiHasOpenai = !empty($aiConfig['openai_api_key']);
 ?>
 <!doctype html>
 <html lang="hy">
@@ -1771,6 +1829,10 @@ $csrfToken = wp_admin_updates_csrf_token($adminUser);
 
       <?php if ($hasAnyAdminSectionAccess): ?>
       <div class="settings-dashboard" id="settingsDashboard">
+        <div class="settings-search-wrapper">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="search" id="settingsSearchInput" placeholder="<?= __('Որոնել բաժինները կամ կարգավորումները (օր. push, ai, gemini, maintenance, seo, սարքեր, մուտքեր)...') ?>">
+        </div>
         <div class="section-switcher grid-view" role="tablist">
         <?php if (!empty($adminSectionPermissions["release"])): ?>
         <button class="section-tab" type="button" data-section-tab="release" aria-selected="false">
@@ -1862,15 +1924,38 @@ $csrfToken = wp_admin_updates_csrf_token($adminUser);
                   </div>
         </button>
         <?php endif; ?>
+        <?php if (!empty($adminSectionPermissions["ai_settings"])): ?>
+        <button class="section-tab" type="button" data-section-tab="ai_settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" style="background:#f3e8ff; color:#9333ea;"><path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><rect x="4" y="8" width="16" height="12" rx="2"></rect><path d="M9 13v2"></path><path d="M15 13v2"></path></svg>
+          <div class="tab-text">
+            <span><?= __('11. AI Կարգավորումներ') ?></span>
+            <small><?= __('Google Gemini և OpenAI ChatGPT API բանալիներ, մոդելներ և կապի ստուգում') ?></small>
+          </div>
+        </button>
+        <?php endif; ?>
         </div>
       </div>
       
       <div class="settings-content-wrapper" id="settingsContentWrapper" hidden>
-        <div class="section-back-nav">
-          <button type="button" class="btn" id="btnBackToDashboard">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-            <?= __('Վերադառնալ կարգավորումներին') ?>
+        <div class="section-top-bar">
+          <button type="button" class="btn" id="btnBackToDashboard" style="font-weight:700;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <span><?= __('Բոլոր բաժինները') ?></span>
           </button>
+          
+          <div class="section-quick-pills">
+            <?php if (!empty($adminSectionPermissions["release"])): ?><button type="button" class="quick-pill" data-section-tab="release">1. <?= __('Թարմացում') ?></button><?php endif; ?>
+            <?php if (!empty($adminSectionPermissions["about"])): ?><button type="button" class="quick-pill" data-section-tab="about">2. <?= __('Ծրագրի մասին') ?></button><?php endif; ?>
+            <?php if (!empty($adminSectionPermissions["site_info"])): ?><button type="button" class="quick-pill" data-section-tab="site_info">3. <?= __('SEO & Տվյալներ') ?></button><?php endif; ?>
+            <?php if (!empty($adminSectionPermissions["maintenance"])): ?><button type="button" class="quick-pill" data-section-tab="maintenance">4. <?= __('Սպասարկում') ?></button><?php endif; ?>
+            <?php if (!empty($adminSectionPermissions["push"])): ?><button type="button" class="quick-pill" data-section-tab="push">5. <?= __('Push') ?></button><?php endif; ?>
+            <?php if (!empty($adminSectionPermissions["devices"])): ?><button type="button" class="quick-pill" data-section-tab="devices">6. <?= __('Սարքեր') ?></button><?php endif; ?>
+            <?php if (!empty($adminSectionPermissions["history"])): ?><button type="button" class="quick-pill" data-section-tab="history">7. <?= __('Պատմություն') ?></button><?php endif; ?>
+            <?php if (!empty($adminSectionPermissions["access"])): ?><button type="button" class="quick-pill" data-section-tab="access">8. <?= __('Մուտքեր') ?></button><?php endif; ?>
+            <?php if (!empty($adminSectionPermissions["moderation"])): ?><button type="button" class="quick-pill" data-section-tab="moderation">9. <?= __('Մոդերացիա') ?></button><?php endif; ?>
+            <?php if (!empty($adminSectionPermissions["translations"])): ?><button type="button" class="quick-pill" data-section-tab="translations">10. <?= __('Թարգմանություն') ?></button><?php endif; ?>
+            <?php if (!empty($adminSectionPermissions["ai_settings"])): ?><button type="button" class="quick-pill" data-section-tab="ai_settings">11. <?= __('AI') ?></button><?php endif; ?>
+          </div>
         </div>
       <?php endif; ?>
 
@@ -2357,8 +2442,13 @@ $csrfToken = wp_admin_updates_csrf_token($adminUser);
               </div>
 
               <div class="form-field">
-                <label for="maintenance_allowed_ips"><?= __('Whitelist (IP հասցեներ ստորակետով)') ?></label>
-                <input id="maintenance_allowed_ips" name="maintenance_allowed_ips" type="text" placeholder="<?= __('192.168.1.1, 10.0.0.1') ?>" value="<?= htmlspecialchars((string)($config['maintenance_allowed_ips'] ?? ''), ENT_QUOTES) ?>">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <label for="maintenance_allowed_ips" style="margin:0;"><?= __('Whitelist (IP հասցեներ ստորակետով)') ?></label>
+                  <button type="button" class="btn btn-ghost" id="addMyIpBtn" style="padding:2px 8px; font-size:11px;" title="<?= __('Ավելացնել իմ ներկայիս IP-ն') ?>">
+                    + <?= __('Ավելացնել իմ IP-ն') ?> (<?= htmlspecialchars($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', ENT_QUOTES) ?>)
+                  </button>
+                </div>
+                <input id="maintenance_allowed_ips" name="maintenance_allowed_ips" type="text" placeholder="<?= __('192.168.1.1, 10.0.0.1') ?>" value="<?= htmlspecialchars((string)($config['maintenance_allowed_ips'] ?? ''), ENT_QUOTES) ?>" data-my-ip="<?= htmlspecialchars($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', ENT_QUOTES) ?>">
               </div>
               
               <div class="bento-header" style="margin-top:24px;">
@@ -2957,6 +3047,155 @@ $csrfToken = wp_admin_updates_csrf_token($adminUser);
                 <?php endforeach; ?>
               </div>
             <?php endif; ?>
+          </div>
+
+          <!-- SECTION 11: AI SETTINGS (Google Gemini & OpenAI ChatGPT) -->
+          <div class="bento-card" id="aiSettingsPanel" data-admin-section="ai_settings all" data-admin-permission="ai_settings" style="margin-top:24px;">
+            <div class="bento-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:20px; border-bottom:1px solid #f1f5f9; padding-bottom:16px;">
+              <div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:22px;">🤖</span>
+                  <h3 style="margin:0;"><?= __('AI Օգնականի Կարգավորումներ (Gemini & ChatGPT)') ?></h3>
+                  <span class="chip <?= ($aiHasGemini || $aiHasOpenai) ? 'success' : 'warning' ?>" style="font-size:11px; padding:2px 8px;">
+                    <?= ($aiHasGemini || $aiHasOpenai) ? __('Կոնֆիգուրացված է') : __('Բանալի չկա') ?>
+                  </span>
+                </div>
+                <p style="margin:4px 0 0; font-size:13px; color:var(--muted);">
+                  <?= __('Կառավարեք երգերի խմբագրիչում և ադմինում օգտագործվող AI մոդելները (ակորդների դասավորություն, ուղղումներ, տեքստի մշակում)։') ?>
+                </p>
+              </div>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <button type="button" class="btn btn-ghost" id="btnTestAiConnection" style="font-size:12px; font-weight:600; padding:8px 14px;">
+                  ⚡ <?= __('Ստուգել կապը') ?>
+                </button>
+                <button type="submit" name="form_action" value="save_ai_settings" class="btn btn-primary" id="btnSaveAiSettings" style="font-size:12px; font-weight:600; padding:8px 16px;">
+                  💾 <?= __('Պահպանել AI') ?>
+                </button>
+              </div>
+            </div>
+
+            <!-- Status Alert Banner for Test Results -->
+            <div id="aiTestResultBanner" style="display:none; padding:12px 16px; border-radius:10px; margin-bottom:20px; font-size:13px; font-weight:500;"></div>
+
+            <!-- Provider Selection -->
+            <div style="margin-bottom:24px;">
+              <label style="display:block; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); margin-bottom:10px;">
+                <?= __('Ակտիվ Մատակարար (Default Provider)') ?>
+              </label>
+              <div class="bento-grid cols-2" style="gap:16px;">
+                <label style="display:flex; align-items:center; gap:12px; padding:14px 18px; border:2px solid <?= ($aiConfig['provider'] ?? 'gemini') === 'gemini' ? 'var(--primary, #4318ff)' : '#e2e8f0' ?>; border-radius:12px; cursor:pointer; background:<?= ($aiConfig['provider'] ?? 'gemini') === 'gemini' ? 'rgba(67,24,255,0.03)' : '#fff' ?>; transition:all 0.2s;" class="ai-provider-card" id="aiProviderCardGemini">
+                  <input type="radio" name="ai_provider" value="gemini" <?= ($aiConfig['provider'] ?? 'gemini') === 'gemini' ? 'checked' : '' ?> style="width:18px; height:18px; accent-color:var(--primary, #4318ff);">
+                  <div>
+                    <div style="font-weight:700; font-size:14px; color:var(--text); display:flex; align-items:center; gap:6px;">
+                      <span>Google Gemini</span>
+                      <span class="chip primary" style="font-size:10px; padding:1px 6px;">Խորհուրդ տրվող</span>
+                    </div>
+                    <div style="font-size:12px; color:var(--muted); margin-top:2px;">Gemini 2.5 Flash / 1.5 Pro (արագ և հզոր)</div>
+                  </div>
+                </label>
+
+                <label style="display:flex; align-items:center; gap:12px; padding:14px 18px; border:2px solid <?= ($aiConfig['provider'] ?? 'gemini') === 'openai' ? '#10b981' : '#e2e8f0' ?>; border-radius:12px; cursor:pointer; background:<?= ($aiConfig['provider'] ?? 'gemini') === 'openai' ? 'rgba(16,185,129,0.03)' : '#fff' ?>; transition:all 0.2s;" class="ai-provider-card" id="aiProviderCardOpenai">
+                  <input type="radio" name="ai_provider" value="openai" <?= ($aiConfig['provider'] ?? 'gemini') === 'openai' ? 'checked' : '' ?> style="width:18px; height:18px; accent-color:#10b981;">
+                  <div>
+                    <div style="font-weight:700; font-size:14px; color:var(--text); display:flex; align-items:center; gap:6px;">
+                      <span>OpenAI ChatGPT</span>
+                      <span class="chip" style="font-size:10px; padding:1px 6px; background:#ecfdf5; color:#059669;">GPT-4o</span>
+                    </div>
+                    <div style="font-size:12px; color:var(--muted); margin-top:2px;">GPT-4o mini / GPT-4o (հուսալի ճշգրտություն)</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Provider Specific Configuration Cards -->
+            <div class="bento-split-even" style="gap:20px;">
+              <!-- Google Gemini Card -->
+              <div class="bento-card" style="padding:18px; border:1px solid #e2e8f0; background:#f8fafc; border-radius:12px; box-shadow:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                  <strong style="font-size:14px; display:flex; align-items:center; gap:6px; color:#4318ff;">
+                    <span>✨</span> Google Gemini API
+                  </strong>
+                  <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="btn btn-ghost" style="padding:3px 8px; font-size:11px;">
+                    <?= __('Ստանալ բանալի') ?> ↗
+                  </a>
+                </div>
+
+                <div class="form-field" style="margin-bottom:14px;">
+                  <label for="gemini_api_key" style="font-size:12px; font-weight:600;"><?= __('Gemini API Key') ?></label>
+                  <div style="position:relative;">
+                    <input type="password" id="gemini_api_key" name="gemini_api_key" value="<?= htmlspecialchars((string)($aiConfig['gemini_api_key'] ?? ''), ENT_QUOTES) ?>" placeholder="AIzaSy..." style="padding-right:40px; font-family:monospace; font-size:13px;">
+                    <button type="button" class="btn btn-icon toggle-password-btn" data-target="gemini_api_key" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); border:none; background:transparent; cursor:pointer;" title="<?= __('Ցույց տալ / Թաքցնել') ?>">👁️</button>
+                  </div>
+                  <small style="color:var(--muted); font-size:11px; margin-top:4px; display:block;">
+                    <?= $aiHasGemini ? '✓ Բանալին պահպանված է (' . substr((string)$aiConfig['gemini_api_key'], 0, 8) . '...)' : '⚠️ Բանալի նշված չէ' ?>
+                  </small>
+                </div>
+
+                <div class="form-field" style="margin-bottom:0;">
+                  <label for="gemini_model" style="font-size:12px; font-weight:600;"><?= __('Gemini Մոդել') ?></label>
+                  <select id="gemini_model" name="gemini_model" class="input-field" style="padding:8px 12px; font-size:13px;">
+                    <?php 
+                    $curGModel = (string)($aiConfig['gemini_model'] ?? 'gemini-2.5-flash');
+                    $gModels = [
+                      'gemini-2.5-flash' => 'Gemini 2.5 Flash (Ամենաարագ & նորագույն)',
+                      'gemini-1.5-flash' => 'Gemini 1.5 Flash (Կայուն & թեթև)',
+                      'gemini-1.5-pro'   => 'Gemini 1.5 Pro (Բարդ տեքստերի համար)',
+                    ];
+                    foreach ($gModels as $gmVal => $gmLabel):
+                    ?>
+                    <option value="<?= htmlspecialchars($gmVal, ENT_QUOTES) ?>" <?= $curGModel === $gmVal ? 'selected' : '' ?>><?= htmlspecialchars($gmLabel, ENT_QUOTES) ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+              </div>
+
+              <!-- OpenAI ChatGPT Card -->
+              <div class="bento-card" style="padding:18px; border:1px solid #e2e8f0; background:#f8fafc; border-radius:12px; box-shadow:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                  <strong style="font-size:14px; display:flex; align-items:center; gap:6px; color:#059669;">
+                    <span>⚡</span> OpenAI ChatGPT API
+                  </strong>
+                  <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" class="btn btn-ghost" style="padding:3px 8px; font-size:11px;">
+                    <?= __('Ստանալ բանալի') ?> ↗
+                  </a>
+                </div>
+
+                <div class="form-field" style="margin-bottom:14px;">
+                  <label for="openai_api_key" style="font-size:12px; font-weight:600;"><?= __('OpenAI API Key') ?></label>
+                  <div style="position:relative;">
+                    <input type="password" id="openai_api_key" name="openai_api_key" value="<?= htmlspecialchars((string)($aiConfig['openai_api_key'] ?? ''), ENT_QUOTES) ?>" placeholder="sk-..." style="padding-right:40px; font-family:monospace; font-size:13px;">
+                    <button type="button" class="btn btn-icon toggle-password-btn" data-target="openai_api_key" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); border:none; background:transparent; cursor:pointer;" title="<?= __('Ցույց տալ / Թաքցնել') ?>">👁️</button>
+                  </div>
+                  <small style="color:var(--muted); font-size:11px; margin-top:4px; display:block;">
+                    <?= $aiHasOpenai ? '✓ Բանալին պահպանված է (' . substr((string)$aiConfig['openai_api_key'], 0, 7) . '...)' : '⚠️ Բանալի նշված չէ' ?>
+                  </small>
+                </div>
+
+                <div class="form-field" style="margin-bottom:0;">
+                  <label for="openai_model" style="font-size:12px; font-weight:600;"><?= __('OpenAI Մոդել') ?></label>
+                  <select id="openai_model" name="openai_model" class="input-field" style="padding:8px 12px; font-size:13px;">
+                    <?php 
+                    $curOModel = (string)($aiConfig['openai_model'] ?? 'gpt-4o-mini');
+                    $oModels = [
+                      'gpt-4o-mini'     => 'GPT-4o Mini (Խորհուրդ տրվող, մատչելի & արագ)',
+                      'gpt-4o'          => 'GPT-4o (Հզորագույն ֆլագման)',
+                      'gpt-4-turbo'     => 'GPT-4 Turbo',
+                      'gpt-3.5-turbo'   => 'GPT-3.5 Turbo (Legacy)',
+                    ];
+                    foreach ($oModels as $omVal => $omLabel):
+                    ?>
+                    <option value="<?= htmlspecialchars($omVal, ENT_QUOTES) ?>" <?= $curOModel === $omVal ? 'selected' : '' ?>><?= htmlspecialchars($omLabel, ENT_QUOTES) ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Features Info Helper -->
+            <div style="margin-top:20px; padding:12px 16px; background:#eff6ff; border-radius:10px; border:1px solid #bfdbfe; font-size:12px; line-height:1.6; color:#1e40af;">
+              💡 <strong><?= __('Որտե՞ղ է օգտագործվում AI-ը.') ?></strong>
+              <?= __('Երգերի կառավարման էջում (songs.php) ակորդները ավտոմատ բաշխելու, տեքստի ուղղագրությունը ստուգելու, տողադարձերը հավասարեցնելու և կրկներգերը ճանաչելու համար։ Երկու մատակարարներն էլ ամբողջությամբ ինտեգրված են։') ?>
+            </div>
           </div>
         </form>
       </div>
@@ -3957,6 +4196,29 @@ $csrfToken = wp_admin_updates_csrf_token($adminUser);
           meta: [
             `Ռեժիմ <?= htmlspecialchars((string)($translationSettings['mode'] ?? 'manual'), ENT_QUOTES) ?>`,
             `Cache <?= (int)($translationCacheStats['all'] ?? 0) ?>`
+          ]
+        },
+        site_info: {
+          eyebrow: 'SEO & Տվյալներ',
+          title: 'SEO և Կայքի տվյալների կառավարում',
+          description: 'Այստեղ կառավարում ես կայքի անվանումը, նկարագրությունը, բանալի բառերը, Open Graph տվյալները և կապի միջոցները։',
+          actionLabel: 'Գնալ կարգավորումներին',
+          targetId: 'siteInfoPanel',
+          meta: [
+            `Անվանում <?= htmlspecialchars((string)($siteInfo['site_title'] ?? 'Worship'), ENT_QUOTES) ?>`,
+            'OpenGraph & Meta'
+          ]
+        },
+        ai_settings: {
+          eyebrow: 'AI Կարգավորումներ',
+          title: 'Gemini և ChatGPT AI ինտեգրում',
+          description: 'Այստեղ կառավարում ես Google Gemini և OpenAI ChatGPT API բանալիները, մոդելները և ստուգում ես կապը։',
+          actionLabel: 'Ստուգել կապը',
+          targetId: 'aiSettingsPanel',
+          meta: [
+            `Provider <?= htmlspecialchars(strtoupper((string)($aiConfig['provider'] ?? 'gemini')), ENT_QUOTES) ?>`,
+            `Gemini <?= $aiHasGemini ? 'միացված' : 'անջատված' ?>`,
+            `OpenAI <?= $aiHasOpenai ? 'միացված' : 'անջատված' ?>`
           ]
         }
       };
@@ -5120,6 +5382,145 @@ $csrfToken = wp_admin_updates_csrf_token($adminUser);
           const url = new URL(window.location.href);
           url.searchParams.delete('section');
           window.history.pushState({}, '', url);
+        });
+      }
+
+      // Settings Grid Live Search
+      const settingsSearchInput = document.getElementById('settingsSearchInput');
+      if (settingsSearchInput) {
+        settingsSearchInput.addEventListener('input', () => {
+          const query = settingsSearchInput.value.trim().toLowerCase();
+          const switcher = document.querySelector('.section-switcher.grid-view');
+          if (!switcher) return;
+          const tabs = switcher.querySelectorAll('.section-tab');
+          tabs.forEach((tab) => {
+            const text = (tab.textContent || '').toLowerCase();
+            const sec = (tab.getAttribute('data-section-tab') || '').toLowerCase();
+            const show = !query || text.includes(query) || sec.includes(query);
+            tab.style.display = show ? '' : 'none';
+          });
+        });
+      }
+
+      // Maintenance "Add My IP" quick button
+      const addMyIpBtn = document.getElementById('addMyIpBtn');
+      if (addMyIpBtn && maintenanceAllowedIpsInput) {
+        addMyIpBtn.addEventListener('click', () => {
+          const myIp = maintenanceAllowedIpsInput.getAttribute('data-my-ip') || '';
+          if (!myIp) return;
+          const current = maintenanceAllowedIpsInput.value.trim();
+          const ips = current ? current.split(',').map(s => s.trim()).filter(Boolean) : [];
+          if (!ips.includes(myIp)) {
+            ips.push(myIp);
+            maintenanceAllowedIpsInput.value = ips.join(', ');
+            maintenanceAllowedIpsInput.dispatchEvent(new Event('input', { bubbles: true }));
+            maintenanceAllowedIpsInput.dispatchEvent(new Event('change', { bubbles: true }));
+            addMyIpBtn.textContent = '✓ Ավելացված է';
+            setTimeout(() => {
+              addMyIpBtn.textContent = '+ Ավելացնել իմ IP-ն (' + myIp + ')';
+            }, 2500);
+          } else {
+            addMyIpBtn.textContent = 'Արդեն ցուցակում է';
+            setTimeout(() => {
+              addMyIpBtn.textContent = '+ Ավելացնել իմ IP-ն (' + myIp + ')';
+            }, 2000);
+          }
+        });
+      }
+
+      // AI Provider Radio Visuals
+      const aiProviderRadios = document.querySelectorAll('input[name="ai_provider"]');
+      const aiCardGemini = document.getElementById('aiProviderCardGemini');
+      const aiCardOpenai = document.getElementById('aiProviderCardOpenai');
+      function updateAiProviderVisuals() {
+        const val = document.querySelector('input[name="ai_provider"]:checked')?.value || 'gemini';
+        if (aiCardGemini) {
+          aiCardGemini.style.borderColor = val === 'gemini' ? 'var(--primary, #4318ff)' : '#e2e8f0';
+          aiCardGemini.style.background = val === 'gemini' ? 'rgba(67,24,255,0.03)' : '#fff';
+        }
+        if (aiCardOpenai) {
+          aiCardOpenai.style.borderColor = val === 'openai' ? '#10b981' : '#e2e8f0';
+          aiCardOpenai.style.background = val === 'openai' ? 'rgba(16,185,129,0.03)' : '#fff';
+        }
+      }
+      aiProviderRadios.forEach(r => r.addEventListener('change', updateAiProviderVisuals));
+
+      // Toggle password inputs
+      document.querySelectorAll('.toggle-password-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.getAttribute('data-target');
+          const input = targetId ? document.getElementById(targetId) : null;
+          if (input) {
+            input.type = input.type === 'password' ? 'text' : 'password';
+            btn.textContent = input.type === 'password' ? '👁️' : '🙈';
+          }
+        });
+      });
+
+      // AI Connection Test Button
+      const btnTestAiConnection = document.getElementById('btnTestAiConnection');
+      const aiTestResultBanner = document.getElementById('aiTestResultBanner');
+      if (btnTestAiConnection) {
+        btnTestAiConnection.addEventListener('click', async () => {
+          const provider = document.querySelector('input[name="ai_provider"]:checked')?.value || 'gemini';
+          const geminiKey = document.getElementById('gemini_api_key')?.value.trim() || '';
+          const geminiModel = document.getElementById('gemini_model')?.value.trim() || 'gemini-2.5-flash';
+          const openaiKey = document.getElementById('openai_api_key')?.value.trim() || '';
+          const openaiModel = document.getElementById('openai_model')?.value.trim() || 'gpt-4o-mini';
+
+          const apiKey = provider === 'gemini' ? geminiKey : openaiKey;
+          const model = provider === 'gemini' ? geminiModel : openaiModel;
+
+          if (!apiKey) {
+            if (aiTestResultBanner) {
+              aiTestResultBanner.style.display = 'block';
+              aiTestResultBanner.style.background = '#fef2f2';
+              aiTestResultBanner.style.color = '#991b1b';
+              aiTestResultBanner.style.border = '1px solid #fecaca';
+              aiTestResultBanner.innerHTML = '⚠️ Խնդրում ենք մուտքագրել API բանալին ստուգելու համար։';
+            }
+            return;
+          }
+
+          const originalText = btnTestAiConnection.innerHTML;
+          btnTestAiConnection.disabled = true;
+          btnTestAiConnection.innerHTML = '⏳ Ստուգվում է...';
+          if (aiTestResultBanner) {
+            aiTestResultBanner.style.display = 'block';
+            aiTestResultBanner.style.background = '#eff6ff';
+            aiTestResultBanner.style.color = '#1e40af';
+            aiTestResultBanner.style.border = '1px solid #bfdbfe';
+            aiTestResultBanner.innerHTML = 'Կատարվում է թեստային հարցում դեպի ' + (provider === 'gemini' ? 'Google Gemini' : 'OpenAI') + ' (' + model + ')...';
+          }
+
+          try {
+            const resp = await fetch('/api_lyrics_assistant.php?action=test_connection', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ provider, api_key: apiKey, model })
+            });
+            const data = await resp.json();
+
+            if (data.ok) {
+              aiTestResultBanner.style.background = '#ecfdf5';
+              aiTestResultBanner.style.color = '#065f46';
+              aiTestResultBanner.style.border = '1px solid #a7f3d0';
+              aiTestResultBanner.innerHTML = '✅ <strong>Կապը հաջողված է։</strong> ' + (data.message || 'API-ն աշխատում է անխափան') + (data.latency_ms ? ' (' + data.latency_ms + 'մվ)' : '');
+            } else {
+              aiTestResultBanner.style.background = '#fef2f2';
+              aiTestResultBanner.style.color = '#991b1b';
+              aiTestResultBanner.style.border = '1px solid #fecaca';
+              aiTestResultBanner.innerHTML = '❌ <strong>Սխալ։</strong> ' + (data.error || 'Չհաջողվեց կապ հաստատել API-ի հետ');
+            }
+          } catch (err) {
+            aiTestResultBanner.style.background = '#fef2f2';
+            aiTestResultBanner.style.color = '#991b1b';
+            aiTestResultBanner.style.border = '1px solid #fecaca';
+            aiTestResultBanner.innerHTML = '❌ <strong>Ցանցային սխալ։</strong> ' + err.message;
+          } finally {
+            btnTestAiConnection.disabled = false;
+            btnTestAiConnection.innerHTML = originalText;
+          }
         });
       }
 

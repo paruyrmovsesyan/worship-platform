@@ -98,6 +98,33 @@ export default function NativePlatformServices() {
 
     const handles = [];
     let cancelled = false;
+    let queuedNavigationPath = '';
+
+    const performNativeNavigation = (path) => {
+      if (!path || cancelled) return;
+      const now = Date.now();
+      const lastNavigation = window.__wpLastNativeExternalNavigation;
+      // Some iOS lifecycle paths can deliver the same appUrlOpen event twice.
+      // A duplicated React navigation while a body portal is mounting can make
+      // WebKit throw NotFoundError and leave only the black host view visible.
+      if (lastNavigation?.path === path && now - lastNavigation.at < 1200) return;
+      window.__wpLastNativeExternalNavigation = { path, at: now };
+
+      if (window.__wpNativeTransitionInFlight) {
+        queuedNavigationPath = path;
+        return;
+      }
+      navigateRef.current(path);
+    };
+
+    const flushQueuedNavigation = () => {
+      if (!queuedNavigationPath || cancelled) return;
+      const path = queuedNavigationPath;
+      queuedNavigationPath = '';
+      navigateRef.current(path);
+    };
+
+    window.addEventListener('wp-native-transition-idle', flushQueuedNavigation);
 
     const addHandle = async (promise) => {
       const handle = await promise;
@@ -107,7 +134,7 @@ export default function NativePlatformServices() {
 
     addHandle(CapacitorApp.addListener('appUrlOpen', ({ url }) => {
       const path = notificationPath({ url });
-      if (path) navigateRef.current(path);
+      performNativeNavigation(path);
     }));
 
     addHandle(CapacitorApp.addListener('appStateChange', ({ isActive }) => {
@@ -174,7 +201,7 @@ export default function NativePlatformServices() {
       }));
       addHandle(PushNotifications.addListener('pushNotificationActionPerformed', ({ notification }) => {
         const path = notificationPath(notification?.data || {});
-        if (path) navigateRef.current(path);
+        performNativeNavigation(path);
       }));
       addHandle(PushNotifications.addListener('pushNotificationReceived', async (notification) => {
         if (Capacitor.getPlatform() === 'android') return;
@@ -198,7 +225,7 @@ export default function NativePlatformServices() {
       }));
       addHandle(LocalNotifications.addListener('localNotificationActionPerformed', ({ notification }) => {
         const path = notificationPath(notification?.extra || {});
-        if (path) navigateRef.current(path);
+        performNativeNavigation(path);
       }));
 
       await PushNotifications.register().catch(() => {});
@@ -229,6 +256,7 @@ export default function NativePlatformServices() {
 
     return () => {
       cancelled = true;
+      window.removeEventListener('wp-native-transition-idle', flushQueuedNavigation);
       handles.splice(0).forEach((handle) => handle?.remove?.());
     };
   }, []);

@@ -54,7 +54,9 @@ export default function ScrollToTop() {
       if (pathname === '/songs') {
         try {
           if (sessionStorage.getItem('songs_app_restore_pending') === '1') return undefined;
-        } catch {}
+        } catch {
+          // Storage can be unavailable in restricted browser contexts.
+        }
       }
       window.scrollTo(0, 0);
       return undefined;

@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef, useTransition } from 'react';
+import { useCallback, useEffect, useState, useRef, useTransition } from 'react';
 import { createPortal, flushSync } from 'react-dom';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
@@ -239,22 +239,57 @@ export default function MobileNav() {
     }
   };
 
-  const switchNativeTab = (path) => {
-    if (path === location.pathname || tabTransitionRef.current) return;
+  const switchNativeTab = useCallback((path) => {
+    if (path === location.pathname || tabTransitionRef.current || window.__wpNativeTransitionInFlight) return;
     const performNavigation = () => navigate(path, { replace: true });
     if (!isNativeApp) {
       performNavigation();
       return;
     }
 
-    // Primary tabs are persistent destinations, not pushed pages. Instagram's
-    // tab bar swaps them immediately; only the dock indicator moves.
-    tabTransitionRef.current = true;
+    // Primary tabs swap without a page slide. Reuse the destination's last
+    // compositor snapshot while React mounts it, then reveal the live route at
+    // its preserved scroll position. This avoids a loading/top-frame flash.
+    const transitionToken = {};
+    tabTransitionRef.current = transitionToken;
+    window.__wpNativeTransitionInFlight = true;
+    document.body.classList.add('native-transition-running', 'native-tab-switching');
+
+    let coverLayer = null;
+    const snapshot = window.__wpNativeRouteSnapshots?.get(path);
+    if (snapshot) {
+      window.__wpNativeRouteSnapshots.delete(path);
+      snapshot.classList.remove('native-tab-transition', 'native-push-transition', 'native-pop-transition');
+      snapshot.classList.add('native-tab-cover-content');
+      const savedY = Number(snapshot.dataset.nativeScrollY || 0);
+      snapshot.style.transform = savedY > 0 ? `translate3d(0, -${savedY}px, 0)` : 'translate3d(0, 0, 0)';
+      snapshot.setAttribute('inert', '');
+      coverLayer = document.createElement('div');
+      coverLayer.className = 'native-tab-cover-layer';
+      coverLayer.setAttribute('aria-hidden', 'true');
+      coverLayer.appendChild(snapshot);
+      document.body.appendChild(coverLayer);
+    }
+
+    let timeoutId = null;
+    let completed = false;
+    const finishTabSwitch = event => {
+      if (completed || (event?.detail?.pathname && event.detail.pathname !== path)) return;
+      completed = true;
+      window.removeEventListener('wp-native-scroll-restored', finishTabSwitch);
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+      coverLayer?.remove();
+      if (tabTransitionRef.current === transitionToken) tabTransitionRef.current = null;
+      document.body.classList.remove('native-transition-running', 'native-tab-switching');
+      window.__wpNativeTransitionInFlight = false;
+      window.dispatchEvent(new CustomEvent('wp-native-transition-idle'));
+    };
+
+    window.addEventListener('wp-native-scroll-restored', finishTabSwitch);
+    timeoutId = window.setTimeout(() => finishTabSwitch(), 1500);
+    window.__wpNativeRestoreScrollPath = path;
     flushSync(performNavigation);
-    window.requestAnimationFrame(() => {
-      tabTransitionRef.current = null;
-    });
-  };
+  }, [isNativeApp, location.pathname, navigate]);
 
   useEffect(() => {
     if (!isNativeApp || !['/', '/songs', '/chats', '/profile', '/login'].includes(location.pathname)) {
@@ -294,7 +329,7 @@ export default function MobileNav() {
       document.removeEventListener('touchstart', onStart);
       document.removeEventListener('touchend', onEnd);
     };
-  }, [isNativeApp, location.pathname, user, guardPath]);
+  }, [isNativeApp, location.pathname, user, guardPath, switchNativeTab]);
 
   const handleNavClick = (path, e) => {
     e?.preventDefault?.();

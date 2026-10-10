@@ -171,6 +171,10 @@ function wp_version_admin_section_registry(): array {
             'label' => 'Թարգմանություններ',
             'description' => 'Լեզուների ձեռքով թարգմանություններ, պահոց և թարգմանված տողերի խմբագրում։',
         ],
+        'ai_settings' => [
+            'label' => 'AI Կարգավորումներ',
+            'description' => 'Google Gemini և OpenAI ChatGPT API բանալիներ, մոդելներ և ինտեգրում։',
+        ],
         'songs_editor' => [
             'label' => 'Երգերի խմբագրում',
             'description' => 'Երգերի ադմին էջ, ավելացում, խմբագրում, արտահանում և որոնում։',
