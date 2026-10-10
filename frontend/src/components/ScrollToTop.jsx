@@ -56,18 +56,35 @@ export default function ScrollToTop() {
     let cancelled = false;
     let frame = null;
     const startedAt = performance.now();
+    document.body.classList.add('native-scroll-restoring');
+
+    const finishRestore = () => {
+      if (cancelled) return;
+      document.body.classList.remove('native-scroll-restoring');
+      window.dispatchEvent(new CustomEvent('wp-native-scroll-restored', {
+        detail: { pathname, targetY },
+      }));
+    };
+
     const restore = () => {
       if (cancelled) return;
       scrollImmediately(targetY);
       const maxScroll = Math.max(0, (document.scrollingElement?.scrollHeight || 0) - window.innerHeight);
       if (targetY > maxScroll + 1 && performance.now() - startedAt < 1200) {
         frame = window.requestAnimationFrame(restore);
+        return;
       }
+      finishRestore();
     };
-    frame = window.requestAnimationFrame(restore);
+
+    // Restore in the layout phase so the live route never paints at y=0.
+    // Retry on subsequent frames only when asynchronously rendered content
+    // has not made the saved offset reachable yet.
+    restore();
     return () => {
       cancelled = true;
       if (frame !== null) window.cancelAnimationFrame(frame);
+      document.body.classList.remove('native-scroll-restoring');
     };
   }, [isNativeApp, pathname]);
 

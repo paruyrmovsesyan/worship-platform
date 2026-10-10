@@ -158,22 +158,26 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
         clearRouteStyles(route);
         activeRoute = null;
         underlayLayer = null;
-        window.__wpNativePopTransitionPending = true;
-        window.__wpNativeRestoreScrollPath = fallbackPath(pathname, user);
-        document.body.classList.add('native-pop-switching');
-        flushSync(() => navigate(fallbackPath(pathname, user), { replace: true }));
-
-        const startedAt = performance.now();
-        const revealLiveRoute = () => {
-          const nextRoute = document.querySelector('main .route-animate');
-          if (!nextRoute?.firstElementChild && performance.now() - startedAt < 1200) {
-            window.requestAnimationFrame(revealLiveRoute);
-            return;
-          }
+        const parentPath = fallbackPath(pathname, user);
+        let revealTimeout = null;
+        let revealed = false;
+        const revealRestoredRoute = event => {
+          if (revealed || (event?.detail?.pathname && event.detail.pathname !== parentPath)) return;
+          revealed = true;
+          window.removeEventListener('wp-native-scroll-restored', revealRestoredRoute);
+          if (revealTimeout !== null) window.clearTimeout(revealTimeout);
           finishCleanup(null, underlay);
           settling = false;
         };
-        window.requestAnimationFrame(revealLiveRoute);
+
+        // Subscribe before navigating: ScrollToTop restores during the
+        // destination route's layout phase and can signal synchronously.
+        window.addEventListener('wp-native-scroll-restored', revealRestoredRoute);
+        revealTimeout = window.setTimeout(() => revealRestoredRoute(), 1500);
+        window.__wpNativePopTransitionPending = true;
+        window.__wpNativeRestoreScrollPath = parentPath;
+        document.body.classList.add('native-pop-switching');
+        flushSync(() => navigate(parentPath, { replace: true }));
       });
     };
 
