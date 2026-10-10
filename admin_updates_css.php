@@ -511,4 +511,32 @@ textarea { min-height: 70px; resize: vertical; line-height: 1.4; }
   background: var(--primary);
 }
 
+/* ── INTERACTIVE PASSWORD TOGGLE & CARDS ── */
+.toggle-password-btn {
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 14px;
+  opacity: 0.65;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.toggle-password-btn:hover {
+  opacity: 1;
+  transform: translateY(-50%) scale(1.15) !important;
+}
+
+.ai-provider-card:hover {
+  border-color: var(--primary) !important;
+  box-shadow: 0 4px 14px rgba(67, 24, 255, 0.08);
+}
+
+.sub-bento-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
 </style>

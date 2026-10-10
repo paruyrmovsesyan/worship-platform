@@ -2171,230 +2171,297 @@ $aiHasOpenai = !empty($aiConfig['openai_api_key']);
 
         <section class="bento-card" id="appAboutPanel" data-admin-section="about" data-admin-permission="about">
           <input type="hidden" name="app_about_present" value="1">
-          <div class="bento-header">
-            <h3><?= __('Ծրագրի մասին էջ') ?></h3>
-            <p><?= __('Կառավարեք PWA ծրագրում ցուցադրվող նկարագրությունը, իրավական տվյալները և օգտակար հղումները։') ?></p>
-          </div>
-
-          <div class="bento-grid cols-3">
-            <?php foreach (['hy' => 'Հայերեն', 'en' => 'English', 'ru' => 'Русский'] as $langCode => $langLabel): ?>
-              <div class="form-field">
-                <label for="app_about_tagline_<?= $langCode ?>"><?= __('Կարճ նկարագրություն') ?> · <?= $langLabel ?></label>
-                <textarea id="app_about_tagline_<?= $langCode ?>" name="app_about_tagline_<?= $langCode ?>" maxlength="300" rows="3"><?= htmlspecialchars((string)($appAbout['tagline'][$langCode] ?? ''), ENT_QUOTES) ?></textarea>
+          <div class="bento-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:20px; border-bottom:1px solid #f1f5f9; padding-bottom:16px;">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:22px;">📱</span>
+                <h3 style="margin:0;"><?= __('PWA «Ծրագրի մասին» Էջի Տվյալներ') ?></h3>
+                <span class="chip primary" style="font-size:11px; padding:2px 8px;">PWA About</span>
               </div>
-            <?php endforeach; ?>
+              <p style="margin:4px 0 0; font-size:13px; color:var(--muted);"><?= __('Կառավարեք PWA ծրագրի «Ծրագրի մասին» էկրանում ցուցադրվող բազմալեզու նկարագրությունը, հեղինակային իրավունքը և օգտակար հղումները։') ?></p>
+            </div>
+            <button class="btn btn-primary" type="submit" name="form_action" value="save_app_about" style="font-size:12px; font-weight:600; padding:8px 16px;">
+              💾 <?= __('Պահպանել Ծրագրի Տվյալները') ?>
+            </button>
           </div>
 
-          <div class="bento-grid cols-3">
-            <?php foreach (['hy' => 'Հայերեն', 'en' => 'English', 'ru' => 'Русский'] as $langCode => $langLabel): ?>
-              <div class="form-field">
-                <label for="app_about_license_<?= $langCode ?>"><?= __('Լիցենզիայի նկարագրություն') ?> · <?= $langLabel ?></label>
-                <textarea id="app_about_license_<?= $langCode ?>" name="app_about_license_<?= $langCode ?>" maxlength="1500" rows="5"><?= htmlspecialchars((string)($appAbout['license_text'][$langCode] ?? ''), ENT_QUOTES) ?></textarea>
+          <!-- Taglines in 3 languages -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px; margin-bottom:20px;">
+            <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+              <span>💬</span> <?= __('Կարճ Նկարագրություն (Tagline) — 3 Լեզուներով') ?>
+            </div>
+            <div class="bento-grid cols-3" style="gap:14px; margin:0;">
+              <?php foreach (['hy' => ['label' => 'Հայերեն', 'color' => '#4318ff', 'bg' => '#eff6ff'], 'en' => ['label' => 'English', 'color' => '#0284c7', 'bg' => '#f0f9ff'], 'ru' => ['label' => 'Русский', 'color' => '#059669', 'bg' => '#ecfdf5']] as $langCode => $lMeta): ?>
+                <div class="form-field" style="margin:0; background:#fff; padding:12px; border-radius:8px; border:1px solid #e2e8f0;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <label for="app_about_tagline_<?= $langCode ?>" style="margin:0; font-size:12px; font-weight:600;"><?= $lMeta['label'] ?></label>
+                    <span class="chip" style="font-size:10px; padding:1px 6px; background:<?= $lMeta['bg'] ?>; color:<?= $lMeta['color'] ?>; font-weight:700; border:none;"><?= strtoupper($langCode) ?></span>
+                  </div>
+                  <textarea id="app_about_tagline_<?= $langCode ?>" name="app_about_tagline_<?= $langCode ?>" maxlength="300" rows="3" style="font-size:13px; line-height:1.4; padding:8px;" placeholder="<?= __('Նկարագրություն...') ?>"><?= htmlspecialchars((string)($appAbout['tagline'][$langCode] ?? ''), ENT_QUOTES) ?></textarea>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          </div>
+
+          <!-- Licenses in 3 languages -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px; margin-bottom:20px;">
+            <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+              <span>📄</span> <?= __('Լիցենզիայի Նկարագրություն (License Text) — 3 Լեզուներով') ?>
+            </div>
+            <div class="bento-grid cols-3" style="gap:14px; margin:0;">
+              <?php foreach (['hy' => ['label' => 'Հայերեն', 'color' => '#4318ff', 'bg' => '#eff6ff'], 'en' => ['label' => 'English', 'color' => '#0284c7', 'bg' => '#f0f9ff'], 'ru' => ['label' => 'Русский', 'color' => '#059669', 'bg' => '#ecfdf5']] as $langCode => $lMeta): ?>
+                <div class="form-field" style="margin:0; background:#fff; padding:12px; border-radius:8px; border:1px solid #e2e8f0;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <label for="app_about_license_<?= $langCode ?>" style="margin:0; font-size:12px; font-weight:600;"><?= $lMeta['label'] ?></label>
+                    <span class="chip" style="font-size:10px; padding:1px 6px; background:<?= $lMeta['bg'] ?>; color:<?= $lMeta['color'] ?>; font-weight:700; border:none;"><?= strtoupper($langCode) ?></span>
+                  </div>
+                  <textarea id="app_about_license_<?= $langCode ?>" name="app_about_license_<?= $langCode ?>" maxlength="1500" rows="4" style="font-size:13px; line-height:1.4; padding:8px;" placeholder="<?= __('Լիցենզիայի տեքստ...') ?>"><?= htmlspecialchars((string)($appAbout['license_text'][$langCode] ?? ''), ENT_QUOTES) ?></textarea>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          </div>
+
+          <!-- Owner, Copyright, URLs -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px; margin-bottom:20px;">
+            <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+              <span>⚖️</span> <?= __('Իրավատեր, Հեղինակային Իրավունք և Հղումներ') ?>
+            </div>
+            <div class="bento-grid cols-2" style="gap:14px; margin-bottom:14px;">
+              <div class="form-field" style="margin:0;">
+                <label for="app_about_owner"><?= __('Իրավատեր / Կազմակերպություն') ?></label>
+                <input id="app_about_owner" name="app_about_owner" maxlength="120" value="<?= htmlspecialchars((string)($appAbout['owner'] ?? ''), ENT_QUOTES) ?>" placeholder="PM Studio">
               </div>
-            <?php endforeach; ?>
-          </div>
+              <div class="form-field" style="margin:0;">
+                <label for="app_about_copyright_year"><?= __('Հեղինակային իրավունքի տարի') ?></label>
+                <input id="app_about_copyright_year" name="app_about_copyright_year" inputmode="numeric" pattern="\d{4}" maxlength="4" value="<?= htmlspecialchars((string)($appAbout['copyright_year'] ?? ''), ENT_QUOTES) ?>" placeholder="<?= date('Y') ?>">
+              </div>
+            </div>
 
-          <div class="bento-grid cols-2">
-            <div class="form-field">
-              <label for="app_about_owner"><?= __('Իրավատեր / կազմակերպություն') ?></label>
-              <input id="app_about_owner" name="app_about_owner" maxlength="120" value="<?= htmlspecialchars((string)($appAbout['owner'] ?? ''), ENT_QUOTES) ?>">
-            </div>
-            <div class="form-field">
-              <label for="app_about_copyright_year"><?= __('Հեղինակային իրավունքի տարի') ?></label>
-              <input id="app_about_copyright_year" name="app_about_copyright_year" inputmode="numeric" pattern="\d{4}" maxlength="4" value="<?= htmlspecialchars((string)($appAbout['copyright_year'] ?? ''), ENT_QUOTES) ?>">
-            </div>
-          </div>
-
-          <div class="bento-grid cols-3">
-            <div class="form-field">
-              <label for="app_about_privacy_url"><?= __('Գաղտնիության հղում') ?></label>
-              <input id="app_about_privacy_url" name="app_about_privacy_url" maxlength="500" value="<?= htmlspecialchars((string)($appAbout['privacy_url'] ?? ''), ENT_QUOTES) ?>" placeholder="/privacy">
-            </div>
-            <div class="form-field">
-              <label for="app_about_terms_url"><?= __('Պայմանների հղում') ?></label>
-              <input id="app_about_terms_url" name="app_about_terms_url" maxlength="500" value="<?= htmlspecialchars((string)($appAbout['terms_url'] ?? ''), ENT_QUOTES) ?>" placeholder="/terms">
-            </div>
-            <div class="form-field">
-              <label for="app_about_support_url"><?= __('Աջակցության հղում') ?></label>
-              <input id="app_about_support_url" name="app_about_support_url" maxlength="500" value="<?= htmlspecialchars((string)($appAbout['support_url'] ?? ''), ENT_QUOTES) ?>" placeholder="/support">
+            <div class="bento-grid cols-3" style="gap:14px; margin:0;">
+              <div class="form-field" style="margin:0;">
+                <label for="app_about_privacy_url"><?= __('Գաղտնիության հղում (Privacy)') ?></label>
+                <input id="app_about_privacy_url" name="app_about_privacy_url" maxlength="500" value="<?= htmlspecialchars((string)($appAbout['privacy_url'] ?? ''), ENT_QUOTES) ?>" placeholder="/privacy">
+              </div>
+              <div class="form-field" style="margin:0;">
+                <label for="app_about_terms_url"><?= __('Պայմանների հղում (Terms)') ?></label>
+                <input id="app_about_terms_url" name="app_about_terms_url" maxlength="500" value="<?= htmlspecialchars((string)($appAbout['terms_url'] ?? ''), ENT_QUOTES) ?>" placeholder="/terms">
+              </div>
+              <div class="form-field" style="margin:0;">
+                <label for="app_about_support_url"><?= __('Աջակցության հղում (Support)') ?></label>
+                <input id="app_about_support_url" name="app_about_support_url" maxlength="500" value="<?= htmlspecialchars((string)($appAbout['support_url'] ?? ''), ENT_QUOTES) ?>" placeholder="/support">
+              </div>
             </div>
           </div>
 
-          <div class="form-field">
+          <!-- Used libraries -->
+          <div class="form-field" style="margin-bottom:20px;">
             <label for="app_about_licenses"><?= __('Օգտագործված գրադարաններ և լիցենզիաներ') ?></label>
-            <textarea id="app_about_licenses" name="app_about_licenses" rows="5" placeholder="React / React DOM | MIT License"><?= htmlspecialchars($appAboutLicensesText, ENT_QUOTES) ?></textarea>
-            <small><?= __('Յուրաքանչյուր գրադարանը գրեք նոր տողում՝ Անուն | Լիցենզիա ձևաչափով։') ?></small>
+            <textarea id="app_about_licenses" name="app_about_licenses" rows="4" style="font-family:monospace; font-size:12px; padding:10px;" placeholder="React / React DOM | MIT License"><?= htmlspecialchars($appAboutLicensesText, ENT_QUOTES) ?></textarea>
+            <small style="color:var(--muted); font-size:11px; margin-top:4px; display:block;"><?= __('Յուրաքանչյուր գրադարանը գրեք նոր տողում՝ Անուն | Լիցենզիա ձևաչափով։') ?></small>
           </div>
 
-          <div style="display:flex; justify-content:flex-end; margin-top:16px;">
-            <button class="btn btn-primary" type="submit" name="form_action" value="save_app_about"><?= __('Պահպանել «Ծրագրի մասին» էջը') ?></button>
+          <div style="display:flex; justify-content:flex-end;">
+            <button class="btn btn-primary" type="submit" name="form_action" value="save_app_about" style="font-size:13px; font-weight:700; padding:10px 24px;">
+              💾 <?= __('Պահպանել «Ծրագրի մասին» էջը') ?>
+            </button>
           </div>
         </section>
 
         <section class="bento-card" id="siteInfoPanel" data-admin-section="site_info" data-admin-permission="site_info">
-          <div class="bento-header">
-            <h3><?= __('Ընդհանուր տվյալներ և SEO') ?></h3>
-            <p><?= __('Կայքի գլխավոր վերնագիր, SEO նկարագրություն, կապի և սոցիալական էջերի տվյալներ։') ?></p>
+          <div class="bento-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:20px; border-bottom:1px solid #f1f5f9; padding-bottom:16px;">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:22px;">🌐</span>
+                <h3 style="margin:0;"><?= __('Ընդհանուր տվյալներ, SEO և Էջերի Բովանդակություն') ?></h3>
+                <span class="chip primary" style="font-size:11px; padding:2px 8px;">SEO & Web</span>
+              </div>
+              <p style="margin:4px 0 0; font-size:13px; color:var(--muted);"><?= __('Կայքի գլխավոր վերնագիր, SEO նկարագրություն, կապի տվյալներ, ինչպես նաև «Մեր մասին» ու իրավական էջերի տեքստեր։') ?></p>
+            </div>
+            <button class="btn btn-primary" type="submit" name="form_action" value="save_site_info" style="font-size:12px; font-weight:600; padding:8px 16px;">
+              💾 <?= __('Պահպանել տվյալները') ?>
+            </button>
           </div>
 
-          <div class="bento-grid cols-2">
-            <div class="form-field">
-              <label for="site_seo_title"><?= __('Կայքի գլխավոր վերնագիր (Title)') ?></label>
-              <input id="site_seo_title" name="site_seo_title" maxlength="120" value="<?= htmlspecialchars((string)($config['site_seo_title'] ?? ''), ENT_QUOTES) ?>">
-            </div>
-            <div class="form-field">
-              <label for="site_seo_keywords"><?= __('SEO Բանալի բառեր (Keywords)') ?></label>
-              <input id="site_seo_keywords" name="site_seo_keywords" maxlength="255" value="<?= htmlspecialchars((string)($config['site_seo_keywords'] ?? ''), ENT_QUOTES) ?>">
-            </div>
-          </div>
+          <!-- SUB-CARD 1: SEO & CONTACT -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:24px;">
+            <h4 style="margin:0 0 16px 0; font-size:14px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px;">
+              <span>🔍</span> <?= __('SEO և Կոնտակտային Տվյալներ') ?>
+            </h4>
 
-          <div class="form-field">
-            <label for="site_seo_description"><?= __('SEO Նկարագրություն (Description)') ?></label>
-            <textarea id="site_seo_description" name="site_seo_description" rows="2" maxlength="300"><?= htmlspecialchars((string)($config['site_seo_description'] ?? ''), ENT_QUOTES) ?></textarea>
-          </div>
-
-          <div class="bento-grid cols-2">
-            <div class="form-field">
-              <label for="site_contact_email"><?= __('Կապի Էլ. փոստ') ?></label>
-              <input id="site_contact_email" name="site_contact_email" type="email" maxlength="120" value="<?= htmlspecialchars((string)($config['site_contact_email'] ?? ''), ENT_QUOTES) ?>">
-            </div>
-            <div class="form-field">
-              <label for="site_contact_phone"><?= __('Կապի Հեռախոսահամար') ?></label>
-              <input id="site_contact_phone" name="site_contact_phone" type="tel" maxlength="50" value="<?= htmlspecialchars((string)($config['site_contact_phone'] ?? ''), ENT_QUOTES) ?>">
-            </div>
-          </div>
-
-          <div class="form-field">
-            <label for="site_contact_address"><?= __('Կապի Հասցե (Գրասենյակ)') ?></label>
-            <input id="site_contact_address" name="site_contact_address" type="text" maxlength="200" value="<?= htmlspecialchars((string)($config['site_contact_address'] ?? ''), ENT_QUOTES) ?>" placeholder="<?= __('Երևան, Հայաստան') ?>">
-          </div>
-
-          <div class="bento-grid cols-3">
-            <div class="form-field">
-              <label for="site_social_facebook"><?= __('Facebook հղում') ?></label>
-              <input id="site_social_facebook" name="site_social_facebook" type="url" maxlength="255" value="<?= htmlspecialchars((string)($config['site_social_facebook'] ?? ''), ENT_QUOTES) ?>" placeholder="https://facebook.com/...">
-            </div>
-            <div class="form-field">
-              <label for="site_social_instagram"><?= __('Instagram հղում') ?></label>
-              <input id="site_social_instagram" name="site_social_instagram" type="url" maxlength="255" value="<?= htmlspecialchars((string)($config['site_social_instagram'] ?? ''), ENT_QUOTES) ?>" placeholder="https://instagram.com/...">
-            </div>
-            <div class="form-field">
-              <label for="site_social_youtube"><?= __('YouTube հղում') ?></label>
-              <input id="site_social_youtube" name="site_social_youtube" type="url" maxlength="255" value="<?= htmlspecialchars((string)($config['site_social_youtube'] ?? ''), ENT_QUOTES) ?>" placeholder="https://youtube.com/...">
-            </div>
-          </div>
-
-          <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:24px 0;">
-          <h4 style="margin:0 0 16px 0; font-size:1.1rem; color:var(--accent-cyan, #00f0ff); font-weight:700;">ℹ️ «Մեր Մասին» (About Us) Էջի Բովանդակություն</h4>
-
-          <div class="bento-grid cols-2">
-            <div class="form-field">
-              <label for="about_hero_title"><?= __('Գլխավոր Վերնագիր') ?></label>
-              <input id="about_hero_title" name="about_hero_title" maxlength="150" value="<?= htmlspecialchars((string)($config['about_hero_title'] ?? 'Մեր Մասին'), ENT_QUOTES) ?>">
-            </div>
-            <div class="form-field">
-              <label for="about_hero_subtitle"><?= __('Ենթավերնագիր') ?></label>
-              <input id="about_hero_subtitle" name="about_hero_subtitle" maxlength="500" value="<?= htmlspecialchars((string)($config['about_hero_subtitle'] ?? ''), ENT_QUOTES) ?>">
-            </div>
-          </div>
-
-          <div class="bento-grid cols-2">
-            <div class="form-field">
-              <label for="about_mission_title"><?= __('Առաքելության Վերնագիր') ?></label>
-              <input id="about_mission_title" name="about_mission_title" maxlength="150" value="<?= htmlspecialchars((string)($config['about_mission_title'] ?? 'Մեր Առաքելությունը'), ENT_QUOTES) ?>">
-              <label for="about_mission_text" style="margin-top:10px;"><?= __('Առաքելության Տեքստ') ?></label>
-              <textarea id="about_mission_text" name="about_mission_text" rows="3" maxlength="2000"><?= htmlspecialchars((string)($config['about_mission_text'] ?? ''), ENT_QUOTES) ?></textarea>
+            <div class="bento-grid cols-2" style="gap:16px; margin-bottom:16px;">
+              <div class="form-field" style="margin:0;">
+                <label for="site_seo_title"><?= __('Կայքի գլխավոր վերնագիր (Title)') ?></label>
+                <input id="site_seo_title" name="site_seo_title" maxlength="120" value="<?= htmlspecialchars((string)($config['site_seo_title'] ?? ''), ENT_QUOTES) ?>" placeholder="Worship Platform — Պաշտամունքի երգարան">
+              </div>
+              <div class="form-field" style="margin:0;">
+                <label for="site_seo_keywords"><?= __('SEO Բանալի բառեր (Keywords)') ?></label>
+                <input id="site_seo_keywords" name="site_seo_keywords" maxlength="255" value="<?= htmlspecialchars((string)($config['site_seo_keywords'] ?? ''), ENT_QUOTES) ?>" placeholder="երգեր, ակորդներ, worship, պաշտամունք">
+              </div>
             </div>
 
-            <div class="form-field">
-              <label for="about_vision_title"><?= __('Տեսլականի Վերնագիր') ?></label>
-              <input id="about_vision_title" name="about_vision_title" maxlength="150" value="<?= htmlspecialchars((string)($config['about_vision_title'] ?? 'Մեր Տեսլականը'), ENT_QUOTES) ?>">
-              <label for="about_vision_text" style="margin-top:10px;"><?= __('Տեսլականի Տեքստ') ?></label>
-              <textarea id="about_vision_text" name="about_vision_text" rows="3" maxlength="2000"><?= htmlspecialchars((string)($config['about_vision_text'] ?? ''), ENT_QUOTES) ?></textarea>
+            <div class="form-field" style="margin-bottom:16px;">
+              <label for="site_seo_description"><?= __('SEO Նկարագրություն (Description)') ?></label>
+              <textarea id="site_seo_description" name="site_seo_description" rows="2" maxlength="300" placeholder="Worship Platform — քրիստոնեական երգերի և ակորդների ամենամեծ հարթակը..."><?= htmlspecialchars((string)($config['site_seo_description'] ?? ''), ENT_QUOTES) ?></textarea>
+            </div>
+
+            <div class="bento-grid cols-3" style="gap:16px; margin-bottom:16px;">
+              <div class="form-field" style="margin:0;">
+                <label for="site_contact_email"><?= __('Կապի Էլ. փոստ') ?></label>
+                <input id="site_contact_email" name="site_contact_email" type="email" maxlength="120" value="<?= htmlspecialchars((string)($config['site_contact_email'] ?? ''), ENT_QUOTES) ?>" placeholder="info@pmstudio.am">
+              </div>
+              <div class="form-field" style="margin:0;">
+                <label for="site_contact_phone"><?= __('Կապի Հեռախոսահամար') ?></label>
+                <input id="site_contact_phone" name="site_contact_phone" type="tel" maxlength="50" value="<?= htmlspecialchars((string)($config['site_contact_phone'] ?? ''), ENT_QUOTES) ?>" placeholder="+374 00 000000">
+              </div>
+              <div class="form-field" style="margin:0;">
+                <label for="site_contact_address"><?= __('Կապի Հասցե (Գրասենյակ)') ?></label>
+                <input id="site_contact_address" name="site_contact_address" type="text" maxlength="200" value="<?= htmlspecialchars((string)($config['site_contact_address'] ?? ''), ENT_QUOTES) ?>" placeholder="<?= __('Երևան, Հայաստան') ?>">
+              </div>
+            </div>
+
+            <div class="bento-grid cols-3" style="gap:16px; margin:0;">
+              <div class="form-field" style="margin:0;">
+                <label for="site_social_facebook"><?= __('Facebook հղում') ?></label>
+                <input id="site_social_facebook" name="site_social_facebook" type="url" maxlength="255" value="<?= htmlspecialchars((string)($config['site_social_facebook'] ?? ''), ENT_QUOTES) ?>" placeholder="https://facebook.com/...">
+              </div>
+              <div class="form-field" style="margin:0;">
+                <label for="site_social_instagram"><?= __('Instagram հղում') ?></label>
+                <input id="site_social_instagram" name="site_social_instagram" type="url" maxlength="255" value="<?= htmlspecialchars((string)($config['site_social_instagram'] ?? ''), ENT_QUOTES) ?>" placeholder="https://instagram.com/...">
+              </div>
+              <div class="form-field" style="margin:0;">
+                <label for="site_social_youtube"><?= __('YouTube հղում') ?></label>
+                <input id="site_social_youtube" name="site_social_youtube" type="url" maxlength="255" value="<?= htmlspecialchars((string)($config['site_social_youtube'] ?? ''), ENT_QUOTES) ?>" placeholder="https://youtube.com/...">
+              </div>
             </div>
           </div>
 
-          <h5 style="margin:16px 0 10px 0; font-size:0.95rem; color:var(--text);"><?= __('Վիճակագրության Ցուցանիշներ') ?></h5>
-          <div class="bento-grid cols-3">
-            <div class="form-field">
-              <label for="about_stat1_number"><?= __('Ցուցանիշ 1 (Թիվ)') ?></label>
-              <input id="about_stat1_number" name="about_stat1_number" maxlength="50" value="<?= htmlspecialchars((string)($config['about_stat1_number'] ?? '1000+'), ENT_QUOTES) ?>">
-              <label for="about_stat1_label" style="margin-top:6px;"><?= __('Անվանում 1') ?></label>
-              <input id="about_stat1_label" name="about_stat1_label" maxlength="100" value="<?= htmlspecialchars((string)($config['about_stat1_label'] ?? 'Ակտիվ Երգեր'), ENT_QUOTES) ?>">
-            </div>
-            <div class="form-field">
-              <label for="about_stat2_number"><?= __('Ցուցանիշ 2 (Թիվ)') ?></label>
-              <input id="about_stat2_number" name="about_stat2_number" maxlength="50" value="<?= htmlspecialchars((string)($config['about_stat2_number'] ?? '500+'), ENT_QUOTES) ?>">
-              <label for="about_stat2_label" style="margin-top:6px;"><?= __('Անվանում 2') ?></label>
-              <input id="about_stat2_label" name="about_stat2_label" maxlength="100" value="<?= htmlspecialchars((string)($config['about_stat2_label'] ?? 'Պաշտամունքի Թիմեր'), ENT_QUOTES) ?>">
-            </div>
-            <div class="form-field">
-              <label for="about_stat3_number"><?= __('Ցուցանիշ 3 (Թիվ)') ?></label>
-              <input id="about_stat3_number" name="about_stat3_number" maxlength="50" value="<?= htmlspecialchars((string)($config['about_stat3_number'] ?? '10,000+'), ENT_QUOTES) ?>">
-              <label for="about_stat3_label" style="margin-top:6px;"><?= __('Անվանում 3') ?></label>
-              <input id="about_stat3_label" name="about_stat3_label" maxlength="100" value="<?= htmlspecialchars((string)($config['about_stat3_label'] ?? 'Օգտատերեր'), ENT_QUOTES) ?>">
-            </div>
-          </div>
+          <!-- SUB-CARD 2: ABOUT US PAGE CONTENT -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:24px;">
+            <h4 style="margin:0 0 16px 0; font-size:14px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px;">
+              <span>ℹ️</span> <?= __('«Մեր Մասին» (About Us) Էջի Բովանդակություն') ?>
+            </h4>
 
-          <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:24px 0;">
-          <h4 style="margin:0 0 16px 0; font-size:1.1rem; color:var(--accent-cyan, #00f0ff); font-weight:700;">🔒 «Գաղտնիության Քաղաքականություն» (Privacy Policy) Էջ</h4>
-
-          <div class="bento-grid cols-2">
-            <div class="form-field">
-              <label for="privacy_title"><?= __('Գլխավոր Վերնագիր') ?></label>
-              <input id="privacy_title" name="privacy_title" maxlength="150" value="<?= htmlspecialchars((string)($config['privacy_title'] ?? 'Գաղտնիության Քաղաքականություն'), ENT_QUOTES) ?>">
+            <div class="bento-grid cols-2" style="gap:16px; margin-bottom:16px;">
+              <div class="form-field" style="margin:0;">
+                <label for="about_hero_title"><?= __('Գլխավոր Վերնագիր') ?></label>
+                <input id="about_hero_title" name="about_hero_title" maxlength="150" value="<?= htmlspecialchars((string)($config['about_hero_title'] ?? 'Մեր Մասին'), ENT_QUOTES) ?>">
+              </div>
+              <div class="form-field" style="margin:0;">
+                <label for="about_hero_subtitle"><?= __('Ենթավերնագիր') ?></label>
+                <input id="about_hero_subtitle" name="about_hero_subtitle" maxlength="500" value="<?= htmlspecialchars((string)($config['about_hero_subtitle'] ?? ''), ENT_QUOTES) ?>">
+              </div>
             </div>
-            <div class="form-field">
-              <label for="privacy_subtitle"><?= __('Ենթավերնագիր') ?></label>
-              <input id="privacy_subtitle" name="privacy_subtitle" maxlength="500" value="<?= htmlspecialchars((string)($config['privacy_subtitle'] ?? ''), ENT_QUOTES) ?>">
+
+            <div class="bento-grid cols-2" style="gap:16px; margin-bottom:16px;">
+              <div class="form-field" style="margin:0;">
+                <label for="about_mission_title"><?= __('Առաքելության Վերնագիր') ?></label>
+                <input id="about_mission_title" name="about_mission_title" maxlength="150" value="<?= htmlspecialchars((string)($config['about_mission_title'] ?? 'Մեր Առաքելությունը'), ENT_QUOTES) ?>">
+                <label for="about_mission_text" style="margin-top:10px;"><?= __('Առաքելության Տեքստ') ?></label>
+                <textarea id="about_mission_text" name="about_mission_text" rows="3" maxlength="2000"><?= htmlspecialchars((string)($config['about_mission_text'] ?? ''), ENT_QUOTES) ?></textarea>
+              </div>
+
+              <div class="form-field" style="margin:0;">
+                <label for="about_vision_title"><?= __('Տեսլականի Վերնագիր') ?></label>
+                <input id="about_vision_title" name="about_vision_title" maxlength="150" value="<?= htmlspecialchars((string)($config['about_vision_title'] ?? 'Մեր Տեսլականը'), ENT_QUOTES) ?>">
+                <label for="about_vision_text" style="margin-top:10px;"><?= __('Տեսլականի Տեքստ') ?></label>
+                <textarea id="about_vision_text" name="about_vision_text" rows="3" maxlength="2000"><?= htmlspecialchars((string)($config['about_vision_text'] ?? ''), ENT_QUOTES) ?></textarea>
+              </div>
             </div>
-          </div>
 
-          <div class="form-field" style="margin-top:12px;">
-            <label for="privacy_content"><?= __('Գաղտնիության Քաղաքականության Տեքստ (Markdown / HTML)') ?></label>
-            <textarea id="privacy_content" name="privacy_content" rows="8" style="font-family: monospace; font-size:0.9rem; line-height:1.5;"><?= htmlspecialchars((string)($config['privacy_content'] ?? ''), ENT_QUOTES) ?></textarea>
-          </div>
-
-          <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:24px 0;">
-          <h4 style="margin:0 0 16px 0; font-size:1.1rem; color:var(--accent-cyan, #00f0ff); font-weight:700;">📜 «Օգտագործման Պայմաններ» (Terms of Service) Էջ</h4>
-
-          <div class="bento-grid cols-2">
-            <div class="form-field">
-              <label for="terms_title"><?= __('Գլխավոր Վերնագիր') ?></label>
-              <input id="terms_title" name="terms_title" maxlength="150" value="<?= htmlspecialchars((string)($config['terms_title'] ?? 'Օգտագործման Պայմաններ'), ENT_QUOTES) ?>">
+            <div style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px;">
+              <?= __('Վիճակագրության Ցուցանիշներ (Stats Counters)') ?>
             </div>
-            <div class="form-field">
-              <label for="terms_subtitle"><?= __('Ենթավերնագիր') ?></label>
-              <input id="terms_subtitle" name="terms_subtitle" maxlength="500" value="<?= htmlspecialchars((string)($config['terms_subtitle'] ?? ''), ENT_QUOTES) ?>">
-            </div>
-          </div>
-
-          <div class="form-field" style="margin-top:12px;">
-            <label for="terms_content"><?= __('Օգտագործման Պայմանների Տեքստ (Markdown / HTML)') ?></label>
-            <textarea id="terms_content" name="terms_content" rows="8" style="font-family: monospace; font-size:0.9rem; line-height:1.5;"><?= htmlspecialchars((string)($config['terms_content'] ?? ''), ENT_QUOTES) ?></textarea>
-          </div>
-
-          <hr style="border:none; border-top:1px solid rgba(255,255,255,0.08); margin:24px 0;">
-          <h4 style="margin:0 0 16px 0; font-size:1.1rem; color:var(--accent-cyan, #00f0ff); font-weight:700;">🍪 «Cookie-ների Քաղաքականություն» (Cookie Policy) Էջ</h4>
-
-          <div class="bento-grid cols-2">
-            <div class="form-field">
-              <label for="cookies_title"><?= __('Գլխավոր Վերնագիր') ?></label>
-              <input id="cookies_title" name="cookies_title" maxlength="150" value="<?= htmlspecialchars((string)($config['cookies_title'] ?? 'Cookie-ների Քաղաքականություն'), ENT_QUOTES) ?>">
-            </div>
-            <div class="form-field">
-              <label for="cookies_subtitle"><?= __('Ենթավերնագիր') ?></label>
-              <input id="cookies_subtitle" name="cookies_subtitle" maxlength="500" value="<?= htmlspecialchars((string)($config['cookies_subtitle'] ?? ''), ENT_QUOTES) ?>">
+            <div class="bento-grid cols-3" style="gap:16px; margin:0;">
+              <div class="form-field" style="margin:0; background:#fff; padding:12px; border-radius:8px; border:1px solid #e2e8f0;">
+                <label for="about_stat1_number"><?= __('Ցուցանիշ 1 (Թիվ)') ?></label>
+                <input id="about_stat1_number" name="about_stat1_number" maxlength="50" value="<?= htmlspecialchars((string)($config['about_stat1_number'] ?? '1000+'), ENT_QUOTES) ?>">
+                <label for="about_stat1_label" style="margin-top:6px;"><?= __('Անվանում 1') ?></label>
+                <input id="about_stat1_label" name="about_stat1_label" maxlength="100" value="<?= htmlspecialchars((string)($config['about_stat1_label'] ?? 'Ակտիվ Երգեր'), ENT_QUOTES) ?>">
+              </div>
+              <div class="form-field" style="margin:0; background:#fff; padding:12px; border-radius:8px; border:1px solid #e2e8f0;">
+                <label for="about_stat2_number"><?= __('Ցուցանիշ 2 (Թիվ)') ?></label>
+                <input id="about_stat2_number" name="about_stat2_number" maxlength="50" value="<?= htmlspecialchars((string)($config['about_stat2_number'] ?? '500+'), ENT_QUOTES) ?>">
+                <label for="about_stat2_label" style="margin-top:6px;"><?= __('Անվանում 2') ?></label>
+                <input id="about_stat2_label" name="about_stat2_label" maxlength="100" value="<?= htmlspecialchars((string)($config['about_stat2_label'] ?? 'Պաշտամունքի Թիմեր'), ENT_QUOTES) ?>">
+              </div>
+              <div class="form-field" style="margin:0; background:#fff; padding:12px; border-radius:8px; border:1px solid #e2e8f0;">
+                <label for="about_stat3_number"><?= __('Ցուցանիշ 3 (Թիվ)') ?></label>
+                <input id="about_stat3_number" name="about_stat3_number" maxlength="50" value="<?= htmlspecialchars((string)($config['about_stat3_number'] ?? '10,000+'), ENT_QUOTES) ?>">
+                <label for="about_stat3_label" style="margin-top:6px;"><?= __('Անվանում 3') ?></label>
+                <input id="about_stat3_label" name="about_stat3_label" maxlength="100" value="<?= htmlspecialchars((string)($config['about_stat3_label'] ?? 'Օգտատերեր'), ENT_QUOTES) ?>">
+              </div>
             </div>
           </div>
 
-          <div class="form-field" style="margin-top:12px;">
-            <label for="cookies_content"><?= __('Cookie-ների Քաղաքականության Տեքստ (Markdown / HTML)') ?></label>
-            <textarea id="cookies_content" name="cookies_content" rows="8" style="font-family: monospace; font-size:0.9rem; line-height:1.5;"><?= htmlspecialchars((string)($config['cookies_content'] ?? ''), ENT_QUOTES) ?></textarea>
+          <!-- SUB-CARD 3: LEGAL PAGES -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:20px;">
+            <h4 style="margin:0 0 16px 0; font-size:14px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px;">
+              <span>📜</span> <?= __('Իրավական Էջերի Բովանդակություն (Legal Documents)') ?>
+            </h4>
+
+            <!-- Privacy Policy -->
+            <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:16px; margin-bottom:16px;">
+              <strong style="font-size:13px; color:var(--text); display:block; margin-bottom:12px;">🔒 <?= __('Գաղտնիության Քաղաքականություն (Privacy Policy)') ?></strong>
+              <div class="bento-grid cols-2" style="gap:12px; margin-bottom:12px;">
+                <div class="form-field" style="margin:0;">
+                  <label for="privacy_title"><?= __('Գլխավոր Վերնագիր') ?></label>
+                  <input id="privacy_title" name="privacy_title" maxlength="150" value="<?= htmlspecialchars((string)($config['privacy_title'] ?? 'Գաղտնիության Քաղաքականություն'), ENT_QUOTES) ?>">
+                </div>
+                <div class="form-field" style="margin:0;">
+                  <label for="privacy_subtitle"><?= __('Ենթավերնագիր') ?></label>
+                  <input id="privacy_subtitle" name="privacy_subtitle" maxlength="500" value="<?= htmlspecialchars((string)($config['privacy_subtitle'] ?? ''), ENT_QUOTES) ?>">
+                </div>
+              </div>
+              <div class="form-field" style="margin:0;">
+                <label for="privacy_content"><?= __('Բովանդակություն (Markdown / HTML)') ?></label>
+                <textarea id="privacy_content" name="privacy_content" rows="6" style="font-family: monospace; font-size:12px; line-height:1.5;"><?= htmlspecialchars((string)($config['privacy_content'] ?? ''), ENT_QUOTES) ?></textarea>
+              </div>
+            </div>
+
+            <!-- Terms of Service -->
+            <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:16px; margin-bottom:16px;">
+              <strong style="font-size:13px; color:var(--text); display:block; margin-bottom:12px;">📜 <?= __('Օգտագործման Պայմաններ (Terms of Service)') ?></strong>
+              <div class="bento-grid cols-2" style="gap:12px; margin-bottom:12px;">
+                <div class="form-field" style="margin:0;">
+                  <label for="terms_title"><?= __('Գլխավոր Վերնագիր') ?></label>
+                  <input id="terms_title" name="terms_title" maxlength="150" value="<?= htmlspecialchars((string)($config['terms_title'] ?? 'Օգտագործման Պայմաններ'), ENT_QUOTES) ?>">
+                </div>
+                <div class="form-field" style="margin:0;">
+                  <label for="terms_subtitle"><?= __('Ենթավերնագիր') ?></label>
+                  <input id="terms_subtitle" name="terms_subtitle" maxlength="500" value="<?= htmlspecialchars((string)($config['terms_subtitle'] ?? ''), ENT_QUOTES) ?>">
+                </div>
+              </div>
+              <div class="form-field" style="margin:0;">
+                <label for="terms_content"><?= __('Բովանդակություն (Markdown / HTML)') ?></label>
+                <textarea id="terms_content" name="terms_content" rows="6" style="font-family: monospace; font-size:12px; line-height:1.5;"><?= htmlspecialchars((string)($config['terms_content'] ?? ''), ENT_QUOTES) ?></textarea>
+              </div>
+            </div>
+
+            <!-- Cookie Policy -->
+            <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:16px; margin:0;">
+              <strong style="font-size:13px; color:var(--text); display:block; margin-bottom:12px;">🍪 <?= __('Cookie-ների Քաղաքականություն (Cookie Policy)') ?></strong>
+              <div class="bento-grid cols-2" style="gap:12px; margin-bottom:12px;">
+                <div class="form-field" style="margin:0;">
+                  <label for="cookies_title"><?= __('Գլխավոր Վերնագիր') ?></label>
+                  <input id="cookies_title" name="cookies_title" maxlength="150" value="<?= htmlspecialchars((string)($config['cookies_title'] ?? 'Cookie-ների Քաղաքականություն'), ENT_QUOTES) ?>">
+                </div>
+                <div class="form-field" style="margin:0;">
+                  <label for="cookies_subtitle"><?= __('Ենթավերնագիր') ?></label>
+                  <input id="cookies_subtitle" name="cookies_subtitle" maxlength="500" value="<?= htmlspecialchars((string)($config['cookies_subtitle'] ?? ''), ENT_QUOTES) ?>">
+                </div>
+              </div>
+              <div class="form-field" style="margin:0;">
+                <label for="cookies_content"><?= __('Բովանդակություն (Markdown / HTML)') ?></label>
+                <textarea id="cookies_content" name="cookies_content" rows="6" style="font-family: monospace; font-size:12px; line-height:1.5;"><?= htmlspecialchars((string)($config['cookies_content'] ?? ''), ENT_QUOTES) ?></textarea>
+              </div>
+            </div>
           </div>
 
-          <div style="display:flex; justify-content:flex-end; margin-top:20px;">
-            <button class="btn btn-primary" type="submit" name="form_action" value="save_site_info"><?= __('Պահպանել տվյալները') ?></button>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:16px; border-top:1px solid #f1f5f9;">
+            <span style="font-size:12px; color:var(--muted);"><?= __('Փոփոխությունները կիրառվում են կայքի SEO meta թեգերում և տեղեկատվական էջերում։') ?></span>
+            <button class="btn btn-primary" type="submit" name="form_action" value="save_site_info" style="font-size:13px; font-weight:700; padding:10px 24px;">
+              💾 <?= __('Պահպանել տվյալները') ?>
+            </button>
           </div>
         </section>
 
@@ -2599,10 +2666,14 @@ $aiHasOpenai = !empty($aiConfig['openai_api_key']);
               <?php foreach ($adminPermissionRows as $index => $row): ?>
                 <div class="bento-card" data-permission-row style="padding:16px; background:#f8fafc; border-radius:12px; box-shadow:none;">
                   <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:12px;">
-                    <div class="form-field" style="margin:0; flex:1; max-width:300px;">
+                    <div class="form-field" style="margin:0; flex:1; max-width:320px;">
                       <input class="input-field" type="email" name="admin_permission_rows[<?= (int)$index ?>][email]" value="<?= htmlspecialchars((string)$row['email'], ENT_QUOTES) ?>" placeholder="admin@example.com" style="padding:8px;">
                     </div>
-                    <button class="btn btn-ghost danger" type="button" data-remove-permission-row style="padding:4px 8px; font-size:12px;"><?= __('Հեռացնել') ?></button>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                      <button class="btn btn-ghost" type="button" data-select-all-permissions style="padding:4px 8px; font-size:11px;"><?= __('Ընտրել բոլորը') ?></button>
+                      <button class="btn btn-ghost" type="button" data-deselect-all-permissions style="padding:4px 8px; font-size:11px;"><?= __('Մաքրել') ?></button>
+                      <button class="btn btn-ghost danger" type="button" data-remove-permission-row style="padding:4px 8px; font-size:11px;"><?= __('Հեռացնել') ?></button>
+                    </div>
                   </div>
                   <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:12px;">
                     <?php foreach ($adminSectionRegistry as $sectionKey => $sectionMeta): ?>
@@ -2643,7 +2714,10 @@ $aiHasOpenai = !empty($aiConfig['openai_api_key']);
               </div>
               <div class="form-field">
                 <label for="social_auth_google_client_secret" style="font-size:12px;"><?= __('Client Secret (Նոր)') ?></label>
-                <input class="input-field" id="social_auth_google_client_secret" name="social_auth_google_client_secret" type="password" value="" placeholder="<?= __('Լրացրեք նոր բանալին պահպանելու համար') ?>" style="padding:8px;">
+                <div style="position:relative;">
+                  <input class="input-field" id="social_auth_google_client_secret" name="social_auth_google_client_secret" type="password" value="" placeholder="<?= __('Լրացրեք նոր բանալին պահպանելու համար') ?>" style="padding:8px 36px 8px 8px;">
+                  <button type="button" class="btn btn-icon toggle-password-btn" data-target="social_auth_google_client_secret" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); border:none; background:transparent; cursor:pointer;" title="<?= __('Ցույց տալ / Թաքցնել') ?>">👁️</button>
+                </div>
               </div>
               <div class="form-field">
                 <label for="social_auth_google_redirect_uri" style="font-size:12px;"><?= __('Redirect URI') ?></label>
@@ -5064,14 +5138,41 @@ $aiHasOpenai = !empty($aiConfig['openai_api_key']);
         field.appendChild(label);
         field.appendChild(input);
 
+        const btnGroup = document.createElement('div');
+        btnGroup.style.display = 'flex';
+        btnGroup.style.gap = '6px';
+        btnGroup.style.alignItems = 'center';
+
+        const selectAllBtn = document.createElement('button');
+        selectAllBtn.type = 'button';
+        selectAllBtn.className = 'btn btn-ghost';
+        selectAllBtn.style.padding = '4px 8px';
+        selectAllBtn.style.fontSize = '11px';
+        selectAllBtn.setAttribute('data-select-all-permissions', '1');
+        selectAllBtn.textContent = 'Ընտրել բոլորը';
+
+        const deselectAllBtn = document.createElement('button');
+        deselectAllBtn.type = 'button';
+        deselectAllBtn.className = 'btn btn-ghost';
+        deselectAllBtn.style.padding = '4px 8px';
+        deselectAllBtn.style.fontSize = '11px';
+        deselectAllBtn.setAttribute('data-deselect-all-permissions', '1');
+        deselectAllBtn.textContent = 'Մաքրել';
+
         const removeBtn = document.createElement('button');
         removeBtn.type = 'button';
-        removeBtn.className = 'history-btn danger';
+        removeBtn.className = 'btn btn-ghost danger';
+        removeBtn.style.padding = '4px 8px';
+        removeBtn.style.fontSize = '11px';
         removeBtn.setAttribute('data-remove-permission-row', '1');
         removeBtn.textContent = 'Հեռացնել';
 
+        btnGroup.appendChild(selectAllBtn);
+        btnGroup.appendChild(deselectAllBtn);
+        btnGroup.appendChild(removeBtn);
+
         head.appendChild(field);
-        head.appendChild(removeBtn);
+        head.appendChild(btnGroup);
 
         const grid = document.createElement('div');
         grid.className = 'permission-grid';
@@ -5570,13 +5671,35 @@ $aiHasOpenai = !empty($aiConfig['openai_api_key']);
 
       permissionList?.addEventListener('click', (event) => {
         const target = event.target;
-        if (!(target instanceof HTMLElement) || !target.closest('[data-remove-permission-row]')) {
+        if (!(target instanceof HTMLElement)) {
           return;
         }
-        const row = target.closest('[data-permission-row]');
-        if (row) {
-          row.remove();
-          schedulePermissionAutosave(250);
+
+        if (target.closest('[data-remove-permission-row]')) {
+          const row = target.closest('[data-permission-row]');
+          if (row) {
+            row.remove();
+            schedulePermissionAutosave(250);
+          }
+          return;
+        }
+
+        if (target.closest('[data-select-all-permissions]')) {
+          const row = target.closest('[data-permission-row]');
+          if (row) {
+            row.querySelectorAll('input[type="checkbox"]').forEach((cb) => { cb.checked = true; });
+            schedulePermissionAutosave(250);
+          }
+          return;
+        }
+
+        if (target.closest('[data-deselect-all-permissions]')) {
+          const row = target.closest('[data-permission-row]');
+          if (row) {
+            row.querySelectorAll('input[type="checkbox"]').forEach((cb) => { cb.checked = false; });
+            schedulePermissionAutosave(250);
+          }
+          return;
         }
       });
 
