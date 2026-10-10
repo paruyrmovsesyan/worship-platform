@@ -279,11 +279,11 @@ export default function MobileNav() {
           return;
         }
         activeAnimation = incoming.animate([
-          { opacity: 0.94, transform: 'translate3d(10px, 0, 0)' },
-          { opacity: 1, transform: 'translate3d(0, 0, 0)' },
+          { opacity: 0.985 },
+          { opacity: 1 },
         ], {
-          duration: 190,
-          easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+          duration: 130,
+          easing: 'ease-out',
           fill: 'forwards',
         });
         activeAnimation.finished.then(finish, finish);

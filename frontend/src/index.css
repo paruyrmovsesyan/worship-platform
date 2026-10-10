@@ -298,11 +298,6 @@ body.is-native .hub-header {
 /* Native-safe transitions. Never begin at opacity: 0 because WKWebView can
    occasionally retain that compositor frame, but keep a subtle app-like
    entrance so navigation and content changes do not feel abrupt. */
-@keyframes nativeTabEnter {
-  from { opacity: 0.94; }
-  to { opacity: 1; }
-}
-
 @keyframes nativePushEnter {
   from { opacity: 0.94; }
   to { opacity: 1; }
