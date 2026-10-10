@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '../utils/nativeConfig';
+
 const CHORD_COLORS = [
   { id: 'cyan', value: '#39d8ff', label: 'Cyan' },
   { id: 'purple', value: '#9a73ff', label: 'Purple' },
@@ -5,6 +7,25 @@ const CHORD_COLORS = [
   { id: 'amber', value: '#f4b942', label: 'Amber' },
   { id: 'rose', value: '#ff7f9f', label: 'Rose' },
 ];
+
+function resolveMediaUrl(url) {
+  if (!url) return '';
+  const trimmed = String(url).trim();
+  if (/^(https?:|\/\/|blob:|data:)/i.test(trimmed)) {
+    return trimmed;
+  }
+  const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return `${API_BASE_URL}${cleanPath}`;
+}
+
+function isAudioAttachment(att) {
+  if (!att) return false;
+  const type = String(att.type || '').toLowerCase();
+  if (type === 'audio') return true;
+  const url = String(att.url || '').toLowerCase();
+  const clean = url.split('?')[0].split('#')[0];
+  return clean.endsWith('.mp3') || clean.endsWith('.m4a') || clean.endsWith('.wav') || clean.endsWith('.ogg') || clean.endsWith('.aac') || clean.endsWith('.flac');
+}
 
 function ToolIcon({ children }) {
   return <svg viewBox="0 0 24 24" aria-hidden="true">{children}</svg>;
@@ -107,12 +128,29 @@ export default function SongViewWebTools({
       <section className="web-tool-section web-media-card">
         <span>Մեդիա և նյութեր</span>
         {attachments?.length ? (
-          attachments.slice(0, 3).map(attachment => (
-            <a key={attachment.id || attachment.url} href={attachment.url} target="_blank" rel="noreferrer">
-              <ToolIcon><path d="M8 5v14l11-7Z" /></ToolIcon>
-              <span>{attachment.title || 'Բացել նյութը'}</span>
-            </a>
-          ))
+          attachments.slice(0, 5).map(attachment => {
+            const resolvedUrl = resolveMediaUrl(attachment.url);
+            const isAudio = isAudioAttachment(attachment);
+            return (
+              <div key={attachment.id || attachment.url} style={{ marginBottom: '8px' }}>
+                <a href={resolvedUrl} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <ToolIcon><path d="M8 5v14l11-7Z" /></ToolIcon>
+                  <span>{attachment.title || 'Բացել նյութը'}</span>
+                </a>
+                {isAudio && (
+                  <audio
+                    controls
+                    playsInline
+                    src={resolvedUrl}
+                    preload="metadata"
+                    style={{ width: '100%', height: '32px', marginTop: '6px' }}
+                  >
+                    Ձեր դիտարկիչը չի աջակցում աուդիո նվագարկիչը:
+                  </audio>
+                )}
+              </div>
+            );
+          })
         ) : (
           <div className="web-media-empty">
             <ToolIcon><path d="M8 5v14l11-7Z" /></ToolIcon>

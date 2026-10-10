@@ -15,6 +15,17 @@ import PrintStudio from '../components/PrintStudio';
 import ChordDiagramPopover from '../components/ChordDiagramPopover';
 import { useIsAppMode } from '../hooks/useIsPWA';
 import { nativeShare } from '../utils/nativeFeatures';
+import { API_BASE_URL } from '../utils/nativeConfig';
+
+function resolveMediaUrl(url) {
+  if (!url) return '';
+  const trimmed = String(url).trim();
+  if (/^(https?:|\/\/|blob:|data:)/i.test(trimmed)) {
+    return trimmed;
+  }
+  const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return `${API_BASE_URL}${cleanPath}`;
+}
 
 function getYouTubeEmbedUrl(url) {
   if (!url) return null;
@@ -23,12 +34,45 @@ function getYouTubeEmbedUrl(url) {
   return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
 }
 
+function getGoogleDriveEmbedUrl(url) {
+  if (!url) return null;
+  const match = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    return `https://drive.google.com/file/d/${match[1]}/preview`;
+  }
+  return null;
+}
+
 function getAttachmentType(att) {
-  const url = (att.url || '').toLowerCase();
-  const title = (att.title || '').toLowerCase();
+  if (!att) return 'link';
+  const type = String(att.type || '').toLowerCase();
+  if (type === 'audio') return 'audio';
+  if (type === 'youtube') return 'youtube';
+  if (type === 'video') return 'video';
+  if (type === 'drive' || type === 'document') return 'drive';
+  if (type === 'image') return 'image';
+
+  const rawUrl = String(att.url || '');
+  const url = rawUrl.toLowerCase();
+  const title = String(att.title || '').toLowerCase();
+
   if (url.includes('youtube.com') || url.includes('youtu.be') || title.includes('youtube')) return 'youtube';
-  if (url.includes('drive.google.com') || title.includes('drive') || title.includes('pdf')) return 'drive';
-  if (url.endsWith('.mp3') || url.endsWith('.wav') || url.endsWith('.m4a') || title.includes('audio') || title.includes('mp3') || title.includes('ձայնագրություն')) return 'audio';
+  if (url.includes('drive.google.com') || title.includes('drive') || title.includes('pdf') || url.includes('.pdf')) return 'drive';
+
+  const cleanPath = url.split('?')[0].split('#')[0];
+  if (
+    cleanPath.endsWith('.mp3') || cleanPath.endsWith('.wav') || cleanPath.endsWith('.m4a') ||
+    cleanPath.endsWith('.ogg') || cleanPath.endsWith('.aac') || cleanPath.endsWith('.flac') ||
+    cleanPath.endsWith('.opus') || cleanPath.endsWith('.weba') ||
+    (url.includes('/uploads/song_materials/') && (url.includes('.mp3') || url.includes('.m4a') || url.includes('.wav') || url.includes('.ogg') || url.includes('.aac') || url.includes('.opus'))) ||
+    title.includes('audio') || title.includes('mp3') || title.includes('ձայնագրություն') || title.includes('աուդիո') || title.includes('երգ')
+  ) {
+    return 'audio';
+  }
+
+  if (cleanPath.endsWith('.mp4') || cleanPath.endsWith('.webm') || cleanPath.endsWith('.mov')) return 'video';
+  if (cleanPath.endsWith('.jpg') || cleanPath.endsWith('.jpeg') || cleanPath.endsWith('.png') || cleanPath.endsWith('.webp')) return 'image';
+
   return 'link';
 }
 
@@ -1151,7 +1195,9 @@ export default function SongView() {
             <div className="sv-pwa-media-list">
               {song.attachments.map(att => {
                 const attType = getAttachmentType(att);
+                const resolvedUrl = resolveMediaUrl(att.url);
                 const embedUrl = getYouTubeEmbedUrl(att.url);
+                const driveEmbedUrl = getGoogleDriveEmbedUrl(att.url);
                 const isEmbedActive = activeEmbedId === att.id;
 
                 return (
@@ -1168,9 +1214,19 @@ export default function SongView() {
                             <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
                           </svg>
                         )}
+                        {attType === 'video' && (
+                          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                          </svg>
+                        )}
                         {attType === 'drive' && (
                           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
+                          </svg>
+                        )}
+                        {attType === 'image' && (
+                          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
                           </svg>
                         )}
                         {attType === 'link' && (
@@ -1183,17 +1239,27 @@ export default function SongView() {
                       <div className="sv-pwa-media-info">
                         <span className="sv-pwa-media-title">{att.title || 'Բացել նյութը'}</span>
                         <span className="sv-pwa-media-sub">
-                          {attType === 'youtube' ? 'YouTube Video' : attType === 'audio' ? 'Audio Track' : attType === 'drive' ? 'Document / File' : 'External Link'}
+                          {attType === 'youtube'
+                            ? 'YouTube Video'
+                            : attType === 'audio'
+                            ? 'Ձայնագրություն (Audio Track)'
+                            : attType === 'video'
+                            ? 'Տեսանյութ (Video)'
+                            : attType === 'drive'
+                            ? 'Փաստաթուղթ (Document)'
+                            : attType === 'image'
+                            ? 'Նկար (Image)'
+                            : 'Հղում (Link)'}
                         </span>
                       </div>
 
                       <div className="sv-pwa-media-actions">
-                        {embedUrl && (
+                        {(embedUrl || driveEmbedUrl || attType === 'video') && (
                           <button
                             type="button"
                             className={`sv-pwa-media-btn ${isEmbedActive ? 'active' : ''}`}
                             onClick={() => setActiveEmbedId(isEmbedActive ? null : att.id)}
-                            title={isEmbedActive ? 'Փակել տեսանյութը' : 'Դիտել տեսանյութը'}
+                            title={isEmbedActive ? 'Փակել' : 'Դիտել'}
                           >
                             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                               {isEmbedActive ? <line x1="18" y1="6" x2="6" y2="18" /> : <polygon points="5 3 19 12 5 21 5 3" />}
@@ -1203,7 +1269,7 @@ export default function SongView() {
                         )}
 
                         <a
-                          href={att.url}
+                          href={resolvedUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="sv-pwa-media-btn sv-pwa-media-ext-btn"
@@ -1229,6 +1295,49 @@ export default function SongView() {
                       </div>
                     </div>
 
+                    {/* Inline Audio Player for Audio Tracks */}
+                    {attType === 'audio' && (
+                      <div className="sv-pwa-media-audio-box" style={{
+                        marginTop: '8px',
+                        padding: '8px 12px',
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(57, 216, 255, 0.22)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px'
+                      }}>
+                        <audio
+                          controls
+                          playsInline
+                          src={resolvedUrl}
+                          preload="metadata"
+                          style={{ width: '100%', height: '40px', outline: 'none' }}
+                        >
+                          Ձեր դիտարկիչը չի աջակցում աուդիո նվագարկիչը:
+                        </audio>
+                      </div>
+                    )}
+
+                    {/* Inline Video Player for local/direct videos */}
+                    {attType === 'video' && isEmbedActive && (
+                      <div className="sv-pwa-media-video-box" style={{
+                        marginTop: '10px',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        background: '#000000'
+                      }}>
+                        <video
+                          controls
+                          playsInline
+                          src={resolvedUrl}
+                          preload="metadata"
+                          style={{ width: '100%', maxHeight: '360px', display: 'block' }}
+                        />
+                      </div>
+                    )}
+
+                    {/* YouTube Embed Player */}
                     {embedUrl && isEmbedActive && (
                       <div className="sv-pwa-media-player-container">
                         <iframe
@@ -1236,6 +1345,17 @@ export default function SongView() {
                           title={att.title || 'YouTube video'}
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
+                        />
+                      </div>
+                    )}
+
+                    {/* Google Drive Embed Preview */}
+                    {driveEmbedUrl && isEmbedActive && (
+                      <div className="sv-pwa-media-player-container">
+                        <iframe
+                          src={driveEmbedUrl}
+                          title={att.title || 'Google Drive Document'}
+                          allow="autoplay"
                         />
                       </div>
                     )}
