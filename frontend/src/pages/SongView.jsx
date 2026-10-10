@@ -45,33 +45,49 @@ function getGoogleDriveEmbedUrl(url) {
 
 function getAttachmentType(att) {
   if (!att) return 'link';
-  const type = String(att.type || '').toLowerCase();
-  if (type === 'audio') return 'audio';
-  if (type === 'youtube') return 'youtube';
-  if (type === 'video') return 'video';
-  if (type === 'drive' || type === 'document') return 'drive';
-  if (type === 'image') return 'image';
-
-  const rawUrl = String(att.url || '');
+  const rawUrl = String(att.url || '').trim();
   const url = rawUrl.toLowerCase();
   const title = String(att.title || '').toLowerCase();
+  const type = String(att.type || '').toLowerCase();
 
-  if (url.includes('youtube.com') || url.includes('youtu.be') || title.includes('youtube')) return 'youtube';
-  if (url.includes('drive.google.com') || title.includes('drive') || title.includes('pdf') || url.includes('.pdf')) return 'drive';
+  // 1. YouTube check ALWAYS takes precedence over generic 'video' or 'link'
+  if (url.includes('youtube.com') || url.includes('youtu.be') || title.includes('youtube') || type === 'youtube' || Boolean(getYouTubeEmbedUrl(rawUrl))) {
+    return 'youtube';
+  }
 
+  // 2. Google Drive check
+  if (url.includes('drive.google.com') || Boolean(getGoogleDriveEmbedUrl(rawUrl)) || title.includes('drive') || type === 'drive') {
+    return 'drive';
+  }
+
+  // 3. Audio check (direct audio file extensions or audio type)
   const cleanPath = url.split('?')[0].split('#')[0];
-  if (
-    cleanPath.endsWith('.mp3') || cleanPath.endsWith('.wav') || cleanPath.endsWith('.m4a') ||
+  const hasAudioExt = cleanPath.endsWith('.mp3') || cleanPath.endsWith('.wav') || cleanPath.endsWith('.m4a') ||
     cleanPath.endsWith('.ogg') || cleanPath.endsWith('.aac') || cleanPath.endsWith('.flac') ||
-    cleanPath.endsWith('.opus') || cleanPath.endsWith('.weba') ||
-    (url.includes('/uploads/song_materials/') && (url.includes('.mp3') || url.includes('.m4a') || url.includes('.wav') || url.includes('.ogg') || url.includes('.aac') || url.includes('.opus'))) ||
-    title.includes('audio') || title.includes('mp3') || title.includes('ձայնագրություն') || title.includes('աուդիո') || title.includes('երգ')
-  ) {
+    cleanPath.endsWith('.opus') || cleanPath.endsWith('.weba');
+
+  if (type === 'audio' || hasAudioExt || (url.includes('/uploads/song_materials/') && hasAudioExt) ||
+      title.includes('audio') || title.includes('mp3') || title.includes('ձայնագրություն') || title.includes('աուդիո')) {
     return 'audio';
   }
 
-  if (cleanPath.endsWith('.mp4') || cleanPath.endsWith('.webm') || cleanPath.endsWith('.mov')) return 'video';
-  if (cleanPath.endsWith('.jpg') || cleanPath.endsWith('.jpeg') || cleanPath.endsWith('.png') || cleanPath.endsWith('.webp')) return 'image';
+  // 4. Video check (direct video file or video type, but NOT YouTube/Drive)
+  const hasVideoExt = cleanPath.endsWith('.mp4') || cleanPath.endsWith('.webm') || cleanPath.endsWith('.mov') || cleanPath.endsWith('.m4v');
+  if (type === 'video' || hasVideoExt) {
+    return 'video';
+  }
+
+  // 5. Image check
+  const hasImageExt = cleanPath.endsWith('.jpg') || cleanPath.endsWith('.jpeg') || cleanPath.endsWith('.png') || cleanPath.endsWith('.webp') || cleanPath.endsWith('.gif');
+  if (type === 'image' || hasImageExt) {
+    return 'image';
+  }
+
+  // 6. Document check
+  const hasDocExt = cleanPath.endsWith('.pdf') || cleanPath.endsWith('.doc') || cleanPath.endsWith('.docx') || cleanPath.endsWith('.txt');
+  if (type === 'document' || hasDocExt || title.includes('pdf')) {
+    return 'drive';
+  }
 
   return 'link';
 }
@@ -1254,7 +1270,7 @@ export default function SongView() {
                       </div>
 
                       <div className="sv-pwa-media-actions">
-                        {(embedUrl || driveEmbedUrl || attType === 'video') && (
+                        {(embedUrl || driveEmbedUrl || (!embedUrl && !driveEmbedUrl && attType === 'video')) && (
                           <button
                             type="button"
                             className={`sv-pwa-media-btn ${isEmbedActive ? 'active' : ''}`}
@@ -1262,7 +1278,14 @@ export default function SongView() {
                             title={isEmbedActive ? 'Փակել' : 'Դիտել'}
                           >
                             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                              {isEmbedActive ? <line x1="18" y1="6" x2="6" y2="18" /> : <polygon points="5 3 19 12 5 21 5 3" />}
+                              {isEmbedActive ? (
+                                <>
+                                  <line x1="18" y1="6" x2="6" y2="18" />
+                                  <line x1="6" y1="6" x2="18" y2="18" />
+                                </>
+                              ) : (
+                                <polygon points="5 3 19 12 5 21 5 3" />
+                              )}
                             </svg>
                             <span>{isEmbedActive ? 'Փակել' : 'Դիտել'}</span>
                           </button>
@@ -1296,7 +1319,7 @@ export default function SongView() {
                     </div>
 
                     {/* Inline Audio Player for Audio Tracks */}
-                    {attType === 'audio' && (
+                    {!embedUrl && !driveEmbedUrl && attType === 'audio' && (
                       <div className="sv-pwa-media-audio-box" style={{
                         marginTop: '8px',
                         padding: '8px 12px',
@@ -1319,8 +1342,8 @@ export default function SongView() {
                       </div>
                     )}
 
-                    {/* Inline Video Player for local/direct videos */}
-                    {attType === 'video' && isEmbedActive && (
+                    {/* Inline Video Player ONLY for local/direct video files (NOT YouTube/Drive) */}
+                    {!embedUrl && !driveEmbedUrl && attType === 'video' && isEmbedActive && (
                       <div className="sv-pwa-media-video-box" style={{
                         marginTop: '10px',
                         borderRadius: '12px',
@@ -1350,7 +1373,7 @@ export default function SongView() {
                     )}
 
                     {/* Google Drive Embed Preview */}
-                    {driveEmbedUrl && isEmbedActive && (
+                    {!embedUrl && driveEmbedUrl && isEmbedActive && (
                       <div className="sv-pwa-media-player-container">
                         <iframe
                           src={driveEmbedUrl}

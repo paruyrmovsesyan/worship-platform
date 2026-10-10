@@ -43,6 +43,10 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
     let velocityX = 0;
     let settling = false;
 
+    const getActiveSurface = () => pathname.startsWith('/chat/')
+      ? document.querySelector('body > .chat-page-container')
+      : document.querySelector('main .route-animate');
+
     const clearRouteStyles = route => {
       if (!route) return;
       route.style.transform = '';
@@ -70,7 +74,7 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
 
     const prepareRoute = () => {
       if (activeRoute) return activeRoute;
-      activeRoute = document.querySelector('main .route-animate');
+      activeRoute = getActiveSurface();
       if (!activeRoute) return null;
       createUnderlay();
       activeRoute.style.willChange = 'transform';

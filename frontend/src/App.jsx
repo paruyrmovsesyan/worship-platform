@@ -211,6 +211,7 @@ function App() {
     let frame = null;
     let cleanupTimer = null;
     let cancelled = false;
+    let animatedSurface = route;
 
     if (hasInteractivePopTransition) {
       nativeTransition = 'native-pop-transition';
@@ -244,20 +245,29 @@ function App() {
     route.classList.add('route-animate');
 
     if (isNativeApp && nativeTransition === 'native-push-transition') {
-      route.style.visibility = 'hidden';
+      const usesPortalSurface = currentPath.startsWith('/chat/');
+      if (!usesPortalSurface) route.style.visibility = 'hidden';
       const startedAt = performance.now();
       const beginPush = () => {
         if (cancelled) return;
-        if (!route.firstElementChild && performance.now() - startedAt < 1200) {
+        const portalSurface = usesPortalSurface
+          ? document.querySelector('body > .chat-page-container')
+          : null;
+        const surfaceReady = usesPortalSurface ? Boolean(portalSurface) : Boolean(route.firstElementChild);
+        if (!surfaceReady && performance.now() - startedAt < 1200) {
           frame = window.requestAnimationFrame(beginPush);
           return;
         }
+        animatedSurface = portalSurface || route;
         route.style.visibility = '';
-        void route.offsetWidth;
-        route.classList.add('native-push-transition');
+        animatedSurface.classList.remove('native-push-transition');
+        animatedSurface.classList.add('native-route-surface');
+        void animatedSurface.offsetWidth;
+        animatedSurface.classList.add('native-push-transition');
         outgoingLayer?.classList.add('is-shifting');
         cleanupTimer = window.setTimeout(() => {
           outgoingLayer?.remove();
+          animatedSurface.classList.remove('native-route-surface', 'native-push-transition');
           document.body.classList.remove('native-push-switching');
         }, 310);
       };
@@ -272,6 +282,7 @@ function App() {
       if (frame !== null) window.cancelAnimationFrame(frame);
       if (cleanupTimer !== null) window.clearTimeout(cleanupTimer);
       route.style.visibility = '';
+      animatedSurface?.classList.remove('native-route-surface', 'native-push-transition');
       outgoingLayer?.remove();
       document.body.classList.remove('native-push-switching');
     };
