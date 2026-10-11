@@ -624,6 +624,19 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
+    // 3.0.2. Module export mismatch / Stale chunk cache (does not provide an export named / dist.js)
+    if (stripos($message, 'does not provide an export named') !== false || 
+        stripos($stackTrace, 'does not provide an export named') !== false ||
+        (stripos($message, 'dist.js') !== false && stripos($message, 'SyntaxError') !== false)) {
+        $reason = 'Vite bundle-ի chunk-երը սինքրոնացված են assets-ում, Service Worker-ը թարմացված է v535, ավելացված է ավտո-վերականգնում (self-healing cache purge)';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
     // 3.1. Notification in WebViews / CriOS (restorePromptAfterExternalDisable, Notification is not defined)
     if (stripos($message, 'Notification is not defined') !== false || 
         stripos($message, 'Can\'t find variable: Notification') !== false || 

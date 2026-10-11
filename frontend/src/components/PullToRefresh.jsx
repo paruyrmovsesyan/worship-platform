@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { useIsAppMode, useIsNativeApp } from '../hooks/useIsPWA';
 
@@ -122,7 +122,11 @@ const PullToRefresh = ({ children, onRefresh, disabled }) => {
           if (isNativeApp) {
             Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
           } else if (typeof navigator !== 'undefined' && navigator.vibrate) {
-            try { navigator.vibrate(18); } catch {}
+            try {
+              navigator.vibrate(18);
+            } catch {
+              // Vibration can be unavailable when the web view is backgrounded.
+            }
           }
         } else if (distance < refreshThreshold) {
           hasVibratedRef.current = false;

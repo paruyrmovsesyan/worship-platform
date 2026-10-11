@@ -369,8 +369,39 @@
         user_email: userEmail,
         device_info: getDeviceInfo(),
       });
+
+      triggerModuleSelfRecovery(errMsg);
     } catch (_) {}
   }, true);
+
+  function triggerModuleSelfRecovery(errMsg) {
+    try {
+      if (!errMsg || typeof errMsg !== 'string') return;
+      if (
+        errMsg.includes('does not provide an export') ||
+        errMsg.includes('Failed to fetch dynamically imported module') ||
+        errMsg.includes('error loading dynamically imported module') ||
+        errMsg.includes('Loading chunk')
+      ) {
+        const lastRecovery = sessionStorage.getItem('__wp_module_recovery_ts');
+        const now = Date.now();
+        if (!lastRecovery || (now - Number(lastRecovery)) > 20000) {
+          sessionStorage.setItem('__wp_module_recovery_ts', String(now));
+          if ('caches' in window) {
+            caches.keys().then(function(cacheNames) {
+              return Promise.all(cacheNames.map(function(cn) { return caches.delete(cn); }));
+            }).then(function() {
+              window.location.reload();
+            }).catch(function() {
+              window.location.reload();
+            });
+          } else {
+            window.location.reload();
+          }
+        }
+      }
+    } catch (_) {}
+  }
 
   // B. Unhandled Promise Rejections
   window.addEventListener('unhandledrejection', function(event) {
@@ -422,6 +453,8 @@
         user_email: userEmail,
         device_info: getDeviceInfo(),
       });
+
+      triggerModuleSelfRecovery(message);
     } catch (_) {}
   });
 
