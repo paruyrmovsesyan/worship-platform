@@ -50,6 +50,14 @@ export default function SongViewWebTools({
   onOpenPrint,
   useFlats,
   onToggleFlats,
+  isTwoColumn,
+  onToggleTwoColumn,
+  keepAwakeActive,
+  onToggleKeepAwake,
+  isStageFullscreen,
+  onToggleStageFullscreen,
+  viewMode,
+  onToggleViewMode,
 }) {
   return (
     <aside className="web-song-console" aria-label="Երգի կառավարման վահանակ">
@@ -58,8 +66,57 @@ export default function SongViewWebTools({
           <span>SONG CONTROLS</span>
           <strong>Կատարման գործիքներ</strong>
         </div>
-        <span className="web-song-console__status">Պատրաստ</span>
+        <span className="web-song-console__status">{keepAwakeActive ? '💡 Կենդանի բեմ' : 'Պատրաստ'}</span>
       </div>
+
+      {/* Stage Performance Quick Controls */}
+      <section className="web-tool-section web-stage-section">
+        <div className="web-tool-label">
+          <span>Բեմական ռեժիմ</span>
+          <span className="web-shortcut-hint">Hotkeys: F, Space, [ ], C</span>
+        </div>
+        <div className="web-stage-grid">
+          <button
+            type="button"
+            className={`web-stage-btn ${isTwoColumn ? 'active' : ''}`}
+            onClick={onToggleTwoColumn}
+            title="Երկսյունակ դասավորություն մեծ էկրանների համար"
+          >
+            <ToolIcon><path d="M4 4h7v16H4zM13 4h7v16h-7z" /></ToolIcon>
+            <span>{isTwoColumn ? '2 Սյունակ' : '1 Սյունակ'}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`web-stage-btn ${keepAwakeActive ? 'active' : ''}`}
+            onClick={onToggleKeepAwake}
+            title="Էկրանը պահել ակտիվ (չմարել կատարման ժամանակ)"
+          >
+            <ToolIcon><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z" /></ToolIcon>
+            <span>{keepAwakeActive ? 'Չմարել' : 'Էկրանը մարել'}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`web-stage-btn ${isStageFullscreen ? 'active' : ''}`}
+            onClick={onToggleStageFullscreen}
+            title="Ամբողջ էկրանով բեմական ռեժիմ (F)"
+          >
+            <ToolIcon><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" /></ToolIcon>
+            <span>{isStageFullscreen ? 'Ելք' : 'Fullscreen'}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`web-stage-btn ${viewMode === 'lyrics' ? 'active' : ''}`}
+            onClick={onToggleViewMode}
+            title="Անջատել / միացնել ակորդների ցուցադրությունը (C)"
+          >
+            <ToolIcon><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></ToolIcon>
+            <span>{viewMode === 'lyrics' ? 'Միայն բառեր' : 'Ակորդներ'}</span>
+          </button>
+        </div>
+      </section>
 
       <section className="web-tool-section">
         <div className="web-tool-label">

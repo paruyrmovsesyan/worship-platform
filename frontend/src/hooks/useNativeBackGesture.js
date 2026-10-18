@@ -15,7 +15,16 @@ const isPrimaryTab = pathname => pathname === '/' ||
 
 const fallbackPath = (pathname, user) => {
   if (pathname.startsWith('/chat/')) return '/chats';
-  if (pathname.startsWith('/song/') || pathname === '/favorites' || pathname === '/transpose') return '/songs';
+  if (pathname.startsWith('/song/')) {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const setlistId = params.get('setlist_id');
+      if (setlistId) return `/setlists/${setlistId}`;
+      if (params.get('list') === 'favorites') return '/favorites';
+    } catch {}
+    return '/songs';
+  }
+  if (pathname === '/favorites' || pathname === '/transpose') return '/songs';
   if (pathname.startsWith('/setlists/')) return '/setlists';
   if (pathname.startsWith('/news/')) return '/news';
   if (pathname.startsWith('/settings') || pathname === '/notifications') return user ? '/profile' : '/';
@@ -33,7 +42,7 @@ const nativeMotionIsReduced = () => document.body.classList.contains('reduce-mot
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 const isBlockedTarget = target => Boolean(target?.closest?.(
-  'input, textarea, select, [contenteditable="true"], .no-swipe-nav, [data-no-swipe]'
+  'input, textarea, select, [contenteditable="true"], .no-swipe-nav, [data-no-swipe], .sla-modal-overlay, .modal-backdrop, .modal-overlay, .sv-modal-overlay, .drawer-overlay'
 ));
 
 const isHorizontalScrollTarget = target => {
@@ -105,18 +114,23 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
 
       if (!layer) {
         const snapshot = window.__wpNativeRouteSnapshots?.get(parentPath)?.cloneNode(true);
-        if (!snapshot) return null;
-        const snapshotScrollY = Number(snapshot.dataset.nativeScrollY || 0);
-        snapshot.style.transform = snapshotScrollY > 0
-          ? `translate3d(0, -${snapshotScrollY}px, 0)`
-          : 'translate3d(0, 0, 0)';
-        snapshot.classList.add('native-pop-underlay-content');
-        snapshot.setAttribute('inert', '');
         layer = document.createElement('div');
         layer.className = 'native-pop-underlay-layer';
         layer.dataset.nativeParentPath = parentPath;
         layer.setAttribute('aria-hidden', 'true');
-        layer.appendChild(snapshot);
+        if (snapshot) {
+          const snapshotScrollY = Number(snapshot.dataset.nativeScrollY || 0);
+          snapshot.style.transform = snapshotScrollY > 0
+            ? `translate3d(0, -${snapshotScrollY}px, 0)`
+            : 'translate3d(0, 0, 0)';
+          snapshot.classList.add('native-pop-underlay-content');
+          snapshot.setAttribute('inert', '');
+          layer.appendChild(snapshot);
+        } else {
+          const fallback = document.createElement('div');
+          fallback.className = 'native-pop-underlay-content native-pop-underlay-fallback';
+          layer.appendChild(fallback);
+        }
       }
 
       document.body.appendChild(layer);
@@ -256,7 +270,7 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
         };
 
         window.addEventListener('wp-native-scroll-restored', revealRestoredRoute);
-        revealTimeout = window.setTimeout(() => revealRestoredRoute(), 1600);
+        revealTimeout = window.setTimeout(() => revealRestoredRoute(), 300);
         window.__wpNativePopTransitionPending = true;
         window.__wpNativeRestoreScrollPath = parentPath;
         window.__wpNativeParentRoutes?.delete(pathname);
@@ -317,6 +331,7 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
     const onTouchStart = event => {
       if (settling || window.__wpNativeTransitionInFlight || event.touches.length !== 1 ||
         isBlockedTarget(event.target) || isHorizontalScrollTarget(event.target)) return;
+      if (document.querySelector('.sla-modal-overlay, .modal-overlay, .sv-modal-overlay, .drawer-overlay, .modal-backdrop')) return;
       const touch = event.touches[0];
       if (touch.clientX > EDGE_WIDTH) return;
       tracking = true;
@@ -366,12 +381,20 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
       else cancelBack();
     };
 
-    const onBackRequest = () => commitBack(0);
+    const onBackRequest = () => {
+      window.__wpNativeTransitionDirection = 'pop';
+      const parentRoute = getParentRoute(pathname, user);
+      const historyIndex = Number(window.history.state?.idx);
+      if (parentRoute.canUseHistoryBack && Number.isFinite(historyIndex) && historyIndex > 0) {
+        navigate(-1);
+      } else {
+        navigate(parentRoute.pathname, { replace: true });
+      }
+    };
+
     const onNativeBackClick = event => {
       if (!event.target?.closest?.(NATIVE_BACK_SELECTOR)) return;
-      event.preventDefault();
-      event.stopPropagation();
-      commitBack(0);
+      window.__wpNativeTransitionDirection = 'pop';
     };
 
     document.addEventListener('touchstart', onTouchStart, { passive: true, capture: true });
@@ -379,7 +402,7 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
     document.addEventListener('touchend', onTouchEnd, { passive: true, capture: true });
     document.addEventListener('touchcancel', cancelBack, { passive: true, capture: true });
     window.addEventListener('wp-native-page-back', onBackRequest);
-    document.addEventListener('click', onNativeBackClick, true);
+    document.addEventListener('click', onNativeBackClick, { capture: true, passive: true });
 
     return () => {
       document.removeEventListener('touchstart', onTouchStart, true);

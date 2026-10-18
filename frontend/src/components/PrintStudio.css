@@ -60,6 +60,34 @@
   cursor: pointer;
 }
 
+.print-presets-bar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 22px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--web-pro-line, rgba(160,185,220,.15));
+}
+
+.print-preset-chip {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #c4d2e2;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(160, 185, 220, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.print-preset-chip:hover {
+  background: rgba(57, 216, 255, 0.12);
+  border-color: #39d8ff;
+  color: #fff;
+}
+
 .print-studio-settings {
   padding: 8px 22px 10px;
   border-bottom: 1px solid var(--web-pro-line, rgba(160,185,220,.15));

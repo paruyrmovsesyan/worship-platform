@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
+import { subscribeToTabMessages } from '../utils/webPwaEnhancements';
 import './SetlistLive.css';
 
 export default function SetlistLive() {
@@ -156,19 +157,31 @@ export default function SetlistLive() {
       url = `/setlists_api.php?action=get_public_setlist&token=${encodeURIComponent(token)}`;
     }
 
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        if (!data || data.error) throw new Error(data?.error || 'Failed to load');
-        setSetlist(data.setlist);
-        setItems(data.items || []);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setError(t('setlists.errorFetch') || 'Error fetching setlist');
-        setLoading(false);
-      });
+    const loadData = () => {
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (!data || data.error) throw new Error(data?.error || 'Failed to load');
+          setSetlist(data.setlist);
+          setItems(data.items || []);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error(err);
+          setError(t('setlists.errorFetch') || 'Error fetching setlist');
+          setLoading(false);
+        });
+    };
+
+    loadData();
+
+    const unsubscribe = subscribeToTabMessages((msg) => {
+      if (msg.action === 'SETLIST_UPDATED' && String(msg.payload?.setlistId) === String(id)) {
+        loadData();
+      }
+    });
+
+    return unsubscribe;
   }, [id, t]);
 
   const songItems = items.filter(i => i.item_type !== 'section');

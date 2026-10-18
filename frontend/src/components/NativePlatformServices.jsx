@@ -145,19 +145,44 @@ export default function NativePlatformServices() {
 
     if (Capacitor.getPlatform() === 'android') {
       addHandle(CapacitorApp.addListener('backButton', () => {
-        // Let full-screen native surfaces consume Back before changing route.
+        // 1. Let full-screen native calls consume Back first
         if (document.querySelector('.native-call-screen')) {
           window.dispatchEvent(new CustomEvent('wp-native-back-request'));
           return;
         }
 
+        // 2. If any modal, drawer, or sheet is open, dismiss it first!
+        const openModal = document.querySelector(
+          '.sla-modal-overlay, .sv-modal-overlay, .modal-backdrop, .modal-overlay, .profile-lang-modal, .drawer-overlay, [data-modal-open="true"]'
+        );
+        if (openModal) {
+          const closeBtn = openModal.querySelector(
+            '.sla-modal-close, .modal-close, .close-btn, [data-action="close"], [aria-label="Close"], [aria-label="Փակել"], .btn-close'
+          );
+          if (closeBtn) {
+            closeBtn.click();
+          } else {
+            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+          }
+          return;
+        }
+
         const pathname = window.location.pathname;
+        // 3. Minimize app when back is pressed on primary root tab
         if (isNativePrimaryTab(pathname)) {
           CapacitorApp.minimizeApp().catch(() => {});
           return;
         }
 
+        // 4. On subpage, prefer clicking in-page back button so custom back handlers run
         if (pathname !== '/') {
+          const inPageBackBtn = document.querySelector(
+            '[data-native-route-back="true"], .chat-btn-back, .sla-back-btn, .sle-back-btn, .notif-back-btn, .song-request-back-btn, .user-profile-back-btn'
+          );
+          if (inPageBackBtn) {
+            inPageBackBtn.click();
+            return;
+          }
           window.dispatchEvent(new CustomEvent('wp-native-page-back'));
           return;
         }

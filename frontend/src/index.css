@@ -353,6 +353,21 @@ body.is-native .native-tab-cover-layer {
   -webkit-backface-visibility: hidden;
 }
 
+body.is-native .native-pop-outgoing-layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--color-bg, #05050A);
+  contain: paint;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  z-index: 9005;
+  box-shadow: -14px 0 28px rgba(0, 0, 0, 0.35);
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+
 body.is-native .native-push-outgoing-layer {
   z-index: 8998;
   transform: translate3d(0, 0, 0);
@@ -360,12 +375,18 @@ body.is-native .native-push-outgoing-layer {
 }
 
 body.is-native .native-push-outgoing-content,
+body.is-native .native-pop-outgoing-content,
 body.is-native .native-pop-underlay-content,
 body.is-native .native-tab-cover-content {
   min-height: 100%;
   animation: none !important;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+}
+
+body.is-native .native-pop-underlay-fallback {
+  min-height: 100%;
+  background: var(--color-bg, #05050A);
 }
 
 body.is-native .native-pop-underlay-layer {

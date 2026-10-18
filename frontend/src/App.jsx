@@ -75,19 +75,25 @@ import NativeRuntimeGuard from './components/NativeRuntimeGuard';
 
 const NATIVE_PRIMARY_PATHS = new Set(['/', '/songs', '/chats', '/profile', '/login']);
 const NATIVE_ROUTE_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)';
-const NATIVE_ROUTE_DURATION = 300;
+const NATIVE_ROUTE_DURATION = 260;
 
 const nativeMotionIsReduced = () => document.body.classList.contains('reduce-motion') ||
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 const createNativeSnapshotLayer = (pathname, layerClass, contentClass) => {
   const snapshots = window.__wpNativeRouteSnapshots;
-  const snapshot = snapshots?.get(pathname);
+  let snapshot = snapshots?.get(pathname);
+  if (snapshot) {
+    snapshots.delete(pathname);
+  } else if (window.__wpNativePreparedPopLayers?.has(pathname)) {
+    const prepared = window.__wpNativePreparedPopLayers.get(pathname);
+    window.__wpNativePreparedPopLayers.delete(pathname);
+    snapshot = prepared?.firstElementChild;
+  }
   if (!snapshot) return null;
 
   // Move the prepared snapshot instead of cloning a long page during an
   // active transition frame. The destination captures a fresh copy later.
-  snapshots.delete(pathname);
   snapshot.classList.remove('native-tab-transition', 'native-push-transition', 'native-pop-transition');
   snapshot.classList.add(contentClass);
   snapshot.style.visibility = '';
@@ -261,6 +267,16 @@ function App() {
     const currentPath = location.pathname;
     const previousIsPrimary = NATIVE_PRIMARY_PATHS.has(previousPath);
     const currentIsPrimary = NATIVE_PRIMARY_PATHS.has(currentPath);
+    const isExplicitPop = window.__wpNativeTransitionDirection === 'pop';
+    window.__wpNativeTransitionDirection = null;
+
+    const getRouteDepth = (path) => {
+      if (NATIVE_PRIMARY_PATHS.has(path)) return 1;
+      if (['/setlists', '/friends', '/news', '/favorites', '/settings', '/notifications', '/transpose'].includes(path)) return 2;
+      if (path.startsWith('/song/') || path.startsWith('/setlists/') || path.startsWith('/chat/') || path.startsWith('/news/') || path.startsWith('/user/') || path.startsWith('/profile/')) return 3;
+      return 2;
+    };
+
     let nativeTransition = 'native-push-transition';
     const hasSharedElementTransition = isNativeApp && window.__wpNativeSharedTransitionPending;
     const hasInteractivePopTransition = isNativeApp && window.__wpNativePopTransitionPending;
@@ -272,17 +288,19 @@ function App() {
     let routeAnimations = [];
     let ownsTransitionLock = false;
     let pushFinished = false;
+    let popFinished = false;
 
     if (previousPath === currentPath) {
       nativeTransition = 'native-tab-transition';
     } else if (hasInteractivePopTransition) {
       nativeTransition = 'native-pop-transition';
-      window.__wpNativePopTransitionPending = false;
     } else if (hasSharedElementTransition) {
       nativeTransition = 'native-tab-transition';
       window.__wpNativeSharedTransitionPending = false;
     } else if (previousIsPrimary && currentIsPrimary) {
       nativeTransition = 'native-tab-transition';
+    } else if (navigationType === 'POP' || isExplicitPop || getRouteDepth(previousPath) > getRouteDepth(currentPath)) {
+      nativeTransition = 'native-pop-transition';
     } else if (!previousIsPrimary && currentIsPrimary) {
       nativeTransition = 'native-pop-transition';
     }
@@ -295,9 +313,13 @@ function App() {
       });
     }
 
+    route.classList.remove(
+      'route-animate', 'native-tab-transition',
+      'native-push-transition', 'native-pop-transition'
+    );
+    route.classList.add('route-animate');
+
     if (isNativeApp && nativeTransition === 'native-push-transition') {
-      // Lock before waiting for an async/portaled destination. A second tab or
-      // link tap in this gap previously interrupted the first transition.
       window.__wpNativeTransitionInFlight = true;
       document.body.classList.add('native-transition-running');
       ownsTransitionLock = true;
@@ -310,15 +332,7 @@ function App() {
         document.body.appendChild(outgoingLayer);
         document.body.classList.add('native-push-switching');
       }
-    }
 
-    route.classList.remove(
-      'route-animate', 'native-tab-transition',
-      'native-push-transition', 'native-pop-transition'
-    );
-    route.classList.add('route-animate');
-
-    if (isNativeApp && nativeTransition === 'native-push-transition') {
       const usesPortalSurface = currentPath.startsWith('/chat/');
       if (usesPortalSurface) document.body.classList.add('native-push-awaiting-portal');
       const startedAt = performance.now();
@@ -328,7 +342,7 @@ function App() {
           ? document.querySelector('body > .chat-page-container')
           : null;
         const surfaceReady = usesPortalSurface ? Boolean(portalSurface) : Boolean(route.firstElementChild);
-        if (!surfaceReady && performance.now() - startedAt < 5000) {
+        if (!surfaceReady && performance.now() - startedAt < 1200) {
           frame = window.requestAnimationFrame(beginPush);
           return;
         }
@@ -359,6 +373,7 @@ function App() {
           routeAnimations.forEach(animation => animation.cancel());
           routeAnimations = [];
           animatedSurface?.classList.remove('native-route-surface');
+          if (animatedSurface) animatedSurface.style.transform = '';
           document.body.classList.remove('native-push-switching');
           if (ownsTransitionLock) {
             ownsTransitionLock = false;
@@ -389,7 +404,7 @@ function App() {
         if (outgoingLayer) {
           const outgoingAnimation = outgoingLayer.animate([
             { transform: 'translate3d(0, 0, 0)' },
-            { transform: 'translate3d(-18vw, 0, 0)' },
+            { transform: 'translate3d(-20vw, 0, 0)' },
           ], {
             duration: NATIVE_ROUTE_DURATION,
             easing: NATIVE_ROUTE_EASING,
@@ -397,13 +412,108 @@ function App() {
           });
           routeAnimations.push(outgoingAnimation);
         }
-        // WebKit can leave Animation.finished pending when a deep link or app
-        // lifecycle event interrupts its document timeline. Always reveal the
-        // live route even if that promise is never settled.
-        transitionTimer = window.setTimeout(finishPush, NATIVE_ROUTE_DURATION + 180);
+        transitionTimer = window.setTimeout(finishPush, NATIVE_ROUTE_DURATION + 40);
         Promise.allSettled(routeAnimations.map(animation => animation.finished)).then(finishPush);
       };
       beginPush();
+    } else if (isNativeApp && nativeTransition === 'native-pop-transition') {
+      if (hasInteractivePopTransition) {
+        window.__wpNativePopTransitionPending = false;
+        document.body.classList.remove('native-pop-switching', 'native-transition-running', 'native-back-interactive');
+        window.__wpNativeTransitionInFlight = false;
+        window.dispatchEvent(new CustomEvent('wp-native-transition-idle'));
+      } else {
+        window.__wpNativeTransitionInFlight = true;
+        document.body.classList.add('native-transition-running', 'native-pop-switching');
+        ownsTransitionLock = true;
+        outgoingLayer = createNativeSnapshotLayer(
+          previousPath,
+          'native-pop-outgoing-layer',
+          'native-pop-outgoing-content',
+        );
+        if (outgoingLayer) {
+          document.body.appendChild(outgoingLayer);
+        }
+
+        const usesPortalSurface = currentPath.startsWith('/chat/');
+        const startedAt = performance.now();
+        const beginPop = () => {
+          if (cancelled) return;
+          const portalSurface = usesPortalSurface
+            ? document.querySelector('body > .chat-page-container')
+            : null;
+          const surfaceReady = usesPortalSurface ? Boolean(portalSurface) : Boolean(route.firstElementChild);
+          if (!surfaceReady && performance.now() - startedAt < 1200) {
+            frame = window.requestAnimationFrame(beginPop);
+            return;
+          }
+          animatedSurface = portalSurface || (surfaceReady ? route : null);
+          if (!animatedSurface) {
+            outgoingLayer?.remove();
+            outgoingLayer = null;
+            document.body.classList.remove('native-pop-switching', 'native-transition-running');
+            if (ownsTransitionLock) {
+              ownsTransitionLock = false;
+              window.__wpNativeTransitionInFlight = false;
+              window.dispatchEvent(new CustomEvent('wp-native-transition-idle'));
+            }
+            return;
+          }
+
+          animatedSurface.classList.add('native-route-surface');
+
+          const finishPop = () => {
+            if (cancelled || popFinished) return;
+            popFinished = true;
+            if (transitionTimer !== null) {
+              window.clearTimeout(transitionTimer);
+              transitionTimer = null;
+            }
+            routeAnimations.forEach(animation => animation.cancel());
+            routeAnimations = [];
+            animatedSurface?.classList.remove('native-route-surface');
+            if (animatedSurface) animatedSurface.style.transform = '';
+            outgoingLayer?.remove();
+            outgoingLayer = null;
+            document.body.classList.remove('native-pop-switching', 'native-transition-running');
+            if (ownsTransitionLock) {
+              ownsTransitionLock = false;
+              window.__wpNativeTransitionInFlight = false;
+              window.dispatchEvent(new CustomEvent('wp-native-transition-idle'));
+            }
+          };
+
+          if (nativeMotionIsReduced()) {
+            finishPop();
+            return;
+          }
+
+          const incomingAnimation = animatedSurface.animate([
+            { transform: 'translate3d(-20vw, 0, 0)' },
+            { transform: 'translate3d(0, 0, 0)' },
+          ], {
+            duration: NATIVE_ROUTE_DURATION,
+            easing: NATIVE_ROUTE_EASING,
+            fill: 'both',
+          });
+          routeAnimations.push(incomingAnimation);
+
+          if (outgoingLayer) {
+            const outgoingAnimation = outgoingLayer.animate([
+              { transform: 'translate3d(0, 0, 0)' },
+              { transform: 'translate3d(100vw, 0, 0)' },
+            ], {
+              duration: NATIVE_ROUTE_DURATION,
+              easing: NATIVE_ROUTE_EASING,
+              fill: 'both',
+            });
+            routeAnimations.push(outgoingAnimation);
+          }
+          transitionTimer = window.setTimeout(finishPop, NATIVE_ROUTE_DURATION + 40);
+          Promise.allSettled(routeAnimations.map(a => a.finished)).then(finishPop);
+        };
+        beginPop();
+      }
     } else if (isNativeApp) {
       route.classList.add(nativeTransition);
     }
@@ -416,9 +526,11 @@ function App() {
       routeAnimations.forEach(animation => animation.cancel());
       routeAnimations = [];
       animatedSurface?.classList.remove('native-route-surface');
+      if (animatedSurface) animatedSurface.style.transform = '';
       outgoingLayer?.remove();
       document.body.classList.remove(
         'native-push-switching',
+        'native-pop-switching',
         'native-push-awaiting-portal',
       );
       if (ownsTransitionLock) {

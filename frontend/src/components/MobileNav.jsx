@@ -278,7 +278,10 @@ export default function MobileNav() {
       completed = true;
       window.removeEventListener('wp-native-scroll-restored', finishTabSwitch);
       if (timeoutId !== null) window.clearTimeout(timeoutId);
-      coverLayer?.remove();
+      if (coverLayer) {
+        coverLayer.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, fill: 'forwards' })
+          .finished.then(() => coverLayer?.remove()).catch(() => coverLayer?.remove());
+      }
       if (tabTransitionRef.current === transitionToken) tabTransitionRef.current = null;
       document.body.classList.remove('native-transition-running', 'native-tab-switching');
       window.__wpNativeTransitionInFlight = false;
@@ -286,7 +289,7 @@ export default function MobileNav() {
     };
 
     window.addEventListener('wp-native-scroll-restored', finishTabSwitch);
-    timeoutId = window.setTimeout(() => finishTabSwitch(), 1500);
+    timeoutId = window.setTimeout(() => finishTabSwitch(), 250);
     window.__wpNativeRestoreScrollPath = path;
     flushSync(performNavigation);
   }, [isNativeApp, location.pathname, navigate]);

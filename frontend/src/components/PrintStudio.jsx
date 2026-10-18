@@ -142,6 +142,25 @@ export default function PrintStudio({
           <button type="button" onClick={onClose} aria-label="Փակել">×</button>
         </header>
 
+        <div className="print-presets-bar">
+          <button
+            type="button"
+            className="print-preset-chip"
+            onClick={() => updateSettings({ columns: 2, fontSize: 13, showChords: true })}
+            title="A4 2-սյունակ կոմպակտ տպագրություն կիրակնօրյա ծառայության համար"
+          >
+            ⚡ 1-Page Sunday Sheet
+          </button>
+          <button
+            type="button"
+            className="print-preset-chip"
+            onClick={() => updateSettings({ columns: 1, fontSize: 16, showChords: true })}
+            title="Ստանդարտ 1-սյունակ խոշոր տառերով"
+          >
+            📖 Խոշոր տառերով
+          </button>
+        </div>
+
         <div className="print-studio-settings">
           <div className="print-setting-row">
             <span>Ձևաչափ</span>

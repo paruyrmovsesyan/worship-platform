@@ -1,0 +1,184 @@
+.offline-storage-manager {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 22px;
+  margin-top: 18px;
+  margin-bottom: 24px;
+}
+
+.osm-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.osm-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(57, 216, 255, 0.12);
+  border: 1px solid rgba(57, 216, 255, 0.28);
+  display: grid;
+  place-items: center;
+  color: #39d8ff;
+  flex-shrink: 0;
+}
+
+.osm-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.osm-title-area h3 {
+  margin: 0 0 4px;
+  font-size: 1.08rem;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.osm-title-area p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #8f9db3;
+  line-height: 1.45;
+}
+
+.osm-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 640px) {
+  .osm-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+.osm-metric-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.osm-metric-label {
+  font-size: 0.72rem;
+  color: #7d8b9e;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.osm-metric-value {
+  font-size: 1.05rem;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.osm-metric-value.osm-date {
+  font-size: 0.86rem;
+  color: #39d8ff;
+}
+
+.osm-progress-box {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.osm-progress-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.osm-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #39d8ff, #9a73ff);
+  transition: width 0.3s ease;
+}
+
+.osm-progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.76rem;
+  color: #a3b2c6;
+}
+
+.osm-alert {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  margin-bottom: 16px;
+  animation: fadeIn 0.2s ease;
+}
+
+.osm-alert-success {
+  background: rgba(74, 222, 128, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  color: #4ade80;
+}
+
+.osm-alert-error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.osm-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.osm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.osm-btn-primary {
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+  color: #ffffff;
+  border: 0;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+}
+
+.osm-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4);
+}
+
+.osm-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.osm-btn-ghost {
+  background: rgba(255, 255, 255, 0.04);
+  color: #a0aec0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.osm-btn-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}

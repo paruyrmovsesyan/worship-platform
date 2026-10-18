@@ -16,6 +16,12 @@ import ChordDiagramPopover from '../components/ChordDiagramPopover';
 import { useIsAppMode } from '../hooks/useIsPWA';
 import { nativeShare } from '../utils/nativeFeatures';
 import { API_BASE_URL } from '../utils/nativeConfig';
+import {
+  requestKeepAwake,
+  releaseKeepAwake,
+  broadcastTabMessage,
+  subscribeToTabMessages
+} from '../utils/webPwaEnhancements';
 
 function resolveMediaUrl(url) {
   if (!url) return '';
@@ -212,10 +218,65 @@ export default function SongView() {
   const [autoScrollActive, setAutoScrollActive] = useState(false);
   const [autoScrollSpeed, setAutoScrollSpeed] = useState(1);
   const [chordColor, setChordColor] = useState(() => localStorage.getItem('chordColor_web') || '#39d8ff');
+  const [isTwoColumn, setIsTwoColumn] = useState(() => localStorage.getItem('web_song_two_column') === 'true');
+  const [keepAwakeActive, setKeepAwakeActive] = useState(() => localStorage.getItem('keepAwake') === 'true');
+  const [isStageFullscreen, setIsStageFullscreen] = useState(false);
   const [popoverChord, setPopoverChord] = useState(null);
   const [popoverPos, setPopoverPos] = useState(null);
   const autoScrollRef = React.useRef(null);
   const popoverOpenTimeRef = React.useRef(0);
+
+  const toggleKeepAwake = async () => {
+    if (keepAwakeActive) {
+      await releaseKeepAwake();
+      setKeepAwakeActive(false);
+      localStorage.setItem('keepAwake', 'false');
+    } else {
+      const ok = await requestKeepAwake();
+      setKeepAwakeActive(ok);
+      localStorage.setItem('keepAwake', ok ? 'true' : 'false');
+    }
+  };
+
+  const toggleTwoColumn = () => {
+    setIsTwoColumn(prev => {
+      const next = !prev;
+      localStorage.setItem('web_song_two_column', String(next));
+      return next;
+    });
+  };
+
+  const toggleStageFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      setIsStageFullscreen(true);
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+      setIsStageFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsStageFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // Multi-tab sync subscription
+  useEffect(() => {
+    const unsubscribe = subscribeToTabMessages((msg) => {
+      if (msg.action === 'SETLIST_UPDATED') {
+        if (setlistNavData && setlistNavData.setlist_id) {
+          fetchSetlistNav(setlistNavData.setlist_id);
+        }
+      } else if (msg.action === 'FAVORITES_UPDATED' && String(msg.payload?.songId) === String(id)) {
+        setIsFavorite(Boolean(msg.payload?.isFavorite));
+      }
+    });
+    return unsubscribe;
+  }, [setlistNavData, id]);
 
   // Auto-scroll effect
   useEffect(() => {
@@ -248,19 +309,13 @@ export default function SongView() {
     document.body.classList.add('song-view-active');
     
     // Wake Lock
-    let wakeLock = null;
-    const requestWakeLock = async () => {
-      try {
-        if ('wakeLock' in navigator && localStorage.getItem('keepAwake') === 'true') {
-          wakeLock = await navigator.wakeLock.request('screen');
-        }
-      } catch (err) {}
-    };
-    requestWakeLock();
+    if (keepAwakeActive) {
+      requestKeepAwake();
+    }
     
     const handleVisibilityChange = () => {
-      if (wakeLock !== null && document.visibilityState === 'visible') {
-        requestWakeLock();
+      if (keepAwakeActive && document.visibilityState === 'visible') {
+        requestKeepAwake();
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -268,9 +323,9 @@ export default function SongView() {
     return () => {
       document.body.classList.remove('song-view-active');
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      if (wakeLock !== null) wakeLock.release().catch(() => {});
+      releaseKeepAwake();
     };
-  }, []);
+  }, [keepAwakeActive]);
 
   const copyShareLink = async () => {
     try {
@@ -576,6 +631,7 @@ export default function SongView() {
       setIsFavorite(data.favorite);
       setTargetKey(data.favorite ? (data.target_key || playingKey) : null);
       setFavMsg(data.favorite ? t('songView.added') : t('songView.removed'));
+      broadcastTabMessage('FAVORITES_UPDATED', { songId: id, isFavorite: data.favorite });
     } catch {
       setIsFavorite(previousState);
       setFavMsg(t('songView.favoriteError', 'Չհաջողվեց պահպանել երգը'));
@@ -1017,28 +1073,51 @@ export default function SongView() {
   }, [id]);
 
   useEffect(() => {
-    if (!setlistNavData) return;
-
     const handleKeyDown = (e) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName) || e.target?.isContentEditable) {
         return;
       }
       if (e.key === 'ArrowRight' || e.key === 'PageDown') {
-        if (setlistNavData.next) {
+        if (setlistNavData?.next) {
           e.preventDefault();
           navigateToSetlistSong(setlistNavData.next);
         }
       } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-        if (setlistNavData.prev) {
+        if (setlistNavData?.prev) {
           e.preventDefault();
           navigateToSetlistSong(setlistNavData.prev);
+        }
+      } else if (e.code === 'Space') {
+        e.preventDefault();
+        setAutoScrollActive(a => !a);
+      } else if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        toggleStageFullscreen();
+      } else if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        handleViewModeChange(viewMode === 'lyrics' ? 'both' : 'lyrics');
+      } else if (e.key === '[' || e.key === '-') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          decreaseFontSize();
+        } else {
+          e.preventDefault();
+          setSemi(prev => prev - 1);
+        }
+      } else if (e.key === ']' || e.key === '=' || e.key === '+') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          increaseFontSize();
+        } else {
+          e.preventDefault();
+          setSemi(prev => prev + 1);
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setlistNavData]);
+  }, [setlistNavData, viewMode]);
 
   if (loading || authLoading) {
     return null;
@@ -1087,7 +1166,7 @@ export default function SongView() {
 
   return (
     <>
-    <div key={id} className={`song-view-page animate-fade-in ${setlistNavData ? 'has-seq-nav' : ''} ${!isPWA ? 'web-song-pro' : ''}`} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+    <div key={id} className={`song-view-page animate-fade-in ${setlistNavData ? 'has-seq-nav' : ''} ${!isPWA ? 'web-song-pro' : ''} ${isStageFullscreen ? 'is-stage-fullscreen' : ''}`} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {/* Top Header */}
       <div className="sv-header">
         <div className="sv-header-left">
@@ -1172,7 +1251,7 @@ export default function SongView() {
 
       {/* Sheet Music / Lyrics Content */}
       <div
-        className={`sv-sheet ${viewMode === 'lyrics' ? 'lyrics-mode' : ''}`}
+        className={`sv-sheet ${viewMode === 'lyrics' ? 'lyrics-mode' : ''} ${isTwoColumn ? 'web-two-column' : ''}`}
         style={{ fontSize: `${fontSize}px` }}
         onMouseOver={openChordPopover}
         onMouseOut={closeChordPopover}
@@ -1580,6 +1659,14 @@ export default function SongView() {
           onOpenPrint={() => setIsPrintOpen(true)}
           useFlats={useFlats}
           onToggleFlats={() => setUseFlats(f => !f)}
+          isTwoColumn={isTwoColumn}
+          onToggleTwoColumn={toggleTwoColumn}
+          keepAwakeActive={keepAwakeActive}
+          onToggleKeepAwake={toggleKeepAwake}
+          isStageFullscreen={isStageFullscreen}
+          onToggleStageFullscreen={toggleStageFullscreen}
+          viewMode={viewMode}
+          onToggleViewMode={() => handleViewModeChange(viewMode === 'lyrics' ? 'both' : 'lyrics')}
         />
       )}
       </div>

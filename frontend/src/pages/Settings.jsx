@@ -7,6 +7,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { APP_THEMES, applyAppTheme, getStoredAppTheme } from '../utils/appTheme';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import OfflineStorageManager from '../components/OfflineStorageManager';
 import {
   getBiometricStatus,
   isBiometricLoginEnabled,
@@ -869,6 +870,7 @@ export default function Settings() {
                 </div>
               </div>
 
+              <OfflineStorageManager />
             </div>
           </div>
         )}

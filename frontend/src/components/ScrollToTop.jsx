@@ -89,10 +89,10 @@ export default function ScrollToTop() {
       scrollImmediately(targetY);
       const maxScroll = Math.max(0, (document.scrollingElement?.scrollHeight || 0) - window.innerHeight);
       const targetIsReachable = targetY <= maxScroll + 1;
-      const targetIsApplied = Math.abs(getScrollY() - Math.min(targetY, maxScroll)) <= 1;
+      const targetIsApplied = Math.abs(getScrollY() - Math.min(targetY, maxScroll)) <= 2;
       stableFrames = targetIsReachable && targetIsApplied ? stableFrames + 1 : 0;
       const elapsed = performance.now() - startedAt;
-      if (elapsed < 1200 && (elapsed < 120 || stableFrames < 2)) {
+      if (elapsed < 250 && stableFrames < 1) {
         frame = window.requestAnimationFrame(restore);
         return;
       }

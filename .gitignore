@@ -13,3 +13,7 @@ frontend/dist-map/
 # Keystores & sensitive credentials
 *.jks
 *.keystore
+
+# Generated social media assets
+social_assets/
+

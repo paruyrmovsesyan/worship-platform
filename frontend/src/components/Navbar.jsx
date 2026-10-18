@@ -5,6 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useIsAppMode } from '../hooks/useIsPWA';
 import LanguageSwitcher from './LanguageSwitcher';
+import { updateAppBadge } from '../utils/webPwaEnhancements';
 import './Navbar.css';
 
 export default function Navbar() {
@@ -33,8 +34,15 @@ export default function Navbar() {
     if (user) {
       fetch('/user_notifications_api.php?action=get_unread_count')
         .then(r => r.json())
-        .then(d => { if(d.ok) setUnreadCount(d.count); })
+        .then(d => {
+          if (d.ok) {
+            setUnreadCount(d.count);
+            updateAppBadge(d.count);
+          }
+        })
         .catch(console.error);
+    } else {
+      updateAppBadge(0);
     }
   }, [user, location.pathname]);
 

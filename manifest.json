@@ -5,6 +5,16 @@
   "start_url": "/",
   "id": "/",
   "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "categories": [
+    "music",
+    "productivity",
+    "utilities"
+  ],
   "background_color": "#05050A",
   "theme_color": "#05050A",
   "icons": [
@@ -19,6 +29,45 @@
       "type": "image/png"
     }
   ],
+  "shortcuts": [
+    {
+      "name": "Երգերի գրադարան",
+      "short_name": "Երգեր",
+      "description": "Որոնել և բացել երգերի ամբողջական գրադարանը",
+      "url": "/songs",
+      "icons": [{ "src": "/icon-192-v8.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Սեթլիստներ",
+      "short_name": "Սեթլիստներ",
+      "description": "Կառավարել պաշտամունքի երգացանկերը",
+      "url": "/setlists",
+      "icons": [{ "src": "/icon-192-v8.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Պահպանված երգեր",
+      "short_name": "Սիրված",
+      "description": "Բացել իմ նախընտրած երգերի ցանկը",
+      "url": "/favorites",
+      "icons": [{ "src": "/icon-192-v8.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Նոր երգի հարցում",
+      "short_name": "Հարցում",
+      "description": "Ավելացնել կամ հարցնել նոր երգ",
+      "url": "/song-request",
+      "icons": [{ "src": "/icon-192-v8.png", "sizes": "192x192" }]
+    }
+  ],
+  "share_target": {
+    "action": "/song-request",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
   "related_applications": [
     {
       "platform": "webapp",

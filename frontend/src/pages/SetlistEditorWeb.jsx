@@ -9,6 +9,7 @@ import { usePageReady } from '../hooks/usePageReady';
 import { useIsPWA } from '../hooks/useIsPWA';
 import { renderWithChords } from '../utils/chordTransposer';
 import PrintStudio from '../components/PrintStudio';
+import { broadcastTabMessage, subscribeToTabMessages } from '../utils/webPwaEnhancements';
 import './Setlists.css';
 import './SongsApp.css'; // ensure track-list styles are loaded
 import './SetlistEditorWebPro.css';
@@ -242,6 +243,15 @@ export default function SetlistEditorWeb() {
         setLoading(false);
       });
   };
+
+  useEffect(() => {
+    const unsubscribe = subscribeToTabMessages((msg) => {
+      if (msg.action === 'SETLIST_UPDATED' && String(msg.payload?.setlistId) === String(id)) {
+        fetchSetlist();
+      }
+    });
+    return unsubscribe;
+  }, [id]);
 
   const fetchTeam = useCallback(() => {
     if (!id) return;
@@ -583,6 +593,7 @@ export default function SetlistEditorWeb() {
         setSearchQuery('');
         setSearchResults([]);
         fetchSetlist(); // refresh list
+        broadcastTabMessage('SETLIST_UPDATED', { setlistId: id });
       } else {
         alert(data.error || t('setlists.errorOccurred'));
       }
@@ -598,6 +609,7 @@ export default function SetlistEditorWeb() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ setlist_id: id, items: payload })
     });
+    broadcastTabMessage('SETLIST_UPDATED', { setlistId: id });
   };
 
   const reorderByItemId = async (sourceId, targetId) => {
@@ -650,6 +662,7 @@ export default function SetlistEditorWeb() {
       const data = await res.json();
       if (data.ok) {
         setItems(prev => prev.filter(i => i.id !== itemId));
+        broadcastTabMessage('SETLIST_UPDATED', { setlistId: id });
       }
     } catch (err) {
       console.error(err);
