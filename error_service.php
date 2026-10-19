@@ -637,6 +637,18 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
+    // 3.0.3. SongView displayTitle / fetchSetlistNav
+    if (stripos($message, 'displayTitle') !== false || stripos($stackTrace, 'displayTitle') !== false ||
+        stripos($message, 'fetchSetlistNav') !== false || stripos($stackTrace, 'fetchSetlistNav') !== false) {
+        $reason = 'SongView.jsx-ում displayTitle-ը հայտարարված է, fetchSetlistNav-ը շտկված, ասեթները թարմացված են v539 (commit 8199a1b & f0506a7)';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
     // 3.1. Notification in WebViews / CriOS (restorePromptAfterExternalDisable, Notification is not defined)
     if (stripos($message, 'Notification is not defined') !== false || 
         stripos($message, 'Can\'t find variable: Notification') !== false || 
