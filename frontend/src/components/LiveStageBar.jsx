@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { liveStageSync } from '../utils/liveStageSync';
 import './LiveStageBar.css';
 
@@ -15,6 +15,16 @@ export default function LiveStageBar({
   const [joinInputCode, setJoinInputCode] = useState('');
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [showMessageInput, setShowMessageInput] = useState(false);
+
+  useEffect(() => {
+    if (propSessionId && !liveStageSync.sessionId) {
+      if (isLeader) {
+        liveStageSync.startSession(propSessionId, 'Worship Leader');
+      } else {
+        liveStageSync.joinSession(propSessionId);
+      }
+    }
+  }, [propSessionId, isLeader]);
 
   useEffect(() => {
     const unsub = liveStageSync.subscribe((state) => {

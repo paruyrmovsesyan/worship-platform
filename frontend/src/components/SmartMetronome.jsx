@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useId } from 'react';
+import { useState, useEffect, useCallback, useId } from 'react';
 import { metronomeEngine } from '../utils/metronomeEngine';
 import './SmartMetronome.css';
 
@@ -17,18 +17,16 @@ export default function SmartMetronome({
   const [screenPulseActive, setScreenPulseActive] = useState(false);
   const selectId = useId();
 
-  // Sync initial props
+  // Sync initial props to engine
   useEffect(() => {
     if (initialBpm && initialBpm > 30 && initialBpm < 280) {
       metronomeEngine.setBpm(initialBpm);
-      setBpm(initialBpm);
     }
   }, [initialBpm]);
 
   useEffect(() => {
     if (initialSignature) {
       metronomeEngine.setBeatsPerBar(initialSignature);
-      setBeatsPerBar(initialSignature);
     }
   }, [initialSignature]);
 

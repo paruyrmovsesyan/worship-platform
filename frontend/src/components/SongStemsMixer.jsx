@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import './SongStemsMixer.css';
 
 const DEFAULT_STEM_TRACKS = [

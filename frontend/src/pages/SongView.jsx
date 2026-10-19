@@ -274,15 +274,23 @@ export default function SongView() {
   useEffect(() => {
     const unsubscribe = subscribeToTabMessages((msg) => {
       if (msg.action === 'SETLIST_UPDATED') {
-        if (setlistNavData && setlistNavData.setlist_id) {
-          fetchSetlistNav(setlistNavData.setlist_id);
+        const params = new URLSearchParams(window.location.search);
+        const setlistId = params.get('setlist_id');
+        if (setlistId) {
+          fetch(`/setlists_api.php?action=get_setlist_song_nav&song_id=${id}&setlist_id=${setlistId}`)
+            .then(r => r.json())
+            .then(data => {
+              if (data && !data.error && data.current) {
+                setSetlistNavData(data);
+              }
+            }).catch(() => {});
         }
       } else if (msg.action === 'FAVORITES_UPDATED' && String(msg.payload?.songId) === String(id)) {
         setIsFavorite(Boolean(msg.payload?.isFavorite));
       }
     });
     return unsubscribe;
-  }, [setlistNavData, id]);
+  }, [id]);
 
   // Auto-scroll effect
   useEffect(() => {
@@ -1005,6 +1013,7 @@ export default function SongView() {
 
   const currentChords = song?.chords ? renderWithChords(song.chords, semi - capo, useFlats) : '';
   const currentLyrics = song?.lyrics || t('songView.noLyrics');
+  const displayTitle = song?.title ? getLocalizedTitle(song.title, language) : (song?.title_hy || song?.title || 'Worship Song');
 
   const openChordPopover = event => {
     const chordElement = event.target.closest?.('.chord');

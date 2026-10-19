@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import './ServicePlanner.css';
 
 const DEFAULT_TIMELINE = [
@@ -33,21 +33,23 @@ export default function ServicePlanner() {
 
   // Auto-calculate start time for each item based on duration
   const timelineWithCalculatedTimes = useMemo(() => {
-    let currentMin = 0;
     const [h, m] = startTime.split(':').map(Number);
     const baseMinutes = (h || 11) * 60 + (m || 0);
 
-    return timeline.map((item) => {
-      const itemStartMin = baseMinutes + currentMin;
+    const result = [];
+    let accumulated = 0;
+    for (const item of timeline) {
+      const itemStartMin = baseMinutes + accumulated;
       const hours = Math.floor(itemStartMin / 60) % 24;
       const mins = itemStartMin % 60;
       const formattedTime = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-      currentMin += parseInt(item.duration, 10) || 0;
-      return {
+      accumulated += parseInt(item.duration, 10) || 0;
+      result.push({
         ...item,
         calculatedTime: formattedTime,
-      };
-    });
+      });
+    }
+    return result;
   }, [startTime, timeline]);
 
   const totalDuration = useMemo(() => {
