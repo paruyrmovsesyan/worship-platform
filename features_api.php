@@ -3,17 +3,6 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/runtime_config.php';
 
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
 const FEATURE_FLAGS_FILE = __DIR__ . '/data/feature_flags.json';
 
 function wp_features_json(array $data, int $status = 200): void {
@@ -125,75 +114,94 @@ function wp_features_save(array $catalog): bool {
     );
 }
 
-$action = trim((string)($_GET['action'] ?? $_POST['action'] ?? 'get_flags'));
+$isDirectApiCall = (
+    basename($_SERVER['SCRIPT_FILENAME'] ?? '') === 'features_api.php'
+    || basename($_SERVER['PHP_SELF'] ?? '') === 'features_api.php'
+    || strpos((string)($_SERVER['REQUEST_URI'] ?? ''), 'features_api.php') !== false
+);
 
-// =========================================================================
-// ACTION: get_flags (Client endpoint)
-// =========================================================================
-if ($action === 'get_flags') {
-    $catalog = wp_features_load();
-    $flags = [];
-    foreach ($catalog as $id => $item) {
-        $flags[$id] = $item['status'] ?? 'published';
-    }
-    wp_features_json([
-        'ok' => true,
-        'flags' => $flags,
-        'catalog' => $catalog,
-    ]);
-}
+if ($isDirectApiCall) {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 
-// =========================================================================
-// ACTION: update_flag (Admin only)
-// =========================================================================
-if ($action === 'update_flag') {
-    $rawInput = file_get_contents('php://input');
-    $payload = @json_decode($rawInput, true) ?: $_POST;
-
-    $featureId = trim((string)($payload['feature_id'] ?? $payload['id'] ?? ''));
-    $newStatus = trim((string)($payload['status'] ?? 'published'));
-
-    if (!in_array($newStatus, ['off', 'beta', 'published'], true)) {
-        wp_features_json(['ok' => false, 'error' => 'Invalid status (must be off, beta, or published)'], 400);
+    if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+        http_response_code(200);
+        exit;
     }
 
-    $catalog = wp_features_load();
-    if (!isset($catalog[$featureId])) {
-        wp_features_json(['ok' => false, 'error' => 'Feature not found in catalog'], 404);
+    $action = trim((string)($_GET['action'] ?? $_POST['action'] ?? 'get_flags'));
+
+    // =========================================================================
+    // ACTION: get_flags (Client endpoint)
+    // =========================================================================
+    if ($action === 'get_flags') {
+        $catalog = wp_features_load();
+        $flags = [];
+        foreach ($catalog as $id => $item) {
+            $flags[$id] = $item['status'] ?? 'published';
+        }
+        wp_features_json([
+            'ok' => true,
+            'flags' => $flags,
+            'catalog' => $catalog,
+        ]);
     }
 
-    $catalog[$featureId]['status'] = $newStatus;
-    $catalog[$featureId]['updated_at'] = time();
+    // =========================================================================
+    // ACTION: update_flag (Admin only)
+    // =========================================================================
+    if ($action === 'update_flag') {
+        $rawInput = file_get_contents('php://input');
+        $payload = @json_decode($rawInput, true) ?: $_POST;
 
-    wp_features_save($catalog);
+        $featureId = trim((string)($payload['feature_id'] ?? $payload['id'] ?? ''));
+        $newStatus = trim((string)($payload['status'] ?? 'published'));
 
-    wp_features_json([
-        'ok' => true,
-        'feature_id' => $featureId,
-        'status' => $newStatus,
-    ]);
-}
+        if (!in_array($newStatus, ['off', 'beta', 'published'], true)) {
+            wp_features_json(['ok' => false, 'error' => 'Invalid status (must be off, beta, or published)'], 400);
+        }
 
-// =========================================================================
-// ACTION: publish_all (Publish all features to production)
-// =========================================================================
-if ($action === 'publish_all') {
-    $catalog = wp_features_load();
-    foreach ($catalog as $id => &$item) {
-        $item['status'] = 'published';
-        $item['updated_at'] = time();
+        $catalog = wp_features_load();
+        if (!isset($catalog[$featureId])) {
+            wp_features_json(['ok' => false, 'error' => 'Feature not found in catalog'], 404);
+        }
+
+        $catalog[$featureId]['status'] = $newStatus;
+        $catalog[$featureId]['updated_at'] = time();
+
+        wp_features_save($catalog);
+
+        wp_features_json([
+            'ok' => true,
+            'feature_id' => $featureId,
+            'status' => $newStatus,
+        ]);
     }
-    wp_features_save($catalog);
-    wp_features_json(['ok' => true, 'message' => 'Բոլոր նոր ֆունկցիաները հաջողությամբ հրապարակվեցին:']);
-}
 
-// =========================================================================
-// ACTION: reset_defaults
-// =========================================================================
-if ($action === 'reset_defaults') {
-    $catalog = wp_features_default_catalog();
-    wp_features_save($catalog);
-    wp_features_json(['ok' => true, 'catalog' => $catalog]);
-}
+    // =========================================================================
+    // ACTION: publish_all (Publish all features to production)
+    // =========================================================================
+    if ($action === 'publish_all') {
+        $catalog = wp_features_load();
+        foreach ($catalog as $id => &$item) {
+            $item['status'] = 'published';
+            $item['updated_at'] = time();
+        }
+        wp_features_save($catalog);
+        wp_features_json(['ok' => true, 'message' => 'Բոլոր նոր ֆունկցիաները հաջողությամբ հրապարակվեցին:']);
+    }
 
-wp_features_json(['ok' => false, 'error' => 'Invalid action'], 400);
+    // =========================================================================
+    // ACTION: reset_defaults
+    // =========================================================================
+    if ($action === 'reset_defaults') {
+        $catalog = wp_features_default_catalog();
+        wp_features_save($catalog);
+        wp_features_json(['ok' => true, 'catalog' => $catalog]);
+    }
+
+    wp_features_json(['ok' => false, 'error' => 'Invalid action'], 400);
+}
