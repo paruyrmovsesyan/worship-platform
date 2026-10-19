@@ -54,6 +54,8 @@ import Notifications from './pages/Notifications';
 import ChatsList from './pages/ChatsList';
 import TransposeTool from './pages/TransposeTool';
 import InstallApp from './pages/InstallApp';
+import LiveProjection from './pages/LiveProjection';
+import ServicePlanner from './pages/ServicePlanner';
 import { Capacitor } from '@capacitor/core';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useIsNativeApp, useIsPWA } from './hooks/useIsPWA';
@@ -724,6 +726,8 @@ function App() {
 
   const renderNav = () => {
     const isChatPage = location.pathname.startsWith('/chat/');
+    const isProjectionPage = location.pathname.startsWith('/projection');
+    if (isProjectionPage) return null;
     if (isAppMode) {
       return isMobile ? (isChatPage ? null : <MobileNav />) : <Sidebar />;
     }
@@ -732,6 +736,7 @@ function App() {
 
   const { isLoading } = usePageLoading() || {};
   const isChatPage = location.pathname.startsWith('/chat/');
+  const isProjectionPage = location.pathname.startsWith('/projection');
 
   usePwaSwipeNavigation({
     enabled: isPWA && isMobile && !isChatPage,
@@ -764,13 +769,14 @@ function App() {
       <ScrollToTop />
       {renderNav()}
       <main
-        className={isAppMode && !isMobile ? 'main-with-sidebar' : ''}
+        className={isAppMode && !isMobile && !isProjectionPage ? 'main-with-sidebar' : ''}
         style={{
           // Never hide the entire native view while an API request is pending.
           // A stalled request previously left only the bottom navigation visible.
           opacity: isLoading && !isNativeApp ? 0 : 1,
           transition: 'opacity 0.4s ease',
           pointerEvents: isLoading && !isNativeApp ? 'none' : 'auto',
+          padding: isProjectionPage ? 0 : undefined,
         }}
       >
         <div ref={transitionRef} className="route-animate">
@@ -813,6 +819,9 @@ function App() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/song-request" element={<SongRequest />} />
               <Route path="/notifications" element={<Notifications />} />
+              <Route path="/projection/:songId" element={<LiveProjection />} />
+              <Route path="/projection/live/:sessionId" element={<LiveProjection />} />
+              <Route path="/service-planner" element={<ServicePlanner />} />
 
               {/* Explicit Error Pages */}
               <Route path="/500" element={<ServerError />} />

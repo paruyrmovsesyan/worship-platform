@@ -1,0 +1,172 @@
+.smart-metronome-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card-bg, rgba(22, 27, 46, 0.95));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 8px 16px;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  user-select: none;
+  font-family: inherit;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.smart-metronome-container.is-active {
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.25), 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.metronome-play-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.metronome-play-btn:hover {
+  transform: scale(1.06);
+}
+
+.metronome-play-btn:active {
+  transform: scale(0.95);
+}
+
+.metronome-play-btn.is-running {
+  background: linear-gradient(135deg, #ef4444, #f87171);
+}
+
+.metronome-bpm-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 58px;
+}
+
+.metronome-bpm-num {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary, #fff);
+  line-height: 1.1;
+}
+
+.metronome-bpm-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary, #94a3b8);
+  font-weight: 600;
+}
+
+.metronome-step-btn {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary, #fff);
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.metronome-step-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.metronome-beat-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.beat-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  transition: transform 0.08s ease, background 0.08s ease;
+}
+
+.beat-dot.is-accent-pos {
+  width: 12px;
+  height: 12px;
+}
+
+.beat-dot.active {
+  background: #38bdf8;
+  transform: scale(1.35);
+  box-shadow: 0 0 10px #38bdf8;
+}
+
+.beat-dot.active.accent {
+  background: #ec4899;
+  box-shadow: 0 0 14px #ec4899;
+  transform: scale(1.45);
+}
+
+.metronome-tap-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-primary, #e2e8f0);
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.12s ease;
+}
+
+.metronome-tap-btn:active {
+  transform: scale(0.92);
+  background: #6366f1;
+  color: #fff;
+}
+
+.metronome-sig-select {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-primary, #e2e8f0);
+  border-radius: 8px;
+  padding: 4px 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+/* Screen Visual Pulse Overlay */
+.stage-visual-pulse-flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99999;
+  box-shadow: inset 0 0 0 4px rgba(56, 189, 248, 0.6);
+  animation: visualPulseFade 0.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+.stage-visual-pulse-flash.accent-flash {
+  box-shadow: inset 0 0 0 6px rgba(236, 72, 153, 0.85);
+}
+
+@keyframes visualPulseFade {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}

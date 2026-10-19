@@ -785,4 +785,176 @@ if ($action === 'batch_import_songs') {
     ]);
 }
 
+// =========================================================================
+// ACTION: generate_chords_for_lyrics
+// =========================================================================
+if ($action === 'generate_chords_for_lyrics') {
+    $rawInput = file_get_contents('php://input');
+    $data = @json_decode($rawInput, true) ?: $_POST;
+
+    $lyrics = trim((string)($data['lyrics'] ?? ''));
+    $title = trim((string)($data['title'] ?? ''));
+    $key = trim((string)($data['key'] ?? 'C'));
+
+    if ($lyrics === '') {
+        wp_lyrics_out(['ok' => false, 'error' => 'Տեքստը դատարկ է։'], 400);
+    }
+
+    $cfg = wp_lyrics_get_config();
+    $provider = $cfg['provider'] ?? 'gemini';
+
+    $prompt = "You are an expert worship musician and music director.
+Given these worship song lyrics, generate a beautiful, accurate, and harmonically sound chord progression in the key of {$key}.
+Song Title: {$title}
+
+OUTPUT FORMAT:
+Generate the song with chords placed directly above the words where harmonic changes occur.
+Keep section headers like [Verse 1], [Chorus], [Bridge], [Outro] or [Տուն 1], [Կրկներգ], [Կամուրջ].
+Use standard musical chords (e.g. C, G, Am, F, Dm, Em, C/E, G/B, D/F#).
+
+Return ONLY a JSON object:
+{
+  \"key\": \"{$key}\",
+  \"chords_sheet\": \"Complete lyrics with chords aligned above words\"
+}";
+
+    try {
+        if ($provider === 'openai') {
+            $messages = [
+                ['role' => 'system', 'content' => $prompt],
+                ['role' => 'user', 'content' => $lyrics]
+            ];
+            $result = wp_lyrics_openai_request($cfg['openai_api_key'], $cfg['openai_model'] ?: 'gpt-4o-mini', $messages, 'json_object');
+        } else {
+            $contents = [
+                ['role' => 'user', 'parts' => [['text' => $prompt . "\n\nLyrics:\n" . $lyrics]]]
+            ];
+            $genConfig = ['temperature' => 0.2, 'responseMimeType' => 'application/json'];
+            $result = wp_lyrics_gemini_request($cfg['gemini_api_key'], $cfg['gemini_model'] ?: 'gemini-2.5-flash', $contents, $genConfig);
+        }
+
+        $cleanText = $result['text'];
+        if (preg_match('/```(?:json)?\s*(\{.*\})\s*```/s', $cleanText, $m)) {
+            $cleanText = $m[1];
+        }
+        $parsed = @json_decode($cleanText, true);
+        wp_lyrics_out(['ok' => true, 'data' => $parsed ?: ['chords_sheet' => $cleanText]]);
+    } catch (Throwable $e) {
+        wp_lyrics_out(['ok' => false, 'error' => $e->getMessage()], 500);
+    }
+}
+
+// =========================================================================
+// ACTION: worship_poetic_translate (Singable translation into Armenian)
+// =========================================================================
+if ($action === 'worship_poetic_translate') {
+    $rawInput = file_get_contents('php://input');
+    $data = @json_decode($rawInput, true) ?: $_POST;
+
+    $lyrics = trim((string)($data['lyrics'] ?? ''));
+    $targetLang = trim((string)($data['target_lang'] ?? 'hy'));
+
+    if ($lyrics === '') {
+        wp_lyrics_out(['ok' => false, 'error' => 'Տեքստը դատարկ է։'], 400);
+    }
+
+    $cfg = wp_lyrics_get_config();
+    $provider = $cfg['provider'] ?? 'gemini';
+
+    $prompt = "You are a Christian worship songwriter and poet specializing in singable Armenian Christian translations of worship songs (like Bethel, Hillsong, Elevation, Jesus Culture).
+Translate the provided song into singable, deeply spiritual Armenian Christian lyrics:
+CRITICAL REQUIREMENTS:
+1. Maintain poetic meter, rhythm, and approximate syllable count per line so it can be sung naturally to the original melody!
+2. Preserve Christian theological terminology (Տեր, Փրկիչ, Գառ, Սուրբ Հոգի, Խաչ, Շնորհք, Փառք).
+3. Do not do a literal robot translation; craft beautiful, singable worship poetry.
+
+Return ONLY a JSON object:
+{
+  \"translated_title\": \"Armenian Title\",
+  \"translated_lyrics\": \"Singable poetic translation with section headers [Տուն 1], [Կրկներգ], [Կամուրջ]\"
+}";
+
+    try {
+        if ($provider === 'openai') {
+            $messages = [
+                ['role' => 'system', 'content' => $prompt],
+                ['role' => 'user', 'content' => $lyrics]
+            ];
+            $result = wp_lyrics_openai_request($cfg['openai_api_key'], $cfg['openai_model'] ?: 'gpt-4o-mini', $messages, 'json_object');
+        } else {
+            $contents = [
+                ['role' => 'user', 'parts' => [['text' => $prompt . "\n\nOriginal Song:\n" . $lyrics]]]
+            ];
+            $genConfig = ['temperature' => 0.3, 'responseMimeType' => 'application/json'];
+            $result = wp_lyrics_gemini_request($cfg['gemini_api_key'], $cfg['gemini_model'] ?: 'gemini-2.5-flash', $contents, $genConfig);
+        }
+
+        $cleanText = $result['text'];
+        if (preg_match('/```(?:json)?\s*(\{.*\})\s*```/s', $cleanText, $m)) {
+            $cleanText = $m[1];
+        }
+        $parsed = @json_decode($cleanText, true);
+        wp_lyrics_out(['ok' => true, 'data' => $parsed ?: ['translated_lyrics' => $cleanText]]);
+    } catch (Throwable $e) {
+        wp_lyrics_out(['ok' => false, 'error' => $e->getMessage()], 500);
+    }
+}
+
+// =========================================================================
+// ACTION: chord_stylizer (Simplify or Enhance chords)
+// =========================================================================
+if ($action === 'chord_stylizer') {
+    $rawInput = file_get_contents('php://input');
+    $data = @json_decode($rawInput, true) ?: $_POST;
+
+    $chords = trim((string)($data['chords'] ?? ''));
+    $style = trim((string)($data['style'] ?? 'enhance')); // 'simplify' or 'enhance'
+
+    if ($chords === '') {
+        wp_lyrics_out(['ok' => false, 'error' => 'Ակորդները դատարկ են։'], 400);
+    }
+
+    $cfg = wp_lyrics_get_config();
+    $provider = $cfg['provider'] ?? 'gemini';
+
+    $modeDesc = $style === 'simplify'
+        ? "Simplify all complex jazz or altered chords to basic major/minor chords (e.g. Cmaj7 -> C, Dm7 -> Dm, G7sus4 -> G) suitable for beginner guitarists and pianists."
+        : "Enhance chords with modern worship acoustic/piano voicings (e.g. add sus4, add9, 7th, 2, slash bass chords like C/E, G/B, D/F#) for richer worship sound.";
+
+    $prompt = "You are an expert worship music arranger.
+{$modeDesc}
+Preserve exact layout, lyrics, and spacing.
+
+Return ONLY a JSON object:
+{
+  \"stylized_chords\": \"Updated chord chart with stylized chords\"
+}";
+
+    try {
+        if ($provider === 'openai') {
+            $messages = [
+                ['role' => 'system', 'content' => $prompt],
+                ['role' => 'user', 'content' => $chords]
+            ];
+            $result = wp_lyrics_openai_request($cfg['openai_api_key'], $cfg['openai_model'] ?: 'gpt-4o-mini', $messages, 'json_object');
+        } else {
+            $contents = [
+                ['role' => 'user', 'parts' => [['text' => $prompt . "\n\nOriginal Chords:\n" . $chords]]]
+            ];
+            $genConfig = ['temperature' => 0.1, 'responseMimeType' => 'application/json'];
+            $result = wp_lyrics_gemini_request($cfg['gemini_api_key'], $cfg['gemini_model'] ?: 'gemini-2.5-flash', $contents, $genConfig);
+        }
+
+        $cleanText = $result['text'];
+        if (preg_match('/```(?:json)?\s*(\{.*\})\s*```/s', $cleanText, $m)) {
+            $cleanText = $m[1];
+        }
+        $parsed = @json_decode($cleanText, true);
+        wp_lyrics_out(['ok' => true, 'data' => $parsed ?: ['stylized_chords' => $cleanText]]);
+    } catch (Throwable $e) {
+        wp_lyrics_out(['ok' => false, 'error' => $e->getMessage()], 500);
+    }
+}
+
 wp_lyrics_out(['ok' => false, 'error' => 'Անհայտ գործողություն (Invalid action)'], 400);
+

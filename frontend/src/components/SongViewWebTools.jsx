@@ -58,6 +58,10 @@ export default function SongViewWebTools({
   onToggleStageFullscreen,
   viewMode,
   onToggleViewMode,
+  onOpenAIStudio,
+  onToggleStems,
+  stemsOpen,
+  songId,
 }) {
   return (
     <aside className="web-song-console" aria-label="Երգի կառավարման վահանակ">
@@ -115,6 +119,28 @@ export default function SongViewWebTools({
             <ToolIcon><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></ToolIcon>
             <span>{viewMode === 'lyrics' ? 'Միայն բառեր' : 'Ակորդներ'}</span>
           </button>
+
+          <button
+            type="button"
+            className={`web-stage-btn ${stemsOpen ? 'active' : ''}`}
+            onClick={onToggleStems}
+            title="RehearsalMix & Stems Mixer"
+          >
+            <ToolIcon><path d="M4 6h16M4 12h16M4 18h16" /></ToolIcon>
+            <span>{stemsOpen ? 'Փակել Stems' : '🎛️ Stems'}</span>
+          </button>
+
+          <a
+            href={`/projection/${songId}`}
+            target="_blank"
+            rel="noreferrer"
+            className="web-stage-btn"
+            title="Բացել պրոյեկտորի էկրանը առանձին պատուհանում"
+            style={{ textDecoration: 'none' }}
+          >
+            <ToolIcon><path d="M2 3h20v14H2zM8 21h8M12 17v4" /></ToolIcon>
+            <span>📽️ Projection</span>
+          </a>
         </div>
       </section>
 
@@ -215,6 +241,19 @@ export default function SongViewWebTools({
           </div>
         )}
       </section>
+
+      <button
+        type="button"
+        className="web-print-launch"
+        onClick={onOpenAIStudio}
+        style={{
+          background: 'linear-gradient(135deg, #6366f1, #9333ea)',
+          marginBottom: '10px',
+        }}
+      >
+        <ToolIcon><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z" /></ToolIcon>
+        <span>Worship AI Studio</span>
+      </button>
 
       <button type="button" className="web-print-launch" onClick={onOpenPrint}>
         <ToolIcon><path d="M6 9V2h12v7" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><path d="M6 14h12v8H6z" /></ToolIcon>

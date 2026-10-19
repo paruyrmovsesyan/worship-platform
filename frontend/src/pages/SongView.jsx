@@ -13,6 +13,10 @@ import './SongViewWebPro.css';
 import SongViewWebTools from '../components/SongViewWebTools';
 import PrintStudio from '../components/PrintStudio';
 import ChordDiagramPopover from '../components/ChordDiagramPopover';
+import SmartMetronome from '../components/SmartMetronome';
+import LiveStageBar from '../components/LiveStageBar';
+import SongStemsMixer from '../components/SongStemsMixer';
+import WorshipAIStudioModal from '../components/WorshipAIStudioModal';
 import { useIsAppMode } from '../hooks/useIsPWA';
 import { nativeShare } from '../utils/nativeFeatures';
 import { API_BASE_URL } from '../utils/nativeConfig';
@@ -215,6 +219,8 @@ export default function SongView() {
   // Web-Pro state (website desktop only)
   const isPWA = useIsAppMode();
   const [isPrintOpen, setIsPrintOpen] = useState(false);
+  const [isAIStudioOpen, setIsAIStudioOpen] = useState(false);
+  const [stemsOpen, setStemsOpen] = useState(false);
   const [autoScrollActive, setAutoScrollActive] = useState(false);
   const [autoScrollSpeed, setAutoScrollSpeed] = useState(1);
   const [chordColor, setChordColor] = useState(() => localStorage.getItem('chordColor_web') || '#39d8ff');
@@ -1249,6 +1255,29 @@ export default function SongView() {
         <button className={`sv-segment ${viewMode === 'both' ? 'active' : ''}`} onClick={() => handleViewModeChange('both')}>{t('songView.bothModes')}</button>
       </div>
 
+      {/* Live Stage Band Follower Bar */}
+      <LiveStageBar
+        currentSongId={song ? Number(song.id) : null}
+        onFollowSongChange={(newSongId) => navigate(`/song/${newSongId}`)}
+      />
+
+      {/* Smart Metronome */}
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0 14px 0' }}>
+        <SmartMetronome
+          initialBpm={song?.bpm || 120}
+          initialSignature={4}
+          enableScreenPulse={keepAwakeActive}
+        />
+      </div>
+
+      {/* RehearsalMix & Stems Mixer Panel */}
+      {stemsOpen && (
+        <SongStemsMixer
+          songTitle={displayTitle}
+          audioUrl={resolveMediaUrl(song?.audio_url || (song?.attachments?.[0]?.url))}
+        />
+      )}
+
       {/* Sheet Music / Lyrics Content */}
       <div
         className={`sv-sheet ${viewMode === 'lyrics' ? 'lyrics-mode' : ''} ${isTwoColumn ? 'web-two-column' : ''}`}
@@ -1667,6 +1696,10 @@ export default function SongView() {
           onToggleStageFullscreen={toggleStageFullscreen}
           viewMode={viewMode}
           onToggleViewMode={() => handleViewModeChange(viewMode === 'lyrics' ? 'both' : 'lyrics')}
+          onOpenAIStudio={() => setIsAIStudioOpen(true)}
+          onToggleStems={() => setStemsOpen(!stemsOpen)}
+          stemsOpen={stemsOpen}
+          songId={song?.id}
         />
       )}
       </div>
@@ -1979,6 +2012,21 @@ export default function SongView() {
       </div>,
       document.body
     )}
+
+      <WorshipAIStudioModal
+        isOpen={isAIStudioOpen}
+        onClose={() => setIsAIStudioOpen(false)}
+        songTitle={displayTitle}
+        lyrics={currentLyrics}
+        chords={song?.chords || ''}
+        onApplyResult={(newText) => {
+          if (newText.includes('[') || /^[A-G][#b]?/.test(newText)) {
+            setSong(prev => ({ ...prev, chords: newText }));
+          } else {
+            setSong(prev => ({ ...prev, lyrics: newText }));
+          }
+        }}
+      />
 
     </>
   );

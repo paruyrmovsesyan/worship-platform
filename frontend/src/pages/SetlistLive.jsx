@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { subscribeToTabMessages } from '../utils/webPwaEnhancements';
+import LiveStageBar from '../components/LiveStageBar';
 import './SetlistLive.css';
 
 export default function SetlistLive() {
@@ -270,6 +271,15 @@ export default function SetlistLive() {
 
         <div className="sll-clock">{formatTime(currentTime)}</div>
       </header>
+
+      {/* ── Live Stage Broadcast / Band Follower Bar ── */}
+      <div style={{ padding: '0 16px', maxWidth: '800px', margin: '0 auto 12px auto' }}>
+        <LiveStageBar
+          sessionId={`SETLIST-${id}`}
+          isLeader={true}
+          onFollowSongChange={(songId) => navigate(`/song/${songId}?setlist_id=${id}`)}
+        />
+      </div>
 
       {/* ── Song List ── */}
       <main className="sll-list">
