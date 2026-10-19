@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -6,21 +6,19 @@ import { useAuth } from '../context/AuthContext';
 import { useIsAppMode } from '../hooks/useIsPWA';
 import LanguageSwitcher from './LanguageSwitcher';
 import { updateAppBadge } from '../utils/webPwaEnhancements';
+import { isFeatureEnabled } from '../utils/featureFlags';
 import './Navbar.css';
 
 export default function Navbar() {
-  const { language, setLanguage, t } = useLanguage();
+  const { t } = useLanguage();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isPWA = useIsAppMode();
 
   const [scrolled, setScrolled]       = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchOpen, setSearchOpen]   = useState(false);
   const [menuOpen, setMenuOpen]       = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
-  const dropdownTimeoutRef = useRef(null);
 
   // Magic Pill sliding animation state
   const [hoverStyle, setHoverStyle] = useState({ opacity: 0, width: 0, transform: 'translateX(0px)' });
@@ -64,13 +62,11 @@ export default function Navbar() {
     if (menuName) onMenuEnter(menuName);
   };
 
-  const handleMenuLeaveWrapper = (e) => {
+  const handleMenuLeaveWrapper = () => {
     // Hide pill when leaving the entire menu container
     setHoverStyle(prev => ({ ...prev, opacity: 0 }));
   };
 
-  const searchRef = useRef(null);
-  const formRef   = useRef(null);
   const hideTimeout = useRef(null);
 
   const onMenuEnter = (menu) => {
@@ -100,12 +96,9 @@ export default function Navbar() {
     return () => { document.body.style.overflow = ''; };
   }, [menuOpen]);
 
-  /* Close search when clicking outside */
+  /* Close profile dropdown when clicking outside */
   useEffect(() => {
     const handler = (e) => {
-      if (formRef.current && !formRef.current.contains(e.target)) {
-        setSearchOpen(false);
-      }
       if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
         setProfileDropdownOpen(false);
       }
@@ -113,26 +106,6 @@ export default function Navbar() {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-
-  const openSearch = () => {
-    setSearchOpen(true);
-    setTimeout(() => searchRef.current?.focus(), 50);
-  };
-
-  const submitSearch = (e) => {
-    e?.preventDefault();
-    const q = searchQuery.trim();
-    if (q) {
-      navigate(`/songs?q=${encodeURIComponent(q)}`);
-      setSearchQuery('');
-      setSearchOpen(false);
-    }
-  };
-
-  const onKey = (e) => {
-    if (e.key === 'Enter') submitSearch(e);
-    if (e.key === 'Escape') { setSearchOpen(false); setSearchQuery(''); }
-  };
 
   const isActive = (path) => location.pathname === path;
 
@@ -161,10 +134,10 @@ export default function Navbar() {
           to: '/setlists', label: t('nav.sets'),
           icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
         },
-        {
+        ...(isFeatureEnabled('service_planner', user) ? [{
           to: '/service-planner', label: 'Ծառայության Պլանավորող',
           icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        },
+        }] : []),
         {
           to: '/friends', label: t('nav.friends'),
           icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>

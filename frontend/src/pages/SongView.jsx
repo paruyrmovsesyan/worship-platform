@@ -26,6 +26,7 @@ import {
   broadcastTabMessage,
   subscribeToTabMessages
 } from '../utils/webPwaEnhancements';
+import { isFeatureEnabled } from '../utils/featureFlags';
 
 function resolveMediaUrl(url) {
   if (!url) return '';
@@ -685,7 +686,9 @@ export default function SongView() {
                 try {
                   const legacyCapoPref = localStorage.getItem(`song_capo_pref:${id}`);
                   if (legacyCapoPref) preferredCapo = Number.parseInt(JSON.parse(legacyCapoPref).capo, 10) || 0;
-                } catch {}
+                } catch {
+                  // ignore corrupt preference
+                }
               }
             }
             preferredCapo = Math.max(0, Math.min(12, preferredCapo));
@@ -735,7 +738,7 @@ export default function SongView() {
             }, 150);
           }
         })
-        .catch(err => {
+        .catch(() => {
           if (cancelled) return;
           if (isInitial) {
             setError(t('songView.error'));
@@ -1265,22 +1268,26 @@ export default function SongView() {
       </div>
 
       {/* Live Stage Band Follower Bar */}
-      <LiveStageBar
-        currentSongId={song ? Number(song.id) : null}
-        onFollowSongChange={(newSongId) => navigate(`/song/${newSongId}`)}
-      />
+      {isFeatureEnabled('live_stage_follower', user) && (
+        <LiveStageBar
+          currentSongId={song ? Number(song.id) : null}
+          onFollowSongChange={(newSongId) => navigate(`/song/${newSongId}`)}
+        />
+      )}
 
       {/* Smart Metronome */}
-      <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0 14px 0' }}>
-        <SmartMetronome
-          initialBpm={song?.bpm || 120}
-          initialSignature={4}
-          enableScreenPulse={keepAwakeActive}
-        />
-      </div>
+      {isFeatureEnabled('smart_metronome', user) && (
+        <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0 14px 0' }}>
+          <SmartMetronome
+            initialBpm={song?.bpm || 120}
+            initialSignature={4}
+            enableScreenPulse={keepAwakeActive}
+          />
+        </div>
+      )}
 
       {/* RehearsalMix & Stems Mixer Panel */}
-      {stemsOpen && (
+      {stemsOpen && isFeatureEnabled('rehearsal_stems', user) && (
         <SongStemsMixer
           songTitle={displayTitle}
           audioUrl={resolveMediaUrl(song?.audio_url || (song?.attachments?.[0]?.url))}

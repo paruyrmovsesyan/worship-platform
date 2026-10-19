@@ -1,0 +1,74 @@
+{
+    "smart_metronome": {
+        "id": "smart_metronome",
+        "title": "Smart Metronome & Visual Click",
+        "description": "Web Audio API-ով ճշգրիտ մետրոնոմ, տեսողական լույսեր, Tap Tempo և Screen Pulse:",
+        "status": "published",
+        "category": "stage",
+        "test_url": "\/song\/1",
+        "updated_at": 1792444986
+    },
+    "live_stage_follower": {
+        "id": "live_stage_follower",
+        "title": "Band Live Follower (Leader Remote Sync)",
+        "description": "Երաժիշտների և վոկալիստների էկրանների ավտոմատ հետևում Worship Leader-ին:",
+        "status": "published",
+        "category": "stage",
+        "test_url": "\/setlists\/1\/live",
+        "updated_at": 1792444986
+    },
+    "rehearsal_stems": {
+        "id": "rehearsal_stems",
+        "title": "RehearsalMix & Stems Mixer",
+        "description": "8-ալիքանի բազմաթրեկ միքշեր, Solo\/Mute և A-B հատվածի կրկնող Looper:",
+        "status": "published",
+        "category": "audio",
+        "test_url": "\/song\/1",
+        "updated_at": 1792444986
+    },
+    "lyrics_projection": {
+        "id": "lyrics_projection",
+        "title": "Live Lyrics Projection & OBS Lower Thirds",
+        "description": "Դահլիճի պրոյեկտորի, OBS եթերի Lower-Thirds և Confidence Monitor ռեժիմներ:",
+        "status": "published",
+        "category": "projection",
+        "test_url": "\/projection\/1",
+        "updated_at": 1792444986
+    },
+    "worship_ai_studio": {
+        "id": "worship_ai_studio",
+        "title": "Worship AI Studio",
+        "description": "Ակորդների գեներացում, պոետիկ հայերեն թարգմանություն և ակորդների հարստացում:",
+        "status": "published",
+        "category": "ai",
+        "test_url": "\/song\/1",
+        "updated_at": 1792444986
+    },
+    "service_planner": {
+        "id": "service_planner",
+        "title": "Ministry Service Planner & Team Rostering",
+        "description": "Կիրակնօրյա ծառայության րոպեական Run-of-Show պլանավորում և թիմի գրաֆիկ:",
+        "status": "published",
+        "category": "ministry",
+        "test_url": "\/service-planner",
+        "updated_at": 1792444986
+    },
+    "offline_p2p_mesh": {
+        "id": "offline_p2p_mesh",
+        "title": "Offline P2P Mesh & Local Discovery",
+        "description": "Բեմական կապ և սինքրոնացում նույնիսկ այն դեպքում, երբ ինտերնետ կապը բացակայում է:",
+        "status": "published",
+        "category": "network",
+        "test_url": "\/setlists",
+        "updated_at": 1792444986
+    },
+    "stage_two_column": {
+        "id": "stage_two_column",
+        "title": "2-Column Chord Chart Stage Layout",
+        "description": "Լայն էկրանների և պլանշետների համար 2 սյունակով ակորդների դասավորություն:",
+        "status": "published",
+        "category": "stage",
+        "test_url": "\/song\/1",
+        "updated_at": 1792444986
+    }
+}
