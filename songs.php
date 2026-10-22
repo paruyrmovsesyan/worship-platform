@@ -54,7 +54,7 @@ if (empty($adminPermissions['songs_editor'])):
 <html lang="hy">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <link rel="apple-touch-icon" href="/wolarm_youth.png" />
   <meta name="theme-color" content="#070910" />
   <title><?= __('Երգերի խմբագրումը հասանելի չէ') ?></title>
@@ -86,7 +86,7 @@ $songsSearchPlaceholder = $songsSearchPlaceholders[$adminLang] ?? $songsSearchPl
 <!doctype html>
 <html lang="hy">
 <head>
-  <?php wp_admin_render_pwa_head('Songs — Worship Platform Admin', ['icon' => '/wolarm_developers.png', 'manifest' => '/songs-manifest.php', 'viewport' => 'width=device-width, initial-scale=1, viewport-fit=cover']); ?>
+  <?php wp_admin_render_pwa_head('Songs — Worship Platform Admin', ['icon' => '/wolarm_developers.png', 'manifest' => '/songs-manifest.php', 'viewport' => 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover']); ?>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="wp-admin-app">

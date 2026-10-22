@@ -1,4 +1,77 @@
 (function() {
+  // ── PREVENT SCREEN ZOOM IN PWA & MOBILE BROWSERS ──
+  (function preventPwaScreenZoom() {
+    function enforceViewportMeta() {
+      try {
+        var vp = document.querySelector('meta[name="viewport"]');
+        var desired = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover";
+        if (!vp) {
+          vp = document.createElement("meta");
+          vp.name = "viewport";
+          vp.content = desired;
+          document.head.appendChild(vp);
+        } else {
+          var content = vp.getAttribute("content") || "";
+          if (content.indexOf("user-scalable=no") === -1 || content.indexOf("maximum-scale=1.0") === -1) {
+            vp.setAttribute("content", desired);
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", enforceViewportMeta, { once: true });
+    } else {
+      enforceViewportMeta();
+    }
+
+    // 1. Prevent iOS Safari pinch-to-zoom gestures
+    document.addEventListener("gesturestart", function(e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener("gesturechange", function(e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener("gestureend", function(e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    // 2. Prevent multi-touch pinch zoom
+    document.addEventListener("touchstart", function(e) {
+      if (e.touches && e.touches.length > 1) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    document.addEventListener("touchmove", function(e) {
+      if (e.touches && e.touches.length > 1) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    // 3. Prevent double-tap to zoom
+    var lastTouchEnd = 0;
+    document.addEventListener("touchend", function(e) {
+      var now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        var tag = (e.target && e.target.tagName ? e.target.tagName.toLowerCase() : "");
+        if (tag !== "input" && tag !== "textarea" && tag !== "select" && !e.target.isContentEditable) {
+          e.preventDefault();
+        }
+      }
+      lastTouchEnd = now;
+    }, { passive: false });
+
+    // 4. Prevent Ctrl + Wheel / Trackpad pinch zoom on desktop/PWA
+    document.addEventListener("wheel", function(e) {
+      if (e.ctrlKey) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  })();
+
   if (window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform()) return;
   if (!("serviceWorker" in navigator)) return;
 

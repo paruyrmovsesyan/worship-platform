@@ -12,7 +12,7 @@ $sourceQuery = $source !== '' ? '&source=' . rawurlencode($source) : '';
 <html lang="hy">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <link rel="apple-touch-icon" href="/wolarm_youth.png">
 <meta name="theme-color" content="#070910">
 <link rel="manifest" href="/manifest.json">

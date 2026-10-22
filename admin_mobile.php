@@ -255,9 +255,6 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
 <!doctype html>
 <html lang="<?= htmlspecialchars($adminLang, ENT_QUOTES) ?>">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title><?= htmlspecialchars($t['page_title']) ?></title>
   <?php wp_admin_render_pwa_head($t['page_title']); ?>
   <?php include __DIR__ . '/admin_shared_css.php'; ?>
   <style>
