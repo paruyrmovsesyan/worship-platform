@@ -121,9 +121,14 @@ button.section-tab.nav-item.active svg { stroke: #fff; }
 /* ── STATS CARDS ── */
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
+}
+@media (max-width: 640px) {
+  .stats {
+    grid-template-columns: 1fr !important;
+  }
 }
 .stat {
   background: #fff;

@@ -1,23 +1,26 @@
 <?php
 // admin_sidebar.php — Shared sidebar include for all admin pages
 // Usage: include __DIR__ . '/admin_sidebar.php';
-// Expected variables: $adminDisplayName, $adminLang, $activePage ('dashboard'|'songs'|'clients'|'statistics'|'news'|'settings'|'faq')
+// Expected variables: $adminDisplayName, $adminLang, $activePage ('dashboard'|'songs'|'clients'|'statistics'|'news'|'settings'|'faq'|'features'|'errors'|'mobile'|'seo'|'status'|'server_load'|'messages')
+if (!function_exists('__')) {
+    require_once __DIR__ . '/admin_i18n.php';
+}
 $activePage = $activePage ?? 'dashboard';
 $adminLang  = $adminLang ?? 'hy';
 $adminDisplayName = $adminDisplayName ?? 'Admin';
 
 $navItems = [
-    'dashboard'  => ['label' => __('Dashboard'),   'href' => '/admin_dashboard.php',  'icon' => '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline>'],
-    'songs'      => ['label' => __('Songs'),        'href' => '/songs.php',             'icon' => '<circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>'],
-    'clients'    => ['label' => __('Clients'),      'href' => '/admin_clients.php',     'icon' => '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>'],
-    'statistics' => ['label' => __('Statistics'),   'href' => '/admin_stats.php',       'icon' => '<line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line>'],
-    'messages'   => ['label' => __('Messages'),     'href' => '/admin_messages.php',    'icon' => '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline>'],
-    'news'       => ['label' => __('News'),         'href' => '/admin_news.php',        'icon' => '<path d="M4 22h16a2 2 0 0 0 2-2V6H2v14a2 2 0 0 0 2 2z"></path><path d="M2 6l10 7 10-7"></path><path d="M8 2v4"></path><path d="M16 2v4"></path>'],
-    'mobile'     => ['label' => ($adminLang === 'ru' ? 'iOS & Android' : ($adminLang === 'en' ? 'Mobile Apps' : 'iOS & Android')), 'href' => '/admin_mobile.php', 'icon' => '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line>'],
-    'features'   => ['label' => ($adminLang === 'ru' ? 'Лаборатория функций' : ($adminLang === 'en' ? 'Feature Labs' : 'Ֆունկցիաների Լաբ.')), 'href' => '/admin_features.php', 'icon' => '<path d="M10 2v7.31L4.89 20.7a2 2 0 0 0 1.76 2.92h14.7a2 2 0 0 0 1.76-2.92L18 9.31V2"></path><path d="M8.5 2h7"></path><path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path>'],
-    'seo'        => ['label' => 'SEO & Search',      'href' => '/admin_seo.php',         'icon' => '<circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><path d="M8 11h6"></path><path d="M11 8v6"></path>'],
-    'settings'   => ['label' => __('Settings'),     'href' => '/admin_updates.php',     'icon' => '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>'],
-    'faq'        => ['label' => __('FAQ'),          'href' => '/admin_faq.php',         'icon' => '<circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line>'],
+    'dashboard'   => ['label' => __('Dashboard'),   'href' => '/admin_dashboard.php',  'icon' => '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline>'],
+    'songs'       => ['label' => __('Songs'),        'href' => '/songs.php',             'icon' => '<circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>'],
+    'clients'     => ['label' => __('Clients'),      'href' => '/admin_clients.php',     'icon' => '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path>'],
+    'statistics'  => ['label' => __('Statistics'),   'href' => '/admin_stats.php',       'icon' => '<line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line>'],
+    'messages'    => ['label' => __('Messages'),     'href' => '/admin_messages.php',    'icon' => '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline>'],
+    'news'        => ['label' => __('News'),         'href' => '/admin_news.php',        'icon' => '<path d="M4 22h16a2 2 0 0 0 2-2V6H2v14a2 2 0 0 0 2 2z"></path><path d="M2 6l10 7 10-7"></path><path d="M8 2v4"></path><path d="M16 2v4"></path>'],
+    'mobile'      => ['label' => ($adminLang === 'ru' ? 'iOS & Android' : ($adminLang === 'en' ? 'Mobile Apps' : 'iOS & Android')), 'href' => '/admin_mobile.php', 'icon' => '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line>'],
+    'features'    => ['label' => ($adminLang === 'ru' ? 'Лаборатория функций' : ($adminLang === 'en' ? 'Feature Labs' : 'Ֆունկցիաների Լաբ.')), 'href' => '/admin_features.php', 'icon' => '<path d="M10 2v7.31L4.89 20.7a2 2 0 0 0 1.76 2.92h14.7a2 2 0 0 0 1.76-2.92L18 9.31V2"></path><path d="M8.5 2h7"></path><path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path>'],
+    'seo'         => ['label' => 'SEO & Search',      'href' => '/admin_seo.php',         'icon' => '<circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><path d="M8 11h6"></path><path d="M11 8v6"></path>'],
+    'settings'    => ['label' => __('Settings'),     'href' => '/admin_updates.php',     'icon' => '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>'],
+    'faq'         => ['label' => __('FAQ'),          'href' => '/admin_faq.php',         'icon' => '<circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line>'],
     'status'      => ['label' => __('System Status'), 'href' => '/admin_status.php',      'icon' => '<path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>'],
     'server_load' => ['label' => __('Server Load'),   'href' => '/admin_server_load.php', 'icon' => '<rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line>'],
     'errors'      => ['label' => ($adminLang === 'ru' ? 'Монитор ошибок' : ($adminLang === 'en' ? 'Error Logs' : 'Սխալների մոնիտոր')), 'href' => '/admin_errors.php', 'icon' => '<polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'],
@@ -30,6 +33,8 @@ $mobileNavLabels = [
     'en' => ['dashboard' => 'Home', 'songs' => 'Songs', 'statistics' => 'Stats', 'settings' => 'Settings'],
 ];
 $mobileLabels = $mobileNavLabels[$adminLang] ?? $mobileNavLabels['en'];
+$isSubPage = !in_array($activePage, $mobileNavKeys, true);
+$menuLabel = ($adminLang === 'ru' ? 'Меню' : ($adminLang === 'en' ? 'Menu' : 'Ցանկ'));
 ?>
 <!-- Global Page Loader -->
 <div id="globalAdminLoader" aria-hidden="true">
@@ -41,25 +46,65 @@ $mobileLabels = $mobileNavLabels[$adminLang] ?? $mobileNavLabels['en'];
     if (loader) {
       setTimeout(function() {
         loader.classList.add('hide');
-      }, 150); // slight delay for smooth transition
+      }, 120);
     }
   });
+
+  window.toggleAdminMobileDrawer = function(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    document.body.classList.toggle('sidebar-open');
+  };
+
+  // Close drawer on escape key or link click on mobile
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.body.classList.contains('sidebar-open')) {
+      document.body.classList.remove('sidebar-open');
+    }
+  });
+
+  // Touch swipe to close mobile sidebar drawer
+  (function() {
+    var touchStartX = 0;
+    var touchStartY = 0;
+    document.addEventListener('touchstart', function(e) {
+      if (e.touches && e.touches[0]) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchend', function(e) {
+      if (!document.body.classList.contains('sidebar-open')) return;
+      if (e.changedTouches && e.changedTouches[0]) {
+        var diffX = e.changedTouches[0].clientX - touchStartX;
+        var diffY = Math.abs(e.changedTouches[0].clientY - touchStartY);
+        if (diffX < -50 && diffY < 90) {
+          document.body.classList.remove('sidebar-open');
+        }
+      }
+    }, { passive: true });
+  })();
 </script>
 
 <div class="sidebar-overlay" onclick="document.body.classList.remove('sidebar-open')"></div>
-<aside class="app-sidebar">
+<aside class="app-sidebar" id="appSidebar">
   <div class="brand">
-    <div class="brand-icon">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+    <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:0;">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+      </div>
+      <div class="brand-text" style="font-size:13px; line-height:1.25; font-weight:800; letter-spacing:-0.2px;"><?= __('Worship<br>Platform Admin') ?></div>
     </div>
-    <div class="brand-text" style="font-size:13px; line-height:1.3; font-weight:800; letter-spacing:-0.2px;"><?= __('Worship<br>Platform Admin') ?></div>
+    <button type="button" class="sidebar-close-btn" onclick="document.body.classList.remove('sidebar-open')" aria-label="Close menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
   </div>
 
   <div class="nav-menu">
     <div class="sidebar-heading"><?= __('Menu') ?></div>
 
     <?php foreach ($navItems as $key => $item): ?>
-    <a class="nav-item <?= $activePage === $key ? 'active' : '' ?>" href="<?= $item['href'] ?>"<?= $activePage === $key ? ' aria-current="page"' : '' ?>>
+    <a class="nav-item <?= $activePage === $key ? 'active' : '' ?>" href="<?= $item['href'] ?>"<?= $activePage === $key ? ' aria-current="page"' : '' ?> onclick="if(window.innerWidth<=992){document.body.classList.remove('sidebar-open');}">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><?= $item['icon'] ?></svg>
       <span><?= htmlspecialchars($item['label']) ?></span>
     </a>
@@ -73,21 +118,33 @@ $mobileLabels = $mobileNavLabels[$adminLang] ?? $mobileNavLabels['en'];
       </div>
     </div>
 
-
-    <a class="nav-item" href="/admin_logout.php" style="color:var(--danger); margin-top: 8px;">
+    <a class="nav-item" href="/admin_logout.php" style="color:var(--danger); margin-top: 10px;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
       <span><?= __('Log Out') ?></span>
     </a>
   </div>
-
-
 </aside>
 
 <nav class="app-bottom-nav" aria-label="Admin mobile navigation">
   <?php foreach ($mobileNavKeys as $key): $item = $navItems[$key]; ?>
-    <a class="<?= $activePage === $key ? 'active' : '' ?>" href="<?= $item['href'] ?>"<?= $activePage === $key ? ' aria-current="page"' : '' ?>>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><?= $item['icon'] ?></svg>
+    <a class="bottom-nav-item <?= $activePage === $key ? 'active' : '' ?>" href="<?= $item['href'] ?>"<?= $activePage === $key ? ' aria-current="page"' : '' ?>>
+      <div class="bottom-nav-icon-wrap">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><?= $item['icon'] ?></svg>
+      </div>
       <span><?= htmlspecialchars($mobileLabels[$key] ?? $item['label']) ?></span>
     </a>
   <?php endforeach; ?>
+  <button type="button" class="bottom-nav-item bottom-nav-menu-btn <?= $isSubPage ? 'active' : '' ?>" onclick="toggleAdminMobileDrawer(event)" aria-label="<?= htmlspecialchars($menuLabel) ?>">
+    <div class="bottom-nav-icon-wrap">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+      <?php if ($isSubPage): ?>
+        <span class="bottom-nav-dot" title="<?= htmlspecialchars($navItems[$activePage]['label'] ?? '') ?>"></span>
+      <?php endif; ?>
+    </div>
+    <span><?= htmlspecialchars($menuLabel) ?></span>
+  </button>
 </nav>

@@ -59,7 +59,7 @@ function seo_e(array $config, string $key): string {
     .seo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.seo-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:var(--shadow-sm)}.seo-card.full{grid-column:1/-1}.seo-card h2{font-size:18px;margin:0 0 6px}.seo-card>p{color:var(--muted);font-size:13px;margin:0 0 20px}.seo-field{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}.seo-field label{font-size:12px;font-weight:800;color:var(--text)}.seo-field input,.seo-field textarea{width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:inherit}.seo-field textarea{min-height:92px;resize:vertical}.seo-help{font-size:11px;color:var(--muted)}.google-preview{background:#fff;border:1px solid #dfe1e5;border-radius:14px;padding:20px;color:#202124}.google-url{font-size:13px}.google-title{font-size:20px;color:#1a0dab;margin:6px 0}.google-desc{font-size:14px;line-height:1.5;color:#4d5156}.seo-actions{display:flex;justify-content:flex-end;margin-top:20px}@media(max-width:900px){.seo-grid{grid-template-columns:1fr}.seo-card.full{grid-column:auto}}
   </style>
 </head>
-<body>
+<body class="wp-admin-app">
 <div class="app-layout">
   <?php include __DIR__ . '/admin_sidebar.php'; ?>
   <main class="app-main">

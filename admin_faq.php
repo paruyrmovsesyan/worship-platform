@@ -163,7 +163,7 @@ $searchPlaceholder = 'Search FAQ...';
     .faq-a { font-size: 14px; color: var(--muted); line-height: 1.6; }
   </style>
 </head>
-<body>
+<body class="wp-admin-app">
 <div class="app-layout">
   <?php include __DIR__ . '/admin_sidebar.php'; ?>
 

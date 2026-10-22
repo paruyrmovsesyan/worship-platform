@@ -273,7 +273,7 @@ $notifCount        = count($notifications);
     }
   </style>
 </head>
-<body>
+<body class="wp-admin-app">
 <div class="app-layout">
   <?php include __DIR__ . '/admin_sidebar.php'; ?>
 

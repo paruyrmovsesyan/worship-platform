@@ -123,7 +123,7 @@ $searchPlaceholder = 'Search messages...';
     .actions { display: flex; gap: 12px; }
   </style>
 </head>
-<body>
+<body class="wp-admin-app">
 <div class="app-layout">
   <?php include __DIR__ . '/admin_sidebar.php'; ?>
 

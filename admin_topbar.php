@@ -3,18 +3,45 @@
  * admin_topbar.php — Shared top navigation bar
  * Expected vars: $adminDisplayName, $adminEmail, $searchPlaceholder
  */
+if (!function_exists('__')) {
+    require_once __DIR__ . '/admin_i18n.php';
+}
 $searchPlaceholder = $searchPlaceholder ?? __('Search...');
 $adminEmail        = $adminEmail ?? '';
 ?>
 <style>
+/* ── Mobile menu button ── */
+.mobile-menu-btn {
+  display: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  color: var(--text);
+  padding: 8px;
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.mobile-menu-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+.mobile-menu-btn:active {
+  transform: scale(0.95);
+}
+
 /* ── User dropdown ── */
-.mobile-menu-btn { display: none; background: transparent; border: none; cursor: pointer; color: var(--text); padding: 4px; }
 .user-menu-wrapper { position: relative; }
 .user-menu-trigger {
   display: flex; align-items: center; gap: 12px;
   cursor: pointer; padding: 6px 10px 6px 6px;
   border-radius: 40px; transition: background .15s;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .user-menu-trigger:hover { background: rgba(67,24,255,0.06); }
 .user-menu-caret { color: var(--muted); transition: transform .2s; flex-shrink: 0; }
@@ -22,9 +49,10 @@ $adminEmail        = $adminEmail ?? '';
 
 .user-dropdown {
   display: none; position: absolute; top: calc(100% + 10px); right: 0;
-  min-width: 240px; background: #fff; border-radius: 18px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.14); z-index: 1001;
+  min-width: 250px; background: #fff; border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(17,28,68,0.18); z-index: 1001;
   overflow: hidden; animation: dropIn .18s ease;
+  border: 1px solid var(--line);
 }
 .user-menu-wrapper.open .user-dropdown { display: block; }
 @keyframes dropIn {
@@ -48,7 +76,8 @@ $adminEmail        = $adminEmail ?? '';
   display: none;
   position: absolute; top: calc(100% + 12px); right: 0;
   width: 360px; background: #fff; border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  box-shadow: 0 20px 60px rgba(17,28,68,0.18);
+  border: 1px solid var(--line);
   z-index: 1002; overflow: hidden;
   animation: dropIn .18s ease;
 }
@@ -61,7 +90,7 @@ $adminEmail        = $adminEmail ?? '';
 .notif-count-badge { background:var(--primary); color:#fff; border-radius:20px; padding:2px 8px; font-size:11px; font-weight:700; }
 .notif-mark { font-size:12px; font-weight:600; color:var(--muted); cursor:pointer; }
 .notif-mark:hover { color:var(--primary); }
-.notif-list { max-height:380px; overflow-y:auto; }
+.notif-list { max-height:380px; overflow-y:auto; -webkit-overflow-scrolling: touch; }
 .notif-item { display:flex; align-items:flex-start; gap:12px; padding:14px 20px; border-bottom:1px solid var(--line); transition:background .1s; }
 .notif-item:hover { background:#f8faff; }
 .notif-item:last-child { border-bottom:none; }
@@ -76,33 +105,52 @@ $adminEmail        = $adminEmail ?? '';
 .notif-loading { padding:30px; text-align:center; color:var(--muted); font-size:13px; }
 .notif-footer { padding:14px 20px; border-top:1px solid var(--line); text-align:center; }
 .notif-footer a { font-size:13px; font-weight:700; color:var(--primary); text-decoration:none; }
+
+/* ── Topbar Search Box ── */
+.search-box { position: relative; }
+.search-box svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+.search-box input {
+  padding: 10px 16px 10px 40px; border-radius: 30px;
+  border: 1px solid var(--line); background: var(--surface); width: 260px;
+  font-family: inherit; font-size: 14px;
+  box-shadow: 0 2px 8px rgba(112,144,176,0.06); outline: none;
+  color: var(--text);
+  transition: width 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.15s, box-shadow 0.15s;
+}
+.search-box input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(58, 45, 255, 0.12);
+  width: 300px;
+}
 </style>
 
 <header class="app-topbar">
-  <div style="display:flex; align-items:center; gap:16px;">
-    <button class="mobile-menu-btn" onclick="document.body.classList.toggle('sidebar-open')" title="Toggle Menu">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+  <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+    <button class="mobile-menu-btn" onclick="toggleAdminMobileDrawer(event)" title="Toggle Menu" aria-label="Toggle Menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
     </button>
-    <!-- Date -->
-    <div class="topbar-date-wrapper" style="display:flex; align-items:center; gap:10px; color:var(--text); font-weight:700; font-size:15px;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-      <span id="topbar-date"><?= date('F j, Y') ?></span>
+    <!-- Date / Brand Indicator -->
+    <div class="topbar-date-wrapper" style="display:flex; align-items:center; gap:8px; color:var(--text); font-weight:700; font-size:14px; min-width:0;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+      <span id="topbar-date" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><?= date('F j, Y') ?></span>
     </div>
   </div>
   <script>
-    document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    try {
+      document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch(e) {}
   </script>
 
   <div class="topbar-right">
     <!-- Search -->
     <div class="search-box">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-      <input type="search" id="topbarSearch" placeholder="<?= htmlspecialchars($searchPlaceholder) ?>">
+      <input type="search" id="topbarSearch" placeholder="<?= htmlspecialchars($searchPlaceholder) ?>" aria-label="<?= htmlspecialchars($searchPlaceholder) ?>">
     </div>
 
     <!-- Notification Bell -->
     <div class="notif-wrapper" id="topbarNotifWrapper">
-      <button class="bell-btn" id="topbarBellBtn" title="<?= __('Notifications') ?>" onclick="topbarToggleNotif(event)">
+      <button class="bell-btn" id="topbarBellBtn" title="<?= __('Notifications') ?>" aria-label="<?= __('Notifications') ?>" onclick="topbarToggleNotif(event)">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
         <span class="bell-dot" id="topbarBellDot"></span>
       </button>
@@ -123,9 +171,9 @@ $adminEmail        = $adminEmail ?? '';
 
     <!-- User menu -->
     <div class="user-menu-wrapper" id="userMenuWrapper">
-      <div class="user-menu-trigger" onclick="toggleUserMenu(event)" title="<?= __('Account menu') ?>">
+      <div class="user-menu-trigger" onclick="toggleUserMenu(event)" title="<?= __('Account menu') ?>" aria-label="<?= __('Account menu') ?>">
         <div class="topbar-avatar"><?= strtoupper(substr($adminDisplayName, 0, 1)) ?></div>
-        <span style="font-weight:700; font-size:15px; color:var(--text);"><?= htmlspecialchars($adminDisplayName) ?></span>
+        <span class="topbar-username" style="font-weight:700; font-size:14px; color:var(--text);"><?= htmlspecialchars($adminDisplayName) ?></span>
         <svg class="user-menu-caret" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </div>
 
@@ -171,7 +219,7 @@ $adminEmail        = $adminEmail ?? '';
     var w = document.getElementById('userMenuWrapper');
     var notifPanel = document.getElementById('topbarNotifPanel');
     if (notifPanel) notifPanel.classList.remove('open');
-    w.classList.toggle('open');
+    if (w) w.classList.toggle('open');
   }
   window.toggleUserMenu = toggleUserMenu;
 
@@ -193,12 +241,13 @@ $adminEmail        = $adminEmail ?? '';
 
   /* ── Notification panel ── */
   var _notifLoaded = false;
+  var _notifCache = null;
 
   window.topbarToggleNotif = function(e) {
     e.stopPropagation();
-    // Close user dropdown
     document.getElementById('userMenuWrapper')?.classList.remove('open');
     var panel = document.getElementById('topbarNotifPanel');
+    if (!panel) return;
     var isOpen = panel.classList.contains('open');
     panel.classList.toggle('open');
     if (!isOpen && !_notifLoaded) {
@@ -207,11 +256,17 @@ $adminEmail        = $adminEmail ?? '';
   };
 
   function loadNotifications() {
+    if (_notifCache !== null) {
+      _notifLoaded = true;
+      renderNotifications(_notifCache);
+      return;
+    }
     fetch('/admin_notifications_api.php')
       .then(function(r) { return r.json(); })
       .then(function(data) {
         _notifLoaded = true;
-        renderNotifications(data.items || []);
+        _notifCache = data.items || [];
+        renderNotifications(_notifCache);
       })
       .catch(function() {
         document.getElementById('topbarNotifList').innerHTML =
@@ -261,7 +316,8 @@ $adminEmail        = $adminEmail ?? '';
   }
 
   window.topbarMarkAllRead = function() {
-    _notifLoaded = false; // allow re-fetch next open
+    _notifLoaded = false;
+    _notifCache = [];
     var badge = document.getElementById('topbarNotifBadge');
     var dot   = document.getElementById('topbarBellDot');
     var list  = document.getElementById('topbarNotifList');
@@ -270,7 +326,6 @@ $adminEmail        = $adminEmail ?? '';
     if (list)  list.innerHTML = '<div class="notif-empty">' + '<?= __('All caught up! 🎉') ?>' + '</div>';
   };
 
-  // Pre-load count on page ready (just to show dot)
   document.addEventListener('DOMContentLoaded', function() {
     fetch('/admin_notifications_api.php')
       .then(function(r) { return r.json(); })
@@ -280,22 +335,9 @@ $adminEmail        = $adminEmail ?? '';
         var dot   = document.getElementById('topbarBellDot');
         if (badge) badge.textContent = items.length;
         if (dot)   dot.style.display = items.length > 0 ? '' : 'none';
-        // Cache the loaded data
         _notifCache = items;
       })
       .catch(function() {});
   });
-
-  var _notifCache = null;
-  // Override loadNotifications to use cache if available
-  var _origLoad = loadNotifications;
-  loadNotifications = function() {
-    if (_notifCache !== null) {
-      _notifLoaded = true;
-      renderNotifications(_notifCache);
-    } else {
-      _origLoad();
-    }
-  };
 })();
 </script>

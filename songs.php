@@ -60,7 +60,7 @@ if (empty($adminPermissions['songs_editor'])):
   <title><?= __('Երգերի խմբագրումը հասանելի չէ') ?></title>
   
 </head>
-<body>
+<body class="wp-admin-app">
   <main class="gate">
     <div class="eyebrow"><?= __('Ադմին հասանելիություն') ?></div>
     <h1><?= __('Երգերի խմբագրումը հասանելի չէ') ?></h1>
@@ -89,7 +89,7 @@ $songsSearchPlaceholder = $songsSearchPlaceholders[$adminLang] ?? $songsSearchPl
   <?php wp_admin_render_pwa_head('Songs — Worship Platform Admin', ['icon' => '/wolarm_developers.png', 'manifest' => '/songs-manifest.php', 'viewport' => 'width=device-width, initial-scale=1, viewport-fit=cover']); ?>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-<body>
+<body class="wp-admin-app">
 
 
 

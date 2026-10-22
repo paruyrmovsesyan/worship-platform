@@ -311,7 +311,7 @@ $searchPlaceholder = 'Search users...';
   <?php wp_admin_render_pwa_head('Clients — Worship Platform Admin'); ?>
   <?php include __DIR__ . '/admin_shared_css.php'; ?>
 </head>
-<body>
+<body class="wp-admin-app">
 <div class="app-layout">
   <?php include __DIR__ . '/admin_sidebar.php'; ?>
 

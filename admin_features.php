@@ -5,6 +5,7 @@ require_once __DIR__ . '/admin_access.php';
 require_once __DIR__ . '/runtime_config.php';
 require_once __DIR__ . '/version_config.php';
 require_once __DIR__ . '/features_api.php';
+require_once __DIR__ . '/admin_pwa_bootstrap.php';
 
 $access = wp_admin_require_access('/admin_features.php');
 $adminUser        = $access['user'];
@@ -123,10 +124,7 @@ foreach ($catalog as $item) {
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars($adminLang) ?>">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title><?= htmlspecialchars($t['page_title']) ?></title>
-  <link rel="icon" type="image/png" href="/favicon.png">
+  <?php wp_admin_render_pwa_head($t['page_title']); ?>
   <?php include __DIR__ . '/admin_shared_css.php'; ?>
   <style>
     /* ── Laboratory Specific Styles ── */
@@ -307,8 +305,44 @@ foreach ($catalog as $item) {
     /* ── Features Grid & Cards ── */
     .features-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+      gap: 18px;
+    }
+
+    @media (max-width: 768px) {
+      .features-hero {
+        padding: 18px 20px;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .btn-publish-all {
+        width: 100%;
+        justify-content: center;
+      }
+      .features-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .features-toolbar > div {
+        width: 100%;
+      }
+      .local-search-input {
+        width: 100%;
+        min-width: 0;
+      }
+      .filter-pills-group {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        flex-wrap: nowrap;
+        padding-bottom: 4px;
+      }
+      .filter-pill {
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .feature-card {
+        padding: 18px;
+      }
     }
     .feature-card {
       background: var(--surface);

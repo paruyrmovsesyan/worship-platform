@@ -255,7 +255,7 @@ $publishedValue = $editItem && !empty($editItem['published_at']) ? str_replace('
     @media (max-width: 900px) { .news-grid-form { grid-template-columns:1fr; } .news-item { flex-direction:column; } }
   </style>
 </head>
-<body>
+<body class="wp-admin-app">
 <div class="app-layout">
   <?php include __DIR__ . '/admin_sidebar.php'; ?>
   <main class="app-main">
