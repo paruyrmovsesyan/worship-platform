@@ -6,6 +6,7 @@ body.website-theme .song-view-page.web-song-pro {
     "header tools"
     "meta tools"
     "tabs tools"
+    "stage tools"
     "sheet tools"
     "attachments tools"
     "legacy tools";
@@ -33,6 +34,7 @@ body.website-theme .song-view-page.web-song-pro::before {
 body.website-theme .web-song-pro > .sv-header { grid-area: header; }
 body.website-theme .web-song-pro > .sv-meta-row { grid-area: meta; }
 body.website-theme .web-song-pro > .sv-segment-control { grid-area: tabs; }
+body.website-theme .web-song-pro > .sv-stage-modules { grid-area: stage; }
 body.website-theme .web-song-pro > .sv-sheet { grid-area: sheet; }
 body.website-theme .web-song-pro > .sv-attachments { grid-area: attachments; }
 body.website-theme .web-song-pro > .web-legacy-controls { grid-area: legacy; }
@@ -756,15 +758,64 @@ body.website-theme .web-stage-btn svg {
   flex-shrink: 0;
 }
 
+/* Stage Modules Container & Mobile/PWA Quick Studio Bar */
+.sv-stage-modules {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.sv-metronome-row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.sv-mobile-studio-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (min-width: 1081px) {
+  body.website-theme .web-song-pro .sv-mobile-studio-bar {
+    display: none;
+  }
+}
+
+.sv-studio-pill-btn {
+  background: rgba(30, 41, 59, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e2e8f0;
+  padding: 7px 13px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.sv-studio-pill-btn:hover,
+.sv-studio-pill-btn.active {
+  background: rgba(99, 102, 241, 0.22);
+  border-color: rgba(99, 102, 241, 0.55);
+  color: #fff;
+}
+
 /* 2-Column Mode for Chord Charts */
-body.website-theme .sv-sheet.web-two-column {
+body.website-theme .sv-sheet.web-two-column,
+body.website-theme .sv-sheet.web-two-column :is(.chords-block, .lyrics-block) {
   column-count: 2;
   column-gap: 40px;
   column-rule: 1px dashed rgba(255, 255, 255, 0.08);
 }
 
 @media (max-width: 860px) {
-  body.website-theme .sv-sheet.web-two-column {
+  body.website-theme .sv-sheet.web-two-column,
+  body.website-theme .sv-sheet.web-two-column :is(.chords-block, .lyrics-block) {
     column-count: 1;
     column-rule: none;
   }

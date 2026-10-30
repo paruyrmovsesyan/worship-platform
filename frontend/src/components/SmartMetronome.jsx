@@ -12,15 +12,19 @@ export default function SmartMetronome({
   const [isPlaying, setIsPlaying] = useState(false);
   const [bpm, setBpm] = useState(initialBpm || 120);
   const [beatsPerBar, setBeatsPerBar] = useState(initialSignature || 4);
+  const [soundType, setSoundType] = useState('woodblock');
+  const [pulseEnabled, setPulseEnabled] = useState(enableScreenPulse);
   const [currentBeat, setCurrentBeat] = useState(0);
   const [isAccent, setIsAccent] = useState(false);
   const [screenPulseActive, setScreenPulseActive] = useState(false);
   const selectId = useId();
+  const soundSelectId = useId();
 
-  // Sync initial props to engine
+  // Sync initial props to engine (engine notifies subscriber on bpm_change / signature_change)
   useEffect(() => {
-    if (initialBpm && initialBpm > 30 && initialBpm < 280) {
-      metronomeEngine.setBpm(initialBpm);
+    const parsed = Number(initialBpm);
+    if (parsed && parsed >= 30 && parsed <= 280) {
+      metronomeEngine.setBpm(parsed);
     }
   }, [initialBpm]);
 
@@ -30,13 +34,20 @@ export default function SmartMetronome({
     }
   }, [initialSignature]);
 
+  // Stop metronome when leaving the page
+  useEffect(() => {
+    return () => {
+      metronomeEngine.stop();
+    };
+  }, []);
+
   // Subscribe to engine events
   useEffect(() => {
     const unsubscribe = metronomeEngine.subscribe((event) => {
       if (event.type === 'beat') {
         setCurrentBeat(event.beat);
         setIsAccent(event.isAccent);
-        if (enableScreenPulse) {
+        if (pulseEnabled) {
           setScreenPulseActive(true);
           setTimeout(() => setScreenPulseActive(false), 120);
         }
@@ -56,12 +67,12 @@ export default function SmartMetronome({
     return () => {
       unsubscribe();
     };
-  }, [enableScreenPulse]);
+  }, [pulseEnabled]);
 
-  // Keyboard shortcut: Space toggles in stage mode, or 'M' for metronome
+  // Keyboard shortcut: 'M' for metronome, 'T' for tap tempo
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
       if (e.key === 'm' || e.key === 'M') {
         e.preventDefault();
         metronomeEngine.toggle();
@@ -96,6 +107,12 @@ export default function SmartMetronome({
     setBeatsPerBar(val);
   }, []);
 
+  const handleSoundChange = useCallback((e) => {
+    const val = e.target.value;
+    metronomeEngine.setSoundType(val);
+    setSoundType(val);
+  }, []);
+
   return (
     <>
       {screenPulseActive && (
@@ -111,45 +128,63 @@ export default function SmartMetronome({
           type="button"
           onClick={handleTogglePlay}
           className={`metronome-play-btn ${isPlaying ? 'is-running' : ''}`}
-          title={isPlaying ? 'Stop (M)' : 'Start Metronome (M)'}
+          title={isPlaying ? 'Կանգնեցնել Մետրոնոմը (M)' : 'Միացնել Մետրոնոմը (M)'}
           aria-label={isPlaying ? 'Stop Metronome' : 'Start Metronome'}
         >
           {isPlaying ? (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <rect x="6" y="6" width="12" height="12" rx="2" />
             </svg>
           ) : (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="6,4 20,12 6,20" />
             </svg>
           )}
         </button>
 
         {/* BPM Adjust */}
-        <button
-          type="button"
-          className="metronome-step-btn"
-          onClick={() => handleStepBpm(-1)}
-          title="-1 BPM"
-          aria-label="Decrease BPM"
-        >
-          −
-        </button>
+        <div className="metronome-bpm-group">
+          <button
+            type="button"
+            className="metronome-step-btn"
+            onClick={() => handleStepBpm(-5)}
+            title="-5 BPM"
+          >
+            −5
+          </button>
+          <button
+            type="button"
+            className="metronome-step-btn"
+            onClick={() => handleStepBpm(-1)}
+            title="-1 BPM"
+            aria-label="Decrease BPM"
+          >
+            −
+          </button>
 
-        <div className="metronome-bpm-display">
-          <span className="metronome-bpm-num">{bpm}</span>
-          <span className="metronome-bpm-label">BPM</span>
+          <div className="metronome-bpm-display">
+            <span className="metronome-bpm-num">{bpm}</span>
+            <span className="metronome-bpm-label">BPM</span>
+          </div>
+
+          <button
+            type="button"
+            className="metronome-step-btn"
+            onClick={() => handleStepBpm(1)}
+            title="+1 BPM"
+            aria-label="Increase BPM"
+          >
+            +
+          </button>
+          <button
+            type="button"
+            className="metronome-step-btn"
+            onClick={() => handleStepBpm(5)}
+            title="+5 BPM"
+          >
+            +5
+          </button>
         </div>
-
-        <button
-          type="button"
-          className="metronome-step-btn"
-          onClick={() => handleStepBpm(1)}
-          title="+1 BPM"
-          aria-label="Increase BPM"
-        >
-          +
-        </button>
 
         {/* Beat dots */}
         <div className="metronome-beat-dots" aria-label={`Beat ${currentBeat} of ${beatsPerBar}`}>
@@ -174,28 +209,60 @@ export default function SmartMetronome({
             type="button"
             className="metronome-tap-btn"
             onClick={handleTap}
-            title="Tap Tempo (T)"
+            title="Հարվածեք տեմպը որոշելու համար (T)"
           >
-            Tap
+            TAP
           </button>
         )}
 
-        {/* Time Signature */}
+        {/* Time Signature (Visible!) */}
         {!compact && (
-          <label htmlFor={selectId} className="visually-hidden">
-            Time signature
+          <div className="metronome-select-wrap">
+            <label htmlFor={selectId} className="visually-hidden">Չափ (Time Signature)</label>
             <select
               id={selectId}
               className="metronome-sig-select"
               value={beatsPerBar}
               onChange={handleSigChange}
+              title="Երաժշտական չափ"
             >
               <option value="4">4/4</option>
               <option value="3">3/4</option>
               <option value="6">6/8</option>
               <option value="2">2/4</option>
             </select>
-          </label>
+          </div>
+        )}
+
+        {/* Sound Type Selector */}
+        {!compact && (
+          <div className="metronome-select-wrap">
+            <label htmlFor={soundSelectId} className="visually-hidden">Ձայնի տեսակ</label>
+            <select
+              id={soundSelectId}
+              className="metronome-sig-select"
+              value={soundType}
+              onChange={handleSoundChange}
+              title="Մետրոնոմի ձայնը"
+            >
+              <option value="woodblock">🥁 Wood</option>
+              <option value="click">🎛️ Click</option>
+              <option value="bell">🔔 Bell</option>
+              <option value="soft">🔉 Soft</option>
+            </select>
+          </div>
+        )}
+
+        {/* Screen Pulse Toggle */}
+        {!compact && (
+          <button
+            type="button"
+            className={`metronome-pulse-btn ${pulseEnabled ? 'active' : ''}`}
+            onClick={() => setPulseEnabled((v) => !v)}
+            title="Էկրանի լուսային զարկ (Visual Pulse)"
+          >
+            💡 Pulse
+          </button>
         )}
       </div>
     </>

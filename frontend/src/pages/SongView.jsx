@@ -1267,32 +1267,74 @@ export default function SongView() {
         <button className={`sv-segment ${viewMode === 'both' ? 'active' : ''}`} onClick={() => handleViewModeChange('both')}>{t('songView.bothModes')}</button>
       </div>
 
-      {/* Live Stage Band Follower Bar */}
-      {isFeatureEnabled('live_stage_follower', user) && (
-        <LiveStageBar
-          currentSongId={song ? Number(song.id) : null}
-          onFollowSongChange={(newSongId) => navigate(`/song/${newSongId}`)}
-        />
-      )}
-
-      {/* Smart Metronome */}
-      {isFeatureEnabled('smart_metronome', user) && (
-        <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0 14px 0' }}>
-          <SmartMetronome
-            initialBpm={song?.bpm || 120}
-            initialSignature={4}
-            enableScreenPulse={keepAwakeActive}
-          />
+      {/* Stage Performance & Studio Modules (Wrapped in sv-stage-modules for clean Web Grid placement) */}
+      <div className="sv-stage-modules">
+        {/* Quick Studio Actions Bar (visible on PWA/Mobile & narrow screens where Web Console is hidden) */}
+        <div className="sv-mobile-studio-bar">
+          {isFeatureEnabled('rehearsal_stems', user) && (
+            <button
+              type="button"
+              className={`sv-studio-pill-btn ${stemsOpen ? 'active' : ''}`}
+              onClick={() => setStemsOpen(v => !v)}
+            >
+              🎛️ Stems Միքշեր
+            </button>
+          )}
+          {isFeatureEnabled('worship_ai_studio', user) && (
+            <button
+              type="button"
+              className="sv-studio-pill-btn"
+              onClick={() => setIsAIStudioOpen(true)}
+            >
+              ✨ AI Studio
+            </button>
+          )}
+          {isFeatureEnabled('live_projection_obs', user) && (
+            <button
+              type="button"
+              className="sv-studio-pill-btn"
+              onClick={() => window.open(`/projection/${song.id}`, '_blank')}
+            >
+              📽️ Պրոյեկտոր
+            </button>
+          )}
         </div>
-      )}
 
-      {/* RehearsalMix & Stems Mixer Panel */}
-      {stemsOpen && isFeatureEnabled('rehearsal_stems', user) && (
-        <SongStemsMixer
-          songTitle={displayTitle}
-          audioUrl={resolveMediaUrl(song?.audio_url || (song?.attachments?.[0]?.url))}
-        />
-      )}
+        {/* Live Stage Band Follower Bar */}
+        {isFeatureEnabled('live_stage_follower', user) && (
+          <LiveStageBar
+            currentSongId={song ? Number(song.id) : null}
+            currentSongTitle={displayTitle}
+            currentKey={soundingKey || song?.song_key || ''}
+            currentCapo={capo}
+            currentSemi={semi}
+            currentBpm={song?.bpm || 120}
+            onFollowSongChange={(newSongId) => navigate(`/song/${newSongId}`)}
+          />
+        )}
+
+        {/* Smart Metronome */}
+        {isFeatureEnabled('smart_metronome', user) && (
+          <div className="sv-metronome-row">
+            <SmartMetronome
+              initialBpm={song?.bpm || 120}
+              initialSignature={4}
+              enableScreenPulse={keepAwakeActive}
+            />
+          </div>
+        )}
+
+        {/* RehearsalMix & Stems Mixer Panel */}
+        {stemsOpen && isFeatureEnabled('rehearsal_stems', user) && (
+          <SongStemsMixer
+            songTitle={displayTitle}
+            songKey={soundingKey || song?.song_key || 'C'}
+            initialBpm={song?.bpm || 120}
+            audioUrl={resolveMediaUrl(song?.audio_url || (song?.attachments?.[0]?.url))}
+            onClose={() => setStemsOpen(false)}
+          />
+        )}
+      </div>
 
       {/* Sheet Music / Lyrics Content */}
       <div
@@ -2033,11 +2075,13 @@ export default function SongView() {
         isOpen={isAIStudioOpen}
         onClose={() => setIsAIStudioOpen(false)}
         songTitle={displayTitle}
+        songKey={soundingKey || song?.song_key || 'C'}
         lyrics={currentLyrics}
         chords={song?.chords || ''}
-        onApplyResult={(newText) => {
-          if (newText.includes('[') || /^[A-G][#b]?/.test(newText)) {
+        onApplyResult={(newText, modeType) => {
+          if (modeType === 'chords' || modeType === 'stylize' || newText.includes('[') || /^[A-G][#b]?/.test(newText)) {
             setSong(prev => ({ ...prev, chords: newText }));
+            setViewMode('chords');
           } else {
             setSong(prev => ({ ...prev, lyrics: newText }));
           }

@@ -83,12 +83,15 @@ if ($action === 'broadcast_state') {
     $currentState['leader_name'] = trim((string)($payload['leader_name'] ?? $currentState['leader_name'] ?? 'Worship Leader'));
     $currentState['song_id'] = isset($payload['song_id']) ? (int)$payload['song_id'] : ($currentState['song_id'] ?? null);
     $currentState['song_title'] = trim((string)($payload['song_title'] ?? $currentState['song_title'] ?? ''));
+    $currentState['target_key'] = trim((string)($payload['target_key'] ?? $currentState['target_key'] ?? ''));
+    $currentState['capo'] = isset($payload['capo']) ? (int)$payload['capo'] : ($currentState['capo'] ?? 0);
+    $currentState['semi'] = isset($payload['semi']) ? (int)$payload['semi'] : ($currentState['semi'] ?? 0);
     $currentState['setlist_id'] = isset($payload['setlist_id']) ? (int)$payload['setlist_id'] : ($currentState['setlist_id'] ?? null);
     $currentState['section_name'] = trim((string)($payload['section_name'] ?? $currentState['section_name'] ?? ''));
     $currentState['section_index'] = isset($payload['section_index']) ? (int)$payload['section_index'] : ($currentState['section_index'] ?? 0);
     $currentState['bpm'] = isset($payload['bpm']) ? (int)$payload['bpm'] : ($currentState['bpm'] ?? 0);
     $currentState['scroll_ratio'] = isset($payload['scroll_ratio']) ? (float)$payload['scroll_ratio'] : ($currentState['scroll_ratio'] ?? 0.0);
-    $currentState['stage_message'] = trim((string)($payload['stage_message'] ?? $currentState['stage_message'] ?? ''));
+    $currentState['stage_message'] = isset($payload['stage_message']) ? trim((string)$payload['stage_message']) : ($currentState['stage_message'] ?? '');
     $currentState['updated_at'] = $now;
     $currentState['version'] = $nowMs;
 
@@ -139,7 +142,9 @@ if ($action === 'list_active_sessions') {
             $active[] = [
                 'session_id' => $id,
                 'leader_name' => $sess['leader_name'] ?? 'Leader',
+                'song_id' => $sess['song_id'] ?? null,
                 'song_title' => $sess['song_title'] ?? '',
+                'target_key' => $sess['target_key'] ?? '',
                 'updated_at' => $sess['updated_at'] ?? 0,
             ];
         }

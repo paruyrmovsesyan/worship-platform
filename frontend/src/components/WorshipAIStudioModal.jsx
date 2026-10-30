@@ -5,16 +5,26 @@ export default function WorshipAIStudioModal({
   isOpen,
   onClose,
   songTitle = '',
+  songKey = 'C',
   lyrics = '',
   chords = '',
   onApplyResult,
 }) {
-  const [activeTab, setActiveTab] = useState('chords'); // 'chords' | 'translate' | 'stylize'
-  const [targetKey, setTargetKey] = useState('C');
+  const [activeTab, setActiveTab] = useState('chords'); // 'chords' | 'stylize' | 'translate'
+  const [targetKey, setTargetKey] = useState(songKey || 'C');
   const [stylizeMode, setStylizeMode] = useState('enhance'); // 'enhance' | 'simplify'
+  const [customSourceText, setCustomSourceText] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [resultText, setResultText] = useState('');
+  const [modeNote, setModeNote] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const defaultSource = activeTab === 'stylize'
+    ? (chords || lyrics || '')
+    : (lyrics || chords || '');
+  const sourceText = customSourceText !== null ? customSourceText : defaultSource;
+  const setSourceText = (val) => setCustomSourceText(val);
 
   if (!isOpen) return null;
 
@@ -22,21 +32,27 @@ export default function WorshipAIStudioModal({
     setLoading(true);
     setError('');
     setResultText('');
+    setModeNote('');
     try {
       const res = await fetch('/api_lyrics_assistant.php?action=generate_chords_for_lyrics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: songTitle,
-          lyrics: lyrics || chords,
+          lyrics: sourceText || lyrics || chords,
           key: targetKey,
         }),
       });
       const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to generate chords');
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Չհաջողվեց գեներացնել ակորդները');
       setResultText(data.data?.chords_sheet || '');
+      if (data.data?.mode === 'music_theory_engine') {
+        setModeNote('Երաժշտական տեսության ներկառուցված շարժիչ (Diatonic Worship Harmony)');
+      } else {
+        setModeNote('AI Neural Studio');
+      }
     } catch (err) {
-      setError(err.message || 'Error occurred');
+      setError(err.message || 'Տեղի ունեցավ սխալ');
     } finally {
       setLoading(false);
     }
@@ -46,20 +62,22 @@ export default function WorshipAIStudioModal({
     setLoading(true);
     setError('');
     setResultText('');
+    setModeNote('');
     try {
       const res = await fetch('/api_lyrics_assistant.php?action=worship_poetic_translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          lyrics: lyrics || chords,
+          lyrics: sourceText || lyrics || chords,
           target_lang: 'hy',
         }),
       });
       const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to translate');
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Չհաջողվեց մշակել տեքստը');
       setResultText(data.data?.translated_lyrics || '');
+      if (data.data?.note) setModeNote(data.data.note);
     } catch (err) {
-      setError(err.message || 'Error occurred');
+      setError(err.message || 'Տեղի ունեցավ սխալ');
     } finally {
       setLoading(false);
     }
@@ -69,33 +87,49 @@ export default function WorshipAIStudioModal({
     setLoading(true);
     setError('');
     setResultText('');
+    setModeNote('');
     try {
       const res = await fetch('/api_lyrics_assistant.php?action=chord_stylizer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          chords: chords || lyrics,
+          chords: sourceText || chords || lyrics,
           style: stylizeMode,
         }),
       });
       const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || 'Failed to stylize chords');
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Չհաջողվեց ձևափոխել ակորդները');
       setResultText(data.data?.stylized_chords || '');
+      setModeNote(
+        stylizeMode === 'enhance'
+          ? 'Ժամանակակից Worship Հարմոնիա (sus4, add9, maj7, m7)'
+          : 'Պարզեցված ակորդներ սկսնակների համար'
+      );
     } catch (err) {
-      setError(err.message || 'Error occurred');
+      setError(err.message || 'Տեղի ունեցավ սխալ');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCopy = () => {
+    if (!resultText) return;
+    navigator.clipboard?.writeText(resultText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
   };
 
   return (
     <div className="ai-studio-overlay" onClick={onClose}>
       <div className="ai-studio-modal" onClick={(e) => e.stopPropagation()}>
         <div className="ai-studio-header">
-          <div className="ai-studio-title">
-            <span>✨ Worship AI Studio</span>
+          <div className="ai-studio-title-wrap">
+            <div className="ai-studio-title">
+              <span>✨ Worship AI Studio</span>
+            </div>
+            {songTitle && <span className="ai-studio-subtitle">{songTitle}</span>}
           </div>
-          <button type="button" className="ai-studio-close-btn" onClick={onClose}>
+          <button type="button" className="ai-studio-close-btn" onClick={onClose} aria-label="Փակել">
             ✕
           </button>
         </div>
@@ -104,49 +138,67 @@ export default function WorshipAIStudioModal({
           <button
             type="button"
             className={`ai-studio-tab-btn ${activeTab === 'chords' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('chords'); setResultText(''); setError(''); }}
+            onClick={() => {
+              setActiveTab('chords');
+              setSourceText(lyrics || chords || '');
+              setResultText('');
+              setError('');
+            }}
           >
-            🎸 Generate Chords
-          </button>
-          <button
-            type="button"
-            className={`ai-studio-tab-btn ${activeTab === 'translate' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('translate'); setResultText(''); setError(''); }}
-          >
-            ✍️ Poetic Armenian Translate
+            🎸 Ակորդների Գեներացում
           </button>
           <button
             type="button"
             className={`ai-studio-tab-btn ${activeTab === 'stylize' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('stylize'); setResultText(''); setError(''); }}
+            onClick={() => {
+              setActiveTab('stylize');
+              setSourceText(chords || lyrics || '');
+              setResultText('');
+              setError('');
+            }}
           >
-            🎨 Chord Stylizer (Worship/Simple)
+            🎨 Ակորդների Հարստացում / Պարզեցում
+          </button>
+          <button
+            type="button"
+            className={`ai-studio-tab-btn ${activeTab === 'translate' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('translate');
+              setSourceText(lyrics || chords || '');
+              setResultText('');
+              setError('');
+            }}
+          >
+            ✍️ Պոետիկ Թարգմանություն & Կառուցվածք
           </button>
         </div>
 
         <div className="ai-studio-body">
           {error && (
-            <div style={{ color: '#f87171', background: 'rgba(239, 68, 68, 0.1)', padding: '10px 14px', borderRadius: '8px', fontSize: '0.85rem' }}>
+            <div className="ai-studio-error">
               ⚠️ {error}
             </div>
           )}
 
           {activeTab === 'chords' && (
-            <>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>
-                AI analyzes lyrics and harmonizes full chord progression for standard church arrangement.
+            <div className="ai-studio-panel">
+              <p className="ai-studio-desc">
+                Վերլուծում է երգի տեքստն ու բաժինները ([Տուն], [Կրկներգ], [Կամուրջ]) և ավտոմատ կառուցում է պաշտամունքային ակորդային հարմոնիա ընտրված տոնայնությամբ։
               </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '0.9rem' }}>Choose Key:</span>
-                <select
-                  value={targetKey}
-                  onChange={(e) => setTargetKey(e.target.value)}
-                  style={{ background: '#1e293b', color: '#fff', border: '1px solid #475569', padding: '6px 12px', borderRadius: '8px' }}
-                >
-                  {['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B', 'Am', 'Em', 'Dm'].map((k) => (
-                    <option key={k} value={k}>{k}</option>
+              <div className="ai-studio-controls-row">
+                <label className="ai-studio-field-label">Ընտրել տոնայնությունը (Key)՝</label>
+                <div className="ai-studio-key-pills">
+                  {['C', 'D', 'Eb', 'E', 'F', 'G', 'A', 'Bb', 'Am', 'Em', 'Dm', 'Bm'].map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      className={`ai-key-pill ${targetKey === k ? 'active' : ''}`}
+                      onClick={() => setTargetKey(k)}
+                    >
+                      {k}
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
               <button
                 type="button"
@@ -154,53 +206,33 @@ export default function WorshipAIStudioModal({
                 disabled={loading}
                 onClick={handleGenerateChords}
               >
-                {loading ? 'Generating Harmonies...' : '✨ Generate Chords in ' + targetKey}
+                {loading ? '⏳ Գեներացվում են ակորդները...' : `✨ Ստեղծել Ակորդներ (${targetKey} տոնայնությամբ)`}
               </button>
-            </>
-          )}
-
-          {activeTab === 'translate' && (
-            <>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>
-                Translates foreign worship songs into singable Armenian poetry with matching meter, rhythm, and worship vocabulary.
-              </p>
-              <button
-                type="button"
-                className="ai-studio-action-btn"
-                disabled={loading}
-                onClick={handleTranslate}
-              >
-                {loading ? 'Translating Poetically...' : '✨ Translate into Armenian Church Lyrics'}
-              </button>
-            </>
+            </div>
           )}
 
           {activeTab === 'stylize' && (
-            <>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>
-                Transform chords between modern worship voicing (sus4, 2, 7th, slash chords) or simplified beginner chords.
+            <div className="ai-studio-panel">
+              <p className="ai-studio-desc">
+                Փոխակերպեք երգի ակորդները ժամանակակից Worship հնչողության (add9, sus4, maj7, m7) կամ պարզեցրեք սկսնակ երաժիշտների համար։
               </p>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                  <input
-                    type="radio"
-                    name="stylizeMode"
-                    value="enhance"
-                    checked={stylizeMode === 'enhance'}
-                    onChange={() => setStylizeMode('enhance')}
-                  />
-                  Modern Worship Voicing (sus4, add9, 7)
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                  <input
-                    type="radio"
-                    name="stylizeMode"
-                    value="simplify"
-                    checked={stylizeMode === 'simplify'}
-                    onChange={() => setStylizeMode('simplify')}
-                  />
-                  Simplify for Beginners
-                </label>
+              <div className="ai-studio-mode-cards">
+                <button
+                  type="button"
+                  className={`ai-mode-card ${stylizeMode === 'enhance' ? 'active' : ''}`}
+                  onClick={() => setStylizeMode('enhance')}
+                >
+                  <span className="ai-mode-card-title">🎹 Modern Worship Voicing</span>
+                  <span className="ai-mode-card-sub">Հարստացնել add9, sus4, maj7, m7 ակորդներով</span>
+                </button>
+                <button
+                  type="button"
+                  className={`ai-mode-card ${stylizeMode === 'simplify' ? 'active' : ''}`}
+                  onClick={() => setStylizeMode('simplify')}
+                >
+                  <span className="ai-mode-card-title">🎸 Սկսնակների Պարզ Ակորդներ</span>
+                  <span className="ai-mode-card-sub">Հեռացնել բարդ կոտորակային (slash) և sus/7 ակորդները</span>
+                </button>
               </div>
               <button
                 type="button"
@@ -208,36 +240,68 @@ export default function WorshipAIStudioModal({
                 disabled={loading}
                 onClick={handleStylizeChords}
               >
-                {loading ? 'Stylizing Chords...' : '✨ Apply Chord Transformation'}
+                {loading ? '⏳ Մշակվում են ակորդները...' : '✨ Կիրառել Ակորդների Ձևափոխումը'}
               </button>
-            </>
+            </div>
           )}
 
+          {activeTab === 'translate' && (
+            <div className="ai-studio-panel">
+              <p className="ai-studio-desc">
+                Օտարալեզու պաշտամունքի երգերի պոետիկ հայերեն թարգմանություն և տեքստի բաժանում կանոնավոր տների ու կրկներգերի։
+              </p>
+              <button
+                type="button"
+                className="ai-studio-action-btn"
+                disabled={loading}
+                onClick={handleTranslate}
+              >
+                {loading ? '⏳ Թարգմանվում և կառուցվածքավորվում է...' : '✨ Թարգմանել և Կառուցվածքավորել Հայերեն'}
+              </button>
+            </div>
+          )}
+
+          <div className="ai-studio-source-section">
+            <label className="ai-studio-field-label">
+              Ելակետային տեքստ / ակորդներ (կարող եք նաև խմբագրել կամ տեղադրել նոր տեքստ)՝
+            </label>
+            <textarea
+              className="ai-studio-source-textarea"
+              rows={5}
+              value={sourceText}
+              onChange={(e) => setSourceText(e.target.value)}
+              placeholder="Տեղադրեք երգի բառերը կամ ակորդներով տեքստը այստեղ..."
+            />
+          </div>
+
           {resultText && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#38bdf8' }}>AI Result:</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onApplyResult) onApplyResult(resultText);
-                    onClose();
-                  }}
-                  style={{
-                    background: '#10b981',
-                    border: 'none',
-                    color: '#fff',
-                    padding: '4px 12px',
-                    borderRadius: '6px',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  ✓ Apply to Song
-                </button>
+            <div className="ai-studio-result-wrap">
+              <div className="ai-studio-result-header">
+                <div>
+                  <span className="ai-studio-result-badge">✨ Արդյունքը պատրաստ է</span>
+                  {modeNote && <span className="ai-studio-mode-note">{modeNote}</span>}
+                </div>
+                <div className="ai-studio-result-actions">
+                  <button
+                    type="button"
+                    className="ai-studio-copy-btn"
+                    onClick={handleCopy}
+                  >
+                    {copied ? '✓ Պատճենվեց' : '📋 Պատճենել'}
+                  </button>
+                  <button
+                    type="button"
+                    className="ai-studio-apply-btn"
+                    onClick={() => {
+                      if (onApplyResult) onApplyResult(resultText, activeTab);
+                      onClose();
+                    }}
+                  >
+                    ✓ Կիրառել երգի էջում
+                  </button>
+                </div>
               </div>
-              <div className="ai-studio-result-box">{resultText}</div>
+              <pre className="ai-studio-result-box">{resultText}</pre>
             </div>
           )}
         </div>

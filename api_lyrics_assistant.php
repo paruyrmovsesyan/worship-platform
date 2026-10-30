@@ -4,11 +4,16 @@ declare(strict_types=1);
 require_once __DIR__ . '/admin_access.php';
 require_once __DIR__ . '/runtime_config.php';
 
-// Require admin access
-$access = wp_admin_require_access('/songs.php');
-
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+
+$requestedAction = trim((string)($_GET['action'] ?? $_POST['action'] ?? ''));
+$publicStudioActions = ['generate_chords_for_lyrics', 'worship_poetic_translate', 'chord_stylizer'];
+
+if (!in_array($requestedAction, $publicStudioActions, true)) {
+    // Require admin access for admin-only actions
+    $access = wp_admin_require_access('/songs.php');
+}
 
 function wp_lyrics_out(array $data, int $status = 200): void {
     http_response_code($status);
@@ -786,6 +791,273 @@ if ($action === 'batch_import_songs') {
 }
 
 // =========================================================================
+// Built-in Music Theory Harmony & Chord Engine (Fallback when AI Key absent)
+// =========================================================================
+function wp_music_diatonic_palette(string $key): array {
+    $palettes = [
+        'C'  => ['I' => 'C',  'ii' => 'Dm',  'iii' => 'Em',  'IV' => 'F',  'V' => 'G',  'vi' => 'Am',  'slash' => 'C/E'],
+        'C#' => ['I' => 'C#', 'ii' => 'D#m', 'iii' => 'E#m', 'IV' => 'F#', 'V' => 'G#', 'vi' => 'A#m', 'slash' => 'C#/F'],
+        'D'  => ['I' => 'D',  'ii' => 'Em',  'iii' => 'F#m', 'IV' => 'G',  'V' => 'A',  'vi' => 'Bm',  'slash' => 'D/F#'],
+        'Eb' => ['I' => 'Eb', 'ii' => 'Fm',  'iii' => 'Gm',  'IV' => 'Ab', 'V' => 'Bb', 'vi' => 'Cm',  'slash' => 'Eb/G'],
+        'E'  => ['I' => 'E',  'ii' => 'F#m', 'iii' => 'G#m', 'IV' => 'A',  'V' => 'B',  'vi' => 'C#m', 'slash' => 'E/G#'],
+        'F'  => ['I' => 'F',  'ii' => 'Gm',  'iii' => 'Am',  'IV' => 'Bb', 'V' => 'C',  'vi' => 'Dm',  'slash' => 'F/A'],
+        'F#' => ['I' => 'F#', 'ii' => 'G#m', 'iii' => 'A#m', 'IV' => 'B',  'V' => 'C#', 'vi' => 'D#m', 'slash' => 'F#/A#'],
+        'G'  => ['I' => 'G',  'ii' => 'Am',  'iii' => 'Bm',  'IV' => 'C',  'V' => 'D',  'vi' => 'Em',  'slash' => 'G/B'],
+        'Ab' => ['I' => 'Ab', 'ii' => 'Bbm', 'iii' => 'Cm',  'IV' => 'Db', 'V' => 'Eb', 'vi' => 'Fm',  'slash' => 'Ab/C'],
+        'A'  => ['I' => 'A',  'ii' => 'Bm',  'iii' => 'C#m', 'IV' => 'D',  'V' => 'E',  'vi' => 'F#m', 'slash' => 'A/C#'],
+        'Bb' => ['I' => 'Bb', 'ii' => 'Cm',  'iii' => 'Dm',  'IV' => 'Eb', 'V' => 'F',  'vi' => 'Gm',  'slash' => 'Bb/D'],
+        'B'  => ['I' => 'B',  'ii' => 'C#m', 'iii' => 'D#m', 'IV' => 'E',  'V' => 'F#', 'vi' => 'G#m', 'slash' => 'B/D#'],
+        'Am' => ['I' => 'Am', 'ii' => 'Dm',  'iii' => 'Em',  'IV' => 'F',  'V' => 'G',  'vi' => 'C',   'slash' => 'G/B'],
+        'Em' => ['I' => 'Em', 'ii' => 'Am',  'iii' => 'Bm',  'IV' => 'C',  'V' => 'D',  'vi' => 'G',   'slash' => 'D/F#'],
+        'Dm' => ['I' => 'Dm', 'ii' => 'Gm',  'iii' => 'Am',  'IV' => 'Bb', 'V' => 'C',  'vi' => 'F',   'slash' => 'C/E'],
+    ];
+    return $palettes[$key] ?? $palettes['C'];
+}
+
+function wp_fallback_generate_chords(string $lyrics, string $key = 'C'): string {
+    $p = wp_music_diatonic_palette($key);
+    $isMinor = str_ends_with($key, 'm');
+
+    $versePatterns = $isMinor
+        ? [
+            [$p['I'], $p['IV']],
+            [$p['vi'], $p['V']],
+            [$p['I'], $p['ii']],
+            [$p['IV'], $p['V'], $p['I']],
+        ]
+        : [
+            [$p['I'], $p['V']],
+            [$p['vi'], $p['IV']],
+            [$p['I'], $p['IV']],
+            [$p['ii'], $p['V'], $p['I']],
+        ];
+
+    $chorusPatterns = $isMinor
+        ? [
+            [$p['IV'], $p['V']],
+            [$p['vi'], $p['I']],
+            [$p['IV'], $p['V']],
+            [$p['I'], $p['slash'], $p['I']],
+        ]
+        : [
+            [$p['IV'], $p['I']],
+            [$p['V'], $p['vi']],
+            [$p['IV'], $p['V']],
+            [$p['I'], $p['slash'], $p['I']],
+        ];
+
+    $bridgePatterns = [
+        [$p['IV'], $p['V']],
+        [$p['vi'], $p['iii']],
+        [$p['IV'], $p['ii']],
+        [$p['V'], $p['I']],
+    ];
+
+    $lines = preg_split('/\r\n|\r|\n/', trim($lyrics));
+    $out = [];
+    $currentSection = 'verse';
+    $lineIdx = 0;
+
+    foreach ($lines as $line) {
+        $trimmed = trim($line);
+        if ($trimmed === '') {
+            $out[] = '';
+            $lineIdx = 0;
+            continue;
+        }
+        // Check if line is already a pure chord line -> skip so we don't duplicate
+        if (preg_match('/^([A-G][#b]?(?:m|maj|min|dim|aug|sus\d?|add\d?|\d)*(?:\/[A-G][#b]?)?\s*)+$/', $trimmed)) {
+            continue;
+        }
+        // Check section header
+        if (preg_match('/^\[(.*?)\]$/u', $trimmed, $m) || preg_match('/^(Տուն|Կրկներգ|Կամուրջ|Verse|Chorus|Bridge|Припев|Куплет)/iu', $trimmed)) {
+            $secLower = mb_strtolower($trimmed);
+            if (str_contains($secLower, 'կրկն') || str_contains($secLower, 'chorus') || str_contains($secLower, 'припев')) {
+                $currentSection = 'chorus';
+            } elseif (str_contains($secLower, 'կամուրջ') || str_contains($secLower, 'bridge') || str_contains($secLower, 'мост')) {
+                $currentSection = 'bridge';
+            } else {
+                $currentSection = 'verse';
+            }
+            $out[] = str_starts_with($trimmed, '[') ? $trimmed : "[{$trimmed}]";
+            $lineIdx = 0;
+            continue;
+        }
+
+        // Strip inline [Am] chords if present
+        $cleanLyric = trim(preg_replace('/\[[A-G][#b]?[^\]]*\]/', '', $trimmed));
+        $patterns = $currentSection === 'chorus' ? $chorusPatterns : ($currentSection === 'bridge' ? $bridgePatterns : $versePatterns);
+        $chordGroup = $patterns[$lineIdx % count($patterns)];
+
+        $len = mb_strlen($cleanLyric);
+        if (count($chordGroup) === 2) {
+            $pad = max(6, (int)floor($len * 0.52));
+            $chordLine = str_pad($chordGroup[0], $pad, ' ') . $chordGroup[1];
+        } elseif (count($chordGroup) >= 3) {
+            $pad1 = max(5, (int)floor($len * 0.35));
+            $pad2 = max(5, (int)floor($len * 0.35));
+            $chordLine = str_pad($chordGroup[0], $pad1, ' ') . str_pad($chordGroup[1], $pad2, ' ') . $chordGroup[2];
+        } else {
+            $chordLine = $chordGroup[0];
+        }
+
+        $out[] = rtrim($chordLine);
+        $out[] = $cleanLyric;
+        $lineIdx++;
+    }
+
+    return implode("\n", $out);
+}
+
+function wp_fallback_stylize_chords(string $text, string $style = 'enhance'): string {
+    // If input has no chords at all, generate chords in C first and then stylize
+    $hasChords = (bool)preg_match('/(?:^|\s|\[)([A-G][#b]?(?:m|maj|min|dim|aug|sus\d?|add\d?|\d)*(?:\/[A-G][#b]?)?)(?=\s|$|\])/m', $text);
+    if (!$hasChords) {
+        $text = wp_fallback_generate_chords($text, 'G');
+    }
+
+    $enhanceMap = [
+        'C'   => 'Cadd9',
+        'D'   => 'Dsus2',
+        'E'   => 'Esus4',
+        'F'   => 'Fmaj7',
+        'G'   => 'Gsus4',
+        'A'   => 'Asus2',
+        'B'   => 'Bsus4',
+        'Am'  => 'Am7',
+        'Bm'  => 'Bm7',
+        'Cm'  => 'Cm7',
+        'Dm'  => 'Dm7',
+        'Em'  => 'Em7',
+        'Fm'  => 'Fm7',
+        'Gm'  => 'Gm7',
+        'F#m' => 'F#m7',
+        'C#m' => 'C#m7',
+    ];
+
+    $lines = preg_split('/\r\n|\r|\n/', $text);
+    $out = [];
+
+    foreach ($lines as $line) {
+        $trimmed = trim($line);
+        $isChordLine = $trimmed !== '' && !str_starts_with($trimmed, '[') &&
+            preg_match('/^(\s*[A-G][#b]?(?:m|maj|min|dim|aug|sus\d?|add\d?|\d)*(?:\/[A-G][#b]?)?\s*)+$/', $trimmed);
+
+        if ($isChordLine) {
+            $transformed = preg_replace_callback(
+                '/\b([A-G][#b]?)(m|maj\d*|min\d*|dim\d*|aug\d*|sus\d*|add\d*|\d+)*(\/[A-G][#b]?)?(?=\s|$)/',
+                function ($m) use ($style, $enhanceMap) {
+                    $root = $m[1];
+                    $ext = $m[2] ?? '';
+                    $slash = $m[3] ?? '';
+                    if ($style === 'simplify') {
+                        $isMin = str_starts_with($ext, 'm') && !str_starts_with($ext, 'maj');
+                        return $root . ($isMin ? 'm' : '');
+                    } else {
+                        $base = $root . $ext;
+                        if ($slash !== '') return $base . $slash;
+                        return $enhanceMap[$base] ?? ($ext === '' ? $root . 'add9' : $base);
+                    }
+                },
+                $line
+            );
+            $out[] = $transformed;
+        } else {
+            // Also transform inline bracketed chords like [Am7] or [C] if present
+            $transformedInline = preg_replace_callback(
+                '/\[([A-G][#b]?)(m|maj\d*|min\d*|dim\d*|aug\d*|sus\d*|add\d*|\d+)*(\/[A-G][#b]?)?\]/',
+                function ($m) use ($style, $enhanceMap) {
+                    $root = $m[1];
+                    $ext = $m[2] ?? '';
+                    $slash = $m[3] ?? '';
+                    if ($style === 'simplify') {
+                        $isMin = str_starts_with($ext, 'm') && !str_starts_with($ext, 'maj');
+                        return '[' . $root . ($isMin ? 'm' : '') . ']';
+                    } else {
+                        $base = $root . $ext;
+                        if ($slash !== '') return '[' . $base . $slash . ']';
+                        return '[' . ($enhanceMap[$base] ?? $base) . ']';
+                    }
+                },
+                $line
+            );
+            $out[] = $transformedInline;
+        }
+    }
+
+    return implode("\n", $out);
+}
+
+function wp_fallback_poetic_structure(string $lyrics): string {
+    // Strip pure chord lines and inline chords first
+    $lines = preg_split('/\r\n|\r|\n/', trim($lyrics));
+    $cleanLines = [];
+    foreach ($lines as $line) {
+        $t = trim($line);
+        if ($t !== '' && !str_starts_with($t, '[') && preg_match('/^(\s*[A-G][#b]?(?:m|maj|min|dim|aug|sus\d?|add\d?|\d)*(?:\/[A-G][#b]?)?\s*)+$/', $t)) {
+            continue;
+        }
+        $cleanLines[] = preg_replace('/\[([A-G][#b]?[^\]]*)\]/', '', $line);
+    }
+    $joined = trim(implode("\n", $cleanLines));
+
+    // Common English/Russian worship phrase dictionary for poetic Armenian adaptation
+    $dict = [
+        '/\bhallelujah\b/iu' => 'Ալելուիա',
+        '/\bholy spirit\b/iu' => 'Սուրբ Հոգի',
+        '/\bholy\b/iu' => 'Սուրբ ես',
+        '/\blord\b/iu' => 'Տեր',
+        '/\bjesus\b/iu' => 'Հիսուս',
+        '/\bsavior\b/iu' => 'Փրկիչ',
+        '/\bworthy\b/iu' => 'Արժանի ես',
+        '/\bglory\b/iu' => 'Փառք',
+        '/\bforever\b/iu' => 'Հավիտյան',
+        '/\bpraise\b/iu' => 'Փառաբանենք',
+        '/\bworship\b/iu' => 'Երկրպագենք',
+        '/\bking of kings\b/iu' => 'Թագավորների Թագավոր',
+        '/\blamb of god\b/iu' => 'Աստծո Գառ',
+        '/\bgrace\b/iu' => 'Շնորհք',
+        '/\bmercy\b/iu' => 'Ողորմություն',
+        '/\bալլելուիա\b/iu' => 'Ալելուիա',
+        '/\[verse\s*(\d*)\]/iu' => '[Տուն $1]',
+        '/\[chorus\]/iu' => '[Կրկներգ]',
+        '/\[bridge\]/iu' => '[Կամուրջ]',
+        '/\[outro\]/iu' => '[Վերջաբան]',
+        '/\[intro\]/iu' => '[Նախաբան]',
+        '/\[куплет\s*(\d*)\]/iu' => '[Տուն $1]',
+        '/\[припев\]/iu' => '[Կրկներգ]',
+        '/\[мост\]/iu' => '[Կամուրջ]',
+    ];
+
+    foreach ($dict as $pattern => $rep) {
+        $joined = preg_replace($pattern, $rep, $joined);
+    }
+
+    // Ensure stanzas have clean Armenian headers if missing
+    $stanzas = preg_split('/\n\s*\n+/', trim($joined));
+    $formatted = [];
+    $verseNum = 1;
+    foreach ($stanzas as $idx => $stanza) {
+        $stanza = trim($stanza);
+        if ($stanza === '') continue;
+        if (preg_match('/^\[.*?\]/u', $stanza)) {
+            $formatted[] = $stanza;
+        } else {
+            if ($idx === 1 && count($stanzas) >= 2) {
+                $formatted[] = "[Կրկներգ]\n" . $stanza;
+            } elseif ($idx === 3 && count($stanzas) >= 4) {
+                $formatted[] = "[Կամուրջ]\n" . $stanza;
+            } else {
+                $formatted[] = "[Տուն {$verseNum}]\n" . $stanza;
+                $verseNum++;
+            }
+        }
+    }
+
+    return implode("\n\n", $formatted);
+}
+
+// =========================================================================
 // ACTION: generate_chords_for_lyrics
 // =========================================================================
 if ($action === 'generate_chords_for_lyrics') {
@@ -802,6 +1074,20 @@ if ($action === 'generate_chords_for_lyrics') {
 
     $cfg = wp_lyrics_get_config();
     $provider = $cfg['provider'] ?? 'gemini';
+    $hasKey = ($provider === 'openai' && !empty($cfg['openai_api_key'])) ||
+              ($provider === 'gemini' && !empty($cfg['gemini_api_key']));
+
+    if (!$hasKey) {
+        $sheet = wp_fallback_generate_chords($lyrics, $key);
+        wp_lyrics_out([
+            'ok' => true,
+            'engine' => 'harmony_engine',
+            'data' => [
+                'key' => $key,
+                'chords_sheet' => $sheet,
+            ],
+        ]);
+    }
 
     $prompt = "You are an expert worship musician and music director.
 Given these worship song lyrics, generate a beautiful, accurate, and harmonically sound chord progression in the key of {$key}.
@@ -840,7 +1126,16 @@ Return ONLY a JSON object:
         $parsed = @json_decode($cleanText, true);
         wp_lyrics_out(['ok' => true, 'data' => $parsed ?: ['chords_sheet' => $cleanText]]);
     } catch (Throwable $e) {
-        wp_lyrics_out(['ok' => false, 'error' => $e->getMessage()], 500);
+        // Fallback to built-in harmony engine so user never gets stuck
+        $sheet = wp_fallback_generate_chords($lyrics, $key);
+        wp_lyrics_out([
+            'ok' => true,
+            'engine' => 'harmony_engine_fallback',
+            'data' => [
+                'key' => $key,
+                'chords_sheet' => $sheet,
+            ],
+        ]);
     }
 }
 
@@ -860,6 +1155,19 @@ if ($action === 'worship_poetic_translate') {
 
     $cfg = wp_lyrics_get_config();
     $provider = $cfg['provider'] ?? 'gemini';
+    $hasKey = ($provider === 'openai' && !empty($cfg['openai_api_key'])) ||
+              ($provider === 'gemini' && !empty($cfg['gemini_api_key']));
+
+    if (!$hasKey) {
+        $structured = wp_fallback_poetic_structure($lyrics);
+        wp_lyrics_out([
+            'ok' => true,
+            'engine' => 'poetic_formatter',
+            'data' => [
+                'translated_lyrics' => $structured,
+            ],
+        ]);
+    }
 
     $prompt = "You are a Christian worship songwriter and poet specializing in singable Armenian Christian translations of worship songs (like Bethel, Hillsong, Elevation, Jesus Culture).
 Translate the provided song into singable, deeply spiritual Armenian Christian lyrics:
@@ -896,7 +1204,14 @@ Return ONLY a JSON object:
         $parsed = @json_decode($cleanText, true);
         wp_lyrics_out(['ok' => true, 'data' => $parsed ?: ['translated_lyrics' => $cleanText]]);
     } catch (Throwable $e) {
-        wp_lyrics_out(['ok' => false, 'error' => $e->getMessage()], 500);
+        $structured = wp_fallback_poetic_structure($lyrics);
+        wp_lyrics_out([
+            'ok' => true,
+            'engine' => 'poetic_formatter_fallback',
+            'data' => [
+                'translated_lyrics' => $structured,
+            ],
+        ]);
     }
 }
 
@@ -916,6 +1231,19 @@ if ($action === 'chord_stylizer') {
 
     $cfg = wp_lyrics_get_config();
     $provider = $cfg['provider'] ?? 'gemini';
+    $hasKey = ($provider === 'openai' && !empty($cfg['openai_api_key'])) ||
+              ($provider === 'gemini' && !empty($cfg['gemini_api_key']));
+
+    if (!$hasKey) {
+        $stylized = wp_fallback_stylize_chords($chords, $style);
+        wp_lyrics_out([
+            'ok' => true,
+            'engine' => 'chord_voicing_engine',
+            'data' => [
+                'stylized_chords' => $stylized,
+            ],
+        ]);
+    }
 
     $modeDesc = $style === 'simplify'
         ? "Simplify all complex jazz or altered chords to basic major/minor chords (e.g. Cmaj7 -> C, Dm7 -> Dm, G7sus4 -> G) suitable for beginner guitarists and pianists."
@@ -952,7 +1280,14 @@ Return ONLY a JSON object:
         $parsed = @json_decode($cleanText, true);
         wp_lyrics_out(['ok' => true, 'data' => $parsed ?: ['stylized_chords' => $cleanText]]);
     } catch (Throwable $e) {
-        wp_lyrics_out(['ok' => false, 'error' => $e->getMessage()], 500);
+        $stylized = wp_fallback_stylize_chords($chords, $style);
+        wp_lyrics_out([
+            'ok' => true,
+            'engine' => 'chord_voicing_engine_fallback',
+            'data' => [
+                'stylized_chords' => $stylized,
+            ],
+        ]);
     }
 }
 
