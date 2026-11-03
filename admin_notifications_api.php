@@ -50,7 +50,7 @@ try {
                     'message' => '📣 Push: ' . ($row['title'] ?? 'Notification'),
                     'sub'     => ($row['devices_count'] ?? 0) . ' devices reached',
                     'time'    => $row['at'] ?? date('Y-m-d H:i:s'),
-                    'link'    => '/admin_updates.php?tab=push'
+                    'link'    => '/admin_updates.php?section=push'
                 ];
             }
         }
@@ -67,7 +67,7 @@ try {
                     'message' => '⚠️ Pending request: ' . ($row['title'] ?? 'Song edit'),
                     'sub'     => 'Requires admin review in Moderation',
                     'time'    => $row['created_at'] ?? date('Y-m-d H:i:s'),
-                    'link'    => '/admin_messages.php'
+                    'link'    => '/admin_updates.php?section=moderation'
                 ];
             }
         }

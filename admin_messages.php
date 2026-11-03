@@ -8,19 +8,22 @@ require_once __DIR__ . '/admin_pwa_bootstrap.php';
 $access = wp_admin_require_access('/admin_messages.php');
 $adminUser = $access['user'];
 $adminDisplayName = trim((string)($adminUser['name'] ?? 'Admin'));
-$db = wp_runtime_open_mysqli();
-
-// Auto-create table if it doesn't exist on the live server
-$db->query("CREATE TABLE IF NOT EXISTS contact_messages (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_name VARCHAR(255) NOT NULL,
-    user_email VARCHAR(255) NOT NULL,
-    message TEXT NOT NULL,
-    is_replied TINYINT(1) DEFAULT 0,
-    reply_text TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    replied_at DATETIME NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+try {
+    $db = wp_runtime_open_mysqli();
+    // Auto-create table if it doesn't exist on the live server
+    $db->query("CREATE TABLE IF NOT EXISTS contact_messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_name VARCHAR(255) NOT NULL,
+        user_email VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        is_replied TINYINT(1) DEFAULT 0,
+        reply_text TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        replied_at DATETIME NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+} catch (Throwable $e) {
+    // DB error handled gracefully
+}
 
 $message = '';
 $messageType = '';
@@ -86,13 +89,18 @@ if (isset($_GET['msg'])) {
 }
 
 $messages = [];
-$res = $db->query("SELECT * FROM contact_messages ORDER BY created_at DESC");
-if ($res) {
-    while ($row = $res->fetch_assoc()) {
-        $messages[] = $row;
+if (!empty($db)) {
+    $res = $db->query("SELECT * FROM contact_messages ORDER BY created_at DESC");
+    if ($res) {
+        while ($row = $res->fetch_assoc()) {
+            $messages[] = $row;
+        }
+    } else {
+        $message = "Database Error: " . $db->error;
+        $messageType = "error";
     }
 } else {
-    $message = "Database Error: " . $db->error;
+    $message = "Database connection error.";
     $messageType = "error";
 }
 

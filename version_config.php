@@ -268,7 +268,7 @@ function wp_version_sanitize_page_app_modes($value): array {
     }
     $normalized = [];
     foreach ($defaults as $key => $defaultValue) {
-        $normalized[$key] = !empty($value[$key]);
+        $normalized[$key] = array_key_exists($key, $value) ? !empty($value[$key]) : $defaultValue;
     }
     return $normalized;
 }
@@ -358,7 +358,7 @@ function wp_version_sanitize_page_web_modes($value): array {
     }
     $normalized = [];
     foreach ($defaults as $key => $defaultValue) {
-        $normalized[$key] = !empty($value[$key]);
+        $normalized[$key] = array_key_exists($key, $value) ? !empty($value[$key]) : $defaultValue;
     }
     return $normalized;
 }

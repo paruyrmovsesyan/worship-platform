@@ -327,6 +327,33 @@ $adminEmail        = $adminEmail ?? '';
   };
 
   document.addEventListener('DOMContentLoaded', function() {
+    var searchInput = document.getElementById('topbarSearch');
+    if (searchInput) {
+      searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          var query = searchInput.value.trim();
+          if (query) {
+            var path = window.location.pathname;
+            if (path.indexOf('admin_clients') !== -1) {
+              window.location.href = '/admin_clients.php?q=' + encodeURIComponent(query);
+            } else if (path.indexOf('admin_news') !== -1) {
+              window.location.href = '/admin_news.php?q=' + encodeURIComponent(query);
+            } else if (path.indexOf('admin_errors') !== -1) {
+              var errSearch = document.getElementById('errorSearchInput');
+              if (errSearch) {
+                errSearch.value = query;
+                errSearch.dispatchEvent(new Event('input'));
+                return;
+              }
+              window.location.href = '/admin_errors.php?q=' + encodeURIComponent(query);
+            } else {
+              window.location.href = '/songs.php?q=' + encodeURIComponent(query);
+            }
+          }
+        }
+      });
+    }
+
     fetch('/admin_notifications_api.php')
       .then(function(r) { return r.json(); })
       .then(function(data) {

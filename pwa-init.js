@@ -247,6 +247,7 @@
     if (path === "/pricing") return "pricing";
     if (path === "/resources") return "resources";
     if (path === "/song-request") return "song_request";
+    if (path === "/studio" || path === "/tools" || path.indexOf("/studio") === 0 || path.indexOf("/tools") === 0) return "studio";
     if (
       path === "/loginuser.php" ||
       path === "/registeruser.php" ||

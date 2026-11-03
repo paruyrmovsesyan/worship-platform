@@ -19,6 +19,8 @@ if (!empty($_SESSION['admin_flash_notice'])) {
 }
 
 if (!empty($_GET['logged_out'])) {
+    unset($_SESSION['admin_access_granted'], $_SESSION['admin_authenticated_at'], $_SESSION['admin_authenticated_user_id']);
+    wp_admin_clear_access_cookie();
     $_SESSION['admin_flash_notice'] = 'Դուք դուրս եկաք admin համակարգից։';
     $redirectQuery = ['next' => $next];
     if ($socialError !== '') {
@@ -29,11 +31,6 @@ if (!empty($_GET['logged_out'])) {
     }
     header('Location: /admin_login.php?' . http_build_query($redirectQuery));
     exit;
-}
-
-if (!empty($_GET['logged_out'])) {
-    unset($_SESSION['admin_access_granted'], $_SESSION['admin_authenticated_at'], $_SESSION['admin_authenticated_user_id']);
-    wp_admin_clear_access_cookie();
 }
 
 if (!empty($_GET['denied'])) {

@@ -15,7 +15,9 @@ export function isPwaOfflineRouteAllowed(pathname = '/') {
     path === '/settings' ||
     path === '/account' ||
     path === '/notifications' ||
-    path === '/contact'
+    path === '/contact' ||
+    path === '/studio' ||
+    path === '/tools'
   ) {
     return true;
   }

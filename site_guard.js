@@ -33,11 +33,27 @@
     return "";
   }
 
+  function isUserLoggedIn() {
+    try {
+      const raw = localStorage.getItem('worship_user') || localStorage.getItem('user') || localStorage.getItem('auth_user');
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u && (u.id || u.email)) return true;
+      }
+    } catch(e) {}
+    return false;
+  }
+
   function isPageDisabledByAdmin(data){
     if(!data) return false;
     const isApp = isStandaloneAppContext();
     const key = getCurrentPageKey();
     if(!key) return false;
+
+    // Logged in users are always allowed to access Worship Studio
+    if(key === "studio" && isUserLoggedIn()) {
+      return false;
+    }
 
     const appModes = data.page_app_modes || {};
     const webModes = data.page_web_modes || {};

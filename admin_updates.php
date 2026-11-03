@@ -1743,7 +1743,7 @@ $aiHasOpenai = !empty($aiConfig['openai_api_key']);
 <!doctype html>
 <html lang="hy">
 <head>
-  <?php wp_admin_render_pwa_head('Settings — Worship Platform Admin', ['viewport' => 'width=device-width, initial-scale=1, viewport-fit=cover']); ?>
+  <?php wp_admin_render_pwa_head('Settings — Worship Platform Admin'); ?>
   <?php include __DIR__ . '/admin_shared_css.php'; ?>
   <?php include __DIR__ . '/admin_updates_css.php'; ?>
 
