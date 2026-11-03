@@ -723,6 +723,14 @@ function wp_version_load(): array {
         if ($val !== false && $val !== null) {
             $decoded = json_decode((string)$val, true);
             if (is_array($decoded)) {
+                if (empty($decoded['page_app_modes']['studio']) || empty($decoded['page_web_modes']['studio'])) {
+                    $decoded['page_app_modes']['studio'] = true;
+                    $decoded['page_web_modes']['studio'] = true;
+                    try {
+                        $upStmt = $pdo->prepare("UPDATE sys_settings SET setting_value = ? WHERE setting_key = 'version_config'");
+                        $upStmt->execute([json_encode($decoded, JSON_UNESCAPED_UNICODE)]);
+                    } catch (Throwable $eIgnored) {}
+                }
                 $configCache = wp_version_sanitize($decoded);
                 return $configCache;
             }
