@@ -1,150 +1,259 @@
-/* Worship Studio Hub Styles */
+/* Worship Pro Studio Hub Styles - Modern, Responsive & Touch-Optimized */
+
 .worship-studio-hub-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 20px 100px;
+  padding: calc(max(16px, env(safe-area-inset-top, 16px)) + 12px) max(16px, env(safe-area-inset-right, 16px)) calc(var(--bottom-nav-safe-gap, max(24px, env(safe-area-inset-bottom, 24px))) + 80px) max(16px, env(safe-area-inset-left, 16px));
   color: var(--text-primary, #f8fafc);
   font-family: inherit;
+  min-height: 100vh;
+  min-height: 100dvh;
+  box-sizing: border-box;
 }
 
+/* Mobile & PWA Top Nav Bar */
+.wsh-top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.wsh-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f1f5f9;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.wsh-back-btn:active {
+  transform: scale(0.96);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.wsh-back-arrow {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.wsh-top-badge {
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, #38bdf8, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.wsh-home-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wsh-home-btn:active {
+  transform: scale(0.94);
+}
+
+/* Header */
 .wsh-header {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .wsh-header-badge {
   display: inline-block;
   background: rgba(99, 102, 241, 0.15);
-  border: 1px solid rgba(99, 102, 241, 0.4);
+  border: 1px solid rgba(99, 102, 241, 0.35);
   color: #818cf8;
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.08em;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .wsh-title {
-  font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+  font-size: clamp(1.4rem, 3.5vw, 2.2rem);
   font-weight: 850;
-  margin: 0 0 10px 0;
+  margin: 0 0 8px 0;
+  line-height: 1.25;
   background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .wsh-subtitle {
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   color: #94a3b8;
-  line-height: 1.6;
+  line-height: 1.55;
   max-width: 780px;
-  margin: 0 0 20px 0;
+  margin: 0 0 18px 0;
 }
 
+/* Horizontal Scrolling Tab Bar */
 .wsh-tabs-scroll {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
-  padding-bottom: 8px;
+  padding: 4px 2px 10px;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.wsh-tabs-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .wsh-tab-pill {
-  background: rgba(30, 41, 59, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(30, 41, 59, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: #cbd5e1;
-  padding: 9px 18px;
+  padding: 9px 16px;
   border-radius: 12px;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   font-weight: 750;
   white-space: nowrap;
   cursor: pointer;
-  transition: all 0.16s ease;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+  font-family: inherit;
 }
 
 .wsh-tab-pill:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.09);
   color: #fff;
+}
+
+.wsh-tab-pill:active {
+  transform: scale(0.97);
 }
 
 .wsh-tab-pill.active {
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border-color: transparent;
+  border-color: rgba(168, 85, 247, 0.4);
   color: #fff;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.4);
 }
 
+.wsh-tab-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* Song Selector Bar */
 .wsh-song-selector-bar {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 12px;
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  padding: 12px 18px;
-  margin-bottom: 24px;
+  border-radius: 16px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .wsh-sel-label {
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 750;
   color: #94a3b8;
+  white-space: nowrap;
+}
+
+.wsh-song-select-wrap {
+  flex: 1;
+  min-width: 0;
 }
 
 .wsh-song-select {
-  flex: 1;
-  min-width: 220px;
+  width: 100%;
   background: #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   color: #fff;
-  padding: 8px 12px;
+  padding: 9px 12px;
   border-radius: 10px;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 700;
   outline: none;
+  font-family: inherit;
+}
+
+.wsh-song-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
 }
 
 .wsh-open-song-btn {
-  background: rgba(56, 189, 248, 0.15);
+  background: rgba(56, 189, 248, 0.14);
   border: 1px solid rgba(56, 189, 248, 0.35);
   color: #38bdf8;
-  padding: 8px 14px;
+  padding: 9px 14px;
   border-radius: 10px;
   font-size: 0.82rem;
   font-weight: 750;
   cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
 }
 
-.wsh-panel-card {
-  background: var(--card-bg, rgba(15, 23, 42, 0.85));
-  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-}
-
-.wsh-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding-bottom: 16px;
-}
-
-.wsh-card-header h3 {
-  font-size: 1.25rem;
-  font-weight: 800;
-  margin: 0 0 6px 0;
+.wsh-open-song-btn:hover {
+  background: rgba(56, 189, 248, 0.25);
   color: #fff;
 }
 
+/* Tool Panel Card */
+.wsh-panel-card {
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.95), rgba(10, 15, 30, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.wsh-card-header {
+  margin-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 14px;
+}
+
+.wsh-card-header h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 0 0 6px 0;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
 .wsh-card-desc {
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   color: #94a3b8;
   margin: 0;
   line-height: 1.5;
@@ -155,36 +264,42 @@
   margin-top: 10px;
 }
 
+/* Help Grid & Boxes */
 .wsh-help-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 24px;
-}
-
-@media (max-width: 768px) {
-  .wsh-help-grid {
-    grid-template-columns: 1fr;
-  }
+  gap: 14px;
+  margin-top: 20px;
 }
 
 .wsh-help-box {
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
-  padding: 16px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
+.wsh-help-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wsh-help-icon {
+  font-size: 1.1rem;
+}
+
 .wsh-help-box strong {
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   color: #38bdf8;
+  font-weight: 750;
 }
 
 .wsh-help-box span {
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   color: #cbd5e1;
   line-height: 1.45;
 }
@@ -193,17 +308,18 @@
   text-align: center;
   padding: 40px 20px;
   color: #64748b;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 
+/* Projection Action Box */
 .wsh-proj-action-box {
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  padding: 24px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
 .wsh-proj-preview-info {
@@ -213,80 +329,153 @@
 }
 
 .wsh-proj-preview-info strong {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: #fff;
 }
 
 .wsh-proj-preview-info span {
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   color: #94a3b8;
 }
 
 .wsh-proj-btns-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
 }
 
 .wsh-btn-launch {
   background: linear-gradient(135deg, #6366f1, #4f46e5);
   border: none;
   color: #fff;
-  padding: 10px 20px;
+  padding: 11px 22px;
   border-radius: 12px;
   font-size: 0.88rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
-  transition: transform 0.12s ease;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+  transition: transform 0.12s ease, opacity 0.15s ease;
+  font-family: inherit;
 }
 
-.wsh-btn-launch:hover {
-  transform: translateY(-1px);
+.wsh-btn-launch:active {
+  transform: scale(0.97);
 }
 
 .wsh-btn-copy {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.16);
   color: #e2e8f0;
-  padding: 10px 18px;
+  padding: 11px 18px;
   border-radius: 12px;
-  font-size: 0.86rem;
+  font-size: 0.85rem;
   font-weight: 750;
   cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
 }
 
-.wsh-ai-intro {
+.wsh-btn-copy:active {
+  transform: scale(0.97);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* AI Intro Box */
+.wsh-ai-intro,
+.wsh-planner-preview-box {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  padding: 24px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 14px;
 }
 
-.wsh-ai-intro p {
-  margin: 0;
-  font-size: 0.92rem;
-  color: #cbd5e1;
-}
-
-.wsh-planner-preview-box {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 24px;
-}
-
+.wsh-ai-intro p,
 .wsh-planner-preview-box p {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   color: #cbd5e1;
   line-height: 1.5;
+}
+
+/* =========================================================================
+   MOBILE & PWA RESPONSIVE OVERRIDES
+   ========================================================================= */
+
+@media (max-width: 768px) {
+  .worship-studio-hub-page {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .wsh-panel-card {
+    padding: 16px 14px;
+    border-radius: 18px;
+  }
+
+  .wsh-help-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .wsh-song-selector-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .wsh-song-select-wrap {
+    width: 100%;
+  }
+
+  .wsh-song-select {
+    width: 100%;
+    font-size: 0.85rem;
+  }
+
+  .wsh-open-song-btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .wsh-proj-btns-row {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .wsh-btn-launch,
+  .wsh-btn-copy {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 480px) {
+  .wsh-title {
+    font-size: 1.35rem;
+  }
+
+  .wsh-subtitle {
+    font-size: 0.82rem;
+  }
+
+  .wsh-tab-pill {
+    padding: 8px 13px;
+    font-size: 0.78rem;
+  }
+
+  .wsh-card-header h3 {
+    font-size: 1.05rem;
+  }
+
+  .wsh-card-desc {
+    font-size: 0.8rem;
+  }
 }

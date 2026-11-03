@@ -13,6 +13,7 @@ export default function WorshipStudioHub() {
   const [songs, setSongs] = useState([]);
   const [selectedSong, setSelectedSong] = useState(null);
   const [isAIStudioOpen, setIsAIStudioOpen] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState(false);
 
   // Fetch songs list for selection in tools
   useEffect(() => {
@@ -31,8 +32,37 @@ export default function WorshipStudioHub() {
     return () => { active = false; };
   }, []);
 
+  const handleCopyObsLink = (songId) => {
+    const url = `${window.location.origin}/projection/${songId}`;
+    navigator.clipboard?.writeText(url);
+    setCopyFeedback(true);
+    setTimeout(() => setCopyFeedback(false), 2500);
+  };
+
   return (
     <div className="worship-studio-hub-page">
+      {/* Mobile / PWA Top Navigation Bar */}
+      <div className="wsh-top-nav">
+        <button
+          type="button"
+          className="wsh-back-btn"
+          onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/songs'))}
+          aria-label="Վերադառնալ"
+        >
+          <span className="wsh-back-arrow">←</span>
+          <span>Ետ</span>
+        </button>
+        <div className="wsh-top-badge">🎛️ Pro Studio</div>
+        <button
+          type="button"
+          className="wsh-home-btn"
+          onClick={() => navigate('/songs')}
+          title="Երգերի գրադարան"
+        >
+          🎵
+        </button>
+      </div>
+
       {/* Studio Header */}
       <div className="wsh-header">
         <div className="wsh-header-badge">PRO WORSHIP SUITE 5.3.0</div>
@@ -48,42 +78,48 @@ export default function WorshipStudioHub() {
             className={`wsh-tab-pill ${activeTab === 'live_stage' ? 'active' : ''}`}
             onClick={() => setActiveTab('live_stage')}
           >
-            📡 Band Live Follower
+            <span className="wsh-tab-icon">📡</span>
+            <span>Live Follower</span>
           </button>
           <button
             type="button"
             className={`wsh-tab-pill ${activeTab === 'stems' ? 'active' : ''}`}
             onClick={() => setActiveTab('stems')}
           >
-            🎛️ RehearsalMix & Stems
+            <span className="wsh-tab-icon">🎛️</span>
+            <span>Stems Միքշեր</span>
           </button>
           <button
             type="button"
             className={`wsh-tab-pill ${activeTab === 'projection' ? 'active' : ''}`}
             onClick={() => setActiveTab('projection')}
           >
-            📽️ Live Projection & OBS
+            <span className="wsh-tab-icon">📽️</span>
+            <span>Պրոյեկցիա & OBS</span>
           </button>
           <button
             type="button"
             className={`wsh-tab-pill ${activeTab === 'ai_studio' ? 'active' : ''}`}
             onClick={() => setActiveTab('ai_studio')}
           >
-            ✨ AI Chords & Translate
+            <span className="wsh-tab-icon">✨</span>
+            <span>AI Studio</span>
           </button>
           <button
             type="button"
             className={`wsh-tab-pill ${activeTab === 'planner' ? 'active' : ''}`}
             onClick={() => setActiveTab('planner')}
           >
-            📅 Service Planner
+            <span className="wsh-tab-icon">📅</span>
+            <span>Service Planner</span>
           </button>
           <button
             type="button"
             className={`wsh-tab-pill ${activeTab === 'metronome' ? 'active' : ''}`}
             onClick={() => setActiveTab('metronome')}
           >
-            ⏱️ Smart Metronome
+            <span className="wsh-tab-icon">⏱️</span>
+            <span>Մետրոնոմ</span>
           </button>
         </div>
       </div>
@@ -92,20 +128,22 @@ export default function WorshipStudioHub() {
       {['stems', 'projection', 'ai_studio'].includes(activeTab) && (
         <div className="wsh-song-selector-bar">
           <label className="wsh-sel-label">Ընտրված երգ՝</label>
-          <select
-            className="wsh-song-select"
-            value={selectedSong ? selectedSong.id : ''}
-            onChange={(e) => {
-              const found = songs.find((s) => String(s.id) === String(e.target.value));
-              if (found) setSelectedSong(found);
-            }}
-          >
-            {songs.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.title_hy || s.title} {s.song_key ? `[${s.song_key}]` : ''}
-              </option>
-            ))}
-          </select>
+          <div className="wsh-song-select-wrap">
+            <select
+              className="wsh-song-select"
+              value={selectedSong ? selectedSong.id : ''}
+              onChange={(e) => {
+                const found = songs.find((s) => String(s.id) === String(e.target.value));
+                if (found) setSelectedSong(found);
+              }}
+            >
+              {songs.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.title_hy || s.title} {s.song_key ? `[${s.song_key}]` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
           {selectedSong && (
             <button
               type="button"
@@ -113,7 +151,7 @@ export default function WorshipStudioHub() {
               onClick={() => navigate(`/song/${selectedSong.id}`)}
               title="Բացել երգի ամբողջական էջը"
             >
-              📄 Բացել երգի էջը ↗
+              📄 Բացել երգը ↗
             </button>
           )}
         </div>
@@ -144,12 +182,18 @@ export default function WorshipStudioHub() {
             />
             <div className="wsh-help-grid">
               <div className="wsh-help-box">
-                <strong>👑 Worship Leader / Ղեկավար</strong>
-                <span>Սեղմեք «Սկսել Live Բեմ»։ Կգեներացվի STAGE-XXXX կոդ։ Երբ դուք փոխեք երգը, բոլորի մոտ այն կփոխվի։</span>
+                <div className="wsh-help-head">
+                  <span className="wsh-help-icon">👑</span>
+                  <strong>Worship Leader / Ղեկավար</strong>
+                </div>
+                <span>Սեղմեք «Սկսել Live Բեմ»։ Կգեներացվի STAGE-XXXX կոդ։ Երբ դուք փոխեք երգը կամ տոնայնությունը, բոլորի մոտ այն վայրկենապես կփոխվի։</span>
               </div>
               <div className="wsh-help-box">
-                <strong>🎸 Երաժիշտ / Թիմի անդամ</strong>
-                <span>Սեղմեք «Միանալ», ընտրեք ցուցակից առաջնորդի սեսիան կամ մուտքագրեք կոդը։</span>
+                <div className="wsh-help-head">
+                  <span className="wsh-help-icon">🎸</span>
+                  <strong>Երաժիշտ / Թիմի անդամ</strong>
+                </div>
+                <span>Սեղմեք «Միանալ», ընտրեք ցուցակից առաջնորդի բեմական սեսիան կամ մուտքագրեք STAGE կոդը։</span>
               </div>
             </div>
           </div>
@@ -161,7 +205,7 @@ export default function WorshipStudioHub() {
         <div className="wsh-panel-card">
           <div className="wsh-card-header">
             <div>
-              <h3>🎛️ RehearsalMix & Stems Mixer (Առանձնացված Շերտերի Միքշեր)</h3>
+              <h3>🎛️ RehearsalMix & Stems Mixer (Շերտերի Միքշեր)</h3>
               <p className="wsh-card-desc">
                 8-ալիքային Web Audio պաշտամունքային սինթեզատոր և միքշեր տանը կամ բեմի ետնամասում անհատական փորձեր անելու համար։
               </p>
@@ -206,18 +250,14 @@ export default function WorshipStudioHub() {
                     className="wsh-btn-launch"
                     onClick={() => window.open(`/projection/${selectedSong.id}`, '_blank')}
                   >
-                    📽️ Բացել Պրոյեկտորը Նոր Պատուհանով ↗
+                    📽️ Բացել Պրոյեկտորը ↗
                   </button>
                   <button
                     type="button"
                     className="wsh-btn-copy"
-                    onClick={() => {
-                      const url = `${window.location.origin}/projection/${selectedSong.id}`;
-                      navigator.clipboard?.writeText(url);
-                      alert('OBS Browser Source հղումը պատճենվեց՝ ' + url);
-                    }}
+                    onClick={() => handleCopyObsLink(selectedSong.id)}
                   >
-                    📋 Պատճենել OBS Browser Source Link
+                    {copyFeedback ? '✅ Հղումը պատճենվեց!' : '📋 Պատճենել OBS Browser Source Link'}
                   </button>
                 </div>
               </div>
@@ -233,7 +273,7 @@ export default function WorshipStudioHub() {
         <div className="wsh-panel-card">
           <div className="wsh-card-header">
             <div>
-              <h3>✨ Worship AI Studio (Ակորդների Գեներացում & Թարգմանություն)</h3>
+              <h3>✨ Worship AI Studio (Ակորդներ & Թարգմանություն)</h3>
               <p className="wsh-card-desc">
                 Արհեստական բանականության և երաժշտական տեսության ներկառուցված շարժիչով ակորդների ստեղծում, հարստացում (Modern Voicing) և պոետիկ հայերեն թարգմանություն։
               </p>
@@ -281,13 +321,6 @@ export default function WorshipStudioHub() {
                 Ծառայության րոպեական ծրագիր (Run-of-Show), երգացանկի ավելացում բազայից և ծառայողների թիմի գրաֆիկ։
               </p>
             </div>
-            <button
-              type="button"
-              className="wsh-btn-launch"
-              onClick={() => navigate('/service-planner')}
-            >
-              🚀 Բացել Ամբողջ Պլանավորիչը ↗
-            </button>
           </div>
           <div className="wsh-tool-body">
             <div className="wsh-planner-preview-box">
@@ -299,7 +332,7 @@ export default function WorshipStudioHub() {
                 className="wsh-btn-launch"
                 onClick={() => navigate('/service-planner')}
               >
-                Անցնել Ծառայության Պլանավորման Էջ →
+                🚀 Բացել Ծառայության Պլանավորման Էջը →
               </button>
             </div>
           </div>
@@ -317,7 +350,7 @@ export default function WorshipStudioHub() {
               </p>
             </div>
           </div>
-          <div className="wsh-tool-body" style={{ display: 'flex', justifyContent: 'center', padding: '24px 0' }}>
+          <div className="wsh-tool-body" style={{ display: 'flex', justifyContent: 'center', padding: '16px 0' }}>
             <SmartMetronome
               initialBpm={selectedSong?.bpm || 120}
               initialSignature={4}
