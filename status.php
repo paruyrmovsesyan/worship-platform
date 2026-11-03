@@ -120,40 +120,24 @@ if (wp_version_is_maintenance_active($config)) {
     ], 503);
 }
 
-$ok = true;
-$msg = "OK";
+$fetchSite = strtolower(trim((string)($_SERVER['HTTP_SEC_FETCH_SITE'] ?? '')));
+$lastTouch = (int)($_COOKIE['wp_status_last_touch'] ?? 0);
+$now = time();
 
-try {
-    $pdo = wp_runtime_open_pdo();
-    $pdo->query("SELECT 1");
-    wp_status_touch_activity($pdo);
-} catch (Throwable $e) {
-    $errMsg = $e->getMessage();
-    // If DB is temporarily under traffic limit (1226 max_user_connections), soft-pass to prevent client error storm
-    if ($e->getCode() === 1226 || stripos($errMsg, 'max_user_connections') !== false || stripos($errMsg, '1226') !== false) {
-        $ok = true;
-        $msg = "OK";
-    } else {
-        $ok = false;
-        $msg = "Կայքը ժամանակավորապես անհասանելի է (DB)";
+// Only connect to database for presence tracking if at least 60s have elapsed
+if ($fetchSite !== 'cross-site' && ($lastTouch === 0 || ($now - $lastTouch) >= 60)) {
+    try {
+        $pdo = wp_runtime_open_pdo();
+        wp_status_touch_activity($pdo);
+    } catch (Throwable $e) {
+        // Presence tracking failure must never impact site availability
     }
-}
-
-if (!$ok) {
-    out([
-        "ok" => false,
-        "maintenance" => true,
-        "message" => $msg,
-        "page_app_modes" => $config['page_app_modes'] ?? wp_version_default_page_app_modes(),
-        "page_web_modes" => $config['page_web_modes'] ?? wp_version_default_page_web_modes(),
-        "blocked_os_list" => $config['blocked_os_list'] ?? [],
-    ], 503);
 }
 
 out([
     "ok" => true,
     "maintenance" => false,
-    "message" => $msg,
+    "message" => "OK",
     "page_app_modes" => $config['page_app_modes'] ?? wp_version_default_page_app_modes(),
     "page_web_modes" => $config['page_web_modes'] ?? wp_version_default_page_web_modes(),
     "blocked_os_list" => $config['blocked_os_list'] ?? [],

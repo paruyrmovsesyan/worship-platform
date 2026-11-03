@@ -294,9 +294,13 @@ if (!function_exists('wp_runtime_open_pdo')) {
                 );
 
                 // Explicitly free PDO instance at the end of the request
-                register_shutdown_function(function () use (&$pdoInstance) {
-                    $pdoInstance = null;
-                });
+                static $pdoShutdown = false;
+                if (!$pdoShutdown) {
+                    $pdoShutdown = true;
+                    register_shutdown_function(function () use (&$pdoInstance) {
+                        $pdoInstance = null;
+                    });
+                }
 
                 return $pdoInstance;
             } catch (PDOException $e) {
@@ -422,7 +426,24 @@ if (!function_exists('wp_runtime_open_mysqli')) {
                     // Shared singleton connection: do not close underlying socket during request
                     return true;
                 }
+
+                public function realClose(): bool {
+                    return @parent::close();
+                }
             }
+        }
+
+        static $mysqliShutdown = false;
+        if (!$mysqliShutdown) {
+            $mysqliShutdown = true;
+            register_shutdown_function(function () use (&$mysqliInstance) {
+                if ($mysqliInstance instanceof WpLoggedMysqli) {
+                    try {
+                        $mysqliInstance->realClose();
+                    } catch (Throwable $_) {}
+                    $mysqliInstance = null;
+                }
+            });
         }
 
         $maxRetries = 3;
@@ -466,6 +487,12 @@ if (!function_exists('wp_runtime_ensure_song_title_columns_mysqli')) {
     function wp_runtime_ensure_song_title_columns_mysqli(mysqli $conn): bool {
         static $done = false;
         if ($done) {
+            return true;
+        }
+
+        $flag = __DIR__ . '/data/.db_schema_v5_ensured';
+        if (is_file($flag)) {
+            $done = true;
             return true;
         }
 
@@ -540,6 +567,7 @@ if (!function_exists('wp_runtime_ensure_song_title_columns_mysqli')) {
         }
 
         $done = true;
+        @touch($flag);
         return true;
     }
 }
@@ -548,6 +576,12 @@ if (!function_exists('wp_runtime_ensure_pricing_tables_mysqli')) {
     function wp_runtime_ensure_pricing_tables_mysqli(mysqli $conn): bool {
         static $done = false;
         if ($done) {
+            return true;
+        }
+
+        $flag = __DIR__ . '/data/.db_schema_pricing_ensured';
+        if (is_file($flag)) {
+            $done = true;
             return true;
         }
 
@@ -732,6 +766,7 @@ if (!function_exists('wp_runtime_ensure_pricing_tables_mysqli')) {
         ");
 
         $done = true;
+        @touch($flag);
         return true;
     }
 }
@@ -740,6 +775,12 @@ if (!function_exists('wp_runtime_ensure_admin_tables_mysqli')) {
     function wp_runtime_ensure_admin_tables_mysqli(mysqli $conn): bool {
         static $done = false;
         if ($done) {
+            return true;
+        }
+
+        $flag = __DIR__ . '/data/.db_schema_admin_ensured';
+        if (is_file($flag)) {
+            $done = true;
             return true;
         }
 
@@ -840,6 +881,7 @@ if (!function_exists('wp_runtime_ensure_admin_tables_mysqli')) {
         $conn->query("ALTER TABLE push_history MODIFY COLUMN at VARCHAR(60) NOT NULL");
 
         $done = true;
+        @touch($flag);
         return true;
     }
 }

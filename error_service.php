@@ -16,6 +16,13 @@ function wp_error_init_table(): bool {
         return $initialized;
     }
 
+    $flag = __DIR__ . '/data/.db_error_table_ensured';
+    if (is_file($flag)) {
+        @touch($flag);
+        $initialized = true;
+        return true;
+    }
+
     try {
         $pdo = wp_runtime_open_pdo();
         $sql = "CREATE TABLE IF NOT EXISTS system_error_logs (
@@ -68,6 +75,7 @@ function wp_error_init_table(): bool {
             }
         } catch (Throwable $_) {}
 
+        @touch($flag);
         $initialized = true;
         return true;
     } catch (Throwable $e) {
@@ -241,8 +249,14 @@ function wp_error_log_record(array $data): array {
     $now = date('Y-m-d H:i:s');
     $fingerprint = wp_error_make_fingerprint($level, $env, $message, $file, $line);
 
-    // Try Database first
-    if (wp_error_init_table()) {
+    $isDbExhaustion = (
+        stripos($message, 'max_user_connections') !== false ||
+        stripos($message, 'too many connections') !== false ||
+        stripos($message, '1226') !== false
+    );
+
+    // Try Database first (skip DB when logging database exhaustion to prevent connection stampede)
+    if (!$isDbExhaustion && wp_error_init_table()) {
         try {
             $pdo = wp_runtime_open_pdo();
             // Check for duplicate within 24 hours

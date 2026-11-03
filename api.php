@@ -9,7 +9,6 @@ require_once __DIR__ . '/translation_runtime.php';
 require_once __DIR__ . '/auth_bootstrap.php';
 require_once __DIR__ . '/version_config.php';
 session_write_close();
-$pdo = wp_runtime_open_pdo();
 
 header("Content-Type: application/json; charset=UTF-8");
 

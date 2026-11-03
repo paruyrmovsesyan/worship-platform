@@ -17,6 +17,7 @@
       if(path === "/pricing") return "pricing";
       if(path === "/resources") return "resources";
       if(path === "/song-request") return "song_request";
+      if(path === "/studio" || path === "/tools" || path.startsWith("/studio") || path.startsWith("/tools")) return "studio";
       if(path === "/profile" || path === "/settings" || path === "/account" || path === "/account.html") return "account";
       if(
         path === "/loginuser.php" ||
@@ -32,11 +33,27 @@
     return "";
   }
 
+  function isUserLoggedIn() {
+    try {
+      const raw = localStorage.getItem('worship_user') || localStorage.getItem('user') || localStorage.getItem('auth_user');
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u && (u.id || u.email)) return true;
+      }
+    } catch(e) {}
+    return false;
+  }
+
   function isPageDisabledByAdmin(data){
     if(!data) return false;
     const isApp = isStandaloneAppContext();
     const key = getCurrentPageKey();
     if(!key) return false;
+
+    // Logged in users are always allowed to access Worship Studio
+    if(key === "studio" && isUserLoggedIn()) {
+      return false;
+    }
 
     const appModes = data.page_app_modes || {};
     const webModes = data.page_web_modes || {};
@@ -71,7 +88,8 @@
       "community": ["/community"],
       "pricing": ["/pricing"],
       "resources": ["/resources"],
-      "song_request": ["/song-request"]
+      "song_request": ["/song-request"],
+      "studio": ["/studio", "/tools"]
     };
     let css = "";
     for(const key in modesObj){
@@ -366,11 +384,23 @@
     };
   }
 
-  // optional՝ պարբերաբար ստուգել
+  // Պարբերաբար ստուգել (միայն ակտիվ էկրանին, 60վրկ մեկ՝ սերվերի ռեսուրսները խնայելու համար)
+  var lastStatusCheckedAt = Date.now();
   setInterval(function(){
     if (!navigator.onLine) return;
+    if (document.hidden) return;
+    lastStatusCheckedAt = Date.now();
     checkStatus();
-  }, 5000);
+  }, 60000);
+
+  document.addEventListener("visibilitychange", function() {
+    if (!document.hidden && navigator.onLine) {
+      if (Date.now() - lastStatusCheckedAt > 30000) {
+        lastStatusCheckedAt = Date.now();
+        checkStatus();
+      }
+    }
+  });
 
   // common JSON error fallback (օր. html է գալիս)
   window.addEventListener("unhandledrejection", (e)=>{
