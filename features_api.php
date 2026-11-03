@@ -13,11 +13,12 @@ function wp_features_json(array $data, int $status = 200): void {
 
 function wp_features_default_catalog(): array {
     return [
+        // ── 1. Բեմ և Ելույթ (Stage & Performance) ──
         'smart_metronome' => [
             'id' => 'smart_metronome',
             'title' => 'Smart Metronome & Visual Click',
             'description' => 'Web Audio API-ով ճշգրիտ մետրոնոմ, տեսողական լույսեր, Tap Tempo և Screen Pulse:',
-            'status' => 'published', // 'off' | 'beta' | 'published'
+            'status' => 'published',
             'category' => 'stage',
             'test_url' => '/song/1',
         ],
@@ -25,49 +26,9 @@ function wp_features_default_catalog(): array {
             'id' => 'live_stage_follower',
             'title' => 'Band Live Follower (Leader Remote Sync)',
             'description' => 'Երաժիշտների և վոկալիստների էկրանների ավտոմատ հետևում Worship Leader-ին:',
-            'status' => 'published',
+            'status' => 'beta',
             'category' => 'stage',
             'test_url' => '/setlists/1/live',
-        ],
-        'rehearsal_stems' => [
-            'id' => 'rehearsal_stems',
-            'title' => 'RehearsalMix & Stems Mixer',
-            'description' => '8-ալիքանի բազմաթրեկ միքշեր, Solo/Mute և A-B հատվածի կրկնող Looper:',
-            'status' => 'published',
-            'category' => 'audio',
-            'test_url' => '/song/1',
-        ],
-        'lyrics_projection' => [
-            'id' => 'lyrics_projection',
-            'title' => 'Live Lyrics Projection & OBS Lower Thirds',
-            'description' => 'Դահլիճի պրոյեկտորի, OBS եթերի Lower-Thirds և Confidence Monitor ռեժիմներ:',
-            'status' => 'published',
-            'category' => 'projection',
-            'test_url' => '/projection/1',
-        ],
-        'worship_ai_studio' => [
-            'id' => 'worship_ai_studio',
-            'title' => 'Worship AI Studio',
-            'description' => 'Ակորդների գեներացում, պոետիկ հայերեն թարգմանություն և ակորդների հարստացում:',
-            'status' => 'published',
-            'category' => 'ai',
-            'test_url' => '/song/1',
-        ],
-        'service_planner' => [
-            'id' => 'service_planner',
-            'title' => 'Ministry Service Planner & Team Rostering',
-            'description' => 'Կիրակնօրյա ծառայության րոպեական Run-of-Show պլանավորում և թիմի գրաֆիկ:',
-            'status' => 'published',
-            'category' => 'ministry',
-            'test_url' => '/service-planner',
-        ],
-        'offline_p2p_mesh' => [
-            'id' => 'offline_p2p_mesh',
-            'title' => 'Offline P2P Mesh & Local Discovery',
-            'description' => 'Բեմական կապ և սինքրոնացում նույնիսկ այն դեպքում, երբ ինտերնետ կապը բացակայում է:',
-            'status' => 'published',
-            'category' => 'network',
-            'test_url' => '/setlists',
         ],
         'stage_two_column' => [
             'id' => 'stage_two_column',
@@ -76,6 +37,144 @@ function wp_features_default_catalog(): array {
             'status' => 'published',
             'category' => 'stage',
             'test_url' => '/song/1',
+        ],
+        'stage_hands_free_pedal' => [
+            'id' => 'stage_hands_free_pedal',
+            'title' => 'Bluetooth Pedal & Hands-Free Page Turner',
+            'description' => 'AirTurn, PageFlip և Coda ոտնակներով կամ ավտո-սքրոլով երգի թերթում բեմական ելույթների ժամանակ։',
+            'status' => 'beta',
+            'category' => 'stage',
+            'test_url' => '/song/1',
+        ],
+        'audio_pitch_pipe' => [
+            'id' => 'audio_pitch_pipe',
+            'title' => 'Vocal Pitch Pipe & Reference Drone',
+            'description' => 'Վոկալիստների տոնայնության տվիչ, մեկնարկային նոտայի ազդանշան և 440Hz A կամերտոն։',
+            'status' => 'beta',
+            'category' => 'stage',
+            'test_url' => '/song/1',
+        ],
+
+        // ── 2. Աուդիո և Բազմաթրեկ (Audio & Multitracks) ──
+        'chord_chart_transpose_capo' => [
+            'id' => 'chord_chart_transpose_capo',
+            'title' => 'Smart Capo & Roman Numeral Chords',
+            'description' => 'Կապոդաստրի դիրքի ավտո-հաշվիչ (Capo 1-7) և Nashville / Հռոմեական թվային ակորդներ։',
+            'status' => 'published',
+            'category' => 'audio',
+            'test_url' => '/song/1',
+        ],
+        'rehearsal_stems' => [
+            'id' => 'rehearsal_stems',
+            'title' => 'RehearsalMix & Stems Mixer',
+            'description' => '8-ալիքանի բազմաթրեկ միքշեր, Solo/Mute և A-B հատվածի կրկնող Looper:',
+            'status' => 'beta',
+            'category' => 'audio',
+            'test_url' => '/song/1',
+        ],
+        'multitrack_pads' => [
+            'id' => 'multitrack_pads',
+            'title' => 'Ambient Worship Pads & Key Transitions',
+            'description' => '12 տոնայնություններում անընդհատ հնչող մթնոլորտային pad-եր՝ երգերի միջև հարթ անցումների համար։',
+            'status' => 'beta',
+            'category' => 'audio',
+            'test_url' => '/song/1',
+        ],
+
+        // ── 3. Պրոյեկցիա և Եթեր (Projection & Stream) ──
+        'lyrics_projection' => [
+            'id' => 'lyrics_projection',
+            'title' => 'Live Lyrics Projection & Confidence Monitor',
+            'description' => 'Դահլիճի պրոյեկտորի, OBS եթերի Lower-Thirds և Confidence Monitor ռեժիմներ:',
+            'status' => 'beta',
+            'category' => 'projection',
+            'test_url' => '/projection/1',
+        ],
+        'obs_ndi_lower_thirds' => [
+            'id' => 'obs_ndi_lower_thirds',
+            'title' => 'OBS / vMix NDI Lower Thirds Stream',
+            'description' => 'YouTube և Facebook ուղիղ եթերների համար թափանցիկ ալֆա-տիտրեր և NDI / Browser Source ինտեգրում։',
+            'status' => 'beta',
+            'category' => 'projection',
+            'test_url' => '/projection/1',
+        ],
+        'ccli_songselect_import' => [
+            'id' => 'ccli_songselect_import',
+            'title' => 'CCLI SongSelect & Church Software Importer',
+            'description' => 'Եկեղեցական ծրագրերից (OpenLP, ProPresenter, ChordPro) երգերի ավտոմատ իմպորտ և ինտեգրում։',
+            'status' => 'beta',
+            'category' => 'projection',
+            'test_url' => '/songs.php',
+        ],
+
+        // ── 4. Արհեստական Բանականություն (AI & Automation) ──
+        'worship_ai_studio' => [
+            'id' => 'worship_ai_studio',
+            'title' => 'Worship AI Studio',
+            'description' => 'Ակորդների գեներացում, պոետիկ հայերեն թարգմանություն և ակորդների հարստացում:',
+            'status' => 'published',
+            'category' => 'ai',
+            'test_url' => '/song/1',
+        ],
+        'ai_vocal_remover' => [
+            'id' => 'ai_vocal_remover',
+            'title' => 'AI Vocal Separation & Minus Generator',
+            'description' => 'Երգի աուդիոյից վոկալի անջատում և մաքուր գործիքային մինուսների գեներացում AI մոդելով։',
+            'status' => 'beta',
+            'category' => 'ai',
+            'test_url' => '/song/1',
+        ],
+        'ai_setlist_flow' => [
+            'id' => 'ai_setlist_flow',
+            'title' => 'AI Setlist Flow & Energy Curve Suggester',
+            'description' => 'Երգերի տեմպի (BPM), տոնայնությունների և երկրպագության էներգիայի հոսքի AI խորհրդատու։',
+            'status' => 'beta',
+            'category' => 'ai',
+            'test_url' => '/setlists',
+        ],
+
+        // ── 5. Ծառայություն և Թիմ (Ministry & Team Planning) ──
+        'service_planner' => [
+            'id' => 'service_planner',
+            'title' => 'Ministry Service Planner & Team Rostering',
+            'description' => 'Կիրակնօրյա ծառայության րոպեական Run-of-Show պլանավորում և թիմի գրաֆիկ:',
+            'status' => 'published',
+            'category' => 'ministry',
+            'test_url' => '/service-planner',
+        ],
+        'team_availability_calendar' => [
+            'id' => 'team_availability_calendar',
+            'title' => 'Team Availability & Automated Rostering',
+            'description' => 'Երաժիշտների և վոկալիստների զբաղվածության օրացույց, բացակայությունների հաշվառում և ծանուցումներ։',
+            'status' => 'beta',
+            'category' => 'ministry',
+            'test_url' => '/service-planner',
+        ],
+        'musician_chat_voice' => [
+            'id' => 'musician_chat_voice',
+            'title' => 'Stage Intercom & Team Voice Chat',
+            'description' => 'Բեմի երաժիշտների, հնչյունային օպերատորի և ղեկավարի միջև ներքին ձայնային ու տեքստային կապ։',
+            'status' => 'beta',
+            'category' => 'ministry',
+            'test_url' => '/setlists/1/live',
+        ],
+
+        // ── 6. Ցանց և Օֆլայն Համակարգ (Network & Offline) ──
+        'offline_p2p_mesh' => [
+            'id' => 'offline_p2p_mesh',
+            'title' => 'Offline P2P Mesh & Local Discovery',
+            'description' => 'Բեմական կապ և սինքրոնացում տեղային Wi-Fi-ով նույնիսկ այն դեպքում, երբ ինտերնետ կապը բացակայում է:',
+            'status' => 'beta',
+            'category' => 'network',
+            'test_url' => '/setlists',
+        ],
+        'bluetooth_proximity_sync' => [
+            'id' => 'bluetooth_proximity_sync',
+            'title' => 'Bluetooth BLE Proximity Sync',
+            'description' => 'Bluetooth Low Energy միջոցով մոտակա սարքերի հետ երգացանկերի ակնթարթային կիսում առանց որևէ ցանցի։',
+            'status' => 'off',
+            'category' => 'network',
+            'test_url' => '/setlists',
         ],
     ];
 }

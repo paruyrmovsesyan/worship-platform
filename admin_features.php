@@ -38,12 +38,13 @@ $i18n = [
         'status_updated' => 'Կարգավիճակը թարմացվեց',
         'empty_search' => 'Որոնմանը համապատասխան ֆունկցիա չգտնվեց:',
         'cat_labels' => [
-            'stage' => 'Բեմ / Stage',
-            'audio' => 'Աուդիո / Audio',
-            'projection' => 'Պրոյեկցիա / Projection',
+            'stage' => 'Բեմ և Ելույթ',
+            'audio' => 'Աուդիո և Բազմաթրեկ',
+            'projection' => 'Պրոյեկցիա և Եթեր',
             'ai' => 'Արհեստական Բանականություն (AI)',
-            'planning' => 'Պլանավորում / Planning',
-            'general' => 'Ընդհանուր / General',
+            'ministry' => 'Ծառայություն և Թիմ',
+            'network' => 'Օֆլայն և Ցանց',
+            'general' => 'Ընդհանուր',
         ],
     ],
     'ru' => [
@@ -53,7 +54,7 @@ $i18n = [
         'publish_all' => '🚀 Опубликовать все функции (Live)',
         'total' => 'Всего функций',
         'published' => 'Опубликовано (Live)',
-        'beta' => 'Beta тестирование',
+        'beta' => 'Beta / Доработка',
         'off' => 'Отключено (Off)',
         'search_placeholder' => 'Поиск функций (Metronome, Follower, Stems...)...',
         'filter_all' => 'Все',
@@ -63,12 +64,13 @@ $i18n = [
         'status_updated' => 'Статус обновлен',
         'empty_search' => 'Функции по запросу не найдены.',
         'cat_labels' => [
-            'stage' => 'Сцена / Stage',
-            'audio' => 'Аудио / Audio',
-            'projection' => 'Проекция / OBS',
+            'stage' => 'Сцена и Выступление',
+            'audio' => 'Аудио и Мультитреки',
+            'projection' => 'Проекция и Эфир (OBS)',
             'ai' => 'Искусственный интеллект (AI)',
-            'planning' => 'Планирование / Planning',
-            'general' => 'Общее / General',
+            'ministry' => 'Служение и Команда',
+            'network' => 'Офлайн и Сеть',
+            'general' => 'Общее',
         ],
     ],
     'en' => [
@@ -78,7 +80,7 @@ $i18n = [
         'publish_all' => '🚀 Publish All Live to Production',
         'total' => 'Total Features',
         'published' => 'Published (Live)',
-        'beta' => 'Beta Testing',
+        'beta' => 'Beta / Refining',
         'off' => 'Disabled (Off)',
         'search_placeholder' => 'Search features (Metronome, Follower, Stems...)...',
         'filter_all' => 'All',
@@ -88,11 +90,12 @@ $i18n = [
         'status_updated' => 'Status updated successfully',
         'empty_search' => 'No matching features found.',
         'cat_labels' => [
-            'stage' => 'Stage & Live',
-            'audio' => 'Audio & Stems',
-            'projection' => 'Projection & OBS',
-            'ai' => 'AI Studio',
-            'planning' => 'Service Planning',
+            'stage' => 'Stage & Performance',
+            'audio' => 'Audio & Multitracks',
+            'projection' => 'Projection & Stream',
+            'ai' => 'AI Studio & Automation',
+            'ministry' => 'Ministry & Team',
+            'network' => 'Offline & Network',
             'general' => 'General',
         ],
     ],
@@ -420,7 +423,8 @@ foreach ($catalog as $item) {
     .feature-cat-tag.audio { background: #fae8ff; color: #a855f7; }
     .feature-cat-tag.projection { background: #fef3c7; color: #d97706; }
     .feature-cat-tag.ai { background: #e0e7ff; color: #4338ca; }
-    .feature-cat-tag.planning { background: #dcfce7; color: #16a34a; }
+    .feature-cat-tag.ministry, .feature-cat-tag.planning { background: #dcfce7; color: #16a34a; }
+    .feature-cat-tag.network { background: #ede9fe; color: #7c3aed; }
 
     .feature-desc {
       font-size: 0.88rem;
@@ -651,6 +655,13 @@ foreach ($catalog as $item) {
                   <?= htmlspecialchars($item['title']) ?>
                 </h3>
                 <span class="feature-cat-tag <?= htmlspecialchars($cat) ?>"><?= htmlspecialchars($catLabel) ?></span>
+                <?php if ($status === 'beta'): ?>
+                  <span class="feature-badge-refining" id="badge-<?= htmlspecialchars($id) ?>" style="font-size:10px; padding:2px 8px; margin-left:6px; font-weight:700; background:#fef3c7; color:#b45309; border-radius:6px; display:inline-block;">🧪 Վերամշակման մեջ</span>
+                <?php elseif ($status === 'off'): ?>
+                  <span class="feature-badge-refining" id="badge-<?= htmlspecialchars($id) ?>" style="font-size:10px; padding:2px 8px; margin-left:6px; font-weight:700; background:#f1f5f9; color:#64748b; border-radius:6px; display:inline-block;">⚪ Փորձարարական</span>
+                <?php else: ?>
+                  <span class="feature-badge-refining" id="badge-<?= htmlspecialchars($id) ?>" style="font-size:10px; padding:2px 8px; margin-left:6px; font-weight:700; background:#dcfce7; color:#15803d; border-radius:6px; display:inline-block;">🟢 Live</span>
+                <?php endif; ?>
               </div>
             </div>
 
@@ -826,6 +837,23 @@ foreach ($catalog as $item) {
       dot.className = 'live-dot ' + newStatus;
     }
 
+    const badge = document.getElementById('badge-' + featureId);
+    if (badge) {
+      if (newStatus === 'published') {
+        badge.style.background = '#dcfce7';
+        badge.style.color = '#15803d';
+        badge.textContent = '🟢 Live';
+      } else if (newStatus === 'beta') {
+        badge.style.background = '#fef3c7';
+        badge.style.color = '#b45309';
+        badge.textContent = '🧪 Վերամշակման մեջ';
+      } else {
+        badge.style.background = '#f1f5f9';
+        badge.style.color = '#64748b';
+        badge.textContent = '⚪ Փորձարարական';
+      }
+    }
+
     const switchBox = card.querySelector('.feature-segmented-switch');
     if (switchBox) {
       const buttons = switchBox.querySelectorAll('.switch-opt');
@@ -881,6 +909,12 @@ foreach ($catalog as $item) {
             const buttons = switchBox.querySelectorAll('.switch-opt');
             buttons.forEach(b => b.classList.remove('active-published', 'active-beta', 'active-off'));
             buttons[2].classList.add('active-published');
+          }
+          const badge = document.getElementById('badge-' + id);
+          if (badge) {
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#15803d';
+            badge.textContent = '🟢 Live';
           }
         });
         recalculateStats();
