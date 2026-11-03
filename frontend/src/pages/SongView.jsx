@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
@@ -223,6 +223,20 @@ export default function SongView() {
   const [isAIStudioOpen, setIsAIStudioOpen] = useState(false);
   const [stemsOpen, setStemsOpen] = useState(false);
   const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
+  const toolsBtnRef = useRef(null);
+  const [toolsMenuPos, setToolsMenuPos] = useState({ top: 80, right: 16 });
+
+  const toggleToolsMenu = (e) => {
+    e?.stopPropagation?.();
+    if (!isToolsMenuOpen && toolsBtnRef.current) {
+      const rect = toolsBtnRef.current.getBoundingClientRect();
+      setToolsMenuPos({
+        top: Math.min(rect.bottom + 8, window.innerHeight - 380),
+        right: Math.max(12, window.innerWidth - rect.right),
+      });
+    }
+    setIsToolsMenuOpen((prev) => !prev);
+  };
   const [autoScrollActive, setAutoScrollActive] = useState(false);
   const [autoScrollSpeed, setAutoScrollSpeed] = useState(1);
   const [chordColor, setChordColor] = useState(() => localStorage.getItem('chordColor_web') || '#39d8ff');
@@ -1278,9 +1292,10 @@ export default function SongView() {
             {/* Pro Ministry Tools Dropdown Trigger (•••) */}
             <div className="sv-tools-menu-container">
               <button
+                ref={toolsBtnRef}
                 type="button"
                 className={`icon-btn sv-tools-menu-btn ${isToolsMenuOpen ? 'active' : ''}`}
-                onClick={() => setIsToolsMenuOpen(v => !v)}
+                onClick={toggleToolsMenu}
                 title="Worship Pro Գործիքներ"
                 aria-label="Worship Pro Studio Tools"
               >
@@ -1290,116 +1305,6 @@ export default function SongView() {
                   <circle cx="12" cy="19" r="2" />
                 </svg>
               </button>
-
-              {isToolsMenuOpen && (
-                <div className="sv-tools-dropdown-menu">
-                  <div className="sv-tools-dropdown-header">
-                    <span>🎛️ Pro Studio Գործիքներ</span>
-                    <button type="button" onClick={() => setIsToolsMenuOpen(false)}>✕</button>
-                  </div>
-                  <div className="sv-tools-dropdown-items">
-                    {isEnabled('pro_studio') && (
-                      <button
-                        type="button"
-                        className="sv-tools-menu-item"
-                        onClick={() => {
-                          setIsToolsMenuOpen(false);
-                          navigate('/studio');
-                        }}
-                      >
-                        <span className="sv-tools-item-icon">🎛️</span>
-                        <div className="sv-tools-item-text">
-                          <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                            Worship Pro Studio Hub
-                            {(isBeta('pro_studio') || isBeta('rehearsal_stems') || isBeta('lyrics_projection') || isBeta('live_stage_follower')) && <BetaBadge />}
-                          </strong>
-                          <small>Բոլոր բեմական գործիքները մեկ տեղում</small>
-                        </div>
-                      </button>
-                    )}
-
-                    {isEnabled('rehearsal_stems') && (
-                      <button
-                        type="button"
-                        className="sv-tools-menu-item"
-                        onClick={() => {
-                          setIsToolsMenuOpen(false);
-                          setStemsOpen(v => !v);
-                        }}
-                      >
-                        <span className="sv-tools-item-icon">🎛️</span>
-                        <div className="sv-tools-item-text">
-                          <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                            {stemsOpen ? 'Փակել Stems Միքշերը' : 'RehearsalMix & Stems'}
-                            {isBeta('rehearsal_stems') && <BetaBadge />}
-                          </strong>
-                          <small>8-ալիքային բազմաթրեկ միքշեր</small>
-                        </div>
-                      </button>
-                    )}
-
-                    {isEnabled('worship_ai_studio') && (
-                      <button
-                        type="button"
-                        className="sv-tools-menu-item"
-                        onClick={() => {
-                          setIsToolsMenuOpen(false);
-                          setIsAIStudioOpen(true);
-                        }}
-                      >
-                        <span className="sv-tools-item-icon">✨</span>
-                        <div className="sv-tools-item-text">
-                          <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                            Worship AI Studio
-                            {isBeta('worship_ai_studio') && <BetaBadge />}
-                          </strong>
-                          <small>Ակորդների գեներացում և հարստացում</small>
-                        </div>
-                      </button>
-                    )}
-
-                    {isEnabled('lyrics_projection') && (
-                      <button
-                        type="button"
-                        className="sv-tools-menu-item"
-                        onClick={() => {
-                          setIsToolsMenuOpen(false);
-                          window.open(`/projection/${song.id}`, '_blank');
-                        }}
-                      >
-                        <span className="sv-tools-item-icon">📽️</span>
-                        <div className="sv-tools-item-text">
-                          <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                            Live Projection & OBS
-                            {isBeta('lyrics_projection') && <BetaBadge />}
-                          </strong>
-                          <small>Դահլիճի պրոյեկտոր և ուղիղ եթեր</small>
-                        </div>
-                      </button>
-                    )}
-
-                    {isEnabled('service_planner') && (
-                      <button
-                        type="button"
-                        className="sv-tools-menu-item"
-                        onClick={() => {
-                          setIsToolsMenuOpen(false);
-                          navigate('/service-planner');
-                        }}
-                      >
-                        <span className="sv-tools-item-icon">📅</span>
-                        <div className="sv-tools-item-text">
-                          <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                            Service Planner
-                            {isBeta('service_planner') && <BetaBadge />}
-                          </strong>
-                          <small>Ծառայության պլանավորող և թիմի գրաֆիկ</small>
-                        </div>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
         </div>
       </div>
@@ -2158,6 +2063,127 @@ export default function SongView() {
       </div>,
       document.body
     )}
+
+      {/* Pro Ministry Tools Portal Dropdown Menu */}
+      {isToolsMenuOpen && createPortal(
+        <div className="sv-tools-portal-overlay" onClick={() => setIsToolsMenuOpen(false)}>
+          <div
+            className="sv-tools-dropdown-menu sv-tools-dropdown-portal"
+            style={{
+              top: `${toolsMenuPos.top}px`,
+              right: `${toolsMenuPos.right}px`,
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="sv-tools-dropdown-header">
+              <span>🎛️ Pro Studio Գործիքներ</span>
+              <button type="button" onClick={() => setIsToolsMenuOpen(false)} aria-label="Փակել">✕</button>
+            </div>
+            <div className="sv-tools-dropdown-items">
+              {isEnabled('pro_studio') && (
+                <button
+                  type="button"
+                  className="sv-tools-menu-item"
+                  onClick={() => {
+                    setIsToolsMenuOpen(false);
+                    navigate('/studio');
+                  }}
+                >
+                  <span className="sv-tools-item-icon">🎛️</span>
+                  <div className="sv-tools-item-text">
+                    <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      Worship Pro Studio Hub
+                      {(isBeta('pro_studio') || isBeta('rehearsal_stems') || isBeta('lyrics_projection') || isBeta('live_stage_follower')) && <BetaBadge />}
+                    </strong>
+                    <small>Բոլոր բեմական գործիքները մեկ տեղում</small>
+                  </div>
+                </button>
+              )}
+
+              {isEnabled('rehearsal_stems') && (
+                <button
+                  type="button"
+                  className="sv-tools-menu-item"
+                  onClick={() => {
+                    setIsToolsMenuOpen(false);
+                    setStemsOpen(v => !v);
+                  }}
+                >
+                  <span className="sv-tools-item-icon">🎛️</span>
+                  <div className="sv-tools-item-text">
+                    <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      {stemsOpen ? 'Փակել Stems Միքշերը' : 'RehearsalMix & Stems'}
+                      {isBeta('rehearsal_stems') && <BetaBadge />}
+                    </strong>
+                    <small>8-ալիքային բազմաթրեկ միքշեր</small>
+                  </div>
+                </button>
+              )}
+
+              {isEnabled('worship_ai_studio') && (
+                <button
+                  type="button"
+                  className="sv-tools-menu-item"
+                  onClick={() => {
+                    setIsToolsMenuOpen(false);
+                    setIsAIStudioOpen(true);
+                  }}
+                >
+                  <span className="sv-tools-item-icon">✨</span>
+                  <div className="sv-tools-item-text">
+                    <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      Worship AI Studio
+                      {isBeta('worship_ai_studio') && <BetaBadge />}
+                    </strong>
+                    <small>Ակորդների գեներացում և հարստացում</small>
+                  </div>
+                </button>
+              )}
+
+              {isEnabled('lyrics_projection') && (
+                <button
+                  type="button"
+                  className="sv-tools-menu-item"
+                  onClick={() => {
+                    setIsToolsMenuOpen(false);
+                    window.open(`/projection/${song.id}`, '_blank');
+                  }}
+                >
+                  <span className="sv-tools-item-icon">📽️</span>
+                  <div className="sv-tools-item-text">
+                    <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      Live Projection & OBS
+                      {isBeta('lyrics_projection') && <BetaBadge />}
+                    </strong>
+                    <small>Դահլիճի պրոյեկտոր և ուղիղ եթեր</small>
+                  </div>
+                </button>
+              )}
+
+              {isEnabled('service_planner') && (
+                <button
+                  type="button"
+                  className="sv-tools-menu-item"
+                  onClick={() => {
+                    setIsToolsMenuOpen(false);
+                    navigate('/service-planner');
+                  }}
+                >
+                  <span className="sv-tools-item-icon">📅</span>
+                  <div className="sv-tools-item-text">
+                    <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      Service Planner
+                      {isBeta('service_planner') && <BetaBadge />}
+                    </strong>
+                    <small>Ծառայության պլանավորող և թիմի գրաֆիկ</small>
+                  </div>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       <WorshipAIStudioModal
         isOpen={isAIStudioOpen}

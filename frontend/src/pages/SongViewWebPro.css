@@ -832,6 +832,51 @@ body.website-theme .web-stage-btn svg {
   color: #fff !important;
 }
 
+/* Pro Ministry Tools Dropdown Portal */
+.sv-tools-portal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: fadeIn 0.15s ease-out;
+}
+
+.sv-tools-dropdown-portal {
+  position: fixed !important;
+  z-index: 100000 !important;
+  width: 300px !important;
+  max-width: calc(100vw - 24px) !important;
+}
+
+@media (max-width: 640px) {
+  .sv-tools-dropdown-portal {
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    border-bottom: none !important;
+    max-height: 85vh !important;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+    animation: slideUpTools 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+}
+
+@keyframes slideUpTools {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 .sv-tools-dropdown-menu {
   position: absolute;
   top: calc(100% + 8px);

@@ -1,8 +1,8 @@
 {
   "app_version": "5.3.0",
   "web_version": "5.3.0",
-  "asset_version": "545",
-  "build_timestamp": "2026-11-03T23:30:00+04:00",
-  "release_type": "feature",
-  "release_summary": "Add Worship Pro Studio to Feature Labs (Tri-state Live/Beta/Off switch) and Page Modes"
+  "asset_version": "546",
+  "build_timestamp": "2026-11-03T23:50:00+04:00",
+  "release_type": "bugfix",
+  "release_summary": "Fix song view three-dots tools menu clipping and portal rendering"
 }
