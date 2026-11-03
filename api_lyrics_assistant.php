@@ -268,8 +268,8 @@ if ($action === 'test_connection') {
 
     try {
         if ($provider === 'openai') {
-            $apiKey = trim((string)($data['openai_api_key'] ?? '')) ?: ($cfg['openai_api_key'] ?? '');
-            $model = trim((string)($data['openai_model'] ?? '')) ?: ($cfg['openai_model'] ?? 'gpt-4o-mini');
+            $apiKey = trim((string)($data['api_key'] ?? $data['openai_api_key'] ?? '')) ?: ($cfg['openai_api_key'] ?? '');
+            $model = trim((string)($data['model'] ?? $data['openai_model'] ?? '')) ?: ($cfg['openai_model'] ?? 'gpt-4o-mini');
             if (empty($apiKey)) {
                 wp_lyrics_out(['ok' => false, 'error' => 'OpenAI API Key-ը լրացված չէ։'], 400);
             }
@@ -279,8 +279,8 @@ if ($action === 'test_connection') {
             $res = wp_lyrics_openai_request($apiKey, $model, $messages, null);
             wp_lyrics_out(['ok' => true, 'provider' => 'openai', 'model' => $model, 'response' => $res['text'] ?: 'Connected']);
         } else {
-            $apiKey = trim((string)($data['gemini_api_key'] ?? '')) ?: ($cfg['gemini_api_key'] ?? '');
-            $model = trim((string)($data['gemini_model'] ?? '')) ?: ($cfg['gemini_model'] ?? 'gemini-2.5-flash');
+            $apiKey = trim((string)($data['api_key'] ?? $data['gemini_api_key'] ?? '')) ?: ($cfg['gemini_api_key'] ?? '');
+            $model = trim((string)($data['model'] ?? $data['gemini_model'] ?? '')) ?: ($cfg['gemini_model'] ?? 'gemini-2.5-flash');
             if (empty($apiKey)) {
                 wp_lyrics_out(['ok' => false, 'error' => 'Gemini API Key-ը լրացված չէ։'], 400);
             }

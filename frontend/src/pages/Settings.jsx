@@ -19,7 +19,7 @@ import './Settings.css';
 
 const hasWhitespace = (value) => /\s/u.test(String(value));
 const APP_INFO_CACHE_KEY = 'wp_cached_app_info';
-const APP_VERSION_FALLBACK = '2.6.9';
+const APP_VERSION_FALLBACK = '5.3.0';
 const LOCKED_GUEST_TABS = ['profile', 'security', 'sessions', 'requests'];
 const DEFAULT_ABOUT_LICENSES = [
   { name: 'React / React DOM', license: 'MIT License' },

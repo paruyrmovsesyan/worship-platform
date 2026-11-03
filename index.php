@@ -28,7 +28,7 @@ $validStaticRoutes = [
     '/resources', '/contact', '/about', '/blog', '/careers', '/documentation', '/tutorials', 
     '/support', '/privacy', '/terms', '/cookies', '/profile', '/settings', '/song-request', 
     '/notifications', '/manifest.json', '/robots.txt', '/sitemap.xml', '/news-sitemap.xml',
-    '/offline.html', '/main.html', '/service-worker.js'
+    '/offline.html', '/main.html', '/service-worker.js', '/studio', '/tools'
 ];
 $isValidRoute = in_array($path, $validStaticRoutes, true)
     || preg_match('#^/song/\d+/?$#', $path)
@@ -314,6 +314,24 @@ $siteConfig = [
 ];
 $configScript = "<script>window.SITE_CONFIG = " . json_encode($siteConfig, JSON_UNESCAPED_UNICODE) . ";</script>";
 
+// Dynamic asset versioning linked to the Admin's published version in version_config
+$publishedWebVer = trim((string)($config['web_version'] ?? '5.3.0'));
+$publishedStamp = trim((string)($config['web_release_stamp'] ?? $config['updated_at'] ?? ''));
+$assetVerToken = rawurlencode($publishedWebVer) . (!empty($publishedStamp) ? ('_' . substr(md5($publishedStamp), 0, 8)) : '');
+
+$htmlContent = preg_replace(
+    '#(/assets/index\.(?:js|css))(?:\?v=[^"\'\s>]+)?#i',
+    '$1?v=' . $assetVerToken,
+    $htmlContent
+);
+
+$versionMetaScript = "<script>window.__WP_PUBLISHED_RELEASE__ = " . json_encode([
+    'web_version' => $publishedWebVer,
+    'app_version' => trim((string)($config['app_version'] ?? '5.3.0')),
+    'release_stamp' => $publishedStamp,
+    'updated_at' => (string)($config['updated_at'] ?? ''),
+], JSON_UNESCAPED_UNICODE) . ";</script>\n";
+
 // Replace in HTML
 // Remove build-time SEO tags to prevent duplicates.
 $htmlContent = preg_replace('/<title>.*?<\/title>/is', '', $htmlContent);
@@ -321,7 +339,7 @@ $htmlContent = preg_replace('/\s*<meta\s+(?:name|property)="(?:application-name|
 $htmlContent = preg_replace('/\s*<link\s+rel="canonical"[^>]*>/i', '', $htmlContent);
 
 // Inject right before </head>
-$injection = $configScript . "\n" . $metaTags . "\n" . $schemaTags . "\n</head>";
+$injection = $configScript . "\n" . $versionMetaScript . $metaTags . "\n" . $schemaTags . "\n</head>";
 $htmlContent = str_ireplace('</head>', $injection, $htmlContent);
 
 echo $htmlContent;

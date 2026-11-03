@@ -13,8 +13,8 @@ const WP_MOBILE_CONFIG_FILE = __DIR__ . '/data/mobile_app_config.json';
 function wp_mobile_default_config(): array {
     return [
         'ios' => [
-            'current_version' => '1.0',
-            'current_build' => '1',
+            'current_version' => '5.3.0',
+            'current_build' => '2',
             'min_version' => '1.0',
             'min_build' => '1',
             'force_update' => false,
@@ -26,8 +26,8 @@ function wp_mobile_default_config(): array {
             'update_message' => 'Խնդրում ենք թարմացնել Worship Platform-ը App Store-ից՝ շարունակելու համար:',
         ],
         'android' => [
-            'current_version' => '1.0',
-            'current_build' => '1',
+            'current_version' => '5.3.0',
+            'current_build' => '2',
             'min_version' => '1.0',
             'min_build' => '1',
             'force_update' => false,

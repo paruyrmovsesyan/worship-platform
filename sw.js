@@ -37,8 +37,8 @@ const APP_SHELL = [
   "/app.js",
   "/site_guard.js",
   "/fav_bridge.js",
-  "/assets/index.css?v=539",
-  "/assets/index.js?v=539",
+  "/assets/index.css?v=542",
+  "/assets/index.js?v=542",
   "/assets/preload-helper.js",
   "/assets/dist.js",
   "/assets/base.js",
@@ -116,7 +116,7 @@ self.addEventListener("install", function(event) {
       }
     })
   );
-  self.skipWaiting();
+  // Do NOT auto skipWaiting on install. Wait for user confirmation in version-check.js
 });
 
 self.addEventListener("activate", function(event) {

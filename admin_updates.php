@@ -1369,7 +1369,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!empty($pushResult['ok'])) {
                     $message .= ' Թարմացման push ծանուցումը նույնպես ուղարկվեց։ ' . (string)($pushResult['message'] ?? '');
                 } else {
-                    $message .= ' Բայց ավտոմատ push ծանուցումը չուղարկվեց։ ' . (string)($pushResult['message'] ?? '') . ' Սխալներ՝ ' . implode(', ', $pushResult['errors'] ?? []);
+                    $message .= ' Բայց ավտոմատ push ծանուցումը չուղարկվեց։ ' . (string)($pushResult['message'] ?? '');
+                    if (!empty($pushResult['errors']) && is_array($pushResult['errors'])) {
+                        $message .= ' Սխալներ՝ ' . implode(', ', $pushResult['errors']);
+                    }
                 }
             } else {
                 $message = 'Չհաջողվեց պահպանել թարմացման տվյալները։';
@@ -1427,7 +1430,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             if (!empty($pushResult['ok'])) {
                                 $message .= ' Թարմացման push ծանուցումը նույնպես ուղարկվեց։ ' . (string)($pushResult['message'] ?? '');
                             } else {
-                                $message .= ' Բայց ավտոմատ push ծանուցումը չուղարկվեց։ ' . (string)($pushResult['message'] ?? '') . ' Սխալներ՝ ' . implode(', ', $pushResult['errors'] ?? []);
+                                $message .= ' Բայց ավտոմատ push ծանուցումը չուղարկվեց։ ' . (string)($pushResult['message'] ?? '');
+                                if (!empty($pushResult['errors']) && is_array($pushResult['errors'])) {
+                                    $message .= ' Սխալներ՝ ' . implode(', ', $pushResult['errors']);
+                                }
                             }
                         } else {
                             $message = 'Package-ը կիրառվեց, բայց version publish save-ը չհաջողվեց։';
@@ -1655,9 +1661,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $targetSection = !empty($_GET['section']) ? (string)$_GET['section'] : '';
     if ($targetSection === '') {
-        $targetSection = in_array($action, ['save_push_settings', 'restore_push_subscriptions', 'send_push'], true)
-            ? 'push'
-            : (in_array($action, ['apply_release', 'save_release_draft', 'rollback'], true) ? 'release' : '');
+        $targetSection = (string)(wp_admin_updates_action_section($action) ?? '');
     }
     $redirectUrl = '/admin_updates.php' . ($targetSection !== '' ? '?section=' . urlencode($targetSection) : '');
     header('Location: ' . $redirectUrl);
@@ -1705,6 +1709,17 @@ $apnsCredentialAvailable = wp_push_credential_is_available('apns');
 $firebaseCredentialAvailable = wp_push_credential_is_available('firebase');
 $csrfToken = wp_admin_updates_csrf_token($adminUser);
 
+$diskBuildFile = __DIR__ . '/version.json';
+$diskBuild = is_file($diskBuildFile) ? @json_decode((string)@file_get_contents($diskBuildFile), true) : null;
+$hasPendingBuild = false;
+if (is_array($diskBuild)) {
+    $diskAppVer = trim((string)($diskBuild['app_version'] ?? ''));
+    $currentAppVer = trim((string)($config['app_version'] ?? ''));
+    if ($diskAppVer !== '' && $diskAppVer !== $currentAppVer) {
+        $hasPendingBuild = true;
+    }
+}
+
 $aiConfigFile = __DIR__ . '/data/lyrics_ai_config.json';
 $aiConfig = [
     'provider' => 'gemini',
@@ -1735,60 +1750,60 @@ $aiHasOpenai = !empty($aiConfig['openai_api_key']);
 </head>
 <body class="wp-admin-app">
   <script>
-    <?= __('const ADMIN_I18N = {
-      \'Թարմացում և տեղադրում\': {ru: \'Обновление и установка\', en: \'Update & Deploy\'},
-      \'Թարմացումների Վահանակ\': {ru: \'Панель обновлений\', en: \'Updates Dashboard\'},
-      \'Սա update-ների, deploy-ի և maintenance-ի կառավարման հիմնական վահանակն է։ Աշխատանքը բաժանված է պարզ փուլերի, որպեսզի phone-ից ու computer-ից արագ գտնես ուզած գործողությունը և սխալ publish չանես։\': {ru: \'Основная панель управления обновлениями и обслуживанием. Работа разделена на простые этапы для быстрого доступа с телефона и ПК.\', en: \'Main dashboard for updates, deploy, and maintenance. Work is divided into simple stages for quick access from phone and PC.\'},
-      \'Ծրագրի ընթացիկ տարբերակ\': {ru: \'Текущая версия приложения\', en: \'Current App Version\'},
-      \'Կայքի ընթացիկ տարբերակ\': {ru: \'Текущая версия сайта\', en: \'Current Web Version\'},
-      \'Փաթեթի կապի վիճակ\': {ru: \'Статус связи пакета\', en: \'Package Sync Status\'},
-      \'Ծրագրի ընդհանուր ճանաչված տեղադրումներ\': {ru: \'Общее количество установок\', en: \'Total Known Installs\'},
-      \'Վերադառնալ ադմին վահանակ\': {ru: \'Вернуться в админку\', en: \'Back to Admin\'},
-      \'Բացել տարբերակի տվյալները\': {ru: \'Данные версии\', en: \'Version Data\'},
-      \'Դուրս գալ admin-ից\': {ru: \'Выйти из админки\', en: \'Log Out\'},
-      \'Արագ հոսք\': {ru: \'Быстрый старт\', en: \'Quick Flow\'},
-      \'Լրացրու version/message դաշտերը `Թարմացում և տեղադրում` բաժնում։\': {ru: \'Заполните поля version/message в разделе «Обновление и установка».\', en: \'Fill in version/message fields in the \"Update & Deploy\" section.\'},
-      \'Ընտրիր կիրառման տարբերակը` առանց ֆայլի կամ ֆայլով։\': {ru: \'Выберите вариант применения: с файлом или без.\', en: \'Choose deployment mode: with or without file.\'},
-      \'Սեղմիր `Կիրառել թարմացումը` ու ավարտիր գործընթացը։\': {ru: \'Нажмите «Применить обновление» для завершения.\', en: \'Click \"Apply Update\" to finish.\'},
-      \'1. Թարմացում և տեղադրում\': {ru: \'1. Обновление и установка\', en: \'1. Update & Deploy\'},
-      \'2. Ծրագրի մասին\': {ru: \'2. О программе\', en: \'2. About the App\'},
-      \'3. Ընդհանուր տվյալներ և SEO\': {ru: \'3. Общие данные и SEO\', en: \'3. General Info & SEO\'},
-      \'4. Տեխնիկական աշխատանքներ\': {ru: \'4. Тех. работы\', en: \'4. Maintenance\'},
-      \'5. Push ծանուցումներ\': {ru: \'5. Push-уведомления\', en: \'5. Push Notifications\'},
-      \'6. Սարքեր\': {ru: \'6. Устройства\', en: \'6. Devices\'},
-      \'7. Պատմություն\': {ru: \'7. История\', en: \'7. History\'},
-      \'8. Մուտքեր\': {ru: \'8. Доступы\', en: \'8. Access\'},
-      \'9. Մոդերացիա\': {ru: \'9. Модерация\', en: \'9. Moderation\'},
-      \'10. Թարգմանություններ\': {ru: \'10. Переводы\', en: \'10. Translations\'},
-      \'Թողարկման գլխավոր հոսք\': {ru: \'Главный поток релиза\', en: \'Main Release Flow\'},
-      \'Այստեղ լրացնում ես տարբերակները, հաղորդագրությունները և ընտրում ես ինչպես կիրառել թարմացումը։\': {ru: \'Здесь вы заполняете версии, сообщения и выбираете способ применения обновления.\', en: \'Here you fill in versions, messages, and choose how to apply the update.\'},
-      \'Ծրագիր\': {ru: \'Программа\', en: \'App\'},
-      \'Կայք\': {ru: \'Сайт\', en: \'Web\'},
-      \'Փաթեթ պատրաստ\': {ru: \'Пакет готов\', en: \'Package Ready\'},
-      \'Գնալ կիրառման կոճակին\': {ru: \'Перейти к применению\', en: \'Go to Apply button\'},
-      \'Նոր հնարավորություն\': {ru: \'Новая функция\', en: \'New Feature\'},
-      \'ԱՆՋԱՏՎԱԾ\': {ru: \'ОТКЛЮЧЕНО\', en: \'DISABLED\'},
-      \'Տեխնիկական աշխատանքների վիճակ\': {ru: \'Состояние тех. работ\', en: \'Maintenance Status\'},
-      \'Վերջին թարմացումը (UTC+4)\': {ru: \'Последнее обновление\', en: \'Last update\'},
-      \'Թողարկման կենդանի ամփոփում\': {ru: \'Живая сводка релиза\', en: \'Live Release Summary\'},
-      \'Մինչև սեղմես `Կիրառել թարմացումը`, այստեղ միանգամից երևում է ինչ տարբերակ է գնալու, ինչ ձևով է կիրառվելու և արդյոք հիմնական դաշտերը լրացված են։\': {ru: \'До нажатия кнопки здесь сразу видно, какая версия будет применена.\', en: \'Before applying, you can see what version will be deployed.\'},
-      \'Փոփոխությունները կպահպանվեն ավտոմատ\': {ru: \'Изменения сохраняются автоматически\', en: \'Changes saved automatically\'},
-      \'Ծրագրի թողարկում\': {ru: \'Релиз программы\', en: \'App Release\'},
-      \'Նոր հնարավորություն - Ծրագրի նոր տարբերակ\': {ru: \'Новая версия программы\', en: \'New App Version\'},
-      \'Կայքի թողարկում\': {ru: \'Релиз сайта\', en: \'Web Release\'},
-      \'Նոր հնարավորություն - Կայքի նոր տարբերակ\': {ru: \'Новая версия сайта\', en: \'New Web Version\'},
-      \'Կիրառման ձև\': {ru: \'Способ применения\', en: \'Deployment Mode\'},
-      \'Կփոխվեն միայն տարբերակների, հաղորդագրությունների և կարգավորումների տվյալները` առանց սերվերի ֆայլերի փոփոխման:\': {ru: \'Будут изменены только данные версий и настройки.\', en: \'Only version data and settings will be changed.\'},
-      \'ԿԻՐԱՌԵԼ ԹԱՐՄԱՑՈՒՄԸ\': {ru: \'ПРИМЕНИТЬ ОБНОВЛЕНИЕ\', en: \'APPLY UPDATE\'},
-      \'ՊԱՏՐԱՍՏ\': {ru: \'ГОТОВ\', en: \'READY\'},
-      \'ՍՊԱՍՄԱՆ ՄԵՋ\': {ru: \'В ОЖИДАНИИ\', en: \'PENDING\'},
-      \'Կարգավորումներ և համակարգ\': {ru: \'Настройки и система\', en: \'Settings & System\'},
-      \'Երգերի ցանկ\': {ru: \'Список песен\', en: \'Music Library\'},
-      \'Կարգավորումներ\': {ru: \'Настройки\', en: \'Settings\'},
-      \'Դուրս գալ\': {ru: \'Выйти\', en: \'Log Out\'},
-      \'Ադմին\': {ru: \'Админ\', en: \'Admin\'}
+    const ADMIN_I18N = {
+      'Թարմացում և տեղադրում': {ru: 'Обновление и установка', en: 'Update & Deploy'},
+      'Թարմացումների Վահանակ': {ru: 'Панель обновлений', en: 'Updates Dashboard'},
+      'Սա update-ների, deploy-ի և maintenance-ի կառավարման հիմնական վահանակն է։ Աշխատանքը բաժանված է պարզ փուլերի, որպեսզի phone-ից ու computer-ից արագ գտնես ուզած գործողությունը և սխալ publish չանես։': {ru: 'Основная панель управления обновлениями и обслуживанием. Работа разделена на простые этапы для быстрого доступа с телефона и ПК.', en: 'Main dashboard for updates, deploy, and maintenance. Work is divided into simple stages for quick access from phone and PC.'},
+      'Ծրագրի ընթացիկ տարբերակ': {ru: 'Текущая версия приложения', en: 'Current App Version'},
+      'Կայքի ընթացիկ տարբերակ': {ru: 'Текущая версия сайта', en: 'Current Web Version'},
+      'Փաթեթի կապի վիճակ': {ru: 'Статус связи пакета', en: 'Package Sync Status'},
+      'Ծրագրի ընդհանուր ճանաչված տեղադրումներ': {ru: 'Общее количество установок', en: 'Total Known Installs'},
+      'Վերադառնալ ադմին վահանակ': {ru: 'Вернуться в админку', en: 'Back to Admin'},
+      'Բացել տարբերակի տվյալները': {ru: 'Данные версии', en: 'Version Data'},
+      'Դուրս գալ admin-ից': {ru: 'Выйти из админки', en: 'Log Out'},
+      'Արագ հոսք': {ru: 'Быстрый старт', en: 'Quick Flow'},
+      'Լրացրու version/message դաշտերը `Թարմացում և տեղադրում` բաժնում։': {ru: 'Заполните поля version/message в разделе «Обновление и установка».', en: 'Fill in version/message fields in the "Update & Deploy" section.'},
+      'Ընտրիր կիրառման տարբերակը` առանց ֆայլի կամ ֆայլով։': {ru: 'Выберите вариант применения: с файлом или без.', en: 'Choose deployment mode: with or without file.'},
+      'Սեղմիր `Կիրառել թարմացումը` ու ավարտիր գործընթացը։': {ru: 'Нажмите «Применить обновление» для завершения.', en: 'Click "Apply Update" to finish.'},
+      '1. Թարմացում և տեղադրում': {ru: '1. Обновление и установка', en: '1. Update & Deploy'},
+      '2. Ծրագրի մասին': {ru: '2. О программе', en: '2. About the App'},
+      '3. Ընդհանուր տվյալներ և SEO': {ru: '3. Общие данные и SEO', en: '3. General Info & SEO'},
+      '4. Տեխնիկական աշխատանքներ': {ru: '4. Тех. работы', en: '4. Maintenance'},
+      '5. Push ծանուցումներ': {ru: '5. Push-уведомления', en: '5. Push Notifications'},
+      '6. Սարքեր': {ru: '6. Устройства', en: '6. Devices'},
+      '7. Պատմություն': {ru: '7. История', en: '7. History'},
+      '8. Մուտքեր': {ru: '8. Доступы', en: '8. Access'},
+      '9. Մոդերացիա': {ru: '9. Модерация', en: '9. Moderation'},
+      '10. Թարգմանություններ': {ru: '10. Переводы', en: '10. Translations'},
+      'Թողարկման գլխավոր հոսք': {ru: 'Главный поток релиза', en: 'Main Release Flow'},
+      'Այստեղ լրացնում ես տարբերակները, հաղորդագրությունները և ընտրում ես ինչպես կիրառել թարմացումը։': {ru: 'Здесь вы заполняете версии, сообщения и выбираете способ применения обновления.', en: 'Here you fill in versions, messages, and choose how to apply the update.'},
+      'Ծրագիր': {ru: 'Программа', en: 'App'},
+      'Կայք': {ru: 'Сайт', en: 'Web'},
+      'Փաթեթ պատրաստ': {ru: 'Пакет готов', en: 'Package Ready'},
+      'Գնալ կիրառման կոճակին': {ru: 'Перейти к применению', en: 'Go to Apply button'},
+      'Նոր հնարավորություն': {ru: 'Новая функция', en: 'New Feature'},
+      'ԱՆՋԱՏՎԱԾ': {ru: 'ОТКЛЮЧЕНО', en: 'DISABLED'},
+      'Տեխնիկական աշխատանքների վիճակ': {ru: 'Состояние тех. работ', en: 'Maintenance Status'},
+      'Վերջին թարմացումը (UTC+4)': {ru: 'Последнее обновление', en: 'Last update'},
+      'Թողարկման կենդանի ամփոփում': {ru: 'Живая сводка релиза', en: 'Live Release Summary'},
+      'Մինչև սեղմես `Կիրառել թարմացումը`, այստեղ միանգամից երևում է ինչ տարբերակ է գնալու, ինչ ձևով է կիրառվելու և արդյոք հիմնական դաշտերը լրացված են։': {ru: 'До нажатия кнопки здесь сразу видно, какая версия будет применена.', en: 'Before applying, you can see what version will be deployed.'},
+      'Փոփոխությունները կպահպանվեն ավտոմատ': {ru: 'Изменения сохраняются автоматически', en: 'Changes saved automatically'},
+      'Ծրագրի թողարկում': {ru: 'Релиз программы', en: 'App Release'},
+      'Նոր հնարավորություն - Ծրագրի նոր տարբերակ': {ru: 'Новая версия программы', en: 'New App Version'},
+      'Կայքի թողարկում': {ru: 'Релиз сайта', en: 'Web Release'},
+      'Նոր հնարավորություն - Կայքի նոր տարբերակ': {ru: 'Новая версия сайта', en: 'New Web Version'},
+      'Կիրառման ձև': {ru: 'Способ применения', en: 'Deployment Mode'},
+      'Կփոխվեն միայն տարբերակների, հաղորդագրությունների և կարգավորումների տվյալները` առանց սերվերի ֆայլերի փոփոխման:': {ru: 'Будут изменены только данные версий и настройки.', en: 'Only version data and settings will be changed.'},
+      'ԿԻՐԱՌԵԼ ԹԱՐՄԱՑՈՒՄԸ': {ru: 'ПРИМЕНИТЬ ОБНОВЛЕНИЕ', en: 'APPLY UPDATE'},
+      'ՊԱՏՐԱՍՏ': {ru: 'ГОТОВ', en: 'READY'},
+      'ՍՊԱՍՄԱՆ ՄԵՋ': {ru: 'В ОЖИДАНИИ', en: 'PENDING'},
+      'Կարգավորումներ և համակարգ': {ru: 'Настройки и система', en: 'Settings & System'},
+      'Երգերի ցանկ': {ru: 'Список песен', en: 'Music Library'},
+      'Կարգավորումներ': {ru: 'Настройки', en: 'Settings'},
+      'Դուրս գալ': {ru: 'Выйти', en: 'Log Out'},
+      'Ադմին': {ru: 'Админ', en: 'Admin'}
     };
-    const currentLang = \'') ?><?= $adminLang ?>';
+    const currentLang = '<?= htmlspecialchars($adminLang, ENT_QUOTES, 'UTF-8') ?>';
     if (currentLang !== 'hy') {
       function translateNode(node) {
         if (node.nodeType === Node.TEXT_NODE) {
@@ -2016,6 +2031,63 @@ $aiHasOpenai = !empty($aiConfig['openai_api_key']);
             
           </div>
         </div>
+
+        <?php if ($hasPendingBuild): ?>
+          <div style="background: linear-gradient(135deg, rgba(255, 171, 0, 0.12), rgba(255, 107, 0, 0.08)); border: 1.5px solid #ffab00; border-radius: 16px; padding: 18px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;" data-admin-section="release all">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div style="font-size: 28px;">📦</div>
+              <div>
+                <div style="font-weight: 800; font-size: 15px; color: #ff8c00;"><?= __('Առկա է սերվերում տեղադրված նոր Build / Տարբերակ') ?></div>
+                <div style="font-size: 13px; color: var(--text); margin-top: 2px;">
+                  <?= __('Սերվերում առկա է:') ?> <strong>v<?= htmlspecialchars($diskBuild['app_version'] ?? '') ?> (Build <?= htmlspecialchars($diskBuild['asset_version'] ?? '') ?>)</strong> | 
+                  <?= __('Ընթացիկ հրապարակված:') ?> <strong>v<?= htmlspecialchars($config['app_version'] ?? '') ?></strong>
+                  <span class="chip" style="background:#ffab00; color:#fff; font-size:11px; margin-left:6px;"><?= __('Դեռ չհրապարակված (Սևագիր)') ?></span>
+                </div>
+                <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                  <?= __('Օգտատերերի կայքում և PWA-ում նոր տարբերակը չի ակտիվանա, քանի դեռ ստորև չեք սեղմել «Կիրառել թարմացումը»:') ?>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-primary" type="button" id="applyPendingBuildBtn" style="padding: 10px 18px; font-weight: 700; background: linear-gradient(135deg, #ff8c00, #ff5500); border: 0; cursor: pointer;">
+              ⚡ <?= __('Լրացնել v' . htmlspecialchars($diskBuild['app_version'] ?? '') . ' տվյալները') ?>
+            </button>
+          </div>
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              var btn = document.getElementById('applyPendingBuildBtn');
+              if (btn) {
+                btn.onclick = function() {
+                  var appInput = document.getElementById('app_version');
+                  var webInput = document.getElementById('web_version');
+                  var summaryApp = document.getElementById('app_release_summary');
+                  var summaryWeb = document.getElementById('web_release_summary');
+                  var titleApp = document.getElementById('app_title');
+                  var titleWeb = document.getElementById('web_title');
+                  var msgApp = document.getElementById('app_message');
+                  var msgWeb = document.getElementById('web_message');
+                  var typeApp = document.getElementById('app_release_type');
+                  var typeWeb = document.getElementById('web_release_type');
+                  
+                  if (appInput) appInput.value = <?= json_encode($diskBuild['app_version'] ?? '') ?>;
+                  if (webInput) webInput.value = <?= json_encode($diskBuild['web_version'] ?? '') ?>;
+                  if (summaryApp) summaryApp.value = <?= json_encode($diskBuild['release_summary'] ?? '') ?>;
+                  if (summaryWeb) summaryWeb.value = <?= json_encode($diskBuild['release_summary'] ?? '') ?>;
+                  if (typeApp) typeApp.value = <?= json_encode($diskBuild['release_type'] ?? 'feature') ?>;
+                  if (typeWeb) typeWeb.value = <?= json_encode($diskBuild['release_type'] ?? 'feature') ?>;
+                  if (titleApp) titleApp.value = "Ծրագրի նոր տարբերակ " + <?= json_encode($diskBuild['app_version'] ?? '') ?>;
+                  if (titleWeb) titleWeb.value = "Կայքի նոր տարբերակ " + <?= json_encode($diskBuild['web_version'] ?? '') ?>;
+                  if (msgApp) msgApp.value = "Հասանելի է " + <?= json_encode($diskBuild['app_version'] ?? '') ?> + " տարբերակը: " + <?= json_encode($diskBuild['release_summary'] ?? '') ?>;
+                  if (msgWeb) msgWeb.value = "Հասանելի է " + <?= json_encode($diskBuild['web_version'] ?? '') ?> + " տարբերակը: " + <?= json_encode($diskBuild['release_summary'] ?? '') ?>;
+                  
+                  var panel = document.getElementById('releaseWorkspacePanel');
+                  if (panel) {
+                    window.scrollTo({ top: panel.offsetTop - 60, behavior: 'smooth' });
+                  }
+                };
+              }
+            });
+          </script>
+        <?php endif; ?>
 
         <div class="bento-split" id="releaseWorkspacePanel" data-admin-section="release all" data-admin-permission="release">
           
@@ -5598,7 +5670,15 @@ $aiHasOpenai = !empty($aiConfig['openai_api_key']);
             const resp = await fetch('/api_lyrics_assistant.php?action=test_connection', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ provider, api_key: apiKey, model })
+              body: JSON.stringify({
+                provider,
+                api_key: apiKey,
+                model,
+                gemini_api_key: geminiKey,
+                gemini_model: geminiModel,
+                openai_api_key: openaiKey,
+                openai_model: openaiModel
+              })
             });
             const data = await resp.json();
 

@@ -17,6 +17,7 @@
       if(path === "/pricing") return "pricing";
       if(path === "/resources") return "resources";
       if(path === "/song-request") return "song_request";
+      if(path === "/studio" || path === "/tools" || path.startsWith("/studio") || path.startsWith("/tools")) return "studio";
       if(path === "/profile" || path === "/settings" || path === "/account" || path === "/account.html") return "account";
       if(
         path === "/loginuser.php" ||
@@ -71,7 +72,8 @@
       "community": ["/community"],
       "pricing": ["/pricing"],
       "resources": ["/resources"],
-      "song_request": ["/song-request"]
+      "song_request": ["/song-request"],
+      "studio": ["/studio", "/tools"]
     };
     let css = "";
     for(const key in modesObj){

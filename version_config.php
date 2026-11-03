@@ -126,6 +126,11 @@ function wp_version_page_app_registry(): array {
             'path' => '/loginuser.php',
             'description' => 'Մուտք, գրանցում, password reset և email verify flow-երը։',
         ],
+        'studio' => [
+            'label' => 'Pro Studio Գործիքներ',
+            'path' => '/studio',
+            'description' => 'Բեմական և ստուդիական պրո գործիքներ (Live Follower, Stems, Projection, AI, Planner, Metronome)։',
+        ],
     ];
 }
 
@@ -329,6 +334,11 @@ function wp_version_page_web_registry(): array {
             'label'       => 'Մուտք և գրանցում',
             'path'        => '/loginuser.php',
             'description' => 'Մուտք, գրանցում, password reset և email verify flow-երը։',
+        ],
+        'studio' => [
+            'label'       => 'Pro Studio Գործիքներ',
+            'path'        => '/studio',
+            'description' => 'Բեմական և ստուդիական պրո գործիքներ (Live Follower, Stems, Projection, AI, Planner, Metronome)։',
         ],
     ];
 }

@@ -157,8 +157,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $config = wp_mobile_get_config();
 
         if ($postAction === 'save_ios' || $postAction === 'save_all') {
-            $config['ios']['current_version'] = trim((string)($_POST['ios_current_version'] ?? '1.0'));
-            $config['ios']['current_build']   = trim((string)($_POST['ios_current_build'] ?? '1'));
+            $config['ios']['current_version'] = trim((string)($_POST['ios_current_version'] ?? '5.3.0'));
+            $config['ios']['current_build']   = trim((string)($_POST['ios_current_build'] ?? '2'));
             $config['ios']['min_version']     = trim((string)($_POST['ios_min_version'] ?? '1.0'));
             $config['ios']['min_build']       = trim((string)($_POST['ios_min_build'] ?? '1'));
             $config['ios']['force_update']    = !empty($_POST['ios_force_update']);
@@ -171,8 +171,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($postAction === 'save_android' || $postAction === 'save_all') {
-            $config['android']['current_version'] = trim((string)($_POST['android_current_version'] ?? '1.0'));
-            $config['android']['current_build']   = trim((string)($_POST['android_current_build'] ?? '1'));
+            $config['android']['current_version'] = trim((string)($_POST['android_current_version'] ?? '5.3.0'));
+            $config['android']['current_build']   = trim((string)($_POST['android_current_build'] ?? '2'));
             $config['android']['min_version']     = trim((string)($_POST['android_min_version'] ?? '1.0'));
             $config['android']['min_build']       = trim((string)($_POST['android_min_build'] ?? '1'));
             $config['android']['force_update']    = !empty($_POST['android_force_update']);
