@@ -749,8 +749,24 @@ export default function SongView() {
 
     fetchFullSongDetails(true);
 
+    // Live update listener: if Service Worker background-syncs or receives fresh song details,
+    // update song state immediately so user sees latest chords/lyrics without manual refresh.
+    const handleSwMessage = (event) => {
+      const data = event && event.data ? event.data : null;
+      if (data && data.type === 'SONG_DETAIL_UPDATED' && String(data.song_id) === String(id)) {
+        fetchFullSongDetails(false);
+      }
+    };
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleSwMessage);
+    }
+
     return () => {
       cancelled = true;
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleSwMessage);
+      }
     };
   }, [id, language, user]);
 

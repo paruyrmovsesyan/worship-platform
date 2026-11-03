@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v540";
+const CACHE_VERSION = "worship-v541";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -776,6 +776,9 @@ async function handleAccountRequest(request, url) {
   }
 }
 
+const SONG_DETAIL_TIMEOUT_MS = 2500;
+const SONGS_LIST_TIMEOUT_MS = 3500;
+
 async function handleApiRequest(event, url) {
   const request = event.request;
   const hasId = url.searchParams.has("id");
@@ -784,18 +787,50 @@ async function handleApiRequest(event, url) {
   const query = (url.searchParams.get("q") || "").toLowerCase();
   const cache = await caches.open(DATA_CACHE);
 
+  // Strategy: For song detail (/api.php?id=...) and song list (/api.php),
+  // use Network-First with a short fallback timeout so user ALWAYS gets the freshest
+  // edited chords/lyrics immediately when online, falling back to offline cache if slow/offline.
+  if (hasId || (!action && !mode && !query)) {
+    const timeoutMs = hasId ? SONG_DETAIL_TIMEOUT_MS : SONGS_LIST_TIMEOUT_MS;
+    try {
+      const networkResponse = await fetchWithTimeout(request.url, timeoutMs);
+      if (networkResponse && networkResponse.status === 200) {
+        await cache.put(request.url, networkResponse.clone());
+        if (!hasId && !action) {
+          await cache.put(SONGS_SNAPSHOT_KEY, networkResponse.clone());
+          broadcastSyncTime(new Date().toISOString());
+        } else if (hasId) {
+          broadcastSongDetailUpdated(url.searchParams.get("id"));
+        }
+        return networkResponse;
+      }
+    } catch (netErr) {
+      // Network failed or timed out -> Fall back to cache below
+    }
+
+    // Try cached exact response
+    const exactCached = await cache.match(request.url);
+    if (exactCached) {
+      return exactCached;
+    }
+
+    // Try snapshot fallback
+    const allSongsResponse = await cache.match(SONGS_SNAPSHOT_KEY);
+    if (allSongsResponse) {
+      return buildSongsFallbackResponse(allSongsResponse, { hasId, action, mode, query, url });
+    }
+
+    return new Response(JSON.stringify(hasId ? null : []), {
+      status: 200,
+      headers: { "Content-Type": "application/json; charset=UTF-8" }
+    });
+  }
+
+  // Other API requests: background revalidation
   const networkPromise = fetch(request.url).then(async function(networkResponse) {
     if (networkResponse && networkResponse.status === 200) {
       await cache.put(request.url, networkResponse.clone());
-
-      if (!hasId && !action) {
-        await cache.put(SONGS_SNAPSHOT_KEY, networkResponse.clone());
-        broadcastSyncTime(new Date().toISOString());
-      } else if (hasId) {
-        broadcastSongDetailUpdated(url.searchParams.get("id"));
-      }
     }
-
     return networkResponse;
   });
 
@@ -803,12 +838,6 @@ async function handleApiRequest(event, url) {
   if (exactCached) {
     event.waitUntil(networkPromise.catch(function() {}));
     return exactCached;
-  }
-
-  const allSongsResponse = await cache.match(SONGS_SNAPSHOT_KEY);
-  if (allSongsResponse) {
-    event.waitUntil(networkPromise.catch(function() {}));
-    return buildSongsFallbackResponse(allSongsResponse, { hasId, action, mode, query, url });
   }
 
   try {
