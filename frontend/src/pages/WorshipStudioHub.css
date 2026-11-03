@@ -1,9 +1,12 @@
-/* Worship Pro Studio Hub Styles - Modern, Responsive & Touch-Optimized */
+/* =========================================================================
+   Worship Pro Studio Hub Styles - Modern, Responsive & Touch-Optimized
+   Version 5.3.0
+   ========================================================================= */
 
 .worship-studio-hub-page {
-  max-width: 1200px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: calc(max(16px, env(safe-area-inset-top, 16px)) + 12px) max(16px, env(safe-area-inset-right, 16px)) calc(var(--bottom-nav-safe-gap, max(24px, env(safe-area-inset-bottom, 24px))) + 80px) max(16px, env(safe-area-inset-left, 16px));
+  padding: calc(max(16px, env(safe-area-inset-top, 16px)) + 8px) max(16px, env(safe-area-inset-right, 16px)) calc(var(--bottom-nav-safe-gap, max(24px, env(safe-area-inset-bottom, 24px))) + 80px) max(16px, env(safe-area-inset-left, 16px));
   color: var(--text-primary, #f8fafc);
   font-family: inherit;
   min-height: 100vh;
@@ -11,21 +14,24 @@
   box-sizing: border-box;
 }
 
-/* Mobile & PWA Top Nav Bar */
+/* ─────────────────────────────────────────────────────────────────────────
+   1. TOP NAVIGATION BAR (App/Mobile & Desktop Header)
+   ───────────────────────────────────────────────────────────────────────── */
 .wsh-top-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  padding: 8px 4px;
 }
 
-.wsh-back-btn {
+.wsh-nav-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: #f1f5f9;
   padding: 8px 16px;
   border-radius: 12px;
@@ -33,377 +39,1110 @@
   font-weight: 750;
   cursor: pointer;
   transition: all 0.16s ease;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  user-select: none;
 }
 
-.wsh-back-btn:active {
+.wsh-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.wsh-nav-btn:active {
   transform: scale(0.96);
   background: rgba(255, 255, 255, 0.16);
 }
 
-.wsh-back-arrow {
+.wsh-btn-icon {
   font-size: 1.1rem;
   line-height: 1;
 }
 
-.wsh-top-badge {
-  font-size: 0.85rem;
+.wsh-top-center-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wsh-brand-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.wsh-brand-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.wsh-brand-title {
+  font-size: 0.95rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: -0.01em;
   background: linear-gradient(135deg, #38bdf8, #818cf8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.wsh-home-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #cbd5e1;
-  display: grid;
-  place-items: center;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
+.wsh-brand-version {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 0.08em;
 }
 
-.wsh-home-btn:active {
-  transform: scale(0.94);
+/* ─────────────────────────────────────────────────────────────────────────
+   2. HERO HEADER SECTION
+   ───────────────────────────────────────────────────────────────────────── */
+.wsh-hero-section {
+  margin-bottom: 24px;
 }
 
-/* Header */
-.wsh-header {
-  margin-bottom: 20px;
+.wsh-hero-badge-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
-.wsh-header-badge {
+.wsh-hero-pill-badge {
   display: inline-block;
-  background: rgba(99, 102, 241, 0.15);
+  background: rgba(99, 102, 241, 0.14);
   border: 1px solid rgba(99, 102, 241, 0.35);
-  color: #818cf8;
+  color: #a5b4fc;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.wsh-hero-status-pill {
+  display: inline-block;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  margin-bottom: 8px;
+  font-weight: 750;
 }
 
-.wsh-title {
-  font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+.wsh-hero-title {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
   font-weight: 850;
-  margin: 0 0 8px 0;
-  line-height: 1.25;
-  background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
+  margin: 0 0 10px 0;
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #ffffff 30%, #93c5fd 70%, #c084fc 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.wsh-subtitle {
-  font-size: 0.88rem;
+.wsh-hero-desc {
+  font-size: 0.92rem;
   color: #94a3b8;
-  line-height: 1.55;
-  max-width: 780px;
-  margin: 0 0 18px 0;
+  line-height: 1.6;
+  max-width: 820px;
+  margin: 0 0 20px 0;
 }
 
-/* Horizontal Scrolling Tab Bar */
-.wsh-tabs-scroll {
+/* ─────────────────────────────────────────────────────────────────────────
+   3. NAVIGATION RIBBON (TAB PILLS)
+   ───────────────────────────────────────────────────────────────────────── */
+.wsh-nav-ribbon {
+  margin-bottom: 20px;
+}
+
+.wsh-ribbon-scroll {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   overflow-x: auto;
-  padding: 4px 2px 10px;
+  padding: 4px 2px 12px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 
-.wsh-tabs-scroll::-webkit-scrollbar {
+.wsh-ribbon-scroll::-webkit-scrollbar {
   display: none;
 }
 
-.wsh-tab-pill {
+.wsh-ribbon-pill {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  background: rgba(30, 41, 59, 0.75);
+  gap: 8px;
+  background: rgba(30, 41, 59, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #cbd5e1;
-  padding: 9px 16px;
-  border-radius: 12px;
-  font-size: 0.84rem;
+  padding: 10px 18px;
+  border-radius: 14px;
+  font-size: 0.86rem;
   font-weight: 750;
   white-space: nowrap;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
   font-family: inherit;
+  user-select: none;
 }
 
-.wsh-tab-pill:hover {
-  background: rgba(255, 255, 255, 0.09);
+.wsh-ribbon-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
-.wsh-tab-pill:active {
+.wsh-ribbon-pill:active {
   transform: scale(0.97);
 }
 
-.wsh-tab-pill.active {
+.wsh-ribbon-pill.active {
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border-color: rgba(168, 85, 247, 0.4);
-  color: #fff;
-  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.4);
+  border-color: rgba(168, 85, 247, 0.5);
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
 }
 
-.wsh-tab-icon {
-  font-size: 1rem;
+.wsh-pill-icon {
+  font-size: 1.05rem;
   line-height: 1;
 }
 
-/* Song Selector Bar */
-.wsh-song-selector-bar {
+.wsh-pill-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  color: inherit;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   4. INTERACTIVE SONG SELECTOR BAR
+   ───────────────────────────────────────────────────────────────────────── */
+.wsh-song-bar-card {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.wsh-sel-label {
-  font-size: 0.82rem;
-  font-weight: 750;
-  color: #94a3b8;
-  white-space: nowrap;
-}
-
-.wsh-song-select-wrap {
-  flex: 1;
-  min-width: 0;
-}
-
-.wsh-song-select {
-  width: 100%;
-  background: #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #fff;
-  padding: 9px 12px;
-  border-radius: 10px;
-  font-size: 0.88rem;
-  font-weight: 700;
-  outline: none;
-  font-family: inherit;
-}
-
-.wsh-song-select:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
-}
-
-.wsh-open-song-btn {
-  background: rgba(56, 189, 248, 0.14);
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  color: #38bdf8;
-  padding: 9px 14px;
-  border-radius: 10px;
-  font-size: 0.82rem;
-  font-weight: 750;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-}
-
-.wsh-open-song-btn:hover {
-  background: rgba(56, 189, 248, 0.25);
-  color: #fff;
-}
-
-/* Tool Panel Card */
-.wsh-panel-card {
-  background: linear-gradient(160deg, rgba(15, 23, 42, 0.95), rgba(10, 15, 30, 0.98));
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 22px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+  justify-content: space-between;
+  gap: 16px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
 
-.wsh-card-header {
-  margin-bottom: 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding-bottom: 14px;
-}
-
-.wsh-card-header h3 {
-  font-size: 1.15rem;
-  font-weight: 800;
-  margin: 0 0 6px 0;
-  color: #fff;
-  letter-spacing: -0.01em;
-}
-
-.wsh-card-desc {
-  font-size: 0.85rem;
-  color: #94a3b8;
-  margin: 0;
-  line-height: 1.5;
-  max-width: 820px;
-}
-
-.wsh-tool-body {
-  margin-top: 10px;
-}
-
-/* Help Grid & Boxes */
-.wsh-help-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-top: 20px;
-}
-
-.wsh-help-box {
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 14px 16px;
+.wsh-sbar-left {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  min-width: 0;
 }
 
-.wsh-help-head {
+.wsh-sbar-tag {
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  color: #38bdf8;
+}
+
+.wsh-sbar-title {
+  font-size: 1.08rem;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wsh-sbar-meta-chips {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-top: 2px;
 }
 
-.wsh-help-icon {
-  font-size: 1.1rem;
-}
-
-.wsh-help-box strong {
-  font-size: 0.9rem;
-  color: #38bdf8;
+.wsh-meta-chip {
+  font-size: 0.74rem;
   font-weight: 750;
-}
-
-.wsh-help-box span {
-  font-size: 0.82rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.07);
   color: #cbd5e1;
-  line-height: 1.45;
 }
 
-.wsh-placeholder {
-  text-align: center;
-  padding: 40px 20px;
-  color: #64748b;
-  font-size: 0.92rem;
+.wsh-meta-chip.key-chip {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
 }
 
-/* Projection Action Box */
-.wsh-proj-action-box {
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 20px;
+.wsh-meta-chip.bpm-chip {
+  background: rgba(16, 185, 129, 0.14);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.wsh-sbar-actions {
   display: flex;
-  flex-direction: column;
-  gap: 18px;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.wsh-proj-preview-info {
+.wsh-sbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-size: 0.84rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  user-select: none;
+}
+
+.wsh-sbar-choose-btn {
+  background: rgba(99, 102, 241, 0.18);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  color: #c7d2fe;
+  padding: 8px 14px;
+}
+
+.wsh-sbar-choose-btn:hover {
+  background: rgba(99, 102, 241, 0.3);
+  color: #fff;
+}
+
+.wsh-sbar-nav-btn {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  padding: 0;
+}
+
+.wsh-sbar-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.wsh-sbar-view-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f1f5f9;
+  padding: 8px 14px;
+}
+
+.wsh-sbar-view-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+/* Quick Song Search Panel */
+.wsh-song-search-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 8px;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+  z-index: 100;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.wsh-search-input-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.wsh-search-icon {
+  font-size: 0.95rem;
+  color: #94a3b8;
+}
+
+.wsh-search-field {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 650;
+  font-family: inherit;
+}
+
+.wsh-search-field::placeholder {
+  color: #64748b;
+}
+
+.wsh-search-clear {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.wsh-song-search-list {
+  max-height: 280px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.wsh-proj-preview-info strong {
+.wsh-song-search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  font-family: inherit;
+  text-align: left;
+}
+
+.wsh-song-search-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.wsh-song-search-item.selected {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #a5b4fc;
+}
+
+.wsh-item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wsh-item-title {
+  font-size: 0.88rem;
+  font-weight: 750;
+}
+
+.wsh-item-sub {
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+.wsh-item-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wsh-item-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+}
+
+.wsh-item-bpm {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.wsh-search-empty {
+  text-align: center;
+  padding: 24px 10px;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   5. OVERVIEW DASHBOARD GRID & CARDS
+   ───────────────────────────────────────────────────────────────────────── */
+.wsh-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.wsh-grid-card {
+  position: relative;
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.95), rgba(10, 15, 30, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.wsh-grid-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.45);
+}
+
+/* Accent Card Borders & Shadows */
+.wsh-grid-card.card-cyan:hover {
+  border-color: rgba(6, 182, 212, 0.45);
+  box-shadow: 0 16px 38px rgba(6, 182, 212, 0.15);
+}
+
+.wsh-grid-card.card-purple:hover {
+  border-color: rgba(139, 92, 246, 0.45);
+  box-shadow: 0 16px 38px rgba(139, 92, 246, 0.15);
+}
+
+.wsh-grid-card.card-amber:hover {
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 16px 38px rgba(245, 158, 11, 0.15);
+}
+
+.wsh-grid-card.card-rose:hover {
+  border-color: rgba(236, 72, 153, 0.45);
+  box-shadow: 0 16px 38px rgba(236, 72, 153, 0.15);
+}
+
+.wsh-grid-card.card-blue:hover {
+  border-color: rgba(59, 130, 246, 0.45);
+  box-shadow: 0 16px 38px rgba(59, 130, 246, 0.15);
+}
+
+.wsh-grid-card.card-teal:hover {
+  border-color: rgba(20, 184, 166, 0.45);
+  box-shadow: 0 16px 38px rgba(20, 184, 166, 0.15);
+}
+
+.wsh-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wsh-card-category-badge {
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.wsh-card-live-dot {
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}
+
+.wsh-card-stat-badge {
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+}
+
+.wsh-card-main-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wsh-card-icon-bubble {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: grid;
+  place-items: center;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.wsh-card-heading {
+  font-size: 1.22rem;
+  font-weight: 850;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.wsh-card-text {
+  font-size: 0.86rem;
+  color: #94a3b8;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.wsh-card-highlights {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 12px;
+}
+
+.wsh-card-highlights li {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wsh-card-footer {
+  margin-top: 4px;
+}
+
+.wsh-action-btn {
+  width: 100%;
+  padding: 11px 18px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  transition: all 0.14s ease;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  user-select: none;
+}
+
+.wsh-action-btn:active {
+  transform: scale(0.97);
+}
+
+.wsh-action-btn.primary-cyan {
+  background: linear-gradient(135deg, #06b6d4, #0284c7);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.35);
+}
+
+.wsh-action-btn.primary-purple {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
+}
+
+.wsh-action-btn.primary-amber {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35);
+}
+
+.wsh-action-btn.primary-rose {
+  background: linear-gradient(135deg, #ec4899, #e11d48);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(236, 72, 153, 0.35);
+}
+
+.wsh-action-btn.primary-blue {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+}
+
+.wsh-action-btn.primary-teal {
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(20, 184, 166, 0.35);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   6. INNER TOOL PANELS (FOR TABS 1-6)
+   ───────────────────────────────────────────────────────────────────────── */
+.wsh-panel-container {
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.95), rgba(10, 15, 30, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.wsh-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 18px;
+  margin-bottom: 22px;
+}
+
+.wsh-panel-headline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wsh-panel-tag {
+  align-self: flex-start;
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.wsh-panel-tag.cyan-tag {
+  background: rgba(6, 182, 212, 0.15);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  color: #22d3ee;
+}
+
+.wsh-panel-tag.purple-tag {
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  color: #c084fc;
+}
+
+.wsh-panel-tag.amber-tag {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+}
+
+.wsh-panel-tag.rose-tag {
+  background: rgba(236, 72, 153, 0.15);
+  border: 1px solid rgba(236, 72, 153, 0.35);
+  color: #f472b6;
+}
+
+.wsh-panel-tag.blue-tag {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #60a5fa;
+}
+
+.wsh-panel-tag.teal-tag {
+  background: rgba(20, 184, 166, 0.15);
+  border: 1px solid rgba(20, 184, 166, 0.35);
+  color: #2dd4bf;
+}
+
+.wsh-panel-title {
+  font-size: 1.35rem;
+  font-weight: 850;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.wsh-panel-subtitle {
+  font-size: 0.88rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.55;
+  max-width: 820px;
+}
+
+.wsh-panel-close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #cbd5e1;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 750;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.14s ease;
+  font-family: inherit;
+}
+
+.wsh-panel-close-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+/* Steps Grid (Tab 1) */
+.wsh-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.wsh-step-card {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wsh-step-badge {
+  font-size: 0.68rem;
+  font-weight: 850;
+  color: #38bdf8;
+  letter-spacing: 0.06em;
+}
+
+.wsh-step-title {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+}
+
+.wsh-step-desc {
+  font-size: 0.84rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.wsh-step-desc code {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.85em;
+}
+
+/* Projection Modes Grid (Tab 3) */
+.wsh-projection-modes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.wsh-proj-mode-card {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  transition: all 0.15s ease;
+}
+
+.wsh-proj-mode-card:hover {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.wsh-mode-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wsh-mode-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.wsh-mode-title {
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 2px 0;
+}
+
+.wsh-mode-badge {
+  font-size: 0.68rem;
+  font-weight: 850;
+  color: #fbbf24;
+  letter-spacing: 0.05em;
+}
+
+.wsh-mode-desc {
+  font-size: 0.84rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.wsh-mode-desc code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 5px;
+  border-radius: 4px;
+  color: #fbbf24;
+  font-size: 0.85em;
+}
+
+.wsh-mode-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wsh-proj-btn {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.14s ease;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.wsh-proj-btn.primary-amber {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border: none;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+}
+
+.wsh-proj-btn.copy-btn {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #cbd5e1;
+}
+
+.wsh-proj-btn.copy-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+/* AI Studio Row (Tab 4) */
+.wsh-ai-feature-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.wsh-ai-card {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wsh-ai-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.wsh-ai-card-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+}
+
+.wsh-ai-card-desc {
+  font-size: 0.84rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.wsh-ai-launch-box {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(99, 102, 241, 0.08));
+  border: 1px solid rgba(236, 72, 153, 0.25);
+  border-radius: 18px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.wsh-ai-launch-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wsh-ai-launch-info strong {
   font-size: 1.05rem;
   color: #fff;
 }
 
-.wsh-proj-preview-info span {
+.wsh-ai-launch-info span {
   font-size: 0.84rem;
-  color: #94a3b8;
-}
-
-.wsh-proj-btns-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  color: #cbd5e1;
 }
 
 .wsh-btn-launch {
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
-  border: none;
-  color: #fff;
-  padding: 11px 22px;
+  padding: 12px 24px;
   border-radius: 12px;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
-  transition: transform 0.12s ease, opacity 0.15s ease;
+  border: none;
   font-family: inherit;
+  transition: all 0.14s ease;
+  white-space: nowrap;
+  user-select: none;
 }
 
 .wsh-btn-launch:active {
   transform: scale(0.97);
 }
 
-.wsh-btn-copy {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #e2e8f0;
-  padding: 11px 18px;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 750;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  font-family: inherit;
+.wsh-btn-launch.primary-rose {
+  background: linear-gradient(135deg, #ec4899, #e11d48);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(236, 72, 153, 0.35);
 }
 
-.wsh-btn-copy:active {
-  transform: scale(0.97);
-  background: rgba(255, 255, 255, 0.14);
+.wsh-btn-launch.primary-blue {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(59, 130, 246, 0.35);
 }
 
-/* AI Intro Box */
-.wsh-ai-intro,
-.wsh-planner-preview-box {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 20px;
+/* Service Planner Hero Card (Tab 5) */
+.wsh-planner-hero-card {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.wsh-planner-card-text {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 14px;
+  gap: 8px;
 }
 
-.wsh-ai-intro p,
-.wsh-planner-preview-box p {
+.wsh-planner-card-text h3 {
+  font-size: 1.18rem;
+  font-weight: 850;
+  color: #fff;
   margin: 0;
-  font-size: 0.88rem;
-  color: #cbd5e1;
-  line-height: 1.5;
 }
 
-/* =========================================================================
-   MOBILE & PWA RESPONSIVE OVERRIDES
-   ========================================================================= */
+.wsh-planner-card-text p {
+  font-size: 0.88rem;
+  color: #94a3b8;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 680px;
+}
+
+.wsh-planner-feature-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.wsh-planner-feature-pills span {
+  font-size: 0.78rem;
+  font-weight: 750;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: #93c5fd;
+}
+
+/* Metronome Wrapper (Tab 6) */
+.wsh-metronome-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+/* Empty State */
+.wsh-empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #64748b;
+}
+
+.wsh-empty-icon {
+  font-size: 2.5rem;
+}
+
+.wsh-empty-state p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #94a3b8;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   7. RESPONSIVE BREAKPOINTS (Mobile & Tablet)
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .wsh-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wsh-planner-hero-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .wsh-ai-launch-box {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .wsh-btn-launch {
+    width: 100%;
+    text-align: center;
+  }
+}
 
 @media (max-width: 768px) {
   .worship-studio-hub-page {
@@ -411,71 +1150,61 @@
     padding-right: 14px;
   }
 
-  .wsh-panel-card {
-    padding: 16px 14px;
+  .wsh-panel-container {
+    padding: 18px 14px;
     border-radius: 18px;
   }
 
-  .wsh-help-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .wsh-song-selector-bar {
+  .wsh-panel-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
+  }
+
+  .wsh-panel-close-btn {
+    align-self: flex-start;
+  }
+
+  .wsh-song-bar-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
     padding: 14px;
   }
 
-  .wsh-song-select-wrap {
+  .wsh-sbar-actions {
     width: 100%;
+    justify-content: space-between;
   }
 
-  .wsh-song-select {
-    width: 100%;
-    font-size: 0.85rem;
-  }
-
-  .wsh-open-song-btn {
-    width: 100%;
+  .wsh-sbar-choose-btn {
+    flex: 1;
     text-align: center;
-    justify-content: center;
   }
 
-  .wsh-proj-btns-row {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .wsh-btn-launch,
-  .wsh-btn-copy {
-    width: 100%;
-    text-align: center;
-    justify-content: center;
-    box-sizing: border-box;
+  .wsh-hide-mobile {
+    display: none;
   }
 }
 
 @media (max-width: 480px) {
-  .wsh-title {
-    font-size: 1.35rem;
+  .wsh-hero-title {
+    font-size: 1.45rem;
   }
 
-  .wsh-subtitle {
-    font-size: 0.82rem;
+  .wsh-hero-desc {
+    font-size: 0.84rem;
   }
 
-  .wsh-tab-pill {
-    padding: 8px 13px;
-    font-size: 0.78rem;
-  }
-
-  .wsh-card-header h3 {
-    font-size: 1.05rem;
-  }
-
-  .wsh-card-desc {
+  .wsh-ribbon-pill {
+    padding: 8px 14px;
     font-size: 0.8rem;
+  }
+
+  .wsh-grid-card {
+    padding: 18px 16px;
+  }
+
+  .wsh-card-heading {
+    font-size: 1.12rem;
   }
 }
