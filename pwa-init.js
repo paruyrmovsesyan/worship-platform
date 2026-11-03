@@ -131,8 +131,8 @@
     var timerId = null;
     var sending = false;
     var lastSentAt = 0;
-    var intervalMs = 5000;
-    var minimumGapMs = 4000;
+    var intervalMs = 30000;
+    var minimumGapMs = 15000;
 
     function canSend() {
       return !document.hidden && navigator.onLine !== false;

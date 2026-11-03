@@ -276,12 +276,52 @@ if (!function_exists('wp_runtime_open_pdo')) {
             }
         }
 
-        $pdoInstance = new WpLoggedPDO(
-            sprintf('mysql:host=%s;dbname=%s;charset=%s', $db['host'], $db['name'], $db['charset']),
-            $db['user'],
-            $db['pass'],
-            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-        );
+        $maxRetries = 3;
+        $attempt = 0;
+        $lastException = null;
+
+        while ($attempt < $maxRetries) {
+            $attempt++;
+            try {
+                $pdoInstance = new WpLoggedPDO(
+                    sprintf('mysql:host=%s;dbname=%s;charset=%s', $db['host'], $db['name'], $db['charset']),
+                    $db['user'],
+                    $db['pass'],
+                    [
+                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                        PDO::ATTR_TIMEOUT => 3,
+                    ]
+                );
+
+                // Explicitly free PDO instance at the end of the request
+                register_shutdown_function(function () use (&$pdoInstance) {
+                    $pdoInstance = null;
+                });
+
+                return $pdoInstance;
+            } catch (PDOException $e) {
+                $lastException = $e;
+                $msg = $e->getMessage();
+                $isConnectionExhausted = (
+                    $e->getCode() === 1226 ||
+                    strpos($msg, '1226') !== false ||
+                    stripos($msg, 'max_user_connections') !== false ||
+                    stripos($msg, 'too many connections') !== false
+                );
+
+                if ($isConnectionExhausted && $attempt < $maxRetries) {
+                    // Brief jittered sleep to let concurrent requests conclude
+                    usleep(random_int(40000, 90000));
+                    continue;
+                }
+
+                throw $e;
+            }
+        }
+
+        if ($lastException) {
+            throw $lastException;
+        }
         return $pdoInstance;
     }
 }
@@ -385,9 +425,29 @@ if (!function_exists('wp_runtime_open_mysqli')) {
             }
         }
 
-        $mysqliInstance = new WpLoggedMysqli($db['host'], $db['user'], $db['pass'], $db['name']);
-        if ($mysqliInstance->connect_error) {
-            throw new RuntimeException('MySQLi Connection Error: ' . $mysqliInstance->connect_error);
+        $maxRetries = 3;
+        $attempt = 0;
+        while ($attempt < $maxRetries) {
+            $attempt++;
+            try {
+                $mysqliInstance = new WpLoggedMysqli($db['host'], $db['user'], $db['pass'], $db['name']);
+                if ($mysqliInstance->connect_errno) {
+                    $errno = $mysqliInstance->connect_errno;
+                    $error = $mysqliInstance->connect_error;
+                    if (($errno === 1226 || stripos($error, 'max_user_connections') !== false) && $attempt < $maxRetries) {
+                        usleep(random_int(40000, 90000));
+                        continue;
+                    }
+                    throw new RuntimeException('MySQLi Connection Error: ' . $error);
+                }
+                break;
+            } catch (Throwable $e) {
+                if ($attempt < $maxRetries && (stripos($e->getMessage(), 'max_user_connections') !== false || stripos($e->getMessage(), '1226') !== false)) {
+                    usleep(random_int(40000, 90000));
+                    continue;
+                }
+                throw $e;
+            }
         }
         $mysqliInstance->set_charset($db['charset']);
         

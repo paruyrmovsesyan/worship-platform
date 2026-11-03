@@ -384,11 +384,23 @@
     };
   }
 
-  // optional՝ պարբերաբար ստուգել
+  // Պարբերաբար ստուգել (միայն ակտիվ էկրանին, 60վրկ մեկ՝ սերվերի ռեսուրսները խնայելու համար)
+  var lastStatusCheckedAt = Date.now();
   setInterval(function(){
     if (!navigator.onLine) return;
+    if (document.hidden) return;
+    lastStatusCheckedAt = Date.now();
     checkStatus();
-  }, 5000);
+  }, 60000);
+
+  document.addEventListener("visibilitychange", function() {
+    if (!document.hidden && navigator.onLine) {
+      if (Date.now() - lastStatusCheckedAt > 30000) {
+        lastStatusCheckedAt = Date.now();
+        checkStatus();
+      }
+    }
+  });
 
   // common JSON error fallback (օր. html է գալիս)
   window.addEventListener("unhandledrejection", (e)=>{

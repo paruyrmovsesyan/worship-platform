@@ -951,9 +951,10 @@ $activePage = 'errors';
           </select>
 
           <select class="select-ctrl" id="pollingInterval">
-            <option value="3000"><?= htmlspecialchars($t['interval']) ?> 3s</option>
+            <option value="15000"><?= htmlspecialchars($t['interval']) ?> 15s</option>
+            <option value="30000">30s</option>
+            <option value="60000">60s</option>
             <option value="5000">5s</option>
-            <option value="10000">10s</option>
             <option value="0"><?= htmlspecialchars($t['stream_paused']) ?></option>
           </select>
 
@@ -1353,6 +1354,7 @@ $activePage = 'errors';
   }
 
   async function fetchLatestErrors() {
+    if (document.hidden) return;
     try {
       const resp = await fetch('/error_api.php?action=poll&limit=60', { cache: 'no-store' });
       if (!resp.ok) return;
@@ -1467,6 +1469,12 @@ $activePage = 'errors';
       statusText.textContent = t.stream_paused;
     }
   }
+
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+      fetchLatestErrors();
+    }
+  });
 
   window.inspectError = function(id) {
     const item = currentLogs.find(l => String(l.id) === String(id));

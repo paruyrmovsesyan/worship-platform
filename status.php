@@ -37,6 +37,13 @@ function wp_status_touch_activity(PDO $pdo): void {
         $fetchSite = strtolower(trim((string)($_SERVER['HTTP_SEC_FETCH_SITE'] ?? '')));
         if ($fetchSite === 'cross-site') return;
 
+        // Skip if recently touched within 60s to avoid DB write load on frequent status pings
+        $lastTouch = (int)($_COOKIE['wp_status_last_touch'] ?? 0);
+        $now = time();
+        if ($lastTouch > 0 && ($now - $lastTouch) < 60) {
+            return;
+        }
+
         $visitorToken = trim((string)($_COOKIE['wp_web_visitor'] ?? ''));
         if (!preg_match('/^[a-f0-9]{32}$/', $visitorToken)) {
             $visitorToken = bin2hex(random_bytes(16));
@@ -48,6 +55,14 @@ function wp_status_touch_activity(PDO $pdo): void {
                 'samesite' => 'Lax',
             ]);
         }
+
+        setcookie('wp_status_last_touch', (string)$now, [
+            'expires' => $now + 300,
+            'path' => '/',
+            'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
 
         $requestedSurface = strtolower(trim((string)($_GET['surface'] ?? '')));
         $appContext = strtolower(trim((string)($_COOKIE['wp_app_context'] ?? '')));
@@ -112,9 +127,16 @@ try {
     $pdo = wp_runtime_open_pdo();
     $pdo->query("SELECT 1");
     wp_status_touch_activity($pdo);
-} catch (Exception $e) {
-    $ok = false;
-    $msg = "Կայքը ժամանակավորապես անհասանելի է (DB)";
+} catch (Throwable $e) {
+    $errMsg = $e->getMessage();
+    // If DB is temporarily under traffic limit (1226 max_user_connections), soft-pass to prevent client error storm
+    if ($e->getCode() === 1226 || stripos($errMsg, 'max_user_connections') !== false || stripos($errMsg, '1226') !== false) {
+        $ok = true;
+        $msg = "OK";
+    } else {
+        $ok = false;
+        $msg = "Կայքը ժամանակավորապես անհասանելի է (DB)";
+    }
 }
 
 if (!$ok) {
