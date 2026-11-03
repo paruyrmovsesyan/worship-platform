@@ -714,6 +714,19 @@ function wp_version_load(): array {
     if ($configCache !== null) {
         return $configCache;
     }
+
+    $cacheFile = __DIR__ . '/data/version_config_cache.json';
+    if (is_file($cacheFile)) {
+        $raw = @file_get_contents($cacheFile);
+        if ($raw) {
+            $cached = json_decode($raw, true);
+            if (is_array($cached) && !empty($cached['app_version'])) {
+                $configCache = wp_version_sanitize($cached);
+                return $configCache;
+            }
+        }
+    }
+
     $defaults = wp_version_defaults();
     try {
         $pdo = wp_runtime_open_pdo();
@@ -732,6 +745,7 @@ function wp_version_load(): array {
                     } catch (Throwable $eIgnored) {}
                 }
                 $configCache = wp_version_sanitize($decoded);
+                @file_put_contents($cacheFile, json_encode($configCache, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
                 return $configCache;
             }
         }
@@ -745,6 +759,7 @@ function wp_version_load(): array {
                 $decoded = json_decode($row['setting_value'] ?? '', true);
                 if (is_array($decoded)) {
                     $configCache = wp_version_sanitize($decoded);
+                    @file_put_contents($cacheFile, json_encode($configCache, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
                     return $configCache;
                 }
             }
@@ -948,6 +963,8 @@ function wp_version_save(array $input, array $meta = []): bool {
         ]);
         return false;
     }
+
+    @file_put_contents(__DIR__ . '/data/version_config_cache.json', json_encode($config, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 
     $historyId = bin2hex(random_bytes(8));
 

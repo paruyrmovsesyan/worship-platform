@@ -223,16 +223,14 @@ if (!function_exists('wp_runtime_open_pdo')) {
 
         if (!class_exists('WpLoggedPDOStatement')) {
             class WpLoggedPDOStatement extends PDOStatement {
-                protected $pdo;
-                protected function __construct($pdo) {
-                    $this->pdo = $pdo;
+                protected function __construct() {
                 }
                 public function execute(?array $params = null): bool {
                     $start = microtime(true);
                     $res = parent::execute($params);
                     $duration = microtime(true) - $start;
                     if ($duration >= wp_runtime_slow_query_threshold()) {
-                        $this->pdo->logSlowQuery($this->queryString, $params, $duration);
+                        wp_runtime_append_slow_query((string)$this->queryString, is_array($params) ? $params : null, (float)$duration);
                     }
                     return $res;
                 }
@@ -241,7 +239,7 @@ if (!function_exists('wp_runtime_open_pdo')) {
             class WpLoggedPDO extends PDO {
                 public function __construct($dsn, $user, $pass, $opts) {
                     parent::__construct($dsn, $user, $pass, $opts);
-                    $this->setAttribute(PDO::ATTR_STATEMENT_CLASS, ['WpLoggedPDOStatement', [$this]]);
+                    $this->setAttribute(PDO::ATTR_STATEMENT_CLASS, ['WpLoggedPDOStatement']);
                 }
 
                 #[\ReturnTypeWillChange]
@@ -276,7 +274,7 @@ if (!function_exists('wp_runtime_open_pdo')) {
             }
         }
 
-        $maxRetries = 3;
+        $maxRetries = 5;
         $attempt = 0;
         $lastException = null;
 
@@ -289,7 +287,7 @@ if (!function_exists('wp_runtime_open_pdo')) {
                     $db['pass'],
                     [
                         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                        PDO::ATTR_TIMEOUT => 3,
+                        PDO::ATTR_TIMEOUT => 4,
                     ]
                 );
 
@@ -314,8 +312,8 @@ if (!function_exists('wp_runtime_open_pdo')) {
                 );
 
                 if ($isConnectionExhausted && $attempt < $maxRetries) {
-                    // Brief jittered sleep to let concurrent requests conclude
-                    usleep(random_int(40000, 90000));
+                    // Graduated jittered sleep to let concurrent requests conclude
+                    usleep(random_int(50000 * $attempt, 110000 * $attempt));
                     continue;
                 }
 
@@ -446,7 +444,7 @@ if (!function_exists('wp_runtime_open_mysqli')) {
             });
         }
 
-        $maxRetries = 3;
+        $maxRetries = 5;
         $attempt = 0;
         while ($attempt < $maxRetries) {
             $attempt++;
@@ -456,7 +454,7 @@ if (!function_exists('wp_runtime_open_mysqli')) {
                     $errno = $mysqliInstance->connect_errno;
                     $error = $mysqliInstance->connect_error;
                     if (($errno === 1226 || stripos($error, 'max_user_connections') !== false) && $attempt < $maxRetries) {
-                        usleep(random_int(40000, 90000));
+                        usleep(random_int(50000 * $attempt, 110000 * $attempt));
                         continue;
                     }
                     throw new RuntimeException('MySQLi Connection Error: ' . $error);
@@ -464,7 +462,7 @@ if (!function_exists('wp_runtime_open_mysqli')) {
                 break;
             } catch (Throwable $e) {
                 if ($attempt < $maxRetries && (stripos($e->getMessage(), 'max_user_connections') !== false || stripos($e->getMessage(), '1226') !== false)) {
-                    usleep(random_int(40000, 90000));
+                    usleep(random_int(50000 * $attempt, 110000 * $attempt));
                     continue;
                 }
                 throw $e;

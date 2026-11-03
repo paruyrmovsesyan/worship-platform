@@ -146,6 +146,12 @@ if (!function_exists('wp_auth_ensure_user_access_columns')) {
             return;
         }
 
+        $flag = __DIR__ . '/data/.db_schema_user_access_ensured';
+        if (is_file($flag)) {
+            $done = true;
+            return;
+        }
+
         $done = true;
         try {
             $columns = [];
@@ -163,6 +169,8 @@ if (!function_exists('wp_auth_ensure_user_access_columns')) {
             if (empty($columns['blocked_at'])) {
                 $pdo->exec("ALTER TABLE users ADD COLUMN blocked_at DATETIME NULL DEFAULT NULL AFTER is_blocked");
             }
+
+            @file_put_contents($flag, '1');
         } catch (Throwable $e) {
             // Column sync should never block auth flow.
         }
@@ -702,92 +710,85 @@ if (!function_exists('wp_auth_restore_from_remember_cookie')) {
     }
 }
 
-$pdo = wp_auth_open_pdo();
-wp_auth_ensure_user_access_columns($pdo);
+// Only establish database connection if session verification or remember cookie restoration is required
+$hasActiveSession = !empty($_SESSION['user_id']);
+$hasRememberCookie = !empty($_COOKIE['remember_me']);
 
-if (!empty($_SESSION['user_id'])) {
+if ($hasActiveSession || $hasRememberCookie) {
+    $pdo = wp_auth_open_pdo();
     if ($pdo) {
-        try {
-            $sessionKey = session_id();
-            $sessionUserId = (int)$_SESSION['user_id'];
-            $sessionRowId = !empty($_SESSION['user_session_row_id']) ? (int)$_SESSION['user_session_row_id'] : 0;
+        wp_auth_ensure_user_access_columns($pdo);
 
-            if ($sessionRowId > 0) {
-                $st = $pdo->prepare("
-                    SELECT
-                        s.id AS session_row_id,
-                        s.user_id,
-                        s.remembered,
-                        s.expires_at,
-                        u.id,
-                        u.name,
-                        u.username,
-                        u.email
-                    FROM user_sessions s
-                    INNER JOIN users u ON u.id = s.user_id
-                    WHERE s.id = ?
-                      AND s.user_id = ?
-                      AND COALESCE(u.is_blocked, 0) = 0
-                      AND s.session_key = ?
-                      AND (s.expires_at IS NULL OR s.expires_at > NOW())
-                    LIMIT 1
-                ");
-                $st->execute([$sessionRowId, $sessionUserId, $sessionKey]);
-            } else {
-                $st = $pdo->prepare("
-                    SELECT
-                        s.id AS session_row_id,
-                        s.user_id,
-                        s.remembered,
-                        s.expires_at,
-                        u.id,
-                        u.name,
-                        u.username,
-                        u.email
-                    FROM user_sessions s
-                    INNER JOIN users u ON u.id = s.user_id
-                    WHERE s.user_id = ?
-                      AND COALESCE(u.is_blocked, 0) = 0
-                      AND s.session_key = ?
-                      AND (s.expires_at IS NULL OR s.expires_at > NOW())
-                    ORDER BY s.id DESC
-                    LIMIT 1
-                ");
-                $st->execute([$sessionUserId, $sessionKey]);
-            }
-            $sessionRow = $st->fetch(PDO::FETCH_ASSOC);
+        if ($hasActiveSession) {
+            try {
+                $sessionKey = session_id();
+                $sessionUserId = (int)$_SESSION['user_id'];
+                $sessionRowId = !empty($_SESSION['user_session_row_id']) ? (int)$_SESSION['user_session_row_id'] : 0;
 
-            if ($sessionRow) {
-                wp_auth_fill_session_user($sessionRow);
-                $_SESSION['auth_via_remember'] = !empty($sessionRow['remembered']) ? 1 : 0;
-                $_SESSION['user_session_row_id'] = (int)($sessionRow['session_row_id'] ?? 0);
-                wp_auth_touch_current_session($pdo);
+                if ($sessionRowId > 0) {
+                    $st = $pdo->prepare("
+                        SELECT
+                            s.id AS session_row_id,
+                            s.user_id,
+                            s.remembered,
+                            s.expires_at,
+                            u.id,
+                            u.name,
+                            u.username,
+                            u.email
+                        FROM user_sessions s
+                        INNER JOIN users u ON u.id = s.user_id
+                        WHERE s.id = ?
+                          AND s.user_id = ?
+                          AND COALESCE(u.is_blocked, 0) = 0
+                          AND s.session_key = ?
+                          AND (s.expires_at IS NULL OR s.expires_at > NOW())
+                        LIMIT 1
+                    ");
+                    $st->execute([$sessionRowId, $sessionUserId, $sessionKey]);
+                } else {
+                    $st = $pdo->prepare("
+                        SELECT
+                            s.id AS session_row_id,
+                            s.user_id,
+                            s.remembered,
+                            s.expires_at,
+                            u.id,
+                            u.name,
+                            u.username,
+                            u.email
+                        FROM user_sessions s
+                        INNER JOIN users u ON u.id = s.user_id
+                        WHERE s.user_id = ?
+                          AND COALESCE(u.is_blocked, 0) = 0
+                          AND s.session_key = ?
+                          AND (s.expires_at IS NULL OR s.expires_at > NOW())
+                        ORDER BY s.id DESC
+                        LIMIT 1
+                    ");
+                    $st->execute([$sessionUserId, $sessionKey]);
+                }
+                $sessionRow = $st->fetch(PDO::FETCH_ASSOC);
+
+                if ($sessionRow) {
+                    wp_auth_fill_session_user($sessionRow);
+                    $_SESSION['auth_via_remember'] = !empty($sessionRow['remembered']) ? 1 : 0;
+                    $_SESSION['user_session_row_id'] = (int)($sessionRow['session_row_id'] ?? 0);
+                    wp_auth_touch_current_session($pdo);
+                    return;
+                }
+
+                // Do not clear remember_me here; allow the bootstrap below
+                // to restore the login from the persistent cookie.
+                wp_auth_clear_session_user(false);
+            } catch (Throwable $e) {
                 return;
             }
-
-            // Do not clear remember_me here; allow the bootstrap below
-            // to restore the login from the persistent cookie.
-            wp_auth_clear_session_user(false);
-        } catch (Throwable $e) {
-            return;
         }
-    } else {
-        return;
-    }
-}
 
-if (!empty($_SESSION['user_id'])) {
-    // If the user is already logged in, update their last active timestamp
-    $pdoForAuth = wp_auth_open_pdo();
-    if ($pdoForAuth) {
-        wp_auth_touch_current_session($pdoForAuth);
-        wp_auth_cleanup_inactive_records($pdoForAuth);
-    }
-} elseif (!empty($_COOKIE['remember_me'])) {
-    // Otherwise, if they have a remember cookie, restore the session
-    $pdoForAuth = wp_auth_open_pdo();
-    if ($pdoForAuth) {
-        wp_auth_restore_from_remember_cookie($pdoForAuth);
-        wp_auth_cleanup_inactive_records($pdoForAuth);
+        if (!empty($_COOKIE['remember_me'])) {
+            wp_auth_restore_from_remember_cookie($pdo);
+            wp_auth_cleanup_inactive_records($pdo);
+        }
     }
 }

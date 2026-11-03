@@ -38,6 +38,7 @@ $i18n = [
         'status_updated' => 'Կարգավիճակը թարմացվեց',
         'empty_search' => 'Որոնմանը համապատասխան ֆունկցիա չգտնվեց:',
         'cat_labels' => [
+            'pro_studio' => '🎛️ Worship Pro Studio (Հավաքական)',
             'stage' => 'Բեմ և Ելույթ',
             'audio' => 'Աուդիո և Բազմաթրեկ',
             'projection' => 'Պրոյեկցիա և Եթեր',
@@ -64,6 +65,7 @@ $i18n = [
         'status_updated' => 'Статус обновлен',
         'empty_search' => 'Функции по запросу не найдены.',
         'cat_labels' => [
+            'pro_studio' => '🎛️ Worship Pro Studio (Пакет)',
             'stage' => 'Сцена и Выступление',
             'audio' => 'Аудио и Мультитреки',
             'projection' => 'Проекция и Эфир (OBS)',
@@ -90,6 +92,7 @@ $i18n = [
         'status_updated' => 'Status updated successfully',
         'empty_search' => 'No matching features found.',
         'cat_labels' => [
+            'pro_studio' => '🎛️ Worship Pro Studio Suite',
             'stage' => 'Stage & Performance',
             'audio' => 'Audio & Multitracks',
             'projection' => 'Projection & Stream',
@@ -110,7 +113,7 @@ $publishedCount = 0;
 $betaCount = 0;
 $offCount = 0;
 
-$categories = [];
+$categories = ['pro_studio'];
 
 foreach ($catalog as $item) {
     $st = $item['status'] ?? 'published';
@@ -426,6 +429,180 @@ foreach ($catalog as $item) {
     .feature-cat-tag.ministry, .feature-cat-tag.planning { background: #dcfce7; color: #16a34a; }
     .feature-cat-tag.network { background: #ede9fe; color: #7c3aed; }
 
+    .feature-cat-tag.pro_studio { background: #ede9fe; color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.3); }
+    .suite-module-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 750; padding: 2px 8px; border-radius: 6px; background: rgba(99, 102, 241, 0.12); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.25); margin-left: 6px; }
+
+    /* ── Worship Pro Studio Master Suite Card ── */
+    .pro-suite-master-card {
+      background: linear-gradient(135deg, rgba(248, 250, 252, 0.98), rgba(238, 242, 255, 0.95));
+      border: 2px solid #818cf8;
+      border-radius: var(--radius);
+      padding: 26px;
+      margin-bottom: 28px;
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.12);
+      position: relative;
+      overflow: hidden;
+    }
+    .pro-suite-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .pro-suite-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .pro-suite-crown {
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      color: #fff;
+      padding: 3px 10px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+    .pro-suite-title {
+      font-size: 1.45rem;
+      font-weight: 850;
+      color: var(--text);
+      margin: 4px 0 6px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pro-suite-desc {
+      font-size: 0.92rem;
+      color: #475569;
+      line-height: 1.5;
+      max-width: 780px;
+      margin: 0;
+    }
+    .pro-suite-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    .pro-suite-switch-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #64748b;
+    }
+    .pro-suite-batch-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .suite-batch-btn {
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      cursor: pointer;
+      background: #fff;
+      color: var(--text);
+      transition: all 0.15s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+    .suite-batch-btn.live:hover { background: #dcfce7; color: #15803d; border-color: #86efac; }
+    .suite-batch-btn.beta:hover { background: #fef3c7; color: #b45309; border-color: #fcd34d; }
+    .suite-batch-btn.off:hover { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+    .suite-batch-btn.test { background: #ede9fe; color: #6366f1; border-color: #c4b5fd; }
+    .suite-batch-btn.test:hover { background: #ddd6fe; }
+
+    .pro-suite-modules-title {
+      font-size: 0.86rem;
+      font-weight: 800;
+      color: #334155;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding-top: 16px;
+      margin-bottom: 12px;
+      border-top: 1px solid rgba(99, 102, 241, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pro-suite-modules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .suite-module-card {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      transition: all 0.15s ease;
+    }
+    .suite-module-card:hover {
+      border-color: #a5b4fc;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+    }
+    .suite-module-top {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .suite-module-icon {
+      font-size: 1.4rem;
+      line-height: 1;
+      padding: 4px;
+      background: #f8fafc;
+      border-radius: 8px;
+    }
+    .suite-module-meta {
+      flex: 1;
+    }
+    .suite-module-name {
+      font-size: 0.95rem;
+      font-weight: 750;
+      color: #0f172a;
+      line-height: 1.3;
+    }
+    .suite-module-subtext {
+      font-size: 0.78rem;
+      color: #64748b;
+      line-height: 1.4;
+      margin-top: 2px;
+    }
+    .suite-module-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(0,0,0,0.06);
+    }
+    .suite-module-status {
+      font-size: 0.75rem;
+      font-weight: 750;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .suite-module-status.published { background: #dcfce7; color: #15803d; }
+    .suite-module-status.beta { background: #fef3c7; color: #b45309; }
+    .suite-module-status.off { background: #f1f5f9; color: #64748b; }
+    .feature-segmented-switch.mini .switch-opt {
+      padding: 3px 8px;
+      font-size: 0.75rem;
+    }
+
     .feature-desc {
       font-size: 0.88rem;
       color: #475569;
@@ -630,13 +807,119 @@ foreach ($catalog as $item) {
         </div>
       </div>
 
+      <!-- Worship Pro Studio Master Suite Showcase -->
+      <?php if (!empty($catalog['pro_studio'])): 
+        $ps = $catalog['pro_studio'];
+        $psStatus = $ps['status'] ?? 'beta';
+        $psModules = array_filter($catalog, fn($item) => ($item['suite'] ?? '') === 'pro_studio');
+      ?>
+      <div class="pro-suite-master-card" id="card-pro_studio" data-id="pro_studio" data-status="<?= htmlspecialchars($psStatus) ?>" data-category="pro_studio" data-title="worship pro studio" data-desc="գլխավոր հավաքական">
+        <div class="pro-suite-header">
+          <div class="pro-suite-info">
+            <div class="pro-suite-badge-row">
+              <span class="pro-suite-crown">⭐ MASTER ECOSYSTEM • ԳԼԽԱՎՈՐ ՀԱՎԱՔԱԿԱՆ</span>
+              <span class="live-dot <?= htmlspecialchars($psStatus) ?>" id="dot-pro_studio"></span>
+              <span class="feature-badge-refining" id="badge-pro_studio" style="font-size:11px; padding:2px 10px; font-weight:700; border-radius:6px; display:inline-block; <?= $psStatus === 'published' ? 'background:#dcfce7; color:#15803d;' : ($psStatus === 'beta' ? 'background:#fef3c7; color:#b45309;' : 'background:#f1f5f9; color:#64748b;') ?>">
+                <?= $psStatus === 'published' ? '🟢 Live' : ($psStatus === 'beta' ? '🧪 Beta / Փորձարկում' : '⚪ Անջատված') ?>
+              </span>
+            </div>
+            <h2 class="pro-suite-title">
+              🎛️ Worship Pro Studio Suite
+            </h2>
+            <p class="pro-suite-desc">
+              Worship Pro Studio-ն կայքի, PWA-ի և հավելվածների բեմական ու երաժշտական <strong>գլխավոր հավաքականն է</strong>:
+              Այն իր ներսում միավորում է բոլոր 6 հիմնական մոդուլները: Այստեղից կարող եք կառավարել ինչպես ամբողջ հավաքականը (Master Switch), այնպես էլ նրա ներսի գործիքներից յուրաքանչյուրը:
+            </p>
+          </div>
+
+          <div class="pro-suite-actions">
+            <div class="pro-suite-switch-label">Հավաքականի Գլխավոր Անջատիչ (Master Switch)՝</div>
+            <div class="feature-segmented-switch" data-feature="pro_studio">
+              <button 
+                type="button" 
+                class="switch-opt <?= $psStatus === 'off' ? 'active-off' : '' ?>" 
+                onclick="updateFeatureStatus('pro_studio', 'off')"
+                title="Անջատել ամբողջ Pro Studio հավաքականը"
+              >
+                Off
+              </button>
+              <button 
+                type="button" 
+                class="switch-opt <?= $psStatus === 'beta' ? 'active-beta' : '' ?>" 
+                onclick="updateFeatureStatus('pro_studio', 'beta')"
+                title="Pro Studio հավաքականը դնել Beta փորձարկման ռեժիմում"
+              >
+                Beta
+              </button>
+              <button 
+                type="button" 
+                class="switch-opt <?= $psStatus === 'published' ? 'active-published' : '' ?>" 
+                onclick="updateFeatureStatus('pro_studio', 'published')"
+                title="Հրապարակել Pro Studio հավաքականը բոլորի համար"
+              >
+                Live
+              </button>
+            </div>
+            <div class="pro-suite-batch-actions">
+              <button type="button" class="suite-batch-btn live" onclick="setSuiteAll('published')">🚀 Բոլոր 6-ը Live</button>
+              <button type="button" class="suite-batch-btn beta" onclick="setSuiteAll('beta')">🧪 Բոլոր 6-ը Beta</button>
+              <button type="button" class="suite-batch-btn off" onclick="setSuiteAll('off')">⚪ Բոլոր 6-ը Off</button>
+              <a href="/studio" target="_blank" class="suite-batch-btn test">🔗 Բացել Pro Studio Hub →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="pro-suite-modules-title">
+          <span>📦 Pro Studio-ի Ներսի 6 Հիմնական Գործիքները (Modules)</span>
+        </div>
+
+        <div class="pro-suite-modules-grid">
+          <?php 
+          $moduleIcons = [
+            'live_stage_follower' => '📡',
+            'rehearsal_stems' => '🎛️',
+            'lyrics_projection' => '📽️',
+            'worship_ai_studio' => '✨',
+            'service_planner' => '📅',
+            'smart_metronome' => '⏱️',
+          ];
+          foreach ($psModules as $mId => $mItem): 
+            $mStatus = $mItem['status'] ?? 'published';
+            $mIcon = $moduleIcons[$mId] ?? '🔧';
+          ?>
+            <div class="suite-module-card <?= $mStatus ?>" id="suite-sub-<?= htmlspecialchars($mId) ?>">
+              <div class="suite-module-top">
+                <span class="suite-module-icon"><?= $mIcon ?></span>
+                <div class="suite-module-meta">
+                  <div class="suite-module-name"><?= htmlspecialchars($mItem['title']) ?></div>
+                  <div class="suite-module-subtext"><?= htmlspecialchars($mItem['description']) ?></div>
+                </div>
+              </div>
+              <div class="suite-module-bottom">
+                <span class="suite-module-status <?= htmlspecialchars($mStatus) ?>" id="subbadge-<?= htmlspecialchars($mId) ?>">
+                  <?= $mStatus === 'published' ? 'Live' : ($mStatus === 'beta' ? 'Beta' : 'Off') ?>
+                </span>
+                <div class="feature-segmented-switch mini" data-feature="<?= htmlspecialchars($mId) ?>">
+                  <button type="button" class="switch-opt <?= $mStatus === 'off' ? 'active-off' : '' ?>" onclick="updateFeatureStatus('<?= htmlspecialchars($mId) ?>', 'off')">Off</button>
+                  <button type="button" class="switch-opt <?= $mStatus === 'beta' ? 'active-beta' : '' ?>" onclick="updateFeatureStatus('<?= htmlspecialchars($mId) ?>', 'beta')">Beta</button>
+                  <button type="button" class="switch-opt <?= $mStatus === 'published' ? 'active-published' : '' ?>" onclick="updateFeatureStatus('<?= htmlspecialchars($mId) ?>', 'published')">Live</button>
+                </div>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+      <?php endif; ?>
+
       <!-- Features Grid -->
       <div class="features-grid" id="featuresGrid">
         <?php foreach ($catalog as $id => $item): 
+          if ($id === 'pro_studio') continue; // Rendered prominently above in Master Suite Card
           $status = $item['status'] ?? 'published';
           $testUrl = $item['test_url'] ?? '/';
           $cat = strtolower((string)($item['category'] ?? 'general'));
           $catLabel = $t['cat_labels'][$cat] ?? ucfirst($cat);
+          $suite = $item['suite'] ?? '';
         ?>
         <div 
           class="feature-card" 
@@ -644,6 +927,7 @@ foreach ($catalog as $item) {
           data-id="<?= htmlspecialchars($id) ?>"
           data-status="<?= htmlspecialchars($status) ?>"
           data-category="<?= htmlspecialchars($cat) ?>"
+          data-suite="<?= htmlspecialchars($suite) ?>"
           data-title="<?= htmlspecialchars(strtolower($item['title'])) ?>"
           data-desc="<?= htmlspecialchars(strtolower($item['description'])) ?>"
         >
@@ -655,6 +939,9 @@ foreach ($catalog as $item) {
                   <?= htmlspecialchars($item['title']) ?>
                 </h3>
                 <span class="feature-cat-tag <?= htmlspecialchars($cat) ?>"><?= htmlspecialchars($catLabel) ?></span>
+                <?php if ($suite === 'pro_studio'): ?>
+                  <span class="suite-module-tag">🎛️ Pro Studio Մոդուլ</span>
+                <?php endif; ?>
                 <?php if ($status === 'beta'): ?>
                   <span class="feature-badge-refining" id="badge-<?= htmlspecialchars($id) ?>" style="font-size:10px; padding:2px 8px; margin-left:6px; font-weight:700; background:#fef3c7; color:#b45309; border-radius:6px; display:inline-block;">🧪 Վերամշակման մեջ</span>
                 <?php elseif ($status === 'off'): ?>
@@ -761,16 +1048,18 @@ foreach ($catalog as $item) {
 
   function applyFilters() {
     const cards = document.querySelectorAll('.feature-card');
+    const masterCard = document.getElementById('card-pro_studio');
     let visibleCount = 0;
 
     cards.forEach(card => {
       const cardStatus = card.getAttribute('data-status');
       const cardCat = card.getAttribute('data-category');
+      const cardSuite = card.getAttribute('data-suite') || '';
       const cardTitle = card.getAttribute('data-title') || '';
       const cardDesc = card.getAttribute('data-desc') || '';
 
       const matchStatus = (activeStatusFilter === 'all' || cardStatus === activeStatusFilter);
-      const matchCat = (activeCategoryFilter === 'all' || cardCat === activeCategoryFilter);
+      const matchCat = (activeCategoryFilter === 'all' || cardCat === activeCategoryFilter || (activeCategoryFilter === 'pro_studio' && cardSuite === 'pro_studio'));
       const matchSearch = (!searchQuery || cardTitle.includes(searchQuery) || cardDesc.includes(searchQuery));
 
       if (matchStatus && matchCat && matchSearch) {
@@ -780,6 +1069,21 @@ foreach ($catalog as $item) {
         card.style.display = 'none';
       }
     });
+
+    if (masterCard) {
+      const mStatus = masterCard.getAttribute('data-status');
+      const mTitle = masterCard.getAttribute('data-title') || '';
+      const mDesc = masterCard.getAttribute('data-desc') || '';
+      const matchMStatus = (activeStatusFilter === 'all' || mStatus === activeStatusFilter);
+      const matchMCat = (activeCategoryFilter === 'all' || activeCategoryFilter === 'pro_studio');
+      const matchMSearch = (!searchQuery || mTitle.includes(searchQuery) || mDesc.includes(searchQuery) || searchQuery.includes('pro') || searchQuery.includes('studio'));
+      if (matchMStatus && matchMCat && matchMSearch) {
+        masterCard.style.display = 'block';
+        visibleCount++;
+      } else {
+        masterCard.style.display = 'none';
+      }
+    }
 
     const empty = document.getElementById('emptySearchState');
     if (empty) {
@@ -801,10 +1105,14 @@ foreach ($catalog as $item) {
       else off++;
     });
 
-    document.getElementById('statTotal').textContent = total;
-    document.getElementById('statPublished').textContent = published;
-    document.getElementById('statBeta').textContent = beta;
-    document.getElementById('statOff').textContent = off;
+    const statTotalEl = document.getElementById('statTotal');
+    const statPubEl = document.getElementById('statPublished');
+    const statBetaEl = document.getElementById('statBeta');
+    const statOffEl = document.getElementById('statOff');
+    if (statTotalEl) statTotalEl.textContent = total;
+    if (statPubEl) statPubEl.textContent = published;
+    if (statBetaEl) statBetaEl.textContent = beta;
+    if (statOffEl) statOffEl.textContent = off;
   }
 
   function showToast(text, icon = '✅') {
@@ -822,6 +1130,60 @@ foreach ($catalog as $item) {
     }, 2800);
   }
 
+  function updateFeatureStatusUI(featureId, newStatus) {
+    const card = document.getElementById('card-' + featureId);
+    if (card) {
+      card.setAttribute('data-status', newStatus);
+      const dot = document.getElementById('dot-' + featureId);
+      if (dot) dot.className = 'live-dot ' + newStatus;
+
+      const badge = document.getElementById('badge-' + featureId);
+      if (badge) {
+        if (newStatus === 'published') {
+          badge.style.background = '#dcfce7';
+          badge.style.color = '#15803d';
+          badge.textContent = '🟢 Live';
+        } else if (newStatus === 'beta') {
+          badge.style.background = '#fef3c7';
+          badge.style.color = '#b45309';
+          badge.textContent = '🧪 Վերամշակման մեջ';
+        } else {
+          badge.style.background = '#f1f5f9';
+          badge.style.color = '#64748b';
+          badge.textContent = '⚪ Փորձարարական';
+        }
+      }
+
+      const switchBox = card.querySelector('.feature-segmented-switch');
+      if (switchBox) {
+        const buttons = switchBox.querySelectorAll('.switch-opt');
+        buttons.forEach(btn => btn.classList.remove('active-published', 'active-beta', 'active-off'));
+        if (newStatus === 'published' && buttons[2]) buttons[2].classList.add('active-published');
+        else if (newStatus === 'beta' && buttons[1]) buttons[1].classList.add('active-beta');
+        else if (buttons[0]) buttons[0].classList.add('active-off');
+      }
+    }
+
+    // Sync sub-card in Master Suite
+    const subCard = document.getElementById('suite-sub-' + featureId);
+    if (subCard) {
+      subCard.className = 'suite-module-card ' + newStatus;
+      const subBadge = document.getElementById('subbadge-' + featureId);
+      if (subBadge) {
+        subBadge.className = 'suite-module-status ' + newStatus;
+        subBadge.textContent = newStatus === 'published' ? 'Live' : (newStatus === 'beta' ? 'Beta' : 'Off');
+      }
+      const miniSwitch = subCard.querySelector('.feature-segmented-switch.mini');
+      if (miniSwitch) {
+        const btns = miniSwitch.querySelectorAll('.switch-opt');
+        btns.forEach(b => b.classList.remove('active-published', 'active-beta', 'active-off'));
+        if (newStatus === 'published' && btns[2]) btns[2].classList.add('active-published');
+        else if (newStatus === 'beta' && btns[1]) btns[1].classList.add('active-beta');
+        else if (btns[0]) btns[0].classList.add('active-off');
+      }
+    }
+  }
+
   async function updateFeatureStatus(featureId, newStatus) {
     const card = document.getElementById('card-' + featureId);
     if (!card) return;
@@ -830,39 +1192,7 @@ foreach ($catalog as $item) {
     if (oldStatus === newStatus) return;
 
     // Optimistic UI update
-    card.setAttribute('data-status', newStatus);
-
-    const dot = document.getElementById('dot-' + featureId);
-    if (dot) {
-      dot.className = 'live-dot ' + newStatus;
-    }
-
-    const badge = document.getElementById('badge-' + featureId);
-    if (badge) {
-      if (newStatus === 'published') {
-        badge.style.background = '#dcfce7';
-        badge.style.color = '#15803d';
-        badge.textContent = '🟢 Live';
-      } else if (newStatus === 'beta') {
-        badge.style.background = '#fef3c7';
-        badge.style.color = '#b45309';
-        badge.textContent = '🧪 Վերամշակման մեջ';
-      } else {
-        badge.style.background = '#f1f5f9';
-        badge.style.color = '#64748b';
-        badge.textContent = '⚪ Փորձարարական';
-      }
-    }
-
-    const switchBox = card.querySelector('.feature-segmented-switch');
-    if (switchBox) {
-      const buttons = switchBox.querySelectorAll('.switch-opt');
-      buttons.forEach(btn => btn.classList.remove('active-published', 'active-beta', 'active-off'));
-      if (newStatus === 'published') buttons[2].classList.add('active-published');
-      else if (newStatus === 'beta') buttons[1].classList.add('active-beta');
-      else buttons[0].classList.add('active-off');
-    }
-
+    updateFeatureStatusUI(featureId, newStatus);
     recalculateStats();
 
     try {
@@ -890,17 +1220,57 @@ foreach ($catalog as $item) {
       showToast(statusUpdatedText + ' (' + newStatus.toUpperCase() + ')', '✨');
     } catch (err) {
       // Revert optimistic update
-      card.setAttribute('data-status', oldStatus);
-      if (dot) dot.className = 'live-dot ' + oldStatus;
-      if (switchBox) {
-        const buttons = switchBox.querySelectorAll('.switch-opt');
-        buttons.forEach(btn => btn.classList.remove('active-published', 'active-beta', 'active-off'));
-        if (oldStatus === 'published') buttons[2].classList.add('active-published');
-        else if (oldStatus === 'beta') buttons[1].classList.add('active-beta');
-        else buttons[0].classList.add('active-off');
-      }
+      updateFeatureStatusUI(featureId, oldStatus);
       recalculateStats();
       showToast('Սխալ՝ ' + (err.message || 'Չհաջողվեց պահպանել'), '⚠️');
+    }
+  }
+
+  async function setSuiteAll(newStatus) {
+    const statusLabels = {
+      published: 'Live (հասանելի բոլորին)',
+      beta: 'Beta (փորձարկման ռեժիմ)',
+      off: 'Off (անջատված)'
+    };
+    if (!confirm('Pro Studio-ի բոլոր 6 գործիքները դարձնե՞լ ' + (statusLabels[newStatus] || newStatus) + ':')) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/features_api.php?action=update_suite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ suite_id: 'pro_studio', status: newStatus, cascade: true })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || 'Server error');
+      }
+
+      updateFeatureStatusUI('pro_studio', newStatus);
+
+      const modules = ['live_stage_follower', 'rehearsal_stems', 'lyrics_projection', 'worship_ai_studio', 'service_planner', 'smart_metronome'];
+      modules.forEach(mId => {
+        updateFeatureStatusUI(mId, newStatus);
+      });
+
+      recalculateStats();
+      applyFilters();
+
+      try {
+        let stored = {};
+        try { stored = JSON.parse(localStorage.getItem('wp_feature_flags') || '{}'); } catch {}
+        stored['pro_studio'] = newStatus;
+        modules.forEach(mId => { stored[mId] = newStatus; });
+        localStorage.setItem('wp_feature_flags', JSON.stringify(stored));
+        window.dispatchEvent(new CustomEvent('wp_feature_flags_updated', {
+          detail: { flags: stored }
+        }));
+      } catch (e) {}
+
+      showToast('Worship Pro Studio-ի բոլոր 6 գործիքները դարձան ' + newStatus.toUpperCase(), '🎛️');
+    } catch (err) {
+      showToast('Սխալ՝ ' + (err.message || 'Չհաջողվեց թարմացնել հավաքականը'), '⚠️');
     }
   }
 

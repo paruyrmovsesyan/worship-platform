@@ -13,31 +13,72 @@ function wp_features_json(array $data, int $status = 200): void {
 
 function wp_features_default_catalog(): array {
     return [
-        // ── 1. Բեմ և Ելույթ (Stage & Performance) ──
+        // ── 0. 🎛️ Worship Pro Studio Suite (Գլխավոր Հավաքական) ──
         'pro_studio' => [
             'id' => 'pro_studio',
-            'title' => 'Worship Pro Studio Hub',
-            'description' => 'Բեմական սինքրոնացում, 8-ալիքային ստեմս միքշեր, պրոյեկցիա, AI և մետրոնոմ մեկ տեղում:',
+            'title' => 'Worship Pro Studio (Գլխավոր Հավաքական)',
+            'description' => 'Բեմական սինքրոնացում, 8-ալիքային ստեմս միքշեր, պրոյեկցիա, AI և մետրոնոմ միավորող գլխավոր էկոհամակարգ:',
             'status' => 'beta',
-            'category' => 'stage',
+            'category' => 'pro_studio',
+            'is_suite' => true,
             'test_url' => '/studio',
-        ],
-        'smart_metronome' => [
-            'id' => 'smart_metronome',
-            'title' => 'Smart Metronome & Visual Click',
-            'description' => 'Web Audio API-ով ճշգրիտ մետրոնոմ, տեսողական լույսեր, Tap Tempo և Screen Pulse:',
-            'status' => 'published',
-            'category' => 'stage',
-            'test_url' => '/song/1',
         ],
         'live_stage_follower' => [
             'id' => 'live_stage_follower',
             'title' => 'Band Live Follower (Leader Remote Sync)',
             'description' => 'Երաժիշտների և վոկալիստների էկրանների ավտոմատ հետևում Worship Leader-ին:',
             'status' => 'beta',
-            'category' => 'stage',
+            'category' => 'pro_studio',
+            'suite' => 'pro_studio',
             'test_url' => '/setlists/1/live',
         ],
+        'rehearsal_stems' => [
+            'id' => 'rehearsal_stems',
+            'title' => 'RehearsalMix & Stems Mixer',
+            'description' => '8-ալիքանի բազմաթրեկ միքշեր, Solo/Mute և A-B հատվածի կրկնող Looper:',
+            'status' => 'beta',
+            'category' => 'pro_studio',
+            'suite' => 'pro_studio',
+            'test_url' => '/song/1',
+        ],
+        'lyrics_projection' => [
+            'id' => 'lyrics_projection',
+            'title' => 'Live Lyrics Projection & Confidence Monitor',
+            'description' => 'Դահլիճի պրոյեկտորի, OBS եթերի Lower-Thirds և Confidence Monitor ռեժիմներ:',
+            'status' => 'beta',
+            'category' => 'pro_studio',
+            'suite' => 'pro_studio',
+            'test_url' => '/projection/1',
+        ],
+        'worship_ai_studio' => [
+            'id' => 'worship_ai_studio',
+            'title' => 'Worship AI Studio',
+            'description' => 'Ակորդների գեներացում, պոետիկ հայերեն թարգմանություն և ակորդների հարստացում:',
+            'status' => 'published',
+            'category' => 'pro_studio',
+            'suite' => 'pro_studio',
+            'test_url' => '/song/1',
+        ],
+        'service_planner' => [
+            'id' => 'service_planner',
+            'title' => 'Ministry Service Planner & Team Rostering',
+            'description' => 'Կիրակնօրյա ծառայության րոպեական Run-of-Show պլանավորում և թիմի գրաֆիկ:',
+            'status' => 'published',
+            'category' => 'pro_studio',
+            'suite' => 'pro_studio',
+            'test_url' => '/service-planner',
+        ],
+        'smart_metronome' => [
+            'id' => 'smart_metronome',
+            'title' => 'Smart Metronome & Visual Click',
+            'description' => 'Web Audio API-ով ճշգրիտ մետրոնոմ, տեսողական լույսեր, Tap Tempo և Screen Pulse:',
+            'status' => 'published',
+            'category' => 'pro_studio',
+            'suite' => 'pro_studio',
+            'test_url' => '/song/1',
+        ],
+
+        // ── 1. Բեմ և Ելույթ (Stage & Performance) ──
         'stage_two_column' => [
             'id' => 'stage_two_column',
             'title' => '2-Column Chord Chart Stage Layout',
@@ -72,14 +113,6 @@ function wp_features_default_catalog(): array {
             'category' => 'audio',
             'test_url' => '/song/1',
         ],
-        'rehearsal_stems' => [
-            'id' => 'rehearsal_stems',
-            'title' => 'RehearsalMix & Stems Mixer',
-            'description' => '8-ալիքանի բազմաթրեկ միքշեր, Solo/Mute և A-B հատվածի կրկնող Looper:',
-            'status' => 'beta',
-            'category' => 'audio',
-            'test_url' => '/song/1',
-        ],
         'multitrack_pads' => [
             'id' => 'multitrack_pads',
             'title' => 'Ambient Worship Pads & Key Transitions',
@@ -90,14 +123,6 @@ function wp_features_default_catalog(): array {
         ],
 
         // ── 3. Պրոյեկցիա և Եթեր (Projection & Stream) ──
-        'lyrics_projection' => [
-            'id' => 'lyrics_projection',
-            'title' => 'Live Lyrics Projection & Confidence Monitor',
-            'description' => 'Դահլիճի պրոյեկտորի, OBS եթերի Lower-Thirds և Confidence Monitor ռեժիմներ:',
-            'status' => 'beta',
-            'category' => 'projection',
-            'test_url' => '/projection/1',
-        ],
         'obs_ndi_lower_thirds' => [
             'id' => 'obs_ndi_lower_thirds',
             'title' => 'OBS / vMix NDI Lower Thirds Stream',
@@ -116,14 +141,6 @@ function wp_features_default_catalog(): array {
         ],
 
         // ── 4. Արհեստական Բանականություն (AI & Automation) ──
-        'worship_ai_studio' => [
-            'id' => 'worship_ai_studio',
-            'title' => 'Worship AI Studio',
-            'description' => 'Ակորդների գեներացում, պոետիկ հայերեն թարգմանություն և ակորդների հարստացում:',
-            'status' => 'published',
-            'category' => 'ai',
-            'test_url' => '/song/1',
-        ],
         'ai_vocal_remover' => [
             'id' => 'ai_vocal_remover',
             'title' => 'AI Vocal Separation & Minus Generator',
@@ -142,14 +159,6 @@ function wp_features_default_catalog(): array {
         ],
 
         // ── 5. Ծառայություն և Թիմ (Ministry & Team Planning) ──
-        'service_planner' => [
-            'id' => 'service_planner',
-            'title' => 'Ministry Service Planner & Team Rostering',
-            'description' => 'Կիրակնօրյա ծառայության րոպեական Run-of-Show պլանավորում և թիմի գրաֆիկ:',
-            'status' => 'published',
-            'category' => 'ministry',
-            'test_url' => '/service-planner',
-        ],
         'team_availability_calendar' => [
             'id' => 'team_availability_calendar',
             'title' => 'Team Availability & Automated Rostering',
@@ -299,6 +308,44 @@ if ($isDirectApiCall) {
         }
         wp_features_save($catalog);
         wp_features_json(['ok' => true, 'message' => 'Բոլոր նոր ֆունկցիաները հաջողությամբ հրապարակվեցին:']);
+    }
+
+    // =========================================================================
+    // ACTION: update_suite (Toggle Pro Studio Suite + optional child cascade)
+    // =========================================================================
+    if ($action === 'update_suite') {
+        $rawInput = file_get_contents('php://input');
+        $payload = @json_decode($rawInput, true) ?: $_POST;
+        $suiteId = trim((string)($payload['suite_id'] ?? 'pro_studio'));
+        $newStatus = trim((string)($payload['status'] ?? 'published'));
+        $cascade = !empty($payload['cascade']);
+
+        if (!in_array($newStatus, ['off', 'beta', 'published'], true)) {
+            wp_features_json(['ok' => false, 'error' => 'Invalid status'], 400);
+        }
+
+        $catalog = wp_features_load();
+        if (isset($catalog[$suiteId])) {
+            $catalog[$suiteId]['status'] = $newStatus;
+            $catalog[$suiteId]['updated_at'] = time();
+        }
+
+        if ($cascade) {
+            foreach ($catalog as $id => &$item) {
+                if (($item['suite'] ?? '') === $suiteId) {
+                    $item['status'] = $newStatus;
+                    $item['updated_at'] = time();
+                }
+            }
+        }
+
+        wp_features_save($catalog);
+        wp_features_json([
+            'ok' => true,
+            'suite_id' => $suiteId,
+            'status' => $newStatus,
+            'cascade' => $cascade,
+        ]);
     }
 
     // =========================================================================

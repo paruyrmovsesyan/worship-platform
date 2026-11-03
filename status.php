@@ -129,6 +129,7 @@ if ($fetchSite !== 'cross-site' && ($lastTouch === 0 || ($now - $lastTouch) >= 6
     try {
         $pdo = wp_runtime_open_pdo();
         wp_status_touch_activity($pdo);
+        $pdo = null;
     } catch (Throwable $e) {
         // Presence tracking failure must never impact site availability
     }

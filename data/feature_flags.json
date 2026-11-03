@@ -1,20 +1,12 @@
 {
     "pro_studio": {
         "id": "pro_studio",
-        "title": "Worship Pro Studio Hub",
-        "description": "Բեմական սինքրոնացում, 8-ալիքային ստեմս միքշեր, պրոյեկցիա, AI և մետրոնոմ մեկ տեղում:",
+        "title": "Worship Pro Studio (Գլխավոր Հավաքական)",
+        "description": "Բեմական սինքրոնացում, 8-ալիքային ստեմս միքշեր, պրոյեկցիա, AI և մետրոնոմ միավորող գլխավոր էկոհամակարգ:",
         "status": "beta",
-        "category": "stage",
-        "test_url": "/studio",
-        "updated_at": 1792444986
-    },
-    "smart_metronome": {
-        "id": "smart_metronome",
-        "title": "Smart Metronome & Visual Click",
-        "description": "Web Audio API-ով ճշգրիտ մետրոնոմ, տեսողական լույսեր, Tap Tempo և Screen Pulse:",
-        "status": "published",
-        "category": "stage",
-        "test_url": "/song/1",
+        "category": "pro_studio",
+        "is_suite": true,
+        "test_url": "\/studio",
         "updated_at": 1792444986
     },
     "live_stage_follower": {
@@ -22,8 +14,59 @@
         "title": "Band Live Follower (Leader Remote Sync)",
         "description": "Երաժիշտների և վոկալիստների էկրանների ավտոմատ հետևում Worship Leader-ին:",
         "status": "beta",
-        "category": "stage",
-        "test_url": "/setlists/1/live",
+        "category": "pro_studio",
+        "suite": "pro_studio",
+        "test_url": "\/setlists\/1\/live",
+        "updated_at": 1792444986
+    },
+    "rehearsal_stems": {
+        "id": "rehearsal_stems",
+        "title": "RehearsalMix & Stems Mixer",
+        "description": "8-ալիքանի բազմաթրեկ միքշեր, Solo\/Mute և A-B հատվածի կրկնող Looper:",
+        "status": "beta",
+        "category": "pro_studio",
+        "suite": "pro_studio",
+        "test_url": "\/song\/1",
+        "updated_at": 1792444986
+    },
+    "lyrics_projection": {
+        "id": "lyrics_projection",
+        "title": "Live Lyrics Projection & Confidence Monitor",
+        "description": "Դահլիճի պրոյեկտորի, OBS եթերի Lower-Thirds և Confidence Monitor ռեժիմներ:",
+        "status": "beta",
+        "category": "pro_studio",
+        "suite": "pro_studio",
+        "test_url": "\/projection\/1",
+        "updated_at": 1792444986
+    },
+    "worship_ai_studio": {
+        "id": "worship_ai_studio",
+        "title": "Worship AI Studio",
+        "description": "Ակորդների գեներացում, պոետիկ հայերեն թարգմանություն և ակորդների հարստացում:",
+        "status": "published",
+        "category": "pro_studio",
+        "suite": "pro_studio",
+        "test_url": "\/song\/1",
+        "updated_at": 1792444986
+    },
+    "service_planner": {
+        "id": "service_planner",
+        "title": "Ministry Service Planner & Team Rostering",
+        "description": "Կիրակնօրյա ծառայության րոպեական Run-of-Show պլանավորում և թիմի գրաֆիկ:",
+        "status": "published",
+        "category": "pro_studio",
+        "suite": "pro_studio",
+        "test_url": "\/service-planner",
+        "updated_at": 1792444986
+    },
+    "smart_metronome": {
+        "id": "smart_metronome",
+        "title": "Smart Metronome & Visual Click",
+        "description": "Web Audio API-ով ճշգրիտ մետրոնոմ, տեսողական լույսեր, Tap Tempo և Screen Pulse:",
+        "status": "published",
+        "category": "pro_studio",
+        "suite": "pro_studio",
+        "test_url": "\/song\/1",
         "updated_at": 1792444986
     },
     "stage_two_column": {
@@ -32,7 +75,7 @@
         "description": "Լայն էկրանների և պլանշետների համար 2 սյունակով ակորդների դասավորություն:",
         "status": "published",
         "category": "stage",
-        "test_url": "/song/1",
+        "test_url": "\/song\/1",
         "updated_at": 1792444986
     },
     "stage_hands_free_pedal": {
@@ -41,7 +84,7 @@
         "description": "AirTurn, PageFlip և Coda ոտնակներով կամ ավտո-սքրոլով երգի թերթում բեմական ելույթների ժամանակ։",
         "status": "beta",
         "category": "stage",
-        "test_url": "/song/1",
+        "test_url": "\/song\/1",
         "updated_at": 1792444986
     },
     "audio_pitch_pipe": {
@@ -50,25 +93,16 @@
         "description": "Վոկալիստների տոնայնության տվիչ, մեկնարկային նոտայի ազդանշան և 440Hz A կամերտոն։",
         "status": "beta",
         "category": "stage",
-        "test_url": "/song/1",
+        "test_url": "\/song\/1",
         "updated_at": 1792444986
     },
     "chord_chart_transpose_capo": {
         "id": "chord_chart_transpose_capo",
         "title": "Smart Capo & Roman Numeral Chords",
-        "description": "Կապոդաստրի դիրքի ավտո-հաշվիչ (Capo 1-7) և Nashville / Հռոմեական թվային ակորդներ։",
+        "description": "Կապոդաստրի դիրքի ավտո-հաշվիչ (Capo 1-7) և Nashville \/ Հռոմեական թվային ակորդներ։",
         "status": "published",
         "category": "audio",
-        "test_url": "/song/1",
-        "updated_at": 1792444986
-    },
-    "rehearsal_stems": {
-        "id": "rehearsal_stems",
-        "title": "RehearsalMix & Stems Mixer",
-        "description": "8-ալիքանի բազմաթրեկ միքշեր, Solo/Mute և A-B հատվածի կրկնող Looper:",
-        "status": "beta",
-        "category": "audio",
-        "test_url": "/song/1",
+        "test_url": "\/song\/1",
         "updated_at": 1792444986
     },
     "multitrack_pads": {
@@ -77,25 +111,16 @@
         "description": "12 տոնայնություններում անընդհատ հնչող մթնոլորտային pad-եր՝ երգերի միջև հարթ անցումների համար։",
         "status": "beta",
         "category": "audio",
-        "test_url": "/song/1",
-        "updated_at": 1792444986
-    },
-    "lyrics_projection": {
-        "id": "lyrics_projection",
-        "title": "Live Lyrics Projection & Confidence Monitor",
-        "description": "Դահլիճի պրոյեկտորի, OBS եթերի Lower-Thirds և Confidence Monitor ռեժիմներ:",
-        "status": "beta",
-        "category": "projection",
-        "test_url": "/projection/1",
+        "test_url": "\/song\/1",
         "updated_at": 1792444986
     },
     "obs_ndi_lower_thirds": {
         "id": "obs_ndi_lower_thirds",
-        "title": "OBS / vMix NDI Lower Thirds Stream",
-        "description": "YouTube և Facebook ուղիղ եթերների համար թափանցիկ ալֆա-տիտրեր և NDI / Browser Source ինտեգրում։",
+        "title": "OBS \/ vMix NDI Lower Thirds Stream",
+        "description": "YouTube և Facebook ուղիղ եթերների համար թափանցիկ ալֆա-տիտրեր և NDI \/ Browser Source ինտեգրում։",
         "status": "beta",
         "category": "projection",
-        "test_url": "/projection/1",
+        "test_url": "\/projection\/1",
         "updated_at": 1792444986
     },
     "ccli_songselect_import": {
@@ -104,16 +129,7 @@
         "description": "Եկեղեցական ծրագրերից (OpenLP, ProPresenter, ChordPro) երգերի ավտոմատ իմպորտ և ինտեգրում։",
         "status": "beta",
         "category": "projection",
-        "test_url": "/songs.php",
-        "updated_at": 1792444986
-    },
-    "worship_ai_studio": {
-        "id": "worship_ai_studio",
-        "title": "Worship AI Studio",
-        "description": "Ակորդների գեներացում, պոետիկ հայերեն թարգմանություն և ակորդների հարստացում:",
-        "status": "published",
-        "category": "ai",
-        "test_url": "/song/1",
+        "test_url": "\/songs.php",
         "updated_at": 1792444986
     },
     "ai_vocal_remover": {
@@ -122,7 +138,7 @@
         "description": "Երգի աուդիոյից վոկալի անջատում և մաքուր գործիքային մինուսների գեներացում AI մոդելով։",
         "status": "beta",
         "category": "ai",
-        "test_url": "/song/1",
+        "test_url": "\/song\/1",
         "updated_at": 1792444986
     },
     "ai_setlist_flow": {
@@ -131,16 +147,7 @@
         "description": "Երգերի տեմպի (BPM), տոնայնությունների և երկրպագության էներգիայի հոսքի AI խորհրդատու։",
         "status": "beta",
         "category": "ai",
-        "test_url": "/setlists",
-        "updated_at": 1792444986
-    },
-    "service_planner": {
-        "id": "service_planner",
-        "title": "Ministry Service Planner & Team Rostering",
-        "description": "Կիրակնօրյա ծառայության րոպեական Run-of-Show պլանավորում և թիմի գրաֆիկ:",
-        "status": "published",
-        "category": "ministry",
-        "test_url": "/service-planner",
+        "test_url": "\/setlists",
         "updated_at": 1792444986
     },
     "team_availability_calendar": {
@@ -149,7 +156,7 @@
         "description": "Երաժիշտների և վոկալիստների զբաղվածության օրացույց, բացակայությունների հաշվառում և ծանուցումներ։",
         "status": "beta",
         "category": "ministry",
-        "test_url": "/service-planner",
+        "test_url": "\/service-planner",
         "updated_at": 1792444986
     },
     "musician_chat_voice": {
@@ -158,7 +165,7 @@
         "description": "Բեմի երաժիշտների, հնչյունային օպերատորի և ղեկավարի միջև ներքին ձայնային ու տեքստային կապ։",
         "status": "beta",
         "category": "ministry",
-        "test_url": "/setlists/1/live",
+        "test_url": "\/setlists\/1\/live",
         "updated_at": 1792444986
     },
     "offline_p2p_mesh": {
@@ -167,7 +174,7 @@
         "description": "Բեմական կապ և սինքրոնացում տեղային Wi-Fi-ով նույնիսկ այն դեպքում, երբ ինտերնետ կապը բացակայում է:",
         "status": "beta",
         "category": "network",
-        "test_url": "/setlists",
+        "test_url": "\/setlists",
         "updated_at": 1792444986
     },
     "bluetooth_proximity_sync": {
@@ -176,7 +183,7 @@
         "description": "Bluetooth Low Energy միջոցով մոտակա սարքերի հետ երգացանկերի ակնթարթային կիսում առանց որևէ ցանցի։",
         "status": "off",
         "category": "network",
-        "test_url": "/setlists",
+        "test_url": "\/setlists",
         "updated_at": 1792444986
     }
 }
