@@ -141,6 +141,30 @@ export default function WorshipStudioHub() {
     },
   ], [isBeta, isOff]);
 
+  if (isOff('pro_studio')) {
+    return (
+      <div className="worship-studio-hub-page">
+        <header className="wsh-top-nav">
+          <button
+            type="button"
+            className="wsh-nav-btn wsh-back-btn"
+            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/songs'))}
+            aria-label="Վերադառնալ"
+          >
+            <span className="wsh-btn-icon">←</span>
+            <span className="wsh-btn-text">Ետ</span>
+          </button>
+        </header>
+        <FeatureDisabledScreen
+          title="Worship Pro Studio-ն անջատված է"
+          description="Այս բաժինը անջատված է կառավարման վահանակի Լաբարատորիայում (Feature Labs) կամ Էջերի Ռեժիմներում:"
+          onBack={() => navigate('/songs')}
+          backLabel="Վերադառնալ Երգերի Գրադարան"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="worship-studio-hub-page">
       {/* Mobile / PWA Top Navigation Bar */}
@@ -158,7 +182,10 @@ export default function WorshipStudioHub() {
         <div className="wsh-top-center-brand">
           <span className="wsh-brand-icon">🎛️</span>
           <div className="wsh-brand-info">
-            <span className="wsh-brand-title">Worship Pro Studio</span>
+            <span className="wsh-brand-title">
+              Worship Pro Studio
+              {isBeta('pro_studio') && <BetaBadge style={{ marginLeft: 6, fontSize: '0.62rem', padding: '1px 5px' }} />}
+            </span>
             <span className="wsh-brand-version">v5.3.0 PRO SUITE</span>
           </div>
         </div>
@@ -179,13 +206,24 @@ export default function WorshipStudioHub() {
       <section className="wsh-hero-section">
         <div className="wsh-hero-badge-wrap">
           <span className="wsh-hero-pill-badge">✨ Պրոֆեսիոնալ Երաժշտական Համակարգ</span>
-          <span className="wsh-hero-status-pill">● Ակտիվ</span>
+          {isBeta('pro_studio') ? (
+            <BetaBadge label="BETA ՓՈՐՁԱՐԿՈՒՄ" />
+          ) : (
+            <span className="wsh-hero-status-pill">● Ակտիվ</span>
+          )}
         </div>
         <h1 className="wsh-hero-title">Worship Studio Hub</h1>
         <p className="wsh-hero-desc">
           Բեմական սինքրոնացում, 8-ալիքային փորձերի միքշեր, եկեղեցու պրոյեկտոր, OBS ուղիղ եթեր,
           ակորդների արհեստական բանականություն և ծառայության պլանավորող մեկ ամբողջական էկրանում։
         </p>
+
+        {isBeta('pro_studio') && (
+          <BetaBanner
+            title="Worship Pro Studio — BETA Փորձարկման Փուլ"
+            description="Pro Studio հարթակը գտնվում է ակտիվ լաբարատոր փորձարկման փուլում (Feature Labs)։ Բոլոր 6 բեմական գործիքները շարունակաբար թարմացվում և կատարելագործվում են։"
+          />
+        )}
 
         {/* Tab Navigation Ribbon */}
         <nav className="wsh-nav-ribbon" aria-label="Pro Studio Tools Navigation">

@@ -1,4 +1,13 @@
 {
+    "pro_studio": {
+        "id": "pro_studio",
+        "title": "Worship Pro Studio Hub",
+        "description": "Բեմական սինքրոնացում, 8-ալիքային ստեմս միքշեր, պրոյեկցիա, AI և մետրոնոմ մեկ տեղում:",
+        "status": "beta",
+        "category": "stage",
+        "test_url": "/studio",
+        "updated_at": 1792444986
+    },
     "smart_metronome": {
         "id": "smart_metronome",
         "title": "Smart Metronome & Visual Click",

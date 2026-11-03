@@ -14,6 +14,14 @@ function wp_features_json(array $data, int $status = 200): void {
 function wp_features_default_catalog(): array {
     return [
         // ── 1. Բեմ և Ելույթ (Stage & Performance) ──
+        'pro_studio' => [
+            'id' => 'pro_studio',
+            'title' => 'Worship Pro Studio Hub',
+            'description' => 'Բեմական սինքրոնացում, 8-ալիքային ստեմս միքշեր, պրոյեկցիա, AI և մետրոնոմ մեկ տեղում:',
+            'status' => 'beta',
+            'category' => 'stage',
+            'test_url' => '/studio',
+        ],
         'smart_metronome' => [
             'id' => 'smart_metronome',
             'title' => 'Smart Metronome & Visual Click',

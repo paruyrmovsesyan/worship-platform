@@ -1298,23 +1298,25 @@ export default function SongView() {
                     <button type="button" onClick={() => setIsToolsMenuOpen(false)}>✕</button>
                   </div>
                   <div className="sv-tools-dropdown-items">
-                    <button
-                      type="button"
-                      className="sv-tools-menu-item"
-                      onClick={() => {
-                        setIsToolsMenuOpen(false);
-                        navigate('/studio');
-                      }}
-                    >
-                      <span className="sv-tools-item-icon">🎛️</span>
-                      <div className="sv-tools-item-text">
-                        <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                          Worship Pro Studio Hub
-                          {(isBeta('rehearsal_stems') || isBeta('lyrics_projection') || isBeta('live_stage_follower')) && <BetaBadge />}
-                        </strong>
-                        <small>Բոլոր բեմական գործիքները մեկ տեղում</small>
-                      </div>
-                    </button>
+                    {isEnabled('pro_studio') && (
+                      <button
+                        type="button"
+                        className="sv-tools-menu-item"
+                        onClick={() => {
+                          setIsToolsMenuOpen(false);
+                          navigate('/studio');
+                        }}
+                      >
+                        <span className="sv-tools-item-icon">🎛️</span>
+                        <div className="sv-tools-item-text">
+                          <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            Worship Pro Studio Hub
+                            {(isBeta('pro_studio') || isBeta('rehearsal_stems') || isBeta('lyrics_projection') || isBeta('live_stage_follower')) && <BetaBadge />}
+                          </strong>
+                          <small>Բոլոր բեմական գործիքները մեկ տեղում</small>
+                        </div>
+                      </button>
+                    )}
 
                     {isEnabled('rehearsal_stems') && (
                       <button
