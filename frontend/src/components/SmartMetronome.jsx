@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useId } from 'react';
 import { metronomeEngine } from '../utils/metronomeEngine';
+import { useFeatureFlags } from '../utils/featureFlags';
+import { BetaBadge } from './BetaBadge';
 import './SmartMetronome.css';
 
 export default function SmartMetronome({
@@ -9,6 +11,7 @@ export default function SmartMetronome({
   enableScreenPulse = false,
   className = '',
 }) {
+  const { isBeta } = useFeatureFlags();
   const [isPlaying, setIsPlaying] = useState(false);
   const [bpm, setBpm] = useState(initialBpm || 120);
   const [beatsPerBar, setBeatsPerBar] = useState(initialSignature || 4);
@@ -212,6 +215,7 @@ export default function SmartMetronome({
             title="Հարվածեք տեմպը որոշելու համար (T)"
           >
             TAP
+            {isBeta('smart_metronome') && <BetaBadge style={{ marginLeft: 4, padding: '1px 4px', fontSize: '0.58rem' }} />}
           </button>
         )}
 

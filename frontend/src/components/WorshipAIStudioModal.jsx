@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useFeatureFlags } from '../utils/featureFlags';
+import { BetaBadge } from './BetaBadge';
 import './WorshipAIStudioModal.css';
 
 export default function WorshipAIStudioModal({
@@ -10,6 +12,7 @@ export default function WorshipAIStudioModal({
   chords = '',
   onApplyResult,
 }) {
+  const { isBeta } = useFeatureFlags();
   const [activeTab, setActiveTab] = useState('chords'); // 'chords' | 'stylize' | 'translate'
   const [targetKey, setTargetKey] = useState(songKey || 'C');
   const [stylizeMode, setStylizeMode] = useState('enhance'); // 'enhance' | 'simplify'
@@ -125,7 +128,10 @@ export default function WorshipAIStudioModal({
         <div className="ai-studio-header">
           <div className="ai-studio-title-wrap">
             <div className="ai-studio-title">
-              <span>✨ Worship AI Studio</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                ✨ Worship AI Studio
+                {isBeta('worship_ai_studio') && <BetaBadge label="BETA" />}
+              </span>
             </div>
             {songTitle && <span className="ai-studio-subtitle">{songTitle}</span>}
           </div>

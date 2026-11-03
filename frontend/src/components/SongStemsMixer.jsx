@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useFeatureFlags } from '../utils/featureFlags';
+import { BetaBadge } from './BetaBadge';
 import './SongStemsMixer.css';
 
 const DEFAULT_STEM_TRACKS = [
@@ -50,6 +52,7 @@ export default function SongStemsMixer({
   initialBpm = 120,
   onClose,
 }) {
+  const { isBeta } = useFeatureFlags();
   const [isPlaying, setIsPlaying] = useState(false);
   const [tracks, setTracks] = useState(DEFAULT_STEM_TRACKS);
   const [masterVolume, setMasterVolume] = useState(85);
@@ -471,7 +474,10 @@ export default function SongStemsMixer({
       <div className="stems-mixer-header">
         <div className="stems-mixer-title-wrap">
           <div className="stems-mixer-title">
-            <span>🎛️ RehearsalMix & Stems Միքշեր</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              🎛️ RehearsalMix & Stems Միքշեր
+              {isBeta('rehearsal_stems') && <BetaBadge label="BETA" />}
+            </span>
             {isPlaying && (
               <span className="stems-live-pill">
                 ● ՏԱԿՏ {currentBar}.{currentBeat}

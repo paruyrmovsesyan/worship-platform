@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { liveStageSync } from '../utils/liveStageSync';
+import { useFeatureFlags } from '../utils/featureFlags';
+import { BetaBadge } from './BetaBadge';
 import './LiveStageBar.css';
 
 const QUICK_STAGE_ALERTS = [
@@ -22,6 +24,7 @@ export default function LiveStageBar({
   isLeader = false,
   sessionId: propSessionId = null,
 }) {
+  const { isBeta } = useFeatureFlags();
   const [activeSession, setActiveSession] = useState(propSessionId || liveStageSync.sessionId);
   const [stageState, setStageState] = useState(liveStageSync.currentState);
   const [isFollowing, setIsFollowing] = useState(true);
@@ -161,6 +164,7 @@ export default function LiveStageBar({
         <div className="live-stage-idle-left">
           <span className="live-stage-idle-icon">📡</span>
           <span className="live-stage-idle-label">Բեմական Սինքրոնացում</span>
+          {isBeta('live_stage_follower') && <BetaBadge label="BETA" />}
         </div>
         <div className="live-stage-idle-actions">
           <button
@@ -298,11 +302,15 @@ export default function LiveStageBar({
 
         <div className="live-stage-info">
           {liveStageSync.isLeader ? (
-            <span>👑 Դուք ղեկավարում եք բեմը</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              👑 Դուք ղեկավարում եք բեմը
+              {isBeta('live_stage_follower') && <BetaBadge label="BETA" />}
+            </span>
           ) : (
-            <span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               🎸 Հետևում եք ({isFollowing ? 'Ավտո-Սինք ՄԻԱՑՎԱԾ' : 'Դադարեցված'})
               {stageState?.target_key ? ` • Տոն՝ ${stageState.target_key}` : ''}
+              {isBeta('live_stage_follower') && <BetaBadge label="BETA" />}
             </span>
           )}
         </div>

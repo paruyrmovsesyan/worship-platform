@@ -91,7 +91,10 @@ export default function SongViewWebTools({
             title="Երկսյունակ դասավորություն մեծ էկրանների համար"
           >
             <ToolIcon><path d="M4 4h7v16H4zM13 4h7v16h-7z" /></ToolIcon>
-            <span>{isTwoColumn ? '2 Սյունակ' : '1 Սյունակ'}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              {isTwoColumn ? '2 Սյունակ' : '1 Սյունակ'}
+              {isBeta('stage_two_column') && <BetaBadge style={{ fontSize: '0.62rem', padding: '1px 5px' }} />}
+            </span>
           </button>
 
           <button

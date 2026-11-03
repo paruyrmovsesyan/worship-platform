@@ -1308,7 +1308,10 @@ export default function SongView() {
                     >
                       <span className="sv-tools-item-icon">🎛️</span>
                       <div className="sv-tools-item-text">
-                        <strong>Worship Pro Studio Hub</strong>
+                        <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          Worship Pro Studio Hub
+                          {(isBeta('rehearsal_stems') || isBeta('lyrics_projection') || isBeta('live_stage_follower')) && <BetaBadge />}
+                        </strong>
                         <small>Բոլոր բեմական գործիքները մեկ տեղում</small>
                       </div>
                     </button>
