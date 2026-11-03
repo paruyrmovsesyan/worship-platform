@@ -3,6 +3,8 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { liveStageSync } from '../utils/liveStageSync';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { useLanguage } from '../context/LanguageContext';
+import { useFeatureFlags } from '../utils/featureFlags';
+import { BetaBadge, FeatureDisabledScreen } from '../components/BetaBadge';
 import './LiveProjection.css';
 
 const BEAMER_THEMES = [
@@ -24,6 +26,7 @@ export default function LiveProjection() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { isOff, isBeta } = useFeatureFlags();
 
   // Mode: 'beamer' (projector), 'lowerthirds' (OBS stream), 'confidence' (stage monitor)
   const [mode, setMode] = useState(searchParams.get('mode') || 'beamer');
@@ -236,6 +239,19 @@ export default function LiveProjection() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [next, prev, toggleFullscreen, slides.length, goToSlide]);
 
+  if (isOff('lyrics_projection')) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#0b0f19', color: '#fff', padding: 20 }}>
+        <FeatureDisabledScreen
+          title="Պրոյեկցիայի ռեժիմն անջատված է"
+          description="Այս ֆունկցիան ժամանակավորապես անջատված է կառավարման վահանակի Լաբարատորիայում (Feature Labs):"
+          backUrl="/studio"
+          backLabel="Վերադառնալ Studio Hub"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={`projection-root mode-${mode} theme-${theme}`}>
       {/* Top Presenter Control Toolbar */}
@@ -248,6 +264,10 @@ export default function LiveProjection() {
         >
           ← Ելք
         </button>
+
+        {isBeta('lyrics_projection') && (
+          <BetaBadge style={{ marginLeft: 6, marginRight: 6 }} />
+        )}
 
         <div className="projection-tool-group">
           <button

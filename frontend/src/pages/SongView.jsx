@@ -24,7 +24,8 @@ import {
   broadcastTabMessage,
   subscribeToTabMessages
 } from '../utils/webPwaEnhancements';
-import { isFeatureEnabled } from '../utils/featureFlags';
+import { useFeatureFlags } from '../utils/featureFlags';
+import { BetaBadge } from '../components/BetaBadge';
 
 function resolveMediaUrl(url) {
   if (!url) return '';
@@ -176,6 +177,7 @@ export default function SongView() {
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const { t, language } = useLanguage();
+  const { isEnabled, isBeta } = useFeatureFlags();
   
   const [song, setSong] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1311,65 +1313,85 @@ export default function SongView() {
                       </div>
                     </button>
 
-                    <button
-                      type="button"
-                      className="sv-tools-menu-item"
-                      onClick={() => {
-                        setIsToolsMenuOpen(false);
-                        setStemsOpen(v => !v);
-                      }}
-                    >
-                      <span className="sv-tools-item-icon">🎛️</span>
-                      <div className="sv-tools-item-text">
-                        <strong>{stemsOpen ? 'Փակել Stems Միքշերը' : 'RehearsalMix & Stems'}</strong>
-                        <small>8-ալիքային բազմաթրեկ միքշեր</small>
-                      </div>
-                    </button>
+                    {isEnabled('rehearsal_stems') && (
+                      <button
+                        type="button"
+                        className="sv-tools-menu-item"
+                        onClick={() => {
+                          setIsToolsMenuOpen(false);
+                          setStemsOpen(v => !v);
+                        }}
+                      >
+                        <span className="sv-tools-item-icon">🎛️</span>
+                        <div className="sv-tools-item-text">
+                          <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            {stemsOpen ? 'Փակել Stems Միքշերը' : 'RehearsalMix & Stems'}
+                            {isBeta('rehearsal_stems') && <BetaBadge />}
+                          </strong>
+                          <small>8-ալիքային բազմաթրեկ միքշեր</small>
+                        </div>
+                      </button>
+                    )}
 
-                    <button
-                      type="button"
-                      className="sv-tools-menu-item"
-                      onClick={() => {
-                        setIsToolsMenuOpen(false);
-                        setIsAIStudioOpen(true);
-                      }}
-                    >
-                      <span className="sv-tools-item-icon">✨</span>
-                      <div className="sv-tools-item-text">
-                        <strong>Worship AI Studio</strong>
-                        <small>Ակորդների գեներացում և հարստացում</small>
-                      </div>
-                    </button>
+                    {isEnabled('worship_ai_studio') && (
+                      <button
+                        type="button"
+                        className="sv-tools-menu-item"
+                        onClick={() => {
+                          setIsToolsMenuOpen(false);
+                          setIsAIStudioOpen(true);
+                        }}
+                      >
+                        <span className="sv-tools-item-icon">✨</span>
+                        <div className="sv-tools-item-text">
+                          <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            Worship AI Studio
+                            {isBeta('worship_ai_studio') && <BetaBadge />}
+                          </strong>
+                          <small>Ակորդների գեներացում և հարստացում</small>
+                        </div>
+                      </button>
+                    )}
 
-                    <button
-                      type="button"
-                      className="sv-tools-menu-item"
-                      onClick={() => {
-                        setIsToolsMenuOpen(false);
-                        window.open(`/projection/${song.id}`, '_blank');
-                      }}
-                    >
-                      <span className="sv-tools-item-icon">📽️</span>
-                      <div className="sv-tools-item-text">
-                        <strong>Live Projection & OBS</strong>
-                        <small>Դահլիճի պրոյեկտոր և ուղիղ եթեր</small>
-                      </div>
-                    </button>
+                    {isEnabled('lyrics_projection') && (
+                      <button
+                        type="button"
+                        className="sv-tools-menu-item"
+                        onClick={() => {
+                          setIsToolsMenuOpen(false);
+                          window.open(`/projection/${song.id}`, '_blank');
+                        }}
+                      >
+                        <span className="sv-tools-item-icon">📽️</span>
+                        <div className="sv-tools-item-text">
+                          <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            Live Projection & OBS
+                            {isBeta('lyrics_projection') && <BetaBadge />}
+                          </strong>
+                          <small>Դահլիճի պրոյեկտոր և ուղիղ եթեր</small>
+                        </div>
+                      </button>
+                    )}
 
-                    <button
-                      type="button"
-                      className="sv-tools-menu-item"
-                      onClick={() => {
-                        setIsToolsMenuOpen(false);
-                        navigate('/service-planner');
-                      }}
-                    >
-                      <span className="sv-tools-item-icon">📅</span>
-                      <div className="sv-tools-item-text">
-                        <strong>Service Planner</strong>
-                        <small>Ծառայության պլանավորող և թիմի գրաֆիկ</small>
-                      </div>
-                    </button>
+                    {isEnabled('service_planner') && (
+                      <button
+                        type="button"
+                        className="sv-tools-menu-item"
+                        onClick={() => {
+                          setIsToolsMenuOpen(false);
+                          navigate('/service-planner');
+                        }}
+                      >
+                        <span className="sv-tools-item-icon">📅</span>
+                        <div className="sv-tools-item-text">
+                          <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            Service Planner
+                            {isBeta('service_planner') && <BetaBadge />}
+                          </strong>
+                          <small>Ծառայության պլանավորող և թիմի գրաֆիկ</small>
+                        </div>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -1385,7 +1407,7 @@ export default function SongView() {
       </div>
 
       {/* RehearsalMix & Stems Mixer Panel (Opens when requested via tools menu) */}
-      {stemsOpen && isFeatureEnabled('rehearsal_stems', user) && (
+      {stemsOpen && isEnabled('rehearsal_stems') && (
         <div className="sv-stage-modules">
           <SongStemsMixer
             songTitle={displayTitle}

@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useFeatureFlags } from '../utils/featureFlags';
+import { BetaBadge, BetaBanner, FeatureDisabledScreen } from '../components/BetaBadge';
 import './ServicePlanner.css';
 
 const DEFAULT_TIMELINE = [
@@ -35,6 +37,7 @@ const CATEGORY_META = {
 const LOCAL_PLANS_KEY = 'wp_service_plans_cache';
 
 export default function ServicePlanner() {
+  const { isOff, isBeta } = useFeatureFlags();
   const [plans, setPlans] = useState([]);
   const [planId, setPlanId] = useState(null);
   const [title, setTitle] = useState('Կիրակնօրյա Պաշտամունքի Ծառայություն');
@@ -305,8 +308,27 @@ export default function ServicePlanner() {
       .slice(0, 30);
   }, [allSongs, songQuery]);
 
+  if (isOff('service_planner')) {
+    return (
+      <div className="service-planner-page" style={{ padding: '60px 16px', display: 'flex', justifyContent: 'center' }}>
+        <FeatureDisabledScreen
+          title="Ծառայության Պլանավորիչն անջատված է"
+          description="Այս ֆունկցիան ժամանակավորապես անջատված է կառավարման վահանակի Լաբարատորիայում (Feature Labs):"
+          backUrl="/studio"
+          backLabel="Վերադառնալ Studio Hub"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="service-planner-page">
+      {isBeta('service_planner') && (
+        <BetaBanner
+          title="Ministry Service Planner — BETA Փորձարկման Փուլ"
+          description="Այս գործիքը գտնվում է ակտիվ լաբարատոր փորձարկման փուլում։ Բոլոր ծրագրերն ու գրաֆիկները պահպանվում են ավտոմատ։"
+        />
+      )}
       {/* Saved Plans Switcher Bar */}
       <div className="sp-plans-switcher">
         <div className="sp-plans-left">

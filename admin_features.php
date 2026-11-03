@@ -875,6 +875,18 @@ foreach ($catalog as $item) {
       if (!res.ok || !data.ok) {
         throw new Error(data.error || 'Server error');
       }
+
+      // Instant synchronization with client PWA and app cache
+      try {
+        let stored = {};
+        try { stored = JSON.parse(localStorage.getItem('wp_feature_flags') || '{}'); } catch {}
+        stored[featureId] = newStatus;
+        localStorage.setItem('wp_feature_flags', JSON.stringify(stored));
+        window.dispatchEvent(new CustomEvent('wp_feature_flags_updated', {
+          detail: { flags: stored }
+        }));
+      } catch (e) {}
+
       showToast(statusUpdatedText + ' (' + newStatus.toUpperCase() + ')', '✨');
     } catch (err) {
       // Revert optimistic update
@@ -919,6 +931,21 @@ foreach ($catalog as $item) {
         });
         recalculateStats();
         applyFilters();
+
+        // Instant synchronization with client PWA and app cache
+        try {
+          let stored = {};
+          try { stored = JSON.parse(localStorage.getItem('wp_feature_flags') || '{}'); } catch {}
+          document.querySelectorAll('.feature-card').forEach(c => {
+            const fid = c.getAttribute('data-id');
+            if (fid) stored[fid] = 'published';
+          });
+          localStorage.setItem('wp_feature_flags', JSON.stringify(stored));
+          window.dispatchEvent(new CustomEvent('wp_feature_flags_updated', {
+            detail: { flags: stored }
+          }));
+        } catch (e) {}
+
         showToast('Բոլոր ֆունկցիաները հաջողությամբ դարձան Live!', '🚀');
       } else {
         showToast('Սխալ՝ ' + (data.error || 'Չհաջողվեց հրապարակել'), '⚠️');

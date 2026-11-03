@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '../utils/nativeConfig';
-import { isFeatureEnabled } from '../utils/featureFlags';
+import { useFeatureFlags } from '../utils/featureFlags';
+import { BetaBadge } from './BetaBadge';
 
 const CHORD_COLORS = [
   { id: 'cyan', value: '#39d8ff', label: 'Cyan' },
@@ -64,6 +65,8 @@ export default function SongViewWebTools({
   stemsOpen,
   songId,
 }) {
+  const { isEnabled, isBeta } = useFeatureFlags();
+
   return (
     <aside className="web-song-console" aria-label="Երգի կառավարման վահանակ">
       <div className="web-song-console__heading">
@@ -121,7 +124,7 @@ export default function SongViewWebTools({
             <span>{viewMode === 'lyrics' ? 'Միայն բառեր' : 'Ակորդներ'}</span>
           </button>
 
-          {isFeatureEnabled('rehearsal_stems') && (
+          {isEnabled('rehearsal_stems') && (
             <button
               type="button"
               className={`web-stage-btn ${stemsOpen ? 'active' : ''}`}
@@ -129,11 +132,14 @@ export default function SongViewWebTools({
               title="RehearsalMix & Stems Mixer"
             >
               <ToolIcon><path d="M4 6h16M4 12h16M4 18h16" /></ToolIcon>
-              <span>{stemsOpen ? 'Փակել Stems' : '🎛️ Stems'}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                {stemsOpen ? 'Փակել Stems' : '🎛️ Stems'}
+                {isBeta('rehearsal_stems') && <BetaBadge style={{ fontSize: '0.62rem', padding: '1px 5px' }} />}
+              </span>
             </button>
           )}
 
-          {isFeatureEnabled('lyrics_projection') && (
+          {isEnabled('lyrics_projection') && (
             <a
               href={`/projection/${songId}`}
               target="_blank"
@@ -143,7 +149,10 @@ export default function SongViewWebTools({
               style={{ textDecoration: 'none' }}
             >
               <ToolIcon><path d="M2 3h20v14H2zM8 21h8M12 17v4" /></ToolIcon>
-              <span>📽️ Projection</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                📽️ Projection
+                {isBeta('lyrics_projection') && <BetaBadge style={{ fontSize: '0.62rem', padding: '1px 5px' }} />}
+              </span>
             </a>
           )}
         </div>
@@ -247,7 +256,7 @@ export default function SongViewWebTools({
         )}
       </section>
 
-      {isFeatureEnabled('worship_ai_studio') && (
+      {isEnabled('worship_ai_studio') && (
         <button
           type="button"
           className="web-print-launch"
@@ -255,10 +264,15 @@ export default function SongViewWebTools({
           style={{
             background: 'linear-gradient(135deg, #6366f1, #9333ea)',
             marginBottom: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
           }}
         >
           <ToolIcon><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z" /></ToolIcon>
           <span>Worship AI Studio</span>
+          {isBeta('worship_ai_studio') && <BetaBadge style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderColor: 'rgba(255,255,255,0.4)' }} />}
         </button>
       )}
 
