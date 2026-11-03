@@ -56,6 +56,7 @@ import TransposeTool from './pages/TransposeTool';
 import InstallApp from './pages/InstallApp';
 import LiveProjection from './pages/LiveProjection';
 import ServicePlanner from './pages/ServicePlanner';
+import WorshipStudioHub from './pages/WorshipStudioHub';
 import { Capacitor } from '@capacitor/core';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useIsNativeApp, useIsPWA } from './hooks/useIsPWA';
@@ -822,6 +823,8 @@ function App() {
               <Route path="/projection/:songId" element={<LiveProjection />} />
               <Route path="/projection/live/:sessionId" element={<LiveProjection />} />
               <Route path="/service-planner" element={<ServicePlanner />} />
+              <Route path="/studio" element={<WorshipStudioHub />} />
+              <Route path="/tools" element={<WorshipStudioHub />} />
 
               {/* Explicit Error Pages */}
               <Route path="/500" element={<ServerError />} />

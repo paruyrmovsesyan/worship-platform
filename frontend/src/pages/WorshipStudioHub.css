@@ -1,0 +1,292 @@
+/* Worship Studio Hub Styles */
+.worship-studio-hub-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 20px 100px;
+  color: var(--text-primary, #f8fafc);
+  font-family: inherit;
+}
+
+.wsh-header {
+  margin-bottom: 24px;
+}
+
+.wsh-header-badge {
+  display: inline-block;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  color: #818cf8;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+.wsh-title {
+  font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+  font-weight: 850;
+  margin: 0 0 10px 0;
+  background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.wsh-subtitle {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  line-height: 1.6;
+  max-width: 780px;
+  margin: 0 0 20px 0;
+}
+
+.wsh-tabs-scroll {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.wsh-tab-pill {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  padding: 9px 18px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 750;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.wsh-tab-pill:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.wsh-tab-pill.active {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+}
+
+.wsh-song-selector-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 12px 18px;
+  margin-bottom: 24px;
+}
+
+.wsh-sel-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.wsh-song-select {
+  flex: 1;
+  min-width: 220px;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  outline: none;
+}
+
+.wsh-open-song-btn {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.wsh-panel-card {
+  background: var(--card-bg, rgba(15, 23, 42, 0.85));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.wsh-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 16px;
+}
+
+.wsh-card-header h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0 0 6px 0;
+  color: #fff;
+}
+
+.wsh-card-desc {
+  font-size: 0.88rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+  max-width: 820px;
+}
+
+.wsh-tool-body {
+  margin-top: 10px;
+}
+
+.wsh-help-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+@media (max-width: 768px) {
+  .wsh-help-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wsh-help-box {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wsh-help-box strong {
+  font-size: 0.92rem;
+  color: #38bdf8;
+}
+
+.wsh-help-box span {
+  font-size: 0.84rem;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.wsh-placeholder {
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.wsh-proj-action-box {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.wsh-proj-preview-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wsh-proj-preview-info strong {
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.wsh-proj-preview-info span {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.wsh-proj-btns-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.wsh-btn-launch {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  border: none;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+  transition: transform 0.12s ease;
+}
+
+.wsh-btn-launch:hover {
+  transform: translateY(-1px);
+}
+
+.wsh-btn-copy {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #e2e8f0;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 0.86rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.wsh-ai-intro {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.wsh-ai-intro p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #cbd5e1;
+}
+
+.wsh-planner-preview-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.wsh-planner-preview-box p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+}

@@ -13,8 +13,6 @@ import './SongViewWebPro.css';
 import SongViewWebTools from '../components/SongViewWebTools';
 import PrintStudio from '../components/PrintStudio';
 import ChordDiagramPopover from '../components/ChordDiagramPopover';
-import SmartMetronome from '../components/SmartMetronome';
-import LiveStageBar from '../components/LiveStageBar';
 import SongStemsMixer from '../components/SongStemsMixer';
 import WorshipAIStudioModal from '../components/WorshipAIStudioModal';
 import { useIsAppMode } from '../hooks/useIsPWA';
@@ -222,6 +220,7 @@ export default function SongView() {
   const [isPrintOpen, setIsPrintOpen] = useState(false);
   const [isAIStudioOpen, setIsAIStudioOpen] = useState(false);
   const [stemsOpen, setStemsOpen] = useState(false);
+  const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
   const [autoScrollActive, setAutoScrollActive] = useState(false);
   const [autoScrollSpeed, setAutoScrollSpeed] = useState(1);
   const [chordColor, setChordColor] = useState(() => localStorage.getItem('chordColor_web') || '#39d8ff');
@@ -1273,6 +1272,108 @@ export default function SongView() {
             <button className={`icon-btn ${isFavorite ? 'active' : ''}`} onClick={toggleFavorite} title={isFavorite ? t('songView.removeFav') : t('songView.addFav')}>
               <svg viewBox="0 0 24 24" width="20" height="20" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
             </button>
+
+            {/* Pro Ministry Tools Dropdown Trigger (•••) */}
+            <div className="sv-tools-menu-container">
+              <button
+                type="button"
+                className={`icon-btn sv-tools-menu-btn ${isToolsMenuOpen ? 'active' : ''}`}
+                onClick={() => setIsToolsMenuOpen(v => !v)}
+                title="Worship Pro Գործիքներ"
+                aria-label="Worship Pro Studio Tools"
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <circle cx="12" cy="5" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="12" cy="19" r="2" />
+                </svg>
+              </button>
+
+              {isToolsMenuOpen && (
+                <div className="sv-tools-dropdown-menu">
+                  <div className="sv-tools-dropdown-header">
+                    <span>🎛️ Pro Studio Գործիքներ</span>
+                    <button type="button" onClick={() => setIsToolsMenuOpen(false)}>✕</button>
+                  </div>
+                  <div className="sv-tools-dropdown-items">
+                    <button
+                      type="button"
+                      className="sv-tools-menu-item"
+                      onClick={() => {
+                        setIsToolsMenuOpen(false);
+                        navigate('/studio');
+                      }}
+                    >
+                      <span className="sv-tools-item-icon">🎛️</span>
+                      <div className="sv-tools-item-text">
+                        <strong>Worship Pro Studio Hub</strong>
+                        <small>Բոլոր բեմական գործիքները մեկ տեղում</small>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="sv-tools-menu-item"
+                      onClick={() => {
+                        setIsToolsMenuOpen(false);
+                        setStemsOpen(v => !v);
+                      }}
+                    >
+                      <span className="sv-tools-item-icon">🎛️</span>
+                      <div className="sv-tools-item-text">
+                        <strong>{stemsOpen ? 'Փակել Stems Միքշերը' : 'RehearsalMix & Stems'}</strong>
+                        <small>8-ալիքային բազմաթրեկ միքշեր</small>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="sv-tools-menu-item"
+                      onClick={() => {
+                        setIsToolsMenuOpen(false);
+                        setIsAIStudioOpen(true);
+                      }}
+                    >
+                      <span className="sv-tools-item-icon">✨</span>
+                      <div className="sv-tools-item-text">
+                        <strong>Worship AI Studio</strong>
+                        <small>Ակորդների գեներացում և հարստացում</small>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="sv-tools-menu-item"
+                      onClick={() => {
+                        setIsToolsMenuOpen(false);
+                        window.open(`/projection/${song.id}`, '_blank');
+                      }}
+                    >
+                      <span className="sv-tools-item-icon">📽️</span>
+                      <div className="sv-tools-item-text">
+                        <strong>Live Projection & OBS</strong>
+                        <small>Դահլիճի պրոյեկտոր և ուղիղ եթեր</small>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="sv-tools-menu-item"
+                      onClick={() => {
+                        setIsToolsMenuOpen(false);
+                        navigate('/service-planner');
+                      }}
+                    >
+                      <span className="sv-tools-item-icon">📅</span>
+                      <div className="sv-tools-item-text">
+                        <strong>Service Planner</strong>
+                        <small>Ծառայության պլանավորող և թիմի գրաֆիկ</small>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
         </div>
       </div>
 
@@ -1283,65 +1384,9 @@ export default function SongView() {
         <button className={`sv-segment ${viewMode === 'both' ? 'active' : ''}`} onClick={() => handleViewModeChange('both')}>{t('songView.bothModes')}</button>
       </div>
 
-      {/* Stage Performance & Studio Modules (Wrapped in sv-stage-modules for clean Web Grid placement) */}
-      <div className="sv-stage-modules">
-        {/* Quick Studio Actions Bar (visible on PWA/Mobile & narrow screens where Web Console is hidden) */}
-        <div className="sv-mobile-studio-bar">
-          {isFeatureEnabled('rehearsal_stems', user) && (
-            <button
-              type="button"
-              className={`sv-studio-pill-btn ${stemsOpen ? 'active' : ''}`}
-              onClick={() => setStemsOpen(v => !v)}
-            >
-              🎛️ Stems Միքշեր
-            </button>
-          )}
-          {isFeatureEnabled('worship_ai_studio', user) && (
-            <button
-              type="button"
-              className="sv-studio-pill-btn"
-              onClick={() => setIsAIStudioOpen(true)}
-            >
-              ✨ AI Studio
-            </button>
-          )}
-          {isFeatureEnabled('live_projection_obs', user) && (
-            <button
-              type="button"
-              className="sv-studio-pill-btn"
-              onClick={() => window.open(`/projection/${song.id}`, '_blank')}
-            >
-              📽️ Պրոյեկտոր
-            </button>
-          )}
-        </div>
-
-        {/* Live Stage Band Follower Bar */}
-        {isFeatureEnabled('live_stage_follower', user) && (
-          <LiveStageBar
-            currentSongId={song ? Number(song.id) : null}
-            currentSongTitle={displayTitle}
-            currentKey={soundingKey || song?.song_key || ''}
-            currentCapo={capo}
-            currentSemi={semi}
-            currentBpm={song?.bpm || 120}
-            onFollowSongChange={(newSongId) => navigate(`/song/${newSongId}`)}
-          />
-        )}
-
-        {/* Smart Metronome */}
-        {isFeatureEnabled('smart_metronome', user) && (
-          <div className="sv-metronome-row">
-            <SmartMetronome
-              initialBpm={song?.bpm || 120}
-              initialSignature={4}
-              enableScreenPulse={keepAwakeActive}
-            />
-          </div>
-        )}
-
-        {/* RehearsalMix & Stems Mixer Panel */}
-        {stemsOpen && isFeatureEnabled('rehearsal_stems', user) && (
+      {/* RehearsalMix & Stems Mixer Panel (Opens when requested via tools menu) */}
+      {stemsOpen && isFeatureEnabled('rehearsal_stems', user) && (
+        <div className="sv-stage-modules">
           <SongStemsMixer
             songTitle={displayTitle}
             songKey={soundingKey || song?.song_key || 'C'}
@@ -1349,8 +1394,8 @@ export default function SongView() {
             audioUrl={resolveMediaUrl(song?.audio_url || (song?.attachments?.[0]?.url))}
             onClose={() => setStemsOpen(false)}
           />
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Sheet Music / Lyrics Content */}
       <div
