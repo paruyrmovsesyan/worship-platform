@@ -249,6 +249,11 @@ function wp_error_log_record(array $data): array {
     $now = date('Y-m-d H:i:s');
     $fingerprint = wp_error_make_fingerprint($level, $env, $message, $file, $line);
 
+    // Maintenance mode 503 responses on status.php are expected HTTP protocol status and not application crashes
+    if ((stripos($message, 'status.php') !== false || stripos($file, 'status.php') !== false) && stripos($message, '503') !== false) {
+        return ['status' => 'ignored', 'reason' => 'Maintenance mode status check'];
+    }
+
     $isDbExhaustion = (
         stripos($message, 'max_user_connections') !== false ||
         stripos($message, 'too many connections') !== false ||
@@ -659,6 +664,17 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         $item['is_resolved'] = 1;
         $item['resolved_at'] = date('Y-m-d H:i:s');
         $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
+    // 3.0.4. status.php HTTP 503 during maintenance or status pings
+    if (stripos($message, 'status.php') !== false || stripos($file, 'status.php') !== false) {
+        $reason = 'status.php-ի 503-ը տեխնիկական աշխատանքների (Maintenance Mode) ստանդարտ ծանուցում է, ոչ թե սերվերի սխալ';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_status_check');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_status_check';
         $item['resolution_reason'] = $reason;
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
