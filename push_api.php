@@ -6,6 +6,7 @@ try {
     require_once __DIR__ . '/auth_bootstrap.php';
     require_once __DIR__ . '/push_service.php';
     require_once __DIR__ . '/runtime_config.php';
+    session_write_close(); // Release session file lock immediately to prevent blocking concurrent requests
 } catch (Throwable $e) {
     header('Content-Type: application/json; charset=UTF-8');
     echo json_encode(['ok' => false, 'error' => 'Include error: ' . $e->getMessage(), 'file' => $e->getFile(), 'line' => $e->getLine()]);

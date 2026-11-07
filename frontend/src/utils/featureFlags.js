@@ -48,46 +48,66 @@ function notifyListeners() {
   }
 }
 
+let inFlightFlagsPromise = null;
+let lastFlagsFetchedAt = 0;
+const FLAGS_THROTTLE_MS = 60000; // 60 seconds throttle to prevent spamming backend
+
 /**
- * Fetch feature flags from backend API with cache-busting
+ * Fetch feature flags from backend API with deduplication & throttling
  */
 export async function loadFeatureFlags(force = false) {
   if (typeof window === 'undefined') return flagsCache;
 
-  try {
-    const res = await fetch(`/features_api.php?action=get_flags&_t=${Date.now()}`, {
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        Pragma: 'no-cache',
-      },
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.flags) {
-        flagsCache = { ...flagsCache, ...data.flags };
-        if (data.catalog) {
-          catalogCache = { ...catalogCache, ...data.catalog };
-        }
-        isInitialized = true;
-
-        try {
-          localStorage.setItem('wp_feature_flags', JSON.stringify(flagsCache));
-          if (data.catalog) {
-            localStorage.setItem('wp_feature_catalog', JSON.stringify(catalogCache));
-          }
-        } catch {}
-
-        notifyListeners();
-        return flagsCache;
-      }
-    }
-  } catch {
-    // Offline fallback: rely on cached flags
+  const now = Date.now();
+  if (!force && isInitialized && (now - lastFlagsFetchedAt) < FLAGS_THROTTLE_MS) {
+    return flagsCache;
   }
 
-  return flagsCache;
+  if (inFlightFlagsPromise) {
+    return inFlightFlagsPromise;
+  }
+
+  inFlightFlagsPromise = (async () => {
+    try {
+      const res = await fetch(`/features_api.php?action=get_flags&_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.flags) {
+          flagsCache = { ...flagsCache, ...data.flags };
+          if (data.catalog) {
+            catalogCache = { ...catalogCache, ...data.catalog };
+          }
+          isInitialized = true;
+          lastFlagsFetchedAt = Date.now();
+
+          try {
+            localStorage.setItem('wp_feature_flags', JSON.stringify(flagsCache));
+            if (data.catalog) {
+              localStorage.setItem('wp_feature_catalog', JSON.stringify(catalogCache));
+            }
+          } catch {}
+
+          notifyListeners();
+          return flagsCache;
+        }
+      }
+    } catch {
+      // Offline fallback: rely on cached flags
+    } finally {
+      inFlightFlagsPromise = null;
+    }
+
+    return flagsCache;
+  })();
+
+  return inFlightFlagsPromise;
 }
 
 /**

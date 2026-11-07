@@ -6,6 +6,7 @@ require_once __DIR__ . '/runtime_config.php';
 
 $action = $_GET['action'] ?? '';
 $uid = (int)($_SESSION['user_id'] ?? 0);
+session_write_close(); // Release session file lock immediately to prevent blocking concurrent requests
 
 if ($uid <= 0) {
     http_response_code(401);

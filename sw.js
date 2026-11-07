@@ -368,7 +368,11 @@ async function handleStaticAssetRequest(event) {
   }
 
   return refreshPromise.catch(function() {
-    return new Response("Offline", { status: 503, statusText: "Offline" });
+    return new Response("Offline", {
+      status: 503,
+      statusText: "Offline",
+      headers: { "X-SW-Offline": "1", "Access-Control-Expose-Headers": "X-SW-Offline" }
+    });
   });
 }
 
@@ -381,8 +385,8 @@ async function handleNetworkOnlyRequest(request, url) {
       status: 503,
       statusText: "Offline",
       headers: isApi
-        ? { "Content-Type": "application/json; charset=UTF-8", "X-SW-Offline": "1" }
-        : { "X-SW-Offline": "1" }
+        ? { "Content-Type": "application/json; charset=UTF-8", "X-SW-Offline": "1", "Access-Control-Expose-Headers": "X-SW-Offline" }
+        : { "X-SW-Offline": "1", "Access-Control-Expose-Headers": "X-SW-Offline" }
     });
   }
 }

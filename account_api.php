@@ -33,6 +33,11 @@ try{
 $uid = !empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
 $action = $_GET['action'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'];
+
+// Release session lock for non-session-writing actions to prevent blocking parallel requests
+if (!in_array($action, ['edit_profile', 'logout', 'logout_all', 'logout_device'], true)) {
+    session_write_close();
+}
 $minPasswordLength = wp_runtime_password_min_length();
 $lang = wp_translation_requested_lang();
 

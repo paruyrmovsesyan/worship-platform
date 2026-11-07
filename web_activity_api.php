@@ -65,6 +65,7 @@ try {
     $deviceKey = hash('sha256', $visitorToken);
     $visitorKey = hash('sha256', $visitorToken . '|' . $source);
     $userId = !empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+    session_write_close(); // Release session file lock immediately to prevent blocking concurrent requests
     [$platform, $browser] = wp_web_activity_client_info((string)($_SERVER['HTTP_USER_AGENT'] ?? ''));
 
     $path = is_array($payload) ? trim((string)($payload['path'] ?? '')) : '';
