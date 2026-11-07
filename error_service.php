@@ -249,9 +249,9 @@ function wp_error_log_record(array $data): array {
     $now = date('Y-m-d H:i:s');
     $fingerprint = wp_error_make_fingerprint($level, $env, $message, $file, $line);
 
-    // Maintenance mode 503 responses on status.php are expected HTTP protocol status and not application crashes
-    if ((stripos($message, 'status.php') !== false || stripos($file, 'status.php') !== false) && stripos($message, '503') !== false) {
-        return ['status' => 'ignored', 'reason' => 'Maintenance mode status check'];
+    // Transient 503 (Service Unavailable / Offline / Maintenance) are network/capacity status codes, not code crashes
+    if (stripos($message, '503') !== false || stripos($file, 'status.php') !== false) {
+        return ['status' => 'ignored', 'reason' => 'Transient 503 Service Unavailable / Maintenance response'];
     }
 
     $isDbExhaustion = (
@@ -668,9 +668,9 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
-    // 3.0.4. status.php HTTP 503 during maintenance or status pings
-    if (stripos($message, 'status.php') !== false || stripos($file, 'status.php') !== false) {
-        $reason = 'status.php-ի 503-ը տեխնիկական աշխատանքների (Maintenance Mode) ստանդարտ ծանուցում է, ոչ թե սերվերի սխալ';
+    // 3.0.4. HTTP 503 Service Unavailable / Maintenance / Offline pings
+    if (stripos($message, '503') !== false || stripos($message, 'status.php') !== false || stripos($file, 'status.php') !== false) {
+        $reason = '503 Service Unavailable-ը տեխսպասարկման կամ ցանցային ժամանակավոր վիճակ է (ոչ թե կոդի խնդիր), բոլոր endpoint-ները հասանելի են';
         wp_error_save_resolution($fingerprint, true, $reason, 'auto_status_check');
         $item['is_resolved'] = 1;
         $item['resolved_at'] = date('Y-m-d H:i:s');

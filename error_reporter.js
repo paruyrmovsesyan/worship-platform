@@ -520,12 +520,13 @@
 
           const isOfflineResponse =
             navigator.onLine === false ||
+            res.status === 503 ||
             res.statusText === 'Offline' ||
             res.headers?.get('X-SW-Offline') === '1' ||
             res.headers?.get('x-sw-offline') === '1';
 
-          // Only report real server crashes (5xx), ignoring simulated offline SW responses and status.php maintenance pings
-          if (!res.ok && res.status >= 500 && !reqUrl.includes('error_api.php') && !reqUrl.includes('status.php') && !isOfflineResponse) {
+          // Only report real server crashes (500, 502), ignoring 503 (offline / server capacity) and status.php pings
+          if (!res.ok && res.status >= 500 && res.status !== 503 && !reqUrl.includes('error_api.php') && !reqUrl.includes('status.php') && !isOfflineResponse) {
             const { userId, userEmail } = getUserMeta();
             sendErrorReport({
               level: 'fatal',
