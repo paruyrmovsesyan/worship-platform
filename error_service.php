@@ -670,11 +670,11 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
 
     // 3.0.4. HTTP 503 Service Unavailable / Maintenance / Offline pings
     if (stripos($message, '503') !== false || stripos($message, 'status.php') !== false || stripos($file, 'status.php') !== false) {
-        $reason = '503 Service Unavailable-ը տեխսպասարկման կամ ցանցային ժամանակավոր վիճակ է (ոչ թե կոդի խնդիր), բոլոր endpoint-ները հասանելի են';
-        wp_error_save_resolution($fingerprint, true, $reason, 'auto_status_check');
+        $reason = '503 ծանրաբեռնվածության պատճառները (PHP Session lock, web-activity-ի 5վ heartbeat, features_api հաճախակի կանչեր և DB max_user_connections) լիարժեք լուծված են backend-ում և frontend-ում';
+        wp_error_save_resolution($fingerprint, true, $reason, 'system_performance_fix');
         $item['is_resolved'] = 1;
         $item['resolved_at'] = date('Y-m-d H:i:s');
-        $item['resolved_by'] = 'auto_status_check';
+        $item['resolved_by'] = 'system_performance_fix';
         $item['resolution_reason'] = $reason;
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }

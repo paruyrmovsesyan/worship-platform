@@ -65,6 +65,9 @@ export default function Sidebar() {
         <Link to="/setlists" onClick={(e) => { if (!guardPath('/setlists')) e.preventDefault(); }} className={`sidebar-link ${isActive('/setlists') ? 'active' : ''}`}>
           <span className="icon">📋</span> {t('nav.sets')}
         </Link>
+        <Link to="/studio" onClick={(e) => { if (!guardPath('/studio')) e.preventDefault(); }} className={`sidebar-link ${isActive('/studio') || isActive('/tools') ? 'active' : ''}`}>
+          <span className="icon">🎛️</span> {t('nav.studio', 'Pro Studio')}
+        </Link>
         <Link to="/friends" onClick={(e) => { if (!guardPath('/friends')) e.preventDefault(); }} className={`sidebar-link ${isActive('/friends') ? 'active' : ''}`}>
           <span className="icon">💬</span> {t('nav.friends', 'Ընկերներ / Չաթ')}
         </Link>

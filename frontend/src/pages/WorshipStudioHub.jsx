@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import LiveStageBar from '../components/LiveStageBar';
 import SongStemsMixer from '../components/SongStemsMixer';
 import SmartMetronome from '../components/SmartMetronome';
@@ -10,18 +10,81 @@ import './WorshipStudioHub.css';
 
 export default function WorshipStudioHub() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const { isEnabled, isBeta, isOff } = useFeatureFlags();
 
   // Active tab: 'overview' | 'live_stage' | 'stems' | 'projection' | 'ai_studio' | 'planner' | 'metronome'
-  const [activeTab, setActiveTab] = useState('overview');
-  const [songs, setSongs] = useState([]);
-  const [selectedSongId, setSelectedSongId] = useState('');
+  const initialTab = useMemo(() => {
+    const tabParam = searchParams.get('tab');
+    const valid = ['overview', 'live_stage', 'stems', 'projection', 'ai_studio', 'planner', 'metronome'];
+    return (tabParam && valid.includes(tabParam)) ? tabParam : 'overview';
+  }, [searchParams]);
+
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Fast offline/cached hydration for PWA + fresh API sync
+  const [songs, setSongs] = useState(() => {
+    try {
+      const cached = localStorage.getItem('wp_songs_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [];
+  });
+
+  const requestedSongId = searchParams.get('song') || searchParams.get('songId') || location.state?.songId || '';
+  const [selectedSongId, setSelectedSongId] = useState(String(requestedSongId || ''));
   const [isAIStudioOpen, setIsAIStudioOpen] = useState(false);
   const [copiedUrlType, setCopiedUrlType] = useState(null); // 'beamer' | 'lowerthirds' | 'confidence' | null
   const [songSearchQuery, setSongSearchQuery] = useState('');
   const [isSongSearchOpen, setIsSongSearchOpen] = useState(false);
 
-  // Fetch songs list for selection in tools
+  const ribbonRef = useRef(null);
+  const songBarRef = useRef(null);
+
+  // Sync tab with URL search parameter
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (tabId === 'overview') {
+        next.delete('tab');
+      } else {
+        next.set('tab', tabId);
+      }
+      return next;
+    }, { replace: true });
+  };
+
+  // Close search panel on click outside
+  useEffect(() => {
+    if (!isSongSearchOpen) return;
+    const handleOutsideClick = (e) => {
+      if (songBarRef.current && !songBarRef.current.contains(e.target)) {
+        setIsSongSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, [isSongSearchOpen]);
+
+  // Scroll active tab pill into view on change
+  useEffect(() => {
+    if (!ribbonRef.current) return;
+    const activePill = ribbonRef.current.querySelector(`.wsh-ribbon-pill[data-tab="${activeTab}"]`);
+    if (activePill && typeof activePill.scrollIntoView === 'function') {
+      activePill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }, [activeTab]);
+
+  // Fetch songs list with cache update
   useEffect(() => {
     let active = true;
     fetch('/api.php')
@@ -29,14 +92,33 @@ export default function WorshipStudioHub() {
       .then((data) => {
         if (!active) return;
         const list = Array.isArray(data) ? data : data?.songs || [];
-        setSongs(list);
         if (list.length > 0) {
-          setSelectedSongId((prev) => prev || String(list[0].id));
+          setSongs(list);
+          try {
+            localStorage.setItem('wp_songs_cache', JSON.stringify(list));
+          } catch {}
+          if (!selectedSongId) {
+            setSelectedSongId(String(list[0].id));
+          }
         }
       })
       .catch(() => {});
     return () => { active = false; };
-  }, []);
+  }, [selectedSongId]);
+
+  // Keep selected song synchronized if requestedSongId changes
+  useEffect(() => {
+    if (requestedSongId) {
+      setSelectedSongId(String(requestedSongId));
+    }
+  }, [requestedSongId]);
+
+  // Fallback first song if no song selected and songs loaded
+  useEffect(() => {
+    if (!selectedSongId && songs.length > 0) {
+      setSelectedSongId(String(songs[0].id));
+    }
+  }, [selectedSongId, songs]);
 
   const selectedSong = useMemo(() => {
     if (!songs || songs.length === 0) return null;
@@ -44,7 +126,7 @@ export default function WorshipStudioHub() {
   }, [songs, selectedSongId]);
 
   const filteredSongs = useMemo(() => {
-    if (!songSearchQuery.trim()) return songs.slice(0, 50);
+    if (!songSearchQuery.trim()) return songs.slice(0, 60);
     const q = songSearchQuery.toLowerCase().trim();
     return songs.filter((s) => {
       const titleHy = String(s.title_hy || '').toLowerCase();
@@ -52,7 +134,7 @@ export default function WorshipStudioHub() {
       const key = String(s.song_key || '').toLowerCase();
       const id = String(s.id || '');
       return titleHy.includes(q) || title.includes(q) || key.includes(q) || id === q;
-    }).slice(0, 50);
+    }).slice(0, 60);
   }, [songs, songSearchQuery]);
 
   const handleCopyProjectionLink = (mode) => {
@@ -63,23 +145,43 @@ export default function WorshipStudioHub() {
     setTimeout(() => setCopiedUrlType(null), 2500);
   };
 
+  const handleSelectSong = (id) => {
+    setSelectedSongId(String(id));
+    setIsSongSearchOpen(false);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('song', String(id));
+      return next;
+    }, { replace: true });
+  };
+
   const handleSelectNextSong = () => {
     if (!songs || songs.length === 0 || !selectedSong) return;
     const currentIndex = songs.findIndex((s) => String(s.id) === String(selectedSong.id));
-    if (currentIndex >= 0 && currentIndex < songs.length - 1) {
-      setSelectedSongId(String(songs[currentIndex + 1].id));
-    } else {
-      setSelectedSongId(String(songs[0].id));
-    }
+    const nextSong = (currentIndex >= 0 && currentIndex < songs.length - 1)
+      ? songs[currentIndex + 1]
+      : songs[0];
+    handleSelectSong(nextSong.id);
   };
 
   const handleSelectPrevSong = () => {
     if (!songs || songs.length === 0 || !selectedSong) return;
     const currentIndex = songs.findIndex((s) => String(s.id) === String(selectedSong.id));
-    if (currentIndex > 0) {
-      setSelectedSongId(String(songs[currentIndex - 1].id));
+    const prevSong = currentIndex > 0
+      ? songs[currentIndex - 1]
+      : songs[songs.length - 1];
+    handleSelectSong(prevSong.id);
+  };
+
+  const handleSmartBack = () => {
+    if (activeTab !== 'overview') {
+      handleTabChange('overview');
+      return;
+    }
+    if (window.history.length > 1) {
+      navigate(-1);
     } else {
-      setSelectedSongId(String(songs[songs.length - 1].id));
+      navigate('/songs');
     }
   };
 
@@ -148,7 +250,7 @@ export default function WorshipStudioHub() {
           <button
             type="button"
             className="wsh-nav-btn wsh-back-btn"
-            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/songs'))}
+            onClick={handleSmartBack}
             aria-label="Վերադառնալ"
           >
             <span className="wsh-btn-icon">←</span>
@@ -172,11 +274,11 @@ export default function WorshipStudioHub() {
         <button
           type="button"
           className="wsh-nav-btn wsh-back-btn"
-          onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/songs'))}
+          onClick={handleSmartBack}
           aria-label="Վերադառնալ"
         >
           <span className="wsh-btn-icon">←</span>
-          <span className="wsh-btn-text">Ետ</span>
+          <span className="wsh-btn-text">{activeTab !== 'overview' ? 'Ընդհանուր' : 'Ետ'}</span>
         </button>
 
         <div className="wsh-top-center-brand">
@@ -227,13 +329,14 @@ export default function WorshipStudioHub() {
 
         {/* Tab Navigation Ribbon */}
         <nav className="wsh-nav-ribbon" aria-label="Pro Studio Tools Navigation">
-          <div className="wsh-ribbon-scroll">
+          <div className="wsh-ribbon-scroll" ref={ribbonRef}>
             {tabsConfig.map((tab) => (
               <button
                 key={tab.id}
+                data-tab={tab.id}
                 type="button"
                 className={`wsh-ribbon-pill ${activeTab === tab.id ? 'active' : ''} ${tab.isOff ? 'pill-off' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
               >
                 <span className="wsh-pill-icon">{tab.icon}</span>
                 <span className="wsh-pill-label">{tab.label}</span>
@@ -249,61 +352,79 @@ export default function WorshipStudioHub() {
       </section>
 
       {/* Interactive Song Selector Bar (Displayed for tools that require a song) */}
-      {['overview', 'stems', 'projection', 'ai_studio', 'metronome'].includes(activeTab) && selectedSong && (
-        <section className="wsh-song-bar-card">
-          <div className="wsh-sbar-left">
-            <span className="wsh-sbar-tag">ԸՆՏՐՎԱԾ ԵՐԳ</span>
-            <div className="wsh-sbar-details">
-              <span className="wsh-sbar-title">
-                {selectedSong.title_hy || selectedSong.title}
-              </span>
-              <div className="wsh-sbar-meta-chips">
-                {selectedSong.song_key && (
-                  <span className="wsh-meta-chip key-chip">🎹 {selectedSong.song_key}</span>
-                )}
-                {selectedSong.bpm ? (
-                  <span className="wsh-meta-chip bpm-chip">⏱️ {selectedSong.bpm} BPM</span>
-                ) : (
-                  <span className="wsh-meta-chip bpm-chip">⏱️ 120 BPM</span>
-                )}
-                <span className="wsh-meta-chip id-chip">#{selectedSong.id}</span>
+      {['overview', 'stems', 'projection', 'ai_studio', 'metronome'].includes(activeTab) && (
+        <section className="wsh-song-bar-card" ref={songBarRef}>
+          {selectedSong ? (
+            <>
+              <div className="wsh-sbar-left">
+                <span className="wsh-sbar-tag">ԸՆՏՐՎԱԾ ԵՐԳ</span>
+                <div className="wsh-sbar-details">
+                  <span className="wsh-sbar-title">
+                    {selectedSong.title_hy || selectedSong.title}
+                  </span>
+                  <div className="wsh-sbar-meta-chips">
+                    {selectedSong.song_key && (
+                      <span className="wsh-meta-chip key-chip">🎹 {selectedSong.song_key}</span>
+                    )}
+                    {selectedSong.bpm ? (
+                      <span className="wsh-meta-chip bpm-chip">⏱️ {selectedSong.bpm} BPM</span>
+                    ) : (
+                      <span className="wsh-meta-chip bpm-chip">⏱️ 120 BPM</span>
+                    )}
+                    <span className="wsh-meta-chip id-chip">#{selectedSong.id}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <div className="wsh-sbar-actions">
-            <button
-              type="button"
-              className="wsh-sbar-btn wsh-sbar-nav-btn"
-              onClick={handleSelectPrevSong}
-              title="Նախորդ երգ"
-            >
-              ◀
-            </button>
-            <button
-              type="button"
-              className="wsh-sbar-btn wsh-sbar-choose-btn"
-              onClick={() => setIsSongSearchOpen(!isSongSearchOpen)}
-            >
-              🔍 Փոխել երգը ▾
-            </button>
-            <button
-              type="button"
-              className="wsh-sbar-btn wsh-sbar-nav-btn"
-              onClick={handleSelectNextSong}
-              title="Հաջորդ երգ"
-            >
-              ▶
-            </button>
-            <button
-              type="button"
-              className="wsh-sbar-btn wsh-sbar-view-btn"
-              onClick={() => navigate(`/song/${selectedSong.id}`)}
-              title="Բացել երգի ակորդները"
-            >
-              📄 Էջ ↗
-            </button>
-          </div>
+              <div className="wsh-sbar-actions">
+                <button
+                  type="button"
+                  className="wsh-sbar-btn wsh-sbar-nav-btn"
+                  onClick={handleSelectPrevSong}
+                  title="Նախորդ երգ"
+                  aria-label="Նախորդ երգ"
+                >
+                  ◀
+                </button>
+                <button
+                  type="button"
+                  className="wsh-sbar-btn wsh-sbar-choose-btn"
+                  onClick={() => setIsSongSearchOpen(!isSongSearchOpen)}
+                  aria-expanded={isSongSearchOpen}
+                >
+                  🔍 Փոխել երգը ▾
+                </button>
+                <button
+                  type="button"
+                  className="wsh-sbar-btn wsh-sbar-nav-btn"
+                  onClick={handleSelectNextSong}
+                  title="Հաջորդ երգ"
+                  aria-label="Հաջորդ երգ"
+                >
+                  ▶
+                </button>
+                <button
+                  type="button"
+                  className="wsh-sbar-btn wsh-sbar-view-btn"
+                  onClick={() => navigate(`/song/${selectedSong.id}`)}
+                  title="Բացել երգի ակորդները"
+                >
+                  📄 Էջ ↗
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="wsh-sbar-loading">
+              <span>⏳ Բեռնվում են երգերի տվյալները...</span>
+              <button
+                type="button"
+                className="wsh-sbar-btn wsh-sbar-choose-btn"
+                onClick={() => navigate('/songs')}
+              >
+                🎵 Երգերի ցանկ
+              </button>
+            </div>
+          )}
 
           {/* Quick Song Search Dropdown Panel */}
           {isSongSearchOpen && (
@@ -323,6 +444,7 @@ export default function WorshipStudioHub() {
                     type="button"
                     className="wsh-search-clear"
                     onClick={() => setSongSearchQuery('')}
+                    aria-label="Մաքրել որոնումը"
                   >
                     ✕
                   </button>
@@ -334,11 +456,8 @@ export default function WorshipStudioHub() {
                     <button
                       key={s.id}
                       type="button"
-                      className={`wsh-song-search-item ${String(s.id) === String(selectedSong.id) ? 'selected' : ''}`}
-                      onClick={() => {
-                        setSelectedSongId(String(s.id));
-                        setIsSongSearchOpen(false);
-                      }}
+                      className={`wsh-song-search-item ${String(s.id) === String(selectedSong?.id) ? 'selected' : ''}`}
+                      onClick={() => handleSelectSong(s.id)}
                     >
                       <div className="wsh-item-left">
                         <span className="wsh-item-title">{s.title_hy || s.title}</span>
@@ -403,7 +522,7 @@ export default function WorshipStudioHub() {
                 <button
                   type="button"
                   className="wsh-action-btn primary-cyan"
-                  onClick={() => setActiveTab('live_stage')}
+                  onClick={() => handleTabChange('live_stage')}
                 >
                   Գործարկել Live Follower →
                 </button>
@@ -448,7 +567,7 @@ export default function WorshipStudioHub() {
                 <button
                   type="button"
                   className="wsh-action-btn primary-purple"
-                  onClick={() => setActiveTab('stems')}
+                  onClick={() => handleTabChange('stems')}
                 >
                   Բացել Stems Միքշերը →
                 </button>
@@ -493,7 +612,7 @@ export default function WorshipStudioHub() {
                 <button
                   type="button"
                   className="wsh-action-btn primary-amber"
-                  onClick={() => setActiveTab('projection')}
+                  onClick={() => handleTabChange('projection')}
                 >
                   Կարգավորել Պրոյեկցիան →
                 </button>
@@ -538,7 +657,7 @@ export default function WorshipStudioHub() {
                 <button
                   type="button"
                   className="wsh-action-btn primary-rose"
-                  onClick={() => setActiveTab('ai_studio')}
+                  onClick={() => handleTabChange('ai_studio')}
                 >
                   Բացել AI Studio-ն →
                 </button>
@@ -628,7 +747,7 @@ export default function WorshipStudioHub() {
                 <button
                   type="button"
                   className="wsh-action-btn primary-teal"
-                  onClick={() => setActiveTab('metronome')}
+                  onClick={() => handleTabChange('metronome')}
                 >
                   Գործարկել Մետրոնոմը →
                 </button>
@@ -647,7 +766,7 @@ export default function WorshipStudioHub() {
             <FeatureDisabledScreen
               title="Band Live Follower-ն անջատված է"
               description="Այս ֆունկցիան ժամանակավորապես անջատված է կառավարման վահանակի Լաբարատորիայում (Feature Labs):"
-              onBack={() => setActiveTab('overview')}
+              onBack={() => handleTabChange('overview')}
             />
           ) : (
             <>
@@ -672,59 +791,58 @@ export default function WorshipStudioHub() {
                 <button
                   type="button"
                   className="wsh-panel-close-btn"
-                  onClick={() => setActiveTab('overview')}
+                  onClick={() => handleTabChange('overview')}
                 >
                   ✕ Ընդհանուր
                 </button>
               </div>
 
-          <div className="wsh-panel-content">
-            <LiveStageBar
-              currentSongId={selectedSong ? Number(selectedSong.id) : null}
-              currentSongTitle={selectedSong?.title_hy || selectedSong?.title || ''}
-              currentKey={selectedSong?.song_key || 'C'}
-              currentCapo={0}
-              currentSemi={0}
-              currentBpm={selectedSong?.bpm || 120}
-              onFollowSongChange={(newSongId) => {
-                setSelectedSongId(String(newSongId));
-                navigate(`/song/${newSongId}`);
-              }}
-            />
+              <div className="wsh-panel-content">
+                <LiveStageBar
+                  currentSongId={selectedSong ? Number(selectedSong.id) : null}
+                  currentSongTitle={selectedSong?.title_hy || selectedSong?.title || ''}
+                  currentKey={selectedSong?.song_key || 'C'}
+                  currentCapo={0}
+                  currentSemi={0}
+                  currentBpm={selectedSong?.bpm || 120}
+                  onFollowSongChange={(newSongId) => {
+                    handleSelectSong(newSongId);
+                  }}
+                />
 
-            <div className="wsh-steps-grid">
-              <div className="wsh-step-card">
-                <div className="wsh-step-badge">ՔԱՅԼ 1 • ՂԵԿԱՎԱՐ (WORSHIP LEADER)</div>
-                <h4 className="wsh-step-title">👑 Սկսել Բեմական Սեսիա</h4>
-                <p className="wsh-step-desc">
-                  Սեղմեք <strong>«Սկսել Live Բեմ»</strong> կոճակը։ Համակարգը կստեղծի ձեր բեմական կոդը
-                  (օր.՝ <code>STAGE-4819</code>)։ Երգի կամ տոնայնության փոփոխությունը կհեռարձակվի ակնթարթորեն։
-                </p>
-              </div>
+                <div className="wsh-steps-grid">
+                  <div className="wsh-step-card">
+                    <div className="wsh-step-badge">ՔԱՅԼ 1 • ՂԵԿԱՎԱՐ (WORSHIP LEADER)</div>
+                    <h4 className="wsh-step-title">👑 Սկսել Բեմական Սեսիա</h4>
+                    <p className="wsh-step-desc">
+                      Սեղմեք <strong>«Սկսել Live Բեմ»</strong> կոճակը։ Համակարգը կստեղծի ձեր բեմական կոդը
+                      (օր.՝ <code>STAGE-4819</code>)։ Երգի կամ տոնայնության փոփոխությունը կհեռարձակվի ակնթարթորեն։
+                    </p>
+                  </div>
 
-              <div className="wsh-step-card">
-                <div className="wsh-step-badge">ՔԱՅԼ 2 • ԵՐԱԺԻՇՏ / ՎՈԿԱԼԻՍՏ</div>
-                <h4 className="wsh-step-title">🎸 Միանալ Բեմին</h4>
-                <p className="wsh-step-desc">
-                  Մյուս սարքերով սեղմեք <strong>«Միանալ»</strong> և ընտրեք ցուցակում հայտնված ակտիվ սեսիան
-                  կամ գրեք առաջնորդի STAGE կոդը։
-                </p>
-              </div>
+                  <div className="wsh-step-card">
+                    <div className="wsh-step-badge">ՔԱՅԼ 2 • ԵՐԱԺԻՇՏ / ՎՈԿԱԼԻՍՏ</div>
+                    <h4 className="wsh-step-title">🎸 Միանալ Բեմին</h4>
+                    <p className="wsh-step-desc">
+                      Մյուս սարքերով սեղմեք <strong>«Միանալ»</strong> և ընտրեք ցուցակում հայտնված ակտիվ սեսիան
+                      կամ գրեք առաջնորդի STAGE կոդը։
+                    </p>
+                  </div>
 
-              <div className="wsh-step-card">
-                <div className="wsh-step-badge">ՔԱՅԼ 3 • ԱՆԽԱՓԱՆ ԿԱՊ</div>
-                <h4 className="wsh-step-title">⚡ Տեղական Mesh & Cloud</h4>
-                <p className="wsh-step-desc">
-                  Համակարգն ավտոմատ ընտրում է ամենաարագ տեղական WiFi ցանցը (WebRTC/BroadcastChannel)
-                  կամ ամպային սերվերը՝ երաշխավորելով 0 միլիվայրկյանի հապաղում։
-                </p>
+                  <div className="wsh-step-card">
+                    <div className="wsh-step-badge">ՔԱՅԼ 3 • ԱՆԽԱՓԱՆ ԿԱՊ</div>
+                    <h4 className="wsh-step-title">⚡ Տեղական Mesh & Cloud</h4>
+                    <p className="wsh-step-desc">
+                      Համակարգն ավտոմատ ընտրում է ամենաարագ տեղական WiFi ցանցը (WebRTC/BroadcastChannel)
+                      կամ ամպային սերվերը՝ երաշխավորելով 0 միլիվայրկյանի հապաղում։
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </>
+            </>
+          )}
+        </section>
       )}
-    </section>
-  )}
 
       {/* ─────────────────────────────────────────────────────────────────
           TAB 2: REHEARSALMIX & STEMS MIXER
@@ -735,7 +853,7 @@ export default function WorshipStudioHub() {
             <FeatureDisabledScreen
               title="RehearsalMix & Stems Mixer-ն անջատված է"
               description="Այս ֆունկցիան ժամանակավորապես անջատված է կառավարման վահանակի Լաբարատորիայում (Feature Labs):"
-              onBack={() => setActiveTab('overview')}
+              onBack={() => handleTabChange('overview')}
             />
           ) : (
             <>
@@ -760,7 +878,7 @@ export default function WorshipStudioHub() {
                 <button
                   type="button"
                   className="wsh-panel-close-btn"
-                  onClick={() => setActiveTab('overview')}
+                  onClick={() => handleTabChange('overview')}
                 >
                   ✕ Ընդհանուր
                 </button>
@@ -795,7 +913,7 @@ export default function WorshipStudioHub() {
             <FeatureDisabledScreen
               title="Live Lyrics Projection-ն անջատված է"
               description="Այս ֆունկցիան ժամանակավորապես անջատված է կառավարման վահանակի Լաբարատորիայում (Feature Labs):"
-              onBack={() => setActiveTab('overview')}
+              onBack={() => handleTabChange('overview')}
             />
           ) : (
             <>
@@ -820,7 +938,7 @@ export default function WorshipStudioHub() {
                 <button
                   type="button"
                   className="wsh-panel-close-btn"
-                  onClick={() => setActiveTab('overview')}
+                  onClick={() => handleTabChange('overview')}
                 >
                   ✕ Ընդհանուր
                 </button>
@@ -847,9 +965,17 @@ export default function WorshipStudioHub() {
                         <button
                           type="button"
                           className="wsh-proj-btn primary-amber"
-                          onClick={() => window.open(`/projection/${selectedSong.id}?mode=beamer`, '_blank')}
+                          onClick={() => navigate(`/projection/${selectedSong.id}?mode=beamer`)}
                         >
-                          📽️ Բացել Դահլիճի Էկրան ↗
+                          📽️ Բացել Էկրանը
+                        </button>
+                        <button
+                          type="button"
+                          className="wsh-proj-btn ext-window-btn"
+                          onClick={() => window.open(`/projection/${selectedSong.id}?mode=beamer`, '_blank')}
+                          title="Բացել առանձին պատուհանում (երկրորդ մոնիտորի համար)"
+                        >
+                          Արտաքին պատուհան ↗
                         </button>
                         <button
                           type="button"
@@ -878,9 +1004,17 @@ export default function WorshipStudioHub() {
                         <button
                           type="button"
                           className="wsh-proj-btn primary-amber"
-                          onClick={() => window.open(`/projection/${selectedSong.id}?mode=lowerthirds`, '_blank')}
+                          onClick={() => navigate(`/projection/${selectedSong.id}?mode=lowerthirds`)}
                         >
-                          📺 Բացել Lower Thirds ↗
+                          📺 Բացել Lower Thirds
+                        </button>
+                        <button
+                          type="button"
+                          className="wsh-proj-btn ext-window-btn"
+                          onClick={() => window.open(`/projection/${selectedSong.id}?mode=lowerthirds`, '_blank')}
+                          title="Բացել առանձին պատուհանում"
+                        >
+                          Արտաքին պատուհան ↗
                         </button>
                         <button
                           type="button"
@@ -909,9 +1043,17 @@ export default function WorshipStudioHub() {
                         <button
                           type="button"
                           className="wsh-proj-btn primary-amber"
-                          onClick={() => window.open(`/projection/${selectedSong.id}?mode=confidence`, '_blank')}
+                          onClick={() => navigate(`/projection/${selectedSong.id}?mode=confidence`)}
                         >
-                          📱 Բացել Stage Monitor ↗
+                          📱 Բացել Stage Monitor
+                        </button>
+                        <button
+                          type="button"
+                          className="wsh-proj-btn ext-window-btn"
+                          onClick={() => window.open(`/projection/${selectedSong.id}?mode=confidence`, '_blank')}
+                          title="Բացել առանձին պատուհանում"
+                        >
+                          Արտաքին պատուհան ↗
                         </button>
                         <button
                           type="button"
@@ -944,7 +1086,7 @@ export default function WorshipStudioHub() {
             <FeatureDisabledScreen
               title="Worship AI Studio-ն անջատված է"
               description="Այս ֆունկցիան ժամանակավորապես անջատված է կառավարման վահանակի Լաբարատորիայում (Feature Labs):"
-              onBack={() => setActiveTab('overview')}
+              onBack={() => handleTabChange('overview')}
             />
           ) : (
             <>
@@ -969,7 +1111,7 @@ export default function WorshipStudioHub() {
                 <button
                   type="button"
                   className="wsh-panel-close-btn"
-                  onClick={() => setActiveTab('overview')}
+                  onClick={() => handleTabChange('overview')}
                 >
                   ✕ Ընդհանուր
                 </button>
@@ -1050,7 +1192,7 @@ export default function WorshipStudioHub() {
             <FeatureDisabledScreen
               title="Ministry Service Planner-ն անջատված է"
               description="Այս ֆունկցիան ժամանակավորապես անջատված է կառավարման վահանակի Լաբարատորիայում (Feature Labs):"
-              onBack={() => setActiveTab('overview')}
+              onBack={() => handleTabChange('overview')}
             />
           ) : (
             <>
@@ -1074,7 +1216,7 @@ export default function WorshipStudioHub() {
                 <button
                   type="button"
                   className="wsh-panel-close-btn"
-                  onClick={() => setActiveTab('overview')}
+                  onClick={() => handleTabChange('overview')}
                 >
                   ✕ Ընդհանուր
                 </button>
@@ -1118,7 +1260,7 @@ export default function WorshipStudioHub() {
             <FeatureDisabledScreen
               title="Smart Visual Metronome-ն անջատված է"
               description="Այս ֆունկցիան ժամանակավորապես անջատված է կառավարման վահանակի Լաբարատորիայում (Feature Labs):"
-              onBack={() => setActiveTab('overview')}
+              onBack={() => handleTabChange('overview')}
             />
           ) : (
             <>
@@ -1142,7 +1284,7 @@ export default function WorshipStudioHub() {
                 <button
                   type="button"
                   className="wsh-panel-close-btn"
-                  onClick={() => setActiveTab('overview')}
+                  onClick={() => handleTabChange('overview')}
                 >
                   ✕ Ընդհանուր
                 </button>

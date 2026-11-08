@@ -157,7 +157,7 @@ export default function MobileNav() {
     if (path === '/songs' || path === '/transpose' || path.startsWith('/song/')) return 1;
     if (path === '/chats' || path.startsWith('/chat/')) return 2;
     if (path === '/profile' || path === '/login' || path === '/settings') return 3;
-    return 0;
+    return -1;
   };
 
   const activeIndex = getActiveIndex();
@@ -501,8 +501,9 @@ export default function MobileNav() {
           style={{
             transform: isScrubbing && scrubPosition !== null
               ? `translate3d(${scrubPosition}px, 0, 0)`
-              : `translate3d(${(isLongPressReady && hoveredIndex !== null ? hoveredIndex : activeIndex) * 100}%, 0, 0)`,
+              : `translate3d(${(isLongPressReady && hoveredIndex !== null ? hoveredIndex : Math.max(0, activeIndex)) * 100}%, 0, 0)`,
             transformOrigin: 'center center',
+            opacity: activeIndex >= 0 || (isLongPressReady && hoveredIndex !== null) ? 1 : 0,
             scale: isScrubbing
               ? `1 ${DRAG_SCALE_Y}`
               : isLongPressReady

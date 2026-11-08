@@ -2086,7 +2086,7 @@ export default function SongView() {
                   className="sv-tools-menu-item"
                   onClick={() => {
                     setIsToolsMenuOpen(false);
-                    navigate('/studio');
+                    navigate('/studio?song=' + (song?.id || id));
                   }}
                 >
                   <span className="sv-tools-item-icon">🎛️</span>
