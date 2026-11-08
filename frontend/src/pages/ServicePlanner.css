@@ -7,6 +7,11 @@
   font-family: inherit;
 }
 
+.service-planner-page.is-embedded {
+  max-width: 100%;
+  padding: 0;
+}
+
 .sp-plans-switcher {
   display: flex;
   justify-content: space-between;

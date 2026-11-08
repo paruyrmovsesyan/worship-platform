@@ -1,8 +1,8 @@
 {
   "app_version": "5.3.0",
   "web_version": "5.3.0",
-  "asset_version": "547",
-  "build_timestamp": "2026-11-08T11:00:00+04:00",
-  "release_type": "bugfix",
-  "release_summary": "Fix Worship Pro Studio Hub PWA offline hydration, mobile responsive layout, and navigation"
+  "asset_version": "548",
+  "build_timestamp": "2026-11-08T11:20:00+04:00",
+  "release_type": "feature",
+  "release_summary": "Redesigned Worship Pro Studio Hub workstation for Web and PWA with live presenter console, ambient pad synth, inline AI Studio, and embedded Service Planner"
 }

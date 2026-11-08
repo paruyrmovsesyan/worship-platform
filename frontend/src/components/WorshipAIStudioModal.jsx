@@ -11,6 +11,7 @@ export default function WorshipAIStudioModal({
   lyrics = '',
   chords = '',
   onApplyResult,
+  inline = false,
 }) {
   const { isBeta } = useFeatureFlags();
   const [activeTab, setActiveTab] = useState('chords'); // 'chords' | 'stylize' | 'translate'
@@ -29,7 +30,7 @@ export default function WorshipAIStudioModal({
   const sourceText = customSourceText !== null ? customSourceText : defaultSource;
   const setSourceText = (val) => setCustomSourceText(val);
 
-  if (!isOpen) return null;
+  if (!inline && !isOpen) return null;
 
   const handleGenerateChords = async () => {
     setLoading(true);
@@ -122,196 +123,208 @@ export default function WorshipAIStudioModal({
     setTimeout(() => setCopied(false), 1800);
   };
 
-  return (
-    <div className="ai-studio-overlay" onClick={onClose}>
-      <div className="ai-studio-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="ai-studio-header">
-          <div className="ai-studio-title-wrap">
-            <div className="ai-studio-title">
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                ✨ Worship AI Studio
-                {isBeta('worship_ai_studio') && <BetaBadge label="BETA" />}
-              </span>
-            </div>
-            {songTitle && <span className="ai-studio-subtitle">{songTitle}</span>}
+  const content = (
+    <div className={inline ? 'ai-studio-inline-card' : 'ai-studio-modal'} onClick={(e) => e.stopPropagation()}>
+      <div className="ai-studio-header">
+        <div className="ai-studio-title-wrap">
+          <div className="ai-studio-title">
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              Worship AI Studio
+              {isBeta('worship_ai_studio') && <BetaBadge label="BETA" />}
+            </span>
           </div>
+          {songTitle && <span className="ai-studio-subtitle">Ակտիվ երգ՝ {songTitle}</span>}
+        </div>
+        {!inline && onClose && (
           <button type="button" className="ai-studio-close-btn" onClick={onClose} aria-label="Փակել">
             ✕
           </button>
-        </div>
+        )}
+      </div>
 
-        <div className="ai-studio-tabs">
-          <button
-            type="button"
-            className={`ai-studio-tab-btn ${activeTab === 'chords' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('chords');
-              setSourceText(lyrics || chords || '');
-              setResultText('');
-              setError('');
-            }}
-          >
-            🎸 Ակորդների Գեներացում
-          </button>
-          <button
-            type="button"
-            className={`ai-studio-tab-btn ${activeTab === 'stylize' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('stylize');
-              setSourceText(chords || lyrics || '');
-              setResultText('');
-              setError('');
-            }}
-          >
-            🎨 Ակորդների Հարստացում / Պարզեցում
-          </button>
-          <button
-            type="button"
-            className={`ai-studio-tab-btn ${activeTab === 'translate' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('translate');
-              setSourceText(lyrics || chords || '');
-              setResultText('');
-              setError('');
-            }}
-          >
-            ✍️ Պոետիկ Թարգմանություն & Կառուցվածք
-          </button>
-        </div>
+      <div className="ai-studio-tabs">
+        <button
+          type="button"
+          className={`ai-studio-tab-btn ${activeTab === 'chords' ? 'active' : ''}`}
+          onClick={() => {
+            setActiveTab('chords');
+            setSourceText(lyrics || chords || '');
+            setResultText('');
+            setError('');
+          }}
+        >
+          Ակորդների Գեներացում
+        </button>
+        <button
+          type="button"
+          className={`ai-studio-tab-btn ${activeTab === 'stylize' ? 'active' : ''}`}
+          onClick={() => {
+            setActiveTab('stylize');
+            setSourceText(chords || lyrics || '');
+            setResultText('');
+            setError('');
+          }}
+        >
+          Modern Voicing & Պարզեցում
+        </button>
+        <button
+          type="button"
+          className={`ai-studio-tab-btn ${activeTab === 'translate' ? 'active' : ''}`}
+          onClick={() => {
+            setActiveTab('translate');
+            setSourceText(lyrics || chords || '');
+            setResultText('');
+            setError('');
+          }}
+        >
+          Պոետիկ Թարգմանություն
+        </button>
+      </div>
 
-        <div className="ai-studio-body">
-          {error && (
-            <div className="ai-studio-error">
-              ⚠️ {error}
-            </div>
-          )}
-
-          {activeTab === 'chords' && (
-            <div className="ai-studio-panel">
-              <p className="ai-studio-desc">
-                Վերլուծում է երգի տեքստն ու բաժինները ([Տուն], [Կրկներգ], [Կամուրջ]) և ավտոմատ կառուցում է պաշտամունքային ակորդային հարմոնիա ընտրված տոնայնությամբ։
-              </p>
-              <div className="ai-studio-controls-row">
-                <label className="ai-studio-field-label">Ընտրել տոնայնությունը (Key)՝</label>
-                <div className="ai-studio-key-pills">
-                  {['C', 'D', 'Eb', 'E', 'F', 'G', 'A', 'Bb', 'Am', 'Em', 'Dm', 'Bm'].map((k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      className={`ai-key-pill ${targetKey === k ? 'active' : ''}`}
-                      onClick={() => setTargetKey(k)}
-                    >
-                      {k}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button
-                type="button"
-                className="ai-studio-action-btn"
-                disabled={loading}
-                onClick={handleGenerateChords}
-              >
-                {loading ? '⏳ Գեներացվում են ակորդները...' : `✨ Ստեղծել Ակորդներ (${targetKey} տոնայնությամբ)`}
-              </button>
-            </div>
-          )}
-
-          {activeTab === 'stylize' && (
-            <div className="ai-studio-panel">
-              <p className="ai-studio-desc">
-                Փոխակերպեք երգի ակորդները ժամանակակից Worship հնչողության (add9, sus4, maj7, m7) կամ պարզեցրեք սկսնակ երաժիշտների համար։
-              </p>
-              <div className="ai-studio-mode-cards">
-                <button
-                  type="button"
-                  className={`ai-mode-card ${stylizeMode === 'enhance' ? 'active' : ''}`}
-                  onClick={() => setStylizeMode('enhance')}
-                >
-                  <span className="ai-mode-card-title">🎹 Modern Worship Voicing</span>
-                  <span className="ai-mode-card-sub">Հարստացնել add9, sus4, maj7, m7 ակորդներով</span>
-                </button>
-                <button
-                  type="button"
-                  className={`ai-mode-card ${stylizeMode === 'simplify' ? 'active' : ''}`}
-                  onClick={() => setStylizeMode('simplify')}
-                >
-                  <span className="ai-mode-card-title">🎸 Սկսնակների Պարզ Ակորդներ</span>
-                  <span className="ai-mode-card-sub">Հեռացնել բարդ կոտորակային (slash) և sus/7 ակորդները</span>
-                </button>
-              </div>
-              <button
-                type="button"
-                className="ai-studio-action-btn"
-                disabled={loading}
-                onClick={handleStylizeChords}
-              >
-                {loading ? '⏳ Մշակվում են ակորդները...' : '✨ Կիրառել Ակորդների Ձևափոխումը'}
-              </button>
-            </div>
-          )}
-
-          {activeTab === 'translate' && (
-            <div className="ai-studio-panel">
-              <p className="ai-studio-desc">
-                Օտարալեզու պաշտամունքի երգերի պոետիկ հայերեն թարգմանություն և տեքստի բաժանում կանոնավոր տների ու կրկներգերի։
-              </p>
-              <button
-                type="button"
-                className="ai-studio-action-btn"
-                disabled={loading}
-                onClick={handleTranslate}
-              >
-                {loading ? '⏳ Թարգմանվում և կառուցվածքավորվում է...' : '✨ Թարգմանել և Կառուցվածքավորել Հայերեն'}
-              </button>
-            </div>
-          )}
-
-          <div className="ai-studio-source-section">
-            <label className="ai-studio-field-label">
-              Ելակետային տեքստ / ակորդներ (կարող եք նաև խմբագրել կամ տեղադրել նոր տեքստ)՝
-            </label>
-            <textarea
-              className="ai-studio-source-textarea"
-              rows={5}
-              value={sourceText}
-              onChange={(e) => setSourceText(e.target.value)}
-              placeholder="Տեղադրեք երգի բառերը կամ ակորդներով տեքստը այստեղ..."
-            />
+      <div className="ai-studio-body">
+        {error && (
+          <div className="ai-studio-error">
+            {error}
           </div>
+        )}
 
-          {resultText && (
-            <div className="ai-studio-result-wrap">
-              <div className="ai-studio-result-header">
-                <div>
-                  <span className="ai-studio-result-badge">✨ Արդյունքը պատրաստ է</span>
-                  {modeNote && <span className="ai-studio-mode-note">{modeNote}</span>}
-                </div>
-                <div className="ai-studio-result-actions">
+        {activeTab === 'chords' && (
+          <div className="ai-studio-panel">
+            <p className="ai-studio-desc">
+              Վերլուծում է երգի տեքստն ու բաժինները ([Տուն], [Կրկներգ], [Կամուրջ]) և ավտոմատ կառուցում է պաշտամունքային ակորդային հարմոնիա ընտրված տոնայնությամբ։
+            </p>
+            <div className="ai-studio-controls-row">
+              <label className="ai-studio-field-label">Ընտրել տոնայնությունը (Key)՝</label>
+              <div className="ai-studio-key-pills">
+                {['C', 'D', 'Eb', 'E', 'F', 'G', 'A', 'Bb', 'Am', 'Em', 'Dm', 'Bm'].map((k) => (
                   <button
+                    key={k}
                     type="button"
-                    className="ai-studio-copy-btn"
-                    onClick={handleCopy}
+                    className={`ai-key-pill ${targetKey === k ? 'active' : ''}`}
+                    onClick={() => setTargetKey(k)}
                   >
-                    {copied ? '✓ Պատճենվեց' : '📋 Պատճենել'}
+                    {k}
                   </button>
+                ))}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="ai-studio-action-btn"
+              disabled={loading}
+              onClick={handleGenerateChords}
+            >
+              {loading ? 'Գեներացվում են ակորդները...' : `Ստեղծել Ակորդներ (${targetKey} տոնայնությամբ)`}
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'stylize' && (
+          <div className="ai-studio-panel">
+            <p className="ai-studio-desc">
+              Փոխակերպեք երգի ակորդները ժամանակակից Worship հնչողության (add9, sus4, maj7, m7) կամ պարզեցրեք սկսնակ երաժիշտների համար։
+            </p>
+            <div className="ai-studio-mode-cards">
+              <button
+                type="button"
+                className={`ai-mode-card ${stylizeMode === 'enhance' ? 'active' : ''}`}
+                onClick={() => setStylizeMode('enhance')}
+              >
+                <span className="ai-mode-card-title">Modern Worship Voicing</span>
+                <span className="ai-mode-card-sub">Հարստացնել add9, sus4, maj7, m7 ակորդներով</span>
+              </button>
+              <button
+                type="button"
+                className={`ai-mode-card ${stylizeMode === 'simplify' ? 'active' : ''}`}
+                onClick={() => setStylizeMode('simplify')}
+              >
+                <span className="ai-mode-card-title">Սկսնակների Պարզ Ակորդներ</span>
+                <span className="ai-mode-card-sub">Հեռացնել բարդ կոտորակային (slash) և sus/7 ակորդները</span>
+              </button>
+            </div>
+            <button
+              type="button"
+              className="ai-studio-action-btn"
+              disabled={loading}
+              onClick={handleStylizeChords}
+            >
+              {loading ? 'Մշակվում են ակորդները...' : 'Կիրառել Ակորդների Ձևափոխումը'}
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'translate' && (
+          <div className="ai-studio-panel">
+            <p className="ai-studio-desc">
+              Օտարալեզու պաշտամունքի երգերի պոետիկ հայերեն թարգմանություն և տեքստի բաժանում կանոնավոր տների ու կրկներգերի։
+            </p>
+            <button
+              type="button"
+              className="ai-studio-action-btn"
+              disabled={loading}
+              onClick={handleTranslate}
+            >
+              {loading ? 'Թարգմանվում և կառուցվածքավորվում է...' : 'Թարգմանել և Կառուցվածքավորել Հայերեն'}
+            </button>
+          </div>
+        )}
+
+        <div className="ai-studio-source-section">
+          <label className="ai-studio-field-label">
+            Ելակետային տեքստ / ակորդներ (կարող եք խմբագրել կամ տեղադրել ցանկացած տեքստ)՝
+          </label>
+          <textarea
+            className="ai-studio-source-textarea"
+            rows={inline ? 7 : 5}
+            value={sourceText}
+            onChange={(e) => setSourceText(e.target.value)}
+            placeholder="Տեղադրեք երգի բառերը կամ ակորդներով տեքստը այստեղ..."
+          />
+        </div>
+
+        {resultText && (
+          <div className="ai-studio-result-wrap">
+            <div className="ai-studio-result-header">
+              <div>
+                <span className="ai-studio-result-badge">Արդյունքը պատրաստ է</span>
+                {modeNote && <span className="ai-studio-mode-note">{modeNote}</span>}
+              </div>
+              <div className="ai-studio-result-actions">
+                <button
+                  type="button"
+                  className="ai-studio-copy-btn"
+                  onClick={handleCopy}
+                >
+                  {copied ? '✓ Պատճենվեց' : 'Պատճենել'}
+                </button>
+                {onApplyResult && (
                   <button
                     type="button"
                     className="ai-studio-apply-btn"
                     onClick={() => {
-                      if (onApplyResult) onApplyResult(resultText, activeTab);
-                      onClose();
+                      onApplyResult(resultText, activeTab);
+                      if (onClose) onClose();
                     }}
                   >
-                    ✓ Կիրառել երգի էջում
+                    ✓ Կիրառել
                   </button>
-                </div>
+                )}
               </div>
-              <pre className="ai-studio-result-box">{resultText}</pre>
             </div>
-          )}
-        </div>
+            <pre className="ai-studio-result-box">{resultText}</pre>
+          </div>
+        )}
       </div>
+    </div>
+  );
+
+  if (inline) {
+    return content;
+  }
+
+  return (
+    <div className="ai-studio-overlay" onClick={onClose}>
+      {content}
     </div>
   );
 }

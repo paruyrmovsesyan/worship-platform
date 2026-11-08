@@ -348,7 +348,7 @@ export default function Navbar() {
             </Link>
             
             <div 
-              className={`nav-item has-dropdown ${activeDropdown === 'solutions' ? 'active-dropdown' : ''} ${isActive('/songs') || isActive('/transpose') || isActive('/setlists') || isActive('/friends') ? 'active' : ''}`}
+              className={`nav-item has-dropdown ${activeDropdown === 'solutions' ? 'active-dropdown' : ''} ${isActive('/songs') || isActive('/transpose') || isActive('/setlists') || isActive('/studio') || isActive('/service-planner') || isActive('/friends') ? 'active' : ''}`}
               onMouseEnter={(e) => handleMenuEnter(e, 'solutions')}
               onMouseLeave={onMenuLeave}
             >
@@ -364,11 +364,23 @@ export default function Navbar() {
                         <Link to="/songs">{t('nav.songs')}</Link>
                         <Link to="/transpose">{t('nav.transposer')}</Link>
                         <Link to="/setlists">{t('nav.sets')}</Link>
+                        {(isEnabled('pro_studio') || isEnabled('rehearsal_stems') || isEnabled('lyrics_projection') || isEnabled('live_stage_follower') || isEnabled('worship_ai_studio') || isEnabled('service_planner')) && (
+                          <Link to="/studio" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            Pro Studio Հաբ
+                            {(isBeta('pro_studio') || isBeta('rehearsal_stems') || isBeta('lyrics_projection') || isBeta('live_stage_follower') || isBeta('worship_ai_studio')) && <BetaBadge />}
+                          </Link>
+                        )}
                       </div>
                     </div>
                     <div className="mega-col">
                       <h4>{t('megaMenu.management')}</h4>
                       <div className="mega-col-links">
+                        {isEnabled('service_planner') && (
+                          <Link to="/service-planner" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            Ծառայության Պլանավորող
+                            {isBeta('service_planner') && <BetaBadge />}
+                          </Link>
+                        )}
                         <Link to="/friends">{t('nav.friends')}</Link>
                       </div>
                     </div>
@@ -381,6 +393,18 @@ export default function Navbar() {
                 </div>
               </div>
             </div>
+
+            {(isEnabled('pro_studio') || isEnabled('rehearsal_stems') || isEnabled('lyrics_projection') || isEnabled('live_stage_follower') || isEnabled('worship_ai_studio') || isEnabled('service_planner')) && (
+              <Link
+                to="/studio"
+                className={`nav-item ${isActive('/studio') || isActive('/tools') ? 'active' : ''}`}
+                onMouseEnter={(e) => handleMenuEnter(e, null)}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              >
+                <span>Pro Studio</span>
+                {(isBeta('pro_studio') || isBeta('rehearsal_stems') || isBeta('lyrics_projection') || isBeta('live_stage_follower') || isBeta('worship_ai_studio')) && <BetaBadge />}
+              </Link>
+            )}
 
             <div 
               className={`nav-item has-dropdown ${activeDropdown === 'resources' ? 'active-dropdown' : ''} ${isActive('/news') || isActive('/resources') || isActive('/community') ? 'active' : ''}`}

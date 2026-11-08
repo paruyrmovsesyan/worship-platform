@@ -117,6 +117,58 @@ export default function LiveProjection() {
     };
   }, [sessionId, song, loadSongById]);
 
+  // Listen to BroadcastChannel & localStorage from Pro Studio Presenter Console
+  useEffect(() => {
+    const applyRemoteProjectionState = (payload) => {
+      if (!payload || typeof payload !== 'object') return;
+      if (payload.songId && (!song || Number(song.id) !== Number(payload.songId))) {
+        loadSongById(payload.songId);
+      }
+      if (typeof payload.slideIndex === 'number') {
+        setCurrentSlideIndex(payload.slideIndex);
+      }
+      if (typeof payload.isBlank === 'boolean') {
+        setIsBlank(payload.isBlank);
+      }
+      if (typeof payload.showTitleOverlay === 'boolean') {
+        setShowTitleOverlay(payload.showTitleOverlay);
+      }
+      if (typeof payload.theme === 'string' && payload.theme) {
+        setTheme(payload.theme);
+      }
+      if (typeof payload.mode === 'string' && payload.mode) {
+        setMode(payload.mode);
+      }
+      if (typeof payload.stageMessage === 'string') {
+        setStageMessage(payload.stageMessage);
+      }
+    };
+
+    let bc = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        bc = new BroadcastChannel('worship_projection_sync');
+        bc.onmessage = (ev) => applyRemoteProjectionState(ev.data);
+      } catch {}
+    }
+
+    const onStorage = (ev) => {
+      if (ev.key === 'wp_projection_live_state' && ev.newValue) {
+        try {
+          applyRemoteProjectionState(JSON.parse(ev.newValue));
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      if (bc) {
+        try { bc.close(); } catch {}
+      }
+      window.removeEventListener('storage', onStorage);
+    };
+  }, [song, loadSongById]);
+
   // Parse lyrics into structured slides: [{ section: 'Տուն 1', text: '...' }]
   const slides = useMemo(() => {
     const rawText = song?.lyrics || song?.chords || '';

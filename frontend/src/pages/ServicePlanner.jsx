@@ -36,7 +36,7 @@ const CATEGORY_META = {
 
 const LOCAL_PLANS_KEY = 'wp_service_plans_cache';
 
-export default function ServicePlanner() {
+export default function ServicePlanner({ embedded = false }) {
   const { isOff, isBeta } = useFeatureFlags();
   const [plans, setPlans] = useState([]);
   const [planId, setPlanId] = useState(null);
@@ -50,7 +50,16 @@ export default function ServicePlanner() {
 
   // Song picker modal state
   const [showSongPicker, setShowSongPicker] = useState(false);
-  const [allSongs, setAllSongs] = useState([]);
+  const [allSongs, setAllSongs] = useState(() => {
+    try {
+      const cached = localStorage.getItem('wp_songs_cache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [];
+  });
   const [songQuery, setSongQuery] = useState('');
   const [newRoleName, setNewRoleName] = useState('');
 
@@ -322,8 +331,8 @@ export default function ServicePlanner() {
   }
 
   return (
-    <div className="service-planner-page">
-      {isBeta('service_planner') && (
+    <div className={`service-planner-page ${embedded ? 'is-embedded' : ''}`}>
+      {!embedded && isBeta('service_planner') && (
         <BetaBanner
           title="Ministry Service Planner — BETA Փորձարկման Փուլ"
           description="Այս գործիքը գտնվում է ակտիվ լաբարատոր փորձարկման փուլում։ Բոլոր ծրագրերն ու գրաֆիկները պահպանվում են ավտոմատ։"
@@ -362,9 +371,11 @@ export default function ServicePlanner() {
             </button>
           )}
         </div>
-        <Link to="/setlists" className="sp-back-link">
-          ← Սեթլիստներ
-        </Link>
+        {!embedded && (
+          <Link to="/setlists" className="sp-back-link">
+            ← Սեթլիստներ
+          </Link>
+        )}
       </div>
 
       <div className="sp-header">
