@@ -272,6 +272,179 @@
   pointer-events: none;
 }
 
+/* ── Search Suggestions & Recent Searches Popover ── */
+.sw-search-suggestions-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: rgba(18, 22, 34, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 14px 16px;
+  z-index: 100;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sw-sug-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sw-sug-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sw-sug-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sw-sug-icon {
+  font-size: 0.82rem;
+}
+
+.sw-sug-clear-all {
+  background: none;
+  border: none;
+  font-size: 0.76rem;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.sw-sug-clear-all:hover {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.12);
+}
+
+.sw-sug-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.sw-sug-chip {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 0.82rem;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.sw-sug-chip:hover {
+  background: rgba(56, 189, 248, 0.16);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.sw-sug-chip-text {
+  cursor: pointer;
+}
+
+.sw-sug-chip-del {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.82rem;
+  margin-left: 6px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.sw-sug-chip-del:hover {
+  color: #f87171;
+}
+
+.sw-sug-chip-preset {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+  color: #bae6fd;
+}
+
+/* ── Lyric Search Snippets ── */
+.sw-card-snippet,
+.sw-row-snippet {
+  margin-top: 4px;
+  font-size: 0.76rem;
+  color: #7dd3fc;
+  background: rgba(14, 165, 233, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 7px;
+  padding: 3px 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.sw-snippet-icon {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+.sw-snippet-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Light mode support */
+body.light-mode .sw-search-suggestions-popover {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+}
+
+body.light-mode .sw-sug-title {
+  color: #555566;
+}
+
+body.light-mode .sw-sug-chip {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #111111;
+}
+
+body.light-mode .sw-sug-chip-preset {
+  background: rgba(14, 165, 233, 0.08);
+  border-color: rgba(14, 165, 233, 0.25);
+  color: #0369a1;
+}
+
+body.light-mode .sw-card-snippet,
+body.light-mode .sw-row-snippet {
+  background: rgba(14, 165, 233, 0.1);
+  border-color: rgba(14, 165, 233, 0.25);
+  color: #0369a1;
+}
+
 /* Sort select */
 .sw-sort-wrapper {
   position: relative;

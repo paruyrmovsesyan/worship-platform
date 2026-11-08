@@ -6,7 +6,14 @@ import { useAuth } from '../context/AuthContext';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { getSongCoverStyle } from '../utils/songCover';
 import { usePageReady } from '../hooks/usePageReady';
-import { matchSongSearch } from '../utils/searchMatcher';
+import { scoreSongSearch } from '../utils/searchMatcher';
+import {
+  getRecentSongSearches,
+  saveRecentSongSearch,
+  removeRecentSongSearch,
+  clearRecentSongSearches,
+  DEFAULT_SEARCH_SUGGESTIONS
+} from '../utils/recentSearches';
 import './SongsWeb.css';
 
 export default function SongsWeb() {
@@ -47,6 +54,8 @@ export default function SongsWeb() {
   const [searchQuery, setSearchQuery] = useState(
     new URLSearchParams(location.search).get('q') || ''
   );
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [recentSearches, setRecentSearches] = useState(getRecentSongSearches);
   const [visibleCount, setVisibleCount] = useState(24);
   const [showBackToTop, setShowBackToTop] = useState(false);
 
@@ -359,12 +368,22 @@ export default function SongsWeb() {
     };
   }, [songs, favorites]);
 
-  // Filter & Sort
+  // Filter & Sort with intelligent relevance scoring
   const filtered = useMemo(() => {
+    const hasSearch = Boolean(searchQuery && searchQuery.trim());
+
     return songs
-      .filter(s => {
-        const matchQ = matchSongSearch(s, searchQuery);
-        if (!matchQ) return false;
+      .map(s => {
+        if (!hasSearch) {
+          return { song: s, score: 0, snippet: null };
+        }
+        const res = scoreSongSearch(s, searchQuery, language);
+        if (!res.matches) return null;
+        return { song: s, score: res.score, snippet: res.snippet };
+      })
+      .filter(item => {
+        if (!item) return false;
+        const s = item.song;
 
         if (selectedKey !== 'All' && s.song_key !== selectedKey) {
           return false;
@@ -400,17 +419,27 @@ export default function SongsWeb() {
         return true;
       })
       .sort((a, b) => {
+        if (hasSearch && (sortBy === 'title' || sortBy === 'recent' || sortBy === 'relevance')) {
+          if (b.score !== a.score) {
+            return b.score - a.score;
+          }
+        }
         if (sortBy === 'title') {
-          const tA = getLocalizedTitle(a.title, language) || a.title || '';
-          const tB = getLocalizedTitle(b.title, language) || b.title || '';
+          const tA = getLocalizedTitle(a.song.title, language) || a.song.title || '';
+          const tB = getLocalizedTitle(b.song.title, language) || b.song.title || '';
           return tA.localeCompare(tB, language === 'am' ? 'hy' : language === 'ru' ? 'ru' : 'en');
         }
-        if (sortBy === 'recent') return (parseInt(b.id, 10) || 0) - (parseInt(a.id, 10) || 0);
-        if (sortBy === 'bpm_asc') return (parseInt(a.bpm, 10) || 0) - (parseInt(b.bpm, 10) || 0);
-        if (sortBy === 'bpm_desc') return (parseInt(b.bpm, 10) || 0) - (parseInt(a.bpm, 10) || 0);
-        if (sortBy === 'key') return (a.song_key || '').localeCompare(b.song_key || '');
+        if (sortBy === 'recent') return (parseInt(b.song.id, 10) || 0) - (parseInt(a.song.id, 10) || 0);
+        if (sortBy === 'bpm_asc') return (parseInt(a.song.bpm, 10) || 0) - (parseInt(b.song.bpm, 10) || 0);
+        if (sortBy === 'bpm_desc') return (parseInt(b.song.bpm, 10) || 0) - (parseInt(a.song.bpm, 10) || 0);
+        if (sortBy === 'key') return (a.song.song_key || '').localeCompare(b.song.song_key || '');
         return 0;
-      });
+      })
+      .map(item => ({
+        ...item.song,
+        _searchScore: item.score,
+        _searchSnippet: item.snippet
+      }));
   }, [songs, searchQuery, selectedKey, activeCategory, favorites, sortBy, language]);
 
   const visibleSongs = filtered.slice(0, visibleCount);
@@ -505,6 +534,14 @@ export default function SongsWeb() {
                 placeholder={t('songs.search', 'Որոնել երգեր, հեղինակներ, խոսքեր...')}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 250)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    saveRecentSongSearch(searchQuery);
+                    setRecentSearches(getRecentSongSearches());
+                  }
+                }}
               />
               <div className="sw-search-right">
                 {searchQuery ? (
@@ -520,11 +557,94 @@ export default function SongsWeb() {
                   <span className="sw-search-shortcut" title="Սեղմեք / արագ որոնման համար">/</span>
                 )}
               </div>
+
+              {isSearchFocused && !searchQuery && (
+                <div className="sw-search-suggestions-popover animate-fade-in">
+                  {recentSearches.length > 0 && (
+                    <div className="sw-sug-section">
+                      <div className="sw-sug-header">
+                        <span className="sw-sug-title">
+                          <span className="sw-sug-icon">🕒</span> {language === 'am' ? 'Վերջին որոնումները' : language === 'ru' ? 'Недавние' : 'Recent'}
+                        </span>
+                        <button
+                          type="button"
+                          className="sw-sug-clear-all"
+                          onPointerDown={(e) => {
+                            e.preventDefault();
+                            clearRecentSongSearches();
+                            setRecentSearches([]);
+                          }}
+                        >
+                          {language === 'am' ? 'Մաքրել' : 'Clear'}
+                        </button>
+                      </div>
+                      <div className="sw-sug-chips">
+                        {recentSearches.map((item, idx) => (
+                          <span key={idx} className="sw-sug-chip">
+                            <span
+                              className="sw-sug-chip-text"
+                              onPointerDown={(e) => {
+                                e.preventDefault();
+                                setSearchQuery(item);
+                                setIsSearchFocused(false);
+                              }}
+                            >
+                              {item}
+                            </span>
+                            <button
+                              type="button"
+                              className="sw-sug-chip-del"
+                              aria-label="Ջնջել"
+                              onPointerDown={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const updated = removeRecentSongSearch(item);
+                                setRecentSearches(updated);
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="sw-sug-section">
+                    <div className="sw-sug-header">
+                      <span className="sw-sug-title">
+                        <span className="sw-sug-icon">💡</span> {language === 'am' ? 'Հաճախ որոնվող' : language === 'ru' ? 'Популярные' : 'Popular'}
+                      </span>
+                    </div>
+                    <div className="sw-sug-chips">
+                      {DEFAULT_SEARCH_SUGGESTIONS.map((sug, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          className="sw-sug-chip sw-sug-chip-preset"
+                          onPointerDown={(e) => {
+                            e.preventDefault();
+                            setSearchQuery(sug);
+                            saveRecentSongSearch(sug);
+                            setRecentSearches(getRecentSongSearches());
+                            setIsSearchFocused(false);
+                          }}
+                        >
+                          {sug}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Sort Dropdown */}
             <div className="sw-sort-wrapper">
               <select className="sw-sort-select" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+                {searchQuery && (
+                  <option value="relevance">🎯 {language === 'am' ? 'Ըստ համապատասխանության' : 'By Relevance'}</option>
+                )}
                 <option value="title">{language === 'am' ? '🔤 Անվանում (Ա-Ֆ)' : 'Title (A-Z)'}</option>
                 <option value="recent">{language === 'am' ? '⏱ Վերջին ավելացված' : 'Newest'}</option>
                 <option value="bpm_asc">{language === 'am' ? '🥁 Տեմպ (BPM աճող)' : 'BPM (Low-High)'}</option>
@@ -699,7 +819,10 @@ export default function SongsWeb() {
                 <article
                   key={song.id}
                   className="sw-card"
-                  onClick={() => navigate(`/song/${song.id}`)}
+                  onClick={() => {
+                    if (searchQuery.trim()) saveRecentSongSearch(searchQuery);
+                    navigate(`/song/${song.id}`);
+                  }}
                 >
                   <div className="sw-card-top">
                     <div
@@ -737,6 +860,12 @@ export default function SongsWeb() {
                     <p className="sw-card-artist">
                       {song.artist || (language === 'am' ? 'Անհայտ հեղինակ' : 'Unknown')}
                     </p>
+                    {searchQuery && song._searchSnippet && (
+                      <div className="sw-card-snippet" title="Համընկնում տեքստում">
+                        <span className="sw-snippet-icon">💬</span>
+                        <span className="sw-snippet-text">«{song._searchSnippet}»</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="sw-card-footer">
@@ -799,7 +928,10 @@ export default function SongsWeb() {
                   <div
                     key={song.id}
                     className="sw-table-row"
-                    onClick={() => navigate(`/song/${song.id}`)}
+                    onClick={() => {
+                      if (searchQuery.trim()) saveRecentSongSearch(searchQuery);
+                      navigate(`/song/${song.id}`);
+                    }}
                   >
                     <div className="sw-td-title">
                       <div
@@ -814,6 +946,12 @@ export default function SongsWeb() {
                           <span className="sw-row-artist-mobile">{song.artist || '—'}</span>
                           {hasChords && <span className="sw-row-chords-badge">Chords</span>}
                         </div>
+                        {searchQuery && song._searchSnippet && (
+                          <div className="sw-row-snippet" title="Համընկնում տեքստում">
+                            <span className="sw-snippet-icon">💬</span>
+                            <span className="sw-snippet-text">«{song._searchSnippet}»</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 

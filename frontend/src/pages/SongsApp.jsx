@@ -6,7 +6,14 @@ import { useAuth } from '../context/AuthContext';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { getSongCoverStyle } from '../utils/songCover';
 import { usePageReady } from '../hooks/usePageReady';
-import { matchSongSearch } from '../utils/searchMatcher';
+import { scoreSongSearch } from '../utils/searchMatcher';
+import {
+  getRecentSongSearches,
+  saveRecentSongSearch,
+  removeRecentSongSearch,
+  clearRecentSongSearches,
+  DEFAULT_SEARCH_SUGGESTIONS
+} from '../utils/recentSearches';
 import './SongsApp.css';
 
 const SONGS_VIEW_STATE_KEY = 'songs_app_view_state_v1';
@@ -77,6 +84,8 @@ export default function SongsApp() {
   const [searchQuery, setSearchQuery] = useState(
     restoreState?.searchQuery ?? initialQuery
   );
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [recentSearches, setRecentSearches] = useState(getRecentSongSearches);
   const [visibleCount, setVisibleCount] = useState(Math.max(15, Number(restoreState?.visibleCount) || 15));
   const [showBackToTop, setShowBackToTop] = useState(false);
   
@@ -330,13 +339,22 @@ export default function SongsApp() {
     }
   };
 
-  // Filter and sort songs
+  // Filter and sort songs with intelligent relevance scoring
   const filtered = useMemo(() => {
+    const hasSearch = Boolean(searchQuery && searchQuery.trim());
+
     return songs
-      .filter(s => {
-        // Search filter
-        const matchQ = matchSongSearch(s, searchQuery);
-        if (!matchQ) return false;
+      .map(s => {
+        if (!hasSearch) {
+          return { song: s, score: 0, snippet: null };
+        }
+        const res = scoreSongSearch(s, searchQuery, language);
+        if (!res.matches) return null;
+        return { song: s, score: res.score, snippet: res.snippet };
+      })
+      .filter(item => {
+        if (!item) return false;
+        const s = item.song;
 
         // Key filter
         if (selectedKey !== 'All' && s.song_key !== selectedKey) {
@@ -374,17 +392,28 @@ export default function SongsApp() {
         return true;
       })
       .sort((a, b) => {
+        // High-precision relevance sort when actively searching
+        if (hasSearch && (sortBy === 'recent' || sortBy === 'relevance')) {
+          if (b.score !== a.score) {
+            return b.score - a.score;
+          }
+        }
         if (sortBy === 'title') {
-          const tA = getLocalizedTitle(a, language) || a.title || '';
-          const tB = getLocalizedTitle(b, language) || b.title || '';
+          const tA = getLocalizedTitle(a.song, language) || a.song.title || '';
+          const tB = getLocalizedTitle(b.song, language) || b.song.title || '';
           return tA.localeCompare(tB, language === 'am' ? 'hy' : language === 'ru' ? 'ru' : 'en');
         }
-        if (sortBy === 'bpm_desc') return (parseInt(b.bpm, 10) || 0) - (parseInt(a.bpm, 10) || 0);
-        if (sortBy === 'bpm_asc' || sortBy === 'bpm') return (parseInt(a.bpm, 10) || 0) - (parseInt(b.bpm, 10) || 0);
-        if (sortBy === 'key') return (a.song_key || '').localeCompare(b.song_key || '');
-        if (sortBy === 'recent') return (parseInt(b.id, 10) || 0) - (parseInt(a.id, 10) || 0);
-        return (parseInt(b.id, 10) || 0) - (parseInt(a.id, 10) || 0);
-      });
+        if (sortBy === 'bpm_desc') return (parseInt(b.song.bpm, 10) || 0) - (parseInt(a.song.bpm, 10) || 0);
+        if (sortBy === 'bpm_asc' || sortBy === 'bpm') return (parseInt(a.song.bpm, 10) || 0) - (parseInt(b.song.bpm, 10) || 0);
+        if (sortBy === 'key') return (a.song.song_key || '').localeCompare(b.song.song_key || '');
+        if (sortBy === 'recent') return (parseInt(b.song.id, 10) || 0) - (parseInt(a.song.id, 10) || 0);
+        return (parseInt(b.song.id, 10) || 0) - (parseInt(a.song.id, 10) || 0);
+      })
+      .map(item => ({
+        ...item.song,
+        _searchScore: item.score,
+        _searchSnippet: item.snippet
+      }));
   }, [songs, searchQuery, selectedKey, activeCategory, favorites, sortBy, language]);
 
   const visibleSongs = filtered.slice(0, visibleCount);
@@ -414,6 +443,9 @@ export default function SongsApp() {
   }, [isLoading, restoreState, visibleSongs.length]);
 
   const openSong = (songId) => {
+    if (searchQuery && searchQuery.trim()) {
+      saveRecentSongSearch(searchQuery);
+    }
     try {
       sessionStorage.setItem(SONGS_VIEW_STATE_KEY, JSON.stringify({
         scrollY: window.scrollY,
@@ -615,6 +647,14 @@ export default function SongsApp() {
               placeholder={t('songs.search')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setTimeout(() => setIsSearchFocused(false), 250)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  saveRecentSongSearch(searchQuery);
+                  setRecentSearches(getRecentSongSearches());
+                }
+              }}
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck="false"
@@ -650,6 +690,86 @@ export default function SongsApp() {
               </button>
             )}
           </div>
+
+          {isSearchFocused && !searchQuery && (
+            <div className="search-suggestions-popover animate-fade-in">
+              {recentSearches.length > 0 && (
+                <div className="sug-section">
+                  <div className="sug-header">
+                    <span className="sug-title">
+                      <span className="sug-icon">🕒</span> {language === 'am' ? 'Վերջին որոնումները' : language === 'ru' ? 'Недавние' : 'Recent'}
+                    </span>
+                    <button
+                      type="button"
+                      className="sug-clear-all"
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        clearRecentSongSearches();
+                        setRecentSearches([]);
+                      }}
+                    >
+                      {language === 'am' ? 'Մաքրել' : 'Clear'}
+                    </button>
+                  </div>
+                  <div className="sug-chips">
+                    {recentSearches.map((item, idx) => (
+                      <span key={idx} className="sug-chip">
+                        <span
+                          className="sug-chip-text"
+                          onPointerDown={(e) => {
+                            e.preventDefault();
+                            setSearchQuery(item);
+                            setIsSearchFocused(false);
+                          }}
+                        >
+                          {item}
+                        </span>
+                        <button
+                          type="button"
+                          className="sug-chip-del"
+                          aria-label="Ջնջել"
+                          onPointerDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const updated = removeRecentSongSearch(item);
+                            setRecentSearches(updated);
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="sug-section">
+                <div className="sug-header">
+                  <span className="sug-title">
+                    <span className="sug-icon">💡</span> {language === 'am' ? 'Հաճախ որոնվող' : language === 'ru' ? 'Популярные' : 'Popular'}
+                  </span>
+                </div>
+                <div className="sug-chips">
+                  {DEFAULT_SEARCH_SUGGESTIONS.map((sug, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="sug-chip sug-chip-preset"
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        setSearchQuery(sug);
+                        saveRecentSongSearch(sug);
+                        setRecentSearches(getRecentSongSearches());
+                        setIsSearchFocused(false);
+                      }}
+                    >
+                      {sug}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -712,6 +832,9 @@ export default function SongsApp() {
         
         <div className="filter-sort-row">
           <select className="sort-sel modern-select" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+            {searchQuery && (
+              <option value="relevance">🎯 {language === 'am' ? 'Ըստ համապատասխանության' : language === 'ru' ? 'По релевантности' : 'By Relevance'}</option>
+            )}
             <option value="recent">⏱ {t('songs.sortRecent', 'Նոր ավելացված')}</option>
             <option value="title">🔤 {t('songs.sortTitle', 'Այբբենական')}</option>
             <option value="bpm_desc">⚡ Տեմպ (արագից դանդաղ)</option>
@@ -798,6 +921,12 @@ export default function SongsApp() {
                       )}
                     </div>
                   </div>
+                  {searchQuery && song._searchSnippet && (
+                    <div className="track-snippet" title="Համընկնում տեքստում">
+                      <span className="snippet-icon">💬</span>
+                      <span className="snippet-text">«{song._searchSnippet}»</span>
+                    </div>
+                  )}
                 </div>
 
                 <div 

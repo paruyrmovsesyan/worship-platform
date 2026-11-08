@@ -9,6 +9,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getLocalizedTitle } from '../utils/titleParser';
+import { scoreSongSearch } from '../utils/searchMatcher';
 import { useLanguage } from '../context/LanguageContext';
 import './WebCommandPalette.css';
 
@@ -189,8 +190,10 @@ export default function WebCommandPalette() {
       { id: 'profile', group: 'Նավիգացիա', type: 'profile', title: 'Անձնական էջ', meta: user ? 'Քո պրոֆիլը և կարգավորումները' : 'Մուտք գործել', shortcut: '⌘ 4', run: () => { setIsOpen(false); navigate(user ? '/profile' : '/login'); } },
     ];
 
-    const dataResults = [
-      ...songs.slice(0, 160).map(song => ({
+    const normalizedQuery = normalizeText(deferredQuery);
+
+    if (!normalizedQuery) {
+      const defaultSongResults = songs.slice(0, 6).map(song => ({
         id: `song-${song.id}`,
         group: 'Արդյունքներ',
         type: 'song',
@@ -200,10 +203,49 @@ export default function WebCommandPalette() {
           setIsOpen(false);
           navigate(`/song/${song.id}`);
         },
-      })),
-      ...setlists.map(setlist => ({
+      }));
+      return [...actions, ...defaultSongResults];
+    }
+
+    // Smart scored song search across ALL songs
+    const scoredSongs = songs
+      .map(song => {
+        const evalRes = scoreSongSearch(song, deferredQuery, language);
+        return { song, ...evalRes };
+      })
+      .filter(item => item.matches)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 12)
+      .map(({ song, snippet, matchedField }) => {
+        const baseMeta = [
+          song.artist,
+          song.song_key ? `Key ${song.song_key}` : '',
+          Number(song.bpm) > 0 ? `${song.bpm} BPM` : ''
+        ].filter(Boolean).join(' · ');
+
+        const meta = snippet && matchedField === 'lyrics'
+          ? `«${snippet}» · ${baseMeta}`
+          : baseMeta;
+
+        return {
+          id: `song-${song.id}`,
+          group: 'Երգեր',
+          type: 'song',
+          title: getLocalizedTitle(song, language),
+          meta,
+          run: () => {
+            setIsOpen(false);
+            navigate(`/song/${song.id}`);
+          },
+        };
+      });
+
+    const setlistResults = setlists
+      .filter(s => normalizeText(s.name || '').includes(normalizedQuery))
+      .slice(0, 4)
+      .map(setlist => ({
         id: `setlist-${setlist.id}`,
-        group: 'Արդյունքներ',
+        group: 'Երգացանկեր',
         type: 'setlist',
         title: setlist.name,
         meta: [setlist.items_count != null ? `${setlist.items_count} երգ` : '', setlist.service_date || ''].filter(Boolean).join(' · '),
@@ -211,10 +253,14 @@ export default function WebCommandPalette() {
           setIsOpen(false);
           navigate(`/setlists/${setlist.id}`);
         },
-      })),
-      ...teams.map(team => ({
+      }));
+
+    const teamResults = teams
+      .filter(t => normalizeText(t.name || '').includes(normalizedQuery))
+      .slice(0, 3)
+      .map(team => ({
         id: `team-${team.id}`,
-        group: 'Արդյունքներ',
+        group: 'Թիմեր',
         type: 'team',
         title: team.name,
         meta: team.members_count != null ? `${team.members_count} անդամ` : 'Թիմ',
@@ -222,15 +268,13 @@ export default function WebCommandPalette() {
           setIsOpen(false);
           navigate('/friends');
         },
-      })),
-    ];
+      }));
 
-    const normalizedQuery = normalizeText(deferredQuery);
-    if (!normalizedQuery) return [...actions, ...dataResults.slice(0, 6)];
+    const matchingActions = actions.filter(action =>
+      normalizeText(`${action.title} ${action.meta}`).includes(normalizedQuery)
+    );
 
-    return [...actions, ...dataResults]
-      .filter(item => normalizeText(`${item.title} ${item.meta} ${item.group}`).includes(normalizedQuery))
-      .slice(0, 16);
+    return [...matchingActions, ...scoredSongs, ...setlistResults, ...teamResults].slice(0, 16);
   }, [deferredQuery, language, navigate, setlists, songs, teams, user]);
 
   useEffect(() => {
