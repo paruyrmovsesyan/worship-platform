@@ -1,18 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { getSongCoverStyle } from '../utils/songCover';
-import { scoreSongSearch } from '../utils/searchMatcher';
-import {
-  getRecentSongSearches,
-  saveRecentSongSearch,
-  removeRecentSongSearch,
-  clearRecentSongSearches,
-  DEFAULT_SEARCH_SUGGESTIONS
-} from '../utils/recentSearches';
+import { saveRecentSongSearch } from '../utils/recentSearches';
 import { sortSavedSongs } from '../utils/savedSongs';
 import { fallbackNews, getCachedNewsList, fetchNewsList, formatNewsDate, formatNewsVersion, getNewsImageUrl } from '../utils/news';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -81,7 +73,6 @@ export default function MobileHub() {
   const navigate = useNavigate();
   const { t, language, setLanguage } = useLanguage();
   
-  const [allSongs, setAllSongs] = useState([]);
   const [recentSongs, setRecentSongs] = useState([]);
   const [upcomingSetlist, setUpcomingSetlist] = useState(null);
   const [favorites, setFavorites] = useState([]);
@@ -91,9 +82,7 @@ export default function MobileHub() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [lastSyncAt, setLastSyncAt] = useState('');
 
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [recentSearches, setRecentSearches] = useState(getRecentSongSearches);
   const searchInputRef = useRef(null);
 
   const favScrollRef = useHorizontalDragScroll();
@@ -264,43 +253,15 @@ export default function MobileHub() {
     }
   };
 
-  useEffect(() => {
-    if (isSearchModalOpen) {
-      document.body.style.overflow = 'hidden';
-      const timer = setTimeout(() => {
-        searchInputRef.current?.focus();
-      }, 50);
-      return () => {
-        clearTimeout(timer);
-        document.body.style.overflow = '';
-      };
-    } else {
-      document.body.style.overflow = '';
-    }
-  }, [isSearchModalOpen]);
-
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim() || !allSongs.length) return [];
-    return allSongs
-      .map(song => {
-        const evalRes = scoreSongSearch(song, searchQuery, language);
-        return { song, ...evalRes };
-      })
-      .filter(item => item.matches)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 10);
-  }, [allSongs, searchQuery, language]);
-
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
+    searchInputRef.current?.blur();
+    document.activeElement?.blur();
     const q = searchQuery.trim();
     if (q) {
       saveRecentSongSearch(q);
-      setRecentSearches(getRecentSongSearches());
-      setIsSearchModalOpen(false);
       navigate(`/songs?q=${encodeURIComponent(q)}`);
     } else {
-      setIsSearchModalOpen(false);
       navigate('/songs');
     }
   };
@@ -381,26 +342,48 @@ export default function MobileHub() {
         
         {/* Hero Search & Categories */}
         <div className="hub-hero">
-          <div 
-            className="hub-search-box" 
-            onClick={() => {
-              setRecentSearches(getRecentSongSearches());
-              setIsSearchModalOpen(true);
-            }}
-            role="button"
-            tabIndex={0}
-          >
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" className="hub-search-icon">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <span className="hub-search-fake-input">
-              {searchQuery || t('hub.searchPlaceholder', 'Որոնել երգեր, հեղինակներ, խոսքեր...')}
-            </span>
-            <span className="hub-search-btn-badge">
+          <form className="hub-search-box" onSubmit={handleSearchSubmit}>
+            <button type="submit" className="hub-search-icon-btn" aria-label="Որոնել">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" className="hub-search-icon">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </button>
+            <input 
+              ref={searchInputRef}
+              type="text" 
+              className="hub-search-input"
+              placeholder={t('hub.searchPlaceholder', 'Որոնել երգեր, հեղինակներ, խոսքեր...')} 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSearchSubmit(e);
+                }
+              }}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck="false"
+              enterKeyHint="search"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="hub-search-clear-btn"
+                onClick={() => setSearchQuery('')}
+                aria-label="Մաքրել"
+              >
+                ✕
+              </button>
+            )}
+            <button
+              type="submit"
+              className="hub-search-btn-badge"
+            >
               {language === 'am' ? 'Որոնել' : 'Search'}
-            </span>
-          </div>
+            </button>
+          </form>
           
           <div className="hub-categories-grid">
             <button className="hub-cat-card" onClick={() => guardPath('/songs', () => navigate('/songs'))}>
@@ -601,290 +584,6 @@ export default function MobileHub() {
         </div>
 
       </div>
-
-      {/* ── Mobile Search Overlay / Modal ── */}
-      {isSearchModalOpen && createPortal(
-        <div className="hub-search-overlay animate-fade-in">
-          <div className="hub-search-modal-container">
-            {/* Modal Search Header */}
-            <div className="hub-search-modal-header">
-              <div className="hub-search-input-wrap">
-                <button
-                  type="button"
-                  className="hub-modal-search-icon-btn"
-                  onClick={() => {
-                    if (searchQuery.trim()) {
-                      saveRecentSongSearch(searchQuery);
-                      setRecentSearches(getRecentSongSearches());
-                    }
-                    searchInputRef.current?.blur();
-                    document.activeElement?.blur();
-                  }}
-                  aria-label="Որոնել"
-                >
-                  <svg className="hub-modal-search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                  </svg>
-                </button>
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  className="hub-modal-search-input"
-                  placeholder={t('hub.searchPlaceholder', 'Որոնել երգեր, հեղինակներ, խոսքեր...')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      if (searchQuery.trim()) {
-                        saveRecentSongSearch(searchQuery);
-                        setRecentSearches(getRecentSongSearches());
-                      }
-                      searchInputRef.current?.blur();
-                      document.activeElement?.blur();
-                    }
-                  }}
-                  autoFocus
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck="false"
-                  enterKeyHint="search"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    className="hub-modal-search-clear"
-                    onClick={() => setSearchQuery('')}
-                    aria-label="Մաքրել"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-              <button
-                type="button"
-                className="hub-modal-close-btn"
-                onClick={() => {
-                  searchInputRef.current?.blur();
-                  document.activeElement?.blur();
-                  setIsSearchModalOpen(false);
-                  setSearchQuery('');
-                }}
-              >
-                {language === 'am' ? 'Փակել' : language === 'ru' ? 'Отмена' : 'Cancel'}
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div
-              className="hub-search-modal-body"
-              onScroll={() => {
-                if (document.activeElement === searchInputRef.current) {
-                  searchInputRef.current?.blur();
-                }
-              }}
-              onTouchMove={() => {
-                if (document.activeElement === searchInputRef.current) {
-                  searchInputRef.current?.blur();
-                }
-              }}
-            >
-              {searchQuery.trim() ? (
-                /* Live Results */
-                <div className="hub-live-results">
-                  {searchResults.length > 0 ? (
-                    <>
-                      <div className="hub-results-list">
-                        {searchResults.map(({ song, snippet }) => (
-                          <div
-                            key={song.id}
-                            className="hub-search-result-item"
-                            onClick={() => {
-                              saveRecentSongSearch(searchQuery);
-                              setIsSearchModalOpen(false);
-                              navigate(`/song/${song.id}`);
-                            }}
-                          >
-                            <div
-                              className="hub-res-avatar"
-                              style={getSongCoverStyle(song.id, song.title || song.song_key || '')}
-                            >
-                              {song.title?.charAt(0)?.toUpperCase()}
-                            </div>
-                            <div className="hub-res-info">
-                              <span className="hub-res-title">{getLocalizedTitle(song, language)}</span>
-                              <div className="hub-res-sub">
-                                <span className="hub-res-artist">{song.artist || 'Unknown'}</span>
-                                {song.song_key && <span className="hub-res-key">{song.song_key}</span>}
-                                {Number(song.bpm) > 0 && <span className="hub-res-bpm">{song.bpm} BPM</span>}
-                              </div>
-                              {snippet && (
-                                <div className="hub-res-snippet">
-                                  <span className="hub-snippet-icon">💬</span>
-                                  <span className="hub-snippet-text">«{snippet}»</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <button
-                        type="button"
-                        className="hub-view-all-results-btn"
-                        onClick={() => {
-                          saveRecentSongSearch(searchQuery);
-                          setIsSearchModalOpen(false);
-                          navigate(`/songs?q=${encodeURIComponent(searchQuery.trim())}`);
-                        }}
-                      >
-                        {language === 'am'
-                          ? `Տեսնել բոլոր արդյունքները երգարանում (${searchResults.length}+) →`
-                          : `View all results in library (${searchResults.length}+) →`}
-                      </button>
-                    </>
-                  ) : (
-                    <div className="hub-no-results">
-                      <div className="hub-no-results-icon">🔍</div>
-                      <p className="hub-no-results-text">
-                        {language === 'am'
-                          ? `«${searchQuery}» հարցմամբ երգ չի գտնվել`
-                          : `No songs found for "${searchQuery}"`}
-                      </p>
-                      <button
-                        type="button"
-                        className="hub-no-results-btn"
-                        onClick={() => {
-                          setIsSearchModalOpen(false);
-                          navigate(`/songs?q=${encodeURIComponent(searchQuery.trim())}`);
-                        }}
-                      >
-                        {language === 'am' ? 'Բացել երգարանում' : 'Open in Library'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                /* Default state with Recent searches & Suggestions */
-                <div className="hub-search-defaults">
-                  {recentSearches.length > 0 && (
-                    <div className="hub-search-section">
-                      <div className="hub-section-head">
-                        <span className="hub-section-title">
-                          <span className="hub-sec-icon">🕒</span> {language === 'am' ? 'Վերջին որոնումները' : language === 'ru' ? 'Недавние' : 'Recent'}
-                        </span>
-                        <button
-                          type="button"
-                          className="hub-clear-all-link"
-                          onClick={() => {
-                            clearRecentSongSearches();
-                            setRecentSearches([]);
-                          }}
-                        >
-                          {language === 'am' ? 'Մաքրել' : 'Clear'}
-                        </button>
-                      </div>
-                      <div className="hub-search-chips">
-                        {recentSearches.map((item, idx) => (
-                          <span key={idx} className="hub-chip">
-                            <span
-                              className="hub-chip-text"
-                              onClick={() => setSearchQuery(item)}
-                            >
-                              {item}
-                            </span>
-                            <button
-                              type="button"
-                              className="hub-chip-del"
-                              aria-label="Ջնջել"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const updated = removeRecentSongSearch(item);
-                                setRecentSearches(updated);
-                              }}
-                            >
-                              ✕
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="hub-search-section">
-                    <div className="hub-section-head">
-                      <span className="hub-section-title">
-                        <span className="hub-sec-icon">💡</span> {language === 'am' ? 'Հաճախ որոնվող' : language === 'ru' ? 'Популярные' : 'Popular'}
-                      </span>
-                    </div>
-                    <div className="hub-search-chips">
-                      {DEFAULT_SEARCH_SUGGESTIONS.map((sug, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          className="hub-chip hub-chip-preset"
-                          onClick={() => {
-                            setSearchQuery(sug);
-                            saveRecentSongSearch(sug);
-                            setRecentSearches(getRecentSongSearches());
-                          }}
-                        >
-                          {sug}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="hub-search-section">
-                    <div className="hub-section-head">
-                      <span className="hub-section-title">
-                        <span className="hub-sec-icon">⚡</span> {language === 'am' ? 'Արագ բաժիններ' : 'Quick Access'}
-                      </span>
-                    </div>
-                    <div className="hub-quick-nav-grid">
-                      <button
-                        type="button"
-                        className="hub-quick-nav-item"
-                        onClick={() => {
-                          setIsSearchModalOpen(false);
-                          navigate('/songs');
-                        }}
-                      >
-                        <span className="hub-qnav-icon">🎵</span>
-                        <span className="hub-qnav-label">{t('hub.categories.songs', 'Երգարան')}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="hub-quick-nav-item"
-                        onClick={() => {
-                          setIsSearchModalOpen(false);
-                          navigate('/setlists');
-                        }}
-                      >
-                        <span className="hub-qnav-icon">📋</span>
-                        <span className="hub-qnav-label">{t('hub.categories.setlists', 'Երգացանկեր')}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="hub-quick-nav-item"
-                        onClick={() => {
-                          setIsSearchModalOpen(false);
-                          navigate('/favorites');
-                        }}
-                      >
-                        <span className="hub-qnav-icon">⭐</span>
-                        <span className="hub-qnav-label">{t('favorites.title', 'Սիրված')}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
     </div>
   );
 }
