@@ -38,7 +38,7 @@
             }
         ]
     },
-    "maintenance_enabled": true,
+    "maintenance_enabled": false,
     "maintenance_message": "Կայքում ընթացքի մեջ են տեխնիկական աշխատանքներ։ Խնդրում ենք փորձել մի փոքր հետո։",
     "maintenance_start_at": "",
     "maintenance_end_at": "",

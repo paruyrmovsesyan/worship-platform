@@ -709,14 +709,22 @@ function wp_version_sanitize(array $raw): array {
     return $config;
 }
 
+function wp_version_runtime_cache_file(): string {
+    return __DIR__ . '/data/.version_config_runtime_cache.json';
+}
+
 function wp_version_load(): array {
     static $configCache = null;
     if ($configCache !== null) {
         return $configCache;
     }
 
-    $cacheFile = __DIR__ . '/data/version_config_cache.json';
-    if (is_file($cacheFile)) {
+    $cacheFile = wp_version_runtime_cache_file();
+    $legacyCacheFile = __DIR__ . '/data/version_config_cache.json';
+    $fixMarkerFile = __DIR__ . '/data/.maintenance_git_reset_fixed_v550';
+    $needsOneTimeMaintenanceFix = !is_file($fixMarkerFile);
+
+    if (!$needsOneTimeMaintenanceFix && is_file($cacheFile)) {
         $raw = @file_get_contents($cacheFile);
         if ($raw) {
             $cached = json_decode($raw, true);
@@ -736,9 +744,20 @@ function wp_version_load(): array {
         if ($val !== false && $val !== null) {
             $decoded = json_decode((string)$val, true);
             if (is_array($decoded)) {
+                $needsDbUpdate = false;
                 if (empty($decoded['page_app_modes']['studio']) || empty($decoded['page_web_modes']['studio'])) {
                     $decoded['page_app_modes']['studio'] = true;
                     $decoded['page_web_modes']['studio'] = true;
+                    $needsDbUpdate = true;
+                }
+                if ($needsOneTimeMaintenanceFix) {
+                    if (!empty($decoded['maintenance_enabled'])) {
+                        $decoded['maintenance_enabled'] = false;
+                        $needsDbUpdate = true;
+                    }
+                    @file_put_contents($fixMarkerFile, date('c'));
+                }
+                if ($needsDbUpdate) {
                     try {
                         $upStmt = $pdo->prepare("UPDATE sys_settings SET setting_value = ? WHERE setting_key = 'version_config'");
                         $upStmt->execute([json_encode($decoded, JSON_UNESCAPED_UNICODE)]);
@@ -746,6 +765,7 @@ function wp_version_load(): array {
                 }
                 $configCache = wp_version_sanitize($decoded);
                 @file_put_contents($cacheFile, json_encode($configCache, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                @file_put_contents($legacyCacheFile, json_encode($configCache, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
                 return $configCache;
             }
         }
@@ -758,8 +778,13 @@ function wp_version_load(): array {
             if ($row = $result->fetch_assoc()) {
                 $decoded = json_decode($row['setting_value'] ?? '', true);
                 if (is_array($decoded)) {
+                    if ($needsOneTimeMaintenanceFix) {
+                        $decoded['maintenance_enabled'] = false;
+                        @file_put_contents($fixMarkerFile, date('c'));
+                    }
                     $configCache = wp_version_sanitize($decoded);
                     @file_put_contents($cacheFile, json_encode($configCache, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                    @file_put_contents($legacyCacheFile, json_encode($configCache, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
                     return $configCache;
                 }
             }
@@ -964,7 +989,9 @@ function wp_version_save(array $input, array $meta = []): bool {
         return false;
     }
 
-    @file_put_contents(__DIR__ . '/data/version_config_cache.json', json_encode($config, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    $encodedCache = json_encode($config, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    @file_put_contents(wp_version_runtime_cache_file(), $encodedCache);
+    @file_put_contents(__DIR__ . '/data/version_config_cache.json', $encodedCache);
 
     $historyId = bin2hex(random_bytes(8));
 

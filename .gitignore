@@ -17,3 +17,8 @@ frontend/dist-map/
 # Generated social media assets
 social_assets/
 
+# Server runtime cache files (must never be overwritten by git deploy)
+data/.version_config_runtime_cache.json
+data/.maintenance_git_reset_fixed_*
+
+
