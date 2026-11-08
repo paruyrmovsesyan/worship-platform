@@ -181,27 +181,33 @@ $activePage = 'worship_roles';
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: var(--radius-lg);
-      overflow: hidden;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
       box-shadow: var(--shadow-sm);
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 24px;
     }
     .roles-table {
       width: 100%;
+      min-width: 760px;
       border-collapse: collapse;
       text-align: left;
     }
     .roles-table th {
-      padding: 14px 18px;
-      font-size: 12px;
+      padding: 13px 16px;
+      font-size: 11.5px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: var(--muted);
       background: rgba(255, 255, 255, 0.02);
       border-bottom: 1px solid var(--line);
+      white-space: nowrap;
     }
     .roles-table td {
-      padding: 14px 18px;
-      font-size: 14px;
+      padding: 13px 16px;
+      font-size: 13.5px;
       color: var(--text);
       border-bottom: 1px solid var(--line);
       vertical-align: middle;
@@ -249,7 +255,8 @@ $activePage = 'worship_roles';
     .role-actions-cell {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      white-space: nowrap;
     }
     .btn-action-icon {
       background: rgba(255, 255, 255, 0.06);
@@ -263,16 +270,54 @@ $activePage = 'worship_roles';
       transition: all 0.15s ease;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
     .btn-action-icon:hover {
-      background: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.14);
       color: #ffffff;
     }
     .btn-action-delete:hover {
       background: rgba(239, 68, 68, 0.2);
       border-color: rgba(239, 68, 68, 0.4);
       color: #f87171;
+    }
+    .roles-table-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .roles-search-box {
+      position: relative;
+      flex: 1;
+      max-width: 380px;
+      min-width: 220px;
+    }
+    .roles-search-box svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--muted);
+    }
+    .roles-search-box input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 9px 14px 9px 40px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13.5px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .roles-search-box input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(67, 24, 255, 0.1);
     }
     /* Add/Edit Modal */
     .admin-modal-backdrop {
@@ -394,46 +439,59 @@ $activePage = 'worship_roles';
         </div>
       </div>
 
+      <!-- ROLES TOOLBAR -->
+      <div class="roles-table-toolbar">
+        <div class="roles-search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="rolesFilterInput" placeholder="Որոնել դեր (անուն, key, տեսակ)..." oninput="filterRolesTable(this.value)">
+        </div>
+        <button type="button" class="btn btn-primary" onclick="openAddRoleModal()" style="display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:12px; font-weight:700;">
+          ➕ <span>Ավելացնել Նոր Դեր</span>
+        </button>
+      </div>
+
       <!-- ROLES TABLE -->
       <div class="roles-table-wrapper">
-        <table class="roles-table">
+        <table class="roles-table" id="rolesTable">
           <thead>
             <tr>
-              <th style="width:70px;">Իկոն</th>
-              <th>Հայերեն (AM)</th>
-              <th>Ռուսերեն (RU)</th>
-              <th>Անգլերեն (EN)</th>
+              <th style="width:60px; text-align:center;">Իկոն</th>
+              <th>Դերի Անվանում</th>
               <th>Իդենտիֆիկատոր (Key)</th>
-              <th style="width:100px;">Տեսակ</th>
-              <th style="width:70px;">Կարգ</th>
-              <th style="width:100px;">Կարգավիճակ</th>
-              <th style="text-align:right; width:180px;">Գործողություններ</th>
+              <th style="width:110px;">Տեսակ</th>
+              <th style="width:70px; text-align:center;">Կարգ</th>
+              <th style="width:110px; text-align:center;">Կարգավիճակ</th>
+              <th style="text-align:right; width:170px;">Գործողություններ</th>
             </tr>
           </thead>
           <tbody>
             <?php if (empty($roles)): ?>
               <tr>
-                <td colspan="9" style="text-align:center; padding:36px; color:var(--muted);">
+                <td colspan="7" style="text-align:center; padding:36px; color:var(--muted);">
                   Դերեր չեն գտնվել
                 </td>
               </tr>
             <?php else: ?>
               <?php foreach ($roles as $r): ?>
-                <tr>
-                  <td>
-                    <span style="font-size:24px;"><?= htmlspecialchars($r['icon'] ?: '🎵') ?></span>
+                <tr class="role-table-row">
+                  <td style="text-align:center;">
+                    <span style="font-size:24px; line-height:1;"><?= htmlspecialchars($r['icon'] ?: '🎵') ?></span>
                   </td>
                   <td>
-                    <strong><?= htmlspecialchars($r['name_am']) ?></strong>
+                    <div style="font-weight:700; font-size:14.5px; color:var(--text);"><?= htmlspecialchars($r['name_am']) ?></div>
+                    <?php if (!empty($r['name_ru']) || !empty($r['name_en'])): ?>
+                      <div style="font-size:12px; color:var(--muted); margin-top:3px; display:flex; gap:8px; flex-wrap:wrap;">
+                        <?php if (!empty($r['name_ru'])): ?>
+                          <span>RU: <?= htmlspecialchars($r['name_ru']) ?></span>
+                        <?php endif; ?>
+                        <?php if (!empty($r['name_en'])): ?>
+                          <span>• EN: <?= htmlspecialchars($r['name_en']) ?></span>
+                        <?php endif; ?>
+                      </div>
+                    <?php endif; ?>
                   </td>
                   <td>
-                    <span style="color:var(--muted);"><?= htmlspecialchars($r['name_ru'] ?: '—') ?></span>
-                  </td>
-                  <td>
-                    <span style="color:var(--muted);"><?= htmlspecialchars($r['name_en'] ?: '—') ?></span>
-                  </td>
-                  <td>
-                    <code style="font-size:12px; background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; color:#38bdf8;">
+                    <code style="font-size:12px; background:rgba(255,255,255,0.06); padding:3px 7px; border-radius:6px; color:#38bdf8; border:1px solid rgba(56,189,248,0.2);">
                       <?= htmlspecialchars($r['role_key']) ?>
                     </code>
                   </td>
@@ -444,38 +502,36 @@ $activePage = 'worship_roles';
                       <span class="role-badge-tag badge-default">Ստանդարտ</span>
                     <?php endif; ?>
                   </td>
-                  <td>
-                    <span style="font-weight:700; color:var(--muted);"><?= (int)$r['sort_order'] ?></span>
+                  <td style="text-align:center;">
+                    <span style="font-weight:700; color:var(--muted); font-size:13px;"><?= (int)$r['sort_order'] ?></span>
                   </td>
-                  <td>
-                    <?php if (!empty($r['is_active'])): ?>
-                      <span class="role-badge-tag badge-active">Ակտիվ</span>
-                    <?php else: ?>
-                      <span class="role-badge-tag badge-inactive">Պասիվ</span>
-                    <?php endif; ?>
+                  <td style="text-align:center;">
+                    <form method="post" style="display:inline;" onsubmit="return true;">
+                      <input type="hidden" name="action" value="toggle">
+                      <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+                      <button
+                        type="submit"
+                        style="background:none; border:none; padding:0; cursor:pointer;"
+                        title="Սեղմեք կարգավիճակը փոխելու համար"
+                      >
+                        <?php if (!empty($r['is_active'])): ?>
+                          <span class="role-badge-tag badge-active" style="cursor:pointer;">● Ակտիվ</span>
+                        <?php else: ?>
+                          <span class="role-badge-tag badge-inactive" style="cursor:pointer;">○ Պասիվ</span>
+                        <?php endif; ?>
+                      </button>
+                    </form>
                   </td>
                   <td style="text-align:right;">
                     <div class="role-actions-cell" style="justify-content:flex-end;">
                       <button
                         type="button"
                         class="btn-action-icon"
-                        title="Խմբագրել"
+                        title="Խմբագրել դերը"
                         onclick='openEditRoleModal(<?= json_encode($r, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
                       >
-                        ✏️
+                        ✏️ Խմբագրել
                       </button>
-
-                      <form method="post" style="display:inline;" onsubmit="return true;">
-                        <input type="hidden" name="action" value="toggle">
-                        <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
-                        <button
-                          type="submit"
-                          class="btn-action-icon"
-                          title="<?= !empty($r['is_active']) ? 'Անջատել' : 'Ակտիվացնել' ?>"
-                        >
-                          <?= !empty($r['is_active']) ? '👁️' : '🚫' ?>
-                        </button>
-                      </form>
 
                       <form method="post" style="display:inline;" onsubmit="return confirm('Իսկապե՞ս ցանկանում եք հեռացնել այս դերը:');">
                         <input type="hidden" name="action" value="delete">
@@ -659,6 +715,15 @@ function closeRoleModal(e) {
     return;
   }
   document.getElementById('roleModalBackdrop').classList.remove('is-open');
+}
+
+function filterRolesTable(q) {
+  q = (q || '').toLowerCase().trim();
+  const rows = document.querySelectorAll('.role-table-row');
+  rows.forEach(tr => {
+    const text = tr.innerText.toLowerCase();
+    tr.style.display = (!q || text.includes(q)) ? '' : 'none';
+  });
 }
 
 document.addEventListener('keydown', function(e) {
