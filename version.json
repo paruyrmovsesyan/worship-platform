@@ -1,8 +1,8 @@
 {
   "app_version": "5.3.0",
   "web_version": "5.3.0",
-  "asset_version": "551",
-  "build_timestamp": "2026-11-08T13:19:00+04:00",
+  "asset_version": "552",
+  "build_timestamp": "2026-11-08T13:30:00+04:00",
   "release_type": "bugfix",
-  "release_summary": "Fix desktop navbar item overlap by removing min-width:0 overflow on navbar-menu and compacting Pro Studio link"
+  "release_summary": "Fix desktop navbar right side overflow and search pill truncation at 1380-1460px"
 }
