@@ -259,9 +259,13 @@
    Premium Language Picker Modal (Bottom Sheet on Mobile/PWA,
    Centered Modal on Desktop)
 ────────────────────────────────────────────────────────────── */
-/* Hide MobileNav dock when language modal is open */
+/* Hide MobileNav dock when language, role or support modal is open */
 body.lang-modal-open #wpAppDock,
-body.lang-modal-open .mobile-bottom-nav {
+body.lang-modal-open .mobile-bottom-nav,
+body.role-modal-open #wpAppDock,
+body.role-modal-open .mobile-bottom-nav,
+body.support-modal-open #wpAppDock,
+body.support-modal-open .mobile-bottom-nav {
   display: none !important;
   opacity: 0 !important;
   pointer-events: none !important;
@@ -1594,66 +1598,146 @@ body.light-mode .support-form textarea {
   opacity: 0.7;
 }
 
-/* Role Modal – Full Screen Sheet */
-.profile-role-modal {
+/* ── Role & Avatar Modal – Native Bottom Sheet / Centered Desktop ── */
+.profile-role-overlay {
   position: fixed !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  top: 0 !important;
-  transform: none !important;
-  margin: 0 !important;
+  inset: 0 !important;
   width: 100% !important;
-  max-width: 100% !important;
-  height: 100dvh !important;
-  max-height: 100dvh !important;
-  overflow-y: auto !important;
-  border-radius: 0 !important;
-  background: linear-gradient(180deg, rgba(14, 20, 40, 0.99), rgba(10, 15, 30, 0.98)) !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: calc(env(safe-area-inset-top, 16px) + 10px) 20px calc(env(safe-area-inset-bottom, 16px) + 80px) !important;
+  height: 100% !important;
+  z-index: 2147483647 !important;
+  background: rgba(0, 0, 0, 0.78) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  padding: 0 !important;
   box-sizing: border-box !important;
+  animation: roleOverlayFadeIn 0.22s ease-out !important;
 }
 
-/* Animate from bottom */
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
+@keyframes roleOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .profile-role-modal {
-  animation: slideUp 0.28s cubic-bezier(0.32, 0.72, 0, 1) !important;
+  width: 100% !important;
+  max-width: 600px !important;
+  max-height: min(90dvh, calc(100dvh - 36px)) !important;
+  border-radius: 28px 28px 0 0 !important;
+  background: linear-gradient(180deg, #131a30 0%, #0d1222 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-bottom: none !important;
+  box-shadow: 0 -16px 50px rgba(0, 0, 0, 0.65) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 8px 0 0 0 !important;
+  margin: 0 !important;
+  position: relative !important;
+  overflow: hidden !important;
+  animation: roleSheetSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes roleSheetSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.profile-role-drag-handle {
+  width: 38px;
+  height: 4.5px;
+  background: rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  margin: 4px auto 10px;
+  flex-shrink: 0;
+}
+
+.profile-role-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.profile-role-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.profile-role-title-badge {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.profile-role-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-role-close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.profile-role-close-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
 }
 
 .role-modal-body {
+  flex: 1;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 16px 20px 24px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding-top: 6px;
+  gap: 20px;
 }
 
 .role-modal-section h4 {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.6);
-  margin-bottom: 10px;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0 10px 0;
   font-weight: 700;
 }
 
 .avatar-gradients-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
+  gap: 10px;
 }
 
 .gradient-swatch {
   aspect-ratio: 1;
   width: 100%;
-  max-width: 44px;
-  border-radius: 12px;
-  border: 2px solid transparent;
+  max-width: 48px;
+  border-radius: 14px;
+  border: 2.5px solid transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1661,17 +1745,20 @@ body.light-mode .support-form textarea {
   color: #fff;
   font-weight: 800;
   font-size: 14px;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
   margin: 0 auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  padding: 0;
 }
 
-.gradient-swatch:hover {
-  transform: scale(1.08);
+.gradient-swatch:active {
+  transform: scale(0.92);
 }
 
 .gradient-swatch.active {
   border-color: #ffffff;
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.4);
+  transform: scale(1.06);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.55), 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .roles-grid {
@@ -1685,30 +1772,36 @@ body.light-mode .support-form textarea {
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
+  min-height: 48px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.92rem;
   font-weight: 600;
   cursor: pointer;
   text-align: left;
   line-height: 1.3;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: all 0.2s ease;
   position: relative;
   width: 100%;
   box-sizing: border-box;
 }
 
 .role-option-card:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.16);
 }
 
+.role-option-card:active {
+  transform: scale(0.985);
+}
+
 .role-option-card.active {
-  background: rgba(0, 212, 255, 0.14);
-  border-color: rgba(0, 212, 255, 0.35);
-  color: #00d4ff;
+  background: rgba(0, 212, 255, 0.12);
+  border-color: rgba(0, 212, 255, 0.5);
+  color: #38bdf8;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
 }
 
 .role-icon {
@@ -1724,25 +1817,125 @@ body.light-mode .support-form textarea {
 .role-check {
   margin-left: auto;
   font-weight: 800;
-  font-size: 14px;
+  font-size: 15px;
+  color: #38bdf8;
   flex-shrink: 0;
 }
 
-.role-modal-save-btn {
-  background: linear-gradient(135deg, #3A2DFF, #00D4FF);
-  border: none;
-  color: #fff;
-  padding: 14px;
-  border-radius: 14px;
-  font-weight: 700;
-  font-size: 1rem;
-  cursor: pointer;
-  margin-top: 8px;
-  box-shadow: 0 8px 20px rgba(0, 212, 255, 0.25);
-  transition: transform 0.15s ease;
-  width: 100%;
+.role-modal-footer {
+  flex-shrink: 0;
+  padding: 12px 20px calc(env(safe-area-inset-bottom, 16px) + 12px);
+  background: linear-gradient(180deg, rgba(14, 20, 40, 0) 0%, rgba(13, 18, 34, 0.88) 30%, #0d1222 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-sizing: border-box;
 }
 
-.role-modal-save-btn:hover {
-  transform: translateY(-1px);
+.role-modal-save-btn {
+  background: linear-gradient(135deg, #2563eb, #00d4ff);
+  border: none;
+  color: #fff;
+  padding: 13px 20px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.98rem;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 212, 255, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.role-modal-save-btn:active {
+  transform: scale(0.98);
+}
+
+/* Desktop styles */
+@media (min-width: 768px) {
+  .profile-role-overlay {
+    align-items: center !important;
+    padding: 24px !important;
+  }
+  .profile-role-modal {
+    max-width: 480px !important;
+    max-height: 85vh !important;
+    border-radius: 24px !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55) !important;
+    animation: roleModalScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+  .profile-role-drag-handle {
+    display: none !important;
+  }
+  .role-modal-footer {
+    padding: 14px 20px 18px !important;
+  }
+}
+
+@keyframes roleModalScaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Light mode styles */
+body.light-mode .profile-role-modal {
+  background: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.15) !important;
+}
+
+body.light-mode .profile-role-drag-handle {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+body.light-mode .profile-role-header {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .profile-role-header h3 {
+  color: #111827;
+}
+
+body.light-mode .profile-role-close-btn {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #374151;
+}
+
+body.light-mode .profile-role-close-btn:hover {
+  background: rgba(0, 0, 0, 0.12);
+  color: #111827;
+}
+
+body.light-mode .role-modal-section h4 {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+body.light-mode .role-option-card {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #1f2937;
+}
+
+body.light-mode .role-option-card:hover {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.14);
+}
+
+body.light-mode .role-option-card.active {
+  background: rgba(0, 119, 204, 0.08);
+  border-color: rgba(0, 119, 204, 0.4);
+  color: #0077cc;
+}
+
+body.light-mode .role-check {
+  color: #0077cc;
+}
+
+body.light-mode .role-modal-footer {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.92) 30%, #ffffff 100%);
+  border-top-color: rgba(0, 0, 0, 0.06);
 }

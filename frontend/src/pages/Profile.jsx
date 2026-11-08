@@ -31,6 +31,34 @@ export default function Profile() {
     };
   }, [isLangModalOpen]);
 
+  useEffect(() => {
+    if (isRoleModalOpen) {
+      document.body.classList.add('role-modal-open');
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.classList.remove('role-modal-open');
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.classList.remove('role-modal-open');
+      document.body.style.overflow = '';
+    };
+  }, [isRoleModalOpen]);
+
+  useEffect(() => {
+    if (isSupportModalOpen) {
+      document.body.classList.add('support-modal-open');
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.classList.remove('support-modal-open');
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.classList.remove('support-modal-open');
+      document.body.style.overflow = '';
+    };
+  }, [isSupportModalOpen]);
+
   const [teamRole, setTeamRole] = useState(null);
   const [avatarGradient, setAvatarGradient] = useState('linear-gradient(135deg, #00d4ff, #3a2dff)');
 
@@ -450,15 +478,28 @@ export default function Profile() {
           </button>
         </div>
 
-        {isRoleModalOpen && (
-          <div className="modal-overlay modal-overlay-bottom" onClick={() => setIsRoleModalOpen(false)}>
+        {isRoleModalOpen && createPortal(
+          <div className="modal-overlay profile-role-overlay" onClick={() => setIsRoleModalOpen(false)}>
             <div className="modal-content profile-role-modal" onClick={e => e.stopPropagation()}>
-              <div className="modal-header">
-                <h3>{t('profile.roleModalTitle', '🎭 Երկրպագության Թիմի Դեր & Ավատար')}</h3>
-                <button className="modal-close" onClick={() => setIsRoleModalOpen(false)}>
-                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              <div className="profile-role-drag-handle" />
+              <div className="modal-header profile-role-header">
+                <div className="profile-role-title-wrap">
+                  <span className="profile-role-title-badge">🎭</span>
+                  <h3>{t('profile.roleModalTitle', 'Երկրպագության Թիմի Դեր & Ավատար')}</h3>
+                </div>
+                <button
+                  type="button"
+                  className="modal-close profile-role-close-btn"
+                  onClick={() => setIsRoleModalOpen(false)}
+                  aria-label={t('common.close', 'Փակել')}
+                >
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
                 </button>
               </div>
+
               <div className="modal-body role-modal-body">
                 <div className="role-modal-section">
                   <h4>{t('profile.chooseAvatarColor', '🎨 Ընտրել Ավատարի Գույնը')}</h4>
@@ -466,9 +507,11 @@ export default function Profile() {
                     {AVATAR_GRADIENTS.map((grad, i) => (
                       <button
                         key={i}
+                        type="button"
                         className={`gradient-swatch ${avatarGradient === grad ? 'active' : ''}`}
                         style={{ background: grad }}
                         onClick={() => saveRoleAndGradient(teamRole, grad)}
+                        aria-label={`Avatar color ${i + 1}`}
                       >
                         {avatarGradient === grad && <span className="swatch-check">✓</span>}
                       </button>
@@ -482,6 +525,7 @@ export default function Profile() {
                     {WORSHIP_ROLES.map(r => (
                       <button
                         key={r.id}
+                        type="button"
                         className={`role-option-card ${teamRole === r.id ? 'active' : ''}`}
                         onClick={() => saveRoleAndGradient(teamRole === r.id ? null : r.id, avatarGradient)}
                       >
@@ -492,13 +536,20 @@ export default function Profile() {
                     ))}
                   </div>
                 </div>
+              </div>
 
-                <button className="role-modal-save-btn" onClick={() => setIsRoleModalOpen(false)}>
+              <div className="role-modal-footer">
+                <button
+                  type="button"
+                  className="role-modal-save-btn"
+                  onClick={() => setIsRoleModalOpen(false)}
+                >
                   {t('profile.saveBtn', 'Պահպանել')}
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {isLangModalOpen && createPortal(
@@ -559,7 +610,7 @@ export default function Profile() {
           document.body
         )}
 
-        {isSupportModalOpen && (
+        {isSupportModalOpen && createPortal(
           <div className="modal-overlay profile-support-overlay" onClick={() => setIsSupportModalOpen(false)}>
             <div className="modal-content profile-support-modal" onClick={e => e.stopPropagation()}>
               <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -638,7 +689,8 @@ export default function Profile() {
                 </form>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     );
@@ -879,25 +931,39 @@ export default function Profile() {
       </div>
 
       {/* Role & Avatar Modal */}
-      {isRoleModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsRoleModalOpen(false)}>
+      {isRoleModalOpen && createPortal(
+        <div className="modal-overlay profile-role-overlay" onClick={() => setIsRoleModalOpen(false)}>
           <div className="modal-content profile-role-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{t('profile.roleModalTitle', '🎭 Երկրպագության Թիմի Դեր & Ավատար')}</h3>
-              <button className="modal-close" onClick={() => setIsRoleModalOpen(false)}>
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <div className="profile-role-drag-handle" />
+            <div className="modal-header profile-role-header">
+              <div className="profile-role-title-wrap">
+                <span className="profile-role-title-badge">🎭</span>
+                <h3>{t('profile.roleModalTitle', 'Երկրպագության Թիմի Դեր & Ավատար')}</h3>
+              </div>
+              <button
+                type="button"
+                className="modal-close profile-role-close-btn"
+                onClick={() => setIsRoleModalOpen(false)}
+                aria-label={t('common.close', 'Փակել')}
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
               </button>
             </div>
             <div className="modal-body role-modal-body">
               <div className="role-modal-section">
-                <h4>{t('profile.chooseAvatarColor', '🎨 Ընտրեք Ձեր Գույնը')}</h4>
+                <h4>{t('profile.chooseAvatarColor', '🎨 Ընտրել Ավատարի Գույնը')}</h4>
                 <div className="avatar-gradients-grid">
                   {AVATAR_GRADIENTS.map((grad, i) => (
                     <button
                       key={i}
+                      type="button"
                       className={`gradient-swatch ${avatarGradient === grad ? 'active' : ''}`}
                       style={{ background: grad }}
                       onClick={() => saveRoleAndGradient(teamRole, grad)}
+                      aria-label={`Avatar color ${i + 1}`}
                     >
                       {avatarGradient === grad && <span className="swatch-check">✓</span>}
                     </button>
@@ -906,11 +972,12 @@ export default function Profile() {
               </div>
 
               <div className="role-modal-section">
-                <h4>{t('profile.chooseYourRole', '📖 Ընտրեք Ձեր Պաշտոնը')}</h4>
+                <h4>{t('profile.chooseYourRole', '📖 Ընտրել Ձեր Դերը Թիմում')}</h4>
                 <div className="roles-grid">
                   {WORSHIP_ROLES.map(r => (
                     <button
                       key={r.id}
+                      type="button"
                       className={`role-option-card ${teamRole === r.id ? 'active' : ''}`}
                       onClick={() => saveRoleAndGradient(teamRole === r.id ? null : r.id, avatarGradient)}
                     >
@@ -921,13 +988,20 @@ export default function Profile() {
                   ))}
                 </div>
               </div>
+            </div>
 
-              <button className="role-modal-save-btn" onClick={() => setIsRoleModalOpen(false)}>
+            <div className="role-modal-footer">
+              <button
+                type="button"
+                className="role-modal-save-btn"
+                onClick={() => setIsRoleModalOpen(false)}
+              >
                 {t('profile.saveBtn', 'Պահպանել')}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Language Modal */}
