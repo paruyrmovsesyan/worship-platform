@@ -216,16 +216,15 @@ export default function WebCommandPalette() {
       .filter(item => item.matches)
       .sort((a, b) => b.score - a.score)
       .slice(0, 12)
-      .map(({ song, snippet, matchedField }) => {
+      .map(({ song, snippet, matchedField, matchedTitle }) => {
         const baseMeta = [
           song.artist,
           song.song_key ? `Key ${song.song_key}` : '',
           Number(song.bpm) > 0 ? `${song.bpm} BPM` : ''
         ].filter(Boolean).join(' · ');
 
-        const meta = snippet && matchedField === 'lyrics'
-          ? `«${snippet}» · ${baseMeta}`
-          : baseMeta;
+        const aliasMeta = matchedTitle ? `🔍 ${matchedTitle}` : '';
+        const meta = [aliasMeta, snippet && matchedField === 'lyrics' ? `«${snippet}»` : '', baseMeta].filter(Boolean).join(' · ');
 
         return {
           id: `song-${song.id}`,

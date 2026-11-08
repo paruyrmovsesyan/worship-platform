@@ -1,7 +1,7 @@
-// Multi-language, phonetic & transliteration-aware search matching utility
-// Supports relevance scoring, snippet extraction, and fuzzy Armenian transliteration
+// Multi-language, phonetic, transliteration & layout-aware search matching utility
+// Advanced support for Armenian, Russian, and English songs, titles, lyrics, and artists.
 
-import { getLocalizedTitle } from './titleParser';
+import { getLocalizedTitle, parseSongTitleVariants } from './titleParser.js';
 
 const ARM_TO_LAT_MAP = {
   'ա': 'a', 'բ': 'b', 'գ': 'g', 'դ': 'd', 'ե': 'e', 'զ': 'z', 'է': 'e', 'ը': 'e',
@@ -23,27 +23,37 @@ const RU_TO_LAT_MAP = {
   'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
   'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
   'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts',
-  'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ы': 'y', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+  'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
 };
 
-const COMMON_SYNONYMS = {
-  'god': ['աստված', 'աստծո', 'աստծու', 'տեր'],
-  'lord': ['տեր', 'տիրոջ', 'տիրոջը'],
-  'jesus': ['հիսուս', 'յիսուս'],
-  'ter': ['տեր', 'տիրոջ', 'տիրոջը'],
-  'tiroch': ['տիրոջ', 'տիրոջը', 'տեր'],
-  'տիրոջ': ['տեր', 'տիրոջը'],
-  'տեր': ['տիրոջ', 'տիրոջը'],
-  'աստված': ['աստծո', 'աստծու', 'աստծուն'],
-  'աստծո': ['աստված', 'աստծու'],
-  'աստծու': ['աստված', 'աստծո'],
-  'հիսուս': ['յիսուս'],
-  'յիսուս': ['հիսուս'],
-  'սուրբ': ['սրբություն', 'սուրպ'],
-  'ալելուիա': ['ալելույա'],
-  'ալելույա': ['ալելուիա'],
-  'փառք': ['փառաբանություն', 'գովաբանություն']
+const LAT_TO_RU_MAP = {
+  'a': 'а', 'b': 'б', 'v': 'в', 'w': 'в', 'g': 'г', 'd': 'д', 'e': 'е', 'z': 'з',
+  'i': 'и', 'j': 'й', 'y': 'и', 'k': 'к', 'l': 'л', 'm': 'м', 'n': 'н', 'o': 'о',
+  'p': 'п', 'r': 'р', 's': 'с', 't': 'т', 'u': 'у', 'f': 'ф', 'h': 'х', 'c': 'ц',
+  'q': 'к', 'x': 'кс'
 };
+
+// Qwerty <-> Russian keyboard layout mapping for accidental wrong-layout typing
+const QWERTY_TO_RU_MAP = {
+  'q': 'й', 'w': 'ц', 'e': 'у', 'r': 'к', 't': 'е', 'y': 'н', 'u': 'г', 'i': 'ш', 'o': 'щ', 'p': 'з', '[': 'х', ']': 'ъ',
+  'a': 'ф', 's': 'ы', 'd': 'в', 'f': 'а', 'g': 'п', 'h': 'р', 'j': 'о', 'k': 'л', 'l': 'д', ';': 'ж', "'": 'э',
+  'z': 'я', 'x': 'ч', 'c': 'с', 'v': 'м', 'b': 'и', 'n': 'т', 'm': 'ь', ',': 'б', '.': 'ю', '`': 'ё'
+};
+
+const RU_TO_QWERTY_MAP = {};
+for (const [k, v] of Object.entries(QWERTY_TO_RU_MAP)) {
+  RU_TO_QWERTY_MAP[v] = k;
+}
+
+export function convertQwertyToCyrillic(str) {
+  if (!str) return '';
+  return str.toLowerCase().split('').map(c => QWERTY_TO_RU_MAP[c] || c).join('');
+}
+
+export function convertCyrillicToQwerty(str) {
+  if (!str) return '';
+  return str.toLowerCase().split('').map(c => RU_TO_QWERTY_MAP[c] || c).join('');
+}
 
 export function transliterateArmToLat(str) {
   if (!str) return '';
@@ -65,52 +75,107 @@ export function transliterateRuToLat(str) {
   return str.split('').map(ch => RU_TO_LAT_MAP[ch] || ch).join('');
 }
 
+export function transliterateLatToRu(str) {
+  if (!str) return '';
+  let s = str.toLowerCase();
+  s = s.replace(/shch/g, 'щ')
+       .replace(/kh/g, 'х')
+       .replace(/ts/g, 'ц')
+       .replace(/tz/g, 'ц')
+       .replace(/ch/g, 'ч')
+       .replace(/sh/g, 'ш')
+       .replace(/zh/g, 'ж')
+       .replace(/yu/g, 'ю')
+       .replace(/ya/g, 'я')
+       .replace(/yo/g, 'ё')
+       .replace(/ye/g, 'е')
+       .replace(/iy$/g, 'ий')
+       .replace(/yi/g, 'ый');
+
+  return s.split('').map(ch => LAT_TO_RU_MAP[ch] || ch).join('');
+}
+
+export function stemRussian(word) {
+  if (!word || word.length < 4) return word;
+  const w = word.toLowerCase();
+  const endings = [
+    'ому', 'ему', 'ыми', 'ими', 'ого', 'его', 'ому', 'ему',
+    'ами', 'ями', 'ей', 'ой', 'ем', 'ом', 'ах', 'ях', 'ов', 'ев',
+    'ия', 'ие', 'ии', 'ью', 'ий', 'ый', 'ой', 'ая', 'яя', 'ое', 'ее', 'ые', 'ие',
+    'ать', 'ить', 'еть', 'ешь', 'ете', 'ут', 'ют', 'ат', 'ят', 'ил', 'ла', 'ли',
+    'а', 'я', 'у', 'ю', 'о', 'е', 'и', 'ы', 'ь', 'ъ'
+  ];
+  for (const end of endings) {
+    if (w.endsWith(end) && (w.length - end.length) >= 3) {
+      return w.slice(0, -end.length);
+    }
+  }
+  return w;
+}
+
+export function stemEnglish(word) {
+  if (!word || word.length < 4) return word;
+  const w = word.toLowerCase().replace(/'s$/g, '');
+  if (w.endsWith('ness') && w.length >= 7) return w.slice(0, -4);
+  if (w.endsWith('ful') && w.length >= 6) return w.slice(0, -3);
+  if (w.endsWith('ing') && w.length >= 6) return w.slice(0, -3);
+  if (w.endsWith('ies') && w.length >= 6) return w.slice(0, -3) + 'y';
+  if (w.endsWith('es') && w.length >= 5) return w.slice(0, -2);
+  if (w.endsWith('ed') && w.length >= 5) return w.slice(0, -2);
+  if (w.endsWith('s') && !w.endsWith('ss') && w.length >= 4) return w.slice(0, -1);
+  return w;
+}
+
 export function normalizeSearchText(text) {
   if (!text) return '';
   return text.toString().toLowerCase()
-    .replace(/[՝՛՜՞․«»""''.,\-–—()!?:;\/\\]/g, ' ')
+    .replace(/[՝՛՜՞․«»""''.,\-–—()!?:;\/\\[\]{}]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
 /**
- * Phonetic folding collapses homophones and ambiguous consonants/vowels
- * into canonical sound tokens for ultra-forgiving Armenian/English/Russian matching.
+ * Multi-lingual phonetic folding collapsing Armenian, Russian, and English
+ * into canonical sound tokens for forgiving cross-language matching.
  */
 export function normalizePhonetic(text) {
   if (!text) return '';
   let s = text.toString().toLowerCase()
-    .replace(/[՝՛՜՞․«»""''.,\-–—()!?:;\/\\]/g, ' ')
+    .replace(/[՝՛՜՞․«»""''.,\-–—()!?:;\/\\[\]{}]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 
-  // Multi-letter phonetic groups
-  s = s.replace(/hallelujah|alleluia|ալելուիա/g, 'ալելույա')
-       .replace(/jesus|յիսուս/g, 'հիսուս')
+  // Multi-letter religious aliases & phonetic groups
+  s = s.replace(/hallelujah|alleluia|аллилуйя|ալելուիա/g, 'ալելույա')
+       .replace(/jesus|иисус|յիսուս/g, 'հիսուս')
+       .replace(/ya|я/g, 'ia')
+       .replace(/yu|ю/g, 'iu')
+       .replace(/yo|ё/g, 'io')
        .replace(/shch|щ/g, '1')
-       .replace(/sh|շ/g, '1')
-       .replace(/ch|ճ|չ/g, '2')
-       .replace(/kh|gh|x|խ|ղ/g, '3')
-       .replace(/ts|tz|dz|c|ծ|ց|ձ/g, '4')
-       .replace(/zh|ժ|j|ջ/g, '5')
-       .replace(/th|ph|թ|տ|փ|պ|t|p/g, m => (m === 'ph' || m === 'փ' || m === 'պ' || m === 'p' ? 'P' : 'T'))
-       .replace(/k|q|ք|կ/g, 'K')
-       .replace(/r|ր|ռ/g, 'R')
-       .replace(/v|w|վ/g, 'V')
-       .replace(/oo|ou|ու|u/g, 'U')
-       .replace(/ye|vo|ev|ե|է|ը|e/g, 'E')
-       .replace(/o|օ|ո/g, 'O')
+       .replace(/sh|ш|շ/g, '1')
+       .replace(/ch|ч|ճ|չ/g, '2')
+       .replace(/kh|gh|x|х|խ|ղ/g, '3')
+       .replace(/ts|tz|dz|c|ц|ծ|ց|ձ/g, '4')
+       .replace(/zh|ж|ժ|j|ջ/g, '5')
+       .replace(/th|ph|թ|տ|փ|պ|t|p|т|п|ф/g, m => (m === 'ph' || m === 'փ' || m === 'պ' || m === 'p' || m === 'п' || m === 'ф' ? 'P' : 'T'))
+       .replace(/k|q|ქ|կ|к/g, 'K')
+       .replace(/r|ր|ռ|р/g, 'R')
+       .replace(/v|w|վ|в/g, 'V')
+       .replace(/oo|ou|ու|u|у/g, 'U')
+       .replace(/ye|vo|ev|ե|է|ը|e|е|э/g, 'E')
+       .replace(/o|օ|ո|о/g, 'O')
        .replace(/i|y|ի|յ|и|й|ы/g, 'I')
-       .replace(/a|ա|а|я/g, 'A')
-       .replace(/b|բ/g, 'B')
-       .replace(/g|գ/g, 'G')
-       .replace(/d|դ/g, 'D')
-       .replace(/z|զ/g, 'Z')
-       .replace(/l|լ/g, 'L')
-       .replace(/m|մ/g, 'M')
-       .replace(/n|ն/g, 'N')
-       .replace(/s|ս/g, 'S')
-       .replace(/h|հ/g, 'H');
+       .replace(/a|ա|а/g, 'A')
+       .replace(/b|բ|б/g, 'B')
+       .replace(/g|գ|г/g, 'G')
+       .replace(/d|դ|д/g, 'D')
+       .replace(/z|զ|з/g, 'Z')
+       .replace(/l|լ|л/g, 'L')
+       .replace(/m|մ|м/g, 'M')
+       .replace(/n|ն|н/g, 'N')
+       .replace(/s|ս|с/g, 'S')
+       .replace(/h|հ/g, 'H')
+       .replace(/[ьъ]/g, '');
 
   return s;
 }
@@ -120,7 +185,164 @@ function escapeRegex(str) {
 }
 
 /**
- * Extracts a concise, readable snippet from song lyrics matching the query.
+ * Extracts all title variations from a song object:
+ * - full title string
+ * - separate language fields (hy, lat, en, ru)
+ * - slash-separated and pipe-separated sub-parts
+ * - parenthetical notes (e.g. "(Bless The Lord)")
+ * - number variations (e.g. "10,000" vs "10000")
+ */
+export function extractTitleCandidates(song) {
+  if (!song) return [];
+  const rawList = [
+    song.title,
+    song.song_title,
+    song.title_hy,
+    song.title_lat,
+    song.title_en,
+    song.title_ru
+  ].filter(Boolean);
+
+  const candidates = new Set();
+
+  for (const raw of rawList) {
+    const s = String(raw).trim();
+    if (!s) continue;
+    candidates.add(s);
+
+    // Split by slash, pipe, semicolon
+    const slashParts = s.split(/[\/\|;]/).map(p => p.trim()).filter(Boolean);
+    for (const p of slashParts) {
+      candidates.add(p);
+    }
+
+    // Extract without parentheses
+    const withoutParens = s.replace(/\([^)]+\)|\[[^\]]+\]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (withoutParens && withoutParens !== s) {
+      candidates.add(withoutParens);
+    }
+
+    // Extract inner parentheses like (Bless The Lord)
+    const parenMatches = s.match(/\(([^)]+)\)|\[([^\]]+)\]/g);
+    if (parenMatches) {
+      for (const pm of parenMatches) {
+        const inner = pm.slice(1, -1).trim();
+        if (inner && inner.length >= 2) {
+          candidates.add(inner);
+        }
+      }
+    }
+
+    // Numbers without commas (10,000 -> 10000)
+    if (/\d+,\d+/.test(s)) {
+      candidates.add(s.replace(/,/g, ''));
+    }
+  }
+
+  // Also include variants parsed by titleParser
+  if (song.title) {
+    const variants = parseSongTitleVariants(song.title);
+    if (variants.hy) candidates.add(variants.hy);
+    if (variants.en) candidates.add(variants.en);
+    if (variants.ru) candidates.add(variants.ru);
+    if (variants.lat) candidates.add(variants.lat);
+  }
+
+  return Array.from(candidates);
+}
+
+// Comprehensive cross-lingual worship terminology and song title synonyms
+const COMMON_SYNONYMS = {
+  // God / Lord
+  'god': ['աստված', 'աստծո', 'աստծու', 'տեր', 'бог', 'бога', 'богу', 'господь', 'lord'],
+  'lord': ['տեր', 'տիրոջ', 'տիրոջը', 'աստված', 'господь', 'бог', 'god'],
+  'jesus': ['հիսուս', 'յիսուս', 'քրիստոս', 'иисус', 'иисуса', 'христос', 'christ'],
+  'christ': ['քրիստոս', 'հիսուս', 'христос', 'иисус', 'jesus'],
+  'бог': ['աստված', 'աստծո', 'господь', 'бога', 'богу', 'god', 'lord'],
+  'господь': ['տեր', 'տիրոջ', 'бог', 'господа', 'lord', 'god'],
+  'иисус': ['հիսուս', 'յիսուս', 'христос', 'jesus', 'christ'],
+  'христос': ['քրիստոս', 'հիսուս', 'christ', 'jesus', 'иисус'],
+  'տեր': ['տիրոջ', 'տիրոջը', 'աստված', 'lord', 'god', 'господь'],
+  'տիրոջ': ['տեր', 'տիրոջը', 'lord'],
+  'աստված': ['աստծո', 'աստծու', 'տեր', 'god', 'lord', 'бог'],
+  'աստծո': ['աստված', 'աստծու', 'god'],
+  'հիսուս': ['յիսուս', 'քրիստոս', 'jesus', 'иисус'],
+  'քրիստոս': ['հիսուս', 'christ', 'христос'],
+
+  // Holy / Spirit
+  'holy': ['սուրբ', 'սրբություն', 'святой', 'святого', 'дух', 'spirit'],
+  'spirit': ['հոգի', 'սուրբ հոգի', 'дух', 'святой дух', 'holy spirit'],
+  'holy spirit': ['սուրբ հոգի', 'святой дух'],
+  'սուրբ': ['սրբություն', 'սուրպ', 'holy', 'святой', 'святого'],
+  'հոգի': ['սուրբ հոգի', 'spirit', 'дух'],
+  'սուրբ հոգի': ['holy spirit', 'святой дух'],
+  'святой': ['սուրբ', 'holy', 'дух', 'святого', 'святому', 'святым'],
+  'дух': ['հոգի', 'spirit', 'святой дух', 'духа'],
+  'святой дух': ['սուրբ հոգի', 'holy spirit'],
+
+  // Praise / Worship / Glory / Bless
+  'praise': ['փառք', 'փառաբանություն', 'գովաբանություն', 'хвала', 'хвалы', 'поклонение', 'worship'],
+  'worship': ['երկրպագություն', 'փառաբանություն', 'поклонение', 'хвала', 'praise'],
+  'glory': ['փառք', 'слава', 'славы', 'хвала'],
+  'bless': ['օրհնել', 'օրհնիր', 'օրհնյալ', 'благослови', 'благословен', 'blessing'],
+  'blessed': ['օրհնյալ', 'օրհնված', 'благословен', 'bless'],
+  'փառք': ['փառաբանություն', 'գովաբանություն', 'glory', 'praise', 'слава', 'хвала'],
+  'երկրպագություն': ['worship', 'поклонение', 'փառաբանություն'],
+  'օրհնիր': ['օրհնել', 'օրհնյալ', 'bless', 'благослови'],
+  'օրհնյալ': ['օրհնված', 'blessed', 'благословен'],
+  'хвала': ['փառք', 'praise', 'поклонение', 'слава', 'хвалы'],
+  'поклонение': ['երկրպագություն', 'worship', 'хвала'],
+  'слава': ['փառք', 'glory', 'хвала', 'славы'],
+  'благослови': ['օրհնիր', 'bless', 'благословен'],
+  'благословен': ['օրհնյալ', 'blessed', 'благослови'],
+
+  // Love / Grace / Mercy / Heart / Life
+  'love': ['սեր', 'սիրո', 'любовь', 'любви', 'любовью'],
+  'grace': ['շնորհք', 'благодать', 'благодати'],
+  'heart': ['սիրտ', 'սրտի', 'сердце', 'сердца'],
+  'life': ['կյանք', 'կյանքի', 'жизнь', 'живой'],
+  'hope': ['հույս', 'надежда', 'надежды'],
+  'faith': ['հավատք', 'вера', 'веры'],
+  'սեր': ['սիրո', 'սիրով', 'love', 'любовь'],
+  'շնորհք': ['grace', 'благодать'],
+  'սիրտ': ['սրտի', 'heart', 'сердце'],
+  'կյանք': ['life', 'жизнь'],
+  'հույս': ['hope', 'надежда'],
+  'հավատք': ['faith', 'вера'],
+  'любовь': ['սեր', 'love', 'любви', 'любовью'],
+  'благодать': ['շնորհք', 'grace'],
+  'сердце': ['սիրտ', 'heart', 'сердца', 'сердцу'],
+  'жизнь': ['կյանք', 'life', 'живой'],
+  'надежда': ['հույս', 'hope'],
+  'вера': ['հավատք', 'faith'],
+
+  // Hallelujah
+  'hallelujah': ['ալելույա', 'ալելուիա', 'аллилуйя', 'alleluia'],
+  'alleluia': ['ալելույա', 'hallelujah', 'аллилуйя'],
+  'ալելույա': ['ալելուիա', 'hallelujah', 'аллилуйя'],
+  'аллилуйя': ['ալելույա', 'hallelujah'],
+
+  // Famous Global Worship Songs Cross-References
+  'way maker': ['ուղի բացող', 'путь укажет он'],
+  'ուղի բացող': ['way maker', 'путь укажет он'],
+  'путь укажет он': ['way maker', 'ուղի բացող'],
+  'oceans': ['օվկիանոսներ', 'океаны'],
+  'океаны': ['oceans', 'օվկիանոսներ'],
+  'օվկիանոսներ': ['oceans', 'океаны'],
+  '10000 reasons': ['10000 причин', 'օրհնիր տիրոջը', 'bless the lord'],
+  '10,000 reasons': ['10000 причин', 'օրհնիր տիրոջը', 'bless the lord'],
+  '10000 причин': ['10,000 reasons', '10000 reasons', 'bless the lord'],
+  'goodness of god': ['благость божья', 'աստծո բարությունը'],
+  'благость божья': ['goodness of god'],
+  'living hope': ['живая надежда', 'կենդանի հույս'],
+  'живая надежда': ['living hope'],
+  'reckless love': ['безудержная любовь', 'անսահման սեր'],
+  'holy forever': ['святой навсегда', 'հավերժ սուրբ'],
+  'святой навсегда': ['holy forever']
+};
+
+/**
+ * Extracts a concise snippet from song lyrics matching the query.
  * Filters out standalone chord lines and chord brackets.
  */
 export function extractLyricsSnippet(lyrics, query) {
@@ -132,12 +354,14 @@ export function extractLyricsSnippet(lyrics, query) {
   const qNorm = normalizeSearchText(rawQ);
   const qPhonetic = normalizePhonetic(rawQ);
   const qTokens = qNorm.split(' ').filter(Boolean);
+  const qRu = transliterateLatToRu(qNorm);
+  const qArm = transliterateLatToArm(qNorm);
 
   for (const line of lines) {
     // Strip inline chord brackets like [Am], [G/B]
     const cleanLine = line.replace(/\[[^\]]+\]/g, '').replace(/\s+/g, ' ').trim();
     if (!cleanLine || cleanLine.length < 4) continue;
-    
+
     // Skip chord-only lines
     if (/^[A-Ga-g#b0-9\/\s\-+]+$/.test(cleanLine) && !/[\u0530-\u058F\u0400-\u04FF\w]{4,}/.test(cleanLine)) {
       continue;
@@ -146,16 +370,18 @@ export function extractLyricsSnippet(lyrics, query) {
     const lineNorm = normalizeSearchText(cleanLine);
     const linePhonetic = normalizePhonetic(cleanLine);
 
-    // Direct substring or phonetic match
     const isDirectMatch = lineNorm.includes(qNorm);
-    const isPhoneticMatch = linePhonetic.includes(qPhonetic);
+    const isPhoneticMatch = qPhonetic.length >= 3 && linePhonetic.includes(qPhonetic);
     const isTokenMatch = qTokens.length > 1 && qTokens.every(tok => lineNorm.includes(tok));
+    const isTranslitMatch = (qRu && qRu.length >= 3 && lineNorm.includes(qRu)) ||
+                            (qArm && qArm.length >= 3 && lineNorm.includes(qArm));
 
-    if (isDirectMatch || isPhoneticMatch || isTokenMatch) {
+    if (isDirectMatch || isPhoneticMatch || isTokenMatch || isTranslitMatch) {
       if (cleanLine.length > 70) {
         let matchIdx = -1;
         if (isDirectMatch) matchIdx = lineNorm.indexOf(qNorm);
         if (matchIdx === -1 && isTokenMatch) matchIdx = lineNorm.indexOf(qTokens[0]);
+        if (matchIdx === -1 && isTranslitMatch && qRu) matchIdx = lineNorm.indexOf(qRu);
         if (matchIdx === -1) matchIdx = 0;
 
         const start = Math.max(0, matchIdx - 20);
@@ -172,41 +398,49 @@ export function extractLyricsSnippet(lyrics, query) {
 /**
  * Calculates a search score for a song based on relevance ranking.
  * Higher score = more relevant.
- * Returns: { matches: boolean, score: number, snippet: string | null, matchedField: string | null }
+ * Returns: { matches: boolean, score: number, snippet: string | null, matchedField: string | null, matchedTitle: string | null }
  */
 export function scoreSongSearch(song, query, language = 'am') {
   if (!query || !query.trim()) {
-    return { matches: true, score: 0, snippet: null, matchedField: null };
+    return { matches: true, score: 0, snippet: null, matchedField: null, matchedTitle: null };
   }
 
   const rawQuery = query.trim();
   const qNorm = normalizeSearchText(rawQuery);
   if (!qNorm) {
-    return { matches: true, score: 0, snippet: null, matchedField: null };
+    return { matches: true, score: 0, snippet: null, matchedField: null, matchedTitle: null };
   }
 
   const qPhonetic = normalizePhonetic(qNorm);
   const qArm = transliterateLatToArm(qNorm);
   const qLat = transliterateArmToLat(qNorm);
+  const qRu = transliterateLatToRu(qNorm);
+  const qRuLat = transliterateRuToLat(qNorm);
+
+  // Keyboard layout switch equivalents
+  const qQwertyToRu = convertQwertyToCyrillic(qNorm);
+  const qRuToQwerty = convertCyrillicToQwerty(qNorm);
 
   const localizedTitle = getLocalizedTitle(song, language) || song.title || '';
-  const titleNorm = normalizeSearchText(localizedTitle);
-  const titlePhonetic = normalizePhonetic(localizedTitle);
+  const localizedTitleNorm = normalizeSearchText(localizedTitle);
+  const localizedTitlePhonetic = normalizePhonetic(localizedTitle);
 
-  const allTitles = [
-    song.title,
-    song.title_hy,
-    song.title_lat,
-    song.title_en,
-    song.title_ru,
-    localizedTitle
-  ].filter(Boolean);
+  // Extract all title variants (English, Russian, Armenian, subtitles, parentheses)
+  const allTitleCandidates = extractTitleCandidates(song);
+  if (!allTitleCandidates.includes(localizedTitle) && localizedTitle) {
+    allTitleCandidates.unshift(localizedTitle);
+  }
 
-  const titleObjects = allTitles.map(t => ({
-    text: t,
-    norm: normalizeSearchText(t),
-    phonetic: normalizePhonetic(t)
-  }));
+  const titleObjects = allTitleCandidates.map(t => {
+    const norm = normalizeSearchText(t);
+    return {
+      raw: t,
+      norm,
+      phonetic: normalizePhonetic(t),
+      stemmedRu: norm.split(' ').map(stemRussian).join(' '),
+      stemmedEn: norm.split(' ').map(stemEnglish).join(' ')
+    };
+  });
 
   const artist = song.artist || song.artist_hy || song.artist_en || song.artist_ru || '';
   const artistNorm = normalizeSearchText(artist);
@@ -217,115 +451,163 @@ export function scoreSongSearch(song, query, language = 'am') {
 
   let score = 0;
   let matchedField = null;
+  let matchedTitle = null;
   let snippet = null;
 
-  // 1. Primary Title Evaluation
-  if (titleNorm === qNorm || titlePhonetic === qPhonetic) {
-    score = Math.max(score, 1200);
-    matchedField = 'title';
-  } else if (titleNorm.startsWith(qNorm) || titlePhonetic.startsWith(qPhonetic)) {
-    score = Math.max(score, 850 + Math.max(0, 30 - localizedTitle.length));
-    matchedField = 'title';
-  } else if (
-    new RegExp(`(?:^|\\s)${escapeRegex(qNorm)}(?:\\s|$)`, 'i').test(titleNorm) ||
-    new RegExp(`(?:^|\\s)${escapeRegex(qPhonetic)}(?:\\s|$)`, 'i').test(titlePhonetic)
-  ) {
-    score = Math.max(score, 650 + Math.max(0, 30 - localizedTitle.length));
-    matchedField = 'title';
-  } else if (titleNorm.includes(qNorm) || titlePhonetic.includes(qPhonetic)) {
-    score = Math.max(score, 450 + Math.max(0, 30 - localizedTitle.length));
-    matchedField = 'title';
-  }
+  // Query variations to test against titles
+  const queryVariants = [
+    { text: qNorm, phonetic: qPhonetic, weight: 1.0, type: 'direct' },
+    (qQwertyToRu && qQwertyToRu !== qNorm) ? { text: qQwertyToRu, phonetic: normalizePhonetic(qQwertyToRu), weight: 0.95, type: 'layout' } : null,
+    (qRuToQwerty && qRuToQwerty !== qNorm) ? { text: qRuToQwerty, phonetic: normalizePhonetic(qRuToQwerty), weight: 0.95, type: 'layout' } : null,
+    (qRu && qRu !== qNorm) ? { text: qRu, phonetic: normalizePhonetic(qRu), weight: 0.9, type: 'translit' } : null,
+    (qRuLat && qRuLat !== qNorm) ? { text: qRuLat, phonetic: normalizePhonetic(qRuLat), weight: 0.9, type: 'translit' } : null,
+    (qArm && qArm !== qNorm) ? { text: qArm, phonetic: normalizePhonetic(qArm), weight: 0.9, type: 'translit' } : null,
+    (qLat && qLat !== qNorm) ? { text: qLat, phonetic: normalizePhonetic(qLat), weight: 0.9, type: 'translit' } : null
+  ].filter(Boolean);
 
-  // 2. Alternative Title Evaluation
-  for (const tObj of titleObjects) {
-    if (tObj.norm === qNorm || tObj.phonetic === qPhonetic) {
-      score = Math.max(score, 1100);
-      matchedField = matchedField || 'title';
-    } else if (tObj.norm.startsWith(qNorm) || tObj.phonetic.startsWith(qPhonetic)) {
-      score = Math.max(score, 800);
-      matchedField = matchedField || 'title';
-    } else if (tObj.norm.includes(qNorm) || tObj.phonetic.includes(qPhonetic)) {
-      score = Math.max(score, 420);
-      matchedField = matchedField || 'title';
-    } else if (qArm && tObj.norm.includes(qArm)) {
-      score = Math.max(score, 400);
-      matchedField = matchedField || 'title';
-    } else if (qLat && tObj.norm.includes(qLat)) {
-      score = Math.max(score, 400);
-      matchedField = matchedField || 'title';
+  // 1. Evaluate Title Candidates across all query variants
+  for (const qv of queryVariants) {
+    for (const tObj of titleObjects) {
+      if (!tObj.norm) continue;
+
+      let itemScore = 0;
+
+      // Exact full match
+      if (tObj.norm === qv.text || (qv.phonetic && tObj.phonetic === qv.phonetic)) {
+        itemScore = 1200 * qv.weight;
+      }
+      // Prefix match
+      else if (tObj.norm.startsWith(qv.text) || (qv.phonetic && tObj.phonetic.startsWith(qv.phonetic))) {
+        itemScore = (850 + Math.max(0, 30 - tObj.raw.length)) * qv.weight;
+      }
+      // Whole word / boundary match
+      else if (
+        new RegExp(`(?:^|\\s)${escapeRegex(qv.text)}(?:\\s|$)`, 'i').test(tObj.norm) ||
+        (qv.phonetic && new RegExp(`(?:^|\\s)${escapeRegex(qv.phonetic)}(?:\\s|$)`, 'i').test(tObj.phonetic))
+      ) {
+        itemScore = (650 + Math.max(0, 30 - tObj.raw.length)) * qv.weight;
+      }
+      // Substring match
+      else if (tObj.norm.includes(qv.text) || (qv.phonetic && qv.phonetic.length >= 3 && tObj.phonetic.includes(qv.phonetic))) {
+        itemScore = (450 + Math.max(0, 30 - tObj.raw.length)) * qv.weight;
+      }
+      // Russian & English Stem matching
+      else {
+        const qStemRu = qv.text.split(' ').map(stemRussian).join(' ');
+        const qStemEn = qv.text.split(' ').map(stemEnglish).join(' ');
+        if (qStemRu && tObj.stemmedRu.includes(qStemRu)) {
+          itemScore = 480 * qv.weight;
+        } else if (qStemEn && tObj.stemmedEn.includes(qStemEn)) {
+          itemScore = 480 * qv.weight;
+        }
+      }
+
+      if (itemScore > score) {
+        score = itemScore;
+        matchedField = 'title';
+        matchedTitle = tObj.raw;
+      }
     }
   }
 
-  // 3. Artist Evaluation
+  // 2. Artist Evaluation
   if (artistNorm) {
-    if (artistNorm === qNorm || artistPhonetic === qPhonetic) {
-      score = Math.max(score, 360);
-      matchedField = matchedField || 'artist';
-    } else if (artistNorm.startsWith(qNorm) || artistPhonetic.startsWith(qPhonetic)) {
-      score = Math.max(score, 290);
-      matchedField = matchedField || 'artist';
-    } else if (artistNorm.includes(qNorm) || artistPhonetic.includes(qPhonetic)) {
-      score = Math.max(score, 220);
-      matchedField = matchedField || 'artist';
+    for (const qv of queryVariants) {
+      let aScore = 0;
+      if (artistNorm === qv.text || (qv.phonetic && artistPhonetic === qv.phonetic)) {
+        aScore = 360 * qv.weight;
+      } else if (artistNorm.startsWith(qv.text) || (qv.phonetic && artistPhonetic.startsWith(qv.phonetic))) {
+        aScore = 290 * qv.weight;
+      } else if (artistNorm.includes(qv.text) || (qv.phonetic && artistPhonetic.includes(qv.phonetic))) {
+        aScore = 220 * qv.weight;
+      }
+
+      if (aScore > score) {
+        score = aScore;
+        matchedField = matchedField || 'artist';
+      }
     }
   }
 
-  // 4. Multi-word Token Matches across Title + Artist
+  // 3. Multi-word Token Matches across Title + Artist
   const qTokens = qNorm.split(' ').filter(Boolean);
   if (qTokens.length > 1) {
-    const combinedNorm = `${titleNorm} ${artistNorm}`;
-    const combinedPhonetic = `${titlePhonetic} ${artistPhonetic}`;
+    const combinedNorm = `${localizedTitleNorm} ${allTitleCandidates.join(' ')} ${artistNorm}`.toLowerCase();
+    const combinedPhonetic = `${localizedTitlePhonetic} ${artistPhonetic}`;
+
     const allTokensMatch = qTokens.every(tok => {
       const tokP = normalizePhonetic(tok);
-      return combinedNorm.includes(tok) || combinedPhonetic.includes(tokP);
+      const tokRu = transliterateLatToRu(tok);
+      const tokArm = transliterateLatToArm(tok);
+      const tokLayout = convertQwertyToCyrillic(tok);
+
+      return combinedNorm.includes(tok) ||
+             (tokP && combinedPhonetic.includes(tokP)) ||
+             (tokRu && combinedNorm.includes(tokRu)) ||
+             (tokArm && combinedNorm.includes(tokArm)) ||
+             (tokLayout && combinedNorm.includes(tokLayout));
     });
-    if (allTokensMatch) {
-      score = Math.max(score, 520);
+
+    if (allTokensMatch && score < 560) {
+      score = 560;
       matchedField = matchedField || 'title';
     }
   }
 
-  // 5. Tags Evaluation
+  // 4. Tags Evaluation
   if (tags && (tags.includes(qNorm) || normalizePhonetic(tags).includes(qPhonetic))) {
-    score = Math.max(score, 180);
-    matchedField = matchedField || 'tags';
+    if (score < 180) {
+      score = 180;
+      matchedField = matchedField || 'tags';
+    }
   }
 
-  // 6. Lyrics Evaluation & Snippet Extraction
+  // 5. Lyrics Evaluation & Snippet Extraction
   if (lyrics) {
     const lyricsSnippet = extractLyricsSnippet(lyrics, rawQuery);
     if (lyricsSnippet) {
-      score = Math.max(score, 120);
+      if (score < 140) {
+        score = 140;
+        matchedField = matchedField || 'lyrics';
+      }
       snippet = lyricsSnippet;
-      matchedField = matchedField || 'lyrics';
     }
   }
 
-  // 7. Synonyms & Religious Terminology Expansion
+  // 6. Synonyms & Cross-Lingual Worship Terminology
   if (score === 0) {
-    const synList = COMMON_SYNONYMS[qNorm] || COMMON_SYNONYMS[qArm] || COMMON_SYNONYMS[qLat] || [];
-    for (const syn of synList) {
-      const synNorm = normalizeSearchText(syn);
-      const synPhonetic = normalizePhonetic(syn);
+    const synCandidates = [qNorm, qArm, qLat, qRu, qRuLat, qQwertyToRu, qRuToQwerty].filter(Boolean);
+    const checkedSyns = new Set();
 
-      for (const tObj of titleObjects) {
-        if (tObj.norm.includes(synNorm) || tObj.phonetic.includes(synPhonetic)) {
-          score = Math.max(score, 390);
-          matchedField = 'title';
-          break;
+    for (const term of synCandidates) {
+      const synList = COMMON_SYNONYMS[term] || [];
+      for (const syn of synList) {
+        if (checkedSyns.has(syn)) continue;
+        checkedSyns.add(syn);
+
+        const synNorm = normalizeSearchText(syn);
+        const synPhonetic = normalizePhonetic(syn);
+
+        for (const tObj of titleObjects) {
+          if (tObj.norm.includes(synNorm) || (synPhonetic && tObj.phonetic.includes(synPhonetic))) {
+            score = Math.max(score, 400);
+            matchedField = 'title';
+            matchedTitle = tObj.raw;
+            break;
+          }
+        }
+
+        if (lyrics && score === 0) {
+          const synSnippet = extractLyricsSnippet(lyrics, syn);
+          if (synSnippet) {
+            score = Math.max(score, 100);
+            snippet = synSnippet;
+            matchedField = 'lyrics';
+            break;
+          }
         }
       }
-
-      if (lyrics && score === 0) {
-        const synSnippet = extractLyricsSnippet(lyrics, syn);
-        if (synSnippet) {
-          score = Math.max(score, 90);
-          snippet = synSnippet;
-          matchedField = 'lyrics';
-          break;
-        }
-      }
+      if (score > 0) break;
     }
   }
 
@@ -333,7 +615,8 @@ export function scoreSongSearch(song, query, language = 'am') {
     matches: score > 0,
     score,
     snippet,
-    matchedField
+    matchedField,
+    matchedTitle: (matchedTitle && matchedTitle !== localizedTitle) ? matchedTitle : null
   };
 }
 
@@ -352,7 +635,18 @@ export function highlightText(text, query) {
   const tokens = query.trim().split(/\s+/).filter(t => t.length > 0);
   if (!tokens.length) return [{ text, highlight: false }];
 
-  const pattern = tokens.map(t => escapeRegex(t)).join('|');
+  // Expand tokens with Russian / translit equivalents for highlighting
+  const expandedTokens = new Set(tokens);
+  for (const t of tokens) {
+    const ru = transliterateLatToRu(t);
+    if (ru && ru !== t) expandedTokens.add(ru);
+    const arm = transliterateLatToArm(t);
+    if (arm && arm !== t) expandedTokens.add(arm);
+    const qw = convertQwertyToCyrillic(t);
+    if (qw && qw !== t) expandedTokens.add(qw);
+  }
+
+  const pattern = Array.from(expandedTokens).map(t => escapeRegex(t)).join('|');
   const regex = new RegExp(`(${pattern})`, 'gi');
   const parts = text.split(regex);
 

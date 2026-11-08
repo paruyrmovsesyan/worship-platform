@@ -350,7 +350,9 @@ export default function SongsApp() {
         }
         const res = scoreSongSearch(s, searchQuery, language);
         if (!res.matches) return null;
-        return { song: s, score: res.score, snippet: res.snippet };
+        s._searchSnippet = res.snippet;
+        s._matchedTitle = res.matchedTitle;
+        return { song: s, score: res.score, snippet: res.snippet, matchedTitle: res.matchedTitle };
       })
       .filter(item => {
         if (!item) return false;
@@ -926,6 +928,11 @@ export default function SongsApp() {
 
                 <div className="track-info">
                   <span className="track-title">{getLocalizedTitle(song, language)}</span>
+                  {searchQuery && song._matchedTitle && (
+                    <span className="track-matched-title" title="Համընկնում այլընտրանքային վերնագրում">
+                      🔍 {song._matchedTitle}
+                    </span>
+                  )}
                   <div className="track-subinfo">
                     <span className="track-artist">{song.artist || t('songs.unknownArtist', 'Unknown Artist')}</span>
                     <div className="track-tags-inline">

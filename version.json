@@ -1,8 +1,8 @@
 {
   "app_version": "5.3.0",
   "web_version": "5.3.0",
-  "asset_version": "556",
-  "build_timestamp": "2026-11-08T17:54:00+04:00",
-  "release_type": "bugfix",
-  "release_summary": "Restore clean inline search on PWA Home without separate modal, with keyboard dismiss on search submit"
+  "asset_version": "557",
+  "build_timestamp": "2026-11-08T18:15:00+04:00",
+  "release_type": "feature",
+  "release_summary": "Comprehensive English & Russian song search: bilingual title variants, Cyrillic-Qwerty layout auto-switching, transliteration, inflections, and matched title badges"
 }

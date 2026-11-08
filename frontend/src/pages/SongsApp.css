@@ -471,6 +471,29 @@ body.website-theme > .songs-back-to-top {
   color: #bae6fd;
 }
 
+/* ── Matched Alternative Title Badge in Track Items ── */
+.track-matched-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 6px;
+  padding: 1px 7px;
+  margin-top: 2px;
+  margin-bottom: 3px;
+  max-width: fit-content;
+}
+
+body.light-mode .track-matched-title {
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.08);
+  border-color: rgba(2, 132, 199, 0.22);
+}
+
 /* ── Lyric Search Snippet in Track Items ── */
 .track-snippet {
   margin-top: 5px;

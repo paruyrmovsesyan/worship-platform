@@ -379,7 +379,9 @@ export default function SongsWeb() {
         }
         const res = scoreSongSearch(s, searchQuery, language);
         if (!res.matches) return null;
-        return { song: s, score: res.score, snippet: res.snippet };
+        s._searchSnippet = res.snippet;
+        s._matchedTitle = res.matchedTitle;
+        return { song: s, score: res.score, snippet: res.snippet, matchedTitle: res.matchedTitle };
       })
       .filter(item => {
         if (!item) return false;
@@ -862,6 +864,11 @@ export default function SongsWeb() {
                     <h3 className="sw-card-title" title={localizedTitle}>
                       {localizedTitle}
                     </h3>
+                    {searchQuery && song._matchedTitle && (
+                      <span className="sw-card-matched-title" title="Համընկնում այլընտրանքային վերնագրում">
+                        🔍 {song._matchedTitle}
+                      </span>
+                    )}
                     <p className="sw-card-artist">
                       {song.artist || (language === 'am' ? 'Անհայտ հեղինակ' : 'Unknown')}
                     </p>
@@ -947,6 +954,11 @@ export default function SongsWeb() {
                       </div>
                       <div className="sw-row-title-block">
                         <span className="sw-row-name">{localizedTitle}</span>
+                        {searchQuery && song._matchedTitle && (
+                          <span className="sw-card-matched-title" title="Համընկնում այլընտրանքային վերնագրում">
+                            🔍 {song._matchedTitle}
+                          </span>
+                        )}
                         <div className="sw-row-sub">
                           <span className="sw-row-artist-mobile">{song.artist || '—'}</span>
                           {hasChords && <span className="sw-row-chords-badge">Chords</span>}

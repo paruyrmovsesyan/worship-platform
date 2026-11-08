@@ -386,6 +386,29 @@
   color: #bae6fd;
 }
 
+/* ── Matched Alternative Title Badge ── */
+.sw-card-matched-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 6px;
+  padding: 1px 7px;
+  margin-top: 3px;
+  margin-bottom: 2px;
+  max-width: fit-content;
+}
+
+body.light-mode .sw-card-matched-title {
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.08);
+  border-color: rgba(2, 132, 199, 0.2);
+}
+
 /* ── Lyric Search Snippets ── */
 .sw-card-snippet,
 .sw-row-snippet {
