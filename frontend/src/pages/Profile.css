@@ -1822,6 +1822,207 @@ body.light-mode .support-form textarea {
   flex-shrink: 0;
 }
 
+/* Add Custom Role Trigger */
+.add-custom-role-trigger {
+  margin-top: 10px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: rgba(0, 212, 255, 0.06);
+  border: 1.5px dashed rgba(0, 212, 255, 0.35);
+  border-radius: 14px;
+  color: #38bdf8;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.add-custom-role-trigger:hover {
+  background: rgba(0, 212, 255, 0.12);
+  border-color: rgba(0, 212, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+.add-custom-role-trigger:active {
+  transform: scale(0.985);
+}
+
+.add-role-plus {
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Custom Role Creation Card */
+.custom-role-form-card {
+  margin-top: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  animation: roleFormSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+@keyframes roleFormSlideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.custom-role-form-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.custom-role-close-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: color 0.15s;
+}
+
+.custom-role-close-btn:hover {
+  color: #ffffff;
+}
+
+.custom-role-emoji-picker label {
+  display: block;
+  font-size: 0.76rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.emoji-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.emoji-chip-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  padding: 0;
+}
+
+.emoji-chip-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(1.08);
+}
+
+.emoji-chip-btn.active {
+  border-color: #00d4ff;
+  background: rgba(0, 212, 255, 0.2);
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.4);
+  transform: scale(1.12);
+}
+
+.custom-role-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.custom-role-input-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 1.15rem;
+  pointer-events: none;
+}
+
+.custom-role-input-group input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px 10px 42px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  font-size: 0.92rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.custom-role-input-group input:focus {
+  border-color: #00d4ff;
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+}
+
+.custom-role-error-msg {
+  font-size: 0.8rem;
+  color: #f87171;
+}
+
+.custom-role-form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.custom-role-cancel-btn {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.custom-role-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.custom-role-submit-btn {
+  flex: 1.5;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0284c7, #00d4ff);
+  border: none;
+  color: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 212, 255, 0.25);
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.custom-role-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .role-modal-footer {
   flex-shrink: 0;
   padding: 12px 20px calc(env(safe-area-inset-bottom, 16px) + 12px);
@@ -1938,4 +2139,67 @@ body.light-mode .role-check {
 body.light-mode .role-modal-footer {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.92) 30%, #ffffff 100%);
   border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+body.light-mode .add-custom-role-trigger {
+  background: rgba(2, 132, 199, 0.06);
+  border-color: rgba(2, 132, 199, 0.35);
+  color: #0284c7;
+}
+
+body.light-mode .add-custom-role-trigger:hover {
+  background: rgba(2, 132, 199, 0.12);
+  border-color: rgba(2, 132, 199, 0.55);
+}
+
+body.light-mode .custom-role-form-card {
+  background: #f8fafc;
+  border-color: rgba(2, 132, 199, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .custom-role-form-title {
+  color: #0f172a;
+}
+
+body.light-mode .custom-role-close-btn {
+  color: #64748b;
+}
+
+body.light-mode .custom-role-close-btn:hover {
+  color: #0f172a;
+}
+
+body.light-mode .custom-role-emoji-picker label {
+  color: #475569;
+}
+
+body.light-mode .emoji-chip-btn {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+body.light-mode .emoji-chip-btn:hover {
+  background: #f1f5f9;
+}
+
+body.light-mode .emoji-chip-btn.active {
+  border-color: #0284c7;
+  background: #e0f2fe;
+}
+
+body.light-mode .custom-role-input-group input {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+body.light-mode .custom-role-cancel-btn {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+body.light-mode .custom-role-cancel-btn:hover {
+  background: #cbd5e1;
 }

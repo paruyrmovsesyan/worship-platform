@@ -20,7 +20,7 @@ function out($arr, $code=200){
 $action = $_GET['action'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'];
 
-if(empty($_SESSION['user_id']) && $action !== 'auth_status'){
+if(empty($_SESSION['user_id']) && $action !== 'auth_status' && $action !== 'get_worship_roles'){
   out(["error"=>"Unauthorized"], 401);
 }
 
@@ -191,25 +191,111 @@ if($action === 'update_profile' && $method === 'POST'){
 }
 
 
+// ✅ GET all active worship team roles
+if($action === 'get_worship_roles' && $method === 'GET'){
+  try {
+    $st = $pdo->query("SELECT id, role_key, icon, name_am, name_ru, name_en, is_custom, is_active, sort_order FROM worship_roles WHERE is_active=1 ORDER BY sort_order ASC, id ASC");
+    $roles = [];
+    while($r = $st->fetch(PDO::FETCH_ASSOC)){
+      $roles[] = [
+        'id' => $r['role_key'],
+        'role_key' => $r['role_key'],
+        'icon' => $r['icon'] ?: '🎵',
+        'label' => [
+          'am' => $r['name_am'],
+          'ru' => $r['name_ru'] ?: $r['name_am'],
+          'en' => $r['name_en'] ?: $r['name_am'],
+        ],
+        'name_am' => $r['name_am'],
+        'name_ru' => $r['name_ru'],
+        'name_en' => $r['name_en'],
+        'is_custom' => (bool)$r['is_custom']
+      ];
+    }
+    out(["ok" => true, "roles" => $roles]);
+  } catch(Exception $e) {
+    out(["ok" => false, "error" => $e->getMessage()], 500);
+  }
+}
+
+// ✅ POST add custom worship team role
+if($action === 'add_custom_role' && $method === 'POST'){
+  $d = readJson();
+  $name = trim((string)($d["name"] ?? ($d["name_am"] ?? '')));
+  $icon = trim((string)($d["icon"] ?? '🎵'));
+  if ($icon === '') $icon = '🎵';
+  if (mb_strlen($name) < 2) {
+    out(["error" => "Դերի անվանումը չափազանց կարճ է"], 400);
+  }
+  if (mb_strlen($name) > 100) {
+    $name = mb_substr($name, 0, 100);
+  }
+  $name_ru = trim((string)($d["name_ru"] ?? ''));
+  $name_en = trim((string)($d["name_en"] ?? ''));
+
+  // Check if role with this name already exists
+  try {
+    $check = $pdo->prepare("SELECT role_key, icon, name_am, name_ru, name_en, is_custom FROM worship_roles WHERE LOWER(name_am)=LOWER(?) LIMIT 1");
+    $check->execute([$name]);
+    $existing = $check->fetch(PDO::FETCH_ASSOC);
+    if ($existing) {
+      out([
+        "ok" => true,
+        "role" => [
+          'id' => $existing['role_key'],
+          'role_key' => $existing['role_key'],
+          'icon' => $existing['icon'] ?: '🎵',
+          'label' => [
+            'am' => $existing['name_am'],
+            'ru' => $existing['name_ru'] ?: $existing['name_am'],
+            'en' => $existing['name_en'] ?: $existing['name_am'],
+          ],
+          'is_custom' => (bool)$existing['is_custom']
+        ]
+      ]);
+    }
+
+    $slug = preg_replace('/[^a-z0-9]+/i', '_', strtolower(trim((string)($name_en ?: $name))));
+    $slug = trim((string)$slug, '_');
+    if (!$slug) {
+      $slug = 'role';
+    }
+    $role_key = 'custom_' . substr($slug, 0, 20) . '_' . substr(md5($name . microtime()), 0, 6);
+
+    $ins = $pdo->prepare("INSERT INTO worship_roles (role_key, icon, name_am, name_ru, name_en, is_custom, is_active, sort_order) VALUES (?, ?, ?, ?, ?, 1, 1, 900)");
+    $ins->execute([$role_key, $icon, $name, $name_ru, $name_en]);
+
+    out([
+      "ok" => true,
+      "role" => [
+        'id' => $role_key,
+        'role_key' => $role_key,
+        'icon' => $icon,
+        'label' => [
+          'am' => $name,
+          'ru' => $name_ru ?: $name,
+          'en' => $name_en ?: $name,
+        ],
+        'name_am' => $name,
+        'name_ru' => $name_ru,
+        'name_en' => $name_en,
+        'is_custom' => true
+      ]
+    ]);
+  } catch(Exception $e) {
+    out(["error" => "Չհաջողվեց ավելացնել դերը: " . $e->getMessage()], 500);
+  }
+}
+
 // ✅ POST save worship team role & avatar gradient
 if($action === 'save_worship_role' && $method === 'POST'){
   $d = readJson();
   $worship_role = trim((string)($d["worship_role"] ?? ''));
   $avatar_gradient = trim((string)($d["avatar_gradient"] ?? ''));
 
-  // Validate worship_role
-  $allowed_roles = ['vocalist','leader','guitarist','keyboardist','bassist','drummer','sound_engineer','team_member',''];
-  if(!in_array($worship_role, $allowed_roles)){
-    $worship_role = '';
+  if (mb_strlen($worship_role) > 100) {
+    $worship_role = mb_substr($worship_role, 0, 100);
   }
-
-  // Auto-create columns if not exist
-  try {
-    $pdo->exec("ALTER TABLE users ADD COLUMN worship_role VARCHAR(30) DEFAULT NULL");
-  } catch(Exception $e) {}
-  try {
-    $pdo->exec("ALTER TABLE users ADD COLUMN avatar_gradient VARCHAR(120) DEFAULT NULL");
-  } catch(Exception $e) {}
 
   $wr = $worship_role === '' ? null : $worship_role;
   $ag = $avatar_gradient === '' ? null : $avatar_gradient;
@@ -221,22 +307,38 @@ if($action === 'save_worship_role' && $method === 'POST'){
 
 // ✅ GET worship team role & avatar gradient
 if($action === 'get_worship_role' && $method === 'GET'){
-  // Auto-create columns if not exist
-  try {
-    $pdo->exec("ALTER TABLE users ADD COLUMN worship_role VARCHAR(30) DEFAULT NULL");
-  } catch(Exception $e) {}
-  try {
-    $pdo->exec("ALTER TABLE users ADD COLUMN avatar_gradient VARCHAR(120) DEFAULT NULL");
-  } catch(Exception $e) {}
-
   $st = $pdo->prepare("SELECT worship_role, avatar_gradient FROM users WHERE id=? LIMIT 1");
   $st->execute([$uid]);
   $row = $st->fetch(PDO::FETCH_ASSOC);
 
+  $wRole = $row ? $row['worship_role'] : null;
+  $roleInfo = null;
+  if ($wRole) {
+    try {
+      $rSt = $pdo->prepare("SELECT role_key, icon, name_am, name_ru, name_en, is_custom FROM worship_roles WHERE role_key=? LIMIT 1");
+      $rSt->execute([$wRole]);
+      $roleRow = $rSt->fetch(PDO::FETCH_ASSOC);
+      if ($roleRow) {
+        $roleInfo = [
+          'id' => $roleRow['role_key'],
+          'role_key' => $roleRow['role_key'],
+          'icon' => $roleRow['icon'] ?: '🎵',
+          'label' => [
+            'am' => $roleRow['name_am'],
+            'ru' => $roleRow['name_ru'] ?: $roleRow['name_am'],
+            'en' => $roleRow['name_en'] ?: $roleRow['name_am'],
+          ],
+          'is_custom' => (bool)$roleRow['is_custom']
+        ];
+      }
+    } catch(Exception $e) {}
+  }
+
   out([
     "ok"=>true,
-    "worship_role"=> $row ? $row['worship_role'] : null,
-    "avatar_gradient"=> $row ? $row['avatar_gradient'] : null
+    "worship_role"=> $wRole,
+    "avatar_gradient"=> $row ? $row['avatar_gradient'] : null,
+    "role_info" => $roleInfo
   ]);
 }
 

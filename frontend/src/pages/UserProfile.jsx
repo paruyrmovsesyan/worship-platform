@@ -198,8 +198,14 @@ export default function UserProfile() {
   const friendship = profileData.friendship || { status: 'none', is_requester: false };
   const setlists = profileData.setlists || [];
 
-  const roleObj = pUser.worship_role ? WORSHIP_ROLES.find(r => r.id === pUser.worship_role) : null;
-  const roleLabel = roleObj ? (roleObj.label[language] || roleObj.label['am']) : null;
+  const roleObj = pUser.role_info
+    ? {
+        id: pUser.role_info.id || pUser.role_info.role_key,
+        icon: pUser.role_info.icon || '🎵',
+        label: pUser.role_info.label || { am: pUser.role_info.name_am, ru: pUser.role_info.name_ru, en: pUser.role_info.name_en }
+      }
+    : (pUser.worship_role ? (WORSHIP_ROLES.find(r => r.id === pUser.worship_role) || { id: pUser.worship_role, icon: '🎵', label: { am: pUser.worship_role } }) : null);
+  const roleLabel = roleObj ? (typeof roleObj.label === 'object' ? (roleObj.label[language] || roleObj.label['am'] || roleObj.label['en']) : roleObj.label) : null;
   const avatarGrad = pUser.avatar_gradient || 'linear-gradient(135deg, #00d4ff, #3a2dff)';
 
   const formatJoinDate = (dateStr) => {

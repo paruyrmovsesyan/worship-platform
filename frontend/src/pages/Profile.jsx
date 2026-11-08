@@ -62,16 +62,23 @@ export default function Profile() {
   const [teamRole, setTeamRole] = useState(null);
   const [avatarGradient, setAvatarGradient] = useState('linear-gradient(135deg, #00d4ff, #3a2dff)');
 
-  const WORSHIP_ROLES = [
-    { id: 'vocalist', icon: '🎤', label: { am: 'Վոկալիստ', ru: 'Вокалист', en: 'Vocalist' } },
-    { id: 'leader', icon: '📖', label: { am: 'Երկրպագության Ղեկավար', ru: 'Лидер поклонения', en: 'Worship Leader' } },
-    { id: 'guitarist', icon: '🎸', label: { am: 'Կիտառահար', ru: 'Гитарист', en: 'Guitarist' } },
-    { id: 'keyboardist', icon: '🎹', label: { am: 'Ստեղնաշարահար', ru: 'Клавишник', en: 'Keyboardist' } },
-    { id: 'bassist', icon: '🎸', label: { am: 'Բաս Կիտառահար', ru: 'Басист', en: 'Bassist' } },
-    { id: 'drummer', icon: '🥁', label: { am: 'Հարվածայիններ', ru: 'Барабанщик', en: 'Drummer' } },
-    { id: 'sound_engineer', icon: '🎛️', label: { am: 'Ձայնային Ինժեներ', ru: 'Звукорежиссер', en: 'Sound Engineer' } },
-    { id: 'team_member', icon: '🎶', label: { am: 'Թիմի Անդամ', ru: 'Участник команды', en: 'Team Member' } }
+  const DEFAULT_WORSHIP_ROLES = [
+    { id: 'vocalist', role_key: 'vocalist', icon: '🎤', label: { am: 'Վոկալիստ', ru: 'Вокалист', en: 'Vocalist' } },
+    { id: 'leader', role_key: 'leader', icon: '📖', label: { am: 'Երկրպագության Ղեկավար', ru: 'Лидер поклонения', en: 'Worship Leader' } },
+    { id: 'guitarist', role_key: 'guitarist', icon: '🎸', label: { am: 'Կիթառահար', ru: 'Гитарист', en: 'Guitarist' } },
+    { id: 'keyboardist', role_key: 'keyboardist', icon: '🎹', label: { am: 'Ստեղնաշարահար', ru: 'Клавишник', en: 'Keyboardist' } },
+    { id: 'bassist', role_key: 'bassist', icon: '🎸', label: { am: 'Բաս Կիթառահար', ru: 'Басист', en: 'Bassist' } },
+    { id: 'drummer', role_key: 'drummer', icon: '🥁', label: { am: 'Հարվածայիններ', ru: 'Барабанщик', en: 'Drummer' } },
+    { id: 'sound_engineer', role_key: 'sound_engineer', icon: '🎛️', label: { am: 'Ձայնային Ինժեներ', ru: 'Звукорежиссер', en: 'Sound Engineer' } },
+    { id: 'team_member', role_key: 'team_member', icon: '🎶', label: { am: 'Թիմի Անդամ', ru: 'Участник команды', en: 'Team Member' } }
   ];
+
+  const [worshipRoles, setWorshipRoles] = useState(DEFAULT_WORSHIP_ROLES);
+  const [isAddingCustomRole, setIsAddingCustomRole] = useState(false);
+  const [customRoleName, setCustomRoleName] = useState('');
+  const [customRoleIcon, setCustomRoleIcon] = useState('🎵');
+  const [customRoleLoading, setCustomRoleLoading] = useState(false);
+  const [customRoleError, setCustomRoleError] = useState('');
 
   const AVATAR_GRADIENTS = [
     'linear-gradient(135deg, #00d4ff, #3a2dff)',
@@ -82,10 +89,24 @@ export default function Profile() {
     'linear-gradient(135deg, #eab308, #f97316)'
   ];
 
-  const currentRoleObj = teamRole ? WORSHIP_ROLES.find(r => r.id === teamRole) : null;
-  const roleLabel = currentRoleObj ? (currentRoleObj.label[language] || currentRoleObj.label['am']) : null;
+  // Load all available worship roles from server
+  useEffect(() => {
+    fetch('/account_api.php?action=get_worship_roles')
+      .then(r => r.json())
+      .then(data => {
+        if (data?.ok && Array.isArray(data.roles) && data.roles.length > 0) {
+          setWorshipRoles(data.roles);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
-  // Load worship role from server on mount
+  const currentRoleObj = teamRole ? worshipRoles.find(r => r.id === teamRole || r.role_key === teamRole) : null;
+  const roleLabel = currentRoleObj
+    ? (currentRoleObj.label?.[language] || currentRoleObj.name_am || currentRoleObj.label?.['am'] || currentRoleObj.name || teamRole)
+    : teamRole;
+
+  // Load user worship role from server on mount
   useEffect(() => {
     if (!user) return;
     fetch('/account_api.php?action=get_worship_role')
@@ -95,6 +116,14 @@ export default function Profile() {
           if (data.worship_role) {
             setTeamRole(data.worship_role);
             try { localStorage.setItem('wp_user_team_role', data.worship_role); } catch(e) {}
+            if (data.role_info) {
+              setWorshipRoles(prev => {
+                if (prev.some(r => r.id === data.role_info.id || r.role_key === data.role_info.id)) {
+                  return prev;
+                }
+                return [...prev, data.role_info];
+              });
+            }
           }
           if (data.avatar_gradient) {
             setAvatarGradient(data.avatar_gradient);
@@ -110,6 +139,45 @@ export default function Profile() {
         if (lg) setAvatarGradient(lg);
       });
   }, [user]);
+
+  const handleCreateCustomRole = async (e) => {
+    if (e) e.preventDefault();
+    const name = customRoleName.trim();
+    if (!name) {
+      setCustomRoleError(t('profile.roleNameRequired', 'Խնդրում ենք լրացնել դերի անվանումը'));
+      return;
+    }
+    setCustomRoleLoading(true);
+    setCustomRoleError('');
+    try {
+      const res = await fetch('/account_api.php?action=add_custom_role', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          icon: customRoleIcon || '🎵'
+        })
+      });
+      const data = await res.json();
+      if (data?.ok && data.role) {
+        setWorshipRoles(prev => {
+          if (prev.some(r => r.id === data.role.id || r.role_key === data.role.role_key)) {
+            return prev;
+          }
+          return [...prev, data.role];
+        });
+        saveRoleAndGradient(data.role.id || data.role.role_key, avatarGradient);
+        setCustomRoleName('');
+        setIsAddingCustomRole(false);
+      } else {
+        setCustomRoleError(data?.error || 'Սխալ տեղի ունեցավ');
+      }
+    } catch {
+      setCustomRoleError('Ցանցային սխալ');
+    } finally {
+      setCustomRoleLoading(false);
+    }
+  };
 
   const saveRoleAndGradient = (newRole, newGradient) => {
     setTeamRole(newRole);
@@ -133,6 +201,179 @@ export default function Profile() {
         avatar_gradient: newGradient || ''
       })
     }).catch(() => {});
+  };
+
+  const renderRoleModal = () => {
+    if (!isRoleModalOpen) return null;
+    return createPortal(
+      <div className="modal-overlay profile-role-overlay" onClick={() => setIsRoleModalOpen(false)}>
+        <div className="modal-content profile-role-modal" onClick={e => e.stopPropagation()}>
+          <div className="profile-role-drag-handle" />
+          <div className="modal-header profile-role-header">
+            <div className="profile-role-title-wrap">
+              <span className="profile-role-title-badge">🎭</span>
+              <h3>{t('profile.roleModalTitle', 'Երկրպագության Թիմի Դեր & Ավատար')}</h3>
+            </div>
+            <button
+              type="button"
+              className="modal-close profile-role-close-btn"
+              onClick={() => setIsRoleModalOpen(false)}
+              aria-label={t('common.close', 'Փակել')}
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+
+          <div className="modal-body role-modal-body">
+            <div className="role-modal-section">
+              <h4>{t('profile.chooseAvatarColor', '🎨 Ընտրել Ավատարի Գույնը')}</h4>
+              <div className="avatar-gradients-grid">
+                {AVATAR_GRADIENTS.map((grad, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    className={`gradient-swatch ${avatarGradient === grad ? 'active' : ''}`}
+                    style={{ background: grad }}
+                    onClick={() => saveRoleAndGradient(teamRole, grad)}
+                    aria-label={`Avatar color ${i + 1}`}
+                  >
+                    {avatarGradient === grad && <span className="swatch-check">✓</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="role-modal-section">
+              <h4>{t('profile.chooseYourRole', '📖 Ընտրել Ձեր Դերը Թիմում')}</h4>
+              <div className="roles-grid">
+                {worshipRoles.map(r => {
+                  const roleKey = r.role_key || r.id;
+                  const label = r.label?.[language] || r.label?.['am'] || r.name_am || r.name || roleKey;
+                  const isSelected = teamRole === roleKey;
+                  return (
+                    <button
+                      key={roleKey}
+                      type="button"
+                      className={`role-option-card ${isSelected ? 'active' : ''}`}
+                      onClick={() => saveRoleAndGradient(isSelected ? null : roleKey, avatarGradient)}
+                    >
+                      <span className="role-icon">{r.icon || '🎵'}</span>
+                      <span className="role-name">{label}</span>
+                      {isSelected && <span className="role-check">✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {!isAddingCustomRole ? (
+                <button
+                  type="button"
+                  className="add-custom-role-trigger"
+                  onClick={() => {
+                    setIsAddingCustomRole(true);
+                    setCustomRoleError('');
+                  }}
+                >
+                  <span className="add-role-plus">+</span>
+                  <span>{t('profile.addCustomRole', 'Ավելացնել այլ դեր')}</span>
+                </button>
+              ) : (
+                <div className="custom-role-form-card">
+                  <div className="custom-role-form-title">
+                    <span>✨ {t('profile.newRoleTitle', 'Նոր Դեր Թիմում')}</span>
+                    <button
+                      type="button"
+                      className="custom-role-close-btn"
+                      onClick={() => {
+                        setIsAddingCustomRole(false);
+                        setCustomRoleError('');
+                      }}
+                      aria-label={t('common.close', 'Փակել')}
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="custom-role-emoji-picker">
+                    <label>{t('profile.selectIcon', 'Ընտրեք պատկերակը')}</label>
+                    <div className="emoji-chips-row">
+                      {['🎵', '🎶', '🎤', '🎸', '🎹', '🥁', '🎛️', '🎺', '🎷', '🎻', '📖', '🙏', '✨', '💡', '📹', '🎨'].map(emoji => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          className={`emoji-chip-btn ${customRoleIcon === emoji ? 'active' : ''}`}
+                          onClick={() => setCustomRoleIcon(emoji)}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="custom-role-input-group">
+                    <span className="custom-role-input-icon">{customRoleIcon}</span>
+                    <input
+                      type="text"
+                      value={customRoleName}
+                      onChange={e => setCustomRoleName(e.target.value)}
+                      placeholder={t('profile.roleNamePlaceholder', 'Օրինակ՝ Թավջութակահար, Օպերատոր...')}
+                      maxLength={50}
+                      autoFocus
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleCreateCustomRole();
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {customRoleError && (
+                    <div className="custom-role-error-msg">{customRoleError}</div>
+                  )}
+
+                  <div className="custom-role-form-actions">
+                    <button
+                      type="button"
+                      className="custom-role-cancel-btn"
+                      onClick={() => {
+                        setIsAddingCustomRole(false);
+                        setCustomRoleError('');
+                      }}
+                      disabled={customRoleLoading}
+                    >
+                      {t('common.cancel', 'Չեղարկել')}
+                    </button>
+                    <button
+                      type="button"
+                      className="custom-role-submit-btn"
+                      onClick={handleCreateCustomRole}
+                      disabled={customRoleLoading || !customRoleName.trim()}
+                    >
+                      {customRoleLoading ? t('common.saving', 'Պահպանվում է...') : t('common.add', 'Ավելացնել')}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="role-modal-footer">
+            <button
+              type="button"
+              className="role-modal-save-btn"
+              onClick={() => setIsRoleModalOpen(false)}
+            >
+              {t('profile.saveBtn', 'Պահպանել')}
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
   };
   const [supportTopic, setSupportTopic] = useState('question');
   const [supportMessage, setSupportMessage] = useState('');
@@ -478,79 +719,7 @@ export default function Profile() {
           </button>
         </div>
 
-        {isRoleModalOpen && createPortal(
-          <div className="modal-overlay profile-role-overlay" onClick={() => setIsRoleModalOpen(false)}>
-            <div className="modal-content profile-role-modal" onClick={e => e.stopPropagation()}>
-              <div className="profile-role-drag-handle" />
-              <div className="modal-header profile-role-header">
-                <div className="profile-role-title-wrap">
-                  <span className="profile-role-title-badge">🎭</span>
-                  <h3>{t('profile.roleModalTitle', 'Երկրպագության Թիմի Դեր & Ավատար')}</h3>
-                </div>
-                <button
-                  type="button"
-                  className="modal-close profile-role-close-btn"
-                  onClick={() => setIsRoleModalOpen(false)}
-                  aria-label={t('common.close', 'Փակել')}
-                >
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              </div>
-
-              <div className="modal-body role-modal-body">
-                <div className="role-modal-section">
-                  <h4>{t('profile.chooseAvatarColor', '🎨 Ընտրել Ավատարի Գույնը')}</h4>
-                  <div className="avatar-gradients-grid">
-                    {AVATAR_GRADIENTS.map((grad, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        className={`gradient-swatch ${avatarGradient === grad ? 'active' : ''}`}
-                        style={{ background: grad }}
-                        onClick={() => saveRoleAndGradient(teamRole, grad)}
-                        aria-label={`Avatar color ${i + 1}`}
-                      >
-                        {avatarGradient === grad && <span className="swatch-check">✓</span>}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="role-modal-section">
-                  <h4>{t('profile.chooseYourRole', '📖 Ընտրել Ձեր Դերը Թիմում')}</h4>
-                  <div className="roles-grid">
-                    {WORSHIP_ROLES.map(r => (
-                      <button
-                        key={r.id}
-                        type="button"
-                        className={`role-option-card ${teamRole === r.id ? 'active' : ''}`}
-                        onClick={() => saveRoleAndGradient(teamRole === r.id ? null : r.id, avatarGradient)}
-                      >
-                        <span className="role-icon">{r.icon}</span>
-                        <span className="role-name">{r.label[language] || r.label['am']}</span>
-                        {teamRole === r.id && <span className="role-check">✓</span>}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="role-modal-footer">
-                <button
-                  type="button"
-                  className="role-modal-save-btn"
-                  onClick={() => setIsRoleModalOpen(false)}
-                >
-                  {t('profile.saveBtn', 'Պահպանել')}
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+        {renderRoleModal()}
 
         {isLangModalOpen && createPortal(
           <div className="modal-overlay profile-lang-overlay" onClick={() => setIsLangModalOpen(false)}>
@@ -931,78 +1100,7 @@ export default function Profile() {
       </div>
 
       {/* Role & Avatar Modal */}
-      {isRoleModalOpen && createPortal(
-        <div className="modal-overlay profile-role-overlay" onClick={() => setIsRoleModalOpen(false)}>
-          <div className="modal-content profile-role-modal" onClick={e => e.stopPropagation()}>
-            <div className="profile-role-drag-handle" />
-            <div className="modal-header profile-role-header">
-              <div className="profile-role-title-wrap">
-                <span className="profile-role-title-badge">🎭</span>
-                <h3>{t('profile.roleModalTitle', 'Երկրպագության Թիմի Դեր & Ավատար')}</h3>
-              </div>
-              <button
-                type="button"
-                className="modal-close profile-role-close-btn"
-                onClick={() => setIsRoleModalOpen(false)}
-                aria-label={t('common.close', 'Փակել')}
-              >
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-            <div className="modal-body role-modal-body">
-              <div className="role-modal-section">
-                <h4>{t('profile.chooseAvatarColor', '🎨 Ընտրել Ավատարի Գույնը')}</h4>
-                <div className="avatar-gradients-grid">
-                  {AVATAR_GRADIENTS.map((grad, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      className={`gradient-swatch ${avatarGradient === grad ? 'active' : ''}`}
-                      style={{ background: grad }}
-                      onClick={() => saveRoleAndGradient(teamRole, grad)}
-                      aria-label={`Avatar color ${i + 1}`}
-                    >
-                      {avatarGradient === grad && <span className="swatch-check">✓</span>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="role-modal-section">
-                <h4>{t('profile.chooseYourRole', '📖 Ընտրել Ձեր Դերը Թիմում')}</h4>
-                <div className="roles-grid">
-                  {WORSHIP_ROLES.map(r => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      className={`role-option-card ${teamRole === r.id ? 'active' : ''}`}
-                      onClick={() => saveRoleAndGradient(teamRole === r.id ? null : r.id, avatarGradient)}
-                    >
-                      <span className="role-icon">{r.icon}</span>
-                      <span className="role-name">{r.label[language] || r.label['am']}</span>
-                      {teamRole === r.id && <span className="role-check">✓</span>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="role-modal-footer">
-              <button
-                type="button"
-                className="role-modal-save-btn"
-                onClick={() => setIsRoleModalOpen(false)}
-              >
-                {t('profile.saveBtn', 'Պահպանել')}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      {renderRoleModal()}
 
       {/* Language Modal */}
       {isLangModalOpen && createPortal(

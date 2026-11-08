@@ -1,8 +1,8 @@
 {
   "app_version": "5.3.0",
   "web_version": "5.3.0",
-  "asset_version": "558",
-  "build_timestamp": "2026-11-09T00:50:00+04:00",
-  "release_type": "bugfix",
-  "release_summary": "Modernize Worship Team Role & Avatar modal into sleek bottom sheet, hide bottom navigation bar and fix obscured Save button"
+  "asset_version": "559",
+  "build_timestamp": "2026-11-09T01:10:00+04:00",
+  "release_type": "feature",
+  "release_summary": "Allow adding custom worship team roles in profile with emoji picker and full admin role management"
 }
