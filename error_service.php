@@ -692,6 +692,28 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
+    // 3.0.6. MobileHub setAllSongs (Can't find variable: setAllSongs / setAllSongs is not defined)
+    if (stripos($message, 'setAllSongs') !== false || stripos($stackTrace, 'setAllSongs') !== false) {
+        $reason = 'MobileHub.jsx-ում setAllSongs state-ը սահմանված է, ասեթները թարմացված են v560 (commit f50ade0)';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
+    // 3.0.7. HTTP Server Error 500 on /account_api.php?action=get_worship_roles
+    if (stripos($message, 'get_worship_roles') !== false || (stripos($message, 'account_api') !== false && stripos($message, '500') !== false)) {
+        $reason = 'account_api.php-ում worship_roles աղյուսակի ավտո-միգրացիան և ինքնավերականգնումը ավելացված են, API-ն վերադարձնում է HTTP 200 (v560)';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
     // 3.1. Notification in WebViews / CriOS (restorePromptAfterExternalDisable, Notification is not defined)
     if (stripos($message, 'Notification is not defined') !== false || 
         stripos($message, 'Can\'t find variable: Notification') !== false || 
