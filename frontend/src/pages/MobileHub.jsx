@@ -73,6 +73,7 @@ export default function MobileHub() {
   const navigate = useNavigate();
   const { t, language, setLanguage } = useLanguage();
   
+  const [allSongs, setAllSongs] = useState([]);
   const [recentSongs, setRecentSongs] = useState([]);
   const [upcomingSetlist, setUpcomingSetlist] = useState(null);
   const [favorites, setFavorites] = useState([]);

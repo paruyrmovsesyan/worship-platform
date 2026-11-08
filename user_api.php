@@ -103,7 +103,10 @@ if (($action === 'get_user_profile' || $action === 'get_public_profile') && $met
 
     // Auto-create worship_role and avatar_gradient columns if not exist
     try {
-        $pdo->exec("ALTER TABLE users ADD COLUMN worship_role VARCHAR(30) DEFAULT NULL");
+        $pdo->exec("ALTER TABLE users ADD COLUMN worship_role VARCHAR(100) DEFAULT NULL");
+    } catch (Throwable $e) {}
+    try {
+        $pdo->exec("ALTER TABLE users MODIFY COLUMN worship_role VARCHAR(100) DEFAULT NULL");
     } catch (Throwable $e) {}
     try {
         $pdo->exec("ALTER TABLE users ADD COLUMN avatar_gradient VARCHAR(120) DEFAULT NULL");
@@ -200,6 +203,31 @@ if (($action === 'get_user_profile' || $action === 'get_public_profile') && $met
         $setlists = $stSets->fetchAll(PDO::FETCH_ASSOC);
     } catch (Throwable $e) {}
 
+    $roleInfo = null;
+    if (!empty($targetUser['worship_role'])) {
+        try {
+            $rSt = $pdo->prepare("SELECT role_key, icon, name_am, name_ru, name_en, is_custom FROM worship_roles WHERE role_key=? LIMIT 1");
+            $rSt->execute([$targetUser['worship_role']]);
+            $roleRow = $rSt->fetch(PDO::FETCH_ASSOC);
+            if ($roleRow) {
+                $roleInfo = [
+                    'id' => $roleRow['role_key'],
+                    'role_key' => $roleRow['role_key'],
+                    'icon' => $roleRow['icon'] ?: '🎵',
+                    'label' => [
+                        'am' => $roleRow['name_am'],
+                        'ru' => $roleRow['name_ru'] ?: $roleRow['name_am'],
+                        'en' => $roleRow['name_en'] ?: $roleRow['name_am'],
+                    ],
+                    'name_am' => $roleRow['name_am'],
+                    'name_ru' => $roleRow['name_ru'],
+                    'name_en' => $roleRow['name_en'],
+                    'is_custom' => (bool)$roleRow['is_custom']
+                ];
+            }
+        } catch (Throwable $e) {}
+    }
+
     out([
         "ok" => true,
         "user" => [
@@ -208,6 +236,7 @@ if (($action === 'get_user_profile' || $action === 'get_public_profile') && $met
             "username" => $targetUser['username'] ?? '',
             "email" => $targetUser['email'] ?? '',
             "worship_role" => $targetUser['worship_role'] ?: null,
+            "role_info" => $roleInfo,
             "avatar_gradient" => $targetUser['avatar_gradient'] ?: null,
             "created_at" => $targetUser['created_at'] ?: null,
             "last_active_at" => $targetUser['last_active_at'] ?: null,

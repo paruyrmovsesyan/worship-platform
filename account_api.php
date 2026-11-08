@@ -191,9 +191,69 @@ if($action === 'update_profile' && $method === 'POST'){
 }
 
 
+function wp_ensure_worship_roles_schema(PDO $pdo): void {
+  static $schemaDone = false;
+  if ($schemaDone) return;
+  $schemaDone = true;
+
+  try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS worship_roles (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      role_key VARCHAR(64) NOT NULL UNIQUE,
+      icon VARCHAR(32) NOT NULL DEFAULT '🎵',
+      name_am VARCHAR(120) NOT NULL,
+      name_ru VARCHAR(120) NOT NULL DEFAULT '',
+      name_en VARCHAR(120) NOT NULL DEFAULT '',
+      is_custom TINYINT(1) NOT NULL DEFAULT 0,
+      is_active TINYINT(1) NOT NULL DEFAULT 1,
+      sort_order INT NOT NULL DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $count = (int)$pdo->query("SELECT COUNT(*) FROM worship_roles")->fetchColumn();
+    if ($count === 0) {
+      $defaults = [
+        ['vocalist', '🎤', 'Վոկալիստ', 'Вокалист', 'Vocalist', 10],
+        ['leader', '📖', 'Երկրպագության Ղեկավար', 'Лидер поклонения', 'Worship Leader', 20],
+        ['guitarist', '🎸', 'Կիթառահար', 'Гитарист', 'Guitarist', 30],
+        ['keyboardist', '🎹', 'Ստեղնաշարահար', 'Клавишник', 'Keyboardist', 40],
+        ['bassist', '🎸', 'Բաս Կիթառահար', 'Басист', 'Bassist', 50],
+        ['drummer', '🥁', 'Հարվածայիններ', 'Барабанщик', 'Drummer', 60],
+        ['sound_engineer', '🎛️', 'Ձայնային Ինժեներ', 'Звукорежиссер', 'Sound Engineer', 70],
+        ['team_member', '🎶', 'Թիմի Անդամ', 'Участник команды', 'Team Member', 80],
+      ];
+      $ins = $pdo->prepare("INSERT IGNORE INTO worship_roles (role_key, icon, name_am, name_ru, name_en, is_custom, is_active, sort_order) VALUES (?, ?, ?, ?, ?, 0, 1, ?)");
+      foreach ($defaults as $d) {
+        $ins->execute($d);
+      }
+    }
+  } catch (Throwable $e) {}
+
+  try {
+    $pdo->exec("ALTER TABLE users ADD COLUMN worship_role VARCHAR(100) DEFAULT NULL");
+  } catch (Throwable $e) {}
+
+  try {
+    $pdo->exec("ALTER TABLE users ADD COLUMN avatar_gradient VARCHAR(120) DEFAULT NULL");
+  } catch (Throwable $e) {}
+}
+
 // ✅ GET all active worship team roles
 if($action === 'get_worship_roles' && $method === 'GET'){
+  $defaultRoles = [
+    ['id'=>'vocalist', 'role_key'=>'vocalist', 'icon'=>'🎤', 'label'=>['am'=>'Վոկալիստ','ru'=>'Вокалист','en'=>'Vocalist'], 'name_am'=>'Վոկալիստ', 'name_ru'=>'Вокалист', 'name_en'=>'Vocalist', 'is_custom'=>false],
+    ['id'=>'leader', 'role_key'=>'leader', 'icon'=>'📖', 'label'=>['am'=>'Երկրպագության Ղեկավար','ru'=>'Лидер поклонения','en'=>'Worship Leader'], 'name_am'=>'Երկրպագության Ղեկավար', 'name_ru'=>'Лидер поклонения', 'name_en'=>'Worship Leader', 'is_custom'=>false],
+    ['id'=>'guitarist', 'role_key'=>'guitarist', 'icon'=>'🎸', 'label'=>['am'=>'Կիթառահար','ru'=>'Гитарист','en'=>'Guitarist'], 'name_am'=>'Կիթառահար', 'name_ru'=>'Гитарист', 'name_en'=>'Guitarist', 'is_custom'=>false],
+    ['id'=>'keyboardist', 'role_key'=>'keyboardist', 'icon'=>'🎹', 'label'=>['am'=>'Ստեղնաշարահար','ru'=>'Клавишник','en'=>'Keyboardist'], 'name_am'=>'Ստեղնաշարահար', 'name_ru'=>'Клавишник', 'name_en'=>'Keyboardist', 'is_custom'=>false],
+    ['id'=>'bassist', 'role_key'=>'bassist', 'icon'=>'🎸', 'label'=>['am'=>'Բաս Կիթառահար','ru'=>'Басист','en'=>'Bassist'], 'name_am'=>'Բաս Կիթառահար', 'name_ru'=>'Басист', 'name_en'=>'Bassist', 'is_custom'=>false],
+    ['id'=>'drummer', 'role_key'=>'drummer', 'icon'=>'🥁', 'label'=>['am'=>'Հարվածայիններ','ru'=>'Барабанщик','en'=>'Drummer'], 'name_am'=>'Հարվածայիններ', 'name_ru'=>'Барабанщик', 'name_en'=>'Drummer', 'is_custom'=>false],
+    ['id'=>'sound_engineer', 'role_key'=>'sound_engineer', 'icon'=>'🎛️', 'label'=>['am'=>'Ձայնային Ինժեներ','ru'=>'Звукорежиссер','en'=>'Sound Engineer'], 'name_am'=>'Ձայնային Ինժեներ', 'name_ru'=>'Звукорежиссер', 'name_en'=>'Sound Engineer', 'is_custom'=>false],
+    ['id'=>'team_member', 'role_key'=>'team_member', 'icon'=>'🎶', 'label'=>['am'=>'Թիմի Անդամ','ru'=>'Участник команды','en'=>'Team Member'], 'name_am'=>'Թիմի Անդամ', 'name_ru'=>'Участник команды', 'name_en'=>'Team Member', 'is_custom'=>false]
+  ];
+
   try {
+    wp_ensure_worship_roles_schema($pdo);
     $st = $pdo->query("SELECT id, role_key, icon, name_am, name_ru, name_en, is_custom, is_active, sort_order FROM worship_roles WHERE is_active=1 ORDER BY sort_order ASC, id ASC");
     $roles = [];
     while($r = $st->fetch(PDO::FETCH_ASSOC)){
@@ -212,14 +272,18 @@ if($action === 'get_worship_roles' && $method === 'GET'){
         'is_custom' => (bool)$r['is_custom']
       ];
     }
+    if (empty($roles)) {
+      $roles = $defaultRoles;
+    }
     out(["ok" => true, "roles" => $roles]);
-  } catch(Exception $e) {
-    out(["ok" => false, "error" => $e->getMessage()], 500);
+  } catch(Throwable $e) {
+    out(["ok" => true, "roles" => $defaultRoles]);
   }
 }
 
 // ✅ POST add custom worship team role
 if($action === 'add_custom_role' && $method === 'POST'){
+  wp_ensure_worship_roles_schema($pdo);
   $d = readJson();
   $name = trim((string)($d["name"] ?? ($d["name_am"] ?? '')));
   $icon = trim((string)($d["icon"] ?? '🎵'));
@@ -289,6 +353,7 @@ if($action === 'add_custom_role' && $method === 'POST'){
 
 // ✅ POST save worship team role & avatar gradient
 if($action === 'save_worship_role' && $method === 'POST'){
+  wp_ensure_worship_roles_schema($pdo);
   $d = readJson();
   $worship_role = trim((string)($d["worship_role"] ?? ''));
   $avatar_gradient = trim((string)($d["avatar_gradient"] ?? ''));
@@ -307,6 +372,7 @@ if($action === 'save_worship_role' && $method === 'POST'){
 
 // ✅ GET worship team role & avatar gradient
 if($action === 'get_worship_role' && $method === 'GET'){
+  wp_ensure_worship_roles_schema($pdo);
   $st = $pdo->prepare("SELECT worship_role, avatar_gradient FROM users WHERE id=? LIMIT 1");
   $st->execute([$uid]);
   $row = $st->fetch(PDO::FETCH_ASSOC);
