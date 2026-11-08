@@ -191,6 +191,18 @@ body.website-theme > .songs-back-to-top {
   box-shadow: 0 0 0 3px rgba(209, 82, 255, 0.2), 0 6px 24px rgba(0, 0, 0, 0.28) !important;
 }
 
+.search-box-icon-btn {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+}
+
 .songs-page .search-box .search-box-icon,
 .songs-page .songs-search-box .search-box-icon,
 .songs-search-box .search-box-icon {
@@ -531,7 +543,19 @@ body.light-mode .songs-search-box:focus-within {
   box-shadow: 0 0 0 3px rgba(180, 50, 230, 0.18) !important;
 }
 
-body.light-mode .songs-page .search-box .search-box-icon,
+body.light-mode .search-box-icon-btn {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+}
+
+.songs-page .search-box .search-box-icon,
 body.light-mode .songs-search-box .search-box-icon {
   color: rgba(0, 0, 0, 0.5) !important;
 }

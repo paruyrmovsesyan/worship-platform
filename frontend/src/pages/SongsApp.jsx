@@ -637,10 +637,19 @@ export default function SongsApp() {
         {/* Search and Quick Controls */}
         <div className="songs-controls">
           <div className="search-box songs-search-box">
-            <svg className="search-box-icon" viewBox="0 0 24 24" width="18" height="18" fill="none"
-              stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
+            <button
+              type="button"
+              className="search-box-icon-btn"
+              onClick={() => {
+                document.activeElement?.blur();
+              }}
+              aria-label="Որոնել"
+            >
+              <svg className="search-box-icon" viewBox="0 0 24 24" width="18" height="18" fill="none"
+                stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </button>
             <input
               type="text"
               className="songs-search-input"
@@ -650,9 +659,14 @@ export default function SongsApp() {
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setTimeout(() => setIsSearchFocused(false), 250)}
               onKeyDown={e => {
-                if (e.key === 'Enter' && searchQuery.trim()) {
-                  saveRecentSongSearch(searchQuery);
-                  setRecentSearches(getRecentSongSearches());
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (searchQuery.trim()) {
+                    saveRecentSongSearch(searchQuery);
+                    setRecentSearches(getRecentSongSearches());
+                  }
+                  e.target.blur();
+                  document.activeElement?.blur();
                 }
               }}
               autoCapitalize="none"

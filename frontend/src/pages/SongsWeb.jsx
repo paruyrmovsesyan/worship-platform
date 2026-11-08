@@ -537,9 +537,14 @@ export default function SongsWeb() {
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setTimeout(() => setIsSearchFocused(false), 250)}
                 onKeyDown={e => {
-                  if (e.key === 'Enter' && searchQuery.trim()) {
-                    saveRecentSongSearch(searchQuery);
-                    setRecentSearches(getRecentSongSearches());
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (searchQuery.trim()) {
+                      saveRecentSongSearch(searchQuery);
+                      setRecentSearches(getRecentSongSearches());
+                    }
+                    e.target.blur();
+                    document.activeElement?.blur();
                   }
                 }}
               />

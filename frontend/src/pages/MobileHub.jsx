@@ -609,10 +609,24 @@ export default function MobileHub() {
             {/* Modal Search Header */}
             <div className="hub-search-modal-header">
               <div className="hub-search-input-wrap">
-                <svg className="hub-modal-search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
+                <button
+                  type="button"
+                  className="hub-modal-search-icon-btn"
+                  onClick={() => {
+                    if (searchQuery.trim()) {
+                      saveRecentSongSearch(searchQuery);
+                      setRecentSearches(getRecentSongSearches());
+                    }
+                    searchInputRef.current?.blur();
+                    document.activeElement?.blur();
+                  }}
+                  aria-label="Որոնել"
+                >
+                  <svg className="hub-modal-search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                </button>
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -623,7 +637,12 @@ export default function MobileHub() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      handleSearchSubmit(e);
+                      if (searchQuery.trim()) {
+                        saveRecentSongSearch(searchQuery);
+                        setRecentSearches(getRecentSongSearches());
+                      }
+                      searchInputRef.current?.blur();
+                      document.activeElement?.blur();
                     }
                   }}
                   autoFocus
@@ -647,6 +666,8 @@ export default function MobileHub() {
                 type="button"
                 className="hub-modal-close-btn"
                 onClick={() => {
+                  searchInputRef.current?.blur();
+                  document.activeElement?.blur();
                   setIsSearchModalOpen(false);
                   setSearchQuery('');
                 }}
@@ -656,7 +677,19 @@ export default function MobileHub() {
             </div>
 
             {/* Modal Body */}
-            <div className="hub-search-modal-body">
+            <div
+              className="hub-search-modal-body"
+              onScroll={() => {
+                if (document.activeElement === searchInputRef.current) {
+                  searchInputRef.current?.blur();
+                }
+              }}
+              onTouchMove={() => {
+                if (document.activeElement === searchInputRef.current) {
+                  searchInputRef.current?.blur();
+                }
+              }}
+            >
               {searchQuery.trim() ? (
                 /* Live Results */
                 <div className="hub-live-results">

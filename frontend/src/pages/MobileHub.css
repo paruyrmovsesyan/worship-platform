@@ -218,6 +218,18 @@ body.wp-standalone-app:not(.is-ios) .hub-header {
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
 }
 
+.hub-modal-search-icon-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 .hub-modal-search-icon {
   color: rgba(255, 255, 255, 0.5);
   flex-shrink: 0;
