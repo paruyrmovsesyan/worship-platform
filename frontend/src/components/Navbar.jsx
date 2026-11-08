@@ -399,10 +399,8 @@ export default function Navbar() {
                 to="/studio"
                 className={`nav-item ${isActive('/studio') || isActive('/tools') ? 'active' : ''}`}
                 onMouseEnter={(e) => handleMenuEnter(e, null)}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
               >
                 <span>Pro Studio</span>
-                {(isBeta('pro_studio') || isBeta('rehearsal_stems') || isBeta('lyrics_projection') || isBeta('live_stage_follower') || isBeta('worship_ai_studio')) && <BetaBadge />}
               </Link>
             )}
 
@@ -563,7 +561,7 @@ export default function Navbar() {
               </div>
             )}
 
-            <div className="lang-toggle hide-mobile" style={{ marginLeft: '12px' }}>
+            <div className="lang-toggle hide-mobile">
               <LanguageSwitcher />
             </div>
 
