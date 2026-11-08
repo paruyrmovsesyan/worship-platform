@@ -71,8 +71,13 @@ const Login = () => {
   useEffect(() => {
     if (user) {
       navigate(next, { replace: true });
+      return;
     }
-  }, [user, navigate, next]);
+    // If user navigated to /login while a server session or remember_me cookie exists, verify immediately
+    if (searchParams.get('logged_out') !== '1') {
+      checkAuth().catch(() => {});
+    }
+  }, [user, navigate, next, checkAuth, searchParams]);
 
   // Apply visual viewport fix for iOS PWA keyboard
   useEffect(() => {

@@ -716,6 +716,9 @@ $hasRememberCookie = !empty($_COOKIE['remember_me']);
 
 if ($hasActiveSession || $hasRememberCookie) {
     $pdo = wp_auth_open_pdo();
+    if (!$pdo) {
+        $GLOBALS['WP_AUTH_DB_UNAVAILABLE'] = true;
+    }
     if ($pdo) {
         wp_auth_ensure_user_access_columns($pdo);
 

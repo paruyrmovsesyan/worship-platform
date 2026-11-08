@@ -70,6 +70,10 @@ class LiveStageSyncService {
     return () => this.subscribers.delete(callback);
   }
 
+  getState() {
+    return this.currentState;
+  }
+
   emit(state) {
     this.currentState = state;
     this.subscribers.forEach((cb) => {

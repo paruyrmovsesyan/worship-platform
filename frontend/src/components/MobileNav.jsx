@@ -194,7 +194,7 @@ export default function MobileNav() {
       )
     },
     {
-      path: user ? '/profile' : '/login',
+      path: user ? '/profile' : '/login?next=/profile',
       label: user ? t('profile.title', 'Պրոֆիլ') : t('nav.login', 'Մուտք'),
       icon: user ? (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

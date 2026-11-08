@@ -312,7 +312,9 @@ export default function WorshipStudioHub() {
   const [showStemsChordPanel, setShowStemsChordPanel] = useState(true);
 
   // Live Stage Director state
-  const [liveSessionState, setLiveSessionState] = useState(() => liveStageSync.getState());
+  const [liveSessionState, setLiveSessionState] = useState(() =>
+    typeof liveStageSync.getState === 'function' ? liveStageSync.getState() : liveStageSync.currentState || null
+  );
   const [customCueText, setCustomCueText] = useState('');
   const [stageNotice, setStageNotice] = useState('');
 
