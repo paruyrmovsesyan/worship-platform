@@ -7,13 +7,13 @@ import { useIsAppMode } from '../hooks/useIsPWA';
 import LanguageSwitcher from './LanguageSwitcher';
 import { updateAppBadge } from '../utils/webPwaEnhancements';
 import { useFeatureFlags } from '../utils/featureFlags';
-import { BetaBadge } from './BetaBadge';
+import { BetaBadge, ComingSoonBadge } from './BetaBadge';
 import './Navbar.css';
 
 export default function Navbar() {
   const { t } = useLanguage();
   const { user, logout } = useAuth();
-  const { isEnabled, isBeta } = useFeatureFlags();
+  const { isEnabled, isBeta, isSoon, isVisible } = useFeatureFlags();
   const navigate = useNavigate();
   const location = useLocation();
   const isPWA = useIsAppMode();
@@ -128,12 +128,13 @@ export default function Navbar() {
           to: '/songs', label: t('nav.songs'),
           icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
         },
-        ...(isEnabled('chord_chart_transpose_capo') ? [{
-          to: '/transpose',
+        ...(isVisible('chord_chart_transpose_capo') ? [{
+          to: isSoon('chord_chart_transpose_capo') ? '#' : '/transpose',
+          isSoon: isSoon('chord_chart_transpose_capo'),
           label: (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               {t('nav.transposer')}
-              {isBeta('chord_chart_transpose_capo') && <BetaBadge />}
+              {isSoon('chord_chart_transpose_capo') ? <ComingSoonBadge /> : (isBeta('chord_chart_transpose_capo') && <BetaBadge />)}
             </span>
           ),
           icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M7 4 4 7l3 3M20 17H4m13-3 3 3-3 3"/></svg>
@@ -142,22 +143,28 @@ export default function Navbar() {
           to: '/setlists', label: t('nav.sets'),
           icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
         },
-        ...(isEnabled('pro_studio') ? [{
-          to: '/studio',
+        ...(isVisible('pro_studio') ? [{
+          to: isSoon('pro_studio') ? '#' : '/studio',
+          isSoon: isSoon('pro_studio'),
           label: (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               🎛️ Pro Studio
-              {(isBeta('pro_studio') || isBeta('rehearsal_stems') || isBeta('lyrics_projection') || isBeta('live_stage_follower') || isBeta('worship_ai_studio')) && <BetaBadge />}
+              {isSoon('pro_studio') ? (
+                <ComingSoonBadge />
+              ) : (
+                (isBeta('pro_studio') || isBeta('rehearsal_stems') || isBeta('lyrics_projection') || isBeta('live_stage_follower') || isBeta('worship_ai_studio')) && <BetaBadge />
+              )}
             </span>
           ),
           icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         }] : []),
-        ...(isEnabled('service_planner') ? [{
-          to: '/service-planner',
+        ...(isVisible('service_planner') ? [{
+          to: isSoon('service_planner') ? '#' : '/service-planner',
+          isSoon: isSoon('service_planner'),
           label: (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               Ծառայության Պլանավորող
-              {isBeta('service_planner') && <BetaBadge />}
+              {isSoon('service_planner') ? <ComingSoonBadge /> : (isBeta('service_planner') && <BetaBadge />)}
             </span>
           ),
           icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -246,10 +253,17 @@ export default function Navbar() {
               {sec.title && <span className="menu-section-title">{sec.title}</span>}
               {sec.items.map(item => (
                 <Link
-                  key={item.to}
+                  key={item.to + (item.isSoon ? '-soon' : '')}
                   to={item.to}
-                  className={`menu-nav-link ${isActive(item.to) ? 'active' : ''}`}
-                  onClick={() => setMenuOpen(false)}
+                  className={`menu-nav-link ${isActive(item.to) ? 'active' : ''} ${item.isSoon ? 'is-disabled-soon' : ''}`}
+                  onClick={(e) => {
+                    if (item.isSoon) {
+                      e.preventDefault();
+                      alert('Այս ֆունկցիան շուտով հասանելի կլինի ծրագրում։');
+                      return;
+                    }
+                    setMenuOpen(false);
+                  }}
                 >
                   <span className="menu-nav-icon">{item.icon}</span>
                   <span>{item.label}</span>
@@ -362,12 +376,39 @@ export default function Navbar() {
                       <h4>{t('megaMenu.music')}</h4>
                       <div className="mega-col-links">
                         <Link to="/songs">{t('nav.songs')}</Link>
-                        <Link to="/transpose">{t('nav.transposer')}</Link>
+                        {isVisible('chord_chart_transpose_capo') && (
+                          <Link 
+                            to={isSoon('chord_chart_transpose_capo') ? '#' : '/transpose'}
+                            onClick={(e) => {
+                              if (isSoon('chord_chart_transpose_capo')) {
+                                e.preventDefault();
+                                alert('Տոնայնափոխիչը շուտով հասանելի կլինի ծրագրում։');
+                              }
+                            }}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                          >
+                            {t('nav.transposer')}
+                            {isSoon('chord_chart_transpose_capo') ? <ComingSoonBadge /> : (isBeta('chord_chart_transpose_capo') && <BetaBadge />)}
+                          </Link>
+                        )}
                         <Link to="/setlists">{t('nav.sets')}</Link>
-                        {(isEnabled('pro_studio') || isEnabled('rehearsal_stems') || isEnabled('lyrics_projection') || isEnabled('live_stage_follower') || isEnabled('worship_ai_studio') || isEnabled('service_planner')) && (
-                          <Link to="/studio" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        {(isVisible('pro_studio') || isVisible('rehearsal_stems') || isVisible('lyrics_projection') || isVisible('live_stage_follower') || isVisible('worship_ai_studio') || isVisible('service_planner')) && (
+                          <Link 
+                            to={isSoon('pro_studio') ? '#' : '/studio'} 
+                            onClick={(e) => {
+                              if (isSoon('pro_studio')) {
+                                e.preventDefault();
+                                alert('Pro Studio-ն շուտով հասանելի կլինի ծրագրում։');
+                              }
+                            }}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                          >
                             Pro Studio Հաբ
-                            {(isBeta('pro_studio') || isBeta('rehearsal_stems') || isBeta('lyrics_projection') || isBeta('live_stage_follower') || isBeta('worship_ai_studio')) && <BetaBadge />}
+                            {isSoon('pro_studio') ? (
+                              <ComingSoonBadge />
+                            ) : (
+                              (isBeta('pro_studio') || isBeta('rehearsal_stems') || isBeta('lyrics_projection') || isBeta('live_stage_follower') || isBeta('worship_ai_studio')) && <BetaBadge />
+                            )}
                           </Link>
                         )}
                       </div>
@@ -375,10 +416,19 @@ export default function Navbar() {
                     <div className="mega-col">
                       <h4>{t('megaMenu.management')}</h4>
                       <div className="mega-col-links">
-                        {isEnabled('service_planner') && (
-                          <Link to="/service-planner" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        {isVisible('service_planner') && (
+                          <Link 
+                            to={isSoon('service_planner') ? '#' : '/service-planner'} 
+                            onClick={(e) => {
+                              if (isSoon('service_planner')) {
+                                e.preventDefault();
+                                alert('Ծառայության Պլանավորողը շուտով հասանելի կլինի ծրագրում։');
+                              }
+                            }}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                          >
                             Ծառայության Պլանավորող
-                            {isBeta('service_planner') && <BetaBadge />}
+                            {isSoon('service_planner') ? <ComingSoonBadge /> : (isBeta('service_planner') && <BetaBadge />)}
                           </Link>
                         )}
                         <Link to="/friends">{t('nav.friends')}</Link>
@@ -394,13 +444,21 @@ export default function Navbar() {
               </div>
             </div>
 
-            {(isEnabled('pro_studio') || isEnabled('rehearsal_stems') || isEnabled('lyrics_projection') || isEnabled('live_stage_follower') || isEnabled('worship_ai_studio') || isEnabled('service_planner')) && (
+            {(isVisible('pro_studio') || isVisible('rehearsal_stems') || isVisible('lyrics_projection') || isVisible('live_stage_follower') || isVisible('worship_ai_studio') || isVisible('service_planner')) && (
               <Link
-                to="/studio"
+                to={isSoon('pro_studio') ? '#' : '/studio'}
                 className={`nav-item ${isActive('/studio') || isActive('/tools') ? 'active' : ''}`}
                 onMouseEnter={(e) => handleMenuEnter(e, null)}
+                onClick={(e) => {
+                  if (isSoon('pro_studio')) {
+                    e.preventDefault();
+                    alert('Pro Studio-ն շուտով հասանելի կլինի ծրագրում։');
+                  }
+                }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
               >
                 <span>Pro Studio</span>
+                {isSoon('pro_studio') ? <ComingSoonBadge style={{ fontSize: '0.62rem', padding: '1px 5px' }} /> : (isBeta('pro_studio') && <BetaBadge style={{ fontSize: '0.62rem', padding: '1px 5px' }} />)}
               </Link>
             )}
 

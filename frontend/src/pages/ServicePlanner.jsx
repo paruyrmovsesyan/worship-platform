@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useFeatureFlags } from '../utils/featureFlags';
-import { BetaBadge, BetaBanner, FeatureDisabledScreen } from '../components/BetaBadge';
+import { BetaBadge, BetaBanner, FeatureDisabledScreen, FeatureComingSoonScreen, ComingSoonBadge } from '../components/BetaBadge';
 import './ServicePlanner.css';
 
 const DEFAULT_TIMELINE = [
@@ -37,7 +37,7 @@ const CATEGORY_META = {
 const LOCAL_PLANS_KEY = 'wp_service_plans_cache';
 
 export default function ServicePlanner({ embedded = false }) {
-  const { isOff, isBeta } = useFeatureFlags();
+  const { isOff, isBeta, isSoon } = useFeatureFlags();
   const [plans, setPlans] = useState([]);
   const [planId, setPlanId] = useState(null);
   const [title, setTitle] = useState('Կիրակնօրյա Պաշտամունքի Ծառայություն');
@@ -323,6 +323,19 @@ export default function ServicePlanner({ embedded = false }) {
         <FeatureDisabledScreen
           title="Ծառայության Պլանավորիչն անջատված է"
           description="Այս ֆունկցիան ժամանակավորապես անջատված է կառավարման վահանակի Լաբարատորիայում (Feature Labs):"
+          backUrl="/studio"
+          backLabel="Վերադառնալ Studio Hub"
+        />
+      </div>
+    );
+  }
+
+  if (isSoon('service_planner')) {
+    return (
+      <div className="service-planner-page" style={{ padding: '60px 16px', display: 'flex', justifyContent: 'center' }}>
+        <FeatureComingSoonScreen
+          title="Ծառայության Պլանավորիչ — Շուտով"
+          description="Այս նոր բաժինը նախապատրաստվում է և շուտով հասանելի կդառնա բոլոր երաժիշտների ու առաջնորդների համար։"
           backUrl="/studio"
           backLabel="Վերադառնալ Studio Hub"
         />

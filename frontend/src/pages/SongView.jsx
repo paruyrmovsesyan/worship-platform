@@ -25,7 +25,7 @@ import {
   subscribeToTabMessages
 } from '../utils/webPwaEnhancements';
 import { useFeatureFlags } from '../utils/featureFlags';
-import { BetaBadge } from '../components/BetaBadge';
+import { BetaBadge, ComingSoonBadge } from '../components/BetaBadge';
 
 function resolveMediaUrl(url) {
   if (!url) return '';
@@ -177,7 +177,7 @@ export default function SongView() {
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const { t, language } = useLanguage();
-  const { isEnabled, isBeta } = useFeatureFlags();
+  const { isEnabled, isBeta, isSoon, isVisible } = useFeatureFlags();
   
   const [song, setSong] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -2080,12 +2080,16 @@ export default function SongView() {
               <button type="button" onClick={() => setIsToolsMenuOpen(false)} aria-label="Փակել">✕</button>
             </div>
             <div className="sv-tools-dropdown-items">
-              {isEnabled('pro_studio') && (
+              {isVisible('pro_studio') && (
                 <button
                   type="button"
-                  className="sv-tools-menu-item"
+                  className={`sv-tools-menu-item ${isSoon('pro_studio') ? 'is-disabled' : ''}`}
                   onClick={() => {
                     setIsToolsMenuOpen(false);
+                    if (isSoon('pro_studio')) {
+                      alert('Worship Pro Studio-ն շուտով հասանելի կլինի ծրագրում։');
+                      return;
+                    }
                     navigate('/studio?song=' + (song?.id || id));
                   }}
                 >
@@ -2093,19 +2097,27 @@ export default function SongView() {
                   <div className="sv-tools-item-text">
                     <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                       Worship Pro Studio Hub
-                      {(isBeta('pro_studio') || isBeta('rehearsal_stems') || isBeta('lyrics_projection') || isBeta('live_stage_follower')) && <BetaBadge />}
+                      {isSoon('pro_studio') ? (
+                        <ComingSoonBadge />
+                      ) : (
+                        (isBeta('pro_studio') || isBeta('rehearsal_stems') || isBeta('lyrics_projection') || isBeta('live_stage_follower')) && <BetaBadge />
+                      )}
                     </strong>
                     <small>Բոլոր բեմական գործիքները մեկ տեղում</small>
                   </div>
                 </button>
               )}
 
-              {isEnabled('rehearsal_stems') && (
+              {isVisible('rehearsal_stems') && (
                 <button
                   type="button"
-                  className="sv-tools-menu-item"
+                  className={`sv-tools-menu-item ${isSoon('rehearsal_stems') ? 'is-disabled' : ''}`}
                   onClick={() => {
                     setIsToolsMenuOpen(false);
+                    if (isSoon('rehearsal_stems')) {
+                      alert('RehearsalMix & Stems միքսերը շուտով հասանելի կլինի ծրագրում։');
+                      return;
+                    }
                     setStemsOpen(v => !v);
                   }}
                 >
@@ -2113,19 +2125,23 @@ export default function SongView() {
                   <div className="sv-tools-item-text">
                     <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                       {stemsOpen ? 'Փակել Stems Միքշերը' : 'RehearsalMix & Stems'}
-                      {isBeta('rehearsal_stems') && <BetaBadge />}
+                      {isSoon('rehearsal_stems') ? <ComingSoonBadge /> : (isBeta('rehearsal_stems') && <BetaBadge />)}
                     </strong>
                     <small>8-ալիքային բազմաթրեկ միքշեր</small>
                   </div>
                 </button>
               )}
 
-              {isEnabled('worship_ai_studio') && (
+              {isVisible('worship_ai_studio') && (
                 <button
                   type="button"
-                  className="sv-tools-menu-item"
+                  className={`sv-tools-menu-item ${isSoon('worship_ai_studio') ? 'is-disabled' : ''}`}
                   onClick={() => {
                     setIsToolsMenuOpen(false);
+                    if (isSoon('worship_ai_studio')) {
+                      alert('Worship AI Studio-ն շուտով հասանելի կլինի ծրագրում։');
+                      return;
+                    }
                     setIsAIStudioOpen(true);
                   }}
                 >
@@ -2133,19 +2149,23 @@ export default function SongView() {
                   <div className="sv-tools-item-text">
                     <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                       Worship AI Studio
-                      {isBeta('worship_ai_studio') && <BetaBadge />}
+                      {isSoon('worship_ai_studio') ? <ComingSoonBadge /> : (isBeta('worship_ai_studio') && <BetaBadge />)}
                     </strong>
                     <small>Ակորդների գեներացում և հարստացում</small>
                   </div>
                 </button>
               )}
 
-              {isEnabled('lyrics_projection') && (
+              {isVisible('lyrics_projection') && (
                 <button
                   type="button"
-                  className="sv-tools-menu-item"
+                  className={`sv-tools-menu-item ${isSoon('lyrics_projection') ? 'is-disabled' : ''}`}
                   onClick={() => {
                     setIsToolsMenuOpen(false);
+                    if (isSoon('lyrics_projection')) {
+                      alert('Live Projection & OBS համակարգը շուտով հասանելի կլինի ծրագրում։');
+                      return;
+                    }
                     window.open(`/projection/${song.id}`, '_blank');
                   }}
                 >
@@ -2153,19 +2173,23 @@ export default function SongView() {
                   <div className="sv-tools-item-text">
                     <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                       Live Projection & OBS
-                      {isBeta('lyrics_projection') && <BetaBadge />}
+                      {isSoon('lyrics_projection') ? <ComingSoonBadge /> : (isBeta('lyrics_projection') && <BetaBadge />)}
                     </strong>
                     <small>Դահլիճի պրոյեկտոր և ուղիղ եթեր</small>
                   </div>
                 </button>
               )}
 
-              {isEnabled('service_planner') && (
+              {isVisible('service_planner') && (
                 <button
                   type="button"
-                  className="sv-tools-menu-item"
+                  className={`sv-tools-menu-item ${isSoon('service_planner') ? 'is-disabled' : ''}`}
                   onClick={() => {
                     setIsToolsMenuOpen(false);
+                    if (isSoon('service_planner')) {
+                      alert('Ծառայության Պլանավորողը շուտով հասանելի կլինի ծրագրում։');
+                      return;
+                    }
                     navigate('/service-planner');
                   }}
                 >
@@ -2173,7 +2197,7 @@ export default function SongView() {
                   <div className="sv-tools-item-text">
                     <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                       Service Planner
-                      {isBeta('service_planner') && <BetaBadge />}
+                      {isSoon('service_planner') ? <ComingSoonBadge /> : (isBeta('service_planner') && <BetaBadge />)}
                     </strong>
                     <small>Ծառայության պլանավորող և թիմի գրաֆիկ</small>
                   </div>

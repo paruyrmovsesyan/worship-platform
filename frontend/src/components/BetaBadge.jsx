@@ -68,4 +68,71 @@ export function FeatureDisabledScreen({
   );
 }
 
+export function ComingSoonBadge({
+  label = 'ՇՈՒՏՈՎ',
+  title = 'Այս ֆունկցիան շուտով հասանելի կլինի (Coming Soon)',
+  style = {},
+  className = '',
+}) {
+  return (
+    <span
+      className={`wp-soon-chip ${className}`}
+      title={title}
+      style={style}
+    >
+      <span className="wp-soon-dot" />
+      {label}
+    </span>
+  );
+}
+
+export function ComingSoonBanner({
+  title = 'Այս ֆունկցիան շուտով հասանելի կլինի',
+  description = 'Մոդուլը գտնվում է ակտիվ նախապատրաստման փուլում և շուտով կգործարկվի հավելվածում։',
+  style = {},
+  className = '',
+}) {
+  return (
+    <div className={`wp-soon-banner ${className}`} style={style}>
+      <span className="wp-soon-banner-icon">⏳</span>
+      <div className="wp-soon-banner-text">
+        <div>
+          <span className="wp-soon-banner-tag">ՇՈՒՏՈՎ</span>
+          <strong>{title}</strong>
+        </div>
+        {description && (
+          <div style={{ fontSize: '0.78rem', color: '#c7d2fe', marginTop: '2px', fontWeight: 500 }}>
+            {description}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function FeatureComingSoonScreen({
+  title = 'Շուտով հասանելի կլինի',
+  description = 'Այս նոր ֆունկցիան գտնվում է նախապատրաստման փուլում և շուտով հասանելի կդառնա հավելվածում և կայքում։',
+  onBack,
+  backUrl = '/studio',
+  backLabel = 'Վերադառնալ',
+}) {
+  return (
+    <div className="wp-soon-feature-card">
+      <div className="wp-soon-icon">⏳</div>
+      <h2 className="wp-soon-title">{title}</h2>
+      <p className="wp-soon-desc">{description}</p>
+      {onBack ? (
+        <button type="button" className="wp-soon-btn" onClick={onBack}>
+          ← {backLabel}
+        </button>
+      ) : (
+        <a href={backUrl} className="wp-soon-btn">
+          ← {backLabel}
+        </a>
+      )}
+    </div>
+  );
+}
+
 export default BetaBadge;

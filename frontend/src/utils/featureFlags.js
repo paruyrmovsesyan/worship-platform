@@ -121,12 +121,13 @@ export function getFeatureStatus(featureId) {
 /**
  * Check if a feature is enabled:
  * - 'off': returns false
+ * - 'soon': returns false (inaccessible / disabled)
  * - 'beta': returns true (active and in testing)
  * - 'published': returns true
  */
 export function isFeatureEnabled(featureId, user = null) {
   const status = getFeatureStatus(featureId);
-  return status !== 'off';
+  return status !== 'off' && status !== 'soon' && status !== 'coming_soon';
 }
 
 /**
@@ -134,6 +135,21 @@ export function isFeatureEnabled(featureId, user = null) {
  */
 export function isFeatureBeta(featureId) {
   return getFeatureStatus(featureId) === 'beta';
+}
+
+/**
+ * Check if a feature is marked as Coming Soon ('soon' or 'coming_soon')
+ */
+export function isFeatureSoon(featureId) {
+  const status = getFeatureStatus(featureId);
+  return status === 'soon' || status === 'coming_soon';
+}
+
+/**
+ * Check if a feature is visible in the UI (visible when published, beta, or soon; hidden when off)
+ */
+export function isFeatureVisible(featureId) {
+  return getFeatureStatus(featureId) !== 'off';
 }
 
 /**
@@ -206,8 +222,13 @@ export function useFeatureFlags() {
     flags,
     catalog,
     getStatus: (id) => flags[id] || 'published',
-    isEnabled: (id) => (flags[id] || 'published') !== 'off',
+    isEnabled: (id) => {
+      const s = flags[id] || 'published';
+      return s !== 'off' && s !== 'soon' && s !== 'coming_soon';
+    },
     isBeta: (id) => flags[id] === 'beta',
+    isSoon: (id) => flags[id] === 'soon' || flags[id] === 'coming_soon',
+    isVisible: (id) => (flags[id] || 'published') !== 'off',
     isOff: (id) => flags[id] === 'off',
   };
 }
@@ -216,11 +237,13 @@ export function useFeatureFlags() {
  * React Hook for a single feature flag
  */
 export function useFeatureFlag(featureId) {
-  const { getStatus, isEnabled, isBeta, isOff } = useFeatureFlags();
+  const { getStatus, isEnabled, isBeta, isSoon, isVisible, isOff } = useFeatureFlags();
   return {
     status: getStatus(featureId),
     enabled: isEnabled(featureId),
     isBeta: isBeta(featureId),
+    isSoon: isSoon(featureId),
+    isVisible: isVisible(featureId),
     isOff: isOff(featureId),
   };
 }

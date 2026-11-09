@@ -1,6 +1,6 @@
 import { API_BASE_URL } from '../utils/nativeConfig';
 import { useFeatureFlags } from '../utils/featureFlags';
-import { BetaBadge } from './BetaBadge';
+import { BetaBadge, ComingSoonBadge } from './BetaBadge';
 
 const CHORD_COLORS = [
   { id: 'cyan', value: '#39d8ff', label: 'Cyan' },
@@ -65,7 +65,7 @@ export default function SongViewWebTools({
   stemsOpen,
   songId,
 }) {
-  const { isEnabled, isBeta } = useFeatureFlags();
+  const { isEnabled, isBeta, isSoon, isVisible } = useFeatureFlags();
 
   return (
     <aside className="web-song-console" aria-label="Երգի կառավարման վահանակ">
@@ -127,36 +127,52 @@ export default function SongViewWebTools({
             <span>{viewMode === 'lyrics' ? 'Միայն բառեր' : 'Ակորդներ'}</span>
           </button>
 
-          {isEnabled('rehearsal_stems') && (
+          {isVisible('rehearsal_stems') && (
             <button
               type="button"
-              className={`web-stage-btn ${stemsOpen ? 'active' : ''}`}
-              onClick={onToggleStems}
-              title="RehearsalMix & Stems Mixer"
+              className={`web-stage-btn ${stemsOpen ? 'active' : ''} ${isSoon('rehearsal_stems') ? 'disabled' : ''}`}
+              onClick={isSoon('rehearsal_stems') ? () => alert('Stems միքսերը շուտով հասանելի կլինի ծրագրում։') : onToggleStems}
+              title={isSoon('rehearsal_stems') ? 'Stems միքսերը շուտով հասանելի կլինի' : 'RehearsalMix & Stems Mixer'}
             >
               <ToolIcon><path d="M4 6h16M4 12h16M4 18h16" /></ToolIcon>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 {stemsOpen ? 'Փակել Stems' : '🎛️ Stems'}
                 {isBeta('rehearsal_stems') && <BetaBadge style={{ fontSize: '0.62rem', padding: '1px 5px' }} />}
+                {isSoon('rehearsal_stems') && <ComingSoonBadge style={{ fontSize: '0.62rem', padding: '1px 5px' }} />}
               </span>
             </button>
           )}
 
-          {isEnabled('lyrics_projection') && (
-            <a
-              href={`/projection/${songId}`}
-              target="_blank"
-              rel="noreferrer"
-              className="web-stage-btn"
-              title="Բացել պրոյեկտորի էկրանը առանձին պատուհանում"
-              style={{ textDecoration: 'none' }}
-            >
-              <ToolIcon><path d="M2 3h20v14H2zM8 21h8M12 17v4" /></ToolIcon>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                📽️ Projection
-                {isBeta('lyrics_projection') && <BetaBadge style={{ fontSize: '0.62rem', padding: '1px 5px' }} />}
-              </span>
-            </a>
+          {isVisible('lyrics_projection') && (
+            isSoon('lyrics_projection') ? (
+              <button
+                type="button"
+                className="web-stage-btn disabled"
+                onClick={() => alert('Պրոյեկցիայի ռեժիմը շուտով հասանելի կլինի ծրագրում։')}
+                title="Պրոյեկցիայի ռեժիմը շուտով հասանելի կլինի"
+              >
+                <ToolIcon><path d="M2 3h20v14H2zM8 21h8M12 17v4" /></ToolIcon>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  📽️ Projection
+                  <ComingSoonBadge style={{ fontSize: '0.62rem', padding: '1px 5px' }} />
+                </span>
+              </button>
+            ) : (
+              <a
+                href={`/projection/${songId}`}
+                target="_blank"
+                rel="noreferrer"
+                className="web-stage-btn"
+                title="Բացել պրոյեկտորի էկրանը առանձին պատուհանում"
+                style={{ textDecoration: 'none' }}
+              >
+                <ToolIcon><path d="M2 3h20v14H2zM8 21h8M12 17v4" /></ToolIcon>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  📽️ Projection
+                  {isBeta('lyrics_projection') && <BetaBadge style={{ fontSize: '0.62rem', padding: '1px 5px' }} />}
+                </span>
+              </a>
+            )
           )}
         </div>
       </section>

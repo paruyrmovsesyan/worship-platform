@@ -1589,3 +1589,26 @@
     flex-direction: column;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Coming Soon styling for Studio Hub
+   ───────────────────────────────────────────────────────────────────────── */
+.wsh-bento-card.wsh-card-soon {
+  opacity: 0.88;
+  border-color: rgba(129, 140, 248, 0.28);
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.7), rgba(49, 46, 129, 0.18));
+}
+
+.wsh-bento-card.wsh-card-soon:hover {
+  border-color: rgba(129, 140, 248, 0.55);
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.2);
+}
+
+.wsh-bento-card.wsh-card-soon .wsh-bento-cta {
+  color: #a5b4fc;
+}
+
+.wsh-dock-tab.is-soon {
+  opacity: 0.85;
+}
+

@@ -4,7 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { useFeatureFlags } from '../utils/featureFlags';
 import { useIsPWA } from '../hooks/useIsPWA';
-import { FeatureDisabledScreen } from '../components/BetaBadge';
+import { FeatureDisabledScreen, FeatureComingSoonScreen, BetaBadge, ComingSoonBadge } from '../components/BetaBadge';
 import { liveStageSync } from '../utils/liveStageSync';
 import SongStemsMixer from '../components/SongStemsMixer';
 import LiveStageBar from '../components/LiveStageBar';
@@ -275,7 +275,7 @@ export default function WorshipStudioHub() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { language } = useLanguage();
-  const { isEnabled } = useFeatureFlags();
+  const { isEnabled, isBeta, isSoon, isVisible, isOff } = useFeatureFlags();
   const isAppMode = useIsPWA();
 
   const initialTab = searchParams.get('tab') || 'overview';
@@ -764,7 +764,7 @@ export default function WorshipStudioHub() {
       },
       {
         id: 'metronome',
-        flag: 'pro_studio',
+        flag: 'smart_metronome',
         icon: 'metronome',
         title: 'Մետրոնոմ և Ֆոնային Pad',
         shortTitle: 'Մետրոնոմ & Pad',
@@ -774,8 +774,8 @@ export default function WorshipStudioHub() {
       },
     ];
 
-    return list.filter((m) => isEnabled(m.flag));
-  }, [isEnabled]);
+    return list.filter((m) => isVisible(m.flag));
+  }, [isVisible]);
 
   const activeModuleMeta = useMemo(
     () => studioModules.find((m) => m.id === activeTab) || null,
@@ -955,12 +955,14 @@ export default function WorshipStudioHub() {
             <button
               key={mod.id}
               type="button"
-              className={`wsh-dock-tab ${activeTab === mod.id ? 'active' : ''}`}
+              className={`wsh-dock-tab ${activeTab === mod.id ? 'active' : ''} ${isSoon(mod.flag) ? 'is-soon' : ''}`}
               style={{ '--tab-accent': mod.accent }}
               onClick={() => setActiveTab(mod.id)}
             >
               <StudioIcon name={mod.icon} size={16} />
               <span>{mod.shortTitle}</span>
+              {isBeta(mod.flag) && <BetaBadge style={{ fontSize: '0.55rem', padding: '1px 5px' }} />}
+              {isSoon(mod.flag) && <ComingSoonBadge style={{ fontSize: '0.55rem', padding: '1px 5px' }} />}
             </button>
           ))}
         </nav>
@@ -971,102 +973,125 @@ export default function WorshipStudioHub() {
         {/* ================= 1. SIMPLE OVERVIEW LAUNCHER ================= */}
         {activeTab === 'overview' && (
           <div className="wsh-bento-grid">
-            {studioModules.map((mod) => (
-              <button
-                key={mod.id}
-                type="button"
-                className="wsh-bento-card"
-                style={{ '--card-accent': mod.accent }}
-                onClick={() => setActiveTab(mod.id)}
-              >
-                <div className="wsh-bento-top">
-                  <div className="wsh-bento-icon">
-                    <StudioIcon name={mod.icon} size={24} />
+            {studioModules.map((mod) => {
+              const modIsSoon = isSoon(mod.flag);
+              const modIsBeta = isBeta(mod.flag);
+              return (
+                <button
+                  key={mod.id}
+                  type="button"
+                  className={`wsh-bento-card ${modIsSoon ? 'wsh-card-soon' : ''}`}
+                  style={{ '--card-accent': mod.accent }}
+                  onClick={() => setActiveTab(mod.id)}
+                >
+                  <div className="wsh-bento-top">
+                    <div className="wsh-bento-icon">
+                      <StudioIcon name={mod.icon} size={24} />
+                    </div>
+                    <div className="wsh-bento-title-wrap">
+                      <h2 style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        {mod.title}
+                        {modIsBeta && <BetaBadge />}
+                        {modIsSoon && <ComingSoonBadge />}
+                      </h2>
+                    </div>
                   </div>
-                  <div className="wsh-bento-title-wrap">
-                    <h2>{mod.title}</h2>
+
+                  <p>{mod.subtitle}</p>
+
+                  <div className="wsh-bento-footer">
+                    <span className="wsh-bento-cta">{modIsSoon ? '⏳ Շուտով' : mod.cta}</span>
+                    <span className="wsh-bento-arrow">{modIsSoon ? '🔒' : '→'}</span>
                   </div>
-                </div>
-
-                <p>{mod.subtitle}</p>
-
-                <div className="wsh-bento-footer">
-                  <span className="wsh-bento-cta">{mod.cta}</span>
-                  <span className="wsh-bento-arrow">→</span>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         )}
 
         {/* ================= 2. STEMS MIXER ================= */}
         {activeTab === 'stems' && (
-          <div className="wsh-workstation-pane">
-            <div className="wsh-simple-pane-bar">
-              <span>Կառավարեք առանձին գործիքների ձայնը և տեմպը</span>
-              <button
-                type="button"
-                className={`wsh-toggle-chord-pane-btn ${showStemsChordPanel ? 'active' : ''}`}
-                onClick={() => setShowStemsChordPanel((v) => !v)}
-              >
-                {showStemsChordPanel ? 'Թաքցնել բառերն ու ակորդները' : '📄 Ցույց տալ բառերն ու ակորդները'}
-              </button>
-            </div>
-
-            <div className={`wsh-stems-split ${showStemsChordPanel ? 'with-chords' : 'full-mixer'}`}>
-              <div className="wsh-stems-mixer-col">
-                <SongStemsMixer
-                  songId={activeSongFull?.id}
-                  songTitle={activeSongTitle}
-                  songKey={effectiveTonality}
-                  songBpm={Number(activeSongFull?.tempo) || 76}
-                  stemsData={activeSongFull?.stems || null}
-                  fallbackAudioUrl={activeSongFull?.audio_url || ''}
-                />
+          isSoon('rehearsal_stems') ? (
+            <FeatureComingSoonScreen
+              title="Աուդիո Միքսեր (Stems) — Շուտով"
+              description="8-ալիքային բազմաթրեկ միքսերը նախապատրաստման փուլում է և շուտով հասանելի կդառնա։"
+              onBack={() => setActiveTab('overview')}
+            />
+          ) : (
+            <div className="wsh-workstation-pane">
+              <div className="wsh-simple-pane-bar">
+                <span>Կառավարեք առանձին գործիքների ձայնը և տեմպը</span>
+                <button
+                  type="button"
+                  className={`wsh-toggle-chord-pane-btn ${showStemsChordPanel ? 'active' : ''}`}
+                  onClick={() => setShowStemsChordPanel((v) => !v)}
+                >
+                  {showStemsChordPanel ? 'Թաքցնել բառերն ու ակորդները' : '📄 Ցույց տալ բառերն ու ակորդները'}
+                </button>
               </div>
 
-              {showStemsChordPanel && (
-                <aside className="wsh-live-chord-sheet">
-                  <div className="wsh-chord-sheet-header">
-                    <h3>
-                      {activeSongTitle} <span className="wsh-cs-key">({effectiveTonality})</span>
-                    </h3>
-                    <div className="wsh-cs-tools">
-                      <button
-                        type="button"
-                        onClick={() => setChordFontSize((s) => Math.max(12, s - 1))}
-                        title="Փոքրացնել տառաչափը"
-                      >
-                        A−
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setChordFontSize((s) => Math.min(22, s + 1))}
-                        title="Մեծացնել տառաչափը"
-                      >
-                        A+
-                      </button>
-                    </div>
-                  </div>
+              <div className={`wsh-stems-split ${showStemsChordPanel ? 'with-chords' : 'full-mixer'}`}>
+                <div className="wsh-stems-mixer-col">
+                  <SongStemsMixer
+                    songId={activeSongFull?.id}
+                    songTitle={activeSongTitle}
+                    songKey={effectiveTonality}
+                    songBpm={Number(activeSongFull?.tempo) || 76}
+                    stemsData={activeSongFull?.stems || null}
+                    fallbackAudioUrl={activeSongFull?.audio_url || ''}
+                  />
+                </div>
 
-                  <div className="wsh-chord-sheet-body" style={{ fontSize: `${chordFontSize}px` }}>
-                    {loadingSongDetail ? (
-                      <div className="wsh-cs-empty">Բեռնվում է երգի տեքստը...</div>
-                    ) : transposedChordSheet ? (
-                      <pre>{transposedChordSheet}</pre>
-                    ) : (
-                      <div className="wsh-cs-empty">Այս երգի համար բառեր կամ ակորդներ չեն գտնվել։</div>
-                    )}
-                  </div>
-                </aside>
-              )}
+                {showStemsChordPanel && (
+                  <aside className="wsh-live-chord-sheet">
+                    <div className="wsh-chord-sheet-header">
+                      <h3>
+                        {activeSongTitle} <span className="wsh-cs-key">({effectiveTonality})</span>
+                      </h3>
+                      <div className="wsh-cs-tools">
+                        <button
+                          type="button"
+                          onClick={() => setChordFontSize((s) => Math.max(12, s - 1))}
+                          title="Փոքրացնել տառաչափը"
+                        >
+                          A−
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setChordFontSize((s) => Math.min(22, s + 1))}
+                          title="Մեծացնել տառաչափը"
+                        >
+                          A+
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="wsh-chord-sheet-body" style={{ fontSize: `${chordFontSize}px` }}>
+                      {loadingSongDetail ? (
+                        <div className="wsh-cs-empty">Բեռնվում է երգի տեքստը...</div>
+                      ) : transposedChordSheet ? (
+                        <pre>{transposedChordSheet}</pre>
+                      ) : (
+                        <div className="wsh-cs-empty">Այս երգի համար բառեր կամ ակորդներ չեն գտնվել։</div>
+                      )}
+                    </div>
+                  </aside>
+                )}
+              </div>
             </div>
-          </div>
+          )
         )}
 
         {/* ================= 3. LIVE STAGE ================= */}
         {activeTab === 'live_stage' && (
-          <div className="wsh-workstation-pane">
+          isSoon('live_stage_follower') ? (
+            <FeatureComingSoonScreen
+              title="Խմբի Ուղիղ Կապ (Live Բեմ) — Շուտով"
+              description="Բեմական սինքրոնացումն ու առաջնորդի հեռակառավարումը նախապատրաստման փուլում են և շուտով հասանելի կդառնան։"
+              onBack={() => setActiveTab('overview')}
+            />
+          ) : (
+            <div className="wsh-workstation-pane">
             <div className="wsh-simple-steps-banner">
               <span><strong>1.</strong> Սեղմեք «Սկսել Live»</span>
               <span><strong>2.</strong> Երաժիշտները միանում են կոդով</span>
@@ -1174,11 +1199,19 @@ export default function WorshipStudioHub() {
               </div>
             </div>
           </div>
-        )}
+        )
+      )}
 
         {/* ================= 4. PROJECTION ================= */}
         {activeTab === 'projection' && (
-          <div className="wsh-workstation-pane">
+          isSoon('lyrics_projection') ? (
+            <FeatureComingSoonScreen
+              title="Էկրանի Բառեր (Պրոյեկտոր) — Շուտով"
+              description="Պրոյեկտորի և OBS եթերի համակարգը նախապատրաստման փուլում է և շուտով հասանելի կդառնա։"
+              onBack={() => setActiveTab('overview')}
+            />
+          ) : (
+            <div className="wsh-workstation-pane">
             <div className="wsh-simple-pane-bar">
               <span>Սեղմեք սլայդի վրա՝ այն մեծ էկրանին ցուցադրելու համար</span>
               <button
@@ -1356,110 +1389,135 @@ export default function WorshipStudioHub() {
               </aside>
             </div>
           </div>
+          )
         )}
 
         {/* ================= 5. AI STUDIO ================= */}
         {activeTab === 'ai_studio' && (
-          <div className="wsh-workstation-pane">
-            <WorshipAIStudioModal
-              inline={true}
-              isOpen={true}
-              onClose={() => setActiveTab('overview')}
-              song={activeSongFull}
-              allSongs={songs}
-              currentKey={effectiveTonality}
-              onApplyChords={(newChordsText) => {
-                if (activeSongFull?.id) {
-                  setSongDetailsCache((prev) => ({
-                    ...prev,
-                    [activeSongFull.id]: {
-                      ...(prev[activeSongFull.id] || activeSongFull),
-                      chords: newChordsText,
-                      lyrics: newChordsText,
-                    },
-                  }));
-                }
-                setActiveTab('stems');
-              }}
+          isSoon('worship_ai_studio') ? (
+            <FeatureComingSoonScreen
+              title="AI Ակորդների Օգնական — Շուտով"
+              description="Արհեստական բանականության ակորդների օգնականը նախապատրաստման փուլում է և շուտով հասանելի կդառնա։"
+              onBack={() => setActiveTab('overview')}
             />
-          </div>
+          ) : (
+            <div className="wsh-workstation-pane">
+              <WorshipAIStudioModal
+                inline={true}
+                isOpen={true}
+                onClose={() => setActiveTab('overview')}
+                song={activeSongFull}
+                allSongs={songs}
+                currentKey={effectiveTonality}
+                onApplyChords={(newChordsText) => {
+                  if (activeSongFull?.id) {
+                    setSongDetailsCache((prev) => ({
+                      ...prev,
+                      [activeSongFull.id]: {
+                        ...(prev[activeSongFull.id] || activeSongFull),
+                        chords: newChordsText,
+                        lyrics: newChordsText,
+                      },
+                    }));
+                  }
+                  setActiveTab('stems');
+                }}
+              />
+            </div>
+          )
         )}
 
         {/* ================= 6. SERVICE PLANNER ================= */}
         {activeTab === 'planner' && (
-          <div className="wsh-workstation-pane">
-            <ServicePlanner embedded={true} />
-          </div>
+          isSoon('service_planner') ? (
+            <FeatureComingSoonScreen
+              title="Ծառայության Պլանավորիչ — Շուտով"
+              description="Ծառայության ծրագրի պլանավորիչը նախապատրաստման փուլում է և շուտով հասանելի կդառնա։"
+              onBack={() => setActiveTab('overview')}
+            />
+          ) : (
+            <div className="wsh-workstation-pane">
+              <ServicePlanner embedded={true} />
+            </div>
+          )
         )}
 
         {/* ================= 7. METRONOME & PAD ================= */}
         {activeTab === 'metronome' && (
-          <div className="wsh-workstation-pane">
-            <div className="wsh-metronome-pad-split">
-              <div className="wsh-metronome-col">
-                <SmartMetronome
-                  initialBpm={Number(activeSongFull?.tempo) || 76}
-                  songTitle={activeSongTitle}
-                />
-              </div>
+          isSoon('smart_metronome') ? (
+            <FeatureComingSoonScreen
+              title="Մետրոնոմ և Ֆոնային Pad — Շուտով"
+              description="Մետրոնոմի և Pad-ի շարժիչը նախապատրաստման փուլում է և շուտով հասանելի կդառնա։"
+              onBack={() => setActiveTab('overview')}
+            />
+          ) : (
+            <div className="wsh-workstation-pane">
+              <div className="wsh-metronome-pad-split">
+                <div className="wsh-metronome-col">
+                  <SmartMetronome
+                    initialBpm={Number(activeSongFull?.tempo) || 76}
+                    songTitle={activeSongTitle}
+                  />
+                </div>
 
-              <div className="wsh-ambient-console-card">
-                <div className="wsh-strip-head">
-                  <div className="wsh-strip-title">
-                    <StudioIcon name="wave" size={20} />
-                    <div>
-                      <h3>Ֆոնային Աղոթքի Pad</h3>
-                      <span>Ընտրեք տոնայնությունը՝ մեղմ ֆոնային հնչողություն միացնելու համար</span>
+                <div className="wsh-ambient-console-card">
+                  <div className="wsh-strip-head">
+                    <div className="wsh-strip-title">
+                      <StudioIcon name="wave" size={20} />
+                      <div>
+                        <h3>Ֆոնային Աղոթքի Pad</h3>
+                        <span>Ընտրեք տոնայնությունը՝ մեղմ ֆոնային հնչողություն միացնելու համար</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="wsh-pad-keys-grid large">
-                  {PAD_KEYS.map((k) => (
+                  <div className="wsh-pad-keys-grid large">
+                    {PAD_KEYS.map((k) => (
+                      <button
+                        key={k.key}
+                        type="button"
+                        className={`wsh-pad-key-btn ${padKey === k.key ? 'selected' : ''} ${
+                          padPlaying && padKey === k.key ? 'sounding' : ''
+                        }`}
+                        onClick={() => {
+                          setPadKey(k.key);
+                          if (!padPlaying) startAmbientPad(k.key);
+                        }}
+                      >
+                        <span className="key-name">{k.key}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="wsh-pad-sliders vertical">
+                    <label>
+                      <div className="slider-label-row">
+                        <span>Ձայնի ուժգնություն</span>
+                        <strong>{Math.round(padVolume * 100)}%</strong>
+                      </div>
+                      <input
+                        type="range"
+                        min="0.05"
+                        max="1"
+                        step="0.02"
+                        value={padVolume}
+                        onChange={(e) => setPadVolume(Number(e.target.value))}
+                      />
+                    </label>
+
                     <button
-                      key={k.key}
                       type="button"
-                      className={`wsh-pad-key-btn ${padKey === k.key ? 'selected' : ''} ${
-                        padPlaying && padKey === k.key ? 'sounding' : ''
-                      }`}
-                      onClick={() => {
-                        setPadKey(k.key);
-                        if (!padPlaying) startAmbientPad(k.key);
-                      }}
+                      className={`wsh-pad-power-btn large ${padPlaying ? 'active' : ''}`}
+                      onClick={() => (padPlaying ? stopAmbientPad() : startAmbientPad(padKey))}
                     >
-                      <span className="key-name">{k.key}</span>
+                      <StudioIcon name={padPlaying ? 'stop' : 'play'} size={16} />
+                      <span>{padPlaying ? `Անջատել Pad-ը (${padKey})` : `Միացնել Pad-ը (${padKey})`}</span>
                     </button>
-                  ))}
-                </div>
-
-                <div className="wsh-pad-sliders vertical">
-                  <label>
-                    <div className="slider-label-row">
-                      <span>Ձայնի ուժգնություն</span>
-                      <strong>{Math.round(padVolume * 100)}%</strong>
-                    </div>
-                    <input
-                      type="range"
-                      min="0.05"
-                      max="1"
-                      step="0.02"
-                      value={padVolume}
-                      onChange={(e) => setPadVolume(Number(e.target.value))}
-                    />
-                  </label>
-
-                  <button
-                    type="button"
-                    className={`wsh-pad-power-btn large ${padPlaying ? 'active' : ''}`}
-                    onClick={() => (padPlaying ? stopAmbientPad() : startAmbientPad(padKey))}
-                  >
-                    <StudioIcon name={padPlaying ? 'stop' : 'play'} size={16} />
-                    <span>{padPlaying ? `Անջատել Pad-ը (${padKey})` : `Միացնել Pad-ը (${padKey})`}</span>
-                  </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )
         )}
       </div>
     </div>

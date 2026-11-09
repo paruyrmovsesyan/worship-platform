@@ -275,9 +275,12 @@ if ($isDirectApiCall) {
 
         $featureId = trim((string)($payload['feature_id'] ?? $payload['id'] ?? ''));
         $newStatus = trim((string)($payload['status'] ?? 'published'));
+        if ($newStatus === 'coming_soon') {
+            $newStatus = 'soon';
+        }
 
-        if (!in_array($newStatus, ['off', 'beta', 'published'], true)) {
-            wp_features_json(['ok' => false, 'error' => 'Invalid status (must be off, beta, or published)'], 400);
+        if (!in_array($newStatus, ['off', 'beta', 'published', 'soon'], true)) {
+            wp_features_json(['ok' => false, 'error' => 'Invalid status (must be off, beta, published, or soon)'], 400);
         }
 
         $catalog = wp_features_load();
@@ -318,9 +321,11 @@ if ($isDirectApiCall) {
         $payload = @json_decode($rawInput, true) ?: $_POST;
         $suiteId = trim((string)($payload['suite_id'] ?? 'pro_studio'));
         $newStatus = trim((string)($payload['status'] ?? 'published'));
-        $cascade = !empty($payload['cascade']);
+        if ($newStatus === 'coming_soon') {
+            $newStatus = 'soon';
+        }
 
-        if (!in_array($newStatus, ['off', 'beta', 'published'], true)) {
+        if (!in_array($newStatus, ['off', 'beta', 'published', 'soon'], true)) {
             wp_features_json(['ok' => false, 'error' => 'Invalid status'], 400);
         }
 

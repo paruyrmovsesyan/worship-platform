@@ -4,7 +4,7 @@ import { liveStageSync } from '../utils/liveStageSync';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { useLanguage } from '../context/LanguageContext';
 import { useFeatureFlags } from '../utils/featureFlags';
-import { BetaBadge, FeatureDisabledScreen } from '../components/BetaBadge';
+import { BetaBadge, FeatureDisabledScreen, FeatureComingSoonScreen, ComingSoonBadge } from '../components/BetaBadge';
 import './LiveProjection.css';
 
 const BEAMER_THEMES = [
@@ -26,7 +26,7 @@ export default function LiveProjection() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { language } = useLanguage();
-  const { isOff, isBeta } = useFeatureFlags();
+  const { isOff, isBeta, isSoon } = useFeatureFlags();
 
   // Mode: 'beamer' (projector), 'lowerthirds' (OBS stream), 'confidence' (stage monitor)
   const [mode, setMode] = useState(searchParams.get('mode') || 'beamer');
@@ -297,6 +297,19 @@ export default function LiveProjection() {
         <FeatureDisabledScreen
           title="Պրոյեկցիայի ռեժիմն անջատված է"
           description="Այս ֆունկցիան ժամանակավորապես անջատված է կառավարման վահանակի Լաբարատորիայում (Feature Labs):"
+          backUrl="/studio"
+          backLabel="Վերադառնալ Studio Hub"
+        />
+      </div>
+    );
+  }
+
+  if (isSoon('lyrics_projection')) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#0b0f19', color: '#fff', padding: 20 }}>
+        <FeatureComingSoonScreen
+          title="Պրոյեկցիայի ռեժիմը շուտով հասանելի կլինի"
+          description="Այս ֆունկցիան շուտով պատրաստ կլինի դահլիճի մեծ էկրանների և OBS ուղիղ եթերների համար։"
           backUrl="/studio"
           backLabel="Վերադառնալ Studio Hub"
         />

@@ -29,6 +29,7 @@ $i18n = [
         'total' => 'Ընդհանուր Ֆունկցիաներ',
         'published' => 'Հրապարակված (Live)',
         'beta' => 'Beta / Փորձարկում',
+        'soon' => 'Շուտով (Coming Soon)',
         'off' => 'Անջատված (Off)',
         'search_placeholder' => 'Որոնել ֆունկցիա (Smart Metronome, Follower, Stems...)...',
         'filter_all' => 'Բոլորը',
@@ -56,6 +57,7 @@ $i18n = [
         'total' => 'Всего функций',
         'published' => 'Опубликовано (Live)',
         'beta' => 'Beta / Доработка',
+        'soon' => 'Скоро (Coming Soon)',
         'off' => 'Отключено (Off)',
         'search_placeholder' => 'Поиск функций (Metronome, Follower, Stems...)...',
         'filter_all' => 'Все',
@@ -83,6 +85,7 @@ $i18n = [
         'total' => 'Total Features',
         'published' => 'Published (Live)',
         'beta' => 'Beta / Refining',
+        'soon' => 'Coming Soon',
         'off' => 'Disabled (Off)',
         'search_placeholder' => 'Search features (Metronome, Follower, Stems...)...',
         'filter_all' => 'All',
@@ -111,6 +114,7 @@ $catalog = wp_features_load();
 $totalCount = count($catalog);
 $publishedCount = 0;
 $betaCount = 0;
+$soonCount = 0;
 $offCount = 0;
 
 $categories = ['pro_studio'];
@@ -119,6 +123,7 @@ foreach ($catalog as $item) {
     $st = $item['status'] ?? 'published';
     if ($st === 'published') $publishedCount++;
     elseif ($st === 'beta') $betaCount++;
+    elseif ($st === 'soon' || $st === 'coming_soon') $soonCount++;
     else $offCount++;
 
     $cat = strtolower((string)($item['category'] ?? 'general'));
@@ -408,6 +413,10 @@ foreach ($catalog as $item) {
       background: #f59e0b;
       box-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
     }
+    .live-dot.soon {
+      background: #6366f1;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.8);
+    }
     .live-dot.off {
       background: #94a3b8;
     }
@@ -516,6 +525,7 @@ foreach ($catalog as $item) {
     }
     .suite-batch-btn.live:hover { background: #dcfce7; color: #15803d; border-color: #86efac; }
     .suite-batch-btn.beta:hover { background: #fef3c7; color: #b45309; border-color: #fcd34d; }
+    .suite-batch-btn.soon:hover { background: #e0e7ff; color: #4338ca; border-color: #c7d2fe; }
     .suite-batch-btn.off:hover { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
     .suite-batch-btn.test { background: #ede9fe; color: #6366f1; border-color: #c4b5fd; }
     .suite-batch-btn.test:hover { background: #ddd6fe; }
@@ -597,6 +607,7 @@ foreach ($catalog as $item) {
     }
     .suite-module-status.published { background: #dcfce7; color: #15803d; }
     .suite-module-status.beta { background: #fef3c7; color: #b45309; }
+    .suite-module-status.soon { background: #e0e7ff; color: #4338ca; }
     .suite-module-status.off { background: #f1f5f9; color: #64748b; }
     .feature-segmented-switch.mini .switch-opt {
       padding: 3px 8px;
@@ -652,6 +663,11 @@ foreach ($catalog as $item) {
       background: #f59e0b;
       color: #fff;
       box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+    }
+    .switch-opt.active-soon {
+      background: #6366f1;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
     }
     .switch-opt.active-off {
       background: #ef4444;
@@ -772,6 +788,14 @@ foreach ($catalog as $item) {
           </div>
         </div>
 
+        <div class="f-stat-card" data-filter="soon" onclick="filterByStatus('soon', this)">
+          <div class="f-stat-icon" style="background:rgba(99,102,241,0.12); color:#6366f1;">⏳</div>
+          <div class="f-stat-info">
+            <div><?= htmlspecialchars($t['soon'] ?? 'Շուտով') ?></div>
+            <strong id="statSoon"><?= $soonCount ?></strong>
+          </div>
+        </div>
+
         <div class="f-stat-card" data-filter="off" onclick="filterByStatus('off', this)">
           <div class="f-stat-icon" style="background:rgba(239,68,68,0.12); color:#ef4444;">🔴</div>
           <div class="f-stat-info">
@@ -819,8 +843,8 @@ foreach ($catalog as $item) {
             <div class="pro-suite-badge-row">
               <span class="pro-suite-crown">⭐ MASTER ECOSYSTEM • ԳԼԽԱՎՈՐ ՀԱՎԱՔԱԿԱՆ</span>
               <span class="live-dot <?= htmlspecialchars($psStatus) ?>" id="dot-pro_studio"></span>
-              <span class="feature-badge-refining" id="badge-pro_studio" style="font-size:11px; padding:2px 10px; font-weight:700; border-radius:6px; display:inline-block; <?= $psStatus === 'published' ? 'background:#dcfce7; color:#15803d;' : ($psStatus === 'beta' ? 'background:#fef3c7; color:#b45309;' : 'background:#f1f5f9; color:#64748b;') ?>">
-                <?= $psStatus === 'published' ? '🟢 Live' : ($psStatus === 'beta' ? '🧪 Beta / Փորձարկում' : '⚪ Անջատված') ?>
+              <span class="feature-badge-refining" id="badge-pro_studio" style="font-size:11px; padding:2px 10px; font-weight:700; border-radius:6px; display:inline-block; <?= $psStatus === 'published' ? 'background:#dcfce7; color:#15803d;' : ($psStatus === 'beta' ? 'background:#fef3c7; color:#b45309;' : (in_array($psStatus, ['soon', 'coming_soon'], true) ? 'background:#e0e7ff; color:#4338ca;' : 'background:#f1f5f9; color:#64748b;')) ?>">
+                <?= $psStatus === 'published' ? '🟢 Live' : ($psStatus === 'beta' ? '🧪 Beta / Փորձարկում' : (in_array($psStatus, ['soon', 'coming_soon'], true) ? '⏳ Շուտով' : '⚪ Անջատված')) ?>
               </span>
             </div>
             <h2 class="pro-suite-title">
@@ -838,6 +862,7 @@ foreach ($catalog as $item) {
               <button 
                 type="button" 
                 class="switch-opt <?= $psStatus === 'off' ? 'active-off' : '' ?>" 
+                data-status="off"
                 onclick="updateFeatureStatus('pro_studio', 'off')"
                 title="Անջատել ամբողջ Pro Studio հավաքականը"
               >
@@ -845,7 +870,17 @@ foreach ($catalog as $item) {
               </button>
               <button 
                 type="button" 
+                class="switch-opt <?= in_array($psStatus, ['soon', 'coming_soon'], true) ? 'active-soon' : '' ?>" 
+                data-status="soon"
+                onclick="updateFeatureStatus('pro_studio', 'soon')"
+                title="Pro Studio հավաքականը նշել որպես «Շուտով»"
+              >
+                Շուտով
+              </button>
+              <button 
+                type="button" 
                 class="switch-opt <?= $psStatus === 'beta' ? 'active-beta' : '' ?>" 
+                data-status="beta"
                 onclick="updateFeatureStatus('pro_studio', 'beta')"
                 title="Pro Studio հավաքականը դնել Beta փորձարկման ռեժիմում"
               >
@@ -854,6 +889,7 @@ foreach ($catalog as $item) {
               <button 
                 type="button" 
                 class="switch-opt <?= $psStatus === 'published' ? 'active-published' : '' ?>" 
+                data-status="published"
                 onclick="updateFeatureStatus('pro_studio', 'published')"
                 title="Հրապարակել Pro Studio հավաքականը բոլորի համար"
               >
@@ -863,6 +899,7 @@ foreach ($catalog as $item) {
             <div class="pro-suite-batch-actions">
               <button type="button" class="suite-batch-btn live" onclick="setSuiteAll('published')">🚀 Բոլոր 6-ը Live</button>
               <button type="button" class="suite-batch-btn beta" onclick="setSuiteAll('beta')">🧪 Բոլոր 6-ը Beta</button>
+              <button type="button" class="suite-batch-btn soon" onclick="setSuiteAll('soon')">⏳ Բոլոր 6-ը Շուտով</button>
               <button type="button" class="suite-batch-btn off" onclick="setSuiteAll('off')">⚪ Բոլոր 6-ը Off</button>
               <a href="/studio" target="_blank" class="suite-batch-btn test">🔗 Բացել Pro Studio Hub →</a>
             </div>
@@ -897,12 +934,13 @@ foreach ($catalog as $item) {
               </div>
               <div class="suite-module-bottom">
                 <span class="suite-module-status <?= htmlspecialchars($mStatus) ?>" id="subbadge-<?= htmlspecialchars($mId) ?>">
-                  <?= $mStatus === 'published' ? 'Live' : ($mStatus === 'beta' ? 'Beta' : 'Off') ?>
+                  <?= $mStatus === 'published' ? 'Live' : ($mStatus === 'beta' ? 'Beta' : (in_array($mStatus, ['soon', 'coming_soon'], true) ? 'Շուտով' : 'Off')) ?>
                 </span>
                 <div class="feature-segmented-switch mini" data-feature="<?= htmlspecialchars($mId) ?>">
-                  <button type="button" class="switch-opt <?= $mStatus === 'off' ? 'active-off' : '' ?>" onclick="updateFeatureStatus('<?= htmlspecialchars($mId) ?>', 'off')">Off</button>
-                  <button type="button" class="switch-opt <?= $mStatus === 'beta' ? 'active-beta' : '' ?>" onclick="updateFeatureStatus('<?= htmlspecialchars($mId) ?>', 'beta')">Beta</button>
-                  <button type="button" class="switch-opt <?= $mStatus === 'published' ? 'active-published' : '' ?>" onclick="updateFeatureStatus('<?= htmlspecialchars($mId) ?>', 'published')">Live</button>
+                  <button type="button" class="switch-opt <?= $mStatus === 'off' ? 'active-off' : '' ?>" data-status="off" onclick="updateFeatureStatus('<?= htmlspecialchars($mId) ?>', 'off')">Off</button>
+                  <button type="button" class="switch-opt <?= in_array($mStatus, ['soon', 'coming_soon'], true) ? 'active-soon' : '' ?>" data-status="soon" onclick="updateFeatureStatus('<?= htmlspecialchars($mId) ?>', 'soon')">Շուտով</button>
+                  <button type="button" class="switch-opt <?= $mStatus === 'beta' ? 'active-beta' : '' ?>" data-status="beta" onclick="updateFeatureStatus('<?= htmlspecialchars($mId) ?>', 'beta')">Beta</button>
+                  <button type="button" class="switch-opt <?= $mStatus === 'published' ? 'active-published' : '' ?>" data-status="published" onclick="updateFeatureStatus('<?= htmlspecialchars($mId) ?>', 'published')">Live</button>
                 </div>
               </div>
             </div>
@@ -944,6 +982,8 @@ foreach ($catalog as $item) {
                 <?php endif; ?>
                 <?php if ($status === 'beta'): ?>
                   <span class="feature-badge-refining" id="badge-<?= htmlspecialchars($id) ?>" style="font-size:10px; padding:2px 8px; margin-left:6px; font-weight:700; background:#fef3c7; color:#b45309; border-radius:6px; display:inline-block;">🧪 Վերամշակման մեջ</span>
+                <?php elseif ($status === 'soon' || $status === 'coming_soon'): ?>
+                  <span class="feature-badge-refining" id="badge-<?= htmlspecialchars($id) ?>" style="font-size:10px; padding:2px 8px; margin-left:6px; font-weight:700; background:#e0e7ff; color:#4338ca; border-radius:6px; display:inline-block;">⏳ Շուտով</span>
                 <?php elseif ($status === 'off'): ?>
                   <span class="feature-badge-refining" id="badge-<?= htmlspecialchars($id) ?>" style="font-size:10px; padding:2px 8px; margin-left:6px; font-weight:700; background:#f1f5f9; color:#64748b; border-radius:6px; display:inline-block;">⚪ Փորձարարական</span>
                 <?php else: ?>
@@ -956,11 +996,12 @@ foreach ($catalog as $item) {
           </div>
 
           <div class="feature-controls-row">
-            <!-- Tri-state Switch -->
+            <!-- Segmented Switch -->
             <div class="feature-segmented-switch" data-feature="<?= htmlspecialchars($id) ?>">
               <button 
                 type="button" 
                 class="switch-opt <?= $status === 'off' ? 'active-off' : '' ?>" 
+                data-status="off"
                 onclick="updateFeatureStatus('<?= htmlspecialchars($id) ?>', 'off')"
                 title="Անջատել բոլորի համար"
               >
@@ -968,7 +1009,17 @@ foreach ($catalog as $item) {
               </button>
               <button 
                 type="button" 
+                class="switch-opt <?= in_array($status, ['soon', 'coming_soon'], true) ? 'active-soon' : '' ?>" 
+                data-status="soon"
+                onclick="updateFeatureStatus('<?= htmlspecialchars($id) ?>', 'soon')"
+                title="Նշել որպես «Շուտով» (կոճակը տեսանելի, բայց անհասանելի)"
+              >
+                Շուտով
+              </button>
+              <button 
+                type="button" 
                 class="switch-opt <?= $status === 'beta' ? 'active-beta' : '' ?>" 
+                data-status="beta"
                 onclick="updateFeatureStatus('<?= htmlspecialchars($id) ?>', 'beta')"
                 title="Միայն ադմինների և թեստավորողների համար"
               >
@@ -977,6 +1028,7 @@ foreach ($catalog as $item) {
               <button 
                 type="button" 
                 class="switch-opt <?= $status === 'published' ? 'active-published' : '' ?>" 
+                data-status="published"
                 onclick="updateFeatureStatus('<?= htmlspecialchars($id) ?>', 'published')"
                 title="Հրապարակել բոլոր օգտատերերի համար"
               >
@@ -1058,7 +1110,7 @@ foreach ($catalog as $item) {
       const cardTitle = card.getAttribute('data-title') || '';
       const cardDesc = card.getAttribute('data-desc') || '';
 
-      const matchStatus = (activeStatusFilter === 'all' || cardStatus === activeStatusFilter);
+      const matchStatus = (activeStatusFilter === 'all' || cardStatus === activeStatusFilter || (activeStatusFilter === 'soon' && (cardStatus === 'soon' || cardStatus === 'coming_soon')));
       const matchCat = (activeCategoryFilter === 'all' || cardCat === activeCategoryFilter || (activeCategoryFilter === 'pro_studio' && cardSuite === 'pro_studio'));
       const matchSearch = (!searchQuery || cardTitle.includes(searchQuery) || cardDesc.includes(searchQuery));
 
@@ -1074,7 +1126,7 @@ foreach ($catalog as $item) {
       const mStatus = masterCard.getAttribute('data-status');
       const mTitle = masterCard.getAttribute('data-title') || '';
       const mDesc = masterCard.getAttribute('data-desc') || '';
-      const matchMStatus = (activeStatusFilter === 'all' || mStatus === activeStatusFilter);
+      const matchMStatus = (activeStatusFilter === 'all' || mStatus === activeStatusFilter || (activeStatusFilter === 'soon' && (mStatus === 'soon' || mStatus === 'coming_soon')));
       const matchMCat = (activeCategoryFilter === 'all' || activeCategoryFilter === 'pro_studio');
       const matchMSearch = (!searchQuery || mTitle.includes(searchQuery) || mDesc.includes(searchQuery) || searchQuery.includes('pro') || searchQuery.includes('studio'));
       if (matchMStatus && matchMCat && matchMSearch) {
@@ -1096,22 +1148,26 @@ foreach ($catalog as $item) {
     let total = cards.length;
     let published = 0;
     let beta = 0;
+    let soon = 0;
     let off = 0;
 
     cards.forEach(card => {
       const st = card.getAttribute('data-status');
       if (st === 'published') published++;
       else if (st === 'beta') beta++;
+      else if (st === 'soon' || st === 'coming_soon') soon++;
       else off++;
     });
 
     const statTotalEl = document.getElementById('statTotal');
     const statPubEl = document.getElementById('statPublished');
     const statBetaEl = document.getElementById('statBeta');
+    const statSoonEl = document.getElementById('statSoon');
     const statOffEl = document.getElementById('statOff');
     if (statTotalEl) statTotalEl.textContent = total;
     if (statPubEl) statPubEl.textContent = published;
     if (statBetaEl) statBetaEl.textContent = beta;
+    if (statSoonEl) statSoonEl.textContent = soon;
     if (statOffEl) statOffEl.textContent = off;
   }
 
@@ -1147,6 +1203,10 @@ foreach ($catalog as $item) {
           badge.style.background = '#fef3c7';
           badge.style.color = '#b45309';
           badge.textContent = '🧪 Վերամշակման մեջ';
+        } else if (newStatus === 'soon' || newStatus === 'coming_soon') {
+          badge.style.background = '#e0e7ff';
+          badge.style.color = '#4338ca';
+          badge.textContent = '⏳ Շուտով';
         } else {
           badge.style.background = '#f1f5f9';
           badge.style.color = '#64748b';
@@ -1157,10 +1217,13 @@ foreach ($catalog as $item) {
       const switchBox = card.querySelector('.feature-segmented-switch');
       if (switchBox) {
         const buttons = switchBox.querySelectorAll('.switch-opt');
-        buttons.forEach(btn => btn.classList.remove('active-published', 'active-beta', 'active-off'));
-        if (newStatus === 'published' && buttons[2]) buttons[2].classList.add('active-published');
-        else if (newStatus === 'beta' && buttons[1]) buttons[1].classList.add('active-beta');
-        else if (buttons[0]) buttons[0].classList.add('active-off');
+        buttons.forEach(btn => {
+          btn.classList.remove('active-published', 'active-beta', 'active-soon', 'active-off');
+          const btnSt = btn.getAttribute('data-status');
+          if (btnSt === newStatus || (btnSt === 'soon' && (newStatus === 'soon' || newStatus === 'coming_soon'))) {
+            btn.classList.add('active-' + btnSt);
+          }
+        });
       }
     }
 
@@ -1171,15 +1234,18 @@ foreach ($catalog as $item) {
       const subBadge = document.getElementById('subbadge-' + featureId);
       if (subBadge) {
         subBadge.className = 'suite-module-status ' + newStatus;
-        subBadge.textContent = newStatus === 'published' ? 'Live' : (newStatus === 'beta' ? 'Beta' : 'Off');
+        subBadge.textContent = newStatus === 'published' ? 'Live' : (newStatus === 'beta' ? 'Beta' : (newStatus === 'soon' || newStatus === 'coming_soon' ? 'Շուտով' : 'Off'));
       }
       const miniSwitch = subCard.querySelector('.feature-segmented-switch.mini');
       if (miniSwitch) {
         const btns = miniSwitch.querySelectorAll('.switch-opt');
-        btns.forEach(b => b.classList.remove('active-published', 'active-beta', 'active-off'));
-        if (newStatus === 'published' && btns[2]) btns[2].classList.add('active-published');
-        else if (newStatus === 'beta' && btns[1]) btns[1].classList.add('active-beta');
-        else if (btns[0]) btns[0].classList.add('active-off');
+        btns.forEach(btn => {
+          btn.classList.remove('active-published', 'active-beta', 'active-soon', 'active-off');
+          const btnSt = btn.getAttribute('data-status');
+          if (btnSt === newStatus || (btnSt === 'soon' && (newStatus === 'soon' || newStatus === 'coming_soon'))) {
+            btn.classList.add('active-' + btnSt);
+          }
+        });
       }
     }
   }
@@ -1230,6 +1296,7 @@ foreach ($catalog as $item) {
     const statusLabels = {
       published: 'Live (հասանելի բոլորին)',
       beta: 'Beta (փորձարկման ռեժիմ)',
+      soon: 'Շուտով (նշված շուտով և անհասանելի)',
       off: 'Off (անջատված)'
     };
     if (!confirm('Pro Studio-ի բոլոր 6 գործիքները դարձնե՞լ ' + (statusLabels[newStatus] || newStatus) + ':')) {
