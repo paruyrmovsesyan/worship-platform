@@ -1,8 +1,8 @@
 {
   "app_version": "5.3.0",
   "web_version": "5.3.0",
-  "asset_version": "562",
-  "build_timestamp": "2026-11-09T16:50:00+04:00",
+  "asset_version": "563",
+  "build_timestamp": "2026-11-09T17:25:00+04:00",
   "release_type": "ui",
-  "release_summary": "Display Coming Soon as top-right corner badge on MobileHub cards"
+  "release_summary": "Make Coming Soon corner label badge 3D, vibrant, and prevent dimmed opacity"
 }

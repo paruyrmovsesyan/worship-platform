@@ -414,7 +414,7 @@ export default function MobileHub() {
                   guardPath('/studio', () => navigate('/studio'));
                 }}
                 disabled={isSoon('pro_studio')}
-                style={isSoon('pro_studio') ? { opacity: 0.65, cursor: 'not-allowed', pointerEvents: 'none' } : {}}
+                style={isSoon('pro_studio') ? { cursor: 'not-allowed', pointerEvents: 'none' } : {}}
                 title={isSoon('pro_studio') ? 'Pro Studio-ն շուտով հասանելի կլինի' : undefined}
               >
                 <div className="cat-icon" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.25))', color: '#c084fc' }}>
