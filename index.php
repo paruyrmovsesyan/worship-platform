@@ -314,10 +314,12 @@ $siteConfig = [
 ];
 $configScript = "<script>window.SITE_CONFIG = " . json_encode($siteConfig, JSON_UNESCAPED_UNICODE) . ";</script>";
 
-// Dynamic asset versioning linked to the Admin's published version in version_config
+// Dynamic asset versioning linked to version.json and Admin's published version
+$versionJson = @json_decode(@file_get_contents(__DIR__ . '/version.json'), true) ?: [];
+$assetVer = trim((string)($versionJson['asset_version'] ?? ''));
 $publishedWebVer = trim((string)($config['web_version'] ?? '5.3.0'));
 $publishedStamp = trim((string)($config['web_release_stamp'] ?? $config['updated_at'] ?? ''));
-$assetVerToken = rawurlencode($publishedWebVer) . (!empty($publishedStamp) ? ('_' . substr(md5($publishedStamp), 0, 8)) : '');
+$assetVerToken = !empty($assetVer) ? ('v' . $assetVer) : (rawurlencode($publishedWebVer) . (!empty($publishedStamp) ? ('_' . substr(md5($publishedStamp), 0, 8)) : ''));
 
 $htmlContent = preg_replace(
     '#(/assets/index\.(?:js|css))(?:\?v=[^"\'\s>]+)?#i',
