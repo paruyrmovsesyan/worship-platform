@@ -408,7 +408,7 @@ export default function MobileHub() {
             </button>
             {isVisible('pro_studio') && (
               <button 
-                className={`hub-cat-card ${isSoon('pro_studio') ? 'is-disabled-soon' : ''}`} 
+                className={`hub-cat-card ${isSoon('pro_studio') ? 'is-disabled-soon' : ''} ${isSoon('pro_studio') || isBeta('pro_studio') ? 'has-corner-badge' : ''}`} 
                 onClick={() => {
                   if (isSoon('pro_studio')) return;
                   guardPath('/studio', () => navigate('/studio'));
@@ -420,10 +420,12 @@ export default function MobileHub() {
                 <div className="cat-icon" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.25))', color: '#c084fc' }}>
                   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 </div>
-                <span className="cat-text" style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center' }}>
-                  Pro Studio
-                  {isSoon('pro_studio') ? <ComingSoonBadge style={{ fontSize: '0.55rem', padding: '1px 4px' }} /> : (isBeta('pro_studio') && <BetaBadge style={{ fontSize: '0.55rem', padding: '1px 4px' }} />)}
-                </span>
+                <span className="cat-text">Pro Studio</span>
+                {isSoon('pro_studio') ? (
+                  <span className="hub-cat-corner-badge soon">Շուտով</span>
+                ) : (
+                  isBeta('pro_studio') && <span className="hub-cat-corner-badge beta">BETA</span>
+                )}
               </button>
             )}
             <button className="hub-cat-card hub-cat-card-wide" onClick={() => guardPath('/transpose', () => navigate('/transpose'))}>

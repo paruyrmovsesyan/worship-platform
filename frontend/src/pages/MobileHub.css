@@ -241,6 +241,7 @@ body.light-mode .hub-search-clear-btn {
 }
 
 .hub-cat-card {
+  position: relative;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
@@ -260,6 +261,38 @@ body.light-mode .hub-search-clear-btn {
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
+}
+
+.hub-cat-card.has-corner-badge {
+  padding-right: 52px;
+}
+
+.hub-cat-corner-badge {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  font-size: 0.58rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1.5px 6px;
+  border-radius: 6px;
+  line-height: 1.1;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hub-cat-corner-badge.soon {
+  background: rgba(99, 102, 241, 0.28);
+  border: 1px solid rgba(129, 140, 248, 0.55);
+  color: #c7d2fe;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.2);
+}
+
+.hub-cat-corner-badge.beta {
+  background: rgba(245, 158, 11, 0.22);
+  border: 1px solid rgba(245, 158, 11, 0.55);
+  color: #fbbf24;
 }
 
 .hub-cat-card:hover {
