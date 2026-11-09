@@ -321,6 +321,7 @@ if ($isDirectApiCall) {
         $payload = @json_decode($rawInput, true) ?: $_POST;
         $suiteId = trim((string)($payload['suite_id'] ?? 'pro_studio'));
         $newStatus = trim((string)($payload['status'] ?? 'published'));
+        $cascade = !empty($payload['cascade']);
         if ($newStatus === 'coming_soon') {
             $newStatus = 'soon';
         }

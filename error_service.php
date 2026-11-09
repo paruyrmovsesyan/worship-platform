@@ -714,6 +714,17 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
+    // 3.0.8. features_api $cascade (Undefined variable $cascade)
+    if (stripos($message, 'cascade') !== false && (stripos($message, 'features_api') !== false || stripos((string)($item['file'] ?? ''), 'features_api') !== false)) {
+        $reason = 'features_api.php-ում update_suite գործողության $cascade փոփոխականը հայտարարված է և շտկված';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
     // 3.1. Notification in WebViews / CriOS (restorePromptAfterExternalDisable, Notification is not defined)
     if (stripos($message, 'Notification is not defined') !== false || 
         stripos($message, 'Can\'t find variable: Notification') !== false || 
