@@ -3,71 +3,71 @@
         "id": "pro_studio",
         "title": "Worship Pro Studio (Գլխավոր Հավաքական)",
         "description": "Բեմական սինքրոնացում, 8-ալիքային ստեմս միքշեր, պրոյեկցիա, AI և մետրոնոմ միավորող գլխավոր էկոհամակարգ:",
-        "status": "beta",
+        "status": "soon",
         "category": "pro_studio",
         "is_suite": true,
         "test_url": "\/studio",
-        "updated_at": 1792444986
+        "updated_at": 1794221774
     },
     "live_stage_follower": {
         "id": "live_stage_follower",
         "title": "Band Live Follower (Leader Remote Sync)",
         "description": "Երաժիշտների և վոկալիստների էկրանների ավտոմատ հետևում Worship Leader-ին:",
-        "status": "beta",
+        "status": "soon",
         "category": "pro_studio",
         "suite": "pro_studio",
         "test_url": "\/setlists\/1\/live",
-        "updated_at": 1792444986
+        "updated_at": 1794221774
     },
     "rehearsal_stems": {
         "id": "rehearsal_stems",
         "title": "RehearsalMix & Stems Mixer",
         "description": "8-ալիքանի բազմաթրեկ միքշեր, Solo\/Mute և A-B հատվածի կրկնող Looper:",
-        "status": "beta",
+        "status": "soon",
         "category": "pro_studio",
         "suite": "pro_studio",
         "test_url": "\/song\/1",
-        "updated_at": 1792444986
+        "updated_at": 1794221774
     },
     "lyrics_projection": {
         "id": "lyrics_projection",
         "title": "Live Lyrics Projection & Confidence Monitor",
         "description": "Դահլիճի պրոյեկտորի, OBS եթերի Lower-Thirds և Confidence Monitor ռեժիմներ:",
-        "status": "beta",
+        "status": "soon",
         "category": "pro_studio",
         "suite": "pro_studio",
         "test_url": "\/projection\/1",
-        "updated_at": 1792444986
+        "updated_at": 1794221774
     },
     "worship_ai_studio": {
         "id": "worship_ai_studio",
         "title": "Worship AI Studio",
         "description": "Ակորդների գեներացում, պոետիկ հայերեն թարգմանություն և ակորդների հարստացում:",
-        "status": "published",
+        "status": "soon",
         "category": "pro_studio",
         "suite": "pro_studio",
         "test_url": "\/song\/1",
-        "updated_at": 1792444986
+        "updated_at": 1794221774
     },
     "service_planner": {
         "id": "service_planner",
         "title": "Ministry Service Planner & Team Rostering",
         "description": "Կիրակնօրյա ծառայության րոպեական Run-of-Show պլանավորում և թիմի գրաֆիկ:",
-        "status": "published",
+        "status": "soon",
         "category": "pro_studio",
         "suite": "pro_studio",
         "test_url": "\/service-planner",
-        "updated_at": 1792444986
+        "updated_at": 1794221774
     },
     "smart_metronome": {
         "id": "smart_metronome",
         "title": "Smart Metronome & Visual Click",
         "description": "Web Audio API-ով ճշգրիտ մետրոնոմ, տեսողական լույսեր, Tap Tempo և Screen Pulse:",
-        "status": "published",
+        "status": "soon",
         "category": "pro_studio",
         "suite": "pro_studio",
         "test_url": "\/song\/1",
-        "updated_at": 1792444986
+        "updated_at": 1794221774
     },
     "stage_two_column": {
         "id": "stage_two_column",

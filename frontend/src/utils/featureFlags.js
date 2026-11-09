@@ -119,12 +119,22 @@ export const PRO_STUDIO_MODULES = [
   'smart_metronome',
 ];
 
+export const DEFAULT_FLAG_FALLBACKS = {
+  pro_studio: 'soon',
+  live_stage_follower: 'soon',
+  rehearsal_stems: 'soon',
+  lyrics_projection: 'soon',
+  worship_ai_studio: 'soon',
+  service_planner: 'soon',
+  smart_metronome: 'soon',
+};
+
 /**
  * Get status of a feature: 'published' | 'beta' | 'soon' | 'off'
  */
 export function getFeatureStatus(featureId) {
   if (!featureId) return 'published';
-  return flagsCache[featureId] || 'published';
+  return flagsCache[featureId] || DEFAULT_FLAG_FALLBACKS[featureId] || 'published';
 }
 
 /**
@@ -253,13 +263,13 @@ export function useFeatureFlags() {
   return {
     flags,
     catalog,
-    getStatus: (id) => flags[id] || 'published',
+    getStatus: (id) => flags[id] || DEFAULT_FLAG_FALLBACKS[id] || 'published',
     isEnabled: (id) => {
-      const s = flags[id] || 'published';
+      const s = flags[id] || DEFAULT_FLAG_FALLBACKS[id] || 'published';
       if (s === 'off' || s === 'soon' || s === 'coming_soon') return false;
       if (id === 'pro_studio') {
         const hasLiveOrBeta = PRO_STUDIO_MODULES.some(m => {
-          const st = flags[m] || 'published';
+          const st = flags[m] || DEFAULT_FLAG_FALLBACKS[m] || 'published';
           return st === 'published' || st === 'beta';
         });
         return hasLiveOrBeta;
@@ -267,25 +277,25 @@ export function useFeatureFlags() {
       return true;
     },
     isBeta: (id) => {
-      const s = flags[id] || 'published';
+      const s = flags[id] || DEFAULT_FLAG_FALLBACKS[id] || 'published';
       if (s === 'soon' || s === 'coming_soon') return false;
       if (id === 'pro_studio') {
         if (s === 'beta') return true;
-        return PRO_STUDIO_MODULES.some(m => (flags[m] || 'published') === 'beta');
+        return PRO_STUDIO_MODULES.some(m => (flags[m] || DEFAULT_FLAG_FALLBACKS[m] || 'published') === 'beta');
       }
       return s === 'beta';
     },
     isSoon: (id) => {
-      const s = flags[id] || 'published';
+      const s = flags[id] || DEFAULT_FLAG_FALLBACKS[id] || 'published';
       if (s === 'soon' || s === 'coming_soon') return true;
       if (id === 'pro_studio') {
         const hasLiveOrBeta = PRO_STUDIO_MODULES.some(m => {
-          const st = flags[m] || 'published';
+          const st = flags[m] || DEFAULT_FLAG_FALLBACKS[m] || 'published';
           return st === 'published' || st === 'beta';
         });
         if (!hasLiveOrBeta) {
           const hasSoon = PRO_STUDIO_MODULES.some(m => {
-            const st = flags[m] || 'published';
+            const st = flags[m] || DEFAULT_FLAG_FALLBACKS[m] || 'published';
             return st === 'soon' || st === 'coming_soon';
           });
           if (hasSoon) return true;
@@ -293,8 +303,8 @@ export function useFeatureFlags() {
       }
       return false;
     },
-    isVisible: (id) => (flags[id] || 'published') !== 'off',
-    isOff: (id) => flags[id] === 'off',
+    isVisible: (id) => (flags[id] || DEFAULT_FLAG_FALLBACKS[id] || 'published') !== 'off',
+    isOff: (id) => (flags[id] || DEFAULT_FLAG_FALLBACKS[id] || 'published') === 'off',
   };
 }
 

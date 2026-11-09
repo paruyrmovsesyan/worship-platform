@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v560";
+const CACHE_VERSION = "worship-v561";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -208,15 +208,16 @@ self.addEventListener("fetch", function(event) {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Auth PHP endpoints must bypass all SW caching and interception logic so that
-  // sessions, cookies, and 302 redirects (e.g. Google OAuth, login, logout) are handled natively.
+  // Auth & flags PHP endpoints must bypass all SW caching and interception logic so that
+  // sessions, cookies, 302 redirects, and live admin flags are handled natively.
   if (
     url.pathname === "/social_auth.php" ||
     url.pathname === "/auth_me.php" ||
     url.pathname === "/auth_bootstrap.php" ||
     url.pathname === "/login_api.php" ||
     url.pathname === "/register_api.php" ||
-    url.pathname === "/logout_users.php"
+    url.pathname === "/logout_users.php" ||
+    url.pathname === "/features_api.php"
   ) {
     return; // Let browser handle it natively — no SW interception
   }
