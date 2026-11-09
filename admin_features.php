@@ -923,8 +923,18 @@ foreach ($catalog as $item) {
           foreach ($psModules as $mId => $mItem): 
             $mStatus = $mItem['status'] ?? 'published';
             $mIcon = $moduleIcons[$mId] ?? '🔧';
+            $mTestUrl = $mItem['test_url'] ?? '/';
           ?>
-            <div class="suite-module-card <?= $mStatus ?>" id="suite-sub-<?= htmlspecialchars($mId) ?>">
+            <div 
+              class="suite-module-card <?= htmlspecialchars($mStatus) ?>" 
+              id="suite-sub-<?= htmlspecialchars($mId) ?>"
+              data-id="<?= htmlspecialchars($mId) ?>"
+              data-status="<?= htmlspecialchars($mStatus) ?>"
+              data-category="pro_studio"
+              data-suite="pro_studio"
+              data-title="<?= htmlspecialchars(strtolower($mItem['title'])) ?>"
+              data-desc="<?= htmlspecialchars(strtolower($mItem['description'])) ?>"
+            >
               <div class="suite-module-top">
                 <span class="suite-module-icon"><?= $mIcon ?></span>
                 <div class="suite-module-meta">
@@ -933,9 +943,16 @@ foreach ($catalog as $item) {
                 </div>
               </div>
               <div class="suite-module-bottom">
-                <span class="suite-module-status <?= htmlspecialchars($mStatus) ?>" id="subbadge-<?= htmlspecialchars($mId) ?>">
-                  <?= $mStatus === 'published' ? 'Live' : ($mStatus === 'beta' ? 'Beta' : (in_array($mStatus, ['soon', 'coming_soon'], true) ? 'Շուտով' : 'Off')) ?>
-                </span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="suite-module-status <?= htmlspecialchars($mStatus) ?>" id="subbadge-<?= htmlspecialchars($mId) ?>">
+                    <?= $mStatus === 'published' ? 'Live' : ($mStatus === 'beta' ? 'Beta' : (in_array($mStatus, ['soon', 'coming_soon'], true) ? 'Շուտով' : 'Off')) ?>
+                  </span>
+                  <?php if (!empty($mTestUrl)): ?>
+                    <a href="<?= htmlspecialchars($mTestUrl) ?>" target="_blank" class="test-feature-btn" style="padding:4px 8px; font-size:11px;" title="Փորձարկել / Տեսնել կայքում">
+                      <span>↗</span>
+                    </a>
+                  <?php endif; ?>
+                </div>
                 <div class="feature-segmented-switch mini" data-feature="<?= htmlspecialchars($mId) ?>">
                   <button type="button" class="switch-opt <?= $mStatus === 'off' ? 'active-off' : '' ?>" data-status="off" onclick="updateFeatureStatus('<?= htmlspecialchars($mId) ?>', 'off')">Off</button>
                   <button type="button" class="switch-opt <?= in_array($mStatus, ['soon', 'coming_soon'], true) ? 'active-soon' : '' ?>" data-status="soon" onclick="updateFeatureStatus('<?= htmlspecialchars($mId) ?>', 'soon')">Շուտով</button>
@@ -952,7 +969,7 @@ foreach ($catalog as $item) {
       <!-- Features Grid -->
       <div class="features-grid" id="featuresGrid">
         <?php foreach ($catalog as $id => $item): 
-          if ($id === 'pro_studio') continue; // Rendered prominently above in Master Suite Card
+          if ($id === 'pro_studio' || ($item['suite'] ?? '') === 'pro_studio') continue; // Pro Studio-ն և իր 6 մոդուլները ցուցադրվում են վերևի գլխավոր Master Suite բաժնում
           $status = $item['status'] ?? 'published';
           $testUrl = $item['test_url'] ?? '/';
           $cat = strtolower((string)($item['category'] ?? 'general'));
@@ -1099,7 +1116,7 @@ foreach ($catalog as $item) {
   }
 
   function applyFilters() {
-    const cards = document.querySelectorAll('.feature-card');
+    const cards = document.querySelectorAll('.features-grid .feature-card');
     const masterCard = document.getElementById('card-pro_studio');
     let visibleCount = 0;
 
@@ -1123,15 +1140,33 @@ foreach ($catalog as $item) {
     });
 
     if (masterCard) {
+      const subCards = masterCard.querySelectorAll('.suite-module-card');
+      let matchingSubCount = 0;
+      subCards.forEach(sub => {
+        const subSt = sub.getAttribute('data-status');
+        const subTitle = sub.getAttribute('data-title') || '';
+        const subDesc = sub.getAttribute('data-desc') || '';
+        const matchSubStatus = (activeStatusFilter === 'all' || subSt === activeStatusFilter || (activeStatusFilter === 'soon' && (subSt === 'soon' || subSt === 'coming_soon')));
+        const matchSubSearch = (!searchQuery || subTitle.includes(searchQuery) || subDesc.includes(searchQuery));
+        if (matchSubStatus && matchSubSearch) {
+          sub.style.display = 'flex';
+          matchingSubCount++;
+        } else {
+          sub.style.display = 'none';
+        }
+      });
+
       const mStatus = masterCard.getAttribute('data-status');
       const mTitle = masterCard.getAttribute('data-title') || '';
       const mDesc = masterCard.getAttribute('data-desc') || '';
       const matchMStatus = (activeStatusFilter === 'all' || mStatus === activeStatusFilter || (activeStatusFilter === 'soon' && (mStatus === 'soon' || mStatus === 'coming_soon')));
       const matchMCat = (activeCategoryFilter === 'all' || activeCategoryFilter === 'pro_studio');
       const matchMSearch = (!searchQuery || mTitle.includes(searchQuery) || mDesc.includes(searchQuery) || searchQuery.includes('pro') || searchQuery.includes('studio'));
-      if (matchMStatus && matchMCat && matchMSearch) {
+
+      const shouldShowMaster = matchMCat && ((matchMStatus && matchMSearch) || matchingSubCount > 0);
+      if (shouldShowMaster) {
         masterCard.style.display = 'block';
-        visibleCount++;
+        visibleCount += (matchingSubCount > 0 ? matchingSubCount : 1);
       } else {
         masterCard.style.display = 'none';
       }
@@ -1144,7 +1179,7 @@ foreach ($catalog as $item) {
   }
 
   function recalculateStats() {
-    const cards = document.querySelectorAll('.feature-card');
+    const cards = document.querySelectorAll('.feature-card, .suite-module-card, .pro-suite-master-card');
     let total = cards.length;
     let published = 0;
     let beta = 0;
@@ -1231,6 +1266,7 @@ foreach ($catalog as $item) {
     const subCard = document.getElementById('suite-sub-' + featureId);
     if (subCard) {
       subCard.className = 'suite-module-card ' + newStatus;
+      subCard.setAttribute('data-status', newStatus);
       const subBadge = document.getElementById('subbadge-' + featureId);
       if (subBadge) {
         subBadge.className = 'suite-module-status ' + newStatus;
@@ -1251,7 +1287,7 @@ foreach ($catalog as $item) {
   }
 
   async function updateFeatureStatus(featureId, newStatus) {
-    const card = document.getElementById('card-' + featureId);
+    const card = document.getElementById('card-' + featureId) || document.getElementById('suite-sub-' + featureId);
     if (!card) return;
 
     const oldStatus = card.getAttribute('data-status');
@@ -1348,23 +1384,9 @@ foreach ($catalog as $item) {
       const res = await fetch('/features_api.php?action=publish_all', { method: 'POST' });
       const data = await res.json();
       if (data.ok) {
-        document.querySelectorAll('.feature-card').forEach(card => {
-          card.setAttribute('data-status', 'published');
-          const id = card.getAttribute('data-id');
-          const dot = document.getElementById('dot-' + id);
-          if (dot) dot.className = 'live-dot published';
-          const switchBox = card.querySelector('.feature-segmented-switch');
-          if (switchBox) {
-            const buttons = switchBox.querySelectorAll('.switch-opt');
-            buttons.forEach(b => b.classList.remove('active-published', 'active-beta', 'active-off'));
-            buttons[2].classList.add('active-published');
-          }
-          const badge = document.getElementById('badge-' + id);
-          if (badge) {
-            badge.style.background = '#dcfce7';
-            badge.style.color = '#15803d';
-            badge.textContent = '🟢 Live';
-          }
+        document.querySelectorAll('.feature-card, .suite-module-card, .pro-suite-master-card').forEach(el => {
+          const fid = el.getAttribute('data-id');
+          if (fid) updateFeatureStatusUI(fid, 'published');
         });
         recalculateStats();
         applyFilters();
@@ -1373,7 +1395,7 @@ foreach ($catalog as $item) {
         try {
           let stored = {};
           try { stored = JSON.parse(localStorage.getItem('wp_feature_flags') || '{}'); } catch {}
-          document.querySelectorAll('.feature-card').forEach(c => {
+          document.querySelectorAll('.feature-card, .suite-module-card, .pro-suite-master-card').forEach(c => {
             const fid = c.getAttribute('data-id');
             if (fid) stored[fid] = 'published';
           });
