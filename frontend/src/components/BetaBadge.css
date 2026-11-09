@@ -257,3 +257,16 @@
   border-color: rgba(129, 140, 248, 0.6);
 }
 
+/* Disabled / Coming soon link & button styling */
+.is-disabled-soon {
+  opacity: 0.62 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.is-disabled-soon:hover {
+  background: transparent !important;
+  color: inherit !important;
+}
+

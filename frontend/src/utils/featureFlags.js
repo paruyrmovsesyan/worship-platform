@@ -110,8 +110,17 @@ export async function loadFeatureFlags(force = false) {
   return inFlightFlagsPromise;
 }
 
+export const PRO_STUDIO_MODULES = [
+  'live_stage_follower',
+  'rehearsal_stems',
+  'lyrics_projection',
+  'worship_ai_studio',
+  'service_planner',
+  'smart_metronome',
+];
+
 /**
- * Get status of a feature: 'published' | 'beta' | 'off'
+ * Get status of a feature: 'published' | 'beta' | 'soon' | 'off'
  */
 export function getFeatureStatus(featureId) {
   if (!featureId) return 'published';
@@ -126,6 +135,7 @@ export function getFeatureStatus(featureId) {
  * - 'published': returns true
  */
 export function isFeatureEnabled(featureId, user = null) {
+  if (isFeatureSoon(featureId)) return false;
   const status = getFeatureStatus(featureId);
   return status !== 'off' && status !== 'soon' && status !== 'coming_soon';
 }
@@ -134,6 +144,11 @@ export function isFeatureEnabled(featureId, user = null) {
  * Check if a feature is marked as Beta
  */
 export function isFeatureBeta(featureId) {
+  if (isFeatureSoon(featureId)) return false;
+  if (featureId === 'pro_studio') {
+    if (getFeatureStatus('pro_studio') === 'beta') return true;
+    return PRO_STUDIO_MODULES.some(m => getFeatureStatus(m) === 'beta');
+  }
   return getFeatureStatus(featureId) === 'beta';
 }
 
@@ -142,7 +157,24 @@ export function isFeatureBeta(featureId) {
  */
 export function isFeatureSoon(featureId) {
   const status = getFeatureStatus(featureId);
-  return status === 'soon' || status === 'coming_soon';
+  if (status === 'soon' || status === 'coming_soon') return true;
+
+  if (featureId === 'pro_studio') {
+    // If all modules of pro_studio are soon/off and at least one is soon
+    const hasLiveOrBeta = PRO_STUDIO_MODULES.some(m => {
+      const s = getFeatureStatus(m);
+      return s === 'published' || s === 'beta';
+    });
+    if (!hasLiveOrBeta) {
+      const hasSoon = PRO_STUDIO_MODULES.some(m => {
+        const s = getFeatureStatus(m);
+        return s === 'soon' || s === 'coming_soon';
+      });
+      if (hasSoon) return true;
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -224,10 +256,43 @@ export function useFeatureFlags() {
     getStatus: (id) => flags[id] || 'published',
     isEnabled: (id) => {
       const s = flags[id] || 'published';
-      return s !== 'off' && s !== 'soon' && s !== 'coming_soon';
+      if (s === 'off' || s === 'soon' || s === 'coming_soon') return false;
+      if (id === 'pro_studio') {
+        const hasLiveOrBeta = PRO_STUDIO_MODULES.some(m => {
+          const st = flags[m] || 'published';
+          return st === 'published' || st === 'beta';
+        });
+        return hasLiveOrBeta;
+      }
+      return true;
     },
-    isBeta: (id) => flags[id] === 'beta',
-    isSoon: (id) => flags[id] === 'soon' || flags[id] === 'coming_soon',
+    isBeta: (id) => {
+      const s = flags[id] || 'published';
+      if (s === 'soon' || s === 'coming_soon') return false;
+      if (id === 'pro_studio') {
+        if (s === 'beta') return true;
+        return PRO_STUDIO_MODULES.some(m => (flags[m] || 'published') === 'beta');
+      }
+      return s === 'beta';
+    },
+    isSoon: (id) => {
+      const s = flags[id] || 'published';
+      if (s === 'soon' || s === 'coming_soon') return true;
+      if (id === 'pro_studio') {
+        const hasLiveOrBeta = PRO_STUDIO_MODULES.some(m => {
+          const st = flags[m] || 'published';
+          return st === 'published' || st === 'beta';
+        });
+        if (!hasLiveOrBeta) {
+          const hasSoon = PRO_STUDIO_MODULES.some(m => {
+            const st = flags[m] || 'published';
+            return st === 'soon' || st === 'coming_soon';
+          });
+          if (hasSoon) return true;
+        }
+      }
+      return false;
+    },
     isVisible: (id) => (flags[id] || 'published') !== 'off',
     isOff: (id) => flags[id] === 'off',
   };

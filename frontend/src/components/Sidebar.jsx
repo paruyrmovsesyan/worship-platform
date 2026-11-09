@@ -4,12 +4,15 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from './LanguageSwitcher';
 import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
+import { useFeatureFlags } from '../utils/featureFlags';
+import { BetaBadge, ComingSoonBadge } from './BetaBadge';
 import './Sidebar.css';
 
 export default function Sidebar() {
   const { t } = useLanguage();
   const { user, logout } = useAuth();
   const { guardPath } = usePwaOfflineGuard();
+  const { isEnabled, isBeta, isSoon, isVisible } = useFeatureFlags();
   const navigate = useNavigate();
   const location = useLocation();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -65,9 +68,31 @@ export default function Sidebar() {
         <Link to="/setlists" onClick={(e) => { if (!guardPath('/setlists')) e.preventDefault(); }} className={`sidebar-link ${isActive('/setlists') ? 'active' : ''}`}>
           <span className="icon">📋</span> {t('nav.sets')}
         </Link>
-        <Link to="/studio" onClick={(e) => { if (!guardPath('/studio')) e.preventDefault(); }} className={`sidebar-link ${isActive('/studio') || isActive('/tools') ? 'active' : ''}`}>
-          <span className="icon">🎛️</span> {t('nav.studio', 'Pro Studio')}
-        </Link>
+        {isVisible('pro_studio') && (
+          <Link 
+            to={isSoon('pro_studio') ? '#' : '/studio'} 
+            onClick={(e) => { 
+              if (isSoon('pro_studio')) {
+                e.preventDefault();
+                return;
+              }
+              if (!guardPath('/studio')) e.preventDefault(); 
+            }} 
+            className={`sidebar-link ${isActive('/studio') || isActive('/tools') ? 'active' : ''} ${isSoon('pro_studio') ? 'is-disabled-soon' : ''}`}
+            style={{ 
+              cursor: isSoon('pro_studio') ? 'not-allowed' : 'pointer',
+              pointerEvents: isSoon('pro_studio') ? 'none' : 'auto'
+            }}
+            title={isSoon('pro_studio') ? 'Pro Studio-ն շուտով հասանելի կլինի' : undefined}
+          >
+            <span className="icon">🎛️</span> {t('nav.studio', 'Pro Studio')}
+            {isSoon('pro_studio') ? (
+              <ComingSoonBadge style={{ fontSize: '0.55rem', padding: '1px 5px', marginLeft: 'auto' }} />
+            ) : (
+              isBeta('pro_studio') && <BetaBadge style={{ fontSize: '0.55rem', padding: '1px 5px', marginLeft: 'auto' }} />
+            )}
+          </Link>
+        )}
         <Link to="/friends" onClick={(e) => { if (!guardPath('/friends')) e.preventDefault(); }} className={`sidebar-link ${isActive('/friends') ? 'active' : ''}`}>
           <span className="icon">💬</span> {t('nav.friends', 'Ընկերներ / Չաթ')}
         </Link>

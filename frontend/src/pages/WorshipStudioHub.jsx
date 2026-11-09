@@ -782,6 +782,19 @@ export default function WorshipStudioHub() {
     [studioModules, activeTab]
   );
 
+  if (isSoon('pro_studio')) {
+    return (
+      <div className="worship-studio-hub-page">
+        <FeatureComingSoonScreen
+          title="Worship Pro Studio Hub — Շուտով"
+          description="Worship Pro Studio-ի բոլոր բեմական, աուդիո և նվագախմբի գործիքները նախապատրաստման փուլում են և շուտով հասանելի կդառնան։"
+          backUrl="/songs"
+          onBack={() => navigate('/songs')}
+        />
+      </div>
+    );
+  }
+
   if (!isEnabled('pro_studio') && studioModules.length === 0) {
     return (
       <div className="worship-studio-hub-page">

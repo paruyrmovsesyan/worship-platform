@@ -2083,15 +2083,15 @@ export default function SongView() {
               {isVisible('pro_studio') && (
                 <button
                   type="button"
-                  className={`sv-tools-menu-item ${isSoon('pro_studio') ? 'is-disabled' : ''}`}
+                  className={`sv-tools-menu-item ${isSoon('pro_studio') ? 'is-disabled is-disabled-soon' : ''}`}
+                  disabled={isSoon('pro_studio')}
                   onClick={() => {
+                    if (isSoon('pro_studio')) return;
                     setIsToolsMenuOpen(false);
-                    if (isSoon('pro_studio')) {
-                      alert('Worship Pro Studio-ն շուտով հասանելի կլինի ծրագրում։');
-                      return;
-                    }
                     navigate('/studio?song=' + (song?.id || id));
                   }}
+                  style={isSoon('pro_studio') ? { opacity: 0.6, cursor: 'not-allowed', pointerEvents: 'none' } : {}}
+                  title={isSoon('pro_studio') ? 'Worship Pro Studio-ն շուտով հասանելի կլինի' : undefined}
                 >
                   <span className="sv-tools-item-icon">🎛️</span>
                   <div className="sv-tools-item-text">

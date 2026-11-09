@@ -901,7 +901,7 @@ foreach ($catalog as $item) {
               <button type="button" class="suite-batch-btn beta" onclick="setSuiteAll('beta')">🧪 Բոլոր 6-ը Beta</button>
               <button type="button" class="suite-batch-btn soon" onclick="setSuiteAll('soon')">⏳ Բոլոր 6-ը Շուտով</button>
               <button type="button" class="suite-batch-btn off" onclick="setSuiteAll('off')">⚪ Բոլոր 6-ը Off</button>
-              <a href="/studio" target="_blank" class="suite-batch-btn test">🔗 Բացել Pro Studio Hub →</a>
+              <a href="/studio" target="_blank" class="suite-batch-btn test" id="btn-open-studio-hub">🔗 Բացել Pro Studio Hub <?= in_array($psStatus, ['soon', 'coming_soon'], true) ? '(Շուտով)' : '→' ?></a>
             </div>
           </div>
         </div>
@@ -1223,6 +1223,12 @@ foreach ($catalog as $item) {
 
   function updateFeatureStatusUI(featureId, newStatus) {
     const card = document.getElementById('card-' + featureId);
+    if (featureId === 'pro_studio') {
+      const hubBtn = document.getElementById('btn-open-studio-hub');
+      if (hubBtn) {
+        hubBtn.textContent = (newStatus === 'soon' || newStatus === 'coming_soon') ? '🔗 Բացել Pro Studio Hub (Շուտով)' : '🔗 Բացել Pro Studio Hub →';
+      }
+    }
     if (card) {
       card.setAttribute('data-status', newStatus);
       const dot = document.getElementById('dot-' + featureId);

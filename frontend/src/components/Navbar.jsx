@@ -256,10 +256,10 @@ export default function Navbar() {
                   key={item.to + (item.isSoon ? '-soon' : '')}
                   to={item.to}
                   className={`menu-nav-link ${isActive(item.to) ? 'active' : ''} ${item.isSoon ? 'is-disabled-soon' : ''}`}
+                  style={item.isSoon ? { cursor: 'not-allowed', pointerEvents: 'none' } : {}}
                   onClick={(e) => {
                     if (item.isSoon) {
                       e.preventDefault();
-                      alert('Այս ֆունկցիան շուտով հասանելի կլինի ծրագրում։');
                       return;
                     }
                     setMenuOpen(false);
@@ -398,10 +398,17 @@ export default function Navbar() {
                             onClick={(e) => {
                               if (isSoon('pro_studio')) {
                                 e.preventDefault();
-                                alert('Pro Studio-ն շուտով հասանելի կլինի ծրագրում։');
                               }
                             }}
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                            className={isSoon('pro_studio') ? 'is-disabled-soon' : ''}
+                            style={{ 
+                              display: 'inline-flex', 
+                              alignItems: 'center', 
+                              gap: 6,
+                              cursor: isSoon('pro_studio') ? 'not-allowed' : 'pointer',
+                              pointerEvents: isSoon('pro_studio') ? 'none' : 'auto'
+                            }}
+                            title={isSoon('pro_studio') ? 'Pro Studio-ն շուտով հասանելի կլինի' : undefined}
                           >
                             Pro Studio Հաբ
                             {isSoon('pro_studio') ? (
@@ -447,15 +454,21 @@ export default function Navbar() {
             {(isVisible('pro_studio') || isVisible('rehearsal_stems') || isVisible('lyrics_projection') || isVisible('live_stage_follower') || isVisible('worship_ai_studio') || isVisible('service_planner')) && (
               <Link
                 to={isSoon('pro_studio') ? '#' : '/studio'}
-                className={`nav-item ${isActive('/studio') || isActive('/tools') ? 'active' : ''}`}
+                className={`nav-item ${isActive('/studio') || isActive('/tools') ? 'active' : ''} ${isSoon('pro_studio') ? 'is-disabled-soon' : ''}`}
                 onMouseEnter={(e) => handleMenuEnter(e, null)}
                 onClick={(e) => {
                   if (isSoon('pro_studio')) {
                     e.preventDefault();
-                    alert('Pro Studio-ն շուտով հասանելի կլինի ծրագրում։');
                   }
                 }}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: 6,
+                  cursor: isSoon('pro_studio') ? 'not-allowed' : 'pointer',
+                  pointerEvents: isSoon('pro_studio') ? 'none' : 'auto'
+                }}
+                title={isSoon('pro_studio') ? 'Pro Studio-ն շուտով հասանելի կլինի' : undefined}
               >
                 <span>Pro Studio</span>
                 {isSoon('pro_studio') ? <ComingSoonBadge style={{ fontSize: '0.62rem', padding: '1px 5px' }} /> : (isBeta('pro_studio') && <BetaBadge style={{ fontSize: '0.62rem', padding: '1px 5px' }} />)}
