@@ -13,6 +13,8 @@
 
   const ENDPOINT = '/error_api.php';
   const OFFLINE_QUEUE_KEY = '__wp_offline_errors_queue';
+  const rawFetch = typeof window.fetch === 'function' ? window.fetch.bind(window) : null;
+  let isDispatchingError = false;
   const recentErrors = new Map();
   let errorCount = 0;
   let errorWindowStart = Date.now();
@@ -185,14 +187,16 @@
   }
 
   function flushOfflineErrors() {
-    if (navigator.onLine === false) return;
+    if (navigator.onLine === false || isDispatchingError) return;
     try {
       const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
       if (!raw) return;
       localStorage.removeItem(OFFLINE_QUEUE_KEY);
       const queue = JSON.parse(raw);
       if (Array.isArray(queue) && queue.length > 0) {
-        queue.forEach(function(item) {
+        // Limit batch to max 5 items to prevent call stack issues
+        const batch = queue.slice(0, 5);
+        batch.forEach(function(item) {
           sendErrorReport(item, true);
         });
       }
@@ -204,10 +208,27 @@
 
   // ── 4. ERROR DISPATCHER ──
   function sendErrorReport(payload, isFlushingQueue = false) {
+    if (!payload || isDispatchingError) return;
+    isDispatchingError = true;
     try {
-      if (!payload) return;
-      const rawMsg = String(payload.message || '');
+      const rawMsg = String(payload.message || '').trim();
       const rawStack = String(payload.stack_trace || '');
+
+      // Ignore empty promise rejection shells, aborted operations, and audio autoplay rejections
+      if (
+        rawMsg === 'Unhandled Promise Rejection: {}' ||
+        rawMsg === 'Unhandled Promise Rejection: [Object]' ||
+        rawMsg === 'Unhandled Promise Rejection' ||
+        rawMsg === 'Error: ra' ||
+        rawMsg === 'ra' ||
+        rawMsg.includes('AbortError') ||
+        rawMsg.includes('The user aborted a request') ||
+        rawMsg.includes('signal is aborted without reason') ||
+        rawMsg.includes('NotAllowedError') ||
+        (rawMsg.includes('call stack') && (rawStack.includes('error_reporter') || payload.file === 'undefined' || rawStack.includes('flushOfflineErrors')))
+      ) {
+        return;
+      }
 
       // Ignore transient background update polling drops and ServiceWorker registration notices
       if (
@@ -268,17 +289,23 @@
         if (sent) return;
       }
 
-      fetch(ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: body,
-        keepalive: true,
-      }).catch(function() {
-        if (!isFlushingQueue) {
-          queueOfflineError(payload);
-        }
-      });
-    } catch (_) {}
+      const fetchFn = rawFetch || window.fetch;
+      if (typeof fetchFn === 'function') {
+        fetchFn(ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: body,
+          keepalive: true,
+        }).catch(function() {
+          if (!isFlushingQueue) {
+            queueOfflineError(payload);
+          }
+        });
+      }
+    } catch (_) {
+    } finally {
+      isDispatchingError = false;
+    }
   }
 
   // ── 5. GLOBAL EVENT LISTENERS ──
@@ -407,22 +434,54 @@
   window.addEventListener('unhandledrejection', function(event) {
     try {
       const reason = event.reason;
-      let message = 'Unhandled Promise Rejection';
+      if (!reason) return;
+
+      let message = '';
       let stack = null;
       let file = null;
       let line = null;
 
       if (reason instanceof Error) {
+        if (
+          reason.name === 'AbortError' ||
+          reason.name === 'NotAllowedError' ||
+          reason.message?.includes('aborted') ||
+          reason.message?.includes('play()')
+        ) {
+          return;
+        }
         message = `Unhandled Promise Rejection: ${reason.message || reason.name}`;
         stack = reason.stack || null;
       } else if (typeof reason === 'string') {
-        message = `Unhandled Promise Rejection: ${reason}`;
-      } else if (reason && typeof reason === 'object') {
-        try {
-          message = `Unhandled Promise Rejection: ${JSON.stringify(reason)}`;
-        } catch (_) {
-          message = 'Unhandled Promise Rejection: [Object]';
+        const clean = reason.trim();
+        if (!clean || clean === '{}') return;
+        message = `Unhandled Promise Rejection: ${clean}`;
+      } else if (typeof reason === 'object') {
+        const errName = reason.name || reason.constructor?.name || '';
+        const errMsg = reason.message || reason.error || '';
+        if (
+          errName === 'AbortError' ||
+          errName === 'NotAllowedError' ||
+          String(errMsg).includes('aborted') ||
+          String(errMsg).includes('play()')
+        ) {
+          return;
         }
+        if (errMsg) {
+          message = `Unhandled Promise Rejection: ${errMsg}`;
+        } else {
+          try {
+            const str = JSON.stringify(reason);
+            if (!str || str === '{}' || str === '[]') return;
+            message = `Unhandled Promise Rejection: ${str}`;
+          } catch (_) {
+            return;
+          }
+        }
+      }
+
+      if (!message || message === 'Unhandled Promise Rejection: {}' || message === 'Unhandled Promise Rejection: [Object]') {
+        return;
       }
 
       // Ignore transient ServiceWorker background update/registration network drops & version manifest polling

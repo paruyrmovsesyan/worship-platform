@@ -33,7 +33,8 @@ export function saveRecentSongSearch(query) {
     const updated = [clean, ...list.filter(item => item.toLowerCase() !== clean.toLowerCase())].slice(0, MAX_RECENT_ITEMS);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch (err) {
-    console.error('Failed to save recent search:', err);
+    // Non-fatal warning if localStorage is full or restricted in private browsing
+    console.warn('Recent search storage unavailable:', err);
   }
 }
 
