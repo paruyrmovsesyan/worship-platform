@@ -1,8 +1,8 @@
 {
   "app_version": "5.3.0",
   "web_version": "5.3.0",
-  "asset_version": "566",
-  "build_timestamp": "2026-11-12T17:55:00+04:00",
-  "release_type": "perf",
-  "release_summary": "Instant setlist cache hydration, eliminate DDL table locks, non-blocking sessions and fast auto-verification"
+  "asset_version": "567",
+  "build_timestamp": "2026-11-12T18:20:00+04:00",
+  "release_type": "bugfix",
+  "release_summary": "Instant optimistic setlist song key saving, unify save buttons and eliminate duplicate key save badges"
 }

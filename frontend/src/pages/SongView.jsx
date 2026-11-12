@@ -998,10 +998,58 @@ export default function SongView() {
 
   // Save current transposed key / capo directly into the setlist item
   const handleSaveKeyToSetlist = async () => {
-    const itemId = setlistNavData?.current?.item_id || new URLSearchParams(location.search).get('setlist_item_id');
+    const searchParams = new URLSearchParams(location.search);
+    const itemId = setlistNavData?.current?.item_id || searchParams.get('setlist_item_id');
+    const setlistId = setlistNavData?.setlist?.id || setlistNavData?.current?.setlist_id || searchParams.get('setlist_id');
     if (!itemId || savingKeyToSetlist) return;
 
     setSavingKeyToSetlist(true);
+    // Instant optimistic feedback
+    setKeySavedFeedback(true);
+
+    // Optimistically update setlistNavData state
+    setSetlistNavData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        current: {
+          ...prev.current,
+          target_key: soundingKey,
+          capo: capo > 0 ? capo : null,
+        },
+      };
+    });
+
+    // Update URL query parameters in-place so reloading preserves target key
+    try {
+      const q = new URLSearchParams(window.location.search);
+      q.set('tkey', soundingKey);
+      if (capo > 0) q.set('capo', String(capo));
+      else q.delete('capo');
+      window.history.replaceState(null, '', `${window.location.pathname}?${q.toString()}`);
+    } catch {}
+
+    // Update localStorage cache of the setlist for instant 0ms back navigation
+    if (setlistId) {
+      try {
+        const cacheKey = `wp_setlist_cache_${setlistId}`;
+        const raw = localStorage.getItem(cacheKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.items)) {
+            const itm = parsed.items.find(i => String(i.id) === String(itemId) || String(i.song_id) === String(id));
+            if (itm) {
+              itm.target_key = soundingKey;
+              itm.capo = capo > 0 ? capo : null;
+              localStorage.setItem(cacheKey, JSON.stringify(parsed));
+            }
+          }
+        }
+      } catch {}
+      broadcastTabMessage('SETLIST_UPDATED', { setlistId });
+      window.dispatchEvent(new CustomEvent('worship:setlists-changed'));
+    }
+
     try {
       const res = await fetch('/setlists_api.php?action=update_setlist_item', {
         method: 'POST',
@@ -1013,34 +1061,29 @@ export default function SongView() {
         }),
       });
       const data = await res.json();
-      if (data.ok) {
-        setSetlistNavData((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            current: {
-              ...prev.current,
-              target_key: soundingKey,
-              capo: capo > 0 ? capo : null,
-            },
-          };
-        });
-        setKeySavedFeedback(true);
-        setTimeout(() => setKeySavedFeedback(false), 2500);
-      } else {
+      if (!data.ok) {
         alert(data.error || 'Failed to save key in setlist');
       }
     } catch (err) {
       console.error(err);
     } finally {
       setSavingKeyToSetlist(false);
+      setTimeout(() => setKeySavedFeedback(false), 2500);
     }
   };
 
-  const setlistCurrentKey = setlistNavData?.current?.target_key || song?.song_key;
-  const setlistCurrentCapo = Number(setlistNavData?.current?.capo || 0);
+  const searchParams = new URLSearchParams(location.search);
+  const isFromSetlist = Boolean(
+    searchParams.get('setlist_id') ||
+    searchParams.get('setlist_item_id') ||
+    setlistNavData?.setlist?.id ||
+    setlistNavData?.current?.setlist_id
+  );
+
+  const setlistCurrentKey = setlistNavData?.current?.target_key || searchParams.get('tkey') || song?.song_key;
+  const setlistCurrentCapo = Number(setlistNavData?.current?.capo !== undefined ? setlistNavData.current.capo : (searchParams.get('capo') || 0));
   const isKeyOrCapoChangedInSetlist = Boolean(
-    (setlistNavData?.current?.item_id || new URLSearchParams(location.search).get('setlist_item_id')) &&
+    isFromSetlist &&
     user &&
     (soundingKey !== setlistCurrentKey || Number(capo || 0) !== setlistCurrentCapo)
   );
@@ -1234,15 +1277,16 @@ export default function SongView() {
       <div className="sv-meta-row">
         <div className="sv-meta-pill key-pill">{t('songView.keyPrefix')} {soundingKey || song.song_key || '?'}</div>
         {Number.parseInt(song.bpm, 10) > 0 && <div className="sv-meta-pill">BPM: {song.bpm}</div>}
-        {isKeyOrCapoChangedInSetlist && (
+        {!isPWA && (isKeyOrCapoChangedInSetlist || keySavedFeedback) && (
           <button
             type="button"
-            className="sv-save-key-pill animate-fade-in"
+            className={`sv-save-key-pill animate-fade-in ${keySavedFeedback ? 'saved-success' : ''}`}
             onClick={handleSaveKeyToSetlist}
             disabled={savingKeyToSetlist}
+            style={keySavedFeedback ? { background: '#10b981', borderColor: '#10b981', color: '#fff' } : undefined}
             title="Պահպանել այս տոնայնությունը երգացանկում"
           >
-            {savingKeyToSetlist ? '...' : keySavedFeedback ? '✓' : `💾 Պահպանել (${soundingKey}${capo > 0 ? ` C${capo}` : ''})`}
+            {savingKeyToSetlist ? '...' : keySavedFeedback ? '✓ Պահպանված է' : `💾 Պահպանել (${soundingKey}${capo > 0 ? ` C${capo}` : ''})`}
           </button>
         )}
         
@@ -1695,22 +1739,30 @@ export default function SongView() {
           </div>
         </div>
         
-        {hasUnsavedKeyChange && (
-          <button className="btn btn-primary btn-sm w-100" style={{ marginTop: '12px' }} onClick={() => saveFavoriteKey(playingKey)}>
-            {t('songView.saveKey')}
-          </button>
-        )}
-
-        {isKeyOrCapoChangedInSetlist && (
-          <button
-            type="button"
-            className="btn btn-primary btn-sm w-100 sv-setlist-save-key-btn animate-fade-in"
-            style={{ marginTop: '10px', background: 'linear-gradient(135deg, #00b4db, #0083b0)' }}
-            onClick={handleSaveKeyToSetlist}
-            disabled={savingKeyToSetlist}
-          >
-            {savingKeyToSetlist ? 'Պահպանվում է...' : keySavedFeedback ? '✓ Տոնայնությունը պահպանվեց երգացանկում' : `💾 Պահպանել (${soundingKey}${capo > 0 ? `, Capo ${capo}` : ''}) երգացանկում`}
-          </button>
+        {/* If inside setlist, only show the setlist save button; otherwise show favorites save button */}
+        {isFromSetlist ? (
+          (isKeyOrCapoChangedInSetlist || keySavedFeedback) && (
+            <button
+              type="button"
+              className={`btn btn-primary btn-sm w-100 sv-setlist-save-key-btn animate-fade-in ${keySavedFeedback ? 'btn-success' : ''}`}
+              style={{
+                marginTop: '10px',
+                background: keySavedFeedback
+                  ? '#10b981'
+                  : 'linear-gradient(135deg, #00b4db, #0083b0)'
+              }}
+              onClick={handleSaveKeyToSetlist}
+              disabled={savingKeyToSetlist}
+            >
+              {savingKeyToSetlist ? 'Պահպանվում է...' : keySavedFeedback ? '✓ Տոնայնությունը պահպանվեց երգացանկում' : `💾 Պահպանել (${soundingKey}${capo > 0 ? `, Capo ${capo}` : ''}) երգացանկում`}
+            </button>
+          )
+        ) : (
+          hasUnsavedKeyChange && (
+            <button className="btn btn-primary btn-sm w-100" style={{ marginTop: '12px' }} onClick={() => saveFavoriteKey(playingKey)}>
+              {t('songView.saveKey')}
+            </button>
+          )
         )}
 
       </div>

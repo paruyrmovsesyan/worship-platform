@@ -1342,21 +1342,21 @@ if ($action === 'update_setlist_item' && $method === 'POST') {
   $item_id = (int)($d['item_id'] ?? 0);
   if ($item_id <= 0) out(["error" => "Invalid item_id"], 400);
 
-  $target_key = normalizeNullable($d['target_key'] ?? '');
-  $notes = normalizeNullable($d['notes'] ?? '');
-  $capo = isset($d['capo']) && $d['capo'] !== '' ? (int)$d['capo'] : null;
-  $is_required = !empty($d['is_required']) ? 1 : 0;
-  $title = array_key_exists('title', $d) ? normalizeNullable($d['title']) : null;
-  $duration = isset($d['duration']) && $d['duration'] !== '' ? (int)$d['duration'] : null;
-  $bpm = isset($d['bpm']) && $d['bpm'] !== '' ? (int)$d['bpm'] : null;
-  $transition_type = array_key_exists('transition_type', $d) ? normalizeNullable($d['transition_type']) : null;
-
   $st = $pdo->prepare("SELECT i.* FROM setlist_items i WHERE i.id=? LIMIT 1");
   $st->execute([$item_id]);
   $item = $st->fetch(PDO::FETCH_ASSOC);
 
   if (!$item) out(["error" => "Item not found"], 404);
   requireSetlistEditable($pdo, (int)$item['setlist_id'], $uid);
+
+  $target_key = array_key_exists('target_key', $d) ? normalizeNullable($d['target_key']) : ($item['target_key'] ?? null);
+  $notes = array_key_exists('notes', $d) ? normalizeNullable($d['notes']) : ($item['notes'] ?? null);
+  $capo = array_key_exists('capo', $d) ? (isset($d['capo']) && $d['capo'] !== '' ? (int)$d['capo'] : null) : (isset($item['capo']) && $item['capo'] !== null ? (int)$item['capo'] : null);
+  $is_required = array_key_exists('is_required', $d) ? (!empty($d['is_required']) ? 1 : 0) : (int)($item['is_required'] ?? 0);
+  $title = array_key_exists('title', $d) ? normalizeNullable($d['title']) : ($item['title'] ?? null);
+  $duration = array_key_exists('duration', $d) ? (isset($d['duration']) && $d['duration'] !== '' ? (int)$d['duration'] : null) : (isset($item['duration']) && $item['duration'] !== null ? (int)$item['duration'] : null);
+  $bpm = array_key_exists('bpm', $d) ? (isset($d['bpm']) && $d['bpm'] !== '' ? (int)$d['bpm'] : null) : (isset($item['bpm']) && $item['bpm'] !== null ? (int)$item['bpm'] : null);
+  $transition_type = array_key_exists('transition_type', $d) ? normalizeNullable($d['transition_type']) : ($item['transition_type'] ?? null);
 
   $pdo->beginTransaction();
   try {
