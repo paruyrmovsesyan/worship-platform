@@ -418,6 +418,7 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
     $file = trim((string)($item['file'] ?? ''));
     $line = isset($item['line']) && is_numeric($item['line']) ? (int)$item['line'] : null;
     $message = (string)($item['message'] ?? '');
+    $stackTrace = (string)($item['stack_trace'] ?? $item['stack'] ?? '');
     $env = strtolower(trim((string)($item['environment'] ?? 'web')));
     $lastSeen = (string)($item['last_seen'] ?? date('Y-m-d H:i:s'));
     $lastSeenTs = strtotime($lastSeen) ?: time();
@@ -721,7 +722,7 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
     }
 
     // 3.0.7. HTTP Server Error 500 on /account_api.php?action=get_worship_roles
-    if (stripos($message, 'get_worship_roles') !== false || (stripos($message, 'account_api') !== false && stripos($message, '500') !== false)) {
+    if (stripos($message, 'get_worship_roles') !== false || stripos((string)($item['url'] ?? ''), 'get_worship_roles') !== false || (stripos($message, 'account_api') !== false && stripos($message, '500') !== false)) {
         $reason = 'account_api.php-ում worship_roles աղյուսակի ավտո-միգրացիան և ինքնավերականգնումը ավելացված են, API-ն վերադարձնում է HTTP 200 (v560)';
         wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
         $item['is_resolved'] = 1;

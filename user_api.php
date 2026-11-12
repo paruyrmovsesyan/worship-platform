@@ -32,6 +32,11 @@ try {
 
 $uid = (int)$_SESSION['user_id'];
 
+// Release session lock for read actions
+if ($method === 'GET') {
+    session_write_close();
+}
+
 function readJson(){
   $raw = file_get_contents("php://input");
   $d = json_decode($raw, true);
@@ -40,9 +45,13 @@ function readJson(){
 
 /* GET USER PROFILE & PLAN */
 if ($action === 'get_profile' && $method === 'GET') {
-    try {
-        $pdo->exec("ALTER TABLE users ADD COLUMN notifications_enabled TINYINT(1) DEFAULT 1");
-    } catch (Throwable $e) {}
+    $lockFile = __DIR__ . '/data/.users_notif_col.lock';
+    if (!is_file($lockFile)) {
+        try {
+            $pdo->exec("ALTER TABLE users ADD COLUMN notifications_enabled TINYINT(1) DEFAULT 1");
+            @file_put_contents($lockFile, '1');
+        } catch (Throwable $e) {}
+    }
 
     $st = $pdo->prepare("SELECT id, name, username, email, plan_type, COALESCE(notifications_enabled, 1) AS notifications_enabled FROM users WHERE id=? LIMIT 1");
     $st->execute([$uid]);
@@ -102,15 +111,19 @@ if (($action === 'get_user_profile' || $action === 'get_public_profile') && $met
     }
 
     // Auto-create worship_role and avatar_gradient columns if not exist
-    try {
-        $pdo->exec("ALTER TABLE users ADD COLUMN worship_role VARCHAR(100) DEFAULT NULL");
-    } catch (Throwable $e) {}
-    try {
-        $pdo->exec("ALTER TABLE users MODIFY COLUMN worship_role VARCHAR(100) DEFAULT NULL");
-    } catch (Throwable $e) {}
-    try {
-        $pdo->exec("ALTER TABLE users ADD COLUMN avatar_gradient VARCHAR(120) DEFAULT NULL");
-    } catch (Throwable $e) {}
+    $lockFile = __DIR__ . '/data/.users_worship_role_col.lock';
+    if (!is_file($lockFile)) {
+        try {
+            $pdo->exec("ALTER TABLE users ADD COLUMN worship_role VARCHAR(100) DEFAULT NULL");
+        } catch (Throwable $e) {}
+        try {
+            $pdo->exec("ALTER TABLE users MODIFY COLUMN worship_role VARCHAR(100) DEFAULT NULL");
+        } catch (Throwable $e) {}
+        try {
+            $pdo->exec("ALTER TABLE users ADD COLUMN avatar_gradient VARCHAR(120) DEFAULT NULL");
+        } catch (Throwable $e) {}
+        @file_put_contents($lockFile, '1');
+    }
 
     $st = $pdo->prepare("
         SELECT id, name, username, email, worship_role, avatar_gradient, created_at, last_active_at,

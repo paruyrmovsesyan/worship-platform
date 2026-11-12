@@ -38,6 +38,15 @@ try {
 
 $uid = !empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
 
+// Release session lock early for read operations to avoid blocking concurrent requests
+if ($method === 'GET' || in_array($action, [
+  'get_setlists', 'get_setlist_items', 'get_setlist_team', 'get_public_setlist',
+  'get_setlist_song_nav', 'export_txt', 'export_pdf', 'get_access_list',
+  'get_team_members', 'search_users', 'search_songs'
+], true)) {
+  session_write_close();
+}
+
 function readJson(){
   $raw = file_get_contents("php://input");
   $d = json_decode($raw, true);
@@ -75,68 +84,87 @@ function requireSetlistOwner(PDO $pdo, int $setlistId, int $uid){
 }
 
 function ensureSetlistAccessTable(PDO $pdo): void {
-  $pdo->exec("
-    CREATE TABLE IF NOT EXISTS setlist_user_access (
-      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-      setlist_id INT UNSIGNED NOT NULL,
-      owner_user_id INT UNSIGNED NOT NULL,
-      grantee_user_id INT UNSIGNED NOT NULL,
-      grantee_email VARCHAR(190) NULL,
-      expires_at DATETIME NULL,
-      revoked_at DATETIME NULL,
-      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-      PRIMARY KEY (id),
-      UNIQUE KEY uniq_setlist_grantee (setlist_id, grantee_user_id),
-      KEY idx_grantee_active (grantee_user_id, revoked_at, expires_at),
-      KEY idx_owner (owner_user_id),
-      KEY idx_setlist (setlist_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  ");
-  
-  try {
-    $pdo->exec("ALTER TABLE setlist_user_access ADD COLUMN can_edit TINYINT(1) DEFAULT 0");
-  } catch (Throwable $e) {}
-  
-  try {
-    $pdo->exec("ALTER TABLE setlist_user_access MODIFY expires_at DATETIME NULL");
-  } catch (Throwable $e) {}
+  static $done = false;
+  if ($done) return;
+  $done = true;
+
+  $lockFile = __DIR__ . '/data/.setlist_access_schema_v3.lock';
+  if (is_file($lockFile)) return;
 
   try {
-    $pdo->exec("ALTER TABLE setlists ADD COLUMN views_count INT UNSIGNED NOT NULL DEFAULT 0");
-  } catch (Throwable $e) {}
+    $pdo->exec("
+      CREATE TABLE IF NOT EXISTS setlist_user_access (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        setlist_id INT UNSIGNED NOT NULL,
+        owner_user_id INT UNSIGNED NOT NULL,
+        grantee_user_id INT UNSIGNED NOT NULL,
+        grantee_email VARCHAR(190) NULL,
+        expires_at DATETIME NULL,
+        revoked_at DATETIME NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY uniq_setlist_grantee (setlist_id, grantee_user_id),
+        KEY idx_grantee_active (grantee_user_id, revoked_at, expires_at),
+        KEY idx_owner (owner_user_id),
+        KEY idx_setlist (setlist_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ");
+    
+    try {
+      $pdo->exec("ALTER TABLE setlist_user_access ADD COLUMN can_edit TINYINT(1) DEFAULT 0");
+    } catch (Throwable $e) {}
+    
+    try {
+      $pdo->exec("ALTER TABLE setlist_user_access MODIFY expires_at DATETIME NULL");
+    } catch (Throwable $e) {}
 
-  $pdo->exec("
-    CREATE TABLE IF NOT EXISTS setlist_saves (
-      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-      setlist_id INT UNSIGNED NOT NULL,
-      user_id INT UNSIGNED NOT NULL,
-      saved_setlist_id INT UNSIGNED NULL,
-      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (id),
-      KEY idx_setlist (setlist_id),
-      KEY idx_user (user_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  ");
+    try {
+      $pdo->exec("ALTER TABLE setlists ADD COLUMN views_count INT UNSIGNED NOT NULL DEFAULT 0");
+    } catch (Throwable $e) {}
+
+    $pdo->exec("
+      CREATE TABLE IF NOT EXISTS setlist_saves (
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        setlist_id INT UNSIGNED NOT NULL,
+        user_id INT UNSIGNED NOT NULL,
+        saved_setlist_id INT UNSIGNED NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY idx_setlist (setlist_id),
+        KEY idx_user (user_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ");
+
+    @file_put_contents($lockFile, '1');
+  } catch (Throwable $e) {}
 }
 
 function trackSetlistView(PDO $pdo, int $setlistId, int $currentUid, int $ownerUid): void {
   if ($setlistId <= 0) return;
   if ($currentUid > 0 && $currentUid === $ownerUid) return;
 
-  if (session_status() === PHP_SESSION_NONE) {
-    @session_start();
-  }
-  if (!isset($_SESSION['viewed_setlists']) || !is_array($_SESSION['viewed_setlists'])) {
-    $_SESSION['viewed_setlists'] = [];
-  }
-  $lastViewed = (int)($_SESSION['viewed_setlists'][$setlistId] ?? 0);
-  if (time() - $lastViewed > 300) {
-    $_SESSION['viewed_setlists'][$setlistId] = time();
-    try {
-      $st = $pdo->prepare("UPDATE setlists SET views_count = views_count + 1 WHERE id = ?");
-      $st->execute([$setlistId]);
-    } catch (Throwable $e) {}
+  if (session_status() === PHP_SESSION_ACTIVE) {
+    if (!isset($_SESSION['viewed_setlists']) || !is_array($_SESSION['viewed_setlists'])) {
+      $_SESSION['viewed_setlists'] = [];
+    }
+    $lastViewed = (int)($_SESSION['viewed_setlists'][$setlistId] ?? 0);
+    if (time() - $lastViewed > 300) {
+      $_SESSION['viewed_setlists'][$setlistId] = time();
+      try {
+        $st = $pdo->prepare("UPDATE setlists SET views_count = views_count + 1 WHERE id = ?");
+        $st->execute([$setlistId]);
+      } catch (Throwable $e) {}
+    }
+  } else {
+    $cookieKey = 'wp_vset_' . $setlistId;
+    if (empty($_COOKIE[$cookieKey])) {
+      @setcookie($cookieKey, (string)time(), time() + 300, '/');
+      try {
+        $st = $pdo->prepare("UPDATE setlists SET views_count = views_count + 1 WHERE id = ?");
+        $st->execute([$setlistId]);
+      } catch (Throwable $e) {}
+    }
   }
 }
 
@@ -207,7 +235,7 @@ function requireSetlistReadable(PDO $pdo, int $setlistId, int $uid): array {
     FROM setlists s
     JOIN setlist_assignments a ON a.setlist_id = s.id
     LEFT JOIN users u ON u.id = s.user_id
-    WHERE s.id = ? AND a.user_id = ? AND s.status = 'active'
+    WHERE s.id = ? AND a.user_id = ? AND (s.status = 'active' OR s.status IS NULL OR s.status = '' OR s.status = 'draft')
     LIMIT 1
   ");
   $st->execute([$setlistId, $uid]);
@@ -223,7 +251,7 @@ function requireSetlistReadable(PDO $pdo, int $setlistId, int $uid): array {
     SELECT s.*, u.name AS owner_name, u.email AS owner_email
     FROM setlists s
     LEFT JOIN users u ON u.id = s.user_id
-    WHERE s.id = ? AND (s.status = 'active' OR s.status IS NULL)
+    WHERE s.id = ? AND (s.status = 'active' OR s.status IS NULL OR s.status = '' OR s.status = 'draft')
     LIMIT 1
   ");
   $st->execute([$setlistId]);
@@ -253,19 +281,30 @@ function findUserByEmail(PDO $pdo, string $email): ?array {
 ensureSetlistAccessTable($pdo);
 
 function ensureTeamArchitectureUpdates(PDO $pdo): void {
-  // Add team_id to setlists
+  static $done = false;
+  if ($done) return;
+  $done = true;
+
+  $lockFile = __DIR__ . '/data/.setlist_team_schema_v3.lock';
+  if (is_file($lockFile)) return;
+
   try {
-      $pdo->exec("ALTER TABLE setlists ADD COLUMN team_id INT UNSIGNED NULL DEFAULT NULL AFTER user_id");
-  } catch (Exception $e) {}
-  
-  // Add team_id to songs
-  try {
-      $pdo->exec("ALTER TABLE songs ADD COLUMN team_id INT UNSIGNED NULL DEFAULT NULL AFTER id");
-  } catch (Exception $e) {}
-  // Add setlist_id to chats for team group chats
-  try {
-      $pdo->exec("ALTER TABLE chats ADD COLUMN setlist_id INT UNSIGNED NULL DEFAULT NULL");
-      $pdo->exec("ALTER TABLE chats ADD INDEX idx_chats_setlist (setlist_id)");
+    // Add team_id to setlists
+    try {
+        $pdo->exec("ALTER TABLE setlists ADD COLUMN team_id INT UNSIGNED NULL DEFAULT NULL AFTER user_id");
+    } catch (Throwable $e) {}
+    
+    // Add team_id to songs
+    try {
+        $pdo->exec("ALTER TABLE songs ADD COLUMN team_id INT UNSIGNED NULL DEFAULT NULL AFTER id");
+    } catch (Throwable $e) {}
+    // Add setlist_id to chats for team group chats
+    try {
+        $pdo->exec("ALTER TABLE chats ADD COLUMN setlist_id INT UNSIGNED NULL DEFAULT NULL");
+        $pdo->exec("ALTER TABLE chats ADD INDEX idx_chats_setlist (setlist_id)");
+    } catch (Throwable $e) {}
+
+    @file_put_contents($lockFile, '1');
   } catch (Throwable $e) {}
 }
 ensureTeamArchitectureUpdates($pdo);

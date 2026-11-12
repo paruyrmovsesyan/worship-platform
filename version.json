@@ -1,8 +1,8 @@
 {
   "app_version": "5.3.0",
   "web_version": "5.3.0",
-  "asset_version": "565",
-  "build_timestamp": "2026-11-10T23:47:00+04:00",
-  "release_type": "bugfix",
-  "release_summary": "Prevent error reporter recursion and unhandled empty promise rejections, auto-verify client anomalies"
+  "asset_version": "566",
+  "build_timestamp": "2026-11-12T17:55:00+04:00",
+  "release_type": "perf",
+  "release_summary": "Instant setlist cache hydration, eliminate DDL table locks, non-blocking sessions and fast auto-verification"
 }

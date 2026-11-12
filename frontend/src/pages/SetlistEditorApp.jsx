@@ -53,9 +53,18 @@ export default function SetlistEditorApp() {
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
 
-  const [setlistData, setSetlistData] = useState(null);
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [cachedInitial] = useState(() => {
+    try {
+      const raw = localStorage.getItem(`wp_setlist_cache_${id}`);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [setlistData, setSetlistData] = useState(() => cachedInitial?.setlist || null);
+  const [items, setItems] = useState(() => cachedInitial?.items || []);
+  const [loading, setLoading] = useState(() => !cachedInitial);
   usePageReady(loading || authLoading);
   const [error, setError] = useState(null);
 
@@ -279,29 +288,24 @@ export default function SetlistEditorApp() {
         if (data.team) setTeam(data.team);
         if (data.chat_id) setTeamChatId(data.chat_id);
         else if (data.chat_id === 0) setTeamChatId(null);
+        try {
+          localStorage.setItem(`wp_setlist_cache_${id}`, JSON.stringify({
+            setlist: data.setlist,
+            items: data.items || [],
+            team: data.team || [],
+            chat_id: data.chat_id
+          }));
+        } catch {}
         setLoading(false);
       })
       .catch(err => {
         console.error(err);
-        setError(t('setlists.errorFetch'));
+        if (!setlistData) {
+          setError(t('setlists.errorFetch'));
+        }
         setLoading(false);
       });
   };
-
-  // Fetch team count for header badge
-  useEffect(() => {
-    if (!id) return;
-    fetch(`/setlists_api.php?action=get_setlist_team&setlist_id=${id}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.ok) {
-          setTeam(data.team || []);
-          if (data.chat_id) setTeamChatId(data.chat_id);
-          else if (data.chat_id === 0) setTeamChatId(null);
-        }
-      })
-      .catch(() => {});
-  }, [id]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -309,20 +313,12 @@ export default function SetlistEditorApp() {
   }, [id, authLoading]);
 
   useEffect(() => {
+    let lastSync = 0;
     const handleSync = () => {
+      const now = Date.now();
+      if (now - lastSync < 2500) return; // Debounce 2.5s
+      lastSync = now;
       fetchSetlist();
-      if (id) {
-        fetch(`/setlists_api.php?action=get_setlist_team&setlist_id=${id}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.ok) {
-              setTeam(data.team || []);
-              if (data.chat_id) setTeamChatId(data.chat_id);
-              else if (data.chat_id === 0) setTeamChatId(null);
-            }
-          })
-          .catch(() => {});
-      }
     };
     window.addEventListener('focus', handleSync);
     window.addEventListener('worship:setlists-changed', handleSync);

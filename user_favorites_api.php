@@ -18,6 +18,11 @@ if (empty($_SESSION['user_id'])) {
   exit;
 }
 
+$action = (string)($_GET['action'] ?? '');
+if ($_SERVER['REQUEST_METHOD'] === 'GET' || in_array($action, ['get_favorites', 'list'], true)) {
+  session_write_close();
+}
+
 try {
   $conn = wp_runtime_open_mysqli();
   wp_runtime_ensure_song_title_columns_mysqli($conn);
@@ -38,6 +43,13 @@ function wp_favorites_table_columns(mysqli $conn, string $table): array {
 }
 
 function wp_ensure_unified_favorites(mysqli $conn, int $userId): void {
+  static $done = false;
+  if ($done) return;
+  $done = true;
+
+  $lockFile = __DIR__ . '/data/.user_favorites_schema_v2.lock';
+  if (is_file($lockFile)) return;
+
   $conn->query("
     CREATE TABLE IF NOT EXISTS user_favorites (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -62,6 +74,7 @@ function wp_ensure_unified_favorites(mysqli $conn, int $userId): void {
     $conn->query("ALTER TABLE user_favorites ADD COLUMN position INT UNSIGNED NOT NULL DEFAULT 0 AFTER target_key");
     $conn->query("ALTER TABLE user_favorites ADD KEY idx_user_fav_position (user_id, position)");
   }
+  @file_put_contents($lockFile, '1');
 
   $legacyTable = $conn->query("SHOW TABLES LIKE 'favorites'");
   if (!$legacyTable || $legacyTable->num_rows === 0) return;

@@ -196,6 +196,9 @@ function wp_ensure_worship_roles_schema(PDO $pdo): void {
   if ($schemaDone) return;
   $schemaDone = true;
 
+  $lockFile = __DIR__ . '/data/.worship_roles_schema_v2.lock';
+  if (is_file($lockFile)) return;
+
   try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS worship_roles (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -237,6 +240,8 @@ function wp_ensure_worship_roles_schema(PDO $pdo): void {
   try {
     $pdo->exec("ALTER TABLE users ADD COLUMN avatar_gradient VARCHAR(120) DEFAULT NULL");
   } catch (Throwable $e) {}
+
+  @file_put_contents($lockFile, '1');
 }
 
 // ✅ GET all active worship team roles

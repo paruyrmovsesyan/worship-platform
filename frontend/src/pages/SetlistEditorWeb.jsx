@@ -46,9 +46,18 @@ export default function SetlistEditorWeb() {
   const { user, loading: authLoading } = useAuth();
   const isPWA = useIsPWA();
   
-  const [setlistData, setSetlistData] = useState(null);
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [cachedInitial] = useState(() => {
+    try {
+      const raw = localStorage.getItem(`wp_setlist_cache_${id}`);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [setlistData, setSetlistData] = useState(() => cachedInitial?.setlist || null);
+  const [items, setItems] = useState(() => cachedInitial?.items || []);
+  const [loading, setLoading] = useState(() => !cachedInitial);
   usePageReady(loading || authLoading);
   const [error, setError] = useState(null);
   
@@ -235,11 +244,21 @@ export default function SetlistEditorWeb() {
         if (Array.isArray(data.team)) setTeam(data.team);
         if (data.chat_id) setTeamChatId(data.chat_id);
         else if (data.chat_id === 0) setTeamChatId(null);
+        try {
+          localStorage.setItem(`wp_setlist_cache_${id}`, JSON.stringify({
+            setlist: data.setlist,
+            items: data.items || [],
+            team: data.team || [],
+            chat_id: data.chat_id
+          }));
+        } catch {}
         setLoading(false);
       })
       .catch(err => {
         console.error(err);
-        setError(t('setlists.errorFetch'));
+        if (!setlistData) {
+          setError(t('setlists.errorFetch'));
+        }
         setLoading(false);
       });
   };
