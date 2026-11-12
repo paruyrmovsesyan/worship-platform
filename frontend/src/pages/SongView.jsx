@@ -999,8 +999,22 @@ export default function SongView() {
   // Save current transposed key / capo directly into the setlist item
   const handleSaveKeyToSetlist = async () => {
     const searchParams = new URLSearchParams(location.search);
-    const itemId = setlistNavData?.current?.item_id || searchParams.get('setlist_item_id');
     const setlistId = setlistNavData?.setlist?.id || setlistNavData?.current?.setlist_id || searchParams.get('setlist_id');
+    let itemId = setlistNavData?.current?.item_id || searchParams.get('setlist_item_id');
+
+    // If itemId wasn't in URL or setlistNavData yet, look up in cached setlist items
+    if (!itemId && setlistId) {
+      try {
+        const cacheKey = `wp_setlist_cache_${setlistId}`;
+        const raw = localStorage.getItem(cacheKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const itm = (parsed.items || []).find(i => String(i.song_id) === String(id));
+          if (itm?.id) itemId = itm.id;
+        }
+      } catch {}
+    }
+
     if (!itemId || savingKeyToSetlist) return;
 
     setSavingKeyToSetlist(true);
@@ -1084,8 +1098,7 @@ export default function SongView() {
   const setlistCurrentCapo = Number(setlistNavData?.current?.capo !== undefined ? setlistNavData.current.capo : (searchParams.get('capo') || 0));
   const isKeyOrCapoChangedInSetlist = Boolean(
     isFromSetlist &&
-    user &&
-    (soundingKey !== setlistCurrentKey || Number(capo || 0) !== setlistCurrentCapo)
+    (!songKeysEqual(soundingKey, setlistCurrentKey) || Number(capo || 0) !== setlistCurrentCapo)
   );
 
   const currentChords = song?.chords ? renderWithChords(song.chords, semi - capo, useFlats) : '';
@@ -1277,33 +1290,6 @@ export default function SongView() {
       <div className="sv-meta-row">
         <div className="sv-meta-pill key-pill">{t('songView.keyPrefix')} {soundingKey || song.song_key || '?'}</div>
         {Number.parseInt(song.bpm, 10) > 0 && <div className="sv-meta-pill">BPM: {song.bpm}</div>}
-        {(isKeyOrCapoChangedInSetlist || keySavedFeedback) && (
-          <button
-            type="button"
-            className={`sv-save-key-pill animate-fade-in ${keySavedFeedback ? 'saved-success' : ''}`}
-            onClick={handleSaveKeyToSetlist}
-            disabled={savingKeyToSetlist}
-            title="Պահպանել այս տոնայնությունը երգացանկում"
-          >
-            {savingKeyToSetlist ? (
-              <span>Պահպանվում է...</span>
-            ) : keySavedFeedback ? (
-              <>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span>Պահպանված է</span>
-              </>
-            ) : (
-              <>
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                  <polyline points="7 3 7 8 15 8"></polyline>
-                </svg>
-                <span>Պահպանել ({soundingKey}{capo > 0 ? ` C${capo}` : ''})</span>
-              </>
-            )}
-          </button>
-        )}
         
         <div className="sv-header-actions" style={{ marginLeft: 'auto' }}>
             {(setlistNavData?.setlist?.id || setlistNavData?.current?.setlist_id) && (
@@ -1831,6 +1817,69 @@ export default function SongView() {
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
       </div>,
+      document.body
+    )}
+
+    {/* Floating / Sticky Setlist Key Save Bar */}
+    {(isKeyOrCapoChangedInSetlist || keySavedFeedback) && createPortal(
+      <aside
+        className={`sv-sticky-save-bar ${setlistNavData ? 'has-seq-nav' : ''}`}
+        aria-live="polite"
+      >
+        <div className="sv-sticky-save-content">
+          <div className="sv-sticky-save-info">
+            <div className={`sv-sticky-save-badge ${keySavedFeedback ? 'is-success' : ''}`}>
+              {keySavedFeedback ? (
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                </svg>
+              )}
+            </div>
+            <div className="sv-sticky-save-text">
+              <span className="sv-sticky-save-title">
+                {keySavedFeedback
+                  ? 'Տոնայնությունը պահպանվեց'
+                  : `Նոր տոնայնություն՝ ${soundingKey}${capo > 0 ? ` (Capo ${capo})` : ''}`}
+              </span>
+              <span className="sv-sticky-save-sub">
+                {keySavedFeedback
+                  ? 'Երգացանկն ակնթարթորեն թարմացված է'
+                  : 'Սեղմեք՝ երգացանկում պահպանելու համար'}
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            className={`sv-sticky-save-btn ${keySavedFeedback ? 'is-saved' : ''}`}
+            onClick={handleSaveKeyToSetlist}
+            disabled={savingKeyToSetlist}
+          >
+            {savingKeyToSetlist ? (
+              <span>⏳ Պահպանվում է...</span>
+            ) : keySavedFeedback ? (
+              <>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Պահպանված է</span>
+              </>
+            ) : (
+              <>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                <span>Պահպանել</span>
+              </>
+            )}
+          </button>
+        </div>
+      </aside>,
       document.body
     )}
 
