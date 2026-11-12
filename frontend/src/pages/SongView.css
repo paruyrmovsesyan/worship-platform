@@ -922,7 +922,9 @@ body.sv-modal-open {
 }
 
 body.sv-modal-open #wpAppDock,
-body.sv-modal-open .mobile-bottom-nav {
+body.sv-modal-open .mobile-bottom-nav,
+body.sv-modal-open .seq-nav,
+body.sv-modal-open .sv-sticky-save-bar {
   display: none !important;
   opacity: 0 !important;
   pointer-events: none !important;

@@ -419,7 +419,8 @@ export default function SongView() {
 
   // Lock body scroll and mark modal open so MobileNav / bottom dock is hidden
   useEffect(() => {
-    if (!isSetlistModalOpen) return undefined;
+    const isAnyModalOpen = isSetlistModalOpen || isToolsMenuOpen || isShareModalOpen || isAIStudioOpen;
+    if (!isAnyModalOpen) return undefined;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     document.body.classList.add('sv-modal-open');
@@ -427,7 +428,7 @@ export default function SongView() {
       document.body.style.overflow = prevOverflow;
       document.body.classList.remove('sv-modal-open');
     };
-  }, [isSetlistModalOpen]);
+  }, [isSetlistModalOpen, isToolsMenuOpen, isShareModalOpen, isAIStudioOpen]);
 
   const filteredSetlists = React.useMemo(() => {
     if (!userSetlists || !Array.isArray(userSetlists)) return [];
@@ -2166,10 +2167,10 @@ export default function SongView() {
         <div className="sv-tools-portal-overlay" onClick={() => setIsToolsMenuOpen(false)}>
           <div
             className="sv-tools-dropdown-menu sv-tools-dropdown-portal"
-            style={{
+            style={!isPWA ? {
               top: `${toolsMenuPos.top}px`,
               right: `${toolsMenuPos.right}px`,
-            }}
+            } : undefined}
             onClick={e => e.stopPropagation()}
           >
             <div className="sv-tools-dropdown-header">

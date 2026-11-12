@@ -46,7 +46,9 @@
 
 /* Any active conversation page is full-screen and provides its own footer. */
 body.chat-active .mobile-bottom-nav,
-body.chat-active #wpAppDock {
+body.chat-active #wpAppDock,
+body.sv-modal-open .mobile-bottom-nav,
+body.sv-modal-open #wpAppDock {
   display: none !important;
   pointer-events: none !important;
 }
