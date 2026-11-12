@@ -1889,13 +1889,13 @@ export default function SongView() {
             <div className="sv-sticky-save-text">
               <span className="sv-sticky-save-title">
                 {(isFromSetlist ? keySavedFeedback : favKeySavedFeedback)
-                  ? 'Տոնայնությունը պահպանվեց'
-                  : `Նոր տոնայնություն՝ ${soundingKey}${capo > 0 ? ` (Capo ${capo})` : ''}`}
+                  ? t('songView.setlistKeySaved', 'Տոնայնությունը պահպանվեց')
+                  : `${t('songView.newKey', 'Նոր տոնայնություն')}՝ ${soundingKey}${capo > 0 ? ` (Capo ${capo})` : ''}`}
               </span>
               <span className="sv-sticky-save-sub">
                 {(isFromSetlist ? keySavedFeedback : favKeySavedFeedback)
-                  ? (isFromSetlist ? 'Երգացանկն ակնթարթորեն թարմացված է' : 'Պահպանվածներն ակնթարթորեն թարմացված են')
-                  : (isFromSetlist ? 'Սեղմեք՝ երգացանկում պահպանելու համար' : 'Սեղմեք՝ պահպանվածներում պահելու համար')}
+                  ? (isFromSetlist ? t('songView.setlistInstantUpdated', 'Երգացանկն ակնթարթորեն թարմացված է') : t('songView.favsInstantUpdated', 'Պահպանվածներն ակնթարթորեն թարմացված են'))
+                  : (isFromSetlist ? t('songView.clickToSaveSetlist', 'Սեղմեք՝ երգացանկում պահպանելու համար') : t('songView.clickToSaveFavs', 'Սեղմեք՝ պահպանվածներում պահելու համար'))}
               </span>
             </div>
           </div>
@@ -1906,13 +1906,13 @@ export default function SongView() {
             disabled={isFromSetlist ? savingKeyToSetlist : savingFavKey}
           >
             {(isFromSetlist ? savingKeyToSetlist : savingFavKey) ? (
-              <span>⏳ Պահպանվում է...</span>
+              <span>⏳ {t('common.saving', 'Պահպանվում է...')}</span>
             ) : (isFromSetlist ? keySavedFeedback : favKeySavedFeedback) ? (
               <>
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
-                <span>Պահպանված է</span>
+                <span>{t('songView.keyIsSaved', 'Պահպանված է')}</span>
               </>
             ) : (
               <>
@@ -1921,7 +1921,7 @@ export default function SongView() {
                   <polyline points="17 21 17 13 7 13 7 21"></polyline>
                   <polyline points="7 3 7 8 15 8"></polyline>
                 </svg>
-                <span>Պահպանել</span>
+                <span>{t('songView.saveKey', 'Պահպանել')}</span>
               </>
             )}
           </button>
