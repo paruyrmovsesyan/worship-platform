@@ -216,6 +216,8 @@ export default function SongView() {
   const [activeEmbedId, setActiveEmbedId] = useState(null);
   const [savingKeyToSetlist, setSavingKeyToSetlist] = useState(false);
   const [keySavedFeedback, setKeySavedFeedback] = useState(false);
+  const [savingFavKey, setSavingFavKey] = useState(false);
+  const [favKeySavedFeedback, setFavKeySavedFeedback] = useState(false);
 
   // Web-Pro state (website desktop only)
   const isPWA = useIsAppMode();
@@ -912,27 +914,65 @@ export default function SongView() {
     if (difference !== null) setSemi(difference);
   };
 
-  const saveFavoriteKey = async (currentPlayKey) => {
-    if (!user || !isFavorite) return;
+  const handleSaveFavoriteKey = async () => {
+    if (savingFavKey || !isFavorite) return;
+    const keyToSave = playingKey || soundingKey;
+    if (!keyToSave) return;
+
+    setSavingFavKey(true);
+    setFavKeySavedFeedback(true);
+
+    const normKey = normalizeSongKey(keyToSave);
+    setTargetKey(normKey);
+
+    // Update URL query parameters in-place so reloading preserves target key
+    try {
+      const q = new URLSearchParams(window.location.search);
+      q.set('tkey', keyToSave);
+      if (capo > 0) q.set('capo', String(capo));
+      else q.delete('capo');
+      window.history.replaceState(null, '', `${window.location.pathname}?${q.toString()}`);
+    } catch {}
+
+    // Update localStorage favorites cache for instant 0ms back navigation
+    try {
+      const raw = localStorage.getItem('wp_user_favorites_cache');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          const item = parsed.find(f => String(f.song_id || f.id) === String(id));
+          if (item) {
+            item.target_key = normKey;
+            localStorage.setItem('wp_user_favorites_cache', JSON.stringify(parsed));
+          }
+        }
+      }
+    } catch {}
+
+    broadcastTabMessage('FAVORITES_UPDATED', { songId: id, targetKey: keyToSave, isFavorite: true });
+    window.dispatchEvent(new CustomEvent('worship:favorites-changed'));
+
     try {
       const res = await fetch('/user_favorites_api.php?action=update_favorite_key', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ song_id: id, target_key: currentPlayKey })
+        body: JSON.stringify({ song_id: id, target_key: keyToSave }),
       });
       const data = await res.json();
-      if (res.ok && data.ok) {
-        setTargetKey(data.target_key || normalizeSongKey(currentPlayKey));
-        setFavMsg(t('songView.keySavedAlert'));
-        setTimeout(() => setFavMsg(''), 2000);
-      } else {
+      if (!res.ok || !data.ok) {
         throw new Error(data.error || 'Key save failed');
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       setFavMsg(t('songView.favoriteError', 'Չհաջողվեց պահպանել երգը'));
       setTimeout(() => setFavMsg(''), 2000);
+    } finally {
+      setSavingFavKey(false);
+      setTimeout(() => setFavKeySavedFeedback(false), 2500);
     }
   };
+
+  const saveFavoriteKey = handleSaveFavoriteKey;
 
   const navigateToSetlistSong = (item) => {
     if (!item || !item.id) return;
@@ -1742,9 +1782,14 @@ export default function SongView() {
         </div>
         
         {/* When outside a setlist, show favorite key save button if key changed */}
-        {!isFromSetlist && hasUnsavedKeyChange && (
-          <button className="btn btn-primary btn-sm w-100" style={{ marginTop: '12px' }} onClick={() => saveFavoriteKey(playingKey)}>
-            {t('songView.saveKey')}
+        {!isFromSetlist && isFavorite && (hasUnsavedKeyChange || favKeySavedFeedback) && (
+          <button
+            className={`btn btn-primary btn-sm w-100 ${favKeySavedFeedback ? 'btn-success' : ''}`}
+            style={{ marginTop: '12px' }}
+            onClick={handleSaveFavoriteKey}
+            disabled={savingFavKey}
+          >
+            {savingFavKey ? '⏳ Պահպանվում է...' : favKeySavedFeedback ? '✓ Պահպանված է' : t('songView.saveKey')}
           </button>
         )}
 
@@ -1821,16 +1866,17 @@ export default function SongView() {
       document.body
     )}
 
-    {/* Floating / Sticky Setlist Key Save Bar */}
-    {(isKeyOrCapoChangedInSetlist || keySavedFeedback) && createPortal(
+    {/* Floating / Sticky Key Save Bar (Setlists & Favorites) */}
+    {((isFromSetlist && (isKeyOrCapoChangedInSetlist || keySavedFeedback)) ||
+      (!isFromSetlist && isFavorite && (hasUnsavedKeyChange || favKeySavedFeedback))) && createPortal(
       <aside
         className={`sv-sticky-save-bar ${setlistNavData ? 'has-seq-nav' : ''}`}
         aria-live="polite"
       >
         <div className="sv-sticky-save-content">
           <div className="sv-sticky-save-info">
-            <div className={`sv-sticky-save-badge ${keySavedFeedback ? 'is-success' : ''}`}>
-              {keySavedFeedback ? (
+            <div className={`sv-sticky-save-badge ${(isFromSetlist ? keySavedFeedback : favKeySavedFeedback) ? 'is-success' : ''}`}>
+              {(isFromSetlist ? keySavedFeedback : favKeySavedFeedback) ? (
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
@@ -1842,26 +1888,26 @@ export default function SongView() {
             </div>
             <div className="sv-sticky-save-text">
               <span className="sv-sticky-save-title">
-                {keySavedFeedback
+                {(isFromSetlist ? keySavedFeedback : favKeySavedFeedback)
                   ? 'Տոնայնությունը պահպանվեց'
                   : `Նոր տոնայնություն՝ ${soundingKey}${capo > 0 ? ` (Capo ${capo})` : ''}`}
               </span>
               <span className="sv-sticky-save-sub">
-                {keySavedFeedback
-                  ? 'Երգացանկն ակնթարթորեն թարմացված է'
-                  : 'Սեղմեք՝ երգացանկում պահպանելու համար'}
+                {(isFromSetlist ? keySavedFeedback : favKeySavedFeedback)
+                  ? (isFromSetlist ? 'Երգացանկն ակնթարթորեն թարմացված է' : 'Պահպանվածներն ակնթարթորեն թարմացված են')
+                  : (isFromSetlist ? 'Սեղմեք՝ երգացանկում պահպանելու համար' : 'Սեղմեք՝ պահպանվածներում պահելու համար')}
               </span>
             </div>
           </div>
           <button
             type="button"
-            className={`sv-sticky-save-btn ${keySavedFeedback ? 'is-saved' : ''}`}
-            onClick={handleSaveKeyToSetlist}
-            disabled={savingKeyToSetlist}
+            className={`sv-sticky-save-btn ${(isFromSetlist ? keySavedFeedback : favKeySavedFeedback) ? 'is-saved' : ''}`}
+            onClick={isFromSetlist ? handleSaveKeyToSetlist : handleSaveFavoriteKey}
+            disabled={isFromSetlist ? savingKeyToSetlist : savingFavKey}
           >
-            {savingKeyToSetlist ? (
+            {(isFromSetlist ? savingKeyToSetlist : savingFavKey) ? (
               <span>⏳ Պահպանվում է...</span>
-            ) : keySavedFeedback ? (
+            ) : (isFromSetlist ? keySavedFeedback : favKeySavedFeedback) ? (
               <>
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12"></polyline>

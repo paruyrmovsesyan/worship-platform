@@ -1,8 +1,8 @@
 {
   "app_version": "5.3.0",
   "web_version": "5.3.0",
-  "asset_version": "569",
-  "build_timestamp": "2026-11-12T18:42:00+04:00",
+  "asset_version": "570",
+  "build_timestamp": "2026-11-12T18:59:00+04:00",
   "release_type": "ui",
-  "release_summary": "Floating sticky bottom bar for instant setlist key saving when transposing songs"
+  "release_summary": "Floating sticky bottom bar for instant key saving in Favorites as well as Setlists"
 }
