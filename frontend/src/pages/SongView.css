@@ -125,25 +125,38 @@
 }
 
 .sv-save-key-pill {
-  background: rgba(0, 212, 255, 0.12);
-  border: 1px solid rgba(0, 212, 255, 0.35);
-  color: #00d4ff;
-  padding: 4px 10px;
+  background: linear-gradient(135deg, rgba(0, 180, 219, 0.22), rgba(0, 131, 176, 0.32));
+  border: 1px solid rgba(0, 212, 255, 0.55);
+  color: #38bdf8;
+  padding: 5px 12px;
   border-radius: 99px;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  transition: all 0.15s ease;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 10px rgba(0, 180, 219, 0.22);
+}
+
+.sv-save-key-pill:hover {
+  background: linear-gradient(135deg, rgba(0, 180, 219, 0.35), rgba(0, 131, 176, 0.45));
+  border-color: #38bdf8;
+  color: #ffffff;
 }
 
 .sv-save-key-pill:active {
   transform: scale(0.95);
-  background: rgba(0, 212, 255, 0.25);
+}
+
+.sv-save-key-pill.saved-success {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  border-color: #10b981 !important;
+  color: #ffffff !important;
+  box-shadow: 0 3px 12px rgba(16, 185, 129, 0.4) !important;
 }
 
 .sv-setlist-save-key-btn {

@@ -1,8 +1,8 @@
 {
   "app_version": "5.3.0",
   "web_version": "5.3.0",
-  "asset_version": "567",
-  "build_timestamp": "2026-11-12T18:20:00+04:00",
-  "release_type": "bugfix",
-  "release_summary": "Instant optimistic setlist song key saving, unify save buttons and eliminate duplicate key save badges"
+  "asset_version": "568",
+  "build_timestamp": "2026-11-12T18:25:00+04:00",
+  "release_type": "ui",
+  "release_summary": "Move setlist song key save button to top header meta row next to key pill, avoiding need to scroll"
 }

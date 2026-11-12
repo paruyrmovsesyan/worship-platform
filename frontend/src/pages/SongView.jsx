@@ -1277,16 +1277,31 @@ export default function SongView() {
       <div className="sv-meta-row">
         <div className="sv-meta-pill key-pill">{t('songView.keyPrefix')} {soundingKey || song.song_key || '?'}</div>
         {Number.parseInt(song.bpm, 10) > 0 && <div className="sv-meta-pill">BPM: {song.bpm}</div>}
-        {!isPWA && (isKeyOrCapoChangedInSetlist || keySavedFeedback) && (
+        {(isKeyOrCapoChangedInSetlist || keySavedFeedback) && (
           <button
             type="button"
             className={`sv-save-key-pill animate-fade-in ${keySavedFeedback ? 'saved-success' : ''}`}
             onClick={handleSaveKeyToSetlist}
             disabled={savingKeyToSetlist}
-            style={keySavedFeedback ? { background: '#10b981', borderColor: '#10b981', color: '#fff' } : undefined}
             title="Պահպանել այս տոնայնությունը երգացանկում"
           >
-            {savingKeyToSetlist ? '...' : keySavedFeedback ? '✓ Պահպանված է' : `💾 Պահպանել (${soundingKey}${capo > 0 ? ` C${capo}` : ''})`}
+            {savingKeyToSetlist ? (
+              <span>Պահպանվում է...</span>
+            ) : keySavedFeedback ? (
+              <>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Պահպանված է</span>
+              </>
+            ) : (
+              <>
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                <span>Պահպանել ({soundingKey}{capo > 0 ? ` C${capo}` : ''})</span>
+              </>
+            )}
           </button>
         )}
         
@@ -1739,30 +1754,11 @@ export default function SongView() {
           </div>
         </div>
         
-        {/* If inside setlist, only show the setlist save button; otherwise show favorites save button */}
-        {isFromSetlist ? (
-          (isKeyOrCapoChangedInSetlist || keySavedFeedback) && (
-            <button
-              type="button"
-              className={`btn btn-primary btn-sm w-100 sv-setlist-save-key-btn animate-fade-in ${keySavedFeedback ? 'btn-success' : ''}`}
-              style={{
-                marginTop: '10px',
-                background: keySavedFeedback
-                  ? '#10b981'
-                  : 'linear-gradient(135deg, #00b4db, #0083b0)'
-              }}
-              onClick={handleSaveKeyToSetlist}
-              disabled={savingKeyToSetlist}
-            >
-              {savingKeyToSetlist ? 'Պահպանվում է...' : keySavedFeedback ? '✓ Տոնայնությունը պահպանվեց երգացանկում' : `💾 Պահպանել (${soundingKey}${capo > 0 ? `, Capo ${capo}` : ''}) երգացանկում`}
-            </button>
-          )
-        ) : (
-          hasUnsavedKeyChange && (
-            <button className="btn btn-primary btn-sm w-100" style={{ marginTop: '12px' }} onClick={() => saveFavoriteKey(playingKey)}>
-              {t('songView.saveKey')}
-            </button>
-          )
+        {/* When outside a setlist, show favorite key save button if key changed */}
+        {!isFromSetlist && hasUnsavedKeyChange && (
+          <button className="btn btn-primary btn-sm w-100" style={{ marginTop: '12px' }} onClick={() => saveFavoriteKey(playingKey)}>
+            {t('songView.saveKey')}
+          </button>
         )}
 
       </div>
