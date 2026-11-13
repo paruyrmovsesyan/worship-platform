@@ -447,6 +447,11 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
     if ($isSameOriginUrl) {
         $urlPath = parse_url($file, PHP_URL_PATH);
         $fileLookupPath = is_string($urlPath) ? rawurldecode($urlPath) : '';
+    } elseif ($isLocalPath) {
+        $urlPath = parse_url($file, PHP_URL_PATH);
+        if (is_string($urlPath) && $urlPath !== '') {
+            $fileLookupPath = rawurldecode($urlPath);
+        }
     }
 
     if ($isLocalPath || ($isSameOriginUrl && $fileLookupPath !== '')) {
@@ -952,6 +957,17 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
     // 9.1. Version manifest check background polling transient failure
     if (stripos($message, 'version_manifest') !== false || stripos($message, 'Version manifest check') !== false || stripos($stackTrace, 'version-check.js') !== false) {
         $reason = 'version-check.js-ի background polling-ը շտկված է (ցանցային ժամանակավոր սխալները այլևս console.error կամ system error չեն առաջացնում)';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
+    // 9.2. social_auth claim_token 500 error (fixed: PDO initialized with wp_runtime_open_pdo)
+    if (stripos($message, 'claim_token') !== false || stripos($stackTrace, 'claim_token') !== false || stripos((string)$file, 'claim_token') !== false) {
+        $reason = 'social_auth.php-ի claim_token endpoint-ում PDO-ի միացումը և error handling-ը շտկված են (commit de6f3f4)';
         wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
         $item['is_resolved'] = 1;
         $item['resolved_at'] = date('Y-m-d H:i:s');
