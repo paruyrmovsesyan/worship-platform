@@ -70,16 +70,14 @@ export default class ErrorBoundary extends React.Component {
       }
 
       const body = JSON.stringify(payload);
-      if (typeof navigator.sendBeacon === 'function') {
-        navigator.sendBeacon('/error_api.php', new Blob([body], { type: 'application/json' }));
-      } else {
+      try {
         fetch('/error_api.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: body,
           keepalive: true
         }).catch(() => {});
-      }
+      } catch (_) {}
     } catch (_) {}
   }
 
@@ -95,6 +93,12 @@ export default class ErrorBoundary extends React.Component {
             <p className="error-subtitle">
               Ծրագրում տեղի է ունեցել անսպասելի սխալ: Խնդրում ենք թարմացնել էջը կամ վերադառնալ գլխավոր էջ:
             </p>
+
+            {this.state.error?.message && (
+              <div style={{ margin: '14px 0', padding: '10px 14px', background: 'rgba(255,71,87,0.12)', border: '1px solid rgba(255,71,87,0.3)', borderRadius: '10px', color: '#ff6b81', fontSize: '0.82rem', textAlign: 'left', wordBreak: 'break-word', fontFamily: 'monospace' }}>
+                ⚠️ {this.state.error.message}
+              </div>
+            )}
 
             <div className="error-actions">
               <button className="btn-error primary" onClick={() => window.location.reload()}>

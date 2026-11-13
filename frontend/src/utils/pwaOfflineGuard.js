@@ -16,13 +16,14 @@ export function isPwaOfflineRouteAllowed(pathname = '/') {
     path === '/account' ||
     path === '/notifications' ||
     path === '/contact' ||
+    path === '/song-request' ||
     path === '/studio' ||
     path === '/tools'
   ) {
     return true;
   }
 
-  if (path.startsWith('/song/') || path.startsWith('/chat/')) {
+  if (path.startsWith('/song/') || path.startsWith('/chat/') || path.startsWith('/setlists') || path.startsWith('/song-request')) {
     return true;
   }
 

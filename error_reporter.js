@@ -282,25 +282,29 @@
       }
 
       const body = JSON.stringify(payload);
-
-      if (typeof navigator.sendBeacon === 'function') {
-        const blob = new Blob([body], { type: 'application/json' });
-        const sent = navigator.sendBeacon(ENDPOINT, blob);
-        if (sent) return;
-      }
-
+      let sentViaFetch = false;
       const fetchFn = rawFetch || window.fetch;
       if (typeof fetchFn === 'function') {
-        fetchFn(ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: body,
-          keepalive: true,
-        }).catch(function() {
-          if (!isFlushingQueue) {
-            queueOfflineError(payload);
-          }
-        });
+        try {
+          fetchFn(ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body,
+            keepalive: true,
+          }).catch(function() {
+            if (!isFlushingQueue) {
+              queueOfflineError(payload);
+            }
+          });
+          sentViaFetch = true;
+        } catch (_) {}
+      }
+
+      if (!sentViaFetch && typeof navigator.sendBeacon === 'function') {
+        try {
+          const blob = new Blob([body], { type: 'application/json' });
+          navigator.sendBeacon(ENDPOINT, blob);
+        } catch (_) {}
       }
     } catch (_) {
     } finally {
