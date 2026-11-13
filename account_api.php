@@ -136,6 +136,37 @@ if(($action === 'me' || $action === 'get_profile' || $action === 'profile') && $
   ]);
 }
 
+// ✅ Check if nickname / username is available
+if ($action === 'check_username' && $method === 'GET') {
+  $raw = (string)($_GET['username'] ?? '');
+  $username = ltrim(trim($raw), '@');
+
+  if ($username === '') {
+    out(["ok" => true, "available" => false, "reason" => "empty"]);
+  }
+  if (strlen($username) < 3) {
+    out(["ok" => true, "available" => false, "reason" => "too_short"]);
+  }
+  if (strlen($username) > 40) {
+    out(["ok" => true, "available" => false, "reason" => "too_long"]);
+  }
+  if (!preg_match('/^[a-zA-Z0-9_.]+$/', $username)) {
+    out(["ok" => true, "available" => false, "reason" => "invalid_chars"]);
+  }
+
+  // Check if current user already owns it
+  $currentUsername = (string)($_SESSION['username'] ?? '');
+  if (strcasecmp($username, $currentUsername) === 0) {
+    out(["ok" => true, "available" => true, "is_current" => true]);
+  }
+
+  $st = $pdo->prepare("SELECT id FROM users WHERE LOWER(username)=LOWER(?) AND id<>? LIMIT 1");
+  $st->execute([$username, $uid]);
+  $exists = (bool)$st->fetchColumn();
+
+  out(["ok" => true, "available" => !$exists, "reason" => $exists ? "taken" : "ok"]);
+}
+
 // ✅ POST update profile (name/email)
 // ✅ POST update profile (name only + optional pending_email)
 if($action === 'update_profile' && $method === 'POST'){

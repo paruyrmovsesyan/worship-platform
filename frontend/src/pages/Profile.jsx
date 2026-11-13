@@ -24,6 +24,7 @@ export default function Profile() {
   const [nicknameError, setNicknameError] = useState('');
   const [nicknameSaving, setNicknameSaving] = useState(false);
   const [nicknameSuccess, setNicknameSuccess] = useState(false);
+  const [nicknameStatus, setNicknameStatus] = useState(null);
 
   useEffect(() => {
     if (isLangModalOpen) {
@@ -382,31 +383,67 @@ export default function Profile() {
   };
 
   const openNicknameModal = () => {
-    setNicknameInput(user?.username ? user.username.replace(/^@+/, '') : '');
+    const curr = user?.username ? user.username.replace(/^@+/, '') : '';
+    setNicknameInput(curr);
+    setNicknameStatus(curr ? 'available' : null);
     setNicknameError('');
     setNicknameSuccess(false);
     setIsNicknameModalOpen(true);
   };
 
-  const handleSaveNickname = async (e) => {
-    if (e) e.preventDefault();
+  // Real-time nickname availability check
+  useEffect(() => {
+    if (!isNicknameModalOpen) return;
     const val = nicknameInput.trim().replace(/^@+/, '');
     if (!val) {
-      setNicknameError(language === 'am' ? 'Նիկնեյմը չի կարող դատարկ լինել' : 'Никнейм не может быть пустым');
+      setNicknameStatus(null);
+      setNicknameError('');
       return;
     }
     if (val.length < 3) {
-      setNicknameError(language === 'am' ? 'Նիկնեյմը պետք է լինի առնվազն 3 նիշ' : 'Никнейм должен быть не менее 3 символов');
+      setNicknameStatus('invalid');
+      setNicknameError(language === 'am' ? 'Նիկնեյմը պետք է լինի առնվազն 3 նիշ' : language === 'ru' ? 'Минимум 3 символа' : 'Minimum 3 characters');
       return;
     }
     if (val.length > 30) {
-      setNicknameError(language === 'am' ? 'Նիկնեյմը չի կարող գերազանցել 30 նիշը' : 'Никнейм не может превышать 30 символов');
+      setNicknameStatus('invalid');
+      setNicknameError(language === 'am' ? 'Նիկնեյմը չի կարող գերազանցել 30 նիշը' : language === 'ru' ? 'Максимум 30 символов' : 'Maximum 30 characters');
       return;
     }
     if (!/^[a-zA-Z0-9_.]+$/.test(val)) {
-      setNicknameError(language === 'am' ? 'Միայն լատինատառեր, թվեր, կետ և _' : 'Только латинские буквы, цифры, точка и _');
+      setNicknameStatus('invalid');
+      setNicknameError(language === 'am' ? 'Միայն լատինատառեր, թվեր, կետ և _' : language === 'ru' ? 'Только латинские буквы, цифры, . и _' : 'Only latin letters, numbers, dot and _');
       return;
     }
+
+    setNicknameStatus('checking');
+    setNicknameError('');
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/account_api.php?action=check_username&username=${encodeURIComponent(val)}`);
+        const data = await res.json();
+        if (data.ok) {
+          if (data.available) {
+            setNicknameStatus('available');
+            setNicknameError('');
+          } else {
+            setNicknameStatus('taken');
+            setNicknameError(language === 'am' ? `«@${val}» նիկնեյմն արդեն զբաղված է` : language === 'ru' ? `Никнейм «@${val}» уже занят` : `Nickname "@${val}" is already taken`);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }, 280);
+
+    return () => clearTimeout(timer);
+  }, [nicknameInput, isNicknameModalOpen, language]);
+
+  const handleSaveNickname = async (e) => {
+    if (e) e.preventDefault();
+    const val = nicknameInput.trim().replace(/^@+/, '');
+    if (!val || nicknameStatus !== 'available') return;
 
     setNicknameSaving(true);
     setNicknameError('');
@@ -449,6 +486,8 @@ export default function Profile() {
 
   const renderNicknameModal = () => {
     if (!isNicknameModalOpen) return null;
+    const canSave = nicknameStatus === 'available' && !nicknameSaving && nicknameInput.trim().length >= 3;
+
     return createPortal(
       <div className="modal-overlay profile-role-overlay" onClick={() => setIsNicknameModalOpen(false)}>
         <div className="modal-content profile-role-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px' }}>
@@ -478,7 +517,7 @@ export default function Profile() {
             </p>
 
             <form onSubmit={handleSaveNickname}>
-              <div style={{ position: 'relative', marginBottom: '12px' }}>
+              <div style={{ position: 'relative', marginBottom: '8px' }}>
                 <span style={{
                   position: 'absolute',
                   left: '14px',
@@ -497,7 +536,6 @@ export default function Profile() {
                   onChange={e => {
                     const cleaned = e.target.value.replace(/[^a-zA-Z0-9_.]/g, '');
                     setNicknameInput(cleaned);
-                    setNicknameError('');
                   }}
                   placeholder="username"
                   autoCapitalize="none"
@@ -506,9 +544,13 @@ export default function Profile() {
                   style={{
                     width: '100%',
                     background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(0, 212, 255, 0.35)',
+                    border: nicknameStatus === 'available'
+                      ? '1px solid rgba(46, 204, 113, 0.7)'
+                      : (nicknameStatus === 'taken' || nicknameStatus === 'invalid')
+                      ? '1px solid rgba(255, 71, 87, 0.7)'
+                      : '1px solid rgba(0, 212, 255, 0.35)',
                     borderRadius: '12px',
-                    padding: '12px 14px 12px 34px',
+                    padding: '12px 42px 12px 34px',
                     color: '#fff',
                     fontSize: '1rem',
                     fontWeight: 600,
@@ -516,21 +558,49 @@ export default function Profile() {
                     boxSizing: 'border-box'
                   }}
                 />
+                <div style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  pointerEvents: 'none'
+                }}>
+                  {nicknameStatus === 'checking' && (
+                    <span style={{ fontSize: '0.8rem', color: '#8fa0b5' }}>⏳</span>
+                  )}
+                  {nicknameStatus === 'available' && (
+                    <span style={{ color: '#2ecc71', fontSize: '1.05rem', fontWeight: 800 }} title="Ազատ է">✓</span>
+                  )}
+                  {(nicknameStatus === 'taken' || nicknameStatus === 'invalid') && (
+                    <span style={{ color: '#ff4757', fontSize: '1rem', fontWeight: 700 }} title="Անհասանելի">✕</span>
+                  )}
+                </div>
               </div>
 
+              {nicknameStatus === 'available' && !nicknameError && (
+                <div style={{ color: '#2ecc71', fontSize: '0.8rem', marginBottom: '12px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span>✓</span>
+                  <span>
+                    {language === 'am' ? 'Այս նիկնեյմն ազատ է' : language === 'ru' ? 'Этот никнейм свободен' : 'This nickname is available'}
+                  </span>
+                </div>
+              )}
+
               {nicknameError && (
-                <div style={{ color: '#ff4757', fontSize: '0.82rem', marginBottom: '14px', fontWeight: 500 }}>
+                <div style={{ color: '#ff4757', fontSize: '0.82rem', marginBottom: '12px', fontWeight: 500 }}>
                   ⚠️ {nicknameError}
                 </div>
               )}
 
               {nicknameSuccess && (
-                <div style={{ color: '#2ecc71', fontSize: '0.82rem', marginBottom: '14px', fontWeight: 500 }}>
+                <div style={{ color: '#2ecc71', fontSize: '0.82rem', marginBottom: '12px', fontWeight: 500 }}>
                   ✓ {language === 'am' ? 'Նիկնեյմը հաջողությամբ պահպանվեց' : 'Никнейм успешно сохранен'}
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '14px' }}>
                 <button
                   type="button"
                   onClick={() => setIsNicknameModalOpen(false)}
@@ -549,16 +619,18 @@ export default function Profile() {
                 </button>
                 <button
                   type="submit"
-                  disabled={nicknameSaving}
+                  disabled={!canSave}
                   style={{
                     flex: 1,
                     padding: '12px',
                     borderRadius: '12px',
                     border: 'none',
-                    background: 'linear-gradient(135deg, #00d4ff, #0072ff)',
-                    color: '#fff',
+                    background: canSave ? 'linear-gradient(135deg, #00d4ff, #0072ff)' : 'rgba(255,255,255,0.08)',
+                    color: canSave ? '#fff' : '#68778d',
                     fontWeight: 700,
-                    cursor: nicknameSaving ? 'not-allowed' : 'pointer'
+                    cursor: canSave ? 'pointer' : 'not-allowed',
+                    boxShadow: canSave ? '0 4px 15px rgba(0, 212, 255, 0.3)' : 'none',
+                    transition: 'all 0.2s'
                   }}
                 >
                   {nicknameSaving ? '...' : (language === 'am' ? 'Պահպանել' : 'Сохранить')}

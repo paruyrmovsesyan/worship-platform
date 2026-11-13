@@ -1,8 +1,8 @@
 {
   "app_version": "5.3.0",
   "web_version": "5.3.0",
-  "asset_version": "575",
-  "build_timestamp": "2026-11-13T20:53:00+04:00",
+  "asset_version": "576",
+  "build_timestamp": "2026-11-13T21:00:00+04:00",
   "release_type": "feature",
-  "release_summary": "Add unique nickname (@username) feature with in-profile editing and global search support"
+  "release_summary": "Real-time nickname availability check with visual indicator before saving"
 }
