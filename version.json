@@ -1,8 +1,8 @@
 {
-  "app_version": "5.3.0",
-  "web_version": "5.3.0",
+  "app_version": "5.3.1",
+  "web_version": "5.3.1",
   "asset_version": "576",
-  "build_timestamp": "2026-11-13T21:00:00+04:00",
-  "release_type": "feature",
-  "release_summary": "Real-time nickname availability check with visual indicator before saving"
+  "build_timestamp": "2026-11-13T21:05:00+04:00",
+  "release_type": "bugfix",
+  "release_summary": "Fix undefined PDO in social_auth claim_token endpoint"
 }

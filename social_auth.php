@@ -313,35 +313,51 @@ if ($endpointAction === 'status') {
 }
 
 if ($endpointAction === 'claim_token' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $d = json_decode(file_get_contents('php://input'), true);
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+
+    $d = json_decode((string)file_get_contents('php://input'), true);
     $token = trim((string)($d['token'] ?? ''));
     if ($token === '') {
-        header('Content-Type: application/json');
-        echo json_encode(["ok" => false, "error" => "No token provided"]);
+        echo json_encode(["ok" => false, "error" => "No token provided"], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
-    $st = $pdo->prepare("SELECT user_id, device_name FROM user_sessions WHERE session_key = 'social_login_claim' AND selector = ? AND expires_at > NOW() LIMIT 1");
-    $st->execute([$token]);
-    $claim = $st->fetch(PDO::FETCH_ASSOC);
-    if (!$claim) {
-        header('Content-Type: application/json');
-        echo json_encode(["ok" => false, "error" => "Invalid or expired token"]);
+    try {
+        $pdo = wp_runtime_open_pdo();
+    } catch (Throwable $e) {
+        error_log('[social_auth] claim_token pdo connect failed: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(["ok" => false, "error" => "Database connection error"], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
-    // Delete it so it can't be claimed again
-    $pdo->prepare("DELETE FROM user_sessions WHERE session_key = 'social_login_claim' AND selector = ?")->execute([$token]);
+    try {
+        $st = $pdo->prepare("SELECT user_id, device_name FROM user_sessions WHERE session_key = 'social_login_claim' AND selector = ? AND expires_at > NOW() LIMIT 1");
+        $st->execute([$token]);
+        $claim = $st->fetch(PDO::FETCH_ASSOC);
+        if (!$claim) {
+            echo json_encode(["ok" => false, "error" => "Invalid or expired token"], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
 
-    // Issue session
-    $user = wp_social_auth_find_user_by_id($pdo, (int)$claim['user_id']);
-    if ($user) {
-        wp_social_auth_issue_session($pdo, $user, (string)$claim['device_name'], true); // Always issue with remember=true for PWA claim
+        // Delete it so it can't be claimed again
+        $pdo->prepare("DELETE FROM user_sessions WHERE session_key = 'social_login_claim' AND selector = ?")->execute([$token]);
+
+        // Issue session
+        $user = wp_social_auth_find_user_by_id($pdo, (int)$claim['user_id']);
+        if ($user) {
+            wp_social_auth_issue_session($pdo, $user, (string)($claim['device_name'] ?? 'pwa'), true); // Always issue with remember=true for PWA claim
+        }
+
+        echo json_encode(["ok" => true], JSON_UNESCAPED_UNICODE);
+        exit;
+    } catch (Throwable $e) {
+        error_log('[social_auth] claim_token processing failed: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(["ok" => false, "error" => "Failed to claim token"], JSON_UNESCAPED_UNICODE);
+        exit;
     }
-
-    header('Content-Type: application/json');
-    echo json_encode(["ok" => true]);
-    exit;
 }
 
 $provider = strtolower(trim((string)($_GET['provider'] ?? $_POST['provider'] ?? '')));
