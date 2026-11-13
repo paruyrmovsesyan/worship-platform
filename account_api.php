@@ -141,7 +141,9 @@ if(($action === 'me' || $action === 'get_profile' || $action === 'profile') && $
 if($action === 'update_profile' && $method === 'POST'){
   $d = readJson();
   $name = trim((string)($d["name"] ?? ''));
-  $username = trim((string)($d["username"] ?? ''));
+  if ($name === '' && !empty($_SESSION['name'])) {
+    $name = (string)$_SESSION['name'];
+  }
   $email = trim((string)($d["email"] ?? ''));
   $birth_date = trim((string)($d["birth_date"] ?? ''));
   $gender = trim((string)($d["gender"] ?? ''));
@@ -161,16 +163,20 @@ if($action === 'update_profile' && $method === 'POST'){
   $pdo->prepare("UPDATE users SET name=?, birth_date=?, gender=?, phone_number=? WHERE id=?")->execute([$name, $bDate, $gndr, $phone, $uid]);
   $_SESSION['name'] = $name;
 
-  // update username
-  if ($username !== '') {
-    if(strlen($username) > 80) out(["error"=>"Username too long"], 400);
-    if (preg_match('/\s/u', $username)) out(["error"=>"Մուտքանունը չի կարող բացատ պարունակել։"], 400);
-    $st = $pdo->prepare("SELECT id FROM users WHERE LOWER(username)=LOWER(?) AND id<>? LIMIT 1");
-    $st->execute([$username, $uid]);
-    if($st->fetchColumn()) out(["error"=>"Այս մուտքանունով (username) օգտատեր արդեն կա"], 409);
+  // update username / nickname
+  if (array_key_exists('username', $d)) {
+    $username = ltrim(trim((string)$d['username']), '@');
+    if ($username !== '') {
+      if(strlen($username) > 40) out(["error"=>"Նիկնեյմը չափազանց երկար է (առավելագույնը 40 նիշ)"], 400);
+      if(strlen($username) < 3) out(["error"=>"Նիկնեյմը պետք է լինի առնվազն 3 նիշ"], 400);
+      if (!preg_match('/^[a-zA-Z0-9_.]+$/', $username)) out(["error"=>"Նիկնեյմը կարող է պարունակել միայն լատինատառեր, թվեր, կետ և ընդգծում (_)"], 400);
+      $st = $pdo->prepare("SELECT id FROM users WHERE LOWER(username)=LOWER(?) AND id<>? LIMIT 1");
+      $st->execute([$username, $uid]);
+      if($st->fetchColumn()) out(["error"=>"Այս նիկնեյմով (@{$username}) օգտատեր արդեն գրանցված է"], 409);
 
-    $pdo->prepare("UPDATE users SET username=? WHERE id=?")->execute([$username, $uid]);
-    $_SESSION['username'] = $username;
+      $pdo->prepare("UPDATE users SET username=? WHERE id=?")->execute([$username, $uid]);
+      $_SESSION['username'] = $username;
+    }
   }
 
   // optional: if email passed here, set pending_email (NOT direct)

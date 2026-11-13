@@ -9,7 +9,7 @@ import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
 import './Profile.css';
 
 export default function Profile() {
-  const { user, logout, loading: authLoading } = useAuth();
+  const { user, setUser, logout, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { t, language, setLanguage } = useLanguage();
   const isPWA = useIsAppMode();
@@ -19,6 +19,11 @@ export default function Profile() {
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
+  const [nicknameInput, setNicknameInput] = useState('');
+  const [nicknameError, setNicknameError] = useState('');
+  const [nicknameSaving, setNicknameSaving] = useState(false);
+  const [nicknameSuccess, setNicknameSuccess] = useState(false);
 
   useEffect(() => {
     if (isLangModalOpen) {
@@ -375,6 +380,197 @@ export default function Profile() {
       document.body
     );
   };
+
+  const openNicknameModal = () => {
+    setNicknameInput(user?.username ? user.username.replace(/^@+/, '') : '');
+    setNicknameError('');
+    setNicknameSuccess(false);
+    setIsNicknameModalOpen(true);
+  };
+
+  const handleSaveNickname = async (e) => {
+    if (e) e.preventDefault();
+    const val = nicknameInput.trim().replace(/^@+/, '');
+    if (!val) {
+      setNicknameError(language === 'am' ? 'Նիկնեյմը չի կարող դատարկ լինել' : 'Никнейм не может быть пустым');
+      return;
+    }
+    if (val.length < 3) {
+      setNicknameError(language === 'am' ? 'Նիկնեյմը պետք է լինի առնվազն 3 նիշ' : 'Никнейм должен быть не менее 3 символов');
+      return;
+    }
+    if (val.length > 30) {
+      setNicknameError(language === 'am' ? 'Նիկնեյմը չի կարող գերազանցել 30 նիշը' : 'Никнейм не может превышать 30 символов');
+      return;
+    }
+    if (!/^[a-zA-Z0-9_.]+$/.test(val)) {
+      setNicknameError(language === 'am' ? 'Միայն լատինատառեր, թվեր, կետ և _' : 'Только латинские буквы, цифры, точка и _');
+      return;
+    }
+
+    setNicknameSaving(true);
+    setNicknameError('');
+    try {
+      const res = await fetch('/account_api.php?action=update_profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: user.name || val,
+          username: val
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setNicknameSuccess(true);
+        if (setUser) {
+          setUser(prev => ({ ...prev, username: val }));
+        }
+        try {
+          const raw = localStorage.getItem('worship_user');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            parsed.username = val;
+            localStorage.setItem('worship_user', JSON.stringify(parsed));
+          }
+        } catch {}
+        setTimeout(() => {
+          setIsNicknameModalOpen(false);
+          setNicknameSuccess(false);
+        }, 800);
+      } else {
+        setNicknameError(data.error || 'Սխալ է տեղի ունեցել');
+      }
+    } catch (err) {
+      setNicknameError('Ցանցային սխալ');
+    } finally {
+      setNicknameSaving(false);
+    }
+  };
+
+  const renderNicknameModal = () => {
+    if (!isNicknameModalOpen) return null;
+    return createPortal(
+      <div className="modal-overlay profile-role-overlay" onClick={() => setIsNicknameModalOpen(false)}>
+        <div className="modal-content profile-role-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+          <div className="profile-role-drag-handle" />
+          <div className="modal-header profile-role-header">
+            <div className="profile-role-title-wrap">
+              <span className="profile-role-title-badge">🏷️</span>
+              <h3>
+                {language === 'am' ? 'Օգտատիրոջ Նիկնեյմ' : language === 'ru' ? 'Никнейм пользователя' : 'User Nickname'}
+              </h3>
+            </div>
+            <button
+              className="profile-role-close-btn"
+              onClick={() => setIsNicknameModalOpen(false)}
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
+          <div style={{ padding: '0 20px 24px' }}>
+            <p style={{ fontSize: '0.86rem', color: '#8fa0b5', lineHeight: '1.45', margin: '0 0 16px' }}>
+              {language === 'am'
+                ? 'Ձեր եզակի @նիկնեյմը, որով ընկերներն ու երաժիշտները կարող են ձեզ արագ գտնել որոնման մեջ և ավելացնել երգացանկերում։'
+                : language === 'ru'
+                ? 'Ваш уникальный @никнейм, по которому друзья и музыканты могут быстро находить вас в поиске и приглашать в сет-листы.'
+                : 'Your unique @nickname for friends and musicians to quickly find you in search and invite you to setlists.'}
+            </p>
+
+            <form onSubmit={handleSaveNickname}>
+              <div style={{ position: 'relative', marginBottom: '12px' }}>
+                <span style={{
+                  position: 'absolute',
+                  left: '14px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#00d4ff',
+                  fontWeight: 700,
+                  fontSize: '1rem',
+                  pointerEvents: 'none'
+                }}>
+                  @
+                </span>
+                <input
+                  type="text"
+                  value={nicknameInput}
+                  onChange={e => {
+                    const cleaned = e.target.value.replace(/[^a-zA-Z0-9_.]/g, '');
+                    setNicknameInput(cleaned);
+                    setNicknameError('');
+                  }}
+                  placeholder="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  style={{
+                    width: '100%',
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(0, 212, 255, 0.35)',
+                    borderRadius: '12px',
+                    padding: '12px 14px 12px 34px',
+                    color: '#fff',
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              {nicknameError && (
+                <div style={{ color: '#ff4757', fontSize: '0.82rem', marginBottom: '14px', fontWeight: 500 }}>
+                  ⚠️ {nicknameError}
+                </div>
+              )}
+
+              {nicknameSuccess && (
+                <div style={{ color: '#2ecc71', fontSize: '0.82rem', marginBottom: '14px', fontWeight: 500 }}>
+                  ✓ {language === 'am' ? 'Նիկնեյմը հաջողությամբ պահպանվեց' : 'Никнейм успешно сохранен'}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsNicknameModalOpen(false)}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    background: 'transparent',
+                    color: '#fff',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {language === 'am' ? 'Չեղարկել' : 'Отмена'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={nicknameSaving}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #00d4ff, #0072ff)',
+                    color: '#fff',
+                    fontWeight: 700,
+                    cursor: nicknameSaving ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {nicknameSaving ? '...' : (language === 'am' ? 'Պահպանել' : 'Сохранить')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+  };
   const [supportTopic, setSupportTopic] = useState('question');
   const [supportMessage, setSupportMessage] = useState('');
   const [supportContact, setSupportContact] = useState('');
@@ -632,6 +828,13 @@ export default function Profile() {
           </div>
           <div className="profile-info">
             <h3>{user.name}</h3>
+            <div className="profile-nickname-badge-row" onClick={openNicknameModal}>
+              {user.username ? (
+                <span className="profile-nickname-tag">@{user.username.replace(/^@+/, '')} <span style={{ opacity: 0.65, fontSize: '0.72rem' }}>✏️</span></span>
+              ) : (
+                <span className="profile-nickname-tag profile-nickname-tag--add">+ Ընտրել նիկնեյմ (@nickname)</span>
+              )}
+            </div>
             <p className="profile-email">{user.email}</p>
             <div className="profile-role-badge-tag" onClick={() => setIsRoleModalOpen(true)}>
               {currentRoleObj ? (
@@ -720,6 +923,7 @@ export default function Profile() {
         </div>
 
         {renderRoleModal()}
+        {renderNicknameModal()}
 
         {isLangModalOpen && createPortal(
           <div className="modal-overlay profile-lang-overlay" onClick={() => setIsLangModalOpen(false)}>

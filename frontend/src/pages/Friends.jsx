@@ -390,6 +390,9 @@ export default function Friends() {
       </div>
       <div className="friend-main">
         <strong>{friend.name}</strong>
+        {friend.username && (
+          <span style={{ color: '#00d4ff', fontSize: '0.78rem', fontWeight: 600 }}>@{friend.username.replace(/^@+/, '')}</span>
+        )}
         <span>{friend.email}</span>
       </div>
       <div className="friend-row-actions">
@@ -521,6 +524,9 @@ export default function Friends() {
                     </div>
                     <div className="friend-main">
                       <strong>{u.name}</strong>
+                      {u.username && (
+                        <span style={{ color: '#00d4ff', fontSize: '0.78rem', fontWeight: 600 }}>@{u.username.replace(/^@+/, '')}</span>
+                      )}
                       <span>{u.email}</span>
                     </div>
                     <div className="friend-row-actions">
