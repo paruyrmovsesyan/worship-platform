@@ -1,10 +1,44 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { subscribeToTabMessages } from '../utils/webPwaEnhancements';
+import { renderWithChords } from '../utils/chordTransposer';
+import { triggerHaptic, setupAndroidBackButton } from '../utils/nativeFeatures';
 import LiveStageBar from '../components/LiveStageBar';
 import './SetlistLive.css';
+
+const KEY_SEMITONES = {
+  'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 'E': 4,
+  'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8, 'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11
+};
+
+const getKeyTransitionInfo = (k1, k2) => {
+  if (!k1 || !k2) return null;
+  const root1 = String(k1).trim().replace(/m$/, '');
+  const root2 = String(k2).trim().replace(/m$/, '');
+  const semi1 = KEY_SEMITONES[root1];
+  const semi2 = KEY_SEMITONES[root2];
+  if (semi1 === undefined || semi2 === undefined) return null;
+
+  const diff = (semi2 - semi1 + 12) % 12;
+  if (diff === 0) {
+    return { label: `${k1} ➔ ${k2} (Նույն տոն.)`, isSmooth: true };
+  }
+  if (diff === 7) {
+    return { label: `${k1} ➔ ${k2} (Կվինտա / +5th)`, isSmooth: true };
+  }
+  if (diff === 5) {
+    return { label: `${k1} ➔ ${k2} (Կվարտա / +4th)`, isSmooth: true };
+  }
+  if (diff === 2) {
+    return { label: `${k1} ➔ ${k2} (+1 Տոն)`, isSmooth: true };
+  }
+  if (diff === 1) {
+    return { label: `${k1} ➔ ${k2} (+½ Տոն)`, isSmooth: true };
+  }
+  return { label: `${k1} ➔ ${k2} (${diff > 6 ? diff - 12 : '+' + diff} կտ)`, isSmooth: false };
+};
 
 export default function SetlistLive() {
   const { id } = useParams();
@@ -25,16 +59,44 @@ export default function SetlistLive() {
   const [loading, setLoading] = useState(() => !cachedData?.items?.length);
   const [error, setError] = useState(null);
   const [activeMetronomeItemId, setActiveMetronomeItemId] = useState(null);
+  const [isMetronomeMuted, setIsMetronomeMuted] = useState(false);
+  const [currentBeat, setCurrentBeat] = useState(0);
+  const [isBeatFlashing, setIsBeatFlashing] = useState(false);
   const [focusedItemId, setFocusedItemId] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [wakeLockActive, setWakeLockActive] = useState(false);
   const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Stage Stopwatch Timer
+  const [stopwatchSeconds, setStopwatchSeconds] = useState(0);
+  const [isStopwatchRunning, setIsStopwatchRunning] = useState(false);
+  const stopwatchIntervalRef = useRef(null);
+
+  // Modals
+  const [previewItem, setPreviewItem] = useState(null);
+  const [showPedalHelp, setShowPedalHelp] = useState(false);
 
   const audioCtxRef = useRef(null);
   const intervalRef = useRef(null);
   const beatCountRef = useRef(0);
   const clockRef = useRef(null);
   const wakeLockRef = useRef(null);
+
+  // Setup Android Hardware Back Button
+  useEffect(() => {
+    return setupAndroidBackButton(() => {
+      if (previewItem) {
+        setPreviewItem(null);
+        return;
+      }
+      if (showPedalHelp) {
+        setShowPedalHelp(false);
+        return;
+      }
+      navigate(`/setlists/${id}`);
+    });
+  }, [id, previewItem, showPedalHelp, navigate]);
 
   // Online / Offline listener
   useEffect(() => {
@@ -47,6 +109,54 @@ export default function SetlistLive() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  // Fullscreen change listener
+  useEffect(() => {
+    const handleFs = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', handleFs);
+    return () => document.removeEventListener('fullscreenchange', handleFs);
+  }, []);
+
+  const toggleFullscreen = () => {
+    triggerHaptic('light');
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
+
+  // Stage Stopwatch logic
+  useEffect(() => {
+    if (isStopwatchRunning) {
+      stopwatchIntervalRef.current = setInterval(() => {
+        setStopwatchSeconds(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (stopwatchIntervalRef.current) clearInterval(stopwatchIntervalRef.current);
+    }
+    return () => {
+      if (stopwatchIntervalRef.current) clearInterval(stopwatchIntervalRef.current);
+    };
+  }, [isStopwatchRunning]);
+
+  const toggleStopwatch = () => {
+    triggerHaptic('light');
+    setIsStopwatchRunning(prev => !prev);
+  };
+
+  const resetStopwatch = (e) => {
+    if (e) e.stopPropagation();
+    triggerHaptic('medium');
+    setIsStopwatchRunning(false);
+    setStopwatchSeconds(0);
+  };
+
+  const formatStopwatch = (totalSec) => {
+    const mins = Math.floor(totalSec / 60);
+    const secs = totalSec % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
 
   // Wake Lock (Prevent screen timeout during live performance)
   useEffect(() => {
@@ -92,30 +202,42 @@ export default function SetlistLive() {
     };
   }, []);
 
-  const playClick = (isAccent = false) => {
+  const playClick = useCallback((isAccent = false) => {
+    if (isMetronomeMuted) return;
     if (!audioCtxRef.current) return;
-    const ctx = audioCtxRef.current;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(isAccent ? 1500 : 1000, ctx.currentTime);
-    gain.gain.setValueAtTime(isAccent ? 1 : 0.6, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.1);
+    try {
+      const ctx = audioCtxRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(isAccent ? 1500 : 1000, ctx.currentTime);
+      gain.gain.setValueAtTime(isAccent ? 1 : 0.6, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.1);
+    } catch (_) {}
+  }, [isMetronomeMuted]);
+
+  const triggerBeatPulse = (beatIndex) => {
+    setCurrentBeat(beatIndex);
+    setIsBeatFlashing(true);
+    setTimeout(() => setIsBeatFlashing(false), 90);
   };
 
-  const stopMetronome = () => {
+  const stopMetronome = useCallback(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setActiveMetronomeItemId(null);
-  };
+    setCurrentBeat(0);
+    setIsBeatFlashing(false);
+  }, []);
 
-  const startMetronome = (itemId, bpm) => {
+  const startMetronome = useCallback((itemId, bpm) => {
     stopMetronome();
     setActiveMetronomeItemId(itemId);
     beatCountRef.current = 0;
+    triggerBeatPulse(0);
     if (!audioCtxRef.current) {
       audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
     }
@@ -126,12 +248,14 @@ export default function SetlistLive() {
     const msPerBeat = 60000 / bpm;
     intervalRef.current = setInterval(() => {
       beatCountRef.current = (beatCountRef.current + 1) % 4;
+      triggerBeatPulse(beatCountRef.current);
       playClick(beatCountRef.current === 0);
     }, msPerBeat);
-  };
+  }, [stopMetronome, playClick]);
 
-  const toggleMetronome = (e, item) => {
-    e.stopPropagation();
+  const toggleMetronome = useCallback((e, item) => {
+    if (e) e.stopPropagation();
+    triggerHaptic('light');
     const bpm = item.bpm && parseInt(item.bpm) > 0
       ? parseInt(item.bpm)
       : (item.original_bpm && parseInt(item.original_bpm) > 0 ? parseInt(item.original_bpm) : 0);
@@ -141,7 +265,7 @@ export default function SetlistLive() {
     } else {
       startMetronome(item.id, bpm);
     }
-  };
+  }, [activeMetronomeItemId, stopMetronome, startMetronome]);
 
   const getEffectiveBpm = (item) => {
     if (item.bpm && parseInt(item.bpm) > 0) return parseInt(item.bpm);
@@ -157,7 +281,7 @@ export default function SetlistLive() {
       stopMetronome();
       if (clockRef.current) clearInterval(clockRef.current);
     };
-  }, []);
+  }, [stopMetronome]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -227,6 +351,7 @@ export default function SetlistLive() {
         const nextIdx = currentIndex < 0 ? 0 : Math.min(currentIndex + 1, songsOnly.length - 1);
         const target = songsOnly[nextIdx];
         if (target) {
+          triggerHaptic('selection');
           setFocusedItemId(target.id);
           const el = document.querySelector(`[data-live-item-id="${target.id}"]`);
           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -236,6 +361,7 @@ export default function SetlistLive() {
         const prevIdx = currentIndex <= 0 ? 0 : currentIndex - 1;
         const target = songsOnly[prevIdx];
         if (target) {
+          triggerHaptic('selection');
           setFocusedItemId(target.id);
           const el = document.querySelector(`[data-live-item-id="${target.id}"]`);
           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -244,18 +370,21 @@ export default function SetlistLive() {
         e.preventDefault();
         const target = currentIndex >= 0 ? songsOnly[currentIndex] : songsOnly[0];
         if (target) toggleMetronome(e, target);
+      } else if (e.key === 'Escape') {
+        if (previewItem) setPreviewItem(null);
+        if (showPedalHelp) setShowPedalHelp(false);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [items, focusedItemId]);
+  }, [items, focusedItemId, previewItem, showPedalHelp, toggleMetronome]);
 
-  const songItems = items.filter(i => i.item_type !== 'section');
+  const songItems = useMemo(() => items.filter(i => i.item_type !== 'section'), [items]);
   const totalSongs = songItems.length;
 
   // Smart duration estimation
-  const durationInfo = React.useMemo(() => {
+  const durationInfo = useMemo(() => {
     if (!songItems.length) return null;
     let knownMinutes = 0;
     let missingDurationCount = 0;
@@ -268,7 +397,6 @@ export default function SetlistLive() {
         missingDurationCount++;
       }
     }
-    // Also consider section durations if any
     for (const sec of items) {
       if (sec.item_type === 'section') {
         const secDur = parseInt(sec.duration, 10);
@@ -298,12 +426,21 @@ export default function SetlistLive() {
   let songCounter = 0;
 
   return (
-    <div className="sll-container">
+    <div className={`sll-container${isBeatFlashing ? ' sll-beat-pulse-active' : ''}`}>
 
       {/* ── Header ── */}
       <header className="sll-header">
-        <button className="sll-back" onClick={() => navigate(`/setlists/${id}`)} title="Դուրս գալ">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <button
+          className="sll-back"
+          data-native-route-back="true"
+          onClick={() => {
+            triggerHaptic('light');
+            navigate(`/setlists/${id}`);
+          }}
+          title="Դուրս գալ"
+          aria-label="Back to setlist"
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
@@ -314,7 +451,7 @@ export default function SetlistLive() {
             <span className="sll-pulse-dot" />
             <span className="sll-live-label">LIVE</span>
           </div>
-          <h1 className="sll-setlist-name">{setlist?.name}</h1>
+          <h1 className="sll-setlist-name">{setlist?.name || t('setlists.title', 'Երգացանկ')}</h1>
           <div className="sll-header-sub">
             <span className="sll-song-count">{totalSongs} երգ</span>
             {durationInfo && (
@@ -335,11 +472,56 @@ export default function SetlistLive() {
           </div>
         </div>
 
-        <div className="sll-clock">{formatTime(currentTime)}</div>
+        <div className="sll-header-right">
+          {/* Clock & Stopwatch */}
+          <div className="sll-clock-group">
+            <div className="sll-clock">{formatTime(currentTime)}</div>
+            <button
+              className={`sll-stopwatch-btn${isStopwatchRunning ? ' running' : ''}`}
+              onClick={toggleStopwatch}
+              title={isStopwatchRunning ? 'Կանգնեցնել ժամաչափը' : 'Սկսել բեմական ժամաչափը'}
+            >
+              <span className="sll-stopwatch-icon">{isStopwatchRunning ? '⏸' : '▶'}</span>
+              <span>{formatStopwatch(stopwatchSeconds)}</span>
+              {stopwatchSeconds > 0 && (
+                <span
+                  className="sll-stopwatch-reset"
+                  onClick={resetStopwatch}
+                  title="Զրոյացնել"
+                >
+                  ↺
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Quick Tools */}
+          <div className="sll-header-actions">
+            <button
+              className="sll-hdr-tool"
+              onClick={() => {
+                triggerHaptic('light');
+                setShowPedalHelp(true);
+              }}
+              title="Bluetooth ոտնակի և ստեղնաշարի կարգավորումներ"
+              aria-label="Pedal controls"
+            >
+              🦶
+            </button>
+            <button
+              className="sll-hdr-tool"
+              onClick={toggleFullscreen}
+              title={isFullscreen ? 'Դուրս գալ լիաէկրան ռեժիմից' : 'Լիաէկրան ռեժիմ'}
+              aria-label="Toggle fullscreen"
+            >
+              {isFullscreen ? '↙↗' : '⛶'}
+            </button>
+          </div>
+        </div>
       </header>
 
       {/* ── Live Stage Broadcast / Band Follower Bar ── */}
-      <div style={{ padding: '0 16px', maxWidth: '800px', margin: '0 auto 12px auto' }}>
+      <div style={{ padding: '0 16px', maxWidth: '800px', margin: '0 auto 12px auto', width: '100%', boxSizing: 'border-box' }}>
         <LiveStageBar
           sessionId={`SETLIST-${id}`}
           isLeader={true}
@@ -371,8 +553,12 @@ export default function SetlistLive() {
           songCounter++;
           const bpm = getEffectiveBpm(item);
           const isActive = activeMetronomeItemId === item.id;
-
           const isFocused = focusedItemId === item.id;
+
+          const nextSong = items.slice(idx + 1).find(i => i.item_type !== 'section');
+          const currentKey = item.target_key || item.song_key;
+          const nextKey = nextSong ? (nextSong.target_key || nextSong.song_key) : null;
+          const harmonicFlow = (currentKey && nextKey) ? getKeyTransitionInfo(currentKey, nextKey) : null;
 
           return (
             <React.Fragment key={item.id}>
@@ -380,6 +566,7 @@ export default function SetlistLive() {
                 data-live-item-id={item.id}
                 className={`sll-card${isActive ? ' sll-card--active' : ''}${isFocused ? ' sll-card--focused' : ''}`}
                 onClick={() => {
+                  triggerHaptic('light');
                   const q = new URLSearchParams();
                   if (id) q.set('setlist_id', String(id));
                   if (item.id) q.set('setlist_item_id', String(item.id));
@@ -402,13 +589,30 @@ export default function SetlistLive() {
 
                 {/* Body */}
                 <div className="sll-card-body">
-                  <div className="sll-card-title">{getLocalizedTitle(item, language)}</div>
+                  <div className="sll-card-title-row">
+                    <span className="sll-card-title">{getLocalizedTitle(item, language)}</span>
+                    {/* Quick Chords Sheet Preview Icon */}
+                    <button
+                      type="button"
+                      className="sll-quick-preview-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        triggerHaptic('light');
+                        setPreviewItem(item);
+                      }}
+                      title="Տեսնել ակորդները տեղում"
+                      aria-label="Preview chords"
+                    >
+                      📄
+                    </button>
+                  </div>
+
                   {(item.artist || item.song_artist) && (
                     <div className="sll-card-artist">{item.artist || item.song_artist}</div>
                   )}
 
-                  {/* Chips */}
-                  {(item.target_key || bpm > 0 || item.duration) && (
+                  {/* Chips: Key, Capo, BPM, Duration */}
+                  {(item.target_key || (item.capo && parseInt(item.capo) > 0) || bpm > 0 || item.duration) && (
                     <div className="sll-card-chips">
                       {item.target_key && (
                         <span className="sll-chip sll-chip--key">
@@ -416,11 +620,17 @@ export default function SetlistLive() {
                           {item.target_key}
                         </span>
                       )}
+                      {item.capo && parseInt(item.capo) > 0 && (
+                        <span className="sll-chip sll-chip--capo" title={`Կապոդաստր ${item.capo}-րդ լադ`}>
+                          🎸 Capo {item.capo}
+                        </span>
+                      )}
                       {bpm > 0 && (
                         <button
+                          type="button"
                           className={`sll-chip sll-chip--bpm${isActive ? ' sll-chip--bpm-active' : ''}`}
                           onClick={e => toggleMetronome(e, item)}
-                          title="Մետրոնոմ"
+                          title="Մետրոնոմ (սեղմեք միացնելու/անջատելու համար)"
                         >
                           {isActive
                             ? <><span className="sll-beat-dot" /><span className="sll-beat-dot sll-beat-dot--2" /><span className="sll-beat-dot sll-beat-dot--3" /></>
@@ -440,7 +650,7 @@ export default function SetlistLive() {
 
                   {/* Notes */}
                   {item.notes && (
-                    <div className="sll-card-notes">{item.notes}</div>
+                    <div className="sll-card-notes">📝 {item.notes}</div>
                   )}
 
                   {/* Role Assignments */}
@@ -464,17 +674,29 @@ export default function SetlistLive() {
                 </div>
               </div>
 
-              {/* Transition */}
-              {item.transition_type && idx < items.length - 1 && (
-                <div className="sll-transition">
-                  {item.transition_type === 'crossfade' && (
-                    <><span className="sll-tr-icon">⇌</span> Սահուն անցում</>
+              {/* ── Inter-Song Transitions (Harmonic Flow & Transition Type) ── */}
+              {(item.transition_type || harmonicFlow) && idx < items.length - 1 && (
+                <div className="sll-transition-flow-wrap">
+                  {item.transition_type && (
+                    <span className="sll-transition-badge">
+                      {item.transition_type === 'crossfade' && (
+                        <><span className="sll-tr-icon">⇌</span> Սահուն անցում</>
+                      )}
+                      {item.transition_type === 'stop' && (
+                        <><span className="sll-tr-icon">■</span> Դադար</>
+                      )}
+                      {item.transition_type !== 'crossfade' && item.transition_type !== 'stop' && (
+                        <><span className="sll-tr-icon">💬</span> Խոսք / Աղոթք</>
+                      )}
+                    </span>
                   )}
-                  {item.transition_type === 'stop' && (
-                    <><span className="sll-tr-icon">■</span> Դադար</>
-                  )}
-                  {item.transition_type !== 'crossfade' && item.transition_type !== 'stop' && (
-                    <><span className="sll-tr-icon">💬</span> Խոսք / Աղոթք</>
+                  {harmonicFlow && (
+                    <span
+                      className={`sll-harmonic-badge ${harmonicFlow.isSmooth ? 'smooth' : 'jump'}`}
+                      title={`Հաջորդ երգի տոնայնությունը՝ ${currentKey} ➔ ${nextKey}`}
+                    >
+                      🎵 {harmonicFlow.label}
+                    </span>
                   )}
                 </div>
               )}
@@ -492,17 +714,48 @@ export default function SetlistLive() {
       {activeItem && (() => {
         const bpm = getEffectiveBpm(activeItem);
         return (
-          <div className="sll-metro">
-            <div className="sll-metro-visual">
-              <span className="sll-metro-dot sll-metro-dot--a" />
-              <span className="sll-metro-dot sll-metro-dot--b" />
-              <span className="sll-metro-dot sll-metro-dot--c" />
+          <div className={`sll-metro${isBeatFlashing ? ' flash' : ''}`}>
+            {/* Visual Beat Indicator (1, 2, 3, 4) */}
+            <div className="sll-metro-visual-beats" title={`Հարված ${currentBeat + 1}/4`}>
+              {[0, 1, 2, 3].map(b => (
+                <span
+                  key={b}
+                  className={`sll-beat-circle${currentBeat === b ? ' active' : ''}${b === 0 ? ' accent' : ''}`}
+                />
+              ))}
             </div>
+
             <div className="sll-metro-info">
               <span className="sll-metro-song">{getLocalizedTitle(activeItem, language)}</span>
-              <span className="sll-metro-bpm">{bpm} <small>BPM</small></span>
+              <span className="sll-metro-bpm">
+                {bpm} <small>BPM</small>
+              </span>
             </div>
-            <button className="sll-metro-stop" onClick={stopMetronome} aria-label="Stop">
+
+            {/* Mute / Silent Stage Visual Toggle */}
+            <button
+              type="button"
+              className={`sll-metro-tool-btn${isMetronomeMuted ? ' muted' : ''}`}
+              onClick={() => {
+                triggerHaptic('light');
+                setIsMetronomeMuted(prev => !prev);
+              }}
+              title={isMetronomeMuted ? 'Միացնել ձայնը' : 'Լուռ տեսողական ֆլեշ (Visual Only)'}
+              aria-label="Toggle metronome sound"
+            >
+              {isMetronomeMuted ? '🔇' : '🔊'}
+            </button>
+
+            {/* Stop Metronome */}
+            <button
+              type="button"
+              className="sll-metro-stop"
+              onClick={() => {
+                triggerHaptic('light');
+                stopMetronome();
+              }}
+              aria-label="Stop metronome"
+            >
               <svg viewBox="0 0 24 24" width="18" height="18">
                 <rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor" />
               </svg>
@@ -510,6 +763,136 @@ export default function SetlistLive() {
           </div>
         );
       })()}
+
+      {/* ── Quick Chords Sheet Modal (Inside Live Mode) ── */}
+      {previewItem && (
+        <div className="sll-modal-overlay" onClick={() => setPreviewItem(null)}>
+          <div className="sll-modal-sheet" onClick={e => e.stopPropagation()}>
+            <div className="sll-modal-handle" />
+            <div className="sll-modal-header">
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <h3 className="sll-modal-title">{getLocalizedTitle(previewItem, language)}</h3>
+                <div className="sll-modal-sub">
+                  {(previewItem.artist || previewItem.song_artist) && (
+                    <span>{previewItem.artist || previewItem.song_artist}</span>
+                  )}
+                  {previewItem.target_key && (
+                    <span className="sll-chip sll-chip--key">{previewItem.target_key}</span>
+                  )}
+                  {previewItem.capo && parseInt(previewItem.capo) > 0 && (
+                    <span className="sll-chip sll-chip--capo">Capo {previewItem.capo}</span>
+                  )}
+                  {getEffectiveBpm(previewItem) > 0 && (
+                    <span className="sll-chip sll-chip--bpm">{getEffectiveBpm(previewItem)} BPM</span>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="sll-modal-close"
+                onClick={() => setPreviewItem(null)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="sll-modal-body">
+              {previewItem.chords || previewItem.lyrics ? (
+                <div
+                  className="sll-chords-render"
+                  dangerouslySetInnerHTML={{
+                    __html: renderWithChords(previewItem.chords || previewItem.lyrics || '', 0, false)
+                  }}
+                />
+              ) : (
+                <div className="sll-modal-empty">
+                  <span>ℹ️ Այս երգի համար ակորդներ կամ բառեր մուտքագրված չեն։</span>
+                </div>
+              )}
+            </div>
+
+            <div className="sll-modal-footer">
+              <button
+                type="button"
+                className="sll-modal-open-full"
+                onClick={() => {
+                  triggerHaptic('light');
+                  const q = new URLSearchParams();
+                  if (id) q.set('setlist_id', String(id));
+                  if (previewItem.id) q.set('setlist_item_id', String(previewItem.id));
+                  if (previewItem.target_key) q.set('tkey', previewItem.target_key);
+                  if (previewItem.capo) {
+                    q.set('capo', String(previewItem.capo));
+                    q.set('capo_mode', '1');
+                  }
+                  q.set('from_live', '1');
+                  navigate(`/song/${previewItem.song_id}?${q.toString()}`);
+                }}
+              >
+                📖 Բացել Ամբողջական Երգը
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Bluetooth Pedal / Controls Help Modal ── */}
+      {showPedalHelp && (
+        <div className="sll-modal-overlay" onClick={() => setShowPedalHelp(false)}>
+          <div className="sll-modal-sheet" onClick={e => e.stopPropagation()} style={{ maxWidth: '460px' }}>
+            <div className="sll-modal-handle" />
+            <div className="sll-modal-header">
+              <div>
+                <h3 className="sll-modal-title">🦶 Bluetooth ոտնակ և ստեղներ</h3>
+                <p className="sll-modal-desc">Կառավարեք երգացանկը բեմի վրա առանց էկրանին դիպչելու</p>
+              </div>
+              <button
+                type="button"
+                className="sll-modal-close"
+                onClick={() => setShowPedalHelp(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="sll-modal-body" style={{ maxHeight: '60vh' }}>
+              <div className="sll-shortcut-list">
+                <div className="sll-shortcut-row">
+                  <span className="sll-key-badge">➔  /  ↓  /  Space  /  PageDown</span>
+                  <span className="sll-key-desc">Հաջորդ երգ (Next Song)</span>
+                </div>
+                <div className="sll-shortcut-row">
+                  <span className="sll-key-badge">⬅  /  ↑  /  PageUp</span>
+                  <span className="sll-key-desc">Նախորդ երգ (Previous Song)</span>
+                </div>
+                <div className="sll-shortcut-row">
+                  <span className="sll-key-badge">M</span>
+                  <span className="sll-key-desc">Մետրոնոմի միացում / դադարեցում</span>
+                </div>
+                <div className="sll-shortcut-row">
+                  <span className="sll-key-badge">Esc</span>
+                  <span className="sll-key-desc">Փակել բացված պատուհանները</span>
+                </div>
+              </div>
+
+              <div className="sll-pedal-tip-box">
+                💡 <strong>Համատեղելիություն՝</strong> Աշխատում է AirTurn (BT200/BT500), PageFlip, Donner, Coda Stompbox և ցանկացած Bluetooth կամ USB ոտնակի հետ (Mode 1 կամ Mode 3):
+              </div>
+            </div>
+
+            <div className="sll-modal-footer">
+              <button
+                type="button"
+                className="sll-modal-open-full"
+                onClick={() => setShowPedalHelp(false)}
+              >
+                Հասկանալի է
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

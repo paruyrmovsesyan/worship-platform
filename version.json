@@ -1,8 +1,8 @@
 {
-  "app_version": "5.3.2",
-  "web_version": "5.3.2",
-  "asset_version": "577",
-  "build_timestamp": "2026-11-13T21:26:00+04:00",
-  "release_type": "bugfix",
-  "release_summary": "Fix missing useCallback in SetlistEditorApp, allow setlists and song-request routes in pwaOfflineGuard, and enhance ErrorBoundary reporter"
+  "app_version": "5.3.3",
+  "web_version": "5.3.3",
+  "asset_version": "578",
+  "build_timestamp": "2026-11-13T22:28:00+04:00",
+  "release_type": "feature",
+  "release_summary": "Major improvements to Setlist Live: stage stopwatch, harmonic key transitions, capo badge, visual/silent metronome, chords preview sheet, pedal cheat sheet, and native back"
 }
