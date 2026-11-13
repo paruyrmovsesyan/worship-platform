@@ -1,8 +1,8 @@
 {
   "app_version": "5.3.0",
   "web_version": "5.3.0",
-  "asset_version": "571",
-  "build_timestamp": "2026-11-12T19:07:00+04:00",
-  "release_type": "i18n",
-  "release_summary": "Complete trilingual localization coverage (AM, EN, RU) across PWA, mobile app, and web"
+  "asset_version": "572",
+  "build_timestamp": "2026-11-13T20:04:00+04:00",
+  "release_type": "feature",
+  "release_summary": "Add instant recipient search (chats & friends) in setlist share modal"
 }

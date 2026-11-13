@@ -87,6 +87,8 @@ export default function SetlistEditorApp() {
   const [shareMessage, setShareMessage] = useState('');
   const [sharedUsers, setSharedUsers] = useState([]);
   const [shareChats, setShareChats] = useState([]);
+  const [shareFriends, setShareFriends] = useState([]);
+  const [shareSearchQuery, setShareSearchQuery] = useState('');
   const [shareLoading, setShareLoading] = useState(false);
   const [sharingChatId, setSharingChatId] = useState(null);
   const [publicShareUrl, setPublicShareUrl] = useState(null);
@@ -1116,14 +1118,18 @@ export default function SetlistEditorApp() {
     setShareAsEditable(false);
     setShareLoading(true);
     setCopySuccess(false);
+    setShareSearchQuery('');
     try {
-      const [chatRes, statusRes, accessRes] = await Promise.all([
+      const [chatRes, friendsRes, statusRes, accessRes] = await Promise.all([
         fetch('/chat_api.php?action=list_chats'),
+        fetch('/friends_api.php?action=get_friends'),
         fetch(`/setlists_api.php?action=get_share_status&setlist_id=${id}`),
         fetch(`/setlists_api.php?action=list_setlist_access&setlist_id=${id}`)
       ]);
       const chatData = await chatRes.json();
       if (chatData.ok) setShareChats(chatData.chats || []);
+      const friendsData = await friendsRes.json();
+      if (friendsData.ok) setShareFriends(friendsData.friends || []);
       const statusData = await statusRes.json();
       if (statusData.ok && statusData.share_url) {
         setPublicShareUrl(statusData.share_url);
@@ -1237,6 +1243,86 @@ export default function SetlistEditorApp() {
       alert('Network error');
     } finally {
       setSharingChatId(null);
+    }
+  };
+
+  const shareRecipients = useMemo(() => {
+    const list = [];
+    const seenUserIds = new Set();
+
+    // 1. Existing chats (both group and direct)
+    for (const c of (shareChats || [])) {
+      const title = c.type === 'group' ? (c.name || 'Խումբ') : (c.participant_names || 'Անհայտ');
+      list.push({
+        type: 'chat',
+        chatId: c.id,
+        isGroup: c.type === 'group',
+        title,
+        avatar: c.type === 'group' ? '👥' : (title ? title.charAt(0).toUpperCase() : '👤'),
+        otherUserId: c.other_user_id,
+        raw: c,
+      });
+      if (c.other_user_id) {
+        seenUserIds.add(Number(c.other_user_id));
+      }
+    }
+
+    // 2. Friends who do not have an existing chat yet
+    for (const f of (shareFriends || [])) {
+      if (!seenUserIds.has(Number(f.id))) {
+        const title = f.name || f.username || f.email || 'Ընկեր';
+        list.push({
+          type: 'friend',
+          userId: f.id,
+          isGroup: false,
+          title,
+          subTitle: f.email || f.username || '',
+          avatar: title ? title.charAt(0).toUpperCase() : '👤',
+          raw: f,
+        });
+      }
+    }
+
+    // 3. Filter by search query
+    const q = shareSearchQuery.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter(item => {
+      const matchTitle = (item.title || '').toLowerCase().includes(q);
+      const matchSub = (item.subTitle || '').toLowerCase().includes(q);
+      return matchTitle || matchSub;
+    });
+  }, [shareChats, shareFriends, shareSearchQuery]);
+
+  const handleShareToRecipient = async (item) => {
+    if (sharingChatId) return;
+    let targetChatId = item.chatId;
+
+    if (!targetChatId && item.userId) {
+      setSharingChatId(`user_${item.userId}`);
+      try {
+        const directRes = await fetch('/chat_api.php?action=get_direct_chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target_user_id: item.userId })
+        });
+        const directData = await directRes.json();
+        if (directData.ok && (directData.chat_id || directData.id)) {
+          targetChatId = directData.chat_id || directData.id;
+        } else {
+          alert(directData.error || 'Չհաջողվեց ստեղծել չաթ');
+          setSharingChatId(null);
+          return;
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Ցանցային սխալ');
+        setSharingChatId(null);
+        return;
+      }
+    }
+
+    if (targetChatId) {
+      await handleShareToChat(targetChatId);
     }
   };
 
@@ -2788,7 +2874,56 @@ export default function SetlistEditorApp() {
                   </label>
                 </div>
 
-                <div style={{ marginBottom: '12px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+                  {/* Search input */}
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      value={shareSearchQuery}
+                      onChange={(e) => setShareSearchQuery(e.target.value)}
+                      placeholder={
+                        language === 'am'
+                          ? '🔍 Որոնել չաթեր կամ ընկերներ...'
+                          : language === 'ru'
+                          ? '🔍 Поиск чатов или друзей...'
+                          : '🔍 Search chats or friends...'
+                      }
+                      style={{
+                        width: '100%',
+                        background: 'rgba(255,255,255,0.08)',
+                        border: '1px solid rgba(0, 212, 255, 0.35)',
+                        borderRadius: '10px',
+                        padding: '9px 36px 9px 12px',
+                        color: '#fff',
+                        fontSize: '0.84rem',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                    {shareSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setShareSearchQuery('')}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#8fa0b5',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          padding: '4px'
+                        }}
+                        aria-label="Clear"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Optional message input */}
                   <input
                     type="text"
                     value={shareMessage}
@@ -2814,21 +2949,23 @@ export default function SetlistEditorApp() {
                   />
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
                   {shareLoading ? (
                     <div style={{ textAlign: 'center', padding: '16px', color: '#8fa0b5' }}>
                       {language === 'am' ? 'Բեռնվում է...' : language === 'ru' ? 'Загрузка...' : 'Loading...'}
                     </div>
-                  ) : shareChats.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '16px', color: '#68778d' }}>
-                      {language === 'am' ? 'Չաթեր չկան' : language === 'ru' ? 'Нет чатов' : 'No chats found'}
+                  ) : shareRecipients.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '16px', color: '#68778d', fontSize: '0.84rem' }}>
+                      {shareSearchQuery
+                        ? (language === 'am' ? 'Արդյունքներ չեն գտնվել' : language === 'ru' ? 'Ничего не найдено' : 'No results found')
+                        : (language === 'am' ? 'Չաթեր կամ ընկերներ չկան' : language === 'ru' ? 'Нет чатов или друзей' : 'No chats or friends found')}
                     </div>
                   ) : (
-                    shareChats.map(c => {
-                      const isSending = sharingChatId === c.id;
+                    shareRecipients.map(item => {
+                      const isSending = sharingChatId === item.chatId || sharingChatId === `user_${item.userId}`;
                       return (
                         <div
-                          key={c.id}
+                          key={item.chatId ? `chat_${item.chatId}` : `user_${item.userId}`}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -2838,15 +2975,22 @@ export default function SetlistEditorApp() {
                             borderRadius: '12px',
                             cursor: sharingChatId ? 'not-allowed' : 'pointer'
                           }}
-                          onClick={() => !sharingChatId && handleShareToChat(c.id)}
+                          onClick={() => !sharingChatId && handleShareToRecipient(item)}
                         >
-                          <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
-                            {c.type === 'group' ? '👥' : (c.participant_names ? c.participant_names.charAt(0).toUpperCase() : '👤')}
+                          <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>
+                            {item.avatar}
                           </div>
-                          <span style={{ flex: 1, fontSize: '0.9rem', color: '#fff', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {c.type === 'group' ? c.name : c.participant_names}
-                          </span>
-                          <span style={{ fontSize: '0.76rem', color: '#00d4ff', fontWeight: 600 }}>
+                          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontSize: '0.88rem', color: '#fff', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {item.title}
+                            </span>
+                            {item.subTitle && (
+                              <span style={{ fontSize: '0.74rem', color: '#8fa0b5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {item.subTitle}
+                              </span>
+                            )}
+                          </div>
+                          <span style={{ fontSize: '0.76rem', color: '#00d4ff', fontWeight: 600, flexShrink: 0 }}>
                             {isSending ? '...' : (language === 'am' ? 'Ուղարկել ➔' : language === 'ru' ? 'Отправить ➔' : 'Send ➔')}
                           </span>
                         </div>
