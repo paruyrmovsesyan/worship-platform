@@ -75,18 +75,17 @@ body.live-mode-active .app-content {
   position: sticky;
   top: 0;
   z-index: 200;
-  background: rgba(8, 10, 16, 0.88);
+  background: rgba(8, 10, 16, 0.92);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 
-  padding-top: calc(env(safe-area-inset-top, 0px) + 14px);
-  padding-bottom: 14px;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+  padding-bottom: 10px;
   padding-left: 16px;
   padding-right: 16px;
 }
@@ -99,6 +98,14 @@ body.wp-standalone-app.is-ios .sll-header {
 body.is-app.is-android .sll-header,
 body.wp-standalone-app:not(.is-ios) .sll-header {
   padding-top: 14px !important;
+}
+
+.sll-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
 }
 
 /* Back button */
@@ -121,10 +128,11 @@ body.wp-standalone-app:not(.is-ios) .sll-header {
 
 /* Center block */
 .sll-header-center {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   text-align: center;
   min-width: 0;
 }
@@ -178,15 +186,41 @@ body.wp-standalone-app:not(.is-ios) .sll-header {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 550px;
+  max-width: 100%;
   letter-spacing: -0.01em;
   line-height: 1.3;
 }
 
 @media (max-width: 600px) {
   .sll-setlist-name {
-    max-width: 200px;
+    max-width: 100%;
+    font-size: 0.98rem;
   }
+}
+
+/* Bottom tier */
+.sll-header-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding-top: 2px;
+}
+
+.sll-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.sll-header-timers {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 /* Sub line */
@@ -431,6 +465,23 @@ body.wp-standalone-app:not(.is-ios) .sll-header {
   color: #ffffff !important;
   border-color: transparent !important;
   box-shadow: 0 0 14px rgba(230, 60, 100, 0.4);
+}
+
+/* Chords sheet preview chip */
+.sll-chip--sheet {
+  background: rgba(0, 212, 255, 0.09);
+  color: #00d4ff;
+  border: 1px solid rgba(0, 212, 255, 0.22);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sll-chip--sheet:hover {
+  background: rgba(0, 212, 255, 0.18);
+  border-color: rgba(0, 212, 255, 0.4);
+  color: #ffffff;
+}
+.sll-chip--sheet:active {
+  transform: scale(0.95);
 }
 
 /* Beat dots inside active BPM chip */

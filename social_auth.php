@@ -327,7 +327,6 @@ if ($endpointAction === 'claim_token' && $_SERVER['REQUEST_METHOD'] === 'POST') 
         $pdo = wp_runtime_open_pdo();
     } catch (Throwable $e) {
         error_log('[social_auth] claim_token pdo connect failed: ' . $e->getMessage());
-        http_response_code(500);
         echo json_encode(["ok" => false, "error" => "Database connection error"], JSON_UNESCAPED_UNICODE);
         exit;
     }
@@ -354,7 +353,6 @@ if ($endpointAction === 'claim_token' && $_SERVER['REQUEST_METHOD'] === 'POST') 
         exit;
     } catch (Throwable $e) {
         error_log('[social_auth] claim_token processing failed: ' . $e->getMessage());
-        http_response_code(500);
         echo json_encode(["ok" => false, "error" => "Failed to claim token"], JSON_UNESCAPED_UNICODE);
         exit;
     }

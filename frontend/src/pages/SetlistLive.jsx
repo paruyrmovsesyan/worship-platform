@@ -22,8 +22,9 @@ const getKeyTransitionInfo = (k1, k2) => {
   if (semi1 === undefined || semi2 === undefined) return null;
 
   const diff = (semi2 - semi1 + 12) % 12;
+  // If same key (no modulation), do NOT render redundant transition badge
   if (diff === 0) {
-    return { label: `${k1} ➔ ${k2} (Նույն տոն.)`, isSmooth: true };
+    return null;
   }
   if (diff === 7) {
     return { label: `${k1} ➔ ${k2} (Կվինտա / +5th)`, isSmooth: true };
@@ -428,31 +429,62 @@ export default function SetlistLive() {
   return (
     <div className={`sll-container${isBeatFlashing ? ' sll-beat-pulse-active' : ''}`}>
 
-      {/* ── Header ── */}
+      {/* ── Balanced 2-Tier Header ── */}
       <header className="sll-header">
-        <button
-          className="sll-back"
-          data-native-route-back="true"
-          onClick={() => {
-            triggerHaptic('light');
-            navigate(`/setlists/${id}`);
-          }}
-          title="Դուրս գալ"
-          aria-label="Back to setlist"
-        >
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
+        {/* Top Row: Back button, Setlist Name, Tools */}
+        <div className="sll-header-top">
+          <button
+            className="sll-back"
+            data-native-route-back="true"
+            onClick={() => {
+              triggerHaptic('light');
+              navigate(`/setlists/${id}`);
+            }}
+            title="Դուրս գալ"
+            aria-label="Back to setlist"
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
 
-        <div className="sll-header-center">
-          <div className="sll-live-indicator">
-            <span className="sll-pulse-ring" />
-            <span className="sll-pulse-dot" />
-            <span className="sll-live-label">LIVE</span>
+          <div className="sll-header-center">
+            <div className="sll-live-indicator">
+              <span className="sll-pulse-ring" />
+              <span className="sll-pulse-dot" />
+              <span className="sll-live-label">LIVE</span>
+            </div>
+            <h1 className="sll-setlist-name" title={setlist?.name}>
+              {setlist?.name || t('setlists.title', 'Երգացանկ')}
+            </h1>
           </div>
-          <h1 className="sll-setlist-name">{setlist?.name || t('setlists.title', 'Երգացանկ')}</h1>
-          <div className="sll-header-sub">
+
+          <div className="sll-header-actions">
+            <button
+              className="sll-hdr-tool"
+              onClick={() => {
+                triggerHaptic('light');
+                setShowPedalHelp(true);
+              }}
+              title="Bluetooth ոտնակի կարգավորումներ"
+              aria-label="Pedal controls"
+            >
+              🦶
+            </button>
+            <button
+              className="sll-hdr-tool"
+              onClick={toggleFullscreen}
+              title={isFullscreen ? 'Դուրս գալ լիաէկրանից' : 'Լիաէկրան'}
+              aria-label="Toggle fullscreen"
+            >
+              {isFullscreen ? '↙↗' : '⛶'}
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom Row: Info badges on left, Clock & Stopwatch on right */}
+        <div className="sll-header-bottom">
+          <div className="sll-header-meta">
             <span className="sll-song-count">{totalSongs} երգ</span>
             {durationInfo && (
               <span className="sll-dur-badge" title={durationInfo.isEstimate ? 'Մոտավոր ընդհանուր տևողություն' : 'Ընդհանուր տևողություն'}>
@@ -470,13 +502,11 @@ export default function SetlistLive() {
               </span>
             )}
           </div>
-        </div>
 
-        <div className="sll-header-right">
-          {/* Clock & Stopwatch */}
-          <div className="sll-clock-group">
+          <div className="sll-header-timers">
             <div className="sll-clock">{formatTime(currentTime)}</div>
             <button
+              type="button"
               className={`sll-stopwatch-btn${isStopwatchRunning ? ' running' : ''}`}
               onClick={toggleStopwatch}
               title={isStopwatchRunning ? 'Կանգնեցնել ժամաչափը' : 'Սկսել բեմական ժամաչափը'}
@@ -492,29 +522,6 @@ export default function SetlistLive() {
                   ↺
                 </span>
               )}
-            </button>
-          </div>
-
-          {/* Quick Tools */}
-          <div className="sll-header-actions">
-            <button
-              className="sll-hdr-tool"
-              onClick={() => {
-                triggerHaptic('light');
-                setShowPedalHelp(true);
-              }}
-              title="Bluetooth ոտնակի և ստեղնաշարի կարգավորումներ"
-              aria-label="Pedal controls"
-            >
-              🦶
-            </button>
-            <button
-              className="sll-hdr-tool"
-              onClick={toggleFullscreen}
-              title={isFullscreen ? 'Դուրս գալ լիաէկրան ռեժիմից' : 'Լիաէկրան ռեժիմ'}
-              aria-label="Toggle fullscreen"
-            >
-              {isFullscreen ? '↙↗' : '⛶'}
             </button>
           </div>
         </div>
@@ -589,12 +596,50 @@ export default function SetlistLive() {
 
                 {/* Body */}
                 <div className="sll-card-body">
-                  <div className="sll-card-title-row">
-                    <span className="sll-card-title">{getLocalizedTitle(item, language)}</span>
-                    {/* Quick Chords Sheet Preview Icon */}
+                  <div className="sll-card-title">{getLocalizedTitle(item, language)}</div>
+
+                  {(item.artist || item.song_artist) && (
+                    <div className="sll-card-artist">{item.artist || item.song_artist}</div>
+                  )}
+
+                  {/* Chips: Key, Capo, BPM, Duration, Quick Chords */}
+                  <div className="sll-card-chips">
+                    {item.target_key && (
+                      <span className="sll-chip sll-chip--key">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="7.5" cy="15.5" r="5.5"/><path d="M21 2l-9.6 9.6"/><path d="M15.5 7.5l3 3"/></svg>
+                        {item.target_key}
+                      </span>
+                    )}
+                    {item.capo && parseInt(item.capo) > 0 && (
+                      <span className="sll-chip sll-chip--capo" title={`Կապոդաստր ${item.capo}-րդ լադ`}>
+                        🎸 Capo {item.capo}
+                      </span>
+                    )}
+                    {bpm > 0 && (
+                      <button
+                        type="button"
+                        className={`sll-chip sll-chip--bpm${isActive ? ' sll-chip--bpm-active' : ''}`}
+                        onClick={e => toggleMetronome(e, item)}
+                        title="Մետրոնոմ (սեղմեք միացնելու/անջատելու համար)"
+                      >
+                        {isActive
+                          ? <><span className="sll-beat-dot" /><span className="sll-beat-dot sll-beat-dot--2" /><span className="sll-beat-dot sll-beat-dot--3" /></>
+                          : <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0V2a1 1 0 0 1 1-1zm0 4c-3.86 0-7 3.14-7 7s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm0 12c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm1-8h-2v5h5v-2h-3V9z"/></svg>
+                        }
+                        {bpm} BPM
+                      </button>
+                    )}
+                    {item.duration && (
+                      <span className="sll-chip sll-chip--dur">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        {item.duration} ր
+                      </span>
+                    )}
+
+                    {/* Integrated Quick Chords Sheet Pill */}
                     <button
                       type="button"
-                      className="sll-quick-preview-btn"
+                      className="sll-chip sll-chip--sheet"
                       onClick={(e) => {
                         e.stopPropagation();
                         triggerHaptic('light');
@@ -603,50 +648,15 @@ export default function SetlistLive() {
                       title="Տեսնել ակորդները տեղում"
                       aria-label="Preview chords"
                     >
-                      📄
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                      </svg>
+                      Ակորդներ
                     </button>
                   </div>
-
-                  {(item.artist || item.song_artist) && (
-                    <div className="sll-card-artist">{item.artist || item.song_artist}</div>
-                  )}
-
-                  {/* Chips: Key, Capo, BPM, Duration */}
-                  {(item.target_key || (item.capo && parseInt(item.capo) > 0) || bpm > 0 || item.duration) && (
-                    <div className="sll-card-chips">
-                      {item.target_key && (
-                        <span className="sll-chip sll-chip--key">
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="7.5" cy="15.5" r="5.5"/><path d="M21 2l-9.6 9.6"/><path d="M15.5 7.5l3 3"/></svg>
-                          {item.target_key}
-                        </span>
-                      )}
-                      {item.capo && parseInt(item.capo) > 0 && (
-                        <span className="sll-chip sll-chip--capo" title={`Կապոդաստր ${item.capo}-րդ լադ`}>
-                          🎸 Capo {item.capo}
-                        </span>
-                      )}
-                      {bpm > 0 && (
-                        <button
-                          type="button"
-                          className={`sll-chip sll-chip--bpm${isActive ? ' sll-chip--bpm-active' : ''}`}
-                          onClick={e => toggleMetronome(e, item)}
-                          title="Մետրոնոմ (սեղմեք միացնելու/անջատելու համար)"
-                        >
-                          {isActive
-                            ? <><span className="sll-beat-dot" /><span className="sll-beat-dot sll-beat-dot--2" /><span className="sll-beat-dot sll-beat-dot--3" /></>
-                            : <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0V2a1 1 0 0 1 1-1zm0 4c-3.86 0-7 3.14-7 7s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm0 12c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm1-8h-2v5h5v-2h-3V9z"/></svg>
-                          }
-                          {bpm} BPM
-                        </button>
-                      )}
-                      {item.duration && (
-                        <span className="sll-chip sll-chip--dur">
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                          {item.duration} ր
-                        </span>
-                      )}
-                    </div>
-                  )}
 
                   {/* Notes */}
                   {item.notes && (
@@ -674,7 +684,7 @@ export default function SetlistLive() {
                 </div>
               </div>
 
-              {/* ── Inter-Song Transitions (Harmonic Flow & Transition Type) ── */}
+              {/* ── Inter-Song Transitions (Only show when there is an actual modulation or explicit transition) ── */}
               {(item.transition_type || harmonicFlow) && idx < items.length - 1 && (
                 <div className="sll-transition-flow-wrap">
                   {item.transition_type && (

@@ -1,8 +1,8 @@
 {
-  "app_version": "5.3.3",
-  "web_version": "5.3.3",
-  "asset_version": "578",
-  "build_timestamp": "2026-11-13T22:28:00+04:00",
-  "release_type": "feature",
-  "release_summary": "Major improvements to Setlist Live: stage stopwatch, harmonic key transitions, capo badge, visual/silent metronome, chords preview sheet, pedal cheat sheet, and native back"
+  "app_version": "5.3.4",
+  "web_version": "5.3.4",
+  "asset_version": "579",
+  "build_timestamp": "2026-11-13T22:47:00+04:00",
+  "release_type": "patch",
+  "release_summary": "Setlist Live mobile header 2-tier layout, redundant same-key transition omission, chord preview chip, and claim_token error safety"
 }
