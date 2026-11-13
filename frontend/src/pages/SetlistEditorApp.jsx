@@ -88,6 +88,7 @@ export default function SetlistEditorApp() {
   const [sharedUsers, setSharedUsers] = useState([]);
   const [shareChats, setShareChats] = useState([]);
   const [shareFriends, setShareFriends] = useState([]);
+  const [shareServerUsers, setShareServerUsers] = useState([]);
   const [shareSearchQuery, setShareSearchQuery] = useState('');
   const [shareLoading, setShareLoading] = useState(false);
   const [sharingChatId, setSharingChatId] = useState(null);
@@ -1119,6 +1120,7 @@ export default function SetlistEditorApp() {
     setShareLoading(true);
     setCopySuccess(false);
     setShareSearchQuery('');
+    setShareServerUsers([]);
     try {
       const [chatRes, friendsRes, statusRes, accessRes] = await Promise.all([
         fetch('/chat_api.php?action=list_chats'),
@@ -1246,52 +1248,119 @@ export default function SetlistEditorApp() {
     }
   };
 
+  // Live user search for share modal
+  useEffect(() => {
+    if (!isShareModalOpen) return;
+    const q = shareSearchQuery.trim();
+    if (q.length < 2) {
+      setShareServerUsers([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/friends_api.php?action=search_users&q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.users)) {
+          setShareServerUsers(data.users);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [shareSearchQuery, isShareModalOpen]);
+
   const shareRecipients = useMemo(() => {
     const list = [];
     const seenUserIds = new Set();
+    const seenChatIds = new Set();
 
     // 1. Existing chats (both group and direct)
     for (const c of (shareChats || [])) {
-      const title = c.type === 'group' ? (c.name || 'Խումբ') : (c.participant_names || 'Անհայտ');
+      if (!c || seenChatIds.has(c.id)) continue;
+      seenChatIds.add(c.id);
+
+      const isGroup = c.type === 'group';
+      const title = isGroup ? (c.name || 'Խումբ') : (c.participant_names || 'Անհայտ');
+      const otherUid = c.other_user_id ? Number(c.other_user_id) : null;
+      if (!isGroup && otherUid) {
+        seenUserIds.add(otherUid);
+      }
+
       list.push({
         type: 'chat',
+        key: `chat_${c.id}`,
         chatId: c.id,
-        isGroup: c.type === 'group',
+        isGroup,
         title,
-        avatar: c.type === 'group' ? '👥' : (title ? title.charAt(0).toUpperCase() : '👤'),
-        otherUserId: c.other_user_id,
+        subTitle: isGroup ? 'Խումբ' : '',
+        avatar: isGroup ? '👥' : (title ? title.charAt(0).toUpperCase() : '👤'),
+        otherUserId: otherUid,
         raw: c,
       });
-      if (c.other_user_id) {
-        seenUserIds.add(Number(c.other_user_id));
-      }
     }
 
-    // 2. Friends who do not have an existing chat yet
+    // 2. Friends who do not have an existing direct chat yet
     for (const f of (shareFriends || [])) {
-      if (!seenUserIds.has(Number(f.id))) {
-        const title = f.name || f.username || f.email || 'Ընկեր';
-        list.push({
-          type: 'friend',
-          userId: f.id,
-          isGroup: false,
-          title,
-          subTitle: f.email || f.username || '',
-          avatar: title ? title.charAt(0).toUpperCase() : '👤',
-          raw: f,
-        });
-      }
+      const fId = Number(f.friend_id || f.id || 0);
+      if (!fId || seenUserIds.has(fId)) continue;
+      seenUserIds.add(fId);
+
+      const title = f.name || f.username || f.email || 'Ընկեր';
+      const subTitle = (f.username ? `@${f.username}` : '') || f.email || '';
+      list.push({
+        type: 'friend',
+        key: `user_${fId}`,
+        userId: fId,
+        isGroup: false,
+        title,
+        subTitle,
+        avatar: title ? title.charAt(0).toUpperCase() : '👤',
+        raw: f,
+      });
     }
 
-    // 3. Filter by search query
+    // 3. Platform users matched by server search
+    for (const u of (shareServerUsers || [])) {
+      const uId = Number(u.id || 0);
+      if (!uId || seenUserIds.has(uId)) continue;
+      seenUserIds.add(uId);
+
+      const title = u.name || u.username || u.email || 'Օգտատեր';
+      const subTitle = (u.username ? `@${u.username}` : '') || u.email || '';
+      list.push({
+        type: 'friend',
+        key: `user_${uId}`,
+        userId: uId,
+        isGroup: false,
+        title,
+        subTitle,
+        avatar: title ? title.charAt(0).toUpperCase() : '👤',
+        raw: u,
+      });
+    }
+
+    // 4. Filter by search query
     const q = shareSearchQuery.trim().toLowerCase();
     if (!q) return list;
+
     return list.filter(item => {
-      const matchTitle = (item.title || '').toLowerCase().includes(q);
-      const matchSub = (item.subTitle || '').toLowerCase().includes(q);
-      return matchTitle || matchSub;
+      const t = (item.title || '').toLowerCase();
+      const sub = (item.subTitle || '').toLowerCase();
+      const rawName = (item.raw?.name || '').toLowerCase();
+      const rawUser = (item.raw?.username || '').toLowerCase();
+      const rawEmail = (item.raw?.email || '').toLowerCase();
+      const rawPart = (item.raw?.participant_names || '').toLowerCase();
+      return (
+        t.includes(q) ||
+        sub.includes(q) ||
+        rawName.includes(q) ||
+        rawUser.includes(q) ||
+        rawEmail.includes(q) ||
+        rawPart.includes(q)
+      );
     });
-  }, [shareChats, shareFriends, shareSearchQuery]);
+  }, [shareChats, shareFriends, shareServerUsers, shareSearchQuery]);
 
   const handleShareToRecipient = async (item) => {
     if (sharingChatId) return;
@@ -1300,12 +1369,32 @@ export default function SetlistEditorApp() {
     if (!targetChatId && item.userId) {
       setSharingChatId(`user_${item.userId}`);
       try {
-        const directRes = await fetch('/chat_api.php?action=get_direct_chat', {
+        let directRes = await fetch('/chat_api.php?action=get_direct_chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ target_user_id: item.userId })
         });
-        const directData = await directRes.json();
+        let directData = await directRes.json();
+
+        // If not friends yet, send friend request and retry get_direct_chat
+        if (!directData.ok && directData.error === 'Not friends') {
+          try {
+            await fetch('/friends_api.php?action=add', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ user_id: item.userId })
+            });
+            directRes = await fetch('/chat_api.php?action=get_direct_chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ target_user_id: item.userId })
+            });
+            directData = await directRes.json();
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
         if (directData.ok && (directData.chat_id || directData.id)) {
           targetChatId = directData.chat_id || directData.id;
         } else {
@@ -2965,7 +3054,7 @@ export default function SetlistEditorApp() {
                       const isSending = sharingChatId === item.chatId || sharingChatId === `user_${item.userId}`;
                       return (
                         <div
-                          key={item.chatId ? `chat_${item.chatId}` : `user_${item.userId}`}
+                          key={item.key}
                           style={{
                             display: 'flex',
                             alignItems: 'center',

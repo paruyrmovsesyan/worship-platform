@@ -107,6 +107,9 @@ export default function SetlistsApp() {
   // Invite via Chat State (must be declared before the useEffect that depends on inviteSetlist)
   const [inviteSetlist, setInviteSetlist] = useState(null);
   const [inviteChats, setInviteChats] = useState([]);
+  const [inviteFriends, setInviteFriends] = useState([]);
+  const [inviteServerUsers, setInviteServerUsers] = useState([]);
+  const [inviteSearchQuery, setInviteSearchQuery] = useState('');
   const [inviteChatsLoading, setInviteChatsLoading] = useState(false);
   const [inviteMessage, setInviteMessage] = useState('');
   const [inviteCanEdit, setInviteCanEdit] = useState(false);
@@ -344,15 +347,127 @@ export default function SetlistsApp() {
     setInviteSetlist(list);
     setInviteMessage('');
     setInviteCanEdit(false);
+    setInviteSearchQuery('');
+    setInviteServerUsers([]);
     setInviteChatsLoading(true);
-    fetch('/chat_api.php?action=list_chats')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.ok) setInviteChats(data.chats || []);
-        setInviteChatsLoading(false);
-      })
-      .catch(() => setInviteChatsLoading(false));
+    Promise.all([
+      fetch('/chat_api.php?action=list_chats').then((res) => res.json()).catch(() => ({ ok: false })),
+      fetch('/friends_api.php?action=get_friends').then((res) => res.json()).catch(() => ({ ok: false }))
+    ]).then(([chatData, friendsData]) => {
+      if (chatData.ok) setInviteChats(chatData.chats || []);
+      if (friendsData.ok) setInviteFriends(friendsData.friends || []);
+      setInviteChatsLoading(false);
+    }).catch(() => setInviteChatsLoading(false));
   };
+
+  useEffect(() => {
+    if (!inviteSetlist) return;
+    const q = inviteSearchQuery.trim();
+    if (q.length < 2) {
+      setInviteServerUsers([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/friends_api.php?action=search_users&q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.users)) {
+          setInviteServerUsers(data.users);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [inviteSearchQuery, inviteSetlist]);
+
+  const inviteRecipients = useMemo(() => {
+    const list = [];
+    const seenUserIds = new Set();
+    const seenChatIds = new Set();
+
+    for (const c of (inviteChats || [])) {
+      if (!c || seenChatIds.has(c.id)) continue;
+      seenChatIds.add(c.id);
+
+      const isGroup = c.type === 'group';
+      const title = isGroup ? (c.name || 'Խումբ') : (c.participant_names || 'Անհայտ');
+      const otherUid = c.other_user_id ? Number(c.other_user_id) : null;
+      if (!isGroup && otherUid) {
+        seenUserIds.add(otherUid);
+      }
+
+      list.push({
+        type: 'chat',
+        key: `chat_${c.id}`,
+        chatId: c.id,
+        isGroup,
+        title,
+        subTitle: isGroup ? 'Խումբ' : '',
+        avatar: isGroup ? '👥' : (title ? title.charAt(0).toUpperCase() : '👤'),
+        otherUserId: otherUid,
+        raw: c,
+      });
+    }
+
+    for (const f of (inviteFriends || [])) {
+      const fId = Number(f.friend_id || f.id || 0);
+      if (!fId || seenUserIds.has(fId)) continue;
+      seenUserIds.add(fId);
+
+      const title = f.name || f.username || f.email || 'Ընկեր';
+      const subTitle = (f.username ? `@${f.username}` : '') || f.email || '';
+      list.push({
+        type: 'friend',
+        key: `user_${fId}`,
+        userId: fId,
+        isGroup: false,
+        title,
+        subTitle,
+        avatar: title ? title.charAt(0).toUpperCase() : '👤',
+        raw: f,
+      });
+    }
+
+    for (const u of (inviteServerUsers || [])) {
+      const uId = Number(u.id || 0);
+      if (!uId || seenUserIds.has(uId)) continue;
+      seenUserIds.add(uId);
+
+      const title = u.name || u.username || u.email || 'Օգտատեր';
+      const subTitle = (u.username ? `@${u.username}` : '') || u.email || '';
+      list.push({
+        type: 'friend',
+        key: `user_${uId}`,
+        userId: uId,
+        isGroup: false,
+        title,
+        subTitle,
+        avatar: title ? title.charAt(0).toUpperCase() : '👤',
+        raw: u,
+      });
+    }
+
+    const q = inviteSearchQuery.trim().toLowerCase();
+    if (!q) return list;
+
+    return list.filter(item => {
+      const t = (item.title || '').toLowerCase();
+      const sub = (item.subTitle || '').toLowerCase();
+      const rawName = (item.raw?.name || '').toLowerCase();
+      const rawUser = (item.raw?.username || '').toLowerCase();
+      const rawEmail = (item.raw?.email || '').toLowerCase();
+      const rawPart = (item.raw?.participant_names || '').toLowerCase();
+      return (
+        t.includes(q) ||
+        sub.includes(q) ||
+        rawName.includes(q) ||
+        rawUser.includes(q) ||
+        rawEmail.includes(q) ||
+        rawPart.includes(q)
+      );
+    });
+  }, [inviteChats, inviteFriends, inviteServerUsers, inviteSearchQuery]);
 
   const handleSendChatInvite = async (chatId) => {
     if (!inviteSetlist) return;
@@ -385,6 +500,56 @@ export default function SetlistsApp() {
       alert('Network error');
     } finally {
       setSendingInviteChatId(null);
+    }
+  };
+
+  const handleSendInviteToRecipient = async (item) => {
+    if (sendingInviteChatId) return;
+    let targetChatId = item.chatId;
+
+    if (!targetChatId && item.userId) {
+      setSendingInviteChatId(`user_${item.userId}`);
+      try {
+        let directRes = await fetch('/chat_api.php?action=get_direct_chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target_user_id: item.userId })
+        });
+        let directData = await directRes.json();
+        if (!directData.ok && directData.error === 'Not friends') {
+          try {
+            await fetch('/friends_api.php?action=add', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ user_id: item.userId })
+            });
+            directRes = await fetch('/chat_api.php?action=get_direct_chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ target_user_id: item.userId })
+            });
+            directData = await directRes.json();
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        if (directData.ok && (directData.chat_id || directData.id)) {
+          targetChatId = directData.chat_id || directData.id;
+        } else {
+          alert(directData.error || 'Failed to create chat');
+          setSendingInviteChatId(null);
+          return;
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Network error');
+        setSendingInviteChatId(null);
+        return;
+      }
+    }
+
+    if (targetChatId) {
+      await handleSendChatInvite(targetChatId);
     }
   };
 
@@ -1315,8 +1480,53 @@ export default function SetlistsApp() {
               </label>
             </div>
 
-            <div style={{ marginBottom: '10px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
-              {language === 'am' ? 'Ընտրեք չաթը' : language === 'ru' ? 'Выберите чат' : 'Select a chat'}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="text"
+                  value={inviteSearchQuery}
+                  onChange={(e) => setInviteSearchQuery(e.target.value)}
+                  placeholder={
+                    language === 'am'
+                      ? '🔍 Որոնել չաթեր կամ ընկերներ...'
+                      : language === 'ru'
+                      ? '🔍 Поиск чатов или друзей...'
+                      : '🔍 Search chats or friends...'
+                  }
+                  style={{
+                    width: '100%',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(0, 212, 255, 0.35)',
+                    borderRadius: '10px',
+                    padding: '9px 36px 9px 12px',
+                    color: '#fff',
+                    fontSize: '0.84rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                {inviteSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setInviteSearchQuery('')}
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#8fa0b5',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      padding: '4px'
+                    }}
+                    aria-label="Clear"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto' }}>
@@ -1324,18 +1534,19 @@ export default function SetlistsApp() {
                 <div style={{ textAlign: 'center', padding: '20px', color: 'var(--color-text-secondary)' }}>
                   {language === 'am' ? 'Բեռնվում է...' : language === 'ru' ? 'Загрузка...' : 'Loading...'}
                 </div>
-              ) : inviteChats.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '20px', color: 'var(--color-text-secondary)' }}>
-                  {language === 'am' ? 'Չաթեր չկան' : language === 'ru' ? 'Нет чатов' : 'No chats found'}
+              ) : inviteRecipients.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: 'var(--color-text-secondary)', fontSize: '0.84rem' }}>
+                  {inviteSearchQuery
+                    ? (language === 'am' ? 'Արդյունքներ չեն գտնվել' : language === 'ru' ? 'Ничего не найдено' : 'No results found')
+                    : (language === 'am' ? 'Չաթեր կամ ընկերներ չկան' : language === 'ru' ? 'Нет чатов или друзей' : 'No chats or friends found')}
                 </div>
               ) : (
-                inviteChats.map((c) => {
-                  const isSending = sendingInviteChatId === c.id;
-                  const chatTitle = c.type === 'group' ? c.name : (c.participant_names || 'Chat');
+                inviteRecipients.map((item) => {
+                  const isSending = sendingInviteChatId === item.chatId || sendingInviteChatId === `user_${item.userId}`;
                   return (
                     <div
-                      key={c.id}
-                      onClick={() => !sendingInviteChatId && handleSendChatInvite(c.id)}
+                      key={item.key}
+                      onClick={() => !sendingInviteChatId && handleSendInviteToRecipient(item)}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -1361,15 +1572,17 @@ export default function SetlistsApp() {
                           flexShrink: 0,
                         }}
                       >
-                        {c.type === 'group' ? '👥' : (chatTitle ? chatTitle.charAt(0).toUpperCase() : '👤')}
+                        {item.avatar}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {chatTitle}
+                          {item.title}
                         </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                          {c.type === 'group' ? (language === 'am' ? 'Խումբ' : language === 'ru' ? 'Группа' : 'Group') : (language === 'am' ? 'Անձնական չաթ' : language === 'ru' ? 'Личный чат' : 'Direct')}
-                        </div>
+                        {item.subTitle && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {item.subTitle}
+                          </div>
+                        )}
                       </div>
                       <button
                         type="button"
