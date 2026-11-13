@@ -1140,7 +1140,9 @@ if ($action === 'get_setlist_items' && $method === 'GET') {
            s.artist AS song_artist,
            s.song_key AS original_key,
            s.bpm AS original_bpm,
-           s.tags AS song_tags
+           s.tags AS song_tags,
+           s.chords AS chords,
+           s.lyrics AS lyrics
     FROM setlist_items i
     LEFT JOIN songs s ON s.id = i.song_id
     WHERE i.setlist_id = ?
@@ -1773,7 +1775,9 @@ if ($action === 'get_public_setlist' && $method === 'GET') {
            s.artist AS song_artist,
            s.song_key AS original_key,
            s.bpm AS original_bpm,
-           s.tags AS song_tags
+           s.tags AS song_tags,
+           s.chords AS chords,
+           s.lyrics AS lyrics
     FROM setlist_items i
     LEFT JOIN songs s ON s.id = i.song_id
     WHERE i.setlist_id = ?

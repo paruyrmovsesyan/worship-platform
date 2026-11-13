@@ -11,11 +11,21 @@ export default function SetlistLive() {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
 
-  const [setlist, setSetlist] = useState(null);
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [cachedData] = useState(() => {
+    try {
+      const raw = localStorage.getItem(`wp_setlist_cache_${id}`);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [setlist, setSetlist] = useState(() => cachedData?.setlist || null);
+  const [items, setItems] = useState(() => cachedData?.items || []);
+  const [loading, setLoading] = useState(() => !cachedData?.items?.length);
   const [error, setError] = useState(null);
   const [activeMetronomeItemId, setActiveMetronomeItemId] = useState(null);
+  const [focusedItemId, setFocusedItemId] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [wakeLockActive, setWakeLockActive] = useState(false);
   const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
@@ -165,10 +175,28 @@ export default function SetlistLive() {
           if (!data || data.error) throw new Error(data?.error || 'Failed to load');
           setSetlist(data.setlist);
           setItems(data.items || []);
+          try {
+            localStorage.setItem(`wp_setlist_cache_${id}`, JSON.stringify({
+              setlist: data.setlist,
+              items: data.items || []
+            }));
+          } catch {}
           setLoading(false);
         })
         .catch(err => {
           console.error(err);
+          try {
+            const raw = localStorage.getItem(`wp_setlist_cache_${id}`);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed?.items?.length) {
+                setSetlist(parsed.setlist);
+                setItems(parsed.items);
+                setLoading(false);
+                return;
+              }
+            }
+          } catch {}
           setError(t('setlists.errorFetch') || 'Error fetching setlist');
           setLoading(false);
         });
@@ -184,6 +212,44 @@ export default function SetlistLive() {
 
     return unsubscribe;
   }, [id, t]);
+
+  // Bluetooth Pedal & Keyboard Navigation (AirTurn, PageFlip, etc.)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+      const songsOnly = items.filter(i => i.item_type !== 'section');
+      if (!songsOnly.length) return;
+
+      const currentIndex = songsOnly.findIndex(s => s.id === focusedItemId);
+
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+        e.preventDefault();
+        const nextIdx = currentIndex < 0 ? 0 : Math.min(currentIndex + 1, songsOnly.length - 1);
+        const target = songsOnly[nextIdx];
+        if (target) {
+          setFocusedItemId(target.id);
+          const el = document.querySelector(`[data-live-item-id="${target.id}"]`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault();
+        const prevIdx = currentIndex <= 0 ? 0 : currentIndex - 1;
+        const target = songsOnly[prevIdx];
+        if (target) {
+          setFocusedItemId(target.id);
+          const el = document.querySelector(`[data-live-item-id="${target.id}"]`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        const target = currentIndex >= 0 ? songsOnly[currentIndex] : songsOnly[0];
+        if (target) toggleMetronome(e, target);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [items, focusedItemId]);
 
   const songItems = items.filter(i => i.item_type !== 'section');
   const totalSongs = songItems.length;
@@ -306,10 +372,13 @@ export default function SetlistLive() {
           const bpm = getEffectiveBpm(item);
           const isActive = activeMetronomeItemId === item.id;
 
+          const isFocused = focusedItemId === item.id;
+
           return (
             <React.Fragment key={item.id}>
               <div
-                className={`sll-card${isActive ? ' sll-card--active' : ''}`}
+                data-live-item-id={item.id}
+                className={`sll-card${isActive ? ' sll-card--active' : ''}${isFocused ? ' sll-card--focused' : ''}`}
                 onClick={() => {
                   const q = new URLSearchParams();
                   if (id) q.set('setlist_id', String(id));

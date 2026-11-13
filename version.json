@@ -1,8 +1,8 @@
 {
   "app_version": "5.3.0",
   "web_version": "5.3.0",
-  "asset_version": "573",
-  "build_timestamp": "2026-11-13T20:21:00+04:00",
-  "release_type": "fix",
-  "release_summary": "Fix friend duplication and recipient search filtering in setlist share modals"
+  "asset_version": "574",
+  "build_timestamp": "2026-11-13T20:46:00+04:00",
+  "release_type": "feature",
+  "release_summary": "Comprehensive setlist enhancements: offline caching, live pedal navigation, chords/lyrics in print, optimistic cache sync, and harmonic key flow"
 }

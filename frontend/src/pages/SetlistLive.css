@@ -330,6 +330,12 @@ body.wp-standalone-app:not(.is-ios) .sll-header {
   background: linear-gradient(135deg, rgba(230, 60, 100, 0.06) 0%, transparent 60%);
 }
 
+/* Focused via Bluetooth pedal / keyboard */
+.sll-card--focused {
+  border-color: #00d4ff !important;
+  box-shadow: 0 0 16px rgba(0, 212, 255, 0.25) !important;
+}
+
 /* ── Number badge ── */
 .sll-card-num {
   flex-shrink: 0;

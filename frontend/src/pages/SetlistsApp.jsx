@@ -69,9 +69,17 @@ function getRelativeDateLabel(dateStr, lang) {
 }
 
 export default function SetlistsApp() {
-  const [setlists, setSetlists] = useState([]);
+  const [cachedSetlists] = useState(() => {
+    try {
+      const raw = localStorage.getItem('wp_setlists_index_cache');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [setlists, setSetlists] = useState(() => (Array.isArray(cachedSetlists) ? cachedSetlists : []));
   const { user, loading: authLoading } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !Array.isArray(cachedSetlists) || cachedSetlists.length === 0);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   usePageReady(loading || authLoading);
@@ -143,11 +151,26 @@ export default function SetlistsApp() {
     fetch('/setlists_api.php?action=get_setlists')
       .then((res) => res.json())
       .then((data) => {
-        setSetlists(Array.isArray(data) ? data : []);
+        const arr = Array.isArray(data) ? data : [];
+        setSetlists(arr);
+        try {
+          localStorage.setItem('wp_setlists_index_cache', JSON.stringify(arr));
+        } catch {}
         setLoading(false);
       })
       .catch((err) => {
         console.error(err);
+        try {
+          const cached = localStorage.getItem('wp_setlists_index_cache');
+          if (cached) {
+            const arr = JSON.parse(cached);
+            if (Array.isArray(arr) && arr.length > 0) {
+              setSetlists(arr);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch {}
         setError(t('setlists.errorLoad', 'Չհաջողվեց բեռնել երգացանկերը'));
         setLoading(false);
       });

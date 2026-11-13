@@ -46,6 +46,38 @@ const TEAM_ROLES = [
   'Պրոյեկցիա / Մեդիա'
 ];
 
+const KEY_SEMITONES = {
+  'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 'E': 4,
+  'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8, 'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11
+};
+
+const getKeyTransitionInfo = (k1, k2) => {
+  if (!k1 || !k2) return null;
+  const root1 = String(k1).trim().replace(/m$/, '');
+  const root2 = String(k2).trim().replace(/m$/, '');
+  const semi1 = KEY_SEMITONES[root1];
+  const semi2 = KEY_SEMITONES[root2];
+  if (semi1 === undefined || semi2 === undefined) return null;
+
+  const diff = (semi2 - semi1 + 12) % 12;
+  if (diff === 0) {
+    return { label: `${k1} ➔ ${k2} (Նույն տոն.)`, isSmooth: true };
+  }
+  if (diff === 7) {
+    return { label: `${k1} ➔ ${k2} (Կվինտա / +5th)`, isSmooth: true };
+  }
+  if (diff === 5) {
+    return { label: `${k1} ➔ ${k2} (Կվարտա / +4th)`, isSmooth: true };
+  }
+  if (diff === 2) {
+    return { label: `${k1} ➔ ${k2} (+1 Տոն)`, isSmooth: true };
+  }
+  if (diff === 1) {
+    return { label: `${k1} ➔ ${k2} (+½ Տոն)`, isSmooth: true };
+  }
+  return { label: `${k1} ➔ ${k2} (${diff > 6 ? diff - 12 : '+' + diff} կտ)`, isSmooth: false };
+};
+
 export default function SetlistEditorApp() {
   const { t, language } = useLanguage();
   const { id } = useParams();
@@ -67,6 +99,17 @@ export default function SetlistEditorApp() {
   const [loading, setLoading] = useState(() => !cachedInitial);
   usePageReady(loading || authLoading);
   const [error, setError] = useState(null);
+
+  const updateCachedItems = useCallback((updatedItems) => {
+    try {
+      const raw = localStorage.getItem(`wp_setlist_cache_${id}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        parsed.items = updatedItems;
+        localStorage.setItem(`wp_setlist_cache_${id}`, JSON.stringify(parsed));
+      }
+    } catch {}
+  }, [id]);
 
   // Quick Song Drawer
   const [isQuickDrawerOpen, setIsQuickDrawerOpen] = useState(false);
@@ -446,6 +489,7 @@ export default function SetlistEditorApp() {
 
   // Reordering
   const persistReorder = async (nextItems) => {
+    updateCachedItems(nextItems);
     const payload = nextItems.map((item, idx) => ({ id: item.id, position: idx + 1 }));
     await fetch('/setlists_api.php?action=reorder_setlist_items', {
       method: 'POST',
@@ -787,14 +831,17 @@ export default function SetlistEditorApp() {
     setIsBatchAdding(true);
     const ids = Array.from(selectedSongIds);
     try {
-      for (const songId of ids) {
-        await fetch('/setlists_api.php?action=add_song_to_setlist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ setlist_id: id, song_id: songId })
-        });
-        setAddedIds(prev => ({ ...prev, [songId]: true }));
-      }
+      await Promise.all(
+        ids.map(songId =>
+          fetch('/setlists_api.php?action=add_song_to_setlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ setlist_id: id, song_id: songId })
+          }).then(() => {
+            setAddedIds(prev => ({ ...prev, [songId]: true }));
+          })
+        )
+      );
       setSelectedSongIds(new Set());
       await fetchSetlist();
       showToast(language === 'am' ? `✓ ${ids.length} երգ ավելացվեց երգացանկում` : `✓ Added ${ids.length} songs to setlist`);
@@ -857,7 +904,11 @@ export default function SetlistEditorApp() {
       });
       const data = await res.json();
       if (data.ok) {
-        setItems(prev => prev.filter(i => i.id !== itemId));
+        setItems(prev => {
+          const next = prev.filter(i => i.id !== itemId);
+          updateCachedItems(next);
+          return next;
+        });
       }
     } catch (err) {
       console.error(err);
@@ -893,6 +944,11 @@ export default function SetlistEditorApp() {
       });
       const data = await res.json();
       if (data.ok) {
+        setItems(prev => {
+          const next = prev.map(i => i.id === editingItem.id ? { ...i, ...itemForm } : i);
+          updateCachedItems(next);
+          return next;
+        });
         setEditingItem(null);
         fetchSetlist();
       } else {
@@ -2283,17 +2339,44 @@ export default function SetlistEditorApp() {
                     )}
                   </div>
 
-                  {item.transition_type && idx < items.length - 1 && (
-                    <div className="sla-transition-wrap">
-                      <span className="sla-transition-chip">
-                        {item.transition_type === 'crossfade'
-                          ? '🔄 Սահուն անցում (Crossfade)'
-                          : item.transition_type === 'stop'
-                          ? '🛑 Դադար (Stop)'
-                          : '💬 Խոսք / Աղոթք (Talk)'}
-                      </span>
-                    </div>
-                  )}
+                  {(() => {
+                    const nextSong = items.slice(idx + 1).find(i => i.item_type !== 'section');
+                    const currentKey = item.target_key || item.song_key;
+                    const nextKey = nextSong ? (nextSong.target_key || nextSong.song_key) : null;
+                    const harmonicFlow = (currentKey && nextKey) ? getKeyTransitionInfo(currentKey, nextKey) : null;
+
+                    if (!item.transition_type && !harmonicFlow) return null;
+                    return (
+                      <div className="sla-transition-wrap" style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', margin: '4px 0 6px' }}>
+                        {item.transition_type && (
+                          <span className="sla-transition-chip">
+                            {item.transition_type === 'crossfade'
+                              ? '🔄 Սահուն անցում (Crossfade)'
+                              : item.transition_type === 'stop'
+                              ? '🛑 Դադար (Stop)'
+                              : '💬 Խոսք / Աղոթք (Talk)'}
+                          </span>
+                        )}
+                        {harmonicFlow && (
+                          <span
+                            className="sla-transition-chip"
+                            style={{
+                              background: harmonicFlow.isSmooth ? 'rgba(46, 204, 113, 0.14)' : 'rgba(255, 255, 255, 0.06)',
+                              color: harmonicFlow.isSmooth ? '#2ecc71' : '#8fa0b5',
+                              border: `1px solid ${harmonicFlow.isSmooth ? 'rgba(46, 204, 113, 0.35)' : 'rgba(255, 255, 255, 0.12)'}`,
+                              fontSize: '0.72rem',
+                              padding: '2px 8px',
+                              borderRadius: '10px',
+                              fontWeight: 500
+                            }}
+                            title={`Անցում ${currentKey} ➔ ${nextKey}`}
+                          >
+                            🎵 {harmonicFlow.label}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </React.Fragment>
               );
             });
