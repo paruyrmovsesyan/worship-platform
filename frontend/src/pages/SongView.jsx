@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +7,14 @@ import { renderWithChords, transposeRoot } from '../utils/chordTransposer';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { normalizeSavedSongSort, sortSavedSongs } from '../utils/savedSongs';
 import { normalizeSongKey, semitoneOffset, songKeysEqual } from '../utils/songKey';
+import {
+  getCachedFavoriteById,
+  getCachedSetlistItem,
+  getCachedSetlistNav,
+  getCachedSongById,
+  prefetchSongById,
+  saveCachedSongDetail,
+} from '../utils/songCache';
 import { usePageReady } from '../hooks/usePageReady';
 import './SongView.css';
 import './SongViewWebPro.css';
@@ -188,8 +196,10 @@ export default function SongView() {
   
   const [song, setSong] = useState(null);
   const [loading, setLoading] = useState(true);
-  usePageReady(loading || authLoading);
+  usePageReady(loading && !song);
   const [error, setError] = useState(null);
+  const userManuallyAdjustedKeyRef = useRef(false);
+  const latestSongRef = useRef(null);
   
   // Controls state
   const [fontSize, setFontSize] = useState(() => parseInt(localStorage.getItem('song_font_size') || '18', 10));
@@ -681,93 +691,157 @@ export default function SongView() {
     setTimeout(() => setFavMsg(''), 2000);
   };
 
-  useEffect(() => {
+  const resolvePreferredCapo = (songId, searchStr, cachedSetlistItem) => {
+    const params = new URLSearchParams(searchStr || '');
+    const urlCapo = params.get('capo');
+    let preferredCapo = 0;
+    if (urlCapo !== null) {
+      preferredCapo = Number.parseInt(urlCapo, 10) || 0;
+    } else if (cachedSetlistItem?.capo != null) {
+      preferredCapo = Number.parseInt(cachedSetlistItem.capo, 10) || 0;
+    } else {
+      preferredCapo = Number.parseInt(localStorage.getItem(`capo_${songId}`) || '0', 10) || 0;
+      if (!preferredCapo) {
+        try {
+          const legacyCapoPref = localStorage.getItem(`song_capo_pref:${songId}`);
+          if (legacyCapoPref) preferredCapo = Number.parseInt(JSON.parse(legacyCapoPref).capo, 10) || 0;
+        } catch {
+          // ignore corrupt preference
+        }
+      }
+    }
+    return Math.max(0, Math.min(12, preferredCapo));
+  };
+
+  useLayoutEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setSong(null);
-    setSemi(0);
-    setTargetKey(null);
-    setIsFavorite(false);
+    userManuallyAdjustedKeyRef.current = false;
+
+    const params = new URLSearchParams(location.search);
+    const urlTkey = params.get('tkey');
+    const urlCapo = params.get('capo');
+    const listQuery = params.get('list') || '';
+    const setlistId = params.get('setlist_id') || (listQuery.startsWith('setlist_') ? listQuery.slice(8) : '');
+    const setlistItemId = params.get('setlist_item_id');
+    const setlistToken = params.get('setlist_token');
+    const isSetlistContext = Boolean(setlistId || setlistItemId || setlistToken);
+
+    const cachedSetlistItem = setlistId ? getCachedSetlistItem(setlistId, id, setlistItemId) : null;
+    const cachedFav = user ? getCachedFavoriteById(id) : null;
+    const cachedSong = getCachedSongById(id, { lang: language, setlistId, setlistItemId });
+    const preferredCapo = resolvePreferredCapo(id, location.search, cachedSetlistItem);
+
+    const computeTransposition = (songData, keyCandidate, capoValue) => {
+      const normalized = normalizeSongKey(keyCandidate);
+      if (!normalized || !songData?.song_key) {
+        return { targetKey: null, semi: capoValue };
+      }
+      const difference = semitoneOffset(songData.song_key, normalized);
+      if (difference === null) {
+        return { targetKey: null, semi: capoValue };
+      }
+      return { targetKey: normalized, semi: difference + capoValue };
+    };
+
+    const initialKeyCandidate =
+      urlTkey ||
+      cachedSetlistItem?.target_key ||
+      (!isSetlistContext ? cachedFav?.target_key : null) ||
+      null;
+
+    if (cachedSong && cachedSong.id) {
+      const { targetKey: nextTargetKey, semi: nextSemi } = computeTransposition(
+        cachedSong,
+        initialKeyCandidate,
+        preferredCapo
+      );
+      latestSongRef.current = cachedSong;
+      setSong(cachedSong);
+      setError(null);
+      setCapo(preferredCapo);
+      setTargetKey(nextTargetKey);
+      setSemi(nextSemi);
+      setIsFavorite(Boolean(cachedFav));
+      setLoading(false);
+    } else {
+      latestSongRef.current = null;
+      setLoading(true);
+      setError(null);
+      setSong(null);
+      setCapo(preferredCapo);
+      setSemi(preferredCapo);
+      setTargetKey(null);
+      setIsFavorite(Boolean(cachedFav));
+    }
 
     const fetchFullSongDetails = (isInitial = false) => {
       fetch(`/api.php?id=${id}`)
         .then(res => res.json())
         .then(data => {
           if (!data || !data.id) throw new Error('Song not found');
+          saveCachedSongDetail(data, language);
           if (cancelled) return;
+
+          latestSongRef.current = data;
           setSong(data);
           if (isInitial) setLoading(false);
 
           if (isInitial) {
-            const params = new URLSearchParams(location.search);
-            const urlTkey = params.get('tkey');
-            const urlCapo = params.get('capo');
-
-            let preferredCapo = 0;
-            if (urlCapo !== null) {
-              preferredCapo = Number.parseInt(urlCapo, 10) || 0;
-            } else {
-              preferredCapo = Number.parseInt(localStorage.getItem(`capo_${id}`) || '0', 10) || 0;
-              if (!preferredCapo) {
-                try {
-                  const legacyCapoPref = localStorage.getItem(`song_capo_pref:${id}`);
-                  if (legacyCapoPref) preferredCapo = Number.parseInt(JSON.parse(legacyCapoPref).capo, 10) || 0;
-                } catch {
-                  // ignore corrupt preference
-                }
-              }
+            if (!userManuallyAdjustedKeyRef.current) {
+              const latestSetlistItem = setlistId ? getCachedSetlistItem(setlistId, id, setlistItemId) : null;
+              const resolvedKeyCandidate =
+                urlTkey ||
+                latestSetlistItem?.target_key ||
+                (!isSetlistContext ? cachedFav?.target_key : null) ||
+                null;
+              const { targetKey: nextTargetKey, semi: nextSemi } = computeTransposition(
+                data,
+                resolvedKeyCandidate,
+                preferredCapo
+              );
+              setCapo(preferredCapo);
+              setTargetKey(nextTargetKey);
+              setSemi(nextSemi);
             }
-            preferredCapo = Math.max(0, Math.min(12, preferredCapo));
-            setCapo(preferredCapo);
-
-            const applyTargetKey = (value) => {
-              const normalized = normalizeSongKey(value);
-              if (!normalized) return;
-              const difference = semitoneOffset(data.song_key, normalized);
-              if (difference === null) return;
-              setTargetKey(normalized);
-              setSemi(difference + preferredCapo);
-            };
 
             if (user) {
               fetch(`/user_favorites_api.php?action=get_favorite&song_id=${id}`)
-                .then(r => r.json())
+                .then(r => (r.ok ? r.json() : null))
                 .then(favData => {
-                  if (cancelled) return;
+                  if (cancelled || !favData) return;
                   setIsFavorite(Boolean(favData.favorite));
-                  applyTargetKey(urlTkey || favData.target_key);
-                }).catch(() => {});
-            } else if (urlTkey) {
-              applyTargetKey(urlTkey);
+                  if (
+                    !userManuallyAdjustedKeyRef.current &&
+                    !urlTkey &&
+                    !isSetlistContext &&
+                    favData.target_key
+                  ) {
+                    const { targetKey: favTargetKey, semi: favSemi } = computeTransposition(
+                      data,
+                      favData.target_key,
+                      preferredCapo
+                    );
+                    if (favTargetKey) {
+                      setTargetKey(favTargetKey);
+                      setSemi(favSemi);
+                    }
+                  }
+                })
+                .catch(() => {});
             }
-            
+
             if (user) {
               fetch('/account_api.php?action=add_recent_view', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ song_id: id })
-              }).catch(()=>{});
+              }).catch(() => {});
             }
-          }
-
-          if (!data.attachments || data.attachments.length === 0) {
-            setTimeout(() => {
-              if (cancelled) return;
-              fetch(`/api.php?id=${id}`)
-                .then(r => r.json())
-                .then(fresh => {
-                  if (!cancelled && fresh && Array.isArray(fresh.attachments) && fresh.attachments.length > 0) {
-                    setSong(prev => ({ ...prev, attachments: fresh.attachments }));
-                  }
-                })
-                .catch(() => {});
-            }, 150);
           }
         })
         .catch(() => {
           if (cancelled) return;
-          if (isInitial) {
+          if (isInitial && !cachedSong) {
             setError(t('songView.error'));
             setLoading(false);
           }
@@ -795,76 +869,138 @@ export default function SongView() {
         navigator.serviceWorker.removeEventListener('message', handleSwMessage);
       }
     };
-  }, [id, language, user]);
+  }, [id, language, user, location.search]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     let cancelled = false;
-    const params = new URLSearchParams(window.location.search);
-    setSetlistNavData(null);
-    const setlistId = params.get('setlist_id');
+    const params = new URLSearchParams(location.search);
+    const listQuery = params.get('list') || '';
+    const setlistId = params.get('setlist_id') || (listQuery.startsWith('setlist_') ? listQuery.slice(8) : '');
     const setlistToken = params.get('setlist_token');
     const setlistItemId = params.get('setlist_item_id');
+    const urlTkey = params.get('tkey');
+    const urlCapo = params.get('capo');
+
+    const applyNavKeyIfNeeded = (currentItem) => {
+      if (!currentItem || userManuallyAdjustedKeyRef.current) return;
+      const songData = latestSongRef.current;
+      if (!songData?.song_key) return;
+
+      const resolvedCapo =
+        urlCapo !== null
+          ? (Number.parseInt(urlCapo, 10) || 0)
+          : (currentItem.capo != null ? (Number.parseInt(currentItem.capo, 10) || 0) : capo);
+      const cleanCapo = Math.max(0, Math.min(12, resolvedCapo));
+
+      if (!urlTkey && currentItem.target_key) {
+        const normalized = normalizeSongKey(currentItem.target_key);
+        const diff = normalized ? semitoneOffset(songData.song_key, normalized) : null;
+        if (normalized && diff !== null) {
+          setCapo(cleanCapo);
+          setTargetKey(normalized);
+          setSemi(diff + cleanCapo);
+          return;
+        }
+      }
+      if (urlCapo === null && currentItem.capo != null && cleanCapo !== capo) {
+        setCapo(cleanCapo);
+        setSemi((prev) => prev - capo + cleanCapo);
+      }
+    };
 
     if (setlistId || setlistToken) {
+      const cachedNav = setlistId ? getCachedSetlistNav(setlistId, id, setlistItemId) : null;
+      if (cachedNav) {
+        setSetlistNavData(cachedNav);
+        if (cachedNav.prev?.id) prefetchSongById(cachedNav.prev.id, language);
+        if (cachedNav.next?.id) prefetchSongById(cachedNav.next.id, language);
+      } else {
+        setSetlistNavData(null);
+      }
+
       let url = `/setlists_api.php?action=get_setlist_song_nav&song_id=${id}`;
       if (setlistId) url += `&setlist_id=${setlistId}`;
       if (setlistToken) url += `&token=${setlistToken}`;
       if (setlistItemId) url += `&item_id=${setlistItemId}`;
-      
+
       fetch(url)
         .then(r => r.json())
         .then(data => {
           if (cancelled) return;
           if (!data.error && data.current) {
-            setSetlistNavData({
+            const normalizedNav = {
               ...data,
               current: {
                 ...data.current,
                 index: data.index,
                 setlist_id: data.setlist?.id || setlistId,
               },
-            });
+            };
+            setSetlistNavData(normalizedNav);
+            applyNavKeyIfNeeded(normalizedNav.current);
+            if (normalizedNav.prev?.id) prefetchSongById(normalizedNav.prev.id, language);
+            if (normalizedNav.next?.id) prefetchSongById(normalizedNav.next.id, language);
           }
         }).catch(() => {});
+    } else if (listQuery === 'favorites' && user) {
+      const applyOrderedFavNav = (data) => {
+        if (!Array.isArray(data)) return;
+        const savedSort = normalizeSavedSongSort(params.get('sort'));
+        const keyFilter = params.get('key');
+        const filteredData = keyFilter
+          ? data.filter(item => (item.target_key || item.song_key) === keyFilter)
+          : data;
+        const orderedData = sortSavedSongs(
+          filteredData,
+          savedSort,
+          item => getLocalizedTitle(item, language),
+          language
+        );
+        const idx = orderedData.findIndex(s => String(s.id) === String(id));
+        if (idx !== -1) {
+          const prevItem = idx > 0 ? orderedData[idx - 1] : null;
+          const nextItem = idx < orderedData.length - 1 ? orderedData[idx + 1] : null;
+          setSetlistNavData({
+            current: { id, index: idx + 1 },
+            total: orderedData.length,
+            prev: prevItem,
+            next: nextItem,
+          });
+          if (prevItem?.id) prefetchSongById(prevItem.id, language);
+          if (nextItem?.id) prefetchSongById(nextItem.id, language);
+        }
+      };
+
+      try {
+        const rawFavCache = localStorage.getItem('wp_user_favorites_cache');
+        if (rawFavCache) {
+          applyOrderedFavNav(JSON.parse(rawFavCache));
+        } else {
+          setSetlistNavData(null);
+        }
+      } catch {
+        setSetlistNavData(null);
+      }
+
+      fetch('/user_favorites_api.php?action=get_favorites')
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => {
+          if (cancelled || !data) return;
+          applyOrderedFavNav(data);
+        }).catch(() => {});
+    } else {
+      setSetlistNavData(null);
     }
 
-    const listQuery = params.get('list');
-    if (listQuery === 'favorites' && user) {
-      fetch('/user_favorites_api.php?action=get_favorites')
-        .then(r => r.json())
-        .then(data => {
-          if (Array.isArray(data)) {
-            const savedSort = normalizeSavedSongSort(params.get('sort'));
-            const keyFilter = params.get('key');
-            const filteredData = keyFilter
-              ? data.filter(item => (item.target_key || item.song_key) === keyFilter)
-              : data;
-            const orderedData = sortSavedSongs(
-              filteredData,
-              savedSort,
-              item => getLocalizedTitle(item, language),
-              language
-            );
-            const idx = orderedData.findIndex(s => String(s.id) === String(id));
-            if (idx !== -1) {
-              setSetlistNavData({
-                current: { id, index: idx + 1 },
-                total: orderedData.length,
-                prev: idx > 0 ? orderedData[idx - 1] : null,
-                next: idx < orderedData.length - 1 ? orderedData[idx + 1] : null,
-              });
-            }
-          }
-        }).catch(() => {});
-    } else if (listQuery && listQuery.startsWith('setlist_')) {
+    if (listQuery && listQuery.startsWith('setlist_')) {
       const setId = listQuery.split('_')[1];
       fetch(`/setlists_api.php?action=get_setlist_items&setlist_id=${setId}`)
         .then(r => r.json())
         .then(d => {
-          if (d && d.setlist && d.setlist.team_role === 'vocalist' && !localStorage.getItem('view_mode_overridden')) {
+          if (!cancelled && d && d.setlist && d.setlist.team_role === 'vocalist' && !localStorage.getItem('view_mode_overridden')) {
             setViewMode('lyrics');
           }
-        });
+        }).catch(() => {});
     }
 
     return () => {
@@ -917,10 +1053,21 @@ export default function SongView() {
   const keySuffix = rootMatchForKeys ? rootMatchForKeys[2] : '';
   const KEYS = KEYS_BASE.map(k => k + keySuffix);
   
+  const applyManualCapo = (nextCapo) => {
+    const clean = Math.max(0, Math.min(12, Number.parseInt(nextCapo, 10) || 0));
+    userManuallyAdjustedKeyRef.current = true;
+    setCapo(clean);
+    localStorage.setItem(`capo_${id}`, clean);
+    localStorage.setItem(`song_capo_pref:${id}`, JSON.stringify({ capo: clean, capo_mode: clean > 0 ? 1 : 0 }));
+  };
+
   const handleKeyClick = (targetKeyStr) => {
     if (!song?.song_key) return;
     const difference = semitoneOffset(song.song_key, targetKeyStr);
-    if (difference !== null) setSemi(difference);
+    if (difference !== null) {
+      userManuallyAdjustedKeyRef.current = true;
+      setSemi(difference);
+    }
   };
 
   const handleSaveFavoriteKey = async () => {
@@ -985,10 +1132,16 @@ export default function SongView() {
 
   const navigateToSetlistSong = (item) => {
     if (!item || !item.id) return;
+    const params = new URLSearchParams(window.location.search);
+    const activeSetlistId = params.get('setlist_id');
+    const cachedItem = activeSetlistId ? getCachedSetlistItem(activeSetlistId, item.id, item.item_id) : null;
+    const effectiveTargetKey = cachedItem?.target_key ?? item.target_key;
+    const effectiveCapo = cachedItem?.capo ?? item.capo;
+
     const q = new URLSearchParams();
-    if (item.target_key) q.set('tkey', item.target_key);
-    if (item.capo) {
-      q.set('capo', String(item.capo));
+    if (effectiveTargetKey) q.set('tkey', effectiveTargetKey);
+    if (effectiveCapo) {
+      q.set('capo', String(effectiveCapo));
       q.set('capo_mode', '1');
     } else {
       const pref = JSON.parse(localStorage.getItem(`song_capo_pref:${item.id}`) || '{"capo":0,"capo_mode":0}');
@@ -997,12 +1150,11 @@ export default function SongView() {
         q.set('capo_mode', '1');
       }
     }
-    
-    const params = new URLSearchParams(window.location.search);
+
     if (params.get('list')) q.set('list', params.get('list'));
     if (params.get('sort')) q.set('sort', params.get('sort'));
     if (params.get('key')) q.set('key', params.get('key'));
-    if (params.get('setlist_id')) q.set('setlist_id', params.get('setlist_id'));
+    if (activeSetlistId) q.set('setlist_id', activeSetlistId);
     if (params.get('setlist_token')) q.set('setlist_token', params.get('setlist_token'));
     if (params.get('from_live')) q.set('from_live', params.get('from_live'));
     if (item.item_id) q.set('setlist_item_id', String(item.item_id));
@@ -1151,7 +1303,10 @@ export default function SongView() {
     (!songKeysEqual(soundingKey, setlistCurrentKey) || Number(capo || 0) !== setlistCurrentCapo)
   );
 
-  const currentChords = song?.chords ? renderWithChords(song.chords, semi - capo, useFlats) : '';
+  const currentChords = useMemo(
+    () => (song?.chords ? renderWithChords(song.chords, semi - capo, useFlats) : ''),
+    [song?.chords, semi, capo, useFlats]
+  );
   const currentLyrics = song?.lyrics || t('songView.noLyrics');
   const displayTitle = song?.title ? getLocalizedTitle(song.title, language) : (song?.title_hy || song?.title || 'Worship Song');
 
@@ -1257,6 +1412,7 @@ export default function SongView() {
           decreaseFontSize();
         } else {
           e.preventDefault();
+          userManuallyAdjustedKeyRef.current = true;
           setSemi(prev => prev - 1);
         }
       } else if (e.key === ']' || e.key === '=' || e.key === '+') {
@@ -1265,6 +1421,7 @@ export default function SongView() {
           increaseFontSize();
         } else {
           e.preventDefault();
+          userManuallyAdjustedKeyRef.current = true;
           setSemi(prev => prev + 1);
         }
       }
@@ -1274,7 +1431,7 @@ export default function SongView() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [setlistNavData, viewMode]);
 
-  if (loading || authLoading) {
+  if (loading || (!song && authLoading)) {
     return null;
   }
 
@@ -1696,12 +1853,7 @@ export default function SongView() {
             <select 
               className="sv-capo-select" 
               value={capo} 
-              onChange={e => {
-                const v = parseInt(e.target.value, 10);
-                setCapo(v);
-                localStorage.setItem(`capo_${id}`, v);
-                localStorage.setItem(`song_capo_pref:${id}`, JSON.stringify({ capo: v, capo_mode: v > 0 ? 1 : 0 }));
-              }}
+              onChange={e => applyManualCapo(e.target.value)}
             >
               <option value="0">{t('songView.noCapo')}</option>
               {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => <option key={n} value={n}>Capo {n}</option>)}
@@ -1722,7 +1874,7 @@ export default function SongView() {
           <div className="sv-stepper-group">
             <span className="sv-stepper-label">{t('songView.transpose')}</span>
             <div className="sv-stepper">
-              <button className="sv-step-btn" onClick={() => setSemi(s => s - 1)}>-</button>
+              <button className="sv-step-btn" onClick={() => { userManuallyAdjustedKeyRef.current = true; setSemi(s => s - 1); }}>-</button>
               <select 
                 className="sv-step-val" 
                 value={soundingKey ? getTransposedFullKey(soundingKey, 0) : ''}
@@ -1735,38 +1887,23 @@ export default function SongView() {
                   return <option key={k} value={displayK} style={{background: 'var(--color-surface)', color: 'var(--color-text-primary)'}}>{displayK}</option>;
                 })}
               </select>
-              <button className="sv-step-btn" onClick={() => setSemi(s => s + 1)}>+</button>
+              <button className="sv-step-btn" onClick={() => { userManuallyAdjustedKeyRef.current = true; setSemi(s => s + 1); }}>+</button>
             </div>
           </div>
           <div className="sv-stepper-group">
             <span className="sv-stepper-label">{t('songView.capoSub')}</span>
             <div className="sv-stepper">
-              <button className="sv-step-btn" onClick={() => {
-                const v = Math.max(0, capo - 1);
-                setCapo(v);
-                localStorage.setItem(`capo_${id}`, v);
-                localStorage.setItem(`song_capo_pref:${id}`, JSON.stringify({ capo: v, capo_mode: v > 0 ? 1 : 0 }));
-              }} disabled={capo <= 0}>-</button>
+              <button className="sv-step-btn" onClick={() => applyManualCapo(capo - 1)} disabled={capo <= 0}>-</button>
               <select 
                 className="sv-step-val" 
                 value={capo}
-                onChange={(e) => {
-                  const v = parseInt(e.target.value, 10);
-                  setCapo(v);
-                  localStorage.setItem(`capo_${id}`, v);
-                  localStorage.setItem(`song_capo_pref:${id}`, JSON.stringify({ capo: v, capo_mode: v > 0 ? 1 : 0 }));
-                }}
+                onChange={(e) => applyManualCapo(e.target.value)}
                 style={{ appearance: 'none', WebkitAppearance: 'none', background: 'transparent', border: 'none', borderLeft: '1px solid rgba(255,255,255,0.08)', borderRight: '1px solid rgba(255,255,255,0.08)', outline: 'none', color: 'var(--sv-accent)', textAlign: 'center', textAlignLast: 'center', cursor: 'pointer', fontFamily: 'inherit' }}
               >
                 <option value="0" style={{background: 'var(--color-surface)', color: 'var(--color-text-primary)'}}>{t('songView.noCapo')}</option>
                 {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => <option key={n} value={n} style={{background: 'var(--color-surface)', color: 'var(--color-text-primary)'}}>Capo {n}</option>)}
               </select>
-              <button className="sv-step-btn" onClick={() => {
-                const v = Math.min(12, capo + 1);
-                setCapo(v);
-                localStorage.setItem(`capo_${id}`, v);
-                localStorage.setItem(`song_capo_pref:${id}`, JSON.stringify({ capo: v, capo_mode: v > 0 ? 1 : 0 }));
-              }} disabled={capo >= 12}>+</button>
+              <button className="sv-step-btn" onClick={() => applyManualCapo(capo + 1)} disabled={capo >= 12}>+</button>
             </div>
           </div>
         </div>
@@ -1810,11 +1947,7 @@ export default function SongView() {
           activeKey={soundingKey ? KEYS.find(k => songKeysEqual(k, soundingKey)) || '' : ''}
           onKeyClick={handleKeyClick}
           capo={capo}
-          onCapoChange={v => {
-            setCapo(v);
-            localStorage.setItem(`capo_${id}`, v);
-            localStorage.setItem(`song_capo_pref:${id}`, JSON.stringify({ capo: v, capo_mode: v > 0 ? 1 : 0 }));
-          }}
+          onCapoChange={applyManualCapo}
           fontSize={fontSize}
           onDecreaseFont={decreaseFontSize}
           onIncreaseFont={increaseFontSize}

@@ -1,8 +1,8 @@
 {
-  "app_version": "5.3.5",
-  "web_version": "5.3.5",
-  "asset_version": "580",
-  "build_timestamp": "2026-11-16T16:16:00+04:00",
+  "app_version": "5.3.6",
+  "web_version": "5.3.6",
+  "asset_version": "581",
+  "build_timestamp": "2026-11-16T16:34:00+04:00",
   "release_type": "patch",
-  "release_summary": "Safe cross-browser fullscreen helper for iOS Safari/PWA and graceful saved songs / setlist sync error handling on MobileHub and Favorites"
+  "release_summary": "Instant 0ms song hydration & neighbor prefetching in SongView, synchronous target key resolution eliminating wrong-key flash in setlists"
 }

@@ -550,7 +550,19 @@ export default function SetlistLive() {
         <LiveStageBar
           sessionId={`SETLIST-${id}`}
           isLeader={true}
-          onFollowSongChange={(songId) => navigate(`/song/${songId}?setlist_id=${id}`)}
+          onFollowSongChange={(songId) => {
+            const matched = items.find((i) => String(i.song_id) === String(songId));
+            const q = new URLSearchParams();
+            q.set('setlist_id', String(id));
+            if (matched?.id) q.set('setlist_item_id', String(matched.id));
+            if (matched?.target_key) q.set('tkey', matched.target_key);
+            if (matched?.capo) {
+              q.set('capo', String(matched.capo));
+              q.set('capo_mode', '1');
+            }
+            q.set('from_live', '1');
+            navigate(`/song/${songId}?${q.toString()}`);
+          }}
         />
       </div>
 

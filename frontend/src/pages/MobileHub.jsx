@@ -553,7 +553,10 @@ export default function MobileHub() {
                   type="button"
                   className="hub-fav-card"
                   aria-label={songTitle}
-                  onClick={() => guardPath(`/song/${songId}?list=favorites&sort=saved_newest`, () => navigate(`/song/${songId}?list=favorites&sort=saved_newest`))}
+                  onClick={() => {
+                    const favUrl = `/song/${songId}?list=favorites&sort=saved_newest${song.target_key ? `&tkey=${encodeURIComponent(song.target_key)}` : ''}`;
+                    guardPath(favUrl, () => navigate(favUrl));
+                  }}
                 >
                   <div
                     className="hub-fav-cover"
