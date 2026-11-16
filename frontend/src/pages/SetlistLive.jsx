@@ -5,6 +5,13 @@ import { getLocalizedTitle } from '../utils/titleParser';
 import { subscribeToTabMessages } from '../utils/webPwaEnhancements';
 import { renderWithChords } from '../utils/chordTransposer';
 import { triggerHaptic, setupAndroidBackButton } from '../utils/nativeFeatures';
+import {
+  getFullscreenElement,
+  isFullscreenSupported,
+  enterFullscreen,
+  exitFullscreen,
+  addFullscreenChangeListener,
+} from '../utils/fullscreen';
 import LiveStageBar from '../components/LiveStageBar';
 import './SetlistLive.css';
 
@@ -113,18 +120,29 @@ export default function SetlistLive() {
 
   // Fullscreen change listener
   useEffect(() => {
-    const handleFs = () => setIsFullscreen(Boolean(document.fullscreenElement));
-    document.addEventListener('fullscreenchange', handleFs);
-    return () => document.removeEventListener('fullscreenchange', handleFs);
+    return addFullscreenChangeListener(() => {
+      if (isFullscreenSupported()) {
+        setIsFullscreen(Boolean(getFullscreenElement()));
+      }
+    });
   }, []);
 
-  const toggleFullscreen = () => {
+  const toggleFullscreen = async () => {
     triggerHaptic('light');
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    } else {
-      document.exitFullscreen().catch(() => {});
+    if (getFullscreenElement()) {
+      await exitFullscreen();
+      setIsFullscreen(false);
+      return;
     }
+    if (isFullscreenSupported()) {
+      const entered = await enterFullscreen();
+      if (entered) {
+        setIsFullscreen(true);
+        return;
+      }
+    }
+    // Safe fallback when Fullscreen API is unavailable (e.g. iOS Safari / PWA)
+    setIsFullscreen(prev => !prev);
   };
 
   // Stage Stopwatch logic
@@ -427,7 +445,7 @@ export default function SetlistLive() {
   let songCounter = 0;
 
   return (
-    <div className={`sll-container${isBeatFlashing ? ' sll-beat-pulse-active' : ''}`}>
+    <div className={`sll-container${isBeatFlashing ? ' sll-beat-pulse-active' : ''}${isFullscreen ? ' sll-container--fullscreen' : ''}`}>
 
       {/* ── Balanced 2-Tier Header ── */}
       <header className="sll-header">

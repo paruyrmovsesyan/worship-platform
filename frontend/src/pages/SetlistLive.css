@@ -35,6 +35,9 @@ body.live-mode-active .app-content {
   flex-direction: column;
   padding-bottom: 96px;
 }
+.sll-container--fullscreen .sll-header-bottom {
+  display: none;
+}
 
 /* ── Loading ── */
 .sll-loading {

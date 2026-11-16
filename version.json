@@ -1,8 +1,8 @@
 {
-  "app_version": "5.3.4",
-  "web_version": "5.3.4",
-  "asset_version": "579",
-  "build_timestamp": "2026-11-13T22:47:00+04:00",
+  "app_version": "5.3.5",
+  "web_version": "5.3.5",
+  "asset_version": "580",
+  "build_timestamp": "2026-11-16T16:16:00+04:00",
   "release_type": "patch",
-  "release_summary": "Setlist Live mobile header 2-tier layout, redundant same-key transition omission, chord preview chip, and claim_token error safety"
+  "release_summary": "Safe cross-browser fullscreen helper for iOS Safari/PWA and graceful saved songs / setlist sync error handling on MobileHub and Favorites"
 }

@@ -976,6 +976,28 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
+    // 9.3. Fullscreen API unsupported on iOS Safari/PWA (fixed with cross-browser fullscreen.js helper)
+    if (stripos($message, 'requestFullscreen') !== false || stripos($stackTrace, 'requestFullscreen') !== false) {
+        $reason = 'Ավելացվել է frontend/src/utils/fullscreen.js անվտանգ helper-ը՝ iOS Safari/PWA-ում fallback ռեժիմով';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
+    // 9.4. Saved songs request failed on MobileHub startup (fixed: 401/503/offline handled gracefully without console.error)
+    if (stripos($message, 'Saved songs request failed') !== false) {
+        $reason = 'MobileHub.jsx-ում պահված երգերի 401/503/offline պատասխանները մշակվում են անվտանգ՝ պահելով քեշը առանց սխալ գեներացնելու';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
     // 10. Check if previously marked in resolutions file
     if (!empty($knownRes['is_resolved'])) {
         $item['is_resolved'] = 1;

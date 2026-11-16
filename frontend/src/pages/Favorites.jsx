@@ -37,17 +37,37 @@ export default function Favorites() {
     setLoading(true);
     setError(null);
 
-    fetch('/user_favorites_api.php?action=get_favorites')
+    fetch('/user_favorites_api.php?action=get_favorites', { credentials: 'include', cache: 'no-store' })
       .then(res => {
-        if (!res.ok) throw new Error('API fetch failed');
+        if (res.status === 401 || res.status === 403) {
+          return [];
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
       .then(data => {
-        setSongs(Array.isArray(data) ? data : []);
+        const list = Array.isArray(data) ? data : [];
+        setSongs(list);
+        try {
+          if (list.length > 0) {
+            localStorage.setItem('wp_user_favorites_cache', JSON.stringify(list));
+          }
+        } catch {}
         setLoading(false);
       })
       .catch(err => {
-        console.error(err);
+        console.warn('Favorites load skipped:', err?.message || err);
+        try {
+          const cached = localStorage.getItem('wp_user_favorites_cache');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed)) {
+              setSongs(parsed);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch {}
         setError(t('favorites.errorLoad'));
         setLoading(false);
       });

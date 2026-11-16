@@ -165,10 +165,15 @@ export default function MobileHub() {
       }
     } catch {}
 
+    let cancelled = false;
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const signal = controller ? controller.signal : undefined;
+
     // Fetch recent songs from API
-    fetch('/api.php')
-      .then(res => res.json())
+    fetch('/api.php', { signal })
+      .then(res => (res.ok ? res.json() : null))
       .then(data => {
+        if (cancelled) return;
         if (Array.isArray(data)) {
           setAllSongs(data);
           setRecentSongs(data.slice(0, 10));
@@ -177,48 +182,65 @@ export default function MobileHub() {
           } catch {}
         }
       })
-      .catch(err => console.error(err));
+      .catch(err => {
+        if (err?.name !== 'AbortError') {
+          console.warn('Songs sync skipped:', err?.message || err);
+        }
+      });
 
     // Fetch user specific data
     if (user) {
       // Fetch setlists (find nearest upcoming service whose date has not passed)
-      fetch('/setlists_api.php?action=get_setlists')
-        .then(res => res.json())
+      fetch('/setlists_api.php?action=get_setlists', { credentials: 'include', cache: 'no-store', signal })
+        .then(res => (res.ok ? res.json() : null))
         .then(data => {
+          if (cancelled || !data) return;
           if (Array.isArray(data) && data.length > 0) {
             const todayStr = getTodayStr();
             const upcoming = data
               .filter(s => s.service_date && String(s.service_date).slice(0, 10) >= todayStr && s.status !== 'archived')
               .sort((a, b) => String(a.service_date).localeCompare(String(b.service_date)))[0];
             setUpcomingSetlist(upcoming || null);
-          } else {
+          } else if (Array.isArray(data)) {
             setUpcomingSetlist(null);
           }
         })
         .catch(err => {
-          console.error(err);
-          setUpcomingSetlist(null);
+          if (err?.name !== 'AbortError') {
+            console.warn('Setlists sync skipped:', err?.message || err);
+          }
         });
 
       // Fetch favorites
-      fetch('/user_favorites_api.php?action=get_favorites')
+      fetch('/user_favorites_api.php?action=get_favorites', { credentials: 'include', cache: 'no-store', signal })
         .then(res => {
-          if (!res.ok) throw new Error('Saved songs request failed');
+          if (res.status === 401 || res.status === 403 || res.status === 503) {
+            return null;
+          }
+          if (!res.ok) return null;
           return res.json();
         })
         .then(data => {
-          if (Array.isArray(data)) {
-            setFavorites(data);
-            try {
-              localStorage.setItem('wp_user_favorites_cache', JSON.stringify(data));
-            } catch {}
-          }
+          if (cancelled || !Array.isArray(data)) return;
+          setFavorites(data);
+          try {
+            localStorage.setItem('wp_user_favorites_cache', JSON.stringify(data));
+          } catch {}
         })
-        .catch(err => console.error(err));
+        .catch(err => {
+          if (err?.name !== 'AbortError') {
+            console.warn('Saved songs sync skipped:', err?.message || err);
+          }
+        });
     } else {
       setFavorites([]);
       setUpcomingSetlist(null);
     }
+
+    return () => {
+      cancelled = true;
+      controller?.abort();
+    };
   }, [user]);
 
   useEffect(() => {

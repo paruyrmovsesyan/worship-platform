@@ -17,6 +17,13 @@ import SongStemsMixer from '../components/SongStemsMixer';
 import WorshipAIStudioModal from '../components/WorshipAIStudioModal';
 import { useIsAppMode } from '../hooks/useIsPWA';
 import { nativeShare } from '../utils/nativeFeatures';
+import {
+  getFullscreenElement,
+  isFullscreenSupported,
+  enterFullscreen,
+  exitFullscreen,
+  addFullscreenChangeListener,
+} from '../utils/fullscreen';
 import { API_BASE_URL } from '../utils/nativeConfig';
 import {
   requestKeepAwake,
@@ -270,22 +277,24 @@ export default function SongView() {
     });
   };
 
-  const toggleStageFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
+  const toggleStageFullscreen = async () => {
+    if (!isStageFullscreen && !getFullscreenElement()) {
+      if (isFullscreenSupported()) {
+        await enterFullscreen();
+      }
       setIsStageFullscreen(true);
     } else {
-      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+      await exitFullscreen();
       setIsStageFullscreen(false);
     }
   };
 
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsStageFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    return addFullscreenChangeListener(() => {
+      if (isFullscreenSupported()) {
+        setIsStageFullscreen(Boolean(getFullscreenElement()));
+      }
+    });
   }, []);
 
   // Multi-tab sync subscription

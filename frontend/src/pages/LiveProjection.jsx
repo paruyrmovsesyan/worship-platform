@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { liveStageSync } from '../utils/liveStageSync';
+import {
+  getFullscreenElement,
+  enterFullscreen,
+  exitFullscreen,
+} from '../utils/fullscreen';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { useLanguage } from '../context/LanguageContext';
 import { useFeatureFlags } from '../utils/featureFlags';
@@ -257,10 +262,10 @@ export default function LiveProjection() {
   }, [goToSlide, safeIndex]);
 
   const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen?.().catch(() => {});
+    if (!getFullscreenElement()) {
+      enterFullscreen();
     } else {
-      document.exitFullscreen?.().catch(() => {});
+      exitFullscreen();
     }
   }, []);
 
