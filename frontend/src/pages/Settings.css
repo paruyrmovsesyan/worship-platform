@@ -199,6 +199,33 @@
   line-height: 1.35;
 }
 
+.settings-guest-inline-card {
+  background: linear-gradient(135deg, rgba(58, 45, 255, 0.12), rgba(0, 212, 255, 0.08));
+  border: 1px solid rgba(58, 45, 255, 0.25);
+  margin-bottom: 1.5rem;
+}
+
+.settings-guest-inline-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.settings-guest-inline-title {
+  margin: 0 0 4px 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #ffffff);
+}
+
+.settings-guest-inline-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.72));
+}
+
 .guest-login-btn {
   white-space: nowrap;
   padding: 8px 16px;

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -71,6 +72,8 @@ export default function Bible() {
 
   const [verses, setVerses] = useState([]);
   const [parallelVerses, setParallelVerses] = useState([]);
+  const [effectiveTranslation, setEffectiveTranslation] = useState(translation);
+  const [fallbackNotice, setFallbackNotice] = useState('');
   const [loading, setLoading] = useState(true);
   const [chapterError, setChapterError] = useState('');
   const [unavailableNotice, setUnavailableNotice] = useState(false);
@@ -110,8 +113,8 @@ export default function Bible() {
         parallel: 'Параллельный перевод',
         fontSize: 'Размер текста',
         fontType: 'Шрифт',
-        serif: 'Literata (Книжный)',
-        sans: 'Inter (Без засечек)',
+        serif: 'Literata',
+        sans: 'Inter',
         verseActions: 'Выбранный стих',
         selectHint: 'Нажмите на любой стих, чтобы выделить его, скопировать, поделиться или добавить заметку.',
         notePlaceholder: 'Личная заметка к стиху...',
@@ -145,8 +148,8 @@ export default function Bible() {
         parallel: 'Parallel Translation',
         fontSize: 'Text Size',
         fontType: 'Font',
-        serif: 'Literata (Serif)',
-        sans: 'Inter (Sans)',
+        serif: 'Literata',
+        sans: 'Inter',
         verseActions: 'Selected Verse',
         selectHint: 'Tap any verse to highlight, bookmark, copy, share, or write a personal study note.',
         notePlaceholder: 'Write a personal note for this verse...',
@@ -179,8 +182,8 @@ export default function Bible() {
       parallel: 'Զուգահեռ թարգմանություն',
       fontSize: 'Տառաչափ',
       fontType: 'Տառատեսակ',
-      serif: 'Literata (Գրքային)',
-      sans: 'Inter (Ժամանակակից)',
+      serif: 'Literata',
+      sans: 'Inter',
       verseActions: 'Ընտրված խոսք',
       selectHint: 'Սեղմեք ցանկացած համար՝ ընդգծելու, պահպանելու, կիսվելու կամ անձնական նշում գրելու համար։',
       notePlaceholder: 'Անձնական նշում այս խոսքի համար...',
@@ -318,9 +321,38 @@ export default function Bible() {
       setLoading(true);
       setChapterError('');
       setUnavailableNotice(false);
+      setFallbackNotice('');
 
-      const mainRes = await loadChapterData(translation, bookId, chapter);
+      let activeTr = translation;
+      let mainRes = await loadChapterData(activeTr, bookId, chapter);
       if (cancelled) return;
+
+      // Smart automatic fallback for partial Armenian translations
+      if (!mainRes.ok && mainRes.unavailable_in_translation) {
+        const fallbackOrder = bookId >= 40
+          ? ['westernarmenian', 'synodal', 'akjv']
+          : ['synodal', 'akjv'];
+        for (const fbTr of fallbackOrder) {
+          if (fbTr === activeTr) continue;
+          const fbRes = await loadChapterData(fbTr, bookId, chapter);
+          if (cancelled) return;
+          if (fbRes.ok) {
+            mainRes = fbRes;
+            activeTr = fbTr;
+            const fbMeta = translations.find((t) => t.id === fbTr);
+            setFallbackNotice(
+              language === 'ru'
+                ? `Книга недоступна в выбранном переводе — показан ${fbMeta?.name || fbTr}`
+                : language === 'en'
+                ? `Unavailable in selected translation — showing ${fbMeta?.name || fbTr}`
+                : `Ընտրված թարգմանությունում այս գիրքը բացակայում է — ցուցադրվում է ${fbMeta?.name || fbTr}`,
+            );
+            break;
+          }
+        }
+      }
+
+      setEffectiveTranslation(activeTr);
       if (mainRes.ok) {
         setVerses(mainRes.verses);
       } else if (mainRes.unavailable_in_translation) {
@@ -331,8 +363,13 @@ export default function Bible() {
         setChapterError(mainRes.error || 'Չհաջողվեց բեռնել գլուխը');
       }
 
-      if (prefs.parallelEnabled && prefs.parallelTr && prefs.parallelTr !== translation) {
-        const parRes = await loadChapterData(prefs.parallelTr, bookId, chapter);
+      const targetParallelTr =
+        prefs.parallelTr && prefs.parallelTr !== activeTr
+          ? prefs.parallelTr
+          : (activeTr === 'synodal' ? 'akjv' : 'synodal');
+
+      if (prefs.parallelEnabled && targetParallelTr !== activeTr) {
+        const parRes = await loadChapterData(targetParallelTr, bookId, chapter);
         if (!cancelled) {
           setParallelVerses(parRes.ok ? parRes.verses : []);
         }
@@ -345,7 +382,7 @@ export default function Bible() {
     return () => {
       cancelled = true;
     };
-  }, [translation, bookId, chapter, prefs.parallelEnabled, prefs.parallelTr, loadChapterData]);
+  }, [translation, bookId, chapter, prefs.parallelEnabled, prefs.parallelTr, loadChapterData, translations, language]);
 
   const handleSelectVerse = useCallback((verseNum) => {
     setSelectedVerse((prev) => {
@@ -498,19 +535,44 @@ export default function Bible() {
     const q = searchQuery.trim();
     if (q.length < 2) return;
     setSearching(true);
+
+    // Direct book/chapter/verse reference jump
+    const refHits = [];
+    const refMatch = q.match(/^(.+?)\s+(\d+)(?::(\d+))?$/);
+    if (refMatch) {
+      const bookPart = refMatch[1].trim().toLowerCase();
+      const chNum = Number(refMatch[2]);
+      const vNum = Number(refMatch[3] || 1);
+      const matchedBook = BIBLE_BOOKS.find(
+        (b) =>
+          b.am.toLowerCase().includes(bookPart) ||
+          b.ru.toLowerCase().includes(bookPart) ||
+          b.en.toLowerCase().includes(bookPart),
+      );
+      if (matchedBook && chNum >= 1 && chNum <= matchedBook.chapters) {
+        refHits.push({
+          book: matchedBook.id,
+          chapter: chNum,
+          verse: vNum,
+          text: `${getBookName(matchedBook.id, language)} ${chNum}${refMatch[3] ? `:${vNum}` : ''}`,
+        });
+      }
+    }
+
     try {
       const res = await fetch(
-        `/bible_api.php?action=search&tr=${encodeURIComponent(translation)}&q=${encodeURIComponent(q)}`,
+        `/bible_api.php?action=search&tr=${encodeURIComponent(effectiveTranslation || translation)}&q=${encodeURIComponent(q)}`,
       );
       const data = await res.json();
-      setSearchResults(data?.ok && Array.isArray(data.results) ? data.results : []);
+      const apiHits = data?.ok && Array.isArray(data.results) ? data.results : [];
+      setSearchResults([...refHits, ...apiHits]);
     } catch {
-      setSearchResults([]);
+      setSearchResults(refHits);
     }
     setSearching(false);
   };
 
-  const activeTranslationMeta = translations.find((tr) => tr.id === translation);
+  const activeTranslationMeta = translations.find((tr) => tr.id === (effectiveTranslation || translation));
   const filteredBooks = useMemo(() => {
     const q = bookSearch.trim().toLowerCase();
     return BIBLE_BOOKS.filter((b) => {
@@ -531,7 +593,8 @@ export default function Bible() {
 
   return (
     <div className="bible-page animate-fade-in">
-      {/* Top Bar */}
+      {/* Top Bar Wrapper (keeps Aa popover floating cleanly without shifting layout) */}
+      <div className="bible-topbar-wrap">
       <header className="bible-topbar">
         <div className="bible-topbar-left">
           <button
@@ -672,18 +735,26 @@ export default function Bible() {
               <input
                 type="checkbox"
                 checked={prefs.parallelEnabled}
-                onChange={(e) => setPrefs((p) => ({ ...p, parallelEnabled: e.target.checked }))}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  const activeMain = effectiveTranslation || translation;
+                  const nextParTr =
+                    prefs.parallelTr && prefs.parallelTr !== activeMain
+                      ? prefs.parallelTr
+                      : (activeMain === 'synodal' ? 'akjv' : 'synodal');
+                  setPrefs((p) => ({ ...p, parallelEnabled: checked, parallelTr: nextParTr }));
+                }}
               />
               <span>{ui.parallel}</span>
             </label>
             {prefs.parallelEnabled && (
               <select
-                value={prefs.parallelTr}
+                value={prefs.parallelTr === (effectiveTranslation || translation) ? (effectiveTranslation === 'synodal' ? 'akjv' : 'synodal') : prefs.parallelTr}
                 onChange={(e) => setPrefs((p) => ({ ...p, parallelTr: e.target.value }))}
                 className="bible-tr-select compact"
               >
                 {translations
-                  .filter((tr) => tr.id !== translation)
+                  .filter((tr) => tr.id !== (effectiveTranslation || translation))
                   .map((tr) => (
                     <option key={tr.id} value={tr.id}>
                       {tr.short} · {tr.name}
@@ -694,6 +765,7 @@ export default function Bible() {
           </div>
         </div>
       )}
+      </div>
 
       {activeTab === 'my' ? (
         <div className="bible-my-grid">
@@ -880,9 +952,9 @@ export default function Bible() {
             <div className="bible-reader-card">
               <div className="bible-reader-head">
                 <div>
-                  <span className="bible-reader-kicker">{activeTranslationMeta?.name || translation}</span>
+                  <span className="bible-reader-kicker">{activeTranslationMeta?.name || effectiveTranslation || translation}</span>
                   <h1>
-                    {getBookName(bookId, language)} {chapter}
+                    {getBookName(bookId, activeTranslationMeta?.lang || language)} {chapter}
                   </h1>
                 </div>
                 <div className="bible-chapter-nav">
@@ -906,6 +978,20 @@ export default function Bible() {
                   </button>
                 </div>
               </div>
+
+              {fallbackNotice && (
+                <div className="bible-fallback-banner">
+                  <span>{fallbackNotice}</span>
+                  <div className="bible-fallback-btns">
+                    {effectiveTranslation !== 'synodal' && (
+                      <button type="button" onClick={() => setTranslation('synodal')}>RST</button>
+                    )}
+                    {effectiveTranslation !== 'akjv' && (
+                      <button type="button" onClick={() => setTranslation('akjv')}>AKJV</button>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {loading ? (
                 <div className="bible-loading">
@@ -1056,8 +1142,8 @@ export default function Bible() {
         </div>
       )}
 
-      {/* Mobile Selected Verse Bottom Action Sheet */}
-      {selectedVerseObj && activeTab === 'read' && (
+      {/* Mobile Selected Verse Bottom Action Sheet (Portaled) */}
+      {selectedVerseObj && activeTab === 'read' && createPortal(
         <div className="bible-mobile-sheet">
           <div className="bible-mobile-sheet-head">
             <strong>
@@ -1101,11 +1187,12 @@ export default function Bible() {
               {ui.saveNote}
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Mobile Book & Chapter Picker Modal */}
-      {showBookDrawer && (
+      {/* Mobile Book & Chapter Picker Modal (Portaled) */}
+      {showBookDrawer && createPortal(
         <div className="bible-modal-backdrop" onClick={() => setShowBookDrawer(false)}>
           <div className="bible-modal" onClick={(e) => e.stopPropagation()}>
             <div className="bible-modal-head">
@@ -1168,11 +1255,12 @@ export default function Bible() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Search Modal */}
-      {showSearchModal && (
+      {/* Search Modal (Portaled) */}
+      {showSearchModal && createPortal(
         <div className="bible-modal-backdrop" onClick={() => setShowSearchModal(false)}>
           <div className="bible-modal" onClick={(e) => e.stopPropagation()}>
             <div className="bible-modal-head">
@@ -1219,7 +1307,8 @@ export default function Bible() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

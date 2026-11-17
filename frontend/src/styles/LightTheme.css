@@ -162,8 +162,14 @@ body.light-mode .navbar.scrolled {
 
 body.light-mode .navbar-logo,
 body.light-mode .navbar .nav-item.active,
-body.light-mode .navbar .nav-item:hover {
+body.light-mode .navbar .nav-item:hover,
+body.light-mode .navbar-hamburger {
   color: #111827;
+}
+
+body.light-mode .navbar .nav-item,
+body.light-mode .nav-login-link {
+  color: #374151;
 }
 
 body.light-mode .mobile-menu-portal .menu-overlay {
@@ -746,4 +752,159 @@ body.light-mode.outlined-chords .chord {
   body.light-mode .mobile-bottom-nav {
     background: #ffffff;
   }
+}
+
+/* SongsWeb (Desktop Song Library) Light Mode */
+body.light-mode .songs-web-view .sw-hero {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode .songs-web-view .sw-hero-title,
+body.light-mode .songs-web-view .sw-stat-num,
+body.light-mode .songs-web-view .sw-row-title {
+  color: #111827;
+}
+
+body.light-mode .songs-web-view .sw-hero-lead,
+body.light-mode .songs-web-view .sw-stat-lbl,
+body.light-mode .songs-web-view .sw-hero-count,
+body.light-mode .songs-web-view .sw-row-artist {
+  color: #5b6677;
+}
+
+body.light-mode .songs-web-view .sw-random-btn {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #111827;
+}
+
+body.light-mode .songs-web-view .sw-hero-stats {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.09);
+  box-shadow: none;
+}
+
+body.light-mode .songs-web-view .sw-console-card,
+body.light-mode .songs-web-view .sw-table-row,
+body.light-mode .songs-web-view .sw-grid-card {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+body.light-mode .songs-web-view .sw-hero-search-input,
+body.light-mode .songs-web-view .sw-sort-select,
+body.light-mode .songs-web-view .sw-view-switcher,
+body.light-mode .songs-web-view .sw-cat-tab:not(.active),
+body.light-mode .songs-web-view .sw-kp:not(.active) {
+  background: rgba(15, 23, 42, 0.045);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #111827;
+}
+
+body.light-mode .songs-web-view .sw-sort-select option {
+  background: #ffffff;
+  color: #111827;
+}
+
+body.light-mode .songs-web-view .sw-view-btn {
+  color: #5b6677;
+}
+
+body.light-mode .songs-web-view .sw-view-btn:hover,
+body.light-mode .songs-web-view .sw-cat-tab:not(.active):hover,
+body.light-mode .songs-web-view .sw-kp:not(.active):hover {
+  color: #111827;
+  background: rgba(15, 23, 42, 0.08);
+  border-color: rgba(15, 23, 42, 0.18);
+}
+
+body.light-mode .songs-web-view .sw-cat-tab.active,
+body.light-mode .songs-web-view .sw-kp.active,
+body.light-mode .songs-web-view .sw-view-btn.active {
+  background: rgba(0, 149, 255, 0.14);
+  border-color: rgba(0, 149, 255, 0.35);
+  color: #0369a1;
+}
+
+body.light-mode.editorial-theme .songs-web-view .sw-cat-tab.active,
+body.light-mode.editorial-theme .songs-web-view .sw-kp.active,
+body.light-mode.editorial-theme .songs-web-view .sw-view-btn.active {
+  background: rgba(247, 181, 0, 0.18);
+  border-color: rgba(179, 130, 0, 0.4);
+  color: #8a5d00;
+}
+
+body.light-mode .songs-web-view .sw-cat-count {
+  background: rgba(15, 23, 42, 0.08);
+  color: #334155;
+}
+
+body.light-mode .songs-web-view .sw-cat-tab.active .sw-cat-count {
+  background: rgba(15, 23, 42, 0.12);
+  color: #111827;
+}
+
+body.light-mode .songs-web-view .sw-key-bar {
+  border-top-color: rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode .songs-web-view .sw-key-bar-label,
+body.light-mode .songs-web-view .sw-results-text,
+body.light-mode .songs-web-view .sw-empty-box p {
+  color: #5b6677;
+}
+
+body.light-mode .songs-web-view .sw-empty-box {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.14);
+}
+
+body.light-mode .songs-web-view .sw-empty-box h3 {
+  color: #111827;
+}
+
+body.light-mode .songs-web-view .sw-empty-reset-btn {
+  background: rgba(0, 149, 255, 0.12);
+  border-color: rgba(0, 149, 255, 0.3);
+  color: #0369a1;
+}
+
+body.light-mode.editorial-theme .songs-web-view .sw-empty-reset-btn {
+  background: rgba(247, 181, 0, 0.18);
+  border-color: rgba(179, 130, 0, 0.38);
+  color: #8a5d00;
+}
+
+body.light-mode .songs-web-view .sw-hero-search-input::placeholder,
+body.light-mode .songs-web-view .sw-search-box svg {
+  color: #6b7280;
+}
+
+/* Warm Editorial (Amber) Accent Overrides */
+body.editorial-theme .settings-btn.primary,
+body.editorial-theme .btn-get-started,
+body.editorial-theme .menu-btn-register,
+body.editorial-theme .settings-page:not(.pwa-mode) .settings-btn:not(.secondary):not(.danger) {
+  background: #f7b500;
+  color: #231603;
+  box-shadow: 0 8px 22px rgba(247, 181, 0, 0.25);
+}
+
+body.light-mode .settings-guest-status-card,
+body.light-mode .settings-page .settings-card.settings-guest-inline-card {
+  background: rgba(247, 181, 0, 0.09);
+  border-color: rgba(179, 130, 0, 0.26);
+}
+
+body.light-mode .settings-guest-inline-title,
+body.light-mode .guest-status-badge {
+  color: #111827;
+}
+
+body.light-mode .settings-guest-inline-desc,
+body.light-mode .guest-status-desc {
+  color: #5b6677;
 }

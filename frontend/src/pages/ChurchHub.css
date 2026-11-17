@@ -463,8 +463,15 @@ body.is-app .church-page {
 }
 
 .church-empty {
+  grid-column: 1 / -1;
   text-align: center;
   padding: 28px 18px;
+}
+
+.church-empty .church-compose-bar {
+  justify-content: center;
+  margin-top: 14px;
+  margin-bottom: 0;
 }
 
 .church-modal-backdrop {

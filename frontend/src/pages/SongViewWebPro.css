@@ -35,6 +35,10 @@ body.website-theme .web-song-pro > .sv-header { grid-area: header; }
 body.website-theme .web-song-pro > .sv-meta-row { grid-area: meta; }
 body.website-theme .web-song-pro > .sv-segment-control { grid-area: tabs; }
 body.website-theme .web-song-pro > .sv-stage-modules { grid-area: stage; }
+body.website-theme .web-song-pro > .sv-stage-modules .sv-tone-capo-card,
+body.website-theme .web-song-pro > .sv-stage-modules .sv-inline-metronome-wrap {
+  margin: 0 0 14px;
+}
 body.website-theme .web-song-pro > .sv-sheet { grid-area: sheet; }
 body.website-theme .web-song-pro > .sv-attachments { grid-area: attachments; }
 body.website-theme .web-song-pro > .web-legacy-controls { grid-area: legacy; }

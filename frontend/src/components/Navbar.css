@@ -962,34 +962,36 @@
   max-width: 1440px;
   min-width: 0;
   box-sizing: border-box;
-  padding: 0 clamp(14px, 1.8vw, 24px);
-  gap: clamp(8px, 1.1vw, 16px);
+  padding: 0 clamp(12px, 1.4vw, 20px);
+  gap: clamp(6px, 0.8vw, 12px);
 }
 
 .navbar-logo {
-  font-size: clamp(0.92rem, 1vw, 1.02rem);
-  gap: 8px;
-  letter-spacing: 0.25px;
+  font-size: clamp(0.86rem, 0.95vw, 0.98rem);
+  gap: 7px;
+  letter-spacing: 0.2px;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .navbar-logo .brand-logo-img {
-  height: 26px;
+  height: 24px;
   width: auto;
   flex-shrink: 0;
 }
 
 .navbar-menu {
   flex: 1 1 auto;
-  min-width: max-content;
+  min-width: 0;
   justify-content: center;
-  gap: clamp(1px, 0.3vw, 4px);
+  gap: clamp(1px, 0.2vw, 3px);
 }
 
 .nav-item {
-  padding: 7px clamp(7px, 0.78vw, 11px);
-  font-size: clamp(0.79rem, 0.84vw, 0.85rem);
+  padding: 7px clamp(5px, 0.58vw, 9px);
+  font-size: clamp(0.75rem, 0.78vw, 0.82rem);
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .navbar-right {
@@ -1040,13 +1042,10 @@
   font-size: 11.5px;
 }
 
-@media (max-width: 1460px) and (min-width: 901px) {
+@media (max-width: 1380px) and (min-width: 901px) {
+  .nav-search-pill .search-placeholder,
   .search-kbd { display: none; }
-}
-
-@media (max-width: 1220px) and (min-width: 901px) {
-  .nav-search-pill .search-placeholder { display: none; }
-  .nav-search-pill { width: 36px; height: 36px; justify-content: center; padding: 0; }
+  .nav-search-pill { width: 34px; height: 34px; justify-content: center; padding: 0; }
 }
 
 @media (max-width: 1100px) and (min-width: 901px) {

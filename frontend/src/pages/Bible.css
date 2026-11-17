@@ -9,17 +9,24 @@ body.is-app .bible-page {
   padding: 12px 14px calc(var(--bottom-nav-total-offset, 88px) + 40px);
 }
 
-.bible-topbar {
+.bible-topbar-wrap {
   position: sticky;
-  top: 0;
+  top: 76px;
   z-index: 30;
+  margin-bottom: 18px;
+}
+
+body.is-app .bible-topbar-wrap {
+  top: 0;
+}
+
+.bible-topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
   padding: 10px 14px;
-  margin-bottom: 18px;
   border-radius: 16px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -77,7 +84,11 @@ body.is-app .bible-page {
   font-size: 0.82rem;
   font-weight: 600;
   outline: none;
-  max-width: 190px;
+  max-width: 245px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 34px;
 }
 
 .bible-tr-select option {
@@ -158,15 +169,18 @@ body.is-app .bible-page {
   width: 100%;
 }
 
-/* Typography & Parallel Popover */
+/* Typography & Parallel Popover (floats cleanly without shifting layout) */
 .bible-aa-popover {
-  max-width: 440px;
-  margin: -6px 0 16px auto;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 45;
+  width: min(100%, 420px);
   padding: 16px;
   border-radius: 14px;
   background: var(--color-surface);
   border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -188,15 +202,52 @@ body.is-app .bible-page {
 
 .bible-aa-stepper button,
 .bible-aa-pills button {
-  height: 32px;
-  padding: 0 12px;
+  min-height: 34px;
+  padding: 6px 14px;
   border-radius: 999px;
   border: 1px solid var(--glass-border);
   background: rgba(255, 255, 255, 0.05);
   color: var(--color-text-primary);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
+}
+
+.bible-fallback-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 9px 12px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  background: rgba(247, 181, 0, 0.12);
+  border: 1px solid rgba(247, 181, 0, 0.3);
+  font-size: 0.8rem;
+  color: var(--color-text-primary);
+}
+
+.bible-fallback-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.bible-fallback-btns button {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(247, 181, 0, 0.45);
+  background: rgba(247, 181, 0, 0.18);
+  color: #f7b500;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+body.light-mode .bible-fallback-btns button {
+  color: #8a5600;
 }
 
 .bible-aa-pills {
@@ -429,12 +480,19 @@ body.is-app .bible-page {
   margin: 0;
 }
 
+.bible-verses-body.is-parallel .bible-verse-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
 .bible-verse-parallel {
-  margin-top: 4px;
-  padding-left: 10px;
+  margin-top: 0;
+  padding-left: 12px;
   border-left: 2px solid rgba(247, 181, 0, 0.45);
   color: var(--color-text-secondary);
-  font-size: 0.9em;
+  font-size: 0.94em;
 }
 
 .bible-verse-num {
@@ -816,9 +874,21 @@ body.light-mode .bible-verse-row:hover {
   background: rgba(15, 23, 42, 0.04);
 }
 
-@media (max-width: 1040px) {
+@media (max-width: 1120px) and (min-width: 901px) {
+  .bible-workspace {
+    grid-template-columns: 220px minmax(0, 1fr) 235px;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 900px) {
   .bible-workspace {
     grid-template-columns: 1fr;
+  }
+
+  .bible-verses-body.is-parallel .bible-verse-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
   }
 
   .bible-left-rail,

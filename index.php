@@ -28,7 +28,7 @@ $validStaticRoutes = [
     '/resources', '/contact', '/about', '/blog', '/careers', '/documentation', '/tutorials', 
     '/support', '/privacy', '/terms', '/cookies', '/profile', '/settings', '/song-request', 
     '/notifications', '/manifest.json', '/robots.txt', '/sitemap.xml', '/news-sitemap.xml',
-    '/offline.html', '/main.html', '/service-worker.js', '/studio', '/tools'
+    '/offline.html', '/main.html', '/service-worker.js', '/studio', '/tools', '/bible', '/church'
 ];
 $isValidRoute = in_array($path, $validStaticRoutes, true)
     || preg_match('#^/song/\d+/?$#', $path)
@@ -127,6 +127,15 @@ if (in_array($path, ['/transpose', '/transpose/', '/transpose.html'], true) || p
             "priceCurrency" => "AMD"
         ]
     ];
+}
+
+// Server-rendered metadata for Bible and Church pages.
+if ($path === '/bible' || $path === '/bible/') {
+    $title = "Աստվածաշունչ | " . $siteName;
+    $description = "Կարդացեք Աստվածաշունչը զուգահեռ թարգմանություններով, անձնական նշումներով, ընդգծումներով և ընթերցանության պլանով։";
+} elseif ($path === '/church' || $path === '/church/') {
+    $title = "Եկեղեցի և Համայնք | " . $siteName;
+    $description = "Եկեղեցական հայտարարություններ, միջոցառումներ, աղոթքի խնդրանքներ և եկեղեցիների ցանկ։";
 }
 
 // Server-rendered metadata for public news articles. This is what crawlers see

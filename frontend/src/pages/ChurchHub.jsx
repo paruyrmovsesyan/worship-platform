@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -748,7 +749,7 @@ export default function ChurchHub() {
         </div>
       )}
 
-      {showCreateChurch && (
+      {showCreateChurch && createPortal(
         <div className="church-modal-backdrop" onClick={() => setShowCreateChurch(false)}>
           <form className="church-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleCreateChurch}>
             <h3>{ui.createChurch}</h3>
@@ -798,7 +799,8 @@ export default function ChurchHub() {
               </button>
             </div>
           </form>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

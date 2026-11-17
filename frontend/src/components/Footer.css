@@ -90,3 +90,36 @@
   .link-group a { font-size: 0.78rem; margin-bottom: 8px; }
   .footer-bottom { font-size: 0.72rem; }
 }
+
+body.light-mode .footer {
+  background: var(--color-bg, #f4f7fb);
+  border-top-color: rgba(15, 23, 42, 0.08);
+}
+
+body.light-mode .footer-logo,
+body.light-mode .link-group h4 {
+  color: #111827;
+}
+
+body.light-mode .link-group a {
+  color: #475569;
+}
+
+body.light-mode .link-group a:hover {
+  color: #111827;
+}
+
+body.light-mode .footer .icon {
+  background: rgba(15, 23, 42, 0.06);
+  color: #475569;
+}
+
+body.light-mode .footer .icon:hover {
+  background: rgba(15, 23, 42, 0.12);
+  color: #111827;
+}
+
+body.light-mode .footer-bottom {
+  border-top-color: rgba(15, 23, 42, 0.08);
+  color: #64748b;
+}

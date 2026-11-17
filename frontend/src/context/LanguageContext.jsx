@@ -3085,12 +3085,16 @@ export function LanguageProvider({ children }) {
     // Set html lang attribute
     document.documentElement.lang = language;
     
-    // Sync language with backend
-    fetch('/account_api.php?action=set_language', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ language })
-    }).catch(console.error);
+    // Sync language with backend only when signed in
+    try {
+      if (localStorage.getItem('worship_user')) {
+        fetch('/account_api.php?action=set_language', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ language })
+        }).catch(() => {});
+      }
+    } catch { /* ignore */ }
   }, [language]);
 
   const t = (key, fallbackText = null) => {

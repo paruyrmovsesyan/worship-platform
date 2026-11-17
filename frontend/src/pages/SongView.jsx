@@ -1513,16 +1513,14 @@ export default function SongView() {
           {capo > 0 && <span className="sv-meta-sub">· C{capo}</span>}
           <span className="sv-meta-caret">{showToneCapo ? '▴' : '▾'}</span>
         </button>
-        {Number.parseInt(song.bpm, 10) > 0 && (
-          <button
-            type="button"
-            className={`sv-meta-pill sv-meta-clickable ${showInlineMetronome ? 'is-open' : ''}`}
-            onClick={() => setShowInlineMetronome((v) => !v)}
-            title="Smart Metronome"
-          >
-            ♩ {song.bpm} BPM
-          </button>
-        )}
+        <button
+          type="button"
+          className={`sv-meta-pill sv-meta-clickable ${showInlineMetronome ? 'is-open' : ''}`}
+          onClick={() => setShowInlineMetronome((v) => !v)}
+          title="Smart Metronome"
+        >
+          ♩ {Number.parseInt(song.bpm, 10) > 0 ? `${song.bpm} BPM` : (language === 'ru' ? 'Метроном' : language === 'en' ? 'Metronome' : 'Մետրոնոմ')}
+        </button>
         
         <div className="sv-header-actions" style={{ marginLeft: 'auto' }}>
             {(setlistNavData?.setlist?.id || setlistNavData?.current?.setlist_id) && (
@@ -1594,67 +1592,67 @@ export default function SongView() {
         <button className={`sv-segment ${viewMode === 'both' ? 'active' : ''}`} onClick={() => handleViewModeChange('both')}>{t('songView.bothModes')}</button>
       </div>
 
-      {/* myekklesia-inspired Quick Key & Capo Card */}
-      {showToneCapo && (
-        <section className="sv-tone-capo-card animate-fade-in">
-          <div className="sv-tone-capo-head">
-            <span>{language === 'ru' ? 'ТОН И КАПО' : language === 'en' ? 'KEY & CAPO' : 'ՏՈՆԱՅՆՈՒԹՅՈՒՆ ԵՎ ԿԱՊՈ'}</span>
-            <button type="button" className="sv-tone-reset" onClick={() => { setSemi(0); applyManualCapo(0); }}>
-              {language === 'ru' ? 'Сброс' : language === 'en' ? 'Reset' : 'Վերակայել'}
-            </button>
-          </div>
-          <div className="sv-tone-keys-grid">
-            {KEYS.map((k) => {
-              const isActive = soundingKey ? songKeysEqual(soundingKey, k) : false;
-              return (
-                <button
-                  key={k}
-                  type="button"
-                  className={`sv-tone-key-chip ${isActive ? 'active' : ''}`}
-                  onClick={() => handleKeyClick(k)}
-                >
-                  {k}
-                </button>
-              );
-            })}
-          </div>
-          <div className="sv-capo-chips-row">
-            <span className="sv-capo-label">Capo:</span>
-            {[0, 1, 2, 3, 4, 5, 6, 7].map((cVal) => (
-              <button
-                key={cVal}
-                type="button"
-                className={`sv-capo-chip ${capo === cVal ? 'active' : ''}`}
-                onClick={() => applyManualCapo(cVal)}
-              >
-                {cVal === 0 ? 'Off' : cVal}
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Inline Smart Metronome Bar */}
-      {showInlineMetronome && (
-        <div className="sv-inline-metronome-wrap animate-fade-in">
-          <SmartMetronome
-            initialBpm={Number.parseInt(song?.bpm, 10) || 120}
-            compact
-            enableScreenPulse
-          />
-        </div>
-      )}
-
-      {/* RehearsalMix & Stems Mixer Panel (Opens when requested via tools menu) */}
-      {stemsOpen && isEnabled('rehearsal_stems') && (
+      {/* Stage Modules Container (fits SongViewWebPro grid-area: stage cleanly) */}
+      {(showToneCapo || showInlineMetronome || (stemsOpen && isEnabled('rehearsal_stems'))) && (
         <div className="sv-stage-modules">
-          <SongStemsMixer
-            songTitle={displayTitle}
-            songKey={soundingKey || song?.song_key || 'C'}
-            initialBpm={song?.bpm || 120}
-            audioUrl={resolveMediaUrl(song?.audio_url || (song?.attachments?.[0]?.url))}
-            onClose={() => setStemsOpen(false)}
-          />
+          {showToneCapo && (
+            <section className="sv-tone-capo-card animate-fade-in">
+              <div className="sv-tone-capo-head">
+                <span>{language === 'ru' ? 'ТОН И КАПО' : language === 'en' ? 'KEY & CAPO' : 'ՏՈՆԱՅՆՈՒԹՅՈՒՆ ԵՎ ԿԱՊՈ'}</span>
+                <button type="button" className="sv-tone-reset" onClick={() => { setSemi(0); applyManualCapo(0); }}>
+                  {language === 'ru' ? 'Сброс' : language === 'en' ? 'Reset' : 'Վերակայել'}
+                </button>
+              </div>
+              <div className="sv-tone-keys-grid">
+                {KEYS.map((k) => {
+                  const isActive = soundingKey ? songKeysEqual(soundingKey, k) : false;
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      className={`sv-tone-key-chip ${isActive ? 'active' : ''}`}
+                      onClick={() => handleKeyClick(k)}
+                    >
+                      {k}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="sv-capo-chips-row">
+                <span className="sv-capo-label">Capo:</span>
+                {[0, 1, 2, 3, 4, 5, 6, 7].map((cVal) => (
+                  <button
+                    key={cVal}
+                    type="button"
+                    className={`sv-capo-chip ${capo === cVal ? 'active' : ''}`}
+                    onClick={() => applyManualCapo(cVal)}
+                  >
+                    {cVal === 0 ? 'Off' : cVal}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {showInlineMetronome && (
+            <div className="sv-inline-metronome-wrap animate-fade-in">
+              <SmartMetronome
+                initialBpm={Number.parseInt(song?.bpm, 10) || 120}
+                compact
+                enableScreenPulse
+              />
+            </div>
+          )}
+
+          {stemsOpen && isEnabled('rehearsal_stems') && (
+            <SongStemsMixer
+              songTitle={displayTitle}
+              songKey={soundingKey || song?.song_key || 'C'}
+              initialBpm={song?.bpm || 120}
+              audioUrl={resolveMediaUrl(song?.audio_url || (song?.attachments?.[0]?.url))}
+              onClose={() => setStemsOpen(false)}
+            />
+          )}
         </div>
       )}
 

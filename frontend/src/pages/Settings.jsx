@@ -598,13 +598,13 @@ export default function Settings() {
         )}
 
         {!user && !LOCKED_GUEST_TABS.includes(activeTab) && (
-          <div className="settings-card mb-4" style={{ background: 'linear-gradient(135deg, rgba(58, 45, 255, 0.12), rgba(0, 212, 255, 0.08))', border: '1px solid rgba(58, 45, 255, 0.25)', marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div className="settings-card settings-guest-inline-card mb-4">
+            <div className="settings-guest-inline-row">
               <div>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', fontWeight: 700, color: '#fff' }}>{t('auth.notLoggedInTitle', 'Դուք մուտք չեք գործել')}</h4>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)' }}>{t('auth.notLoggedInDesc', 'Մուտք գործեք՝ պրոֆիլը, երգացանկերը և ֆավորիտները կառավարելու համար:')}</p>
+                <h4 className="settings-guest-inline-title">{t('auth.notLoggedInTitle', 'Դուք մուտք չեք գործել')}</h4>
+                <p className="settings-guest-inline-desc">{t('auth.notLoggedInDesc', 'Մուտք գործեք՝ պրոֆիլը, երգացանկերը և ֆավորիտները կառավարելու համար:')}</p>
               </div>
-              <button className="btn btn-primary" style={{ padding: '8px 18px', borderRadius: '12px', fontSize: '0.9rem' }} onClick={() => navigate('/login')}>
+              <button className="settings-btn primary small guest-login-btn" onClick={() => navigate('/login')}>
                 {t('auth.login', 'Մուտք')}
               </button>
             </div>

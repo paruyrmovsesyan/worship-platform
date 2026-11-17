@@ -39,7 +39,7 @@ function wp_bible_translations_catalog(): array {
         ],
         [
             'id' => 'synodal',
-            'name' => 'Синодальный перевод',
+            'name' => 'Синодальный',
             'short' => 'RST',
             'lang' => 'ru',
             'scope' => 'full',

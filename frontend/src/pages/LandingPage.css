@@ -932,6 +932,14 @@
   background: linear-gradient(180deg, rgba(255,255,255,.025), transparent 80%);
 }
 
+.landing-page .hero-title {
+  color: #ffffff;
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  -webkit-text-fill-color: currentColor;
+}
+
 .hero-title span {
   color: #7ee7ff;
   background: linear-gradient(100deg, #f4f8ff 0%, #72e5ff 45%, #8990ff 100%);
@@ -1094,4 +1102,80 @@
 @keyframes scaleUp {
   0% { transform: scale(0.95); opacity: 0; }
   100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── Light Mode Support for Landing Page ── */
+body.light-mode .landing-page {
+  background: var(--color-bg, #f4f7fb);
+  color: var(--color-text-primary, #111827);
+}
+
+body.light-mode .landing-page .hero-stage-light {
+  background: radial-gradient(700px 380px at 50% 0%, rgba(247, 181, 0, 0.08), transparent 72%);
+}
+
+body.light-mode .landing-page .hero-title {
+  color: #111827;
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  -webkit-text-fill-color: #111827;
+}
+
+body.light-mode .landing-page .hero-title span {
+  background: linear-gradient(100deg, #111827 0%, #2e56d4 52%, #b38200 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body.light-mode .landing-page .hero-subtitle,
+body.light-mode .landing-page .hero-scroll-link,
+body.light-mode .landing-page .section-heading-row p,
+body.light-mode .landing-page .song-filter-nav a,
+body.light-mode .landing-page .song-table-head,
+body.light-mode .landing-page .song-number,
+body.light-mode .landing-page .song-bpm,
+body.light-mode .landing-page .song-copy small,
+body.light-mode .landing-page .news-content p,
+body.light-mode .landing-page .news-date {
+  color: #5f6167;
+}
+
+body.light-mode .landing-page .btn-install-app {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.14);
+  color: #111827;
+}
+
+body.light-mode .landing-page .section-heading-row h2,
+body.light-mode .landing-page .song-copy strong,
+body.light-mode .landing-page .news-content h3,
+body.light-mode .landing-page .news-content h4 {
+  color: #111827;
+}
+
+body.light-mode .landing-page .song-row,
+body.light-mode .landing-page .news-card,
+body.light-mode .landing-page .pick-row {
+  background: var(--color-surface, #ffffff);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+body.light-mode .landing-page .list-pagination button {
+  background: #ffffff;
+  color: #111827;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+body.light-mode .landing-page .section-link,
+body.light-mode .landing-page .song-key,
+body.light-mode .landing-page .news-read {
+  color: #2e56d4;
+}
+
+body.light-mode.editorial-theme .landing-page .section-link,
+body.light-mode.editorial-theme .landing-page .song-key,
+body.light-mode.editorial-theme .landing-page .news-read {
+  color: #b38200;
 }
