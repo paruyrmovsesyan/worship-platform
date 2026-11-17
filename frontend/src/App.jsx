@@ -79,6 +79,12 @@ import NativeAppLock from './components/NativeAppLock';
 import NativePlatformServices from './components/NativePlatformServices';
 import NativeRouteLoader from './components/NativeRouteLoader';
 import NativeRuntimeGuard from './components/NativeRuntimeGuard';
+import {
+  AnnouncementRestrictedView,
+  PlatformAnnouncementBanner,
+} from './components/PlatformAnnouncementGuard';
+import { matchesRestrictedPage, usePlatformAnnouncement } from './utils/featureFlags';
+import { API_BASE_URL } from './utils/nativeConfig';
 
 const NATIVE_PRIMARY_PATHS = new Set(['/', '/songs', '/chats', '/profile', '/login']);
 const NATIVE_ROUTE_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)';
@@ -166,6 +172,11 @@ function App() {
   const isPWA = useIsPWA();
   const isNativeApp = useIsNativeApp();
   const isAppMode = isPWA || isNativeApp;
+  const runtimeSurface = isNativeApp
+    ? (Capacitor.getPlatform() === 'ios' ? 'ios' : 'android')
+    : (isPWA ? 'pwa' : 'web');
+  const platformAnnouncement = usePlatformAnnouncement(runtimeSurface, API_BASE_URL);
+  const isRouteRestricted = matchesRestrictedPage(location.pathname, platformAnnouncement.restrictedPages);
   const { isOffline, canAccessPath } = usePwaOfflineGuard();
   const location = useLocation();
   const navigate = useNavigate();
@@ -770,7 +781,15 @@ function App() {
           <NativeRouteLoader refreshing={nativeRefreshing} />
           <NativeRuntimeGuard />
         </>
-      ) : null}
+      ) : (
+        <PlatformAnnouncementBanner
+          announcement={platformAnnouncement.announcement}
+          dismissed={platformAnnouncement.dismissed}
+          onDismiss={platformAnnouncement.dismiss}
+          navigate={navigate}
+          isPWA={isPWA}
+        />
+      )}
       <ScrollToTop />
       {renderNav()}
       <main
@@ -786,6 +805,13 @@ function App() {
       >
         <div ref={transitionRef} className="route-animate">
           <ErrorBoundary>
+            {isRouteRestricted ? (
+              <AnnouncementRestrictedView
+                announcement={platformAnnouncement.announcement}
+                onBackHome={() => navigate('/')}
+                onRecheck={platformAnnouncement.recheck}
+              />
+            ) : (
             <Routes key={refreshKey}>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
@@ -851,6 +877,7 @@ function App() {
               {/* Catch-all 404 Not Found Route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            )}
           </ErrorBoundary>
         </div>
       </main>

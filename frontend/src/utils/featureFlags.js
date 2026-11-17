@@ -8,7 +8,130 @@ import { useState, useEffect } from 'react';
 
 let flagsCache = {};
 let catalogCache = {};
+let announcementRestrictedFeatures = new Set();
+let announcementRestrictedPages = [];
+let activeAnnouncement = null;
 let isInitialized = false;
+
+export function setAnnouncementRestrictions({ announcement = null, restrictedFeatures = [], restrictedPages = [] } = {}) {
+  activeAnnouncement = announcement || null;
+  announcementRestrictedFeatures = new Set(Array.isArray(restrictedFeatures) ? restrictedFeatures.map(String) : []);
+  announcementRestrictedPages = Array.isArray(restrictedPages) ? restrictedPages.map(String) : [];
+  notifyListeners();
+}
+
+export function getAnnouncementRestrictions() {
+  return {
+    announcement: activeAnnouncement,
+    restrictedFeatures: Array.from(announcementRestrictedFeatures),
+    restrictedPages: [...announcementRestrictedPages],
+  };
+}
+
+export function isFeatureRestrictedByAnnouncement(featureId) {
+  return Boolean(featureId && announcementRestrictedFeatures.has(String(featureId)));
+}
+
+export function matchesRestrictedPage(pathname, restrictedPages) {
+  if (!pathname || !Array.isArray(restrictedPages) || restrictedPages.length === 0) {
+    return false;
+  }
+  const clean = String(pathname).split('?')[0].split('#')[0] || '/';
+  if (clean === '/' || clean === '/login' || clean === '/register' || clean === '/settings') {
+    return false;
+  }
+
+  return restrictedPages.some((entry) => {
+    const key = String(entry || '').trim();
+    if (!key) return false;
+    if (key === '/songs') return clean === '/songs';
+    if (key === '/song') return clean.startsWith('/song/');
+    if (key === '/chats') return clean === '/chats' || clean.startsWith('/chat/');
+    if (key === '/studio') return clean === '/studio' || clean === '/tools';
+    if (key === '/projection') return clean.startsWith('/projection');
+    return clean === key || clean.startsWith(`${key}/`);
+  });
+}
+
+let inFlightAnnouncementPromise = null;
+
+export async function fetchPlatformAnnouncement(surface, baseUrl = '') {
+  if (typeof window === 'undefined') return getAnnouncementRestrictions();
+  if (inFlightAnnouncementPromise) return inFlightAnnouncementPromise;
+
+  inFlightAnnouncementPromise = (async () => {
+    try {
+      const endpoint = `${baseUrl}/mobile_config_api.php?platform=${encodeURIComponent(surface)}&_t=${Date.now()}`;
+      const res = await fetch(endpoint, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.ok) {
+          const announcement = data.announcement || null;
+          const restrictedPages = Array.isArray(data.restrictions?.pages)
+            ? data.restrictions.pages
+            : (Array.isArray(announcement?.restricted_pages) ? announcement.restricted_pages : []);
+          const restrictedFeatures = Array.isArray(data.restrictions?.features)
+            ? data.restrictions.features
+            : (Array.isArray(announcement?.restricted_features) ? announcement.restricted_features : []);
+
+          setAnnouncementRestrictions({ announcement, restrictedFeatures, restrictedPages });
+        }
+      }
+    } catch {
+      // Preserve last cached restriction state while offline
+    } finally {
+      inFlightAnnouncementPromise = null;
+    }
+    return getAnnouncementRestrictions();
+  })();
+
+  return inFlightAnnouncementPromise;
+}
+
+export function usePlatformAnnouncement(surface, baseUrl = '') {
+  const [state, setState] = useState(() => getAnnouncementRestrictions());
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    const syncFromRemote = () => {
+      fetchPlatformAnnouncement(surface, baseUrl).then((next) => {
+        if (!active) return;
+        setState(next);
+        if (!next.announcement) setDismissed(false);
+      });
+    };
+
+    syncFromRemote();
+    const timer = window.setInterval(syncFromRemote, 60_000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        syncFromRemote();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [surface, baseUrl]);
+
+  const recheck = async () => {
+    const next = await fetchPlatformAnnouncement(surface, baseUrl);
+    setState(next);
+    if (!next.announcement) setDismissed(false);
+    return next;
+  };
+
+  return {
+    ...state,
+    dismissed,
+    dismiss: () => setDismissed(true),
+    recheck,
+  };
+}
 
 // 1. Initial hydration from localStorage
 try {
@@ -144,7 +267,8 @@ export function getFeatureStatus(featureId) {
  * - 'beta': returns true (active and in testing)
  * - 'published': returns true
  */
-export function isFeatureEnabled(featureId, user = null) {
+export function isFeatureEnabled(featureId) {
+  if (isFeatureRestrictedByAnnouncement(featureId)) return false;
   if (isFeatureSoon(featureId)) return false;
   const status = getFeatureStatus(featureId);
   return status !== 'off' && status !== 'soon' && status !== 'coming_soon';
@@ -207,12 +331,14 @@ export function isFeatureOff(featureId) {
 export function useFeatureFlags() {
   const [flags, setFlags] = useState(() => ({ ...flagsCache }));
   const [catalog, setCatalog] = useState(() => ({ ...catalogCache }));
+  const [restrictedSet, setRestrictedSet] = useState(() => new Set(announcementRestrictedFeatures));
 
   useEffect(() => {
     // 1. Subscribe to in-memory notifications
     const handleChange = (newFlags, newCatalog) => {
       setFlags({ ...newFlags });
       if (newCatalog) setCatalog({ ...newCatalog });
+      setRestrictedSet(new Set(announcementRestrictedFeatures));
     };
     listeners.add(handleChange);
 
@@ -265,10 +391,12 @@ export function useFeatureFlags() {
     catalog,
     getStatus: (id) => flags[id] || DEFAULT_FLAG_FALLBACKS[id] || 'published',
     isEnabled: (id) => {
+      if (restrictedSet.has(id)) return false;
       const s = flags[id] || DEFAULT_FLAG_FALLBACKS[id] || 'published';
       if (s === 'off' || s === 'soon' || s === 'coming_soon') return false;
       if (id === 'pro_studio') {
         const hasLiveOrBeta = PRO_STUDIO_MODULES.some(m => {
+          if (restrictedSet.has(m)) return false;
           const st = flags[m] || DEFAULT_FLAG_FALLBACKS[m] || 'published';
           return st === 'published' || st === 'beta';
         });
@@ -276,6 +404,7 @@ export function useFeatureFlags() {
       }
       return true;
     },
+    isRestricted: (id) => restrictedSet.has(id),
     isBeta: (id) => {
       const s = flags[id] || DEFAULT_FLAG_FALLBACKS[id] || 'published';
       if (s === 'soon' || s === 'coming_soon') return false;

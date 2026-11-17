@@ -191,13 +191,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($postAction === 'save_announcements') {
         $config = wp_mobile_get_config();
-        $config['announcement']['enabled']     = !empty($_POST['announcement_enabled']);
-        $config['announcement']['target']      = in_array($_POST['announcement_target'] ?? '', ['all', 'ios', 'android'], true) ? $_POST['announcement_target'] : 'all';
-        $config['announcement']['type']        = in_array($_POST['announcement_type'] ?? '', ['info', 'warning', 'success', 'critical'], true) ? $_POST['announcement_type'] : 'info';
-        $config['announcement']['title']       = trim((string)($_POST['announcement_title'] ?? ''));
-        $config['announcement']['message']     = trim((string)($_POST['announcement_message'] ?? ''));
-        $config['announcement']['action_text'] = trim((string)($_POST['announcement_action_text'] ?? ''));
-        $config['announcement']['action_url']  = trim((string)($_POST['announcement_action_url'] ?? ''));
+        $allowedTargets = ['all', 'web_pwa', 'web', 'pwa', 'native', 'ios', 'android'];
+        $allowedPages = array_keys(wp_mobile_restrictable_pages());
+        $allowedFeatures = array_keys(wp_mobile_restrictable_features());
+
+        $rawRestrictedPages = isset($_POST['restricted_pages']) && is_array($_POST['restricted_pages'])
+            ? array_map('strval', $_POST['restricted_pages'])
+            : [];
+        $rawRestrictedFeatures = isset($_POST['restricted_features']) && is_array($_POST['restricted_features'])
+            ? array_map('strval', $_POST['restricted_features'])
+            : [];
+
+        $config['announcement']['enabled']             = !empty($_POST['announcement_enabled']);
+        $config['announcement']['target']              = in_array($_POST['announcement_target'] ?? '', $allowedTargets, true) ? $_POST['announcement_target'] : 'all';
+        $config['announcement']['type']                = in_array($_POST['announcement_type'] ?? '', ['info', 'warning', 'success', 'critical'], true) ? $_POST['announcement_type'] : 'info';
+        $config['announcement']['title']               = trim((string)($_POST['announcement_title'] ?? ''));
+        $config['announcement']['message']             = trim((string)($_POST['announcement_message'] ?? ''));
+        $config['announcement']['action_text']         = trim((string)($_POST['announcement_action_text'] ?? ''));
+        $config['announcement']['action_url']          = trim((string)($_POST['announcement_action_url'] ?? ''));
+        $config['announcement']['dismissible']         = !empty($_POST['announcement_dismissible']);
+        $config['announcement']['restricted_pages']    = array_values(array_intersect($allowedPages, $rawRestrictedPages));
+        $config['announcement']['restricted_features'] = array_values(array_intersect($allowedFeatures, $rawRestrictedFeatures));
 
         // Feature flags
         $config['features']['biometric_auth']      = !empty($_POST['feat_biometric_auth']);
@@ -1030,21 +1044,44 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
 
     <!-- 5. ANNOUNCEMENTS & FEATURES TAB -->
     <?php if ($activeTab === 'announcements'): ?>
+      <?php
+        $restrictablePages = wp_mobile_restrictable_pages();
+        $restrictableFeatures = wp_mobile_restrictable_features();
+        $selectedPages = (array)($mobileConfig['announcement']['restricted_pages'] ?? []);
+        $selectedFeatures = (array)($mobileConfig['announcement']['restricted_features'] ?? []);
+        $isDismissible = !isset($mobileConfig['announcement']['dismissible']) || !empty($mobileConfig['announcement']['dismissible']);
+      ?>
       <form method="POST" class="m-form-card">
         <input type="hidden" name="form_action" value="save_announcements">
-        <div class="m-card-header">
-          <div class="m-card-title">📢 Ներծրագրային Հայտարարության Բաններ (In-App Banner)</div>
-          <button type="submit" class="m-btn m-btn--primary">💾 <?= htmlspecialchars($t['save_changes']) ?></button>
+        <div class="m-card-header" style="flex-wrap:wrap; gap:10px;">
+          <div class="m-card-title">📢 Հայտարարություններ և Սահմանափակումներ (Կայք, PWA, iOS և Android)</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button type="button" class="m-btn m-btn--secondary" onclick="wpFillUpgradeAnnouncementPreset()">⚡ Վերազինման ձևանմուշ</button>
+            <button type="submit" class="m-btn m-btn--primary">💾 <?= htmlspecialchars($t['save_changes']) ?></button>
+          </div>
         </div>
 
-        <div class="m-toggle-wrap" style="margin-bottom:16px;">
-          <label class="m-switch">
-            <input type="checkbox" name="announcement_enabled" value="1" <?= !empty($mobileConfig['announcement']['enabled']) ? 'checked' : '' ?>>
-            <span class="m-slider"></span>
-          </label>
-          <div>
-            <div style="font-weight:700; color:#fff; font-size:0.92rem;">Միացնել Ներծրագրային Բանները</div>
-            <div style="font-size:0.8rem; color:#94a3b8;">Հաղորդագրությունը կհայտնվի հավելվածի վերևի հատվածում:</div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px; margin-bottom:16px;">
+          <div class="m-toggle-wrap">
+            <label class="m-switch">
+              <input type="checkbox" name="announcement_enabled" value="1" <?= !empty($mobileConfig['announcement']['enabled']) ? 'checked' : '' ?>>
+              <span class="m-slider"></span>
+            </label>
+            <div>
+              <div style="font-weight:700; color:var(--text); font-size:0.92rem;">Միացնել Հայտարարությունն ու Սահմանափակումները</div>
+              <div style="font-size:0.8rem; color:var(--muted);">Ցուցադրվում է ընտրված հարթակներում (Կայք, PWA, iOS, Android):</div>
+            </div>
+          </div>
+
+          <div class="m-toggle-wrap">
+            <label class="m-switch">
+              <input type="checkbox" name="announcement_dismissible" value="1" <?= $isDismissible ? 'checked' : '' ?>>
+              <span class="m-slider"></span>
+            </label>
+            <div>
+              <div style="font-weight:700; color:var(--text); font-size:0.92rem;">Թույլ տալ փակել բանները</div>
+              <div style="font-size:0.8rem; color:var(--muted);">Անջատելու դեպքում բանները մշտապես երևում է էկրանի վերևում:</div>
+            </div>
           </div>
         </div>
 
@@ -1052,7 +1089,11 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
           <div class="m-field">
             <label class="m-label">Թիրախային Հարթակ</label>
             <select name="announcement_target" class="m-select">
-              <option value="all" <?= ($mobileConfig['announcement']['target'] ?? '') === 'all' ? 'selected' : '' ?>>📱 Երկուսն էլ (iOS և Android)</option>
+              <option value="all" <?= ($mobileConfig['announcement']['target'] ?? '') === 'all' ? 'selected' : '' ?>>🌐 Ամբողջ համակարգը (Կայք, PWA, iOS և Android)</option>
+              <option value="web_pwa" <?= ($mobileConfig['announcement']['target'] ?? '') === 'web_pwa' ? 'selected' : '' ?>>🖥️ Կայք և PWA</option>
+              <option value="web" <?= ($mobileConfig['announcement']['target'] ?? '') === 'web' ? 'selected' : '' ?>>🌍 Միայն Կայք (Web)</option>
+              <option value="pwa" <?= ($mobileConfig['announcement']['target'] ?? '') === 'pwa' ? 'selected' : '' ?>>📲 Միայն PWA</option>
+              <option value="native" <?= ($mobileConfig['announcement']['target'] ?? '') === 'native' ? 'selected' : '' ?>>📱 Միայն iOS և Android Native</option>
               <option value="ios" <?= ($mobileConfig['announcement']['target'] ?? '') === 'ios' ? 'selected' : '' ?>>🍏 Միայն iOS</option>
               <option value="android" <?= ($mobileConfig['announcement']['target'] ?? '') === 'android' ? 'selected' : '' ?>>🤖 Միայն Android</option>
             </select>
@@ -1061,34 +1102,96 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
             <label class="m-label">Բանների Տեսակ</label>
             <select name="announcement_type" class="m-select">
               <option value="info" <?= ($mobileConfig['announcement']['type'] ?? '') === 'info' ? 'selected' : '' ?>>ℹ️ Տեղեկատվական (Info - Կապույտ)</option>
-              <option value="warning" <?= ($mobileConfig['announcement']['type'] ?? '') === 'warning' ? 'selected' : '' ?>>⚠️ Զգուշացում (Warning - Դեղին)</option>
+              <option value="warning" <?= ($mobileConfig['announcement']['type'] ?? '') === 'warning' ? 'selected' : '' ?>>⚠️ Զգուշացում / Վերազինում (Warning - Դեղին)</option>
               <option value="success" <?= ($mobileConfig['announcement']['type'] ?? '') === 'success' ? 'selected' : '' ?>>✅ Դրական (Success - Կանաչ)</option>
               <option value="critical" <?= ($mobileConfig['announcement']['type'] ?? '') === 'critical' ? 'selected' : '' ?>>🚨 Կրիտիկական (Critical - Կարմիր)</option>
             </select>
           </div>
           <div class="m-field">
             <label class="m-label">Վերնագիր</label>
-            <input type="text" name="announcement_title" class="m-input" value="<?= htmlspecialchars($mobileConfig['announcement']['title'] ?? '') ?>" placeholder="Օրինակ՝ Կարևոր ծանուցում">
+            <input type="text" id="wpAnnTitle" name="announcement_title" class="m-input" value="<?= htmlspecialchars($mobileConfig['announcement']['title'] ?? '') ?>" placeholder="Օրինակ՝ Վերազինման աշխատանքներ">
           </div>
         </div>
 
         <div class="m-form-row">
           <div class="m-field" style="grid-column: span 3;">
             <label class="m-label">Հաղորդագրություն</label>
-            <textarea name="announcement_message" class="m-textarea" rows="2" placeholder="Գրեք հաղորդագրության տեքստը..."><?= htmlspecialchars($mobileConfig['announcement']['message'] ?? '') ?></textarea>
+            <textarea id="wpAnnMsg" name="announcement_message" class="m-textarea" rows="3" placeholder="Գրեք հայտարարության տեքստը..."><?= htmlspecialchars($mobileConfig['announcement']['message'] ?? '') ?></textarea>
           </div>
         </div>
 
         <div class="m-form-row">
           <div class="m-field">
             <label class="m-label">Գործողության Կոճակ (Կամընտիր)</label>
-            <input type="text" name="announcement_action_text" class="m-input" value="<?= htmlspecialchars($mobileConfig['announcement']['action_text'] ?? '') ?>" placeholder="Օրինակ՝ Թարմացնել">
+            <input type="text" name="announcement_action_text" class="m-input" value="<?= htmlspecialchars($mobileConfig['announcement']['action_text'] ?? '') ?>" placeholder="Օրինակ՝ Մանրամասն">
           </div>
           <div class="m-field" style="grid-column: span 2;">
             <label class="m-label">Կոճակի Հղում</label>
-            <input type="text" name="announcement_action_url" class="m-input" value="<?= htmlspecialchars($mobileConfig['announcement']['action_url'] ?? '') ?>" placeholder="https://... կամ ներքին էջ (/songs)">
+            <input type="text" name="announcement_action_url" class="m-input" value="<?= htmlspecialchars($mobileConfig['announcement']['action_url'] ?? '') ?>" placeholder="https://... կամ ներքին էջ (/news)">
           </div>
         </div>
+
+        <!-- SELECTIVE PAGE & FEATURE RESTRICTIONS TIED TO ANNOUNCEMENT -->
+        <div class="m-card-header" style="margin-top:26px; flex-wrap:wrap; gap:10px;">
+          <div>
+            <div class="m-card-title">🔒 Ըստ հայտարարության սահմանափակվող էջեր և ֆունկցիաներ</div>
+            <div style="font-size:0.8rem; color:var(--muted); margin-top:4px;">Նշված էջերն ու ֆունկցիաները ժամանակավորապես կարգելափակվեն միայն այնքան ժամանակ, քանի դեռ հայտարարությունը միացված է։</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:18px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px; flex-wrap:wrap;">
+            <strong style="color:var(--text); font-size:0.9rem;">📄 Սահմանափակվող էջեր (Pages)</strong>
+            <div style="display:flex; gap:8px;">
+              <button type="button" class="m-btn m-btn--secondary" style="padding:5px 10px; font-size:0.78rem;" onclick="wpToggleCheckGroup('restricted_pages[]', true)">Ընտրել բոլորը</button>
+              <button type="button" class="m-btn m-btn--secondary" style="padding:5px 10px; font-size:0.78rem;" onclick="wpToggleCheckGroup('restricted_pages[]', false)">Մաքրել</button>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+            <?php foreach ($restrictablePages as $pagePath => $pageLabel): ?>
+              <label class="m-toggle-wrap" style="padding:10px 12px; cursor:pointer;">
+                <input type="checkbox" name="restricted_pages[]" value="<?= htmlspecialchars($pagePath) ?>" <?= in_array($pagePath, $selectedPages, true) ? 'checked' : '' ?> style="width:16px; height:16px; accent-color: var(--primary);">
+                <span style="font-size:0.84rem; font-weight:600; color:var(--text);"><?= htmlspecialchars($pageLabel) ?></span>
+              </label>
+            <?php endforeach; ?>
+          </div>
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px; flex-wrap:wrap;">
+            <strong style="color:var(--text); font-size:0.9rem;">🧩 Սահմանափակվող ֆունկցիաներ (Features)</strong>
+            <div style="display:flex; gap:8px;">
+              <button type="button" class="m-btn m-btn--secondary" style="padding:5px 10px; font-size:0.78rem;" onclick="wpToggleCheckGroup('restricted_features[]', true)">Ընտրել բոլորը</button>
+              <button type="button" class="m-btn m-btn--secondary" style="padding:5px 10px; font-size:0.78rem;" onclick="wpToggleCheckGroup('restricted_features[]', false)">Մաքրել</button>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+            <?php foreach ($restrictableFeatures as $featKey => $featLabel): ?>
+              <label class="m-toggle-wrap" style="padding:10px 12px; cursor:pointer;">
+                <input type="checkbox" name="restricted_features[]" value="<?= htmlspecialchars($featKey) ?>" <?= in_array($featKey, $selectedFeatures, true) ? 'checked' : '' ?> style="width:16px; height:16px; accent-color: var(--primary);">
+                <span style="font-size:0.84rem; font-weight:600; color:var(--text);"><?= htmlspecialchars($featLabel) ?></span>
+              </label>
+            <?php endforeach; ?>
+          </div>
+        </div>
+
+        <script>
+          function wpToggleCheckGroup(name, checked) {
+            document.querySelectorAll('input[name="' + name + '"]').forEach(function (el) {
+              el.checked = checked;
+            });
+          }
+          function wpFillUpgradeAnnouncementPreset() {
+            var titleEl = document.getElementById('wpAnnTitle');
+            var msgEl = document.getElementById('wpAnnMsg');
+            if (titleEl && !titleEl.value.trim()) {
+              titleEl.value = 'Տեխնիկական վերազինում';
+            }
+            if (msgEl) {
+              msgEl.value = 'Worship Platform կայքն ու հավելվածը կամ որոշ բաժիններ ժամանակավորապես սահմանափակված են վերազինման և բարելավման նպատակներով։ Շուտով կվերադառնանք։';
+            }
+          }
+        </script>
 
         <div class="m-card-header" style="margin-top:28px;">
           <div class="m-card-title">⚙️ Native Ֆունկցիաների Կառավարում (Feature Flags)</div>

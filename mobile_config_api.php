@@ -106,16 +106,12 @@ if ($action === 'get_admin_data') {
 }
 
 // ── CLIENT-FACING CONFIG CHECK ──
-// e.g. GET /mobile_config_api.php?platform=ios&version=1.0&build=1
+// e.g. GET /mobile_config_api.php?platform=ios|android|web|pwa&version=1.0&build=1
 $platform = strtolower(trim((string)($_GET['platform'] ?? $postData['platform'] ?? '')));
-if ($platform !== 'ios' && $platform !== 'android') {
-    // If not specified, inspect user agent
+if (!in_array($platform, ['ios', 'android', 'web', 'pwa'], true)) {
+    // Default web browsers cleanly to 'web' unless native UA is omitted intentionally
     $ua = strtolower($_SERVER['HTTP_USER_AGENT'] ?? '');
-    if (str_contains($ua, 'iphone') || str_contains($ua, 'ipad') || str_contains($ua, 'ios')) {
-        $platform = 'ios';
-    } else {
-        $platform = 'android';
-    }
+    $platform = (str_contains($ua, 'iphone') || str_contains($ua, 'ipad')) ? 'ios' : 'web';
 }
 
 $clientVersion = trim((string)($_GET['version'] ?? $postData['version'] ?? ''));

@@ -41,13 +41,15 @@ function wp_mobile_default_config(): array {
         ],
         'announcement' => [
             'enabled' => false,
-            'target' => 'all', // 'all', 'ios', 'android'
+            'target' => 'all', // 'all', 'web_pwa', 'web', 'pwa', 'native', 'ios', 'android'
             'type' => 'info', // 'info', 'warning', 'success', 'critical'
             'title' => '',
             'message' => '',
             'action_text' => '',
             'action_url' => '',
             'dismissible' => true,
+            'restricted_pages' => [],
+            'restricted_features' => [],
         ],
         'features' => [
             'biometric_auth' => true,
@@ -182,23 +184,78 @@ function wp_mobile_get_registered_devices(): array {
 }
 
 /**
- * Resolves client status given platform and client version/build.
+ * Canonical catalog of pages that can be temporarily restricted alongside an announcement.
+ */
+function wp_mobile_restrictable_pages(): array {
+    return [
+        '/songs' => 'Երգարան (/songs)',
+        '/song' => 'Երգի դիտում (/song/:id)',
+        '/setlists' => 'Երգացանկեր (/setlists)',
+        '/bible' => 'Աստվածաշունչ (/bible)',
+        '/church' => 'Եկեղեցի և Աղոթք (/church)',
+        '/media' => 'Մեդիա և Ռադիո (/media)',
+        '/studio' => 'Pro Studio և Գործիքներ (/studio)',
+        '/service-planner' => 'Ծառայության Պլանավորող (/service-planner)',
+        '/transpose' => 'Տրանսպոզ Գործիք (/transpose)',
+        '/favorites' => 'Սիրելիներ (/favorites)',
+        '/friends' => 'Ընկերներ և Թիմեր (/friends)',
+        '/chats' => 'Չաթեր (/chats)',
+        '/song-request' => 'Խնդրել Երգ (/song-request)',
+        '/projection' => 'Live Պրոյեկցիա (/projection)',
+        '/news' => 'Նորություններ (/news)',
+    ];
+}
+
+/**
+ * Canonical catalog of features that can be temporarily restricted alongside an announcement.
+ */
+function wp_mobile_restrictable_features(): array {
+    return [
+        'pro_studio' => 'Worship Pro Studio',
+        'live_stage_follower' => 'Live Stage Sync (Երաժիշտների սինքրոն)',
+        'rehearsal_stems' => 'RehearsalMix & Stems Միքշեր',
+        'lyrics_projection' => 'Live Պրոյեկցիա և OBS',
+        'worship_ai_studio' => 'Worship AI Studio',
+        'service_planner' => 'Service Planner',
+        'smart_metronome' => 'Խելացի Մետրոնոմ',
+        'chord_chart_transpose_capo' => 'Տրանսպոզ և Կապո',
+        'audio_calls' => 'Աուդիո Զանգեր (WebRTC)',
+        'setlists_sync' => 'Երգացանկերի Սինքրոնացում',
+        'offline_mode' => 'Offline Քեշավորում',
+    ];
+}
+
+/**
+ * Checks whether an announcement target applies to the requesting runtime surface.
+ */
+function wp_mobile_announcement_matches_platform(string $target, string $platform): bool {
+    return match ($target) {
+        'all' => true,
+        'web_pwa' => $platform === 'web' || $platform === 'pwa',
+        'native' => $platform === 'ios' || $platform === 'android',
+        default => $target === $platform,
+    };
+}
+
+/**
+ * Resolves client status given platform ('web', 'pwa', 'ios', 'android') and version/build.
  */
 function wp_mobile_evaluate_client(string $platform, string $clientVersion = '', string $clientBuild = ''): array {
     $config = wp_mobile_get_config();
-    $platConfig = $config[$platform] ?? $config['android'];
+    $isNative = ($platform === 'ios' || $platform === 'android');
+    $platConfig = $isNative ? ($config[$platform] ?? $config['android']) : [];
 
-    $isMaintenance = ($platConfig['status'] ?? 'live') === 'maintenance';
+    $isMaintenance = $isNative && (($platConfig['status'] ?? 'live') === 'maintenance');
     $minVersion = (string)($platConfig['min_version'] ?? '1.0');
     $minBuild = (int)($platConfig['min_build'] ?? 1);
     $currentVersion = (string)($platConfig['current_version'] ?? '1.0');
-    $forceUpdateConfig = !empty($platConfig['force_update']);
+    $forceUpdateConfig = $isNative && !empty($platConfig['force_update']);
 
     $clientBuildInt = (int)$clientBuild;
     $needsUpdate = false;
     $isMandatory = false;
 
-    if ($clientVersion !== '') {
+    if ($isNative && $clientVersion !== '') {
         if (version_compare($clientVersion, $currentVersion, '<')) {
             $needsUpdate = true;
         }
@@ -212,13 +269,23 @@ function wp_mobile_evaluate_client(string $platform, string $clientVersion = '',
     }
 
     $announcement = $config['announcement'] ?? [];
+    $target = (string)($announcement['target'] ?? 'all');
     $showAnnouncement = !empty($announcement['enabled']) &&
-        ($announcement['target'] === 'all' || $announcement['target'] === $platform);
+        wp_mobile_announcement_matches_platform($target, $platform);
+
+    $allowedPages = array_keys(wp_mobile_restrictable_pages());
+    $allowedFeatures = array_keys(wp_mobile_restrictable_features());
+    $restrictedPages = $showAnnouncement
+        ? array_values(array_intersect($allowedPages, array_map('strval', (array)($announcement['restricted_pages'] ?? []))))
+        : [];
+    $restrictedFeatures = $showAnnouncement
+        ? array_values(array_intersect($allowedFeatures, array_map('strval', (array)($announcement['restricted_features'] ?? []))))
+        : [];
 
     return [
         'ok' => true,
         'platform' => $platform,
-        'status' => $platConfig['status'] ?? 'live',
+        'status' => $isNative ? ($platConfig['status'] ?? 'live') : 'live',
         'maintenance' => [
             'active' => $isMaintenance,
             'title' => $platConfig['maintenance_title'] ?? '',
@@ -236,12 +303,19 @@ function wp_mobile_evaluate_client(string $platform, string $clientVersion = '',
         ],
         'announcement' => $showAnnouncement ? [
             'type' => $announcement['type'] ?? 'info',
+            'target' => $target,
             'title' => $announcement['title'] ?? '',
             'message' => $announcement['message'] ?? '',
             'action_text' => $announcement['action_text'] ?? '',
             'action_url' => $announcement['action_url'] ?? '',
-            'dismissible' => !empty($announcement['dismissible']),
+            'dismissible' => !isset($announcement['dismissible']) || !empty($announcement['dismissible']),
+            'restricted_pages' => $restrictedPages,
+            'restricted_features' => $restrictedFeatures,
         ] : null,
+        'restrictions' => [
+            'pages' => $restrictedPages,
+            'features' => $restrictedFeatures,
+        ],
         'features' => $config['features'] ?? [],
         'timestamp' => date('Y-m-d H:i:s'),
     ];
