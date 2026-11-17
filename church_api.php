@@ -52,6 +52,7 @@ function wp_church_open_pdo(): ?PDO {
                 description TEXT NULL,
                 service_time VARCHAR(120) NOT NULL DEFAULT '',
                 invite_code VARCHAR(32) NOT NULL DEFAULT '',
+                church_type VARCHAR(32) NOT NULL DEFAULT 'church',
                 is_open TINYINT(1) NOT NULL DEFAULT 1,
                 owner_user_id INT UNSIGNED NOT NULL,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -67,6 +68,7 @@ function wp_church_open_pdo(): ?PDO {
                 user_id INT UNSIGNED NOT NULL,
                 user_name VARCHAR(160) NOT NULL DEFAULT '',
                 role VARCHAR(40) NOT NULL DEFAULT 'member',
+                ministry VARCHAR(40) NOT NULL DEFAULT '',
                 status VARCHAR(20) NOT NULL DEFAULT 'approved',
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
@@ -101,6 +103,43 @@ function wp_church_open_pdo(): ?PDO {
                 PRIMARY KEY (post_id, user_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
+        $conn->exec("
+            CREATE TABLE IF NOT EXISTS church_rehearsals (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                church_id INT UNSIGNED NOT NULL DEFAULT 0,
+                title VARCHAR(200) NOT NULL,
+                rehearsal_date VARCHAR(32) NOT NULL,
+                rehearsal_time VARCHAR(16) NOT NULL DEFAULT '',
+                location VARCHAR(160) NOT NULL DEFAULT '',
+                repeat_weekly TINYINT(1) NOT NULL DEFAULT 0,
+                setlist_id INT UNSIGNED NOT NULL DEFAULT 0,
+                setlist_title VARCHAR(200) NOT NULL DEFAULT '',
+                notes TEXT NULL,
+                created_by INT UNSIGNED NOT NULL,
+                created_by_name VARCHAR(160) NOT NULL DEFAULT '',
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY idx_church_date (church_id, rehearsal_date)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        $conn->exec("
+            CREATE TABLE IF NOT EXISTS church_rsvps (
+                target_type VARCHAR(24) NOT NULL,
+                target_id INT UNSIGNED NOT NULL,
+                user_id INT UNSIGNED NOT NULL,
+                user_name VARCHAR(160) NOT NULL DEFAULT '',
+                status VARCHAR(16) NOT NULL DEFAULT 'going',
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (target_type, target_id, user_id),
+                KEY idx_target (target_type, target_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+        try {
+            $conn->exec("ALTER TABLE churches ADD COLUMN church_type VARCHAR(32) NOT NULL DEFAULT 'church'");
+        } catch (Throwable $ignore) {}
+        try {
+            $conn->exec("ALTER TABLE church_members ADD COLUMN ministry VARCHAR(40) NOT NULL DEFAULT ''");
+        } catch (Throwable $ignore) {}
         $pdo = $conn;
     } catch (Throwable $e) {
         $pdo = null;
@@ -110,14 +149,26 @@ function wp_church_open_pdo(): ?PDO {
 
 function wp_church_file_store_load(): array {
     $file = __DIR__ . '/data/church_store.json';
+    $defaults = [
+        'next_church_id' => 1,
+        'next_post_id' => 1,
+        'next_rehearsal_id' => 1,
+        'churches' => [],
+        'members' => [],
+        'posts' => [],
+        'prayers' => [],
+        'rehearsals' => [],
+        'rsvps' => [],
+        'feedback' => [],
+    ];
     if (!is_file($file)) {
-        return ['next_church_id' => 1, 'next_post_id' => 1, 'churches' => [], 'members' => [], 'posts' => [], 'prayers' => []];
+        return $defaults;
     }
     $data = json_decode((string)@file_get_contents($file), true);
     if (!is_array($data)) {
-        return ['next_church_id' => 1, 'next_post_id' => 1, 'churches' => [], 'members' => [], 'posts' => [], 'prayers' => []];
+        return $defaults;
     }
-    return array_merge(['next_church_id' => 1, 'next_post_id' => 1, 'churches' => [], 'members' => [], 'posts' => [], 'prayers' => []], $data);
+    return array_merge($defaults, $data);
 }
 
 function wp_church_file_store_save(array $store): bool {
@@ -208,6 +259,10 @@ if ($action === 'create_church') {
     $city = trim((string)($in['city'] ?? ''));
     $desc = trim((string)($in['description'] ?? ''));
     $serviceTime = trim((string)($in['service_time'] ?? ''));
+    $churchType = trim((string)($in['church_type'] ?? 'church'));
+    if (!in_array($churchType, ['church', 'worship_group'], true)) {
+        $churchType = 'church';
+    }
     $isOpen = isset($in['is_open']) ? ((int)(bool)$in['is_open']) : 1;
 
     if (mb_strlen($name) < 2) {
@@ -217,12 +272,12 @@ if ($action === 'create_church') {
 
     if ($pdo) {
         try {
-            $st = $pdo->prepare("INSERT INTO churches (name, city, description, service_time, invite_code, is_open, owner_user_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $st->execute([$name, $city, $desc, $serviceTime, $invite, $isOpen, $uid]);
+            $st = $pdo->prepare("INSERT INTO churches (name, city, description, service_time, invite_code, church_type, is_open, owner_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $st->execute([$name, $city, $desc, $serviceTime, $invite, $churchType, $isOpen, $uid]);
             $churchId = (int)$pdo->lastInsertId();
-            $stM = $pdo->prepare("INSERT INTO church_members (church_id, user_id, user_name, role, status) VALUES (?, ?, ?, 'pastor', 'approved')");
-            $stM->execute([$churchId, $uid, $user['name']]);
-            wp_church_out(['ok' => true, 'church_id' => $churchId, 'invite_code' => $invite]);
+            $stM = $pdo->prepare("INSERT INTO church_members (church_id, user_id, user_name, role, ministry, status) VALUES (?, ?, ?, 'pastor', ?, 'approved')");
+            $stM->execute([$churchId, $uid, $user['name'], $churchType === 'worship_group' ? 'worship' : '']);
+            wp_church_out(['ok' => true, 'church_id' => $churchId, 'invite_code' => $invite, 'church_type' => $churchType]);
         } catch (Throwable $e) {
             wp_church_out(['ok' => false, 'error' => 'Failed to create church'], 500);
         }
@@ -237,6 +292,7 @@ if ($action === 'create_church') {
         'description' => $desc,
         'service_time' => $serviceTime,
         'invite_code' => $invite,
+        'church_type' => $churchType,
         'is_open' => $isOpen,
         'owner_user_id' => $uid,
         'created_at' => date('Y-m-d H:i:s'),
@@ -246,11 +302,12 @@ if ($action === 'create_church') {
         'user_id' => $uid,
         'user_name' => $user['name'],
         'role' => 'pastor',
+        'ministry' => $churchType === 'worship_group' ? 'worship' : '',
         'status' => 'approved',
         'created_at' => date('Y-m-d H:i:s'),
     ];
     wp_church_file_store_save($store);
-    wp_church_out(['ok' => true, 'church_id' => $churchId, 'invite_code' => $invite]);
+    wp_church_out(['ok' => true, 'church_id' => $churchId, 'invite_code' => $invite, 'church_type' => $churchType]);
 }
 
 // =========================================================================
@@ -346,7 +403,7 @@ if ($action === 'my_church') {
             $members = [];
             $pending = [];
             if ($activeChurchId > 0) {
-                $stM = $pdo->prepare("SELECT user_id, user_name, role, status, created_at FROM church_members WHERE church_id = ? ORDER BY status = 'pending' DESC, role = 'pastor' DESC, user_name ASC");
+                $stM = $pdo->prepare("SELECT user_id, user_name, role, COALESCE(ministry, '') AS ministry, status, created_at FROM church_members WHERE church_id = ? ORDER BY status = 'pending' DESC, role = 'pastor' DESC, user_name ASC");
                 $stM->execute([$activeChurchId]);
                 foreach ($stM->fetchAll(PDO::FETCH_ASSOC) as $row) {
                     if ($row['status'] === 'pending') $pending[] = $row;
@@ -390,10 +447,14 @@ if ($action === 'manage_member') {
     $in = wp_church_json_input();
     $churchId = (int)($in['church_id'] ?? 0);
     $targetUserId = (int)($in['target_user_id'] ?? 0);
-    $decision = trim((string)($in['decision'] ?? '')); // approve | reject | role
+    $decision = trim((string)($in['decision'] ?? '')); // approve | reject | role | ministry
     $newRole = trim((string)($in['role'] ?? 'member'));
     if (!in_array($newRole, ['member', 'worship_leader', 'leader', 'pastor'], true)) {
         $newRole = 'member';
+    }
+    $newMinistry = trim((string)($in['ministry'] ?? ''));
+    if (!in_array($newMinistry, ['', 'worship', 'kids', 'prayer', 'media', 'hospitality'], true)) {
+        $newMinistry = '';
     }
 
     if ($pdo) {
@@ -413,6 +474,9 @@ if ($action === 'manage_member') {
             } elseif ($decision === 'role') {
                 $st = $pdo->prepare("UPDATE church_members SET role = ? WHERE church_id = ? AND user_id = ?");
                 $st->execute([$newRole, $churchId, $targetUserId]);
+            } elseif ($decision === 'ministry') {
+                $st = $pdo->prepare("UPDATE church_members SET ministry = ? WHERE church_id = ? AND user_id = ?");
+                $st->execute([$newMinistry, $churchId, $targetUserId]);
             }
             wp_church_out(['ok' => true]);
         } catch (Throwable $e) {
@@ -435,6 +499,7 @@ if ($action === 'manage_member') {
             if ($decision === 'reject') continue;
             if ($decision === 'approve') $m['status'] = 'approved';
             if ($decision === 'role') $m['role'] = $newRole;
+            if ($decision === 'ministry') $m['ministry'] = $newMinistry;
         }
         $nextMembers[] = $m;
     }
@@ -455,12 +520,15 @@ if ($action === 'get_feed') {
             $sql = "
                 SELECT p.*,
                     COALESCE(c.name, '') AS church_name,
-                    EXISTS(SELECT 1 FROM church_post_prayers pp WHERE pp.post_id = p.id AND pp.user_id = ?) AS has_prayed
+                    EXISTS(SELECT 1 FROM church_post_prayers pp WHERE pp.post_id = p.id AND pp.user_id = ?) AS has_prayed,
+                    (SELECT COUNT(*) FROM church_rsvps r1 WHERE r1.target_type = 'event' AND r1.target_id = p.id AND r1.status = 'going') AS rsvp_going_count,
+                    (SELECT COUNT(*) FROM church_rsvps r2 WHERE r2.target_type = 'event' AND r2.target_id = p.id AND r2.status = 'cant') AS rsvp_cant_count,
+                    COALESCE((SELECT r3.status FROM church_rsvps r3 WHERE r3.target_type = 'event' AND r3.target_id = p.id AND r3.user_id = ? LIMIT 1), '') AS my_rsvp
                 FROM church_posts p
                 LEFT JOIN churches c ON c.id = p.church_id
                 WHERE p.church_id = ?
             ";
-            $params = [$uid, $churchId];
+            $params = [$uid, $uid, $churchId];
             if (in_array($type, ['announcement', 'event', 'prayer'], true)) {
                 $sql .= " AND p.type = ?";
                 $params[] = $type;
@@ -484,6 +552,9 @@ if ($action === 'get_feed') {
                     'is_anonymous' => $isAnon,
                     'pray_count' => (int)$row['pray_count'],
                     'has_prayed' => !empty($row['has_prayed']),
+                    'rsvp_going_count' => (int)($row['rsvp_going_count'] ?? 0),
+                    'rsvp_cant_count' => (int)($row['rsvp_cant_count'] ?? 0),
+                    'my_rsvp' => (string)($row['my_rsvp'] ?? ''),
                     'created_at' => (string)$row['created_at'],
                 ];
             }, $st->fetchAll(PDO::FETCH_ASSOC));
@@ -501,9 +572,22 @@ if ($action === 'get_feed') {
         $pid = (int)$p['id'];
         $hasPrayed = !empty($store['prayers']["{$pid}_{$uid}"]);
         $isAnon = !empty($p['is_anonymous']);
+        $going = 0;
+        $cant = 0;
+        $myRsvp = '';
+        foreach ($store['rsvps'] as $rk => $rv) {
+            if (strpos($rk, "event_{$pid}_") === 0) {
+                if (($rv['status'] ?? '') === 'going') $going++;
+                if (($rv['status'] ?? '') === 'cant') $cant++;
+                if ((int)($rv['user_id'] ?? 0) === $uid) $myRsvp = (string)$rv['status'];
+            }
+        }
         $posts[] = array_merge($p, [
             'author_name' => $isAnon ? 'Անանուն' : $p['author_name'],
             'has_prayed' => $hasPrayed,
+            'rsvp_going_count' => $going,
+            'rsvp_cant_count' => $cant,
+            'my_rsvp' => $myRsvp,
         ]);
     }
     wp_church_out(['ok' => true, 'posts' => $posts]);
@@ -638,6 +722,370 @@ if ($action === 'delete_post') {
         if ((int)$p['id'] !== $postId) return true;
         return (int)$p['user_id'] !== $uid && !in_array($user['role'], ['admin', 'owner'], true);
     }));
+    wp_church_file_store_save($store);
+    wp_church_out(['ok' => true]);
+}
+
+// =========================================================================
+// REHEARSALS (CREATE / LIST / DELETE)
+// =========================================================================
+if ($action === 'list_rehearsals') {
+    $churchId = (int)($_GET['church_id'] ?? 0);
+    if ($pdo) {
+        try {
+            $st = $pdo->prepare("
+                SELECT r.*,
+                    COALESCE(c.name, '') AS church_name,
+                    (SELECT COUNT(*) FROM church_rsvps r1 WHERE r1.target_type = 'rehearsal' AND r1.target_id = r.id AND r1.status = 'going') AS rsvp_going_count,
+                    (SELECT COUNT(*) FROM church_rsvps r2 WHERE r2.target_type = 'rehearsal' AND r2.target_id = r.id AND r2.status = 'cant') AS rsvp_cant_count,
+                    COALESCE((SELECT r3.status FROM church_rsvps r3 WHERE r3.target_type = 'rehearsal' AND r3.target_id = r.id AND r3.user_id = ? LIMIT 1), '') AS my_rsvp
+                FROM church_rehearsals r
+                LEFT JOIN churches c ON c.id = r.church_id
+                WHERE r.church_id = ?
+                ORDER BY r.rehearsal_date ASC, r.rehearsal_time ASC, r.id DESC
+                LIMIT 60
+            ");
+            $st->execute([$uid, $churchId]);
+            $rows = array_map(static function (array $row): array {
+                return [
+                    'id' => (int)$row['id'],
+                    'church_id' => (int)$row['church_id'],
+                    'church_name' => (string)$row['church_name'],
+                    'title' => (string)$row['title'],
+                    'rehearsal_date' => (string)$row['rehearsal_date'],
+                    'rehearsal_time' => (string)$row['rehearsal_time'],
+                    'location' => (string)$row['location'],
+                    'repeat_weekly' => !empty($row['repeat_weekly']),
+                    'setlist_id' => (int)$row['setlist_id'],
+                    'setlist_title' => (string)$row['setlist_title'],
+                    'notes' => (string)($row['notes'] ?? ''),
+                    'created_by' => (int)$row['created_by'],
+                    'created_by_name' => (string)$row['created_by_name'],
+                    'rsvp_going_count' => (int)($row['rsvp_going_count'] ?? 0),
+                    'rsvp_cant_count' => (int)($row['rsvp_cant_count'] ?? 0),
+                    'my_rsvp' => (string)($row['my_rsvp'] ?? ''),
+                ];
+            }, $st->fetchAll(PDO::FETCH_ASSOC));
+            wp_church_out(['ok' => true, 'rehearsals' => $rows]);
+        } catch (Throwable $e) {
+            wp_church_out(['ok' => false, 'error' => 'Failed to load rehearsals'], 500);
+        }
+    }
+
+    $store = wp_church_file_store_load();
+    $list = [];
+    foreach ($store['rehearsals'] as $r) {
+        if ((int)$r['church_id'] !== $churchId) continue;
+        $rid = (int)$r['id'];
+        $going = 0;
+        $cant = 0;
+        $myRsvp = '';
+        foreach ($store['rsvps'] as $rk => $rv) {
+            if (strpos($rk, "rehearsal_{$rid}_") === 0) {
+                if (($rv['status'] ?? '') === 'going') $going++;
+                if (($rv['status'] ?? '') === 'cant') $cant++;
+                if ((int)($rv['user_id'] ?? 0) === $uid) $myRsvp = (string)$rv['status'];
+            }
+        }
+        $list[] = array_merge($r, [
+            'rsvp_going_count' => $going,
+            'rsvp_cant_count' => $cant,
+            'my_rsvp' => $myRsvp,
+        ]);
+    }
+    usort($list, static fn($a, $b) => strcmp(($a['rehearsal_date'] ?? '') . ($a['rehearsal_time'] ?? ''), ($b['rehearsal_date'] ?? '') . ($b['rehearsal_time'] ?? '')));
+    wp_church_out(['ok' => true, 'rehearsals' => $list]);
+}
+
+if ($action === 'create_rehearsal') {
+    if ($uid <= 0) wp_church_out(['ok' => false, 'error' => 'Please log in first'], 401);
+    $in = wp_church_json_input();
+    $churchId = max(0, (int)($in['church_id'] ?? 0));
+    $title = trim((string)($in['title'] ?? ''));
+    $date = trim((string)($in['rehearsal_date'] ?? ''));
+    $time = trim((string)($in['rehearsal_time'] ?? '18:00'));
+    $location = trim((string)($in['location'] ?? ''));
+    $repeatWeekly = !empty($in['repeat_weekly']) ? 1 : 0;
+    $setlistId = max(0, (int)($in['setlist_id'] ?? 0));
+    $setlistTitle = trim((string)($in['setlist_title'] ?? ''));
+    $notes = trim((string)($in['notes'] ?? ''));
+
+    if ($title === '' || $date === '') {
+        wp_church_out(['ok' => false, 'error' => 'Title and date are required'], 400);
+    }
+
+    if ($pdo) {
+        try {
+            $st = $pdo->prepare("
+                INSERT INTO church_rehearsals (church_id, title, rehearsal_date, rehearsal_time, location, repeat_weekly, setlist_id, setlist_title, notes, created_by, created_by_name)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            $st->execute([$churchId, $title, $date, $time, $location, $repeatWeekly, $setlistId, $setlistTitle, $notes, $uid, $user['name']]);
+            wp_church_out(['ok' => true, 'id' => (int)$pdo->lastInsertId()]);
+        } catch (Throwable $e) {
+            wp_church_out(['ok' => false, 'error' => 'Failed to create rehearsal'], 500);
+        }
+    }
+
+    $store = wp_church_file_store_load();
+    $rid = (int)$store['next_rehearsal_id']++;
+    $store['rehearsals'][] = [
+        'id' => $rid,
+        'church_id' => $churchId,
+        'title' => $title,
+        'rehearsal_date' => $date,
+        'rehearsal_time' => $time,
+        'location' => $location,
+        'repeat_weekly' => (bool)$repeatWeekly,
+        'setlist_id' => $setlistId,
+        'setlist_title' => $setlistTitle,
+        'notes' => $notes,
+        'created_by' => $uid,
+        'created_by_name' => $user['name'],
+        'created_at' => date('Y-m-d H:i:s'),
+    ];
+    wp_church_file_store_save($store);
+    wp_church_out(['ok' => true, 'id' => $rid]);
+}
+
+if ($action === 'delete_rehearsal') {
+    if ($uid <= 0) wp_church_out(['ok' => false, 'error' => 'Unauthorized'], 401);
+    $in = wp_church_json_input();
+    $rid = (int)($in['id'] ?? 0);
+    if ($rid <= 0) wp_church_out(['ok' => false, 'error' => 'Invalid id'], 400);
+
+    if ($pdo) {
+        try {
+            $st = $pdo->prepare("SELECT created_by FROM church_rehearsals WHERE id = ? LIMIT 1");
+            $st->execute([$rid]);
+            $owner = (int)$st->fetchColumn();
+            if ($owner !== $uid && !in_array($user['role'], ['admin', 'owner'], true)) {
+                wp_church_out(['ok' => false, 'error' => 'Forbidden'], 403);
+            }
+            $pdo->prepare("DELETE FROM church_rehearsals WHERE id = ?")->execute([$rid]);
+            $pdo->prepare("DELETE FROM church_rsvps WHERE target_type = 'rehearsal' AND target_id = ?")->execute([$rid]);
+            wp_church_out(['ok' => true]);
+        } catch (Throwable $e) {
+            wp_church_out(['ok' => false, 'error' => 'Failed to delete rehearsal'], 500);
+        }
+    }
+
+    $store = wp_church_file_store_load();
+    $store['rehearsals'] = array_values(array_filter($store['rehearsals'], static function ($r) use ($rid, $uid, $user) {
+        if ((int)$r['id'] !== $rid) return true;
+        return (int)$r['created_by'] !== $uid && !in_array($user['role'], ['admin', 'owner'], true);
+    }));
+    wp_church_file_store_save($store);
+    wp_church_out(['ok' => true]);
+}
+
+// =========================================================================
+// RSVP (EVENT OR REHEARSAL: going | cant | '')
+// =========================================================================
+if ($action === 'rsvp') {
+    if ($uid <= 0) wp_church_out(['ok' => false, 'error' => 'Please log in first'], 401);
+    $in = wp_church_json_input();
+    $targetType = trim((string)($in['target_type'] ?? 'event'));
+    if (!in_array($targetType, ['event', 'rehearsal'], true)) $targetType = 'event';
+    $targetId = (int)($in['target_id'] ?? 0);
+    $status = trim((string)($in['status'] ?? 'going'));
+    if (!in_array($status, ['going', 'cant', 'clear'], true)) $status = 'going';
+    if ($targetId <= 0) wp_church_out(['ok' => false, 'error' => 'Invalid target'], 400);
+
+    if ($pdo) {
+        try {
+            $stCurr = $pdo->prepare("SELECT status FROM church_rsvps WHERE target_type = ? AND target_id = ? AND user_id = ? LIMIT 1");
+            $stCurr->execute([$targetType, $targetId, $uid]);
+            $current = (string)($stCurr->fetchColumn() ?: '');
+            $nextStatus = ($status === 'clear' || $current === $status) ? '' : $status;
+            if ($nextStatus === '') {
+                $pdo->prepare("DELETE FROM church_rsvps WHERE target_type = ? AND target_id = ? AND user_id = ?")->execute([$targetType, $targetId, $uid]);
+            } else {
+                $pdo->prepare("
+                    INSERT INTO church_rsvps (target_type, target_id, user_id, user_name, status)
+                    VALUES (?, ?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE user_name = VALUES(user_name), status = VALUES(status)
+                ")->execute([$targetType, $targetId, $uid, $user['name'], $nextStatus]);
+            }
+            $stG = $pdo->prepare("SELECT COUNT(*) FROM church_rsvps WHERE target_type = ? AND target_id = ? AND status = 'going'");
+            $stG->execute([$targetType, $targetId]);
+            $going = (int)$stG->fetchColumn();
+            $stC = $pdo->prepare("SELECT COUNT(*) FROM church_rsvps WHERE target_type = ? AND target_id = ? AND status = 'cant'");
+            $stC->execute([$targetType, $targetId]);
+            $cant = (int)$stC->fetchColumn();
+            wp_church_out(['ok' => true, 'my_rsvp' => $nextStatus, 'rsvp_going_count' => $going, 'rsvp_cant_count' => $cant]);
+        } catch (Throwable $e) {
+            wp_church_out(['ok' => false, 'error' => 'Failed to save RSVP'], 500);
+        }
+    }
+
+    $store = wp_church_file_store_load();
+    $rk = "{$targetType}_{$targetId}_{$uid}";
+    $current = (string)($store['rsvps'][$rk]['status'] ?? '');
+    $nextStatus = ($status === 'clear' || $current === $status) ? '' : $status;
+    if ($nextStatus === '') {
+        unset($store['rsvps'][$rk]);
+    } else {
+        $store['rsvps'][$rk] = ['user_id' => $uid, 'user_name' => $user['name'], 'status' => $nextStatus];
+    }
+    $going = 0;
+    $cant = 0;
+    $prefix = "{$targetType}_{$targetId}_";
+    foreach ($store['rsvps'] as $k => $rv) {
+        if (strpos($k, $prefix) === 0) {
+            if (($rv['status'] ?? '') === 'going') $going++;
+            if (($rv['status'] ?? '') === 'cant') $cant++;
+        }
+    }
+    wp_church_file_store_save($store);
+    wp_church_out(['ok' => true, 'my_rsvp' => $nextStatus, 'rsvp_going_count' => $going, 'rsvp_cant_count' => $cant]);
+}
+
+// =========================================================================
+// UNIFIED CHURCH CALENDAR (EVENTS + REHEARSALS)
+// =========================================================================
+if ($action === 'get_calendar') {
+    $churchId = (int)($_GET['church_id'] ?? 0);
+    $items = [];
+
+    if ($pdo) {
+        try {
+            $stE = $pdo->prepare("
+                SELECT p.id, p.church_id, COALESCE(c.name, '') AS church_name, p.title, p.body, p.event_date, p.location,
+                    (SELECT COUNT(*) FROM church_rsvps r1 WHERE r1.target_type = 'event' AND r1.target_id = p.id AND r1.status = 'going') AS rsvp_going_count,
+                    (SELECT COUNT(*) FROM church_rsvps r2 WHERE r2.target_type = 'event' AND r2.target_id = p.id AND r2.status = 'cant') AS rsvp_cant_count,
+                    COALESCE((SELECT r3.status FROM church_rsvps r3 WHERE r3.target_type = 'event' AND r3.target_id = p.id AND r3.user_id = ? LIMIT 1), '') AS my_rsvp
+                FROM church_posts p
+                LEFT JOIN churches c ON c.id = p.church_id
+                WHERE p.type = 'event' AND p.church_id = ?
+                ORDER BY p.event_date ASC, p.id DESC LIMIT 60
+            ");
+            $stE->execute([$uid, $churchId]);
+            foreach ($stE->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $rawDate = trim((string)$row['event_date']);
+                $isoDate = preg_match('/^(\d{4}-\d{2}-\d{2})/', $rawDate, $m) ? $m[1] : date('Y-m-d');
+                $items[] = [
+                    'kind' => 'event',
+                    'id' => (int)$row['id'],
+                    'church_id' => (int)$row['church_id'],
+                    'church_name' => (string)$row['church_name'],
+                    'title' => (string)($row['title'] ?: mb_substr((string)$row['body'], 0, 56)),
+                    'subtitle' => (string)$row['body'],
+                    'date' => $isoDate,
+                    'date_label' => $rawDate,
+                    'time' => '',
+                    'location' => (string)$row['location'],
+                    'rsvp_going_count' => (int)$row['rsvp_going_count'],
+                    'rsvp_cant_count' => (int)$row['rsvp_cant_count'],
+                    'my_rsvp' => (string)$row['my_rsvp'],
+                ];
+            }
+
+            $stR = $pdo->prepare("
+                SELECT r.*, COALESCE(c.name, '') AS church_name,
+                    (SELECT COUNT(*) FROM church_rsvps r1 WHERE r1.target_type = 'rehearsal' AND r1.target_id = r.id AND r1.status = 'going') AS rsvp_going_count,
+                    (SELECT COUNT(*) FROM church_rsvps r2 WHERE r2.target_type = 'rehearsal' AND r2.target_id = r.id AND r2.status = 'cant') AS rsvp_cant_count,
+                    COALESCE((SELECT r3.status FROM church_rsvps r3 WHERE r3.target_type = 'rehearsal' AND r3.target_id = r.id AND r3.user_id = ? LIMIT 1), '') AS my_rsvp
+                FROM church_rehearsals r
+                LEFT JOIN churches c ON c.id = r.church_id
+                WHERE r.church_id = ?
+                ORDER BY r.rehearsal_date ASC, r.rehearsal_time ASC LIMIT 60
+            ");
+            $stR->execute([$uid, $churchId]);
+            foreach ($stR->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $items[] = [
+                    'kind' => 'rehearsal',
+                    'id' => (int)$row['id'],
+                    'church_id' => (int)$row['church_id'],
+                    'church_name' => (string)$row['church_name'],
+                    'title' => (string)$row['title'],
+                    'subtitle' => (string)$row['setlist_title'],
+                    'date' => (string)$row['rehearsal_date'],
+                    'date_label' => trim((string)$row['rehearsal_date'] . ' ' . (string)$row['rehearsal_time']),
+                    'time' => (string)$row['rehearsal_time'],
+                    'location' => (string)$row['location'],
+                    'repeat_weekly' => !empty($row['repeat_weekly']),
+                    'setlist_id' => (int)$row['setlist_id'],
+                    'setlist_title' => (string)$row['setlist_title'],
+                    'rsvp_going_count' => (int)$row['rsvp_going_count'],
+                    'rsvp_cant_count' => (int)$row['rsvp_cant_count'],
+                    'my_rsvp' => (string)$row['my_rsvp'],
+                ];
+            }
+            usort($items, static fn($a, $b) => strcmp(($a['date'] ?? '') . ($a['time'] ?? ''), ($b['date'] ?? '') . ($b['time'] ?? '')));
+            wp_church_out(['ok' => true, 'items' => $items]);
+        } catch (Throwable $e) {
+            wp_church_out(['ok' => false, 'error' => 'Failed to load calendar'], 500);
+        }
+    }
+
+    $store = wp_church_file_store_load();
+    foreach ($store['posts'] as $p) {
+        if ((int)$p['church_id'] !== $churchId || ($p['type'] ?? '') !== 'event') continue;
+        $pid = (int)$p['id'];
+        $rawDate = trim((string)($p['event_date'] ?? ''));
+        $isoDate = preg_match('/^(\d{4}-\d{2}-\d{2})/', $rawDate, $m) ? $m[1] : date('Y-m-d');
+        $items[] = [
+            'kind' => 'event',
+            'id' => $pid,
+            'church_id' => $churchId,
+            'title' => (string)($p['title'] ?: mb_substr((string)$p['body'], 0, 56)),
+            'subtitle' => (string)$p['body'],
+            'date' => $isoDate,
+            'date_label' => $rawDate,
+            'time' => '',
+            'location' => (string)($p['location'] ?? ''),
+            'rsvp_going_count' => 0,
+            'rsvp_cant_count' => 0,
+            'my_rsvp' => (string)($store['rsvps']["event_{$pid}_{$uid}"]['status'] ?? ''),
+        ];
+    }
+    foreach ($store['rehearsals'] as $r) {
+        if ((int)$r['church_id'] !== $churchId) continue;
+        $rid = (int)$r['id'];
+        $items[] = [
+            'kind' => 'rehearsal',
+            'id' => $rid,
+            'church_id' => $churchId,
+            'title' => (string)$r['title'],
+            'subtitle' => (string)($r['setlist_title'] ?? ''),
+            'date' => (string)$r['rehearsal_date'],
+            'date_label' => trim((string)$r['rehearsal_date'] . ' ' . (string)($r['rehearsal_time'] ?? '')),
+            'time' => (string)($r['rehearsal_time'] ?? ''),
+            'location' => (string)($r['location'] ?? ''),
+            'repeat_weekly' => !empty($r['repeat_weekly']),
+            'setlist_id' => (int)($r['setlist_id'] ?? 0),
+            'setlist_title' => (string)($r['setlist_title'] ?? ''),
+            'rsvp_going_count' => 0,
+            'rsvp_cant_count' => 0,
+            'my_rsvp' => (string)($store['rsvps']["rehearsal_{$rid}_{$uid}"]['status'] ?? ''),
+        ];
+    }
+    usort($items, static fn($a, $b) => strcmp(($a['date'] ?? '') . ($a['time'] ?? ''), ($b['date'] ?? '') . ($b['time'] ?? '')));
+    wp_church_out(['ok' => true, 'items' => $items]);
+}
+
+// =========================================================================
+// FEEDBACK / REPORT CONTENT
+// =========================================================================
+if ($action === 'submit_feedback') {
+    $in = wp_church_json_input();
+    $category = trim((string)($in['category'] ?? 'feedback'));
+    $targetId = (int)($in['target_id'] ?? 0);
+    $message = trim((string)($in['message'] ?? ''));
+    if (mb_strlen($message) < 3) {
+        wp_church_out(['ok' => false, 'error' => 'Message too short'], 400);
+    }
+    $store = wp_church_file_store_load();
+    $store['feedback'][] = [
+        'id' => count($store['feedback']) + 1,
+        'user_id' => $uid,
+        'user_name' => $user['name'],
+        'category' => $category,
+        'target_id' => $targetId,
+        'message' => $message,
+        'created_at' => date('Y-m-d H:i:s'),
+    ];
     wp_church_file_store_save($store);
     wp_church_out(['ok' => true]);
 }

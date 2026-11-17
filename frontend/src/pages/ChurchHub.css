@@ -1,8 +1,11 @@
 .church-page {
+  width: 100%;
   max-width: 1080px;
   margin: 0 auto;
   padding: 20px 20px 120px;
   color: var(--color-text-primary);
+  box-sizing: border-box;
+  overflow-x: clip;
 }
 
 body.is-app .church-page {
@@ -16,6 +19,7 @@ body.is-app .church-page {
   gap: 16px;
   flex-wrap: wrap;
   margin-bottom: 18px;
+  max-width: 100%;
 }
 
 .church-hero-bar h1 {
@@ -31,15 +35,23 @@ body.is-app .church-page {
 
 .church-segmented {
   display: inline-flex;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
   padding: 4px;
   border-radius: 999px;
   background: var(--color-surface);
   border: 1px solid var(--glass-border);
+  box-sizing: border-box;
+}
+
+.church-segmented::-webkit-scrollbar {
+  display: none;
 }
 
 .church-segmented button {
   height: 34px;
-  padding: 0 16px;
+  padding: 0 14px;
   border-radius: 999px;
   border: none;
   background: transparent;
@@ -47,6 +59,8 @@ body.is-app .church-page {
   font-size: 0.84rem;
   font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .church-segmented button.active {
@@ -518,4 +532,158 @@ body.light-mode .church-member-row {
   .church-two-col {
     grid-template-columns: 1fr;
   }
+
+  .church-page {
+    padding: 14px 12px calc(var(--bottom-nav-total-offset, 88px) + 40px);
+  }
+
+  .church-cal-grid {
+    gap: 4px;
+  }
+
+  .church-cal-cell {
+    min-height: 40px;
+    padding: 4px 2px;
+    font-size: 0.8rem;
+  }
 }
+
+.church-feed-layout,
+.church-directory-layout,
+.church-pulse-layout {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.church-rsvp-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.church-rsvp-btn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.church-rsvp-btn.going.active {
+  background: rgba(52, 211, 153, 0.18);
+  border-color: #34d399;
+  color: #34d399;
+}
+
+.church-rsvp-btn.cant.active {
+  background: rgba(251, 113, 133, 0.18);
+  border-color: #fb7185;
+  color: #fb7185;
+}
+
+.church-cal-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.church-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.church-cal-dow {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  padding-bottom: 4px;
+}
+
+.church-cal-cell {
+  min-height: 54px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--color-text-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 6px 4px;
+}
+
+.church-cal-cell.is-outside {
+  opacity: 0.35;
+}
+
+.church-cal-cell.is-today {
+  border-color: rgba(247, 181, 0, 0.55);
+}
+
+.church-cal-cell.is-selected {
+  background: #f7b500;
+  color: #231603;
+  border-color: #f7b500;
+  font-weight: 800;
+}
+
+.church-cal-dots {
+  display: flex;
+  gap: 3px;
+}
+
+.church-cal-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f7b500;
+}
+
+.church-cal-dot.rehearsal {
+  background: #38bdf8;
+}
+
+.church-cal-cell.is-selected .church-cal-dot {
+  background: #231603;
+}
+
+.church-qr-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+}
+
+.church-qr-box {
+  background: #ffffff;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.church-member-selects {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+body.light-mode .church-cal-cell,
+body.light-mode .church-rsvp-btn:not(.active) {
+  background: rgba(15, 23, 42, 0.035);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+

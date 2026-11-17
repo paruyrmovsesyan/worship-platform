@@ -7,7 +7,8 @@ import {
   renderWithChords,
   renderLyricsWithStageNotes,
   stripStageNotes,
-  transposeRoot
+  transposeRoot,
+  extractChordsOnlyChart,
 } from '../utils/chordTransposer';
 import SmartMetronome from '../components/SmartMetronome';
 import { getLocalizedTitle } from '../utils/titleParser';
@@ -249,6 +250,7 @@ export default function SongView() {
   const [stemsOpen, setStemsOpen] = useState(false);
   const [showToneCapo, setShowToneCapo] = useState(false);
   const [showInlineMetronome, setShowInlineMetronome] = useState(false);
+  const [pedalMode, setPedalMode] = useState(() => localStorage.getItem('wp_pedal_mode_v1') === 'true');
   const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
   const toolsBtnRef = useRef(null);
   const [toolsMenuPos, setToolsMenuPos] = useState({ top: 80, right: 16 });
@@ -1315,6 +1317,10 @@ export default function SongView() {
     () => (song?.chords ? renderWithChords(song.chords, semi - capo, useFlats) : ''),
     [song?.chords, semi, capo, useFlats]
   );
+  const chordsOnlySections = useMemo(
+    () => (song?.chords ? extractChordsOnlyChart(song.chords, semi - capo, useFlats) : []),
+    [song?.chords, semi, capo, useFlats]
+  );
   const currentLyrics = song?.lyrics || t('songView.noLyrics');
   const displayTitle = song?.title ? getLocalizedTitle(song.title, language) : (song?.title_hy || song?.title || 'Worship Song');
 
@@ -1395,12 +1401,27 @@ export default function SongView() {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName) || e.target?.isContentEditable) {
         return;
       }
-      if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || (pedalMode && e.key === 'ArrowDown')) {
+        if (pedalMode) {
+          const nearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 48;
+          if (!nearBottom) {
+            e.preventDefault();
+            window.scrollBy({ top: Math.round(window.innerHeight * 0.65), behavior: 'smooth' });
+            return;
+          }
+        }
         if (setlistNavData?.next) {
           e.preventDefault();
           navigateToSetlistSong(setlistNavData.next);
         }
-      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || (pedalMode && e.key === 'ArrowUp')) {
+        if (pedalMode) {
+          if (window.scrollY > 48) {
+            e.preventDefault();
+            window.scrollBy({ top: -Math.round(window.innerHeight * 0.65), behavior: 'smooth' });
+            return;
+          }
+        }
         if (setlistNavData?.prev) {
           e.preventDefault();
           navigateToSetlistSong(setlistNavData.prev);
@@ -1437,7 +1458,7 @@ export default function SongView() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setlistNavData, viewMode]);
+  }, [setlistNavData, viewMode, pedalMode]);
 
   if (loading || (!song && authLoading)) {
     return null;
@@ -1521,6 +1542,20 @@ export default function SongView() {
         >
           ♩ {Number.parseInt(song.bpm, 10) > 0 ? `${song.bpm} BPM` : (language === 'ru' ? 'Метроном' : language === 'en' ? 'Metronome' : 'Մետրոնոմ')}
         </button>
+        <button
+          type="button"
+          className={`sv-meta-pill sv-meta-clickable ${pedalMode ? 'is-open' : ''}`}
+          onClick={() => {
+            setPedalMode((v) => {
+              const next = !v;
+              localStorage.setItem('wp_pedal_mode_v1', String(next));
+              return next;
+            });
+          }}
+          title={language === 'ru' ? 'Bluetooth педаль (PageDown/Up, стрелки, Space)' : language === 'en' ? 'Bluetooth Pedal Mode (PageDown/Up, Arrows, Space)' : 'Bluetooth էջաթերթման ոտնակ'}
+        >
+          🦶 {language === 'ru' ? 'Педаль' : language === 'en' ? 'Pedal' : 'Ոտնակ'}{pedalMode ? ' •' : ''}
+        </button>
         
         <div className="sv-header-actions" style={{ marginLeft: 'auto' }}>
             {(setlistNavData?.setlist?.id || setlistNavData?.current?.setlist_id) && (
@@ -1587,8 +1622,15 @@ export default function SongView() {
 
       {/* Segmented Control for View Mode */}
       <div className="sv-segment-control">
-        <button className={`sv-segment ${viewMode === 'lyrics' ? 'active' : ''}`} onClick={() => handleViewModeChange('lyrics')}>{t('songView.lyricsOnly')}</button>
+        <button className={`sv-segment ${viewMode === 'lyrics' ? 'active' : ''}`} onClick={() => handleViewModeChange('lyrics')}>
+          {language === 'ru' ? 'Простой' : language === 'en' ? 'Simple' : 'Պարզ'}
+        </button>
         <button className={`sv-segment ${viewMode === 'chords' ? 'active' : ''}`} onClick={() => handleViewModeChange('chords')}>{t('songView.chordsOnly')}</button>
+        {song.chords && (
+          <button className={`sv-segment ${viewMode === 'chords_chart' ? 'active' : ''}`} onClick={() => handleViewModeChange('chords_chart')}>
+            {language === 'ru' ? 'Без слов' : language === 'en' ? 'Chart' : 'Առանց բառերի'}
+          </button>
+        )}
         <button className={`sv-segment ${viewMode === 'both' ? 'active' : ''}`} onClick={() => handleViewModeChange('both')}>{t('songView.bothModes')}</button>
       </div>
 
@@ -1664,7 +1706,29 @@ export default function SongView() {
         onMouseOut={closeChordPopover}
         onClick={openChordPopover}
       >
-        {viewMode === 'chords' && song.chords ? (
+        {viewMode === 'chords_chart' && song.chords ? (
+          <div className="sv-chords-only-grid">
+            {chordsOnlySections.length > 0 ? chordsOnlySections.map((sec, idx) => (
+              <section key={`${sec.label}_${idx}`} className="sv-chart-section">
+                <header className="sv-chart-sec-title">{sec.label}</header>
+                {sec.cues.map((cue, cIdx) => (
+                  <div key={cIdx} className="sv-chart-cue">🎸 {cue}</div>
+                ))}
+                <div className="sv-chart-bars">
+                  {sec.bars.map((bar, bIdx) => (
+                    <div key={bIdx} className="sv-chart-bar-row">
+                      {bar.map((ch, kIdx) => (
+                        <span key={kIdx} className="chord sv-chart-chord-pill">{ch}</span>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )) : (
+              <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
+            )}
+          </div>
+        ) : viewMode === 'chords' && song.chords ? (
           <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
         ) : viewMode === 'both' && song.chords ? (
           <>
@@ -1673,7 +1737,7 @@ export default function SongView() {
             <pre className="lyrics-block" dangerouslySetInnerHTML={{ __html: renderLyricsWithStageNotes(currentLyrics) }} />
           </>
         ) : (
-          <pre className="lyrics-block" dangerouslySetInnerHTML={{ __html: renderLyricsWithStageNotes(currentLyrics) }} />
+          <pre className="lyrics-block">{stripStageNotes(currentLyrics)}</pre>
         )}
       </div>
 

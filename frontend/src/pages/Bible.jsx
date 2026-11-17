@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -6,11 +6,38 @@ import { useLanguage } from '../context/LanguageContext';
 import {
   BIBLE_BOOKS,
   BIBLE_READING_PLAN,
+  BIBLICAL_MEASURES,
   DEFAULT_BIBLE_TRANSLATIONS,
   getBookName,
+  matchMeasureToken,
 } from '../utils/bibleData';
 import { nativeShare } from '../utils/nativeFeatures';
 import './Bible.css';
+
+const MEASURES_SPLIT_REGEX = new RegExp(
+  `(${BIBLICAL_MEASURES.map((m) => m.pattern.source).join('|')})`,
+  'gi',
+);
+
+function formatVerseSelectionRange(verseNums) {
+  if (!verseNums || verseNums.length === 0) return '';
+  const sorted = [...new Set(verseNums)].sort((a, b) => a - b);
+  if (sorted.length === 1) return String(sorted[0]);
+  const parts = [];
+  let start = sorted[0];
+  let end = sorted[0];
+  for (let i = 1; i < sorted.length; i += 1) {
+    if (sorted[i] === end + 1) {
+      end = sorted[i];
+    } else {
+      parts.push(start === end ? `${start}` : `${start}-${end}`);
+      start = sorted[i];
+      end = sorted[i];
+    }
+  }
+  parts.push(start === end ? `${start}` : `${start}-${end}`);
+  return parts.join(', ');
+}
 
 const LAST_READ_KEY = 'wp_bible_last_read_v1';
 const USER_STATE_KEY = 'wp_bible_user_state_v1';
@@ -82,6 +109,16 @@ export default function Bible() {
     const v = Number(searchParams.get('verse'));
     return v > 0 ? v : null;
   });
+  const [selectedVerses, setSelectedVerses] = useState(() => {
+    const v = Number(searchParams.get('verse'));
+    return v > 0 ? [v] : [];
+  });
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [readerPage, setReaderPage] = useState(0);
+  const [isTopbarCompact, setIsTopbarCompact] = useState(false);
+  const [activeMeasure, setActiveMeasure] = useState(null);
+  const lastScrollYRef = useRef(0);
+  const swipeStartXRef = useRef(null);
 
   const [userState, setUserState] = useState(() =>
     readJsonStorage(USER_STATE_KEY, {
@@ -384,9 +421,38 @@ export default function Bible() {
     };
   }, [translation, bookId, chapter, prefs.parallelEnabled, prefs.parallelTr, loadChapterData, translations, language]);
 
-  const handleSelectVerse = useCallback((verseNum) => {
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY || document.documentElement.scrollTop || 0;
+      const goingDown = y > lastScrollYRef.current;
+      if (y > 120 && goingDown) {
+        setIsTopbarCompact(true);
+      } else if (!goingDown || y < 60) {
+        setIsTopbarCompact(false);
+      }
+      lastScrollYRef.current = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const handleSelectVerse = useCallback((verseNum, event) => {
+    const isMulti = multiSelectMode || event?.shiftKey || event?.ctrlKey || event?.metaKey;
+    if (isMulti) {
+      setSelectedVerses((prev) => {
+        const exists = prev.includes(verseNum);
+        const next = exists ? prev.filter((x) => x !== verseNum) : [...prev, verseNum].sort((a, b) => a - b);
+        const primary = next[0] || null;
+        setSelectedVerse(primary);
+        if (!primary) setNoteDraft('');
+        return next;
+      });
+      return;
+    }
+
     setSelectedVerse((prev) => {
       const next = prev === verseNum ? null : verseNum;
+      setSelectedVerses(next ? [next] : []);
       if (!next) {
         setNoteDraft('');
       } else {
@@ -397,7 +463,7 @@ export default function Bible() {
       }
       return next;
     });
-  }, [bookId, chapter, userState.notes]);
+  }, [bookId, chapter, userState.notes, multiSelectMode]);
 
   const selectBookChapter = (bId, chNum = 1) => {
     const b = BIBLE_BOOKS.find((item) => item.id === bId);
@@ -405,6 +471,8 @@ export default function Bible() {
     setBookId(bId);
     setChapter(Math.max(1, Math.min(maxCh, chNum)));
     setSelectedVerse(null);
+    setSelectedVerses([]);
+    setReaderPage(0);
     setShowBookDrawer(false);
     setActiveTab('read');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -428,31 +496,29 @@ export default function Bible() {
   };
 
   const toggleHighlight = (colorId) => {
-    if (!selectedVerse) return;
+    const targets = selectedVerses.length > 0 ? selectedVerses : (selectedVerse ? [selectedVerse] : []);
+    if (targets.length === 0) return;
     persistUserState((prev) => {
-      const exists = prev.highlights.find(
-        (h) => h.book === bookId && h.chapter === chapter && h.verse === selectedVerse,
+      const allSameColor = targets.every((vNum) => {
+        const ex = prev.highlights.find((h) => h.book === bookId && h.chapter === chapter && h.verse === vNum);
+        return ex && ex.color === colorId;
+      });
+      const remaining = prev.highlights.filter(
+        (h) => !(h.book === bookId && h.chapter === chapter && targets.includes(h.verse)),
       );
-      let nextHighlights;
-      if (exists && exists.color === colorId) {
-        nextHighlights = prev.highlights.filter(
-          (h) => !(h.book === bookId && h.chapter === chapter && h.verse === selectedVerse),
-        );
-      } else {
-        nextHighlights = [
-          ...prev.highlights.filter(
-            (h) => !(h.book === bookId && h.chapter === chapter && h.verse === selectedVerse),
-          ),
-          {
-            book: bookId,
-            chapter,
-            verse: selectedVerse,
-            color: colorId,
-            text: verses.find((v) => v.verse === selectedVerse)?.text || '',
-            updatedAt: Date.now(),
-          },
-        ];
-      }
+      const nextHighlights = allSameColor
+        ? remaining
+        : [
+            ...remaining,
+            ...targets.map((vNum) => ({
+              book: bookId,
+              chapter,
+              verse: vNum,
+              color: colorId,
+              text: verses.find((v) => v.verse === vNum)?.text || '',
+              updatedAt: Date.now(),
+            })),
+          ];
       return { ...prev, highlights: nextHighlights };
     });
   };
@@ -509,25 +575,35 @@ export default function Bible() {
     });
   };
 
+  const getSelectedFormattedPassage = () => {
+    const nums = selectedVerses.length > 0 ? [...selectedVerses].sort((a, b) => a - b) : (selectedVerse ? [selectedVerse] : []);
+    if (nums.length === 0) return null;
+    const picked = nums
+      .map((num) => verses.find((v) => v.verse === num))
+      .filter(Boolean);
+    if (picked.length === 0) return null;
+    const body = picked.map((v) => (picked.length > 1 ? `${v.verse}. ${v.text}` : v.text)).join(' ');
+    const ref = `${getBookName(bookId, language)} ${chapter}:${formatVerseSelectionRange(nums)}`;
+    return {
+      title: ref,
+      text: `«${body}»\n— ${ref}`,
+    };
+  };
+
   const handleCopyVerse = async () => {
-    if (!selectedVerse) return;
-    const vObj = verses.find((v) => v.verse === selectedVerse);
-    if (!vObj) return;
-    const formatted = `«${vObj.text}»\n— ${getBookName(bookId, language)} ${chapter}:${selectedVerse}`;
+    const passage = getSelectedFormattedPassage();
+    if (!passage) return;
     try {
-      await navigator.clipboard.writeText(formatted);
+      await navigator.clipboard.writeText(passage.text);
       setCopyFeedback('Պատճենված է');
       setTimeout(() => setCopyFeedback(''), 1500);
     } catch { /* ignore storage error */ }
   };
 
   const handleShareVerse = async () => {
-    if (!selectedVerse) return;
-    const vObj = verses.find((v) => v.verse === selectedVerse);
-    if (!vObj) return;
-    const title = `${getBookName(bookId, language)} ${chapter}:${selectedVerse}`;
-    const text = `«${vObj.text}»\n— ${title}`;
-    await nativeShare({ title, text, url: window.location.href });
+    const passage = getSelectedFormattedPassage();
+    if (!passage) return;
+    await nativeShare({ title: passage.title, text: passage.text, url: window.location.href });
   };
 
   const runBibleSearch = async (e) => {
@@ -590,11 +666,43 @@ export default function Bible() {
   const selectedHighlight = userState.highlights.find(
     (h) => h.book === bookId && h.chapter === chapter && h.verse === selectedVerse,
   );
+  const selectedRangeLabel = formatVerseSelectionRange(
+    selectedVerses.length > 0 ? selectedVerses : (selectedVerse ? [selectedVerse] : []),
+  );
+  const pageSize = prefs.parallelEnabled && parallelVerses.length > 0 ? 6 : 9;
+  const totalPages = prefs.pagedMode && verses.length > 0 ? Math.max(1, Math.ceil(verses.length / pageSize)) : 1;
+  const clampedPage = Math.min(readerPage, Math.max(0, totalPages - 1));
+  const displayedVerses = prefs.pagedMode
+    ? verses.slice(clampedPage * pageSize, (clampedPage + 1) * pageSize)
+    : verses;
+
+  const renderVerseWithMeasures = (text) => {
+    const parts = String(text || '').split(MEASURES_SPLIT_REGEX);
+    if (parts.length <= 1) return text;
+    return parts.map((part, idx) => {
+      const m = part ? matchMeasureToken(part) : null;
+      if (!m) return part;
+      return (
+        <span
+          key={idx}
+          className="bible-measure-token"
+          role="button"
+          tabIndex={0}
+          onClick={(e) => {
+            e.stopPropagation();
+            setActiveMeasure(m);
+          }}
+        >
+          {part}
+        </span>
+      );
+    });
+  };
 
   return (
     <div className="bible-page animate-fade-in">
       {/* Top Bar Wrapper (keeps Aa popover floating cleanly without shifting layout) */}
-      <div className="bible-topbar-wrap">
+      <div className={`bible-topbar-wrap ${isTopbarCompact ? 'is-compact' : ''}`}>
       <header className="bible-topbar">
         <div className="bible-topbar-left">
           <button
@@ -649,6 +757,14 @@ export default function Bible() {
         </div>
 
         <div className="bible-topbar-right">
+          <button
+            type="button"
+            className={`bible-icon-pill ${multiSelectMode ? 'active' : ''}`}
+            onClick={() => setMultiSelectMode((m) => !m)}
+            title={language === 'ru' ? 'Выбрать несколько стихов' : language === 'en' ? 'Multi-select verses' : 'Ընտրել մի քանի համար'}
+          >
+            ☑
+          </button>
           <button
             type="button"
             className={`bible-icon-pill ${isChapterBookmarked ? 'is-bookmarked' : ''}`}
@@ -728,6 +844,22 @@ export default function Bible() {
                 {ui.sans}
               </button>
             </div>
+          </div>
+
+          <div className="bible-aa-row bible-aa-parallel">
+            <label className="bible-aa-toggle">
+              <input
+                type="checkbox"
+                checked={Boolean(prefs.pagedMode)}
+                onChange={(e) => {
+                  setReaderPage(0);
+                  setPrefs((p) => ({ ...p, pagedMode: e.target.checked }));
+                }}
+              />
+              <span>
+                {language === 'ru' ? 'Страницами (читалка)' : language === 'en' ? 'Book pages mode' : 'Գրքի էջերով (читалка)'}
+              </span>
+            </label>
           </div>
 
           <div className="bible-aa-row bible-aa-parallel">
@@ -1018,46 +1150,82 @@ export default function Bible() {
                   <p>{chapterError}</p>
                 </div>
               ) : (
-                <div
-                  className={`bible-verses-body ${prefs.fontFamily === 'serif' ? 'is-serif' : 'is-sans'} ${
-                    prefs.parallelEnabled && parallelVerses.length > 0 ? 'is-parallel' : ''
-                  }`}
-                  style={{ fontSize: `${prefs.fontSize}px` }}
-                >
-                  {verses.map((v) => {
-                    const hl = userState.highlights.find(
-                      (h) => h.book === bookId && h.chapter === chapter && h.verse === v.verse,
-                    );
-                    const hasNote = userState.notes.some(
-                      (n) => n.book === bookId && n.chapter === chapter && n.verse === v.verse,
-                    );
-                    const hlObj = hl ? HIGHLIGHT_COLORS.find((c) => c.id === hl.color) : null;
-                    const parVerse = prefs.parallelEnabled
-                      ? parallelVerses.find((pv) => pv.verse === v.verse)
-                      : null;
+                <>
+                  <div
+                    className={`bible-verses-body ${prefs.fontFamily === 'serif' ? 'is-serif' : 'is-sans'} ${
+                      prefs.parallelEnabled && parallelVerses.length > 0 ? 'is-parallel' : ''
+                    }`}
+                    style={{ fontSize: `${prefs.fontSize}px` }}
+                    onTouchStart={(e) => {
+                      if (e.touches.length === 1) swipeStartXRef.current = e.touches[0].clientX;
+                    }}
+                    onTouchEnd={(e) => {
+                      if (!prefs.pagedMode || swipeStartXRef.current === null) return;
+                      const dx = e.changedTouches[0].clientX - swipeStartXRef.current;
+                      swipeStartXRef.current = null;
+                      if (dx < -48 && clampedPage < totalPages - 1) setReaderPage(clampedPage + 1);
+                      else if (dx > 48 && clampedPage > 0) setReaderPage(clampedPage - 1);
+                    }}
+                  >
+                    {displayedVerses.map((v) => {
+                      const hl = userState.highlights.find(
+                        (h) => h.book === bookId && h.chapter === chapter && h.verse === v.verse,
+                      );
+                      const hasNote = userState.notes.some(
+                        (n) => n.book === bookId && n.chapter === chapter && n.verse === v.verse,
+                      );
+                      const hlObj = hl ? HIGHLIGHT_COLORS.find((c) => c.id === hl.color) : null;
+                      const parVerse = prefs.parallelEnabled
+                        ? parallelVerses.find((pv) => pv.verse === v.verse)
+                        : null;
+                      const isRowSelected = selectedVerses.includes(v.verse) || selectedVerse === v.verse;
 
-                    return (
-                      <div
-                        key={v.verse}
-                        className={`bible-verse-row ${selectedVerse === v.verse ? 'is-selected' : ''}`}
-                        style={hlObj ? { backgroundColor: hlObj.bg } : undefined}
-                        onClick={() => handleSelectVerse(v.verse)}
-                      >
-                        <p className="bible-verse-main">
-                          <sup className="bible-verse-num">{v.verse}</sup>
-                          <span>{v.text}</span>
-                          {hasNote && <span className="bible-note-dot" title="Note" />}
-                        </p>
-                        {parVerse && (
-                          <p className="bible-verse-parallel">
-                            <sup className="bible-verse-num">{parVerse.verse}</sup>
-                            <span>{parVerse.text}</span>
+                      return (
+                        <div
+                          key={v.verse}
+                          className={`bible-verse-row ${isRowSelected ? 'is-selected' : ''}`}
+                          style={hlObj ? { backgroundColor: hlObj.bg } : undefined}
+                          onClick={(e) => handleSelectVerse(v.verse, e)}
+                        >
+                          <p className="bible-verse-main">
+                            <sup className="bible-verse-num">{v.verse}</sup>
+                            <span>{renderVerseWithMeasures(v.text)}</span>
+                            {hasNote && <span className="bible-note-dot" title="Note" />}
                           </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                          {parVerse && (
+                            <p className="bible-verse-parallel">
+                              <sup className="bible-verse-num">{parVerse.verse}</sup>
+                              <span>{parVerse.text}</span>
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {prefs.pagedMode && totalPages > 1 && (
+                    <div className="bible-paged-bar">
+                      <button
+                        type="button"
+                        className="bible-pill-btn"
+                        disabled={clampedPage === 0}
+                        onClick={() => setReaderPage(Math.max(0, clampedPage - 1))}
+                      >
+                        ‹ {language === 'ru' ? 'Назад' : language === 'en' ? 'Prev' : 'Նախորդ'}
+                      </button>
+                      <span>
+                        {language === 'ru' ? 'Стр.' : language === 'en' ? 'Page' : 'Էջ'} {clampedPage + 1} / {totalPages}
+                      </span>
+                      <button
+                        type="button"
+                        className="bible-pill-btn"
+                        disabled={clampedPage >= totalPages - 1}
+                        onClick={() => setReaderPage(Math.min(totalPages - 1, clampedPage + 1))}
+                      >
+                        {language === 'ru' ? 'Дальше' : language === 'en' ? 'Next' : 'Հաջորդ'} ›
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
 
               <div className="bible-reader-footer">
@@ -1088,9 +1256,13 @@ export default function Bible() {
               {selectedVerseObj ? (
                 <div className="bible-inspector-body">
                   <h4>
-                    {getBookName(bookId, language)} {chapter}:{selectedVerse}
+                    {getBookName(bookId, language)} {chapter}:{selectedRangeLabel || selectedVerse}
                   </h4>
-                  <p className="bible-inspector-quote">«{selectedVerseObj.text}»</p>
+                  <p className="bible-inspector-quote">
+                    «{selectedVerses.length > 1
+                      ? selectedVerses.map((num) => verses.find((v) => v.verse === num)?.text).filter(Boolean).join(' ')
+                      : selectedVerseObj.text}»
+                  </p>
 
                   <div className="bible-hl-swatches">
                     {HIGHLIGHT_COLORS.map((c) => (
@@ -1147,7 +1319,7 @@ export default function Bible() {
         <div className="bible-mobile-sheet">
           <div className="bible-mobile-sheet-head">
             <strong>
-              {getBookName(bookId, language)} {chapter}:{selectedVerse}
+              {getBookName(bookId, language)} {chapter}:{selectedRangeLabel || selectedVerse}
             </strong>
             <div className="bible-hl-swatches">
               {HIGHLIGHT_COLORS.map((c) => (
@@ -1161,7 +1333,14 @@ export default function Bible() {
                 />
               ))}
             </div>
-            <button type="button" className="bible-sheet-close" onClick={() => setSelectedVerse(null)}>
+            <button
+              type="button"
+              className="bible-sheet-close"
+              onClick={() => {
+                setSelectedVerse(null);
+                setSelectedVerses([]);
+              }}
+            >
               ✕
             </button>
           </div>
@@ -1255,6 +1434,20 @@ export default function Bible() {
               </div>
             </div>
           </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Clickable Biblical Measure Tooltip Popover */}
+      {activeMeasure && createPortal(
+        <div className="bible-measure-popover" onClick={() => setActiveMeasure(null)}>
+          <div>
+            <strong>📏 {activeMeasure.label[language] || activeMeasure.label.am}</strong>
+            <span>{activeMeasure.info[language] || activeMeasure.info.am}</span>
+          </div>
+          <button type="button" className="bible-sheet-close" onClick={() => setActiveMeasure(null)}>
+            ✕
+          </button>
         </div>,
         document.body
       )}

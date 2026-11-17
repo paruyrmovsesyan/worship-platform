@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext.jsx'
 import { LanguageProvider } from './context/LanguageContext.jsx'
 import { PageLoadingProvider } from './context/PageLoadingContext.jsx'
 import { CallProvider } from './context/CallContext.jsx'
+import { MediaProvider } from './context/MediaContext.jsx'
 import { Capacitor } from '@capacitor/core'
 import App from './App.jsx'
 import './index.css'
@@ -23,9 +24,11 @@ prepareNativeRuntime.finally(() => {
       <AuthProvider>
         <BrowserRouter>
           <CallProvider>
-            <PageLoadingProvider>
-              <App />
-            </PageLoadingProvider>
+            <MediaProvider>
+              <PageLoadingProvider>
+                <App />
+              </PageLoadingProvider>
+            </MediaProvider>
           </CallProvider>
         </BrowserRouter>
       </AuthProvider>

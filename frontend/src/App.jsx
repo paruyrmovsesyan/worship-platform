@@ -59,6 +59,8 @@ import ServicePlanner from './pages/ServicePlanner';
 import WorshipStudioHub from './pages/WorshipStudioHub';
 import Bible from './pages/Bible';
 import ChurchHub from './pages/ChurchHub';
+import MediaHub from './pages/MediaHub';
+import RadioMiniPlayer from './components/RadioMiniPlayer';
 import { Capacitor } from '@capacitor/core';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useIsNativeApp, useIsPWA } from './hooks/useIsPWA';
@@ -829,6 +831,7 @@ function App() {
               <Route path="/tools" element={<WorshipStudioHub />} />
               <Route path="/bible" element={<Bible />} />
               <Route path="/church" element={<ChurchHub />} />
+              <Route path="/media" element={<MediaHub />} />
 
               {/* Explicit Error Pages */}
               <Route path="/500" element={<ServerError />} />
@@ -851,6 +854,7 @@ function App() {
           </ErrorBoundary>
         </div>
       </main>
+      <RadioMiniPlayer />
       {rememberPromptOpen && (
         <div style={{
           position: 'fixed',

@@ -28,7 +28,7 @@ $validStaticRoutes = [
     '/resources', '/contact', '/about', '/blog', '/careers', '/documentation', '/tutorials', 
     '/support', '/privacy', '/terms', '/cookies', '/profile', '/settings', '/song-request', 
     '/notifications', '/manifest.json', '/robots.txt', '/sitemap.xml', '/news-sitemap.xml',
-    '/offline.html', '/main.html', '/service-worker.js', '/studio', '/tools', '/bible', '/church'
+    '/offline.html', '/main.html', '/service-worker.js', '/studio', '/tools', '/bible', '/church', '/media'
 ];
 $isValidRoute = in_array($path, $validStaticRoutes, true)
     || preg_match('#^/song/\d+/?$#', $path)
@@ -135,7 +135,10 @@ if ($path === '/bible' || $path === '/bible/') {
     $description = "Կարդացեք Աստվածաշունչը զուգահեռ թարգմանություններով, անձնական նշումներով, ընդգծումներով և ընթերցանության պլանով։";
 } elseif ($path === '/church' || $path === '/church/') {
     $title = "Եկեղեցի և Համայնք | " . $siteName;
-    $description = "Եկեղեցական հայտարարություններ, միջոցառումներ, աղոթքի խնդրանքներ և եկեղեցիների ցանկ։";
+    $description = "Եկեղեցական հայտարարություններ, միջոցառումներ, աղոթքի խնդրանքներ, օրացույց և փորձեր։";
+} elseif ($path === '/media' || $path === '/media/') {
+    $title = "Մեդիա և 24/7 Ռադիո | " . $siteName;
+    $description = "Քրիստոնեական փառաբանության 24/7 ռադիո, քարոզներ և առանց գովազդի վիդեո ալիքներ։";
 }
 
 // Server-rendered metadata for public news articles. This is what crawlers see

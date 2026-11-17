@@ -952,3 +952,73 @@ body.light-mode .bible-verse-row:hover {
     color: var(--color-text-primary);
   }
 }
+
+.bible-topbar-wrap {
+  transition: transform 0.22s ease, opacity 0.22s ease;
+}
+
+.bible-topbar-wrap.is-compact {
+  transform: translateY(-8px);
+  opacity: 0.92;
+}
+
+.bible-icon-pill.active {
+  background: rgba(247, 181, 0, 0.18);
+  border-color: rgba(247, 181, 0, 0.5);
+  color: #f7b500;
+}
+
+.bible-measure-token {
+  border-bottom: 1.5px dotted #f7b500;
+  cursor: pointer;
+  color: inherit;
+  transition: background 0.15s ease;
+}
+
+.bible-measure-token:hover {
+  background: rgba(247, 181, 0, 0.14);
+  border-radius: 4px;
+}
+
+.bible-measure-popover {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--bottom-nav-total-offset, 80px) + 18px);
+  z-index: 95;
+  width: min(92vw, 420px);
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: var(--color-surface);
+  border: 1px solid rgba(247, 181, 0, 0.45);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bible-measure-popover strong {
+  display: block;
+  font-size: 0.85rem;
+  color: #f7b500;
+  margin-bottom: 2px;
+}
+
+.bible-measure-popover span {
+  font-size: 0.84rem;
+  color: var(--color-text-primary);
+}
+
+.bible-paged-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border);
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+}
+

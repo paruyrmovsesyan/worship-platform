@@ -295,3 +295,70 @@
   border: 1px solid rgba(34, 197, 94, 0.35);
   color: #4ade80;
 }
+
+.sr-smart-import-box {
+  background: rgba(247, 181, 0, 0.06);
+  border: 1px solid rgba(247, 181, 0, 0.25);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sr-smart-import-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.84rem;
+  color: var(--color-text-secondary);
+}
+
+.sr-file-upload-btn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--color-text-primary);
+}
+
+.sr-smart-import-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.sr-chord-shelf {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.sr-chord-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(247, 181, 0, 0.35);
+  background: rgba(247, 181, 0, 0.12);
+  color: #f7b500;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sr-chord-chip.is-meta {
+  border-color: var(--glass-border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-secondary);
+}
+
+body.light-mode .sr-chord-chip {
+  color: #8a5d00;
+}
+

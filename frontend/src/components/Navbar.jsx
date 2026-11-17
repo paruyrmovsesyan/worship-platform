@@ -180,6 +180,10 @@ export default function Navbar() {
         {
           to: '/church', label: t('nav.church', 'Եկեղեցի և Աղոթք'),
           icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v5"/><path d="M9.5 4.5h5"/><path d="M4 22V11l8-5 8 5v11"/><path d="M9 22v-6h6v6"/></svg>
+        },
+        {
+          to: '/media', label: t('nav.media', 'Մեդիա և Ռադիո'),
+          icon: <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         }
       ]
     },
@@ -515,6 +519,7 @@ export default function Navbar() {
                       <div className="mega-col-links">
                         <Link to="/news">{t('nav.news')}</Link>
                         <Link to="/resources">{t('nav.resources')}</Link>
+                        <Link to="/media">{t('nav.media', 'Մեդիա և 24/7 Ռադիո')}</Link>
                       </div>
                     </div>
                   </div>

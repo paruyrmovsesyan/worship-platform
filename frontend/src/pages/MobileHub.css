@@ -1324,3 +1324,12 @@ body.light-mode .hub-account-prompt-btn-secondary {
   line-height: 1.4;
 }
 .bg-green { background: linear-gradient(135deg, #11998E, #38EF7D); }
+
+body.light-mode.editorial-theme .mobile-hub {
+  background:
+    radial-gradient(640px 420px at 15% 4%, rgba(247, 181, 0, 0.14), transparent 68%),
+    radial-gradient(560px 420px at 90% 18%, rgba(251, 146, 60, 0.10), transparent 65%),
+    radial-gradient(520px 420px at 40% 70%, rgba(56, 189, 248, 0.08), transparent 65%),
+    var(--color-bg, #faf7f1);
+}
+

@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { usePageReady } from '../hooks/usePageReady';
-import { renderWithChords } from '../utils/chordTransposer';
+import { renderWithChords, parseSmartSongText } from '../utils/chordTransposer';
 import './SongRequest.css';
 
 const COMMON_KEYS = [
   '', 'C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B',
   'Cm', 'C#m', 'Dm', 'Ebm', 'Em', 'Fm', 'F#m', 'Gm', 'Abm', 'Am', 'Bbm', 'Bm'
 ];
+
+const QUICK_CHORD_PALETTE = ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'Bm', 'D', 'A', 'E', 'Bb', 'F#m', 'G/B', 'C/E', 'Asus4', 'Dsus4', '[Տուն 1]', '[Կրկներգ]', '[Անցում]', '! '];
 
 export default function SongRequest() {
   const { user, loading: authLoading } = useAuth();
@@ -74,6 +76,54 @@ export default function SongRequest() {
   }, [songId, isEditMode, t]);
 
   const [requestMode, setRequestMode] = useState(isEditMode ? 'full' : 'quick');
+  const [showSmartImport, setShowSmartImport] = useState(false);
+  const [rawImportText, setRawImportText] = useState('');
+  const chordsRef = useRef(null);
+
+  const handleSmartImportApply = () => {
+    const parsed = parseSmartSongText(rawImportText);
+    setFormData((prev) => ({
+      ...prev,
+      title_hy: prev.title_hy || parsed.title || '',
+      artist: prev.artist || parsed.artist || '',
+      song_key: prev.song_key || parsed.key || '',
+      bpm: prev.bpm || parsed.bpm || '',
+      chords: parsed.chords || prev.chords,
+      lyrics: parsed.lyrics || prev.lyrics,
+    }));
+    setShowSmartImport(false);
+    setRawImportText('');
+    setRequestMode('full');
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const txt = await file.text();
+    setRawImportText(txt);
+    e.target.value = '';
+  };
+
+  const insertTokenIntoChords = (token) => {
+    const el = chordsRef.current;
+    const current = formData.chords || '';
+    if (!el || typeof el.selectionStart !== 'number') {
+      setFormData((prev) => ({ ...prev, chords: current ? `${current} ${token}` : token }));
+      return;
+    }
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const padBefore = start > 0 && !/\s|\n/.test(current[start - 1]) && !token.startsWith('[') && !token.startsWith('!') ? ' ' : '';
+    const padAfter = token.startsWith('[') ? '\n' : token.startsWith('!') ? '' : ' ';
+    const inserted = `${padBefore}${token}${padAfter}`;
+    const nextVal = current.slice(0, start) + inserted + current.slice(end);
+    setFormData((prev) => ({ ...prev, chords: nextVal }));
+    setTimeout(() => {
+      el.focus();
+      const pos = start + inserted.length;
+      el.setSelectionRange(pos, pos);
+    }, 0);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -384,16 +434,52 @@ export default function SongRequest() {
                   <span className="song-request-card-icon">📜</span>
                   {t('songRequest.lyricsAndChordsSection', 'Ակորդներ և Տեքստ')}
                 </h3>
-                {formData.chords && (
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   <button
                     type="button"
-                    className={`preview-toggle-btn ${isPreviewActive ? 'active' : ''}`}
-                    onClick={() => setIsPreviewActive(p => !p)}
+                    className={`preview-toggle-btn ${showSmartImport ? 'active' : ''}`}
+                    onClick={() => setShowSmartImport((s) => !s)}
                   >
-                    {isPreviewActive ? t('songRequest.edit', '✏️ Խմբագրել') : t('songRequest.preview', '👁️ Նախադիտում')}
+                    📥 {t('songRequest.smartImport', 'Խելացի ներմուծում (ChordPro / ProPresenter)')}
                   </button>
-                )}
+                  {formData.chords && (
+                    <button
+                      type="button"
+                      className={`preview-toggle-btn ${isPreviewActive ? 'active' : ''}`}
+                      onClick={() => setIsPreviewActive(p => !p)}
+                    >
+                      {isPreviewActive ? t('songRequest.edit', '✏️ Խմբագրել') : t('songRequest.preview', '👁️ Նախադիտում')}
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {showSmartImport && (
+                <div className="sr-smart-import-box">
+                  <div className="sr-smart-import-head">
+                    <span>{t('songRequest.smartImportHint', 'Տեղադրեք ChordPro ({title:}, [Am]բառ), ProPresenter / EasyWorship կամ ակորդներ+տեքստ, կամ ընտրեք .txt / .cho / .pro ֆայլ՝')}</span>
+                    <label className="sr-file-upload-btn">
+                      📄 {t('songRequest.chooseFile', 'Ընտրել ֆայլ')}
+                      <input type="file" accept=".txt,.cho,.pro,.chordpro,.crd" onChange={handleImportFile} hidden />
+                    </label>
+                  </div>
+                  <textarea
+                    className="song-request-textarea code-font"
+                    rows="6"
+                    value={rawImportText}
+                    onChange={(e) => setRawImportText(e.target.value)}
+                    placeholder="{title: Օրհնիր Տեր}&#10;{key: G}&#10;{tempo: 74}&#10;[Verse 1]&#10;[G]Տեր, Քո [D]անունը [Em]սուրբ է [C]..."
+                  />
+                  <div className="sr-smart-import-actions">
+                    <button type="button" className="preview-toggle-btn" onClick={() => setShowSmartImport(false)}>
+                      {t('common.cancel', 'Չեղարկել')}
+                    </button>
+                    <button type="button" className="preview-toggle-btn active" onClick={handleSmartImportApply} disabled={!rawImportText.trim()}>
+                      ✨ {t('songRequest.parseAndFill', 'Ավտոմատ վերլուծել և լրացնել')}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {isPreviewActive ? (
@@ -408,7 +494,20 @@ export default function SongRequest() {
                   <>
                     <div className="song-request-field">
                       <label className="song-request-label">{t('songRequest.chords', 'Ակորդներ (ստանդարտ ֆորմատով)')}</label>
+                      <div className="sr-chord-shelf">
+                        {QUICK_CHORD_PALETTE.map((tok) => (
+                          <button
+                            key={tok}
+                            type="button"
+                            className={`sr-chord-chip ${tok.startsWith('[') || tok.startsWith('!') ? 'is-meta' : ''}`}
+                            onClick={() => insertTokenIntoChords(tok)}
+                          >
+                            {tok === '! ' ? '! Նշում' : tok}
+                          </button>
+                        ))}
+                      </div>
                       <textarea
+                        ref={chordsRef}
                         className="song-request-textarea code-font"
                         name="chords"
                         value={formData.chords}

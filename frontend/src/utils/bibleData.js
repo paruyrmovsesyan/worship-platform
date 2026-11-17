@@ -100,3 +100,67 @@ export function getBookName(bookId, lang = 'am') {
   if (!book) return `Book ${bookId}`;
   return book[lang] || book.am || book.en;
 }
+
+export const BIBLICAL_MEASURES = [
+  {
+    pattern: /(կանգուն(?:ներ(?:ով|ի)?)?|cubit(?:s)?|локт[яейь]+|локоть)/i,
+    label: { am: 'Կանգուն', ru: 'Локоть', en: 'Cubit' },
+    info: {
+      am: '1 կանգուն ≈ 45 սմ (արմունկից մինչև միջնամատի ծայրը)',
+      ru: '1 локоть ≈ 45 см (от локтя до кончика среднего пальца)',
+      en: '1 cubit ≈ 45 cm / 18 in (elbow to fingertip)',
+    },
+  },
+  {
+    pattern: /(տաղանդ(?:ներ(?:ով|ի)?)?|տալանտ(?:ներ)?|talent(?:s)?|талант(?:а|ов|ы)?)/i,
+    label: { am: 'Տաղանդ', ru: 'Талант', en: 'Talent' },
+    info: {
+      am: '1 տաղանդ ≈ 34 կգ արծաթ կամ ոսկի (~6000 դենար / ~20 տարվա վարձ)',
+      ru: '1 талант ≈ 34 кг серебра или золота (~6000 динариев)',
+      en: '1 talent ≈ 34 kg (75 lb) (~6,000 denarii / ~20 years’ wages)',
+    },
+  },
+  {
+    pattern: /(սիկղ(?:եր)?|shekel(?:s)?|сикл[яейь]*)/i,
+    label: { am: 'Սիկղ', ru: 'Сикль', en: 'Shekel' },
+    info: {
+      am: '1 սիկղ ≈ 11.4 գրամ արծաթ (~4 օրվա աշխատավարձ)',
+      ru: '1 сикль ≈ 11,4 г серебра (~4 дня работы)',
+      en: '1 shekel ≈ 11.4 g / 0.4 oz of silver (~4 days’ wages)',
+    },
+  },
+  {
+    pattern: /(դենար(?:ներ|ի)?|denari(?:us|i)?|динари(?:й|я|ев)?)/i,
+    label: { am: 'Դենար', ru: 'Динарий', en: 'Denarius' },
+    info: {
+      am: '1 դենար ≈ 1 օրվա աշխատավարձ (Հռոմեական արծաթե դրամ)',
+      ru: '1 динарий ≈ оплата 1 дня труда работника',
+      en: '1 denarius ≈ 1 day’s wage for a laborer',
+    },
+  },
+  {
+    pattern: /(եփա(?:յով|ի)?|ephah(?:s)?|еф[аыу])/i,
+    label: { am: 'Եփա', ru: 'Ефа', en: 'Ephah' },
+    info: {
+      am: '1 եփա ≈ 22 լիտր չոր ապրանքի չափ (ցորեն, ալյուր)',
+      ru: '1 ефа ≈ 22 литра (мера сыпучих тел: зерно, мука)',
+      en: '1 ephah ≈ 22 liters (~20 quarts dry measure)',
+    },
+  },
+  {
+    pattern: /(ասպարեզ(?:ներ)?|stadi(?:a|um)|furlong(?:s)?|стади(?:й|я|ев))/i,
+    label: { am: 'Ասպարեզ', ru: 'Стадий', en: 'Stadia' },
+    info: {
+      am: '1 ասպարեզ ≈ 185 մետր',
+      ru: '1 стадий ≈ 185 метров',
+      en: '1 stadium / furlong ≈ 185 meters (607 ft)',
+    },
+  },
+];
+
+export function matchMeasureToken(token) {
+  for (const item of BIBLICAL_MEASURES) {
+    if (item.pattern.test(token)) return item;
+  }
+  return null;
+}

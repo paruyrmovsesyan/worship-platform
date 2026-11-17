@@ -77,27 +77,27 @@ class MetronomeEngine {
 
     const baseVol = this.volume;
 
-    if (this.soundType === 'digital') {
+    if (this.soundType === 'digital' || this.soundType === 'click') {
       osc.type = 'square';
       osc.frequency.setValueAtTime(isAccent ? 1760 : 880, time);
-      gain.gain.setValueAtTime(baseVol * (isAccent ? 0.9 : 0.6), time);
+      gain.gain.setValueAtTime(baseVol * (isAccent ? 0.85 : 0.55), time);
       gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.04);
       osc.start(time);
       osc.stop(time + 0.04);
-    } else if (this.soundType === 'cowbell') {
+    } else if (this.soundType === 'cowbell' || this.soundType === 'bell') {
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(isAccent ? 800 : 540, time);
-      gain.gain.setValueAtTime(baseVol * 0.9, time);
+      osc.frequency.setValueAtTime(isAccent ? 1050 : 660, time);
+      gain.gain.setValueAtTime(baseVol * (isAccent ? 0.9 : 0.6), time);
       gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.09);
       osc.start(time);
       osc.stop(time + 0.09);
-    } else if (this.soundType === 'beep') {
+    } else if (this.soundType === 'soft' || this.soundType === 'beep') {
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(isAccent ? 1400 : 900, time);
-      gain.gain.setValueAtTime(baseVol * 0.8, time);
-      gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.05);
+      osc.frequency.setValueAtTime(isAccent ? 980 : 620, time);
+      gain.gain.setValueAtTime(baseVol * (isAccent ? 0.65 : 0.4), time);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.055);
       osc.start(time);
-      osc.stop(time + 0.05);
+      osc.stop(time + 0.055);
     } else {
       // Woodblock (warm, percussive band default)
       osc.type = 'triangle';
