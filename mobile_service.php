@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/runtime_config.php';
+require_once __DIR__ . '/version_config.php';
 require_once __DIR__ . '/error_service.php';
 require_once __DIR__ . '/push_service.php';
 
@@ -45,9 +46,17 @@ function wp_mobile_default_config(): array {
             'type' => 'info', // 'info', 'warning', 'success', 'critical'
             'title' => '',
             'message' => '',
+            'title_ru' => '',
+            'message_ru' => '',
+            'title_en' => '',
+            'message_en' => '',
             'action_text' => '',
             'action_url' => '',
             'dismissible' => true,
+            'schedule_start_at' => '',
+            'schedule_end_at' => '',
+            'show_countdown' => false,
+            'sync_with_maintenance' => false,
             'restricted_pages' => [],
             'restricted_features' => [],
         ],
@@ -222,7 +231,45 @@ function wp_mobile_restrictable_features(): array {
         'audio_calls' => 'Աուդիո Զանգեր (WebRTC)',
         'setlists_sync' => 'Երգացանկերի Սինքրոնացում',
         'offline_mode' => 'Offline Քեշավորում',
+        'song_lyrics_copy' => 'Երգի պատճենում / Արտահանում',
+        'setlist_creation' => 'Նոր երգացանկերի ստեղծում',
+        'chat_messaging' => 'Չաթում հաղորդագրություններ ուղարկում',
+        'song_requests_submit' => 'Նոր երգի հայտերի ուղարկում',
     ];
+}
+
+/**
+ * Checks whether an announcement should currently be displayed/enforced based on enabled flag and schedule window.
+ */
+function wp_mobile_is_announcement_active(array $announcement, ?array $versionConfig = null): bool {
+    $enabled = !empty($announcement['enabled']);
+    $syncMaint = !empty($announcement['sync_with_maintenance']);
+    if ($syncMaint && $versionConfig !== null && wp_version_is_maintenance_active($versionConfig)) {
+        return true;
+    }
+    if (!$enabled) {
+        return false;
+    }
+
+    $tz = wp_version_admin_timezone();
+    $nowTs = (new DateTimeImmutable('now', $tz))->getTimestamp();
+    $startRaw = wp_version_normalize_datetime($announcement['schedule_start_at'] ?? '');
+    $endRaw = wp_version_normalize_datetime($announcement['schedule_end_at'] ?? '');
+
+    if ($startRaw !== '') {
+        try {
+            $startTs = (new DateTimeImmutable($startRaw, $tz))->getTimestamp();
+            if ($nowTs < $startTs) return false;
+        } catch (Throwable $_) {}
+    }
+    if ($endRaw !== '') {
+        try {
+            $endTs = (new DateTimeImmutable($endRaw, $tz))->getTimestamp();
+            if ($nowTs > $endTs) return false;
+        } catch (Throwable $_) {}
+    }
+
+    return true;
 }
 
 /**
@@ -242,10 +289,15 @@ function wp_mobile_announcement_matches_platform(string $target, string $platfor
  */
 function wp_mobile_evaluate_client(string $platform, string $clientVersion = '', string $clientBuild = ''): array {
     $config = wp_mobile_get_config();
+    $versionConfig = wp_version_load();
     $isNative = ($platform === 'ios' || $platform === 'android');
     $platConfig = $isNative ? ($config[$platform] ?? $config['android']) : [];
 
-    $isMaintenance = $isNative && (($platConfig['status'] ?? 'live') === 'maintenance');
+    $globalMaintActive = wp_version_is_maintenance_active($versionConfig);
+    $isMaintenance = $isNative && (
+        (($platConfig['status'] ?? 'live') === 'maintenance') ||
+        (!empty($config['announcement']['sync_with_maintenance']) && $globalMaintActive)
+    );
     $minVersion = (string)($platConfig['min_version'] ?? '1.0');
     $minBuild = (int)($platConfig['min_build'] ?? 1);
     $currentVersion = (string)($platConfig['current_version'] ?? '1.0');
@@ -270,7 +322,7 @@ function wp_mobile_evaluate_client(string $platform, string $clientVersion = '',
 
     $announcement = $config['announcement'] ?? [];
     $target = (string)($announcement['target'] ?? 'all');
-    $showAnnouncement = !empty($announcement['enabled']) &&
+    $showAnnouncement = wp_mobile_is_announcement_active($announcement, $versionConfig) &&
         wp_mobile_announcement_matches_platform($target, $platform);
 
     $allowedPages = array_keys(wp_mobile_restrictable_pages());
@@ -282,14 +334,22 @@ function wp_mobile_evaluate_client(string $platform, string $clientVersion = '',
         ? array_values(array_intersect($allowedFeatures, array_map('strval', (array)($announcement['restricted_features'] ?? []))))
         : [];
 
+    $countdownEndAt = !empty($announcement['schedule_end_at'])
+        ? (string)$announcement['schedule_end_at']
+        : (string)($versionConfig['maintenance_end_at'] ?? '');
+
     return [
         'ok' => true,
         'platform' => $platform,
         'status' => $isNative ? ($platConfig['status'] ?? 'live') : 'live',
         'maintenance' => [
             'active' => $isMaintenance,
-            'title' => $platConfig['maintenance_title'] ?? '',
-            'message' => $platConfig['maintenance_message'] ?? '',
+            'web_active' => $globalMaintActive,
+            'end_at' => (string)($versionConfig['maintenance_end_at'] ?? ''),
+            'title' => $platConfig['maintenance_title'] ?? 'Վերազինման աշխատանքներ',
+            'message' => !empty($platConfig['maintenance_message'])
+                ? (string)$platConfig['maintenance_message']
+                : (string)($versionConfig['maintenance_message'] ?? ''),
         ],
         'version' => [
             'current' => $currentVersion,
@@ -306,9 +366,16 @@ function wp_mobile_evaluate_client(string $platform, string $clientVersion = '',
             'target' => $target,
             'title' => $announcement['title'] ?? '',
             'message' => $announcement['message'] ?? '',
+            'title_ru' => $announcement['title_ru'] ?? '',
+            'message_ru' => $announcement['message_ru'] ?? '',
+            'title_en' => $announcement['title_en'] ?? '',
+            'message_en' => $announcement['message_en'] ?? '',
             'action_text' => $announcement['action_text'] ?? '',
             'action_url' => $announcement['action_url'] ?? '',
             'dismissible' => !isset($announcement['dismissible']) || !empty($announcement['dismissible']),
+            'show_countdown' => !empty($announcement['show_countdown']),
+            'schedule_start_at' => (string)($announcement['schedule_start_at'] ?? ''),
+            'schedule_end_at' => $countdownEndAt,
             'restricted_pages' => $restrictedPages,
             'restricted_features' => $restrictedFeatures,
         ] : null,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 
 const BANNER_ACCENTS = {
@@ -8,10 +8,57 @@ const BANNER_ACCENTS = {
   info: { border: 'rgba(0, 212, 255, 0.45)', badge: 'rgba(0, 212, 255, 0.16)', tint: '#7ee8ff' },
 };
 
+function resolveLocalizedAnnouncement(announcement, language) {
+  if (!announcement) return { title: '', message: '' };
+  if (language === 'ru') {
+    return {
+      title: announcement.title_ru || announcement.title || '',
+      message: announcement.message_ru || announcement.message || '',
+    };
+  }
+  if (language === 'en') {
+    return {
+      title: announcement.title_en || announcement.title || '',
+      message: announcement.message_en || announcement.message || '',
+    };
+  }
+  return {
+    title: announcement.title || '',
+    message: announcement.message || '',
+  };
+}
+
+function formatCountdown(targetIso, nowMs) {
+  if (!targetIso) return '';
+  const targetMs = Date.parse(targetIso);
+  if (Number.isNaN(targetMs)) return '';
+  const diffSec = Math.max(0, Math.floor((targetMs - nowMs) / 1000));
+  if (diffSec <= 0) return '';
+  const hrs = Math.floor(diffSec / 3600);
+  const mins = Math.floor((diffSec % 3600) / 60);
+  const secs = diffSec % 60;
+  const pad = (n) => String(n).padStart(2, '0');
+  return hrs > 0 ? `${hrs}:${pad(mins)}:${pad(secs)}` : `${pad(mins)}:${pad(secs)}`;
+}
+
+function useLiveCountdown(targetIso, enabled) {
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!enabled || !targetIso) return undefined;
+    const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [targetIso, enabled]);
+
+  return enabled && targetIso ? formatCountdown(targetIso, nowMs) : '';
+}
+
 /**
  * Top announcement banner rendered for Website and PWA (NativeRuntimeGuard handles native banner).
  */
-export function PlatformAnnouncementBanner({ announcement, dismissed, onDismiss, navigate, isPWA }) {
+export function PlatformAnnouncementBanner({ announcement, dismissed, onDismiss, navigate, isPWA, language = 'am' }) {
+  const countdown = useLiveCountdown(announcement?.schedule_end_at, Boolean(announcement?.show_countdown));
+
   if (Capacitor.isNativePlatform() || !announcement || dismissed) {
     return null;
   }
@@ -19,6 +66,7 @@ export function PlatformAnnouncementBanner({ announcement, dismissed, onDismiss,
   const palette = BANNER_ACCENTS[announcement.type] || BANNER_ACCENTS.info;
   const actionUrl = String(announcement.action_url || '').trim();
   const isInternal = actionUrl.startsWith('/');
+  const localized = resolveLocalizedAnnouncement(announcement, language);
 
   return (
     <div
@@ -28,7 +76,7 @@ export function PlatformAnnouncementBanner({ announcement, dismissed, onDismiss,
         top: isPWA ? 'max(10px, env(safe-area-inset-top, 10px))' : '74px',
         left: '50%',
         transform: 'translateX(-50%)',
-        width: 'min(760px, calc(100vw - 24px))',
+        width: 'min(780px, calc(100vw - 24px))',
         zIndex: 99980,
         background: 'linear-gradient(160deg, rgba(18, 20, 32, 0.94) 0%, rgba(11, 12, 20, 0.97) 100%)',
         border: `1px solid ${palette.border}`,
@@ -58,10 +106,27 @@ export function PlatformAnnouncementBanner({ announcement, dismissed, onDismiss,
         }}
       />
       <div style={{ flex: 1, minWidth: 0 }}>
-        {announcement.title && (
-          <div style={{ fontWeight: 800, marginBottom: '2px', color: palette.tint }}>{announcement.title}</div>
-        )}
-        <div style={{ color: 'rgba(241, 245, 249, 0.92)', lineHeight: 1.4 }}>{announcement.message}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: localized.title ? '2px' : 0 }}>
+          {localized.title && (
+            <div style={{ fontWeight: 800, color: palette.tint }}>{localized.title}</div>
+          )}
+          {countdown && (
+            <span
+              style={{
+                padding: '2px 8px',
+                borderRadius: '999px',
+                background: palette.badge,
+                border: `1px solid ${palette.border}`,
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              ⏳ {countdown}
+            </span>
+          )}
+        </div>
+        <div style={{ color: 'rgba(241, 245, 249, 0.92)', lineHeight: 1.4 }}>{localized.message}</div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
@@ -135,8 +200,10 @@ export function PlatformAnnouncementBanner({ announcement, dismissed, onDismiss,
 /**
  * Full-page lock card rendered when a user navigates to a page restricted by the active announcement.
  */
-export function AnnouncementRestrictedView({ announcement, onBackHome, onRecheck }) {
+export function AnnouncementRestrictedView({ announcement, onBackHome, onRecheck, language = 'am' }) {
   const [checking, setChecking] = useState(false);
+  const localized = resolveLocalizedAnnouncement(announcement, language);
+  const countdown = useLiveCountdown(announcement?.schedule_end_at, Boolean(announcement?.show_countdown));
 
   const handleRecheck = async () => {
     if (checking || !onRecheck) return;
@@ -190,19 +257,34 @@ export function AnnouncementRestrictedView({ announcement, onBackHome, onRecheck
           </svg>
         </div>
 
+        {countdown && (
+          <div
+            style={{
+              display: 'inline-block',
+              marginBottom: '10px',
+              padding: '4px 12px',
+              borderRadius: '999px',
+              background: 'rgba(0, 212, 255, 0.14)',
+              border: '1px solid rgba(0, 212, 255, 0.32)',
+              color: '#7ee8ff',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            ⏳ {countdown}
+          </div>
+        )}
+
         <h2 style={{ margin: '0 0 10px', fontSize: '1.3rem', fontWeight: 800 }}>
-          {announcement?.title || 'Բաժինը ժամանակավորապես սահմանափակված է'}
+          {localized.title || 'Բաժինը ժամանակավորապես սահմանափակված է'}
         </h2>
         <p style={{ margin: '0 0 22px', color: 'rgba(226, 232, 240, 0.8)', fontSize: '0.94rem', lineHeight: 1.55 }}>
-          {announcement?.message || 'Այս բաժինը ժամանակավորապես անհասանելի է՝ համակարգի վերազինման և թարմացման նպատակներով։'}
+          {localized.message || 'Այս բաժինը ժամանակավորապես անհասանելի է՝ համակարգի վերազինման և թարմացման նպատակներով։'}
         </p>
 
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={onBackHome}
-          >
+          <button type="button" className="btn btn-primary" onClick={onBackHome}>
             Գլխավոր էջ
           </button>
           <button

@@ -189,7 +189,7 @@ function App() {
   const [rememberPromptSaving, setRememberPromptSaving] = React.useState(false);
   const [rememberPromptError, setRememberPromptError] = React.useState('');
   const { user, loading: authLoading } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     document.body.classList.remove('mobile-theme', 'app-desktop-theme', 'website-theme', 'is-app', 'is-pwa', 'is-ios', 'is-android', 'is-native');
@@ -788,6 +788,7 @@ function App() {
           onDismiss={platformAnnouncement.dismiss}
           navigate={navigate}
           isPWA={isPWA}
+          language={language}
         />
       )}
       <ScrollToTop />
@@ -810,6 +811,7 @@ function App() {
                 announcement={platformAnnouncement.announcement}
                 onBackHome={() => navigate('/')}
                 onRecheck={platformAnnouncement.recheck}
+                language={language}
               />
             ) : (
             <Routes key={refreshKey}>

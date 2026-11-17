@@ -1054,8 +1054,12 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
       <form method="POST" class="m-form-card">
         <input type="hidden" name="form_action" value="save_announcements">
         <div class="m-card-header" style="flex-wrap:wrap; gap:10px;">
-          <div class="m-card-title">📢 Հայտարարություններ և Սահմանափակումներ (Կայք, PWA, iOS և Android)</div>
+          <div>
+            <div class="m-card-title">📢 Հայտարարություններ և Սահմանափակումներ (Կայք, PWA, iOS և Android)</div>
+            <div style="font-size:0.8rem; color:#94a3b8; margin-top:4px;">Կարող ես նաև բացել նոր ընդլայնված կառավարման կենտրոնը՝ բազմալեզու տեքստերով, պլանավորումով և տեխնիկական դադարի հետ կապակցմամբ։</div>
+          </div>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a href="/admin_announcements.php" class="m-btn m-btn--secondary">🧭 Առանձին Կառավարման Էջ</a>
             <button type="button" class="m-btn m-btn--secondary" onclick="wpFillUpgradeAnnouncementPreset()">⚡ Վերազինման ձևանմուշ</button>
             <button type="submit" class="m-btn m-btn--primary">💾 <?= htmlspecialchars($t['save_changes']) ?></button>
           </div>
