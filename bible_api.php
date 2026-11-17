@@ -47,6 +47,15 @@ function wp_bible_translations_catalog(): array {
             'note' => 'Полная Библия (66 книг)',
         ],
         [
+            'id' => 'nrt',
+            'name' => 'Новый русский',
+            'short' => 'НРП',
+            'lang' => 'ru',
+            'scope' => 'full',
+            'available_books' => range(1, 66),
+            'note' => 'Современный русский перевод (66 книг)',
+        ],
+        [
             'id' => 'akjv',
             'name' => 'American KJV',
             'short' => 'AKJV',
@@ -54,6 +63,15 @@ function wp_bible_translations_catalog(): array {
             'scope' => 'full',
             'available_books' => range(1, 66),
             'note' => 'Full Bible (66 books)',
+        ],
+        [
+            'id' => 'esv',
+            'name' => 'English Standard (ESV)',
+            'short' => 'ESV',
+            'lang' => 'en',
+            'scope' => 'full',
+            'available_books' => range(1, 66),
+            'note' => 'Modern English (66 books)',
         ],
         [
             'id' => 'kjv',
@@ -68,8 +86,18 @@ function wp_bible_translations_catalog(): array {
 }
 
 function wp_bible_valid_translation(string $tr): string {
-    $allowed = ['easternarmenian', 'westernarmenian', 'synodal', 'akjv', 'kjv'];
+    $allowed = ['easternarmenian', 'westernarmenian', 'synodal', 'nrt', 'akjv', 'esv', 'kjv'];
     return in_array($tr, $allowed, true) ? $tr : 'synodal';
+}
+
+function wp_bible_bolls_code(string $tr): ?string {
+    return match ($tr) {
+        'nrt' => 'NRT',
+        'esv' => 'ESV',
+        'synodal' => 'SYNOD',
+        'kjv', 'akjv' => 'KJV',
+        default => null,
+    };
 }
 
 function wp_bible_fetch_remote(string $url): ?array {
@@ -142,24 +170,46 @@ function wp_bible_load_chapter(string $tr, int $book, int $chapter): array {
         }
     }
 
-    $url = "https://api.getbible.net/v2/{$tr}/{$book}/{$chapter}.json";
-    $remote = wp_bible_fetch_remote($url);
-    if (!$remote || empty($remote['verses']) || !is_array($remote['verses'])) {
-        return ['ok' => false, 'error' => 'Unable to load chapter right now'];
+    $verses = [];
+    if (in_array($tr, ['nrt', 'esv'], true)) {
+        $bollsSlug = strtoupper($tr);
+        $remote = wp_bible_fetch_remote("https://bolls.life/get-text/{$bollsSlug}/{$book}/{$chapter}/");
+        if (!$remote || !is_array($remote) || empty($remote[0]['text'])) {
+            return ['ok' => false, 'error' => 'Unable to load chapter right now'];
+        }
+        foreach ($remote as $v) {
+            $cleanText = trim(preg_replace('/\s+/', ' ', html_entity_decode(strip_tags((string)($v['text'] ?? '')), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+            if ($cleanText !== '') {
+                $verses[] = [
+                    'verse' => (int)($v['verse'] ?? 0),
+                    'text' => $cleanText,
+                ];
+            }
+        }
+        $trName = $tr === 'nrt' ? 'Новый русский' : 'ESV';
+    } else {
+        $url = "https://api.getbible.net/v2/{$tr}/{$book}/{$chapter}.json";
+        $remote = wp_bible_fetch_remote($url);
+        if (!$remote || empty($remote['verses']) || !is_array($remote['verses'])) {
+            return ['ok' => false, 'error' => 'Unable to load chapter right now'];
+        }
+        foreach ($remote['verses'] as $v) {
+            $verses[] = [
+                'verse' => (int)($v['verse'] ?? 0),
+                'text' => trim((string)($v['text'] ?? '')),
+            ];
+        }
+        $trName = (string)($remote['translation'] ?? $tr);
     }
 
-    $verses = [];
-    foreach ($remote['verses'] as $v) {
-        $verses[] = [
-            'verse' => (int)($v['verse'] ?? 0),
-            'text' => trim((string)($v['text'] ?? '')),
-        ];
+    if (empty($verses)) {
+        return ['ok' => false, 'error' => 'Unable to load chapter right now'];
     }
 
     $payload = [
         'ok' => true,
         'translation' => $tr,
-        'translation_name' => (string)($remote['translation'] ?? $tr),
+        'translation_name' => $trName,
         'book' => $book,
         'book_name' => (string)($remote['book_name'] ?? ''),
         'chapter' => $chapter,
@@ -283,8 +333,39 @@ if ($action === 'search') {
         wp_bible_out(['ok' => true, 'results' => []]);
     }
 
-    $cacheDir = __DIR__ . '/data/bible_cache';
     $results = [];
+    $seen = [];
+
+    $bollsCode = wp_bible_bolls_code($tr);
+    if ($bollsCode !== null) {
+        $remoteSearch = wp_bible_fetch_remote("https://bolls.life/v2/find/{$bollsCode}?search=" . rawurlencode($q));
+        if ($remoteSearch && !empty($remoteSearch['results']) && is_array($remoteSearch['results'])) {
+            foreach ($remoteSearch['results'] as $item) {
+                $b = (int)($item['book'] ?? 0);
+                $c = (int)($item['chapter'] ?? 0);
+                $v = (int)($item['verse'] ?? 0);
+                $withoutStrongs = preg_replace('/<S>.*?<\/S>/si', '', (string)($item['text'] ?? ''));
+                $cleanText = trim(preg_replace('/\s+/', ' ', html_entity_decode(strip_tags((string)$withoutStrongs), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+                if ($b >= 1 && $b <= 66 && $c > 0 && $v > 0 && $cleanText !== '') {
+                    $k = "{$b}_{$c}_{$v}";
+                    $seen[$k] = true;
+                    $results[] = [
+                        'translation' => $tr,
+                        'book' => $b,
+                        'book_name' => '',
+                        'chapter' => $c,
+                        'verse' => $v,
+                        'text' => $cleanText,
+                    ];
+                    if (count($results) >= 40) {
+                        wp_bible_out(['ok' => true, 'results' => $results]);
+                    }
+                }
+            }
+        }
+    }
+
+    $cacheDir = __DIR__ . '/data/bible_cache';
     if (is_dir($cacheDir)) {
         $files = glob("{$cacheDir}/{$tr}_*.json") ?: [];
         foreach ($files as $file) {
@@ -293,12 +374,18 @@ if ($action === 'search') {
             foreach ($data['verses'] as $v) {
                 $text = (string)($v['text'] ?? '');
                 if (mb_stripos($text, $q) !== false) {
+                    $b = (int)$data['book'];
+                    $c = (int)$data['chapter'];
+                    $vn = (int)$v['verse'];
+                    $k = "{$b}_{$c}_{$vn}";
+                    if (!empty($seen[$k])) continue;
+                    $seen[$k] = true;
                     $results[] = [
                         'translation' => $tr,
-                        'book' => (int)$data['book'],
+                        'book' => $b,
                         'book_name' => (string)$data['book_name'],
-                        'chapter' => (int)$data['chapter'],
-                        'verse' => (int)$v['verse'],
+                        'chapter' => $c,
+                        'verse' => $vn,
                         'text' => $text,
                     ];
                     if (count($results) >= 40) {
@@ -309,6 +396,55 @@ if ($action === 'search') {
         }
     }
     wp_bible_out(['ok' => true, 'results' => $results]);
+}
+
+function wp_bible_align_psalm(string $mainTr, string $targetTr, int $book, int $chapter): int {
+    if ($book !== 19) return $chapter;
+    $lxx = ['synodal', 'nrt'];
+    $mainIsLxx = in_array($mainTr, $lxx, true);
+    $targetIsLxx = in_array($targetTr, $lxx, true);
+    if ($mainIsLxx === $targetIsLxx) return $chapter;
+    if (!$mainIsLxx && $targetIsLxx) {
+        if ($chapter === 10) return 9;
+        if ($chapter >= 11 && $chapter <= 113) return $chapter - 1;
+        if ($chapter === 114 || $chapter === 115) return 113;
+        if ($chapter === 116) return 114;
+        if ($chapter >= 117 && $chapter <= 146) return $chapter - 1;
+        if ($chapter === 147) return 146;
+        return $chapter;
+    }
+    if ($chapter >= 10 && $chapter <= 112) return $chapter + 1;
+    if ($chapter === 113) return 114;
+    if ($chapter === 114 || $chapter === 115) return 116;
+    if ($chapter >= 116 && $chapter <= 145) return $chapter + 1;
+    if ($chapter === 146 || $chapter === 147) return 147;
+    return $chapter;
+}
+
+if ($action === 'compare') {
+    $mainTr = wp_bible_valid_translation((string)($_GET['main_tr'] ?? 'akjv'));
+    $book = (int)($_GET['book'] ?? 43);
+    $chapter = (int)($_GET['chapter'] ?? 1);
+    $verseNum = (int)($_GET['verse'] ?? 1);
+    $items = [];
+    foreach (wp_bible_translations_catalog() as $meta) {
+        if (!in_array($book, $meta['available_books'], true)) continue;
+        $targetCh = wp_bible_align_psalm($mainTr, $meta['id'], $book, $chapter);
+        $loaded = wp_bible_load_chapter($meta['id'], $book, $targetCh);
+        if (empty($loaded['ok']) || empty($loaded['verses'])) continue;
+        foreach ($loaded['verses'] as $v) {
+            if ((int)$v['verse'] === $verseNum) {
+                $items[] = [
+                    'id' => $meta['id'],
+                    'short' => $meta['short'],
+                    'name' => $meta['name'],
+                    'text' => $v['text'],
+                ];
+                break;
+            }
+        }
+    }
+    wp_bible_out(['ok' => true, 'book' => $book, 'chapter' => $chapter, 'verse' => $verseNum, 'comparisons' => $items]);
 }
 
 if ($action === 'user_state') {

@@ -74,9 +74,38 @@ export const DEFAULT_BIBLE_TRANSLATIONS = [
   { id: 'easternarmenian', name: 'Արևելահայերեն', short: 'ՀԱՅ', lang: 'am', scope: 'partial', available_books: [1, 2, 40, 41, 42, 43] },
   { id: 'westernarmenian', name: 'Արևմտահայերեն (ՆԿ)', short: 'ԱՐՄ', lang: 'am', scope: 'nt', available_books: Array.from({ length: 27 }, (_, i) => 40 + i) },
   { id: 'synodal', name: 'Синодальный', short: 'RST', lang: 'ru', scope: 'full', available_books: Array.from({ length: 66 }, (_, i) => i + 1) },
+  { id: 'nrt', name: 'Новый русский', short: 'НРП', lang: 'ru', scope: 'full', available_books: Array.from({ length: 66 }, (_, i) => i + 1) },
   { id: 'akjv', name: 'American KJV', short: 'AKJV', lang: 'en', scope: 'full', available_books: Array.from({ length: 66 }, (_, i) => i + 1) },
+  { id: 'esv', name: 'English Standard (ESV)', short: 'ESV', lang: 'en', scope: 'full', available_books: Array.from({ length: 66 }, (_, i) => i + 1) },
   { id: 'kjv', name: 'King James Version', short: 'KJV', lang: 'en', scope: 'full', available_books: Array.from({ length: 66 }, (_, i) => i + 1) },
 ];
+
+const LXX_PSALM_TRANSLATIONS = new Set(['synodal', 'nrt']);
+
+/** Aligns Psalm numbering between LXX/Russian Synodal and Masoretic/English traditions. */
+export function getAlignedParallelChapter(mainTr, parallelTr, bookId, chapter) {
+  if (Number(bookId) !== 19) return chapter;
+  const mainIsLxx = LXX_PSALM_TRANSLATIONS.has(mainTr);
+  const parIsLxx = LXX_PSALM_TRANSLATIONS.has(parallelTr);
+  if (mainIsLxx === parIsLxx) return chapter;
+
+  if (!mainIsLxx && parIsLxx) {
+    if (chapter === 10) return 9;
+    if (chapter >= 11 && chapter <= 113) return chapter - 1;
+    if (chapter === 114 || chapter === 115) return 113;
+    if (chapter === 116) return 114;
+    if (chapter >= 117 && chapter <= 146) return chapter - 1;
+    if (chapter === 147) return 146;
+    return chapter;
+  }
+
+  if (chapter >= 10 && chapter <= 112) return chapter + 1;
+  if (chapter === 113) return 114;
+  if (chapter === 114 || chapter === 115) return 116;
+  if (chapter >= 116 && chapter <= 145) return chapter + 1;
+  if (chapter === 146 || chapter === 147) return 147;
+  return chapter;
+}
 
 export const BIBLE_READING_PLAN = [
   { day: 1, book: 19, chapter: 23, label: { am: 'Սաղմոս 23 — Տերն է իմ Հովիվը', ru: 'Псалом 22 — Господь Пастырь мой', en: 'Psalm 23 — The Lord Is My Shepherd' } },

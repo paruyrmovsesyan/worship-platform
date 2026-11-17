@@ -3,11 +3,13 @@ import { createPortal } from 'react-dom';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import {
   BIBLE_BOOKS,
   BIBLE_READING_PLAN,
   BIBLICAL_MEASURES,
   DEFAULT_BIBLE_TRANSLATIONS,
+  getAlignedParallelChapter,
   getBookName,
   matchMeasureToken,
 } from '../utils/bibleData';
@@ -105,6 +107,7 @@ export default function Bible() {
   const [chapterError, setChapterError] = useState('');
   const [unavailableNotice, setUnavailableNotice] = useState(false);
 
+  const isMobileViewport = useMediaQuery('(max-width: 900px)');
   const [selectedVerse, setSelectedVerse] = useState(() => {
     const v = Number(searchParams.get('verse'));
     return v > 0 ? v : null;
@@ -117,8 +120,17 @@ export default function Bible() {
   const [readerPage, setReaderPage] = useState(0);
   const [isTopbarCompact, setIsTopbarCompact] = useState(false);
   const [activeMeasure, setActiveMeasure] = useState(null);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [speakingVerse, setSpeakingVerse] = useState(null);
+  const [audioSpeed, setAudioSpeed] = useState(1.0);
+  const [offlineProgress, setOfflineProgress] = useState(null); // { done, total }
+  const [offlineReadyTick, setOfflineReadyTick] = useState(0);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+  const [compareItems, setCompareItems] = useState([]);
+  const [loadingCompare, setLoadingCompare] = useState(false);
   const lastScrollYRef = useRef(0);
   const swipeStartXRef = useRef(null);
+  const audioStopRef = useRef(true);
 
   const [userState, setUserState] = useState(() =>
     readJsonStorage(USER_STATE_KEY, {
@@ -406,7 +418,8 @@ export default function Bible() {
           : (activeTr === 'synodal' ? 'akjv' : 'synodal');
 
       if (prefs.parallelEnabled && targetParallelTr !== activeTr) {
-        const parRes = await loadChapterData(targetParallelTr, bookId, chapter);
+        const alignedCh = getAlignedParallelChapter(activeTr, targetParallelTr, bookId, chapter);
+        const parRes = await loadChapterData(targetParallelTr, bookId, alignedCh);
         if (!cancelled) {
           setParallelVerses(parRes.ok ? parRes.verses : []);
         }
@@ -420,6 +433,131 @@ export default function Bible() {
       cancelled = true;
     };
   }, [translation, bookId, chapter, prefs.parallelEnabled, prefs.parallelTr, loadChapterData, translations, language]);
+
+  const stopAudioRead = useCallback(() => {
+    audioStopRef.current = true;
+    setAudioPlaying(false);
+    setSpeakingVerse(null);
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch { /* ignore */ }
+    }
+  }, []);
+
+  useEffect(() => () => stopAudioRead(), [stopAudioRead]);
+
+  const startAudioRead = useCallback((startFromVerse = null) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window) || verses.length === 0) return;
+    if (audioPlaying && !startFromVerse) {
+      stopAudioRead();
+      return;
+    }
+
+    stopAudioRead();
+    audioStopRef.current = false;
+    setAudioPlaying(true);
+
+    const activeLang = translations.find((tr) => tr.id === (effectiveTranslation || translation))?.lang || 'en';
+    const voiceLang = activeLang === 'am' ? 'hy-AM' : activeLang === 'ru' ? 'ru-RU' : 'en-US';
+    const startIdx = startFromVerse
+      ? Math.max(0, verses.findIndex((v) => v.verse === startFromVerse))
+      : 0;
+
+    const speakIndex = (idx) => {
+      if (audioStopRef.current || idx >= verses.length) {
+        stopAudioRead();
+        return;
+      }
+      const vObj = verses[idx];
+      setSpeakingVerse(vObj.verse);
+      const utter = new SpeechSynthesisUtterance(vObj.text);
+      utter.lang = voiceLang;
+      utter.rate = audioSpeed;
+      utter.onend = () => {
+        if (!audioStopRef.current) speakIndex(idx + 1);
+      };
+      utter.onerror = () => stopAudioRead();
+      window.speechSynthesis.speak(utter);
+    };
+
+    speakIndex(startIdx);
+  }, [verses, audioPlaying, stopAudioRead, translations, effectiveTranslation, translation, audioSpeed]);
+
+  const isCurrentBookOffline = useMemo(() => {
+    void offlineReadyTick;
+    const activeTr = effectiveTranslation || translation;
+    try {
+      for (let ch = 1; ch <= currentBook.chapters; ch += 1) {
+        if (!localStorage.getItem(`wp_bible_ch_${activeTr}_${bookId}_${ch}`)) return false;
+      }
+      return currentBook.chapters > 0;
+    } catch {
+      return false;
+    }
+  }, [effectiveTranslation, translation, bookId, currentBook.chapters, offlineReadyTick]);
+
+  const downloadBookOffline = async () => {
+    const activeTr = effectiveTranslation || translation;
+    const total = currentBook.chapters;
+    setOfflineProgress({ done: 0, total });
+    for (let ch = 1; ch <= total; ch += 1) {
+      await loadChapterData(activeTr, bookId, ch);
+      setOfflineProgress({ done: ch, total });
+    }
+    setOfflineProgress(null);
+    setOfflineReadyTick((t) => t + 1);
+  };
+
+  const openCompareVerse = async (vNum) => {
+    const targetV = vNum || selectedVerse;
+    if (!targetV) return;
+    setShowCompareModal(true);
+    setLoadingCompare(true);
+    try {
+      const activeMain = effectiveTranslation || translation;
+      const res = await fetch(`/bible_api.php?action=compare&main_tr=${encodeURIComponent(activeMain)}&book=${bookId}&chapter=${chapter}&verse=${targetV}`);
+      const data = await res.json();
+      setCompareItems(data?.ok && Array.isArray(data.comparisons) ? data.comparisons : []);
+    } catch {
+      setCompareItems([]);
+    }
+    setLoadingCompare(false);
+  };
+
+  const findMatchingSongs = () => {
+    const text = selectedVerseObj?.text || '';
+    const words = text
+      .replace(/[^\p{L}\s]/gu, ' ')
+      .split(/\s+/)
+      .filter((w) => w.length >= 4);
+    const q = words[0] || getBookName(bookId, language);
+    navigate(`/songs?q=${encodeURIComponent(q)}`);
+  };
+
+  const removeSavedBookmark = (bmBook, bmChapter, e) => {
+    e?.stopPropagation();
+    persistUserState((prev) => ({
+      ...prev,
+      bookmarks: prev.bookmarks.filter((b) => !(b.book === bmBook && b.chapter === bmChapter)),
+    }));
+  };
+
+  const removeSavedHighlight = (hlBook, hlCh, hlVerse, e) => {
+    e?.stopPropagation();
+    persistUserState((prev) => ({
+      ...prev,
+      highlights: prev.highlights.filter((h) => !(h.book === hlBook && h.chapter === hlCh && h.verse === hlVerse)),
+    }));
+  };
+
+  const removeSavedNote = (nBook, nCh, nVerse, e) => {
+    e?.stopPropagation();
+    persistUserState((prev) => ({
+      ...prev,
+      notes: prev.notes.filter((n) => !(n.book === nBook && n.chapter === nCh && n.verse === nVerse)),
+    }));
+  };
 
   useEffect(() => {
     const onScroll = () => {
@@ -468,6 +606,7 @@ export default function Bible() {
   const selectBookChapter = (bId, chNum = 1) => {
     const b = BIBLE_BOOKS.find((item) => item.id === bId);
     const maxCh = b?.chapters || 1;
+    stopAudioRead();
     setBookId(bId);
     setChapter(Math.max(1, Math.min(maxCh, chNum)));
     setSelectedVerse(null);
@@ -477,6 +616,20 @@ export default function Bible() {
     setActiveTab('read');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName)) return;
+      if (showBookDrawer || showSearchModal || showCompareModal) return;
+      if (e.key === 'ArrowRight') {
+        if (chapter < currentBook.chapters) selectBookChapter(bookId, chapter + 1);
+      } else if (e.key === 'ArrowLeft') {
+        if (chapter > 1) selectBookChapter(bookId, chapter - 1);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
 
   const stepChapter = (dir) => {
     if (dir > 0) {
@@ -757,6 +910,16 @@ export default function Bible() {
         </div>
 
         <div className="bible-topbar-right">
+          {typeof window !== 'undefined' && 'speechSynthesis' in window && verses.length > 0 && (
+            <button
+              type="button"
+              className={`bible-icon-pill ${audioPlaying ? 'active' : ''}`}
+              onClick={() => startAudioRead()}
+              title={language === 'ru' ? 'Слушать главу' : language === 'en' ? 'Listen to chapter' : 'Լսել գլուխը'}
+            >
+              {audioPlaying ? '❚❚' : '🔊'}
+            </button>
+          )}
           <button
             type="button"
             className={`bible-icon-pill ${multiSelectMode ? 'active' : ''}`}
@@ -846,6 +1009,59 @@ export default function Bible() {
             </div>
           </div>
 
+          <div className="bible-aa-row">
+            <span>{language === 'ru' ? 'Вид текста' : language === 'en' ? 'Reading Style' : 'Ընթերցման ձև'}</span>
+            <div className="bible-aa-pills">
+              <button
+                type="button"
+                className={!prefs.flowMode ? 'active' : ''}
+                onClick={() => setPrefs((p) => ({ ...p, flowMode: false }))}
+              >
+                {language === 'ru' ? 'Стихи' : language === 'en' ? 'Verses' : 'Համարներ'}
+              </button>
+              <button
+                type="button"
+                className={prefs.flowMode ? 'active' : ''}
+                onClick={() => setPrefs((p) => ({ ...p, flowMode: true }))}
+              >
+                {language === 'ru' ? 'Абзац' : language === 'en' ? 'Paragraph' : 'Հոդված'}
+              </button>
+            </div>
+          </div>
+
+          <div className="bible-aa-row">
+            <span>{language === 'ru' ? 'Фон чтения' : language === 'en' ? 'Reader Tint' : 'Թղթի երանգ'}</span>
+            <div className="bible-aa-pills">
+              {[
+                { id: 'default', label: language === 'ru' ? 'Авто' : language === 'en' ? 'Auto' : 'Ավտո' },
+                { id: 'sepia', label: 'Sepia' },
+                { id: 'amoled', label: 'AMOLED' },
+              ].map((tOpt) => (
+                <button
+                  key={tOpt.id}
+                  type="button"
+                  className={(prefs.paperTint || 'default') === tOpt.id ? 'active' : ''}
+                  onClick={() => setPrefs((p) => ({ ...p, paperTint: tOpt.id }))}
+                >
+                  {tOpt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="bible-aa-row bible-aa-parallel">
+            <label className="bible-aa-toggle">
+              <input
+                type="checkbox"
+                checked={Boolean(prefs.relaxedLine)}
+                onChange={(e) => setPrefs((p) => ({ ...p, relaxedLine: e.target.checked }))}
+              />
+              <span>
+                {language === 'ru' ? 'Свободный интервал' : language === 'en' ? 'Relaxed spacing' : 'Ազատ տողամիջոց'}
+              </span>
+            </label>
+          </div>
+
           <div className="bible-aa-row bible-aa-parallel">
             <label className="bible-aa-toggle">
               <input
@@ -900,6 +1116,26 @@ export default function Bible() {
       </div>
 
       {activeTab === 'my' ? (
+        <div className="bible-my-wrap">
+          <div className="bible-stats-row">
+            <div className="bible-stat-chip">
+              <strong>{userState.plan_days.length} / {BIBLE_READING_PLAN.length}</strong>
+              <span>{language === 'ru' ? 'Дней плана' : language === 'en' ? 'Plan Days' : 'Պլանի օրեր'}</span>
+            </div>
+            <div className="bible-stat-chip">
+              <strong>{userState.bookmarks.length}</strong>
+              <span>{ui.bookmarks}</span>
+            </div>
+            <div className="bible-stat-chip">
+              <strong>{userState.notes.length}</strong>
+              <span>{ui.notes}</span>
+            </div>
+            <div className="bible-stat-chip">
+              <strong>{userState.highlights.length}</strong>
+              <span>{ui.highlights}</span>
+            </div>
+          </div>
+
         <div className="bible-my-grid">
           {/* Reading Plan */}
           <section className="bible-card">
@@ -958,14 +1194,23 @@ export default function Bible() {
                     <h4>{ui.bookmarks}</h4>
                     <div className="bible-chip-wrap">
                       {userState.bookmarks.map((bm) => (
-                        <button
-                          key={`${bm.book}_${bm.chapter}`}
-                          type="button"
-                          className="bible-pill-btn"
-                          onClick={() => selectBookChapter(bm.book, bm.chapter)}
-                        >
-                          {getBookName(bm.book, language)} {bm.chapter}
-                        </button>
+                        <div key={`${bm.book}_${bm.chapter}`} className="bible-bm-chip">
+                          <button
+                            type="button"
+                            className="bible-pill-btn"
+                            onClick={() => selectBookChapter(bm.book, bm.chapter)}
+                          >
+                            {getBookName(bm.book, language)} {bm.chapter}
+                          </button>
+                          <button
+                            type="button"
+                            className="bible-bm-del"
+                            onClick={(e) => removeSavedBookmark(bm.book, bm.chapter, e)}
+                            aria-label="Remove bookmark"
+                          >
+                            ✕
+                          </button>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -980,9 +1225,19 @@ export default function Bible() {
                       setSelectedVerse(n.verse);
                     }}
                   >
-                    <span className="bible-saved-ref">
-                      {getBookName(n.book, language)} {n.chapter}:{n.verse}
-                    </span>
+                    <div className="bible-saved-head">
+                      <span className="bible-saved-ref">
+                        {getBookName(n.book, language)} {n.chapter}:{n.verse}
+                      </span>
+                      <button
+                        type="button"
+                        className="bible-saved-del"
+                        onClick={(e) => removeSavedNote(n.book, n.chapter, n.verse, e)}
+                        aria-label="Delete note"
+                      >
+                        ✕
+                      </button>
+                    </div>
                     <p className="bible-saved-note">{n.text}</p>
                     {n.verseText ? <small className="bible-saved-quote">«{n.verseText}»</small> : null}
                   </div>
@@ -1000,9 +1255,19 @@ export default function Bible() {
                         setSelectedVerse(h.verse);
                       }}
                     >
-                      <span className="bible-saved-ref">
-                        {getBookName(h.book, language)} {h.chapter}:{h.verse}
-                      </span>
+                      <div className="bible-saved-head">
+                        <span className="bible-saved-ref">
+                          {getBookName(h.book, language)} {h.chapter}:{h.verse}
+                        </span>
+                        <button
+                          type="button"
+                          className="bible-saved-del"
+                          onClick={(e) => removeSavedHighlight(h.book, h.chapter, h.verse, e)}
+                          aria-label="Delete highlight"
+                        >
+                          ✕
+                        </button>
+                      </div>
                       <p className="bible-saved-quote">{h.text}</p>
                     </div>
                   );
@@ -1010,6 +1275,7 @@ export default function Bible() {
               </div>
             )}
           </section>
+        </div>
         </div>
       ) : (
         <div className="bible-workspace">
@@ -1081,7 +1347,7 @@ export default function Bible() {
 
           {/* Center Reading Surface */}
           <main className="bible-reader-col">
-            <div className="bible-reader-card">
+            <div className={`bible-reader-card tint-${prefs.paperTint || 'default'}`}>
               <div className="bible-reader-head">
                 <div>
                   <span className="bible-reader-kicker">{activeTranslationMeta?.name || effectiveTranslation || translation}</span>
@@ -1090,6 +1356,29 @@ export default function Bible() {
                   </h1>
                 </div>
                 <div className="bible-chapter-nav">
+                  <button
+                    type="button"
+                    className={`bible-pill-btn ${isCurrentBookOffline ? 'is-offline-ready' : ''}`}
+                    onClick={downloadBookOffline}
+                    disabled={Boolean(offlineProgress)}
+                    title={language === 'ru' ? 'Скачать книгу для офлайн-чтения' : language === 'en' ? 'Download book offline' : 'Պահել գիրքը օֆլայն'}
+                  >
+                    {offlineProgress
+                      ? `⏳ ${offlineProgress.done}/${offlineProgress.total}`
+                      : isCurrentBookOffline
+                      ? `✓ ${language === 'ru' ? 'Офлайн' : language === 'en' ? 'Offline' : 'Օֆլայն'}`
+                      : `📥 ${language === 'ru' ? 'Офлайн' : language === 'en' ? 'Offline' : 'Օֆլայն'}`}
+                  </button>
+                  {audioPlaying && (
+                    <button
+                      type="button"
+                      className="bible-pill-btn"
+                      onClick={() => setAudioSpeed((s) => (s === 1 ? 1.25 : s === 1.25 ? 0.85 : 1))}
+                      title="Audio speed"
+                    >
+                      {audioSpeed}x
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="bible-pill-btn"
@@ -1154,6 +1443,8 @@ export default function Bible() {
                   <div
                     className={`bible-verses-body ${prefs.fontFamily === 'serif' ? 'is-serif' : 'is-sans'} ${
                       prefs.parallelEnabled && parallelVerses.length > 0 ? 'is-parallel' : ''
+                    } ${prefs.flowMode && !(prefs.parallelEnabled && parallelVerses.length > 0) ? 'is-flow' : ''} ${
+                      prefs.relaxedLine ? 'is-relaxed' : ''
                     }`}
                     style={{ fontSize: `${prefs.fontSize}px` }}
                     onTouchStart={(e) => {
@@ -1183,7 +1474,7 @@ export default function Bible() {
                       return (
                         <div
                           key={v.verse}
-                          className={`bible-verse-row ${isRowSelected ? 'is-selected' : ''}`}
+                          className={`bible-verse-row ${isRowSelected ? 'is-selected' : ''} ${speakingVerse === v.verse ? 'is-speaking' : ''}`}
                           style={hlObj ? { backgroundColor: hlObj.bg } : undefined}
                           onClick={(e) => handleSelectVerse(v.verse, e)}
                         >
@@ -1284,6 +1575,12 @@ export default function Bible() {
                     <button type="button" className="bible-pill-btn" onClick={handleShareVerse}>
                       {ui.share}
                     </button>
+                    <button type="button" className="bible-pill-btn" onClick={() => openCompareVerse(selectedVerse)}>
+                      🔄 {language === 'ru' ? 'Сравнить' : language === 'en' ? 'Compare' : 'Համեմատել'}
+                    </button>
+                    <button type="button" className="bible-pill-btn" onClick={findMatchingSongs}>
+                      🎵 {language === 'ru' ? 'Песни' : language === 'en' ? 'Songs' : 'Երգեր'}
+                    </button>
                   </div>
 
                   <textarea
@@ -1314,8 +1611,8 @@ export default function Bible() {
         </div>
       )}
 
-      {/* Mobile Selected Verse Bottom Action Sheet (Portaled) */}
-      {selectedVerseObj && activeTab === 'read' && createPortal(
+      {/* Mobile Selected Verse Bottom Action Sheet (Portaled, strict mobile <= 900px) */}
+      {isMobileViewport && selectedVerseObj && activeTab === 'read' && createPortal(
         <div className="bible-mobile-sheet">
           <div className="bible-mobile-sheet-head">
             <strong>
@@ -1351,8 +1648,11 @@ export default function Bible() {
             <button type="button" className="bible-pill-btn" onClick={handleShareVerse}>
               {ui.share}
             </button>
-            <button type="button" className="bible-pill-btn" onClick={() => setActiveTab('my')}>
-              {ui.readingPlan}
+            <button type="button" className="bible-pill-btn" onClick={() => openCompareVerse(selectedVerse)}>
+              🔄 {language === 'ru' ? 'Переводы' : language === 'en' ? 'Compare' : 'Համեմատել'}
+            </button>
+            <button type="button" className="bible-pill-btn" onClick={() => startAudioRead(selectedVerse)}>
+              🔊 {language === 'ru' ? 'Слушать' : language === 'en' ? 'Listen' : 'Լսել'}
             </button>
           </div>
           <div className="bible-mobile-note-row">
@@ -1448,6 +1748,45 @@ export default function Bible() {
           <button type="button" className="bible-sheet-close" onClick={() => setActiveMeasure(null)}>
             ✕
           </button>
+        </div>,
+        document.body
+      )}
+
+      {/* Compare Translations Modal (Portaled) */}
+      {showCompareModal && createPortal(
+        <div className="bible-modal-backdrop" onClick={() => setShowCompareModal(false)}>
+          <div className="bible-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="bible-modal-head">
+              <h3>
+                {getBookName(bookId, language)} {chapter}:{selectedVerse || 1} —{' '}
+                {language === 'ru' ? 'Сравнение переводов' : language === 'en' ? 'Compare Translations' : 'Թարգմանությունների համեմատություն'}
+              </h3>
+              <button type="button" className="bible-sheet-close" onClick={() => setShowCompareModal(false)}>
+                ✕
+              </button>
+            </div>
+            {loadingCompare ? (
+              <div className="bible-loading">
+                <div className="bible-skeleton-line" />
+                <div className="bible-skeleton-line short" />
+                <div className="bible-skeleton-line" />
+              </div>
+            ) : compareItems.length === 0 ? (
+              <p className="bible-empty-copy">Չհաջողվեց բեռնել համեմատությունը</p>
+            ) : (
+              <div className="bible-compare-list">
+                {compareItems.map((item) => (
+                  <div key={item.id} className="bible-compare-card">
+                    <div className="bible-compare-head">
+                      <span className="bible-badge-pill">{item.short}</span>
+                      <strong>{item.name}</strong>
+                    </div>
+                    <p>{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>,
         document.body
       )}
