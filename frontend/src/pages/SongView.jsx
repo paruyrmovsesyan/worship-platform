@@ -1329,7 +1329,7 @@ export default function SongView() {
     if (!chordElement) return;
 
     const chordText = (chordElement.textContent || '').trim();
-    if (!chordText) return;
+    if (!chordText || !/^[A-G]/i.test(chordText)) return;
 
     const now = Date.now();
 
@@ -1718,7 +1718,12 @@ export default function SongView() {
                   {sec.bars.map((bar, bIdx) => (
                     <div key={bIdx} className="sv-chart-bar-row">
                       {bar.map((ch, kIdx) => (
-                        <span key={kIdx} className="chord sv-chart-chord-pill">{ch}</span>
+                        <span
+                          key={kIdx}
+                          className={`${/^[A-G]/i.test(String(ch).trim()) ? 'chord ' : ''}sv-chart-chord-pill`}
+                        >
+                          {ch}
+                        </span>
                       ))}
                     </div>
                   ))}

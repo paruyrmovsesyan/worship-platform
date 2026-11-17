@@ -189,7 +189,10 @@ function PianoDiagram({ chord }) {
 
     // Parse main chord root
     const rootMatch = mainChord.match(/^([A-G](?:#|b)?)/i);
-    const rootIndex = noteIndex(rootMatch ? rootMatch[1] : 'C');
+    if (!rootMatch) return new Set([0, 4, 7]);
+
+    const normalizedRoot = rootMatch[1].charAt(0).toUpperCase() + rootMatch[1].slice(1);
+    const rootIndex = noteIndex(normalizedRoot);
     if (rootIndex >= 0) {
       const qualityStr = mainChord.slice(rootMatch[0].length).toLowerCase();
       const isMinor = qualityStr.startsWith('m') && !qualityStr.startsWith('maj');
@@ -240,7 +243,8 @@ function PianoDiagram({ chord }) {
 
     // Slash Bass Note e.g. D/F# -> F#
     if (bassNote) {
-      const bassIndex = noteIndex(bassNote);
+      const normalizedBass = bassNote.charAt(0).toUpperCase() + bassNote.slice(1);
+      const bassIndex = noteIndex(normalizedBass);
       if (bassIndex >= 0) {
         activeSet.add(bassIndex);
       }
@@ -285,7 +289,7 @@ export default function ChordDiagramPopover({ chord, position, onMouseEnter, onM
     } catch {}
   };
 
-  if (!chord || !position) return null;
+  if (!chord || !position || !/^[A-G]/i.test(String(chord).trim())) return null;
 
   return (
     <aside
