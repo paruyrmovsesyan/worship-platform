@@ -175,10 +175,10 @@ function App() {
   const runtimeSurface = isNativeApp
     ? (Capacitor.getPlatform() === 'ios' ? 'ios' : 'android')
     : (isPWA ? 'pwa' : 'web');
+  const location = useLocation();
   const platformAnnouncement = usePlatformAnnouncement(runtimeSurface, API_BASE_URL);
   const isRouteRestricted = matchesRestrictedPage(location.pathname, platformAnnouncement.restrictedPages);
   const { isOffline, canAccessPath } = usePwaOfflineGuard();
-  const location = useLocation();
   const navigate = useNavigate();
   const navigationType = useNavigationType();
   const transitionRef = React.useRef(null);
