@@ -7,7 +7,6 @@ const HEARTBEAT_INTERVAL_MS = 4_000;
 
 export default function NativeRuntimeGuard() {
   const [appStatus, setAppStatus] = useState(null);
-  const [announcementDismissed, setAnnouncementDismissed] = useState(false);
   const [rechecking, setRechecking] = useState(false);
 
   useEffect(() => {
@@ -82,7 +81,6 @@ export default function NativeRuntimeGuard() {
   if (!appStatus) return null;
 
   const isForceUpdate = Boolean(appStatus.version?.force_update);
-  const announcement = appStatus.announcement;
 
   // 1. Maintenance Mode Full-Screen View (Worship obsidian Liquid Glass)
   if (isMaintenance) {
@@ -246,105 +244,6 @@ export default function NativeRuntimeGuard() {
           >
             Թարմացնել Հիմա
           </a>
-        </div>
-      </div>
-    );
-  }
-
-  // 3. In-App Announcement Top Banner (Worship obsidian Liquid Glass capsule)
-  if (announcement && !announcementDismissed) {
-    const accentMap = {
-      critical: { border: 'rgba(255, 69, 58, 0.5)', badge: 'rgba(255, 69, 58, 0.2)', tint: '#ff6961' },
-      warning: { border: 'rgba(247, 181, 0, 0.5)', badge: 'rgba(247, 181, 0, 0.2)', tint: '#f7b500' },
-      success: { border: 'rgba(16, 185, 129, 0.48)', badge: 'rgba(16, 185, 129, 0.2)', tint: '#34d399' },
-      info: { border: 'rgba(0, 212, 255, 0.45)', badge: 'rgba(0, 212, 255, 0.16)', tint: '#7ee8ff' },
-    };
-    const palette = accentMap[announcement.type] || accentMap.info;
-
-    return (
-      <div
-        role="status"
-        style={{
-          position: 'fixed',
-          top: 'max(10px, env(safe-area-inset-top, 10px))',
-          left: '12px',
-          right: '12px',
-          zIndex: 99990,
-          background: 'linear-gradient(160deg, rgba(22, 24, 38, 0.92) 0%, rgba(14, 15, 24, 0.96) 100%)',
-          border: `1px solid ${palette.border}`,
-          color: '#ffffff',
-          borderRadius: '18px',
-          padding: '12px 14px',
-          boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 16px 36px rgba(0, 0, 0, 0.48)',
-          backdropFilter: 'blur(24px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-          animation: 'wpPopIn 240ms cubic-bezier(0.22, 0.61, 0.36, 1) both',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '10px',
-          fontSize: '0.84rem',
-        }}
-      >
-        <div
-          aria-hidden="true"
-          style={{
-            width: '10px',
-            height: '10px',
-            borderRadius: '50%',
-            background: palette.tint,
-            boxShadow: `0 0 10px ${palette.tint}`,
-            flexShrink: 0,
-          }}
-        />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {announcement.title && (
-            <div style={{ fontWeight: 800, marginBottom: '2px', color: palette.tint }}>{announcement.title}</div>
-          )}
-          <div style={{ color: 'rgba(241, 245, 249, 0.92)', lineHeight: 1.4 }}>{announcement.message}</div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-          {announcement.action_text && announcement.action_url && (
-            <a
-              href={announcement.action_url}
-              style={{
-                background: palette.badge,
-                border: `1px solid ${palette.border}`,
-                color: '#ffffff',
-                padding: '7px 12px',
-                borderRadius: '999px',
-                fontWeight: 700,
-                fontSize: '0.78rem',
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {announcement.action_text}
-            </a>
-          )}
-          {announcement.dismissible && (
-            <button
-              type="button"
-              onClick={() => setAnnouncementDismissed(true)}
-              aria-label="Փակել հայտարարությունը"
-              style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.14)',
-                color: '#ffffff',
-                width: '28px',
-                height: '28px',
-                borderRadius: '50%',
-                cursor: 'pointer',
-                fontSize: '0.8rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              ✕
-            </button>
-          )}
         </div>
       </div>
     );

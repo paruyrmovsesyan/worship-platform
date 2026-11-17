@@ -781,16 +781,7 @@ function App() {
           <NativeRouteLoader refreshing={nativeRefreshing} />
           <NativeRuntimeGuard />
         </>
-      ) : (
-        <PlatformAnnouncementBanner
-          announcement={platformAnnouncement.announcement}
-          dismissed={platformAnnouncement.dismissed}
-          onDismiss={platformAnnouncement.dismiss}
-          navigate={navigate}
-          isPWA={isPWA}
-          language={language}
-        />
-      )}
+      ) : null}
       <ScrollToTop />
       {renderNav()}
       <main
@@ -804,6 +795,15 @@ function App() {
           padding: isProjectionPage ? 0 : undefined,
         }}
       >
+        {!(isAppMode && isMobile && location.pathname === '/') && !isProjectionPage && (
+          <PlatformAnnouncementBanner
+            announcement={platformAnnouncement.announcement}
+            dismissed={platformAnnouncement.dismissed}
+            onDismiss={platformAnnouncement.dismiss}
+            navigate={navigate}
+            language={language}
+          />
+        )}
         <div ref={transitionRef} className="route-animate">
           <ErrorBoundary>
             {isRouteRestricted ? (

@@ -12,6 +12,7 @@ import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
 import { useHorizontalDragScroll } from '../hooks/useHorizontalDragScroll';
 import { useFeatureFlags } from '../utils/featureFlags';
 import { BetaBadge, ComingSoonBadge } from '../components/BetaBadge';
+import { PlatformAnnouncementBanner } from '../components/PlatformAnnouncementGuard';
 import { getTodayDevotional, TOPIC_COLLECTIONS } from '../utils/devotionalData';
 import { nativeShare } from '../utils/nativeFeatures';
 import './MobileHub.css';
@@ -414,6 +415,7 @@ export default function MobileHub() {
       </div>
 
       <div className="hub-content">
+        <PlatformAnnouncementBanner embedded navigate={navigate} language={language} />
         <div className="hub-today-greeting">
           <div>
             <span className="hub-today-eyebrow">

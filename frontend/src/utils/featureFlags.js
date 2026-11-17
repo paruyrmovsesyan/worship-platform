@@ -11,18 +11,30 @@ let catalogCache = {};
 let announcementRestrictedFeatures = new Set();
 let announcementRestrictedPages = [];
 let activeAnnouncement = null;
+let announcementDismissed = false;
 let isInitialized = false;
 
 export function setAnnouncementRestrictions({ announcement = null, restrictedFeatures = [], restrictedPages = [] } = {}) {
+  const prevKey = activeAnnouncement ? `${activeAnnouncement.title || ''}|${activeAnnouncement.message || ''}` : '';
+  const nextKey = announcement ? `${announcement.title || ''}|${announcement.message || ''}` : '';
   activeAnnouncement = announcement || null;
+  if (!announcement || prevKey !== nextKey) {
+    announcementDismissed = false;
+  }
   announcementRestrictedFeatures = new Set(Array.isArray(restrictedFeatures) ? restrictedFeatures.map(String) : []);
   announcementRestrictedPages = Array.isArray(restrictedPages) ? restrictedPages.map(String) : [];
+  notifyListeners();
+}
+
+export function dismissPlatformAnnouncement() {
+  announcementDismissed = true;
   notifyListeners();
 }
 
 export function getAnnouncementRestrictions() {
   return {
     announcement: activeAnnouncement,
+    dismissed: announcementDismissed,
     restrictedFeatures: Array.from(announcementRestrictedFeatures),
     restrictedPages: [...announcementRestrictedPages],
   };
@@ -90,45 +102,49 @@ export async function fetchPlatformAnnouncement(surface, baseUrl = '') {
 
 export function usePlatformAnnouncement(surface, baseUrl = '') {
   const [state, setState] = useState(() => getAnnouncementRestrictions());
-  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     let active = true;
 
+    const handleStoreChange = () => {
+      if (active) setState(getAnnouncementRestrictions());
+    };
+    listeners.add(handleStoreChange);
+
     const syncFromRemote = () => {
+      if (!surface) return;
       fetchPlatformAnnouncement(surface, baseUrl).then((next) => {
-        if (!active) return;
-        setState(next);
-        if (!next.announcement) setDismissed(false);
+        if (active) setState(next);
       });
     };
 
     syncFromRemote();
-    const timer = window.setInterval(syncFromRemote, 60_000);
+    const timer = surface ? window.setInterval(syncFromRemote, 60_000) : null;
     const onVisible = () => {
       if (document.visibilityState === 'visible') {
         syncFromRemote();
       }
     };
-    document.addEventListener('visibilitychange', onVisible);
+    if (surface) {
+      document.addEventListener('visibilitychange', onVisible);
+    }
     return () => {
       active = false;
-      window.clearInterval(timer);
-      document.removeEventListener('visibilitychange', onVisible);
+      listeners.delete(handleStoreChange);
+      if (timer) window.clearInterval(timer);
+      if (surface) document.removeEventListener('visibilitychange', onVisible);
     };
   }, [surface, baseUrl]);
 
   const recheck = async () => {
-    const next = await fetchPlatformAnnouncement(surface, baseUrl);
+    const next = await fetchPlatformAnnouncement(surface || 'web', baseUrl);
     setState(next);
-    if (!next.announcement) setDismissed(false);
     return next;
   };
 
   return {
     ...state,
-    dismissed,
-    dismiss: () => setDismissed(true),
+    dismiss: dismissPlatformAnnouncement,
     recheck,
   };
 }

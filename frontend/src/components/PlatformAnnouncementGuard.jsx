@@ -1,30 +1,69 @@
 import { useEffect, useState } from 'react';
-import { Capacitor } from '@capacitor/core';
+import { usePlatformAnnouncement } from '../utils/featureFlags';
 
 const BANNER_ACCENTS = {
-  critical: { border: 'rgba(255, 69, 58, 0.5)', badge: 'rgba(255, 69, 58, 0.2)', tint: '#ff6961' },
-  warning: { border: 'rgba(247, 181, 0, 0.5)', badge: 'rgba(247, 181, 0, 0.2)', tint: '#f7b500' },
-  success: { border: 'rgba(16, 185, 129, 0.48)', badge: 'rgba(16, 185, 129, 0.2)', tint: '#34d399' },
-  info: { border: 'rgba(0, 212, 255, 0.45)', badge: 'rgba(0, 212, 255, 0.16)', tint: '#7ee8ff' },
+  critical: {
+    border: 'rgba(255, 69, 58, 0.38)',
+    badge: 'rgba(255, 69, 58, 0.16)',
+    glow: 'rgba(255, 69, 58, 0.16)',
+    tint: '#ff6961',
+    defaultTitle: { am: 'Տեխնիկական հայտարարություն', ru: 'Техническое уведомление', en: 'Service Notice' },
+  },
+  warning: {
+    border: 'rgba(247, 181, 0, 0.38)',
+    badge: 'rgba(247, 181, 0, 0.16)',
+    glow: 'rgba(247, 181, 0, 0.14)',
+    tint: '#f7b500',
+    defaultTitle: { am: 'Ուշադրություն', ru: 'Внимание', en: 'Notice' },
+  },
+  success: {
+    border: 'rgba(16, 185, 129, 0.38)',
+    badge: 'rgba(16, 185, 129, 0.16)',
+    glow: 'rgba(16, 185, 129, 0.14)',
+    tint: '#34d399',
+    defaultTitle: { am: 'Թարմացում', ru: 'Обновление', en: 'Update' },
+  },
+  info: {
+    border: 'rgba(0, 212, 255, 0.36)',
+    badge: 'rgba(0, 212, 255, 0.14)',
+    glow: 'rgba(0, 212, 255, 0.14)',
+    tint: '#7ee8ff',
+    defaultTitle: { am: 'Հայտարարություն', ru: 'Объявление', en: 'Announcement' },
+  },
 };
 
 function resolveLocalizedAnnouncement(announcement, language) {
   if (!announcement) return { title: '', message: '' };
+  let rawTitle = announcement.title || '';
+  let rawMsg = announcement.message || '';
+
   if (language === 'ru') {
-    return {
-      title: announcement.title_ru || announcement.title || '',
-      message: announcement.message_ru || announcement.message || '',
-    };
+    rawTitle = announcement.title_ru || rawTitle;
+    rawMsg = announcement.message_ru || rawMsg;
+  } else if (language === 'en') {
+    rawTitle = announcement.title_en || rawTitle;
+    rawMsg = announcement.message_en || rawMsg;
   }
-  if (language === 'en') {
-    return {
-      title: announcement.title_en || announcement.title || '',
-      message: announcement.message_en || announcement.message || '',
-    };
+
+  rawTitle = String(rawTitle || '').trim();
+  rawMsg = String(rawMsg || '').trim();
+
+  // If the admin pasted a multi-line announcement into message without a separate title,
+  // promote the first short line into the bold card header so the layout stays clean.
+  if (!rawTitle && rawMsg.includes('\n')) {
+    const lines = rawMsg.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (lines.length >= 2 && lines[0].length <= 80) {
+      return {
+        title: lines[0],
+        message: lines.slice(1).join('\n'),
+      };
+    }
   }
+
+  const palette = BANNER_ACCENTS[announcement.type] || BANNER_ACCENTS.info;
   return {
-    title: announcement.title || '',
-    message: announcement.message || '',
+    title: rawTitle || palette.defaultTitle[language] || palette.defaultTitle.am,
+    message: rawMsg,
   };
 }
 
@@ -54,12 +93,24 @@ function useLiveCountdown(targetIso, enabled) {
 }
 
 /**
- * Top announcement banner rendered for Website and PWA (NativeRuntimeGuard handles native banner).
+ * In-flow announcement card rendered cleanly below headers so it never covers navigation or content.
  */
-export function PlatformAnnouncementBanner({ announcement, dismissed, onDismiss, navigate, isPWA, language = 'am' }) {
+export function PlatformAnnouncementBanner({
+  announcement: propAnnouncement,
+  dismissed: propDismissed,
+  onDismiss,
+  navigate,
+  language = 'am',
+  embedded = false,
+}) {
+  const store = usePlatformAnnouncement();
+  const announcement = propAnnouncement !== undefined ? propAnnouncement : store.announcement;
+  const dismissed = propDismissed !== undefined ? propDismissed : store.dismissed;
+  const handleDismiss = onDismiss || store.dismiss;
+
   const countdown = useLiveCountdown(announcement?.schedule_end_at, Boolean(announcement?.show_countdown));
 
-  if (Capacitor.isNativePlatform() || !announcement || dismissed) {
+  if (!announcement || dismissed) {
     return null;
   }
 
@@ -72,66 +123,120 @@ export function PlatformAnnouncementBanner({ announcement, dismissed, onDismiss,
     <div
       role="status"
       style={{
-        position: 'fixed',
-        top: isPWA ? 'max(10px, env(safe-area-inset-top, 10px))' : '74px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: 'min(780px, calc(100vw - 24px))',
-        zIndex: 99980,
-        background: 'linear-gradient(160deg, rgba(18, 20, 32, 0.94) 0%, rgba(11, 12, 20, 0.97) 100%)',
+        width: embedded ? '100%' : 'min(920px, calc(100% - 28px))',
+        margin: embedded ? '0 0 14px 0' : '10px auto 12px',
+        background: `radial-gradient(240px 140px at 0% 0%, ${palette.glow}, transparent 72%), linear-gradient(165deg, rgba(22, 24, 36, 0.95) 0%, rgba(13, 14, 22, 0.98) 100%)`,
         border: `1px solid ${palette.border}`,
         color: '#ffffff',
         borderRadius: '18px',
-        padding: '12px 16px',
-        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 16px 38px rgba(0, 0, 0, 0.42)',
-        backdropFilter: 'blur(22px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(22px) saturate(180%)',
+        padding: '13px 15px',
+        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 12px 28px rgba(0, 0, 0, 0.28)',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '12px',
-        fontSize: '0.86rem',
+        flexDirection: 'column',
+        gap: '7px',
         boxSizing: 'border-box',
       }}
     >
+      {/* Top Header Row: Status Dot + Title on Left, Countdown Pill + Close Button on Right */}
       <div
-        aria-hidden="true"
         style={{
-          width: '10px',
-          height: '10px',
-          borderRadius: '50%',
-          background: palette.tint,
-          boxShadow: `0 0 10px ${palette.tint}`,
-          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px',
         }}
-      />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: localized.title ? '2px' : 0 }}>
-          {localized.title && (
-            <div style={{ fontWeight: 800, color: palette.tint }}>{localized.title}</div>
-          )}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+          <span
+            aria-hidden="true"
+            style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: palette.tint,
+              boxShadow: `0 0 8px ${palette.tint}`,
+              flexShrink: 0,
+            }}
+          />
+          <strong
+            style={{
+              fontWeight: 800,
+              fontSize: '0.88rem',
+              color: palette.tint,
+              lineHeight: 1.25,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {localized.title}
+          </strong>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
           {countdown && (
             <span
               style={{
-                padding: '2px 8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '3px 9px',
                 borderRadius: '999px',
                 background: palette.badge,
                 border: `1px solid ${palette.border}`,
+                color: '#ffffff',
                 fontSize: '0.72rem',
                 fontWeight: 700,
                 fontVariantNumeric: 'tabular-nums',
+                whiteSpace: 'nowrap',
               }}
             >
               ⏳ {countdown}
             </span>
           )}
+          {announcement.dismissible !== false && (
+            <button
+              type="button"
+              onClick={handleDismiss}
+              aria-label="Փակել հայտարարությունը"
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.14)',
+                color: 'rgba(255, 255, 255, 0.85)',
+                width: '26px',
+                height: '26px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                fontSize: '0.76rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+                flexShrink: 0,
+              }}
+            >
+              ✕
+            </button>
+          )}
         </div>
-        <div style={{ color: 'rgba(241, 245, 249, 0.92)', lineHeight: 1.4 }}>{localized.message}</div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-        {announcement.action_text && actionUrl && (
-          isInternal && navigate ? (
+      {/* Full-Width Body Copy */}
+      {localized.message && (
+        <div
+          style={{
+            color: 'rgba(235, 240, 248, 0.9)',
+            fontSize: '0.83rem',
+            lineHeight: 1.48,
+            whiteSpace: 'pre-line',
+          }}
+        >
+          {localized.message}
+        </div>
+      )}
+
+      {/* Optional CTA Row */}
+      {announcement.action_text && actionUrl && (
+        <div style={{ display: 'flex', justifyContent: 'flex-start', paddingTop: '3px' }}>
+          {isInternal && navigate ? (
             <button
               type="button"
               onClick={() => navigate(actionUrl)}
@@ -139,15 +244,14 @@ export function PlatformAnnouncementBanner({ announcement, dismissed, onDismiss,
                 background: palette.badge,
                 border: `1px solid ${palette.border}`,
                 color: '#ffffff',
-                padding: '7px 13px',
+                padding: '6px 13px',
                 borderRadius: '999px',
                 fontWeight: 700,
                 fontSize: '0.78rem',
                 cursor: 'pointer',
-                whiteSpace: 'nowrap',
               }}
             >
-              {announcement.action_text}
+              {announcement.action_text} →
             </button>
           ) : (
             <a
@@ -158,41 +262,18 @@ export function PlatformAnnouncementBanner({ announcement, dismissed, onDismiss,
                 background: palette.badge,
                 border: `1px solid ${palette.border}`,
                 color: '#ffffff',
-                padding: '7px 13px',
+                padding: '6px 13px',
                 borderRadius: '999px',
                 fontWeight: 700,
                 fontSize: '0.78rem',
                 textDecoration: 'none',
-                whiteSpace: 'nowrap',
               }}
             >
-              {announcement.action_text}
+              {announcement.action_text} →
             </a>
-          )
-        )}
-        {announcement.dismissible !== false && (
-          <button
-            type="button"
-            onClick={onDismiss}
-            aria-label="Փակել հայտարարությունը"
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.14)',
-              color: '#ffffff',
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              cursor: 'pointer',
-              fontSize: '0.8rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            ✕
-          </button>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -279,7 +360,7 @@ export function AnnouncementRestrictedView({ announcement, onBackHome, onRecheck
         <h2 style={{ margin: '0 0 10px', fontSize: '1.3rem', fontWeight: 800 }}>
           {localized.title || 'Բաժինը ժամանակավորապես սահմանափակված է'}
         </h2>
-        <p style={{ margin: '0 0 22px', color: 'rgba(226, 232, 240, 0.8)', fontSize: '0.94rem', lineHeight: 1.55 }}>
+        <p style={{ margin: '0 0 22px', color: 'rgba(226, 232, 240, 0.8)', fontSize: '0.94rem', lineHeight: 1.55, whiteSpace: 'pre-line' }}>
           {localized.message || 'Այս բաժինը ժամանակավորապես անհասանելի է՝ համակարգի վերազինման և թարմացման նպատակներով։'}
         </p>
 
