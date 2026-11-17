@@ -5,7 +5,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useIsAppMode } from '../hooks/useIsPWA';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { getLocalizedTitle } from '../utils/titleParser';
-import { APP_THEMES, applyAppTheme, getStoredAppTheme } from '../utils/appTheme';
+import {
+  APP_THEMES,
+  THEME_STYLES,
+  applyAppTheme,
+  applyThemeStyle,
+  getStoredAppTheme,
+  getStoredThemeStyle
+} from '../utils/appTheme';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import OfflineStorageManager from '../components/OfflineStorageManager';
 import {
@@ -70,6 +77,7 @@ export default function Settings() {
 
   // App Settings States
   const [appTheme, setAppTheme] = useState(getStoredAppTheme);
+  const [themeStyle, setThemeStyle] = useState(getStoredThemeStyle);
   const [keepAwake, setKeepAwake] = useState(localStorage.getItem('keepAwake') === 'true');
   const [reduceMotion, setReduceMotion] = useState(localStorage.getItem('reduceMotion') === 'true');
   const [oledMode, setOledMode] = useState(localStorage.getItem('oledMode') === 'true');
@@ -273,6 +281,13 @@ export default function Settings() {
       }
     }
     applyAppTheme(nextTheme);
+    showMsg(t('settings.app.saved', 'Պահպանված է'));
+  };
+
+  const handleThemeStyleChange = (nextStyle) => {
+    if (nextStyle === themeStyle) return;
+    setThemeStyle(nextStyle);
+    applyThemeStyle(nextStyle);
     showMsg(t('settings.app.saved', 'Պահպանված է'));
   };
 
@@ -723,6 +738,39 @@ export default function Settings() {
                   >
                     <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41" /></svg>
                     <span>{t('settings.app.lightTheme', 'Բաց')}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="app-theme-setting" style={{ marginBottom: '1.5rem' }}>
+                <div className="app-theme-copy">
+                  <strong>{language === 'ru' ? 'Стиль оформления' : language === 'en' ? 'Design Style' : 'Դիզայնի ոճ'}</strong>
+                  <p className="text-muted">
+                    {language === 'ru'
+                      ? 'Worship Classic или тёплая палитра Editorial (Amber).'
+                      : language === 'en'
+                      ? 'Worship Classic or Warm Editorial (Amber) palette.'
+                      : 'Worship Classic կամ տաք Editorial (Amber) ներկապնակ։'}
+                  </p>
+                </div>
+                <div className="app-theme-segmented" role="radiogroup" aria-label="Design Style">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={themeStyle === THEME_STYLES.CLASSIC}
+                    className={themeStyle === THEME_STYLES.CLASSIC ? 'active' : ''}
+                    onClick={() => handleThemeStyleChange(THEME_STYLES.CLASSIC)}
+                  >
+                    <span>Classic</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={themeStyle === THEME_STYLES.EDITORIAL}
+                    className={themeStyle === THEME_STYLES.EDITORIAL ? 'active' : ''}
+                    onClick={() => handleThemeStyleChange(THEME_STYLES.EDITORIAL)}
+                  >
+                    <span style={{ color: themeStyle === THEME_STYLES.EDITORIAL ? '#F7B500' : undefined }}>Warm Amber</span>
                   </button>
                 </div>
               </div>

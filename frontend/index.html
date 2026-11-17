@@ -12,7 +12,9 @@
     <script>
       try {
         const appTheme = localStorage.getItem('theme') === 'light' ? 'light' : 'dark';
+        const themeStyle = localStorage.getItem('themeStyle') === 'editorial' ? 'editorial' : 'classic';
         document.documentElement.dataset.theme = appTheme;
+        document.documentElement.dataset.themeStyle = themeStyle;
         document.documentElement.style.colorScheme = appTheme;
       } catch (_) {}
     </script>

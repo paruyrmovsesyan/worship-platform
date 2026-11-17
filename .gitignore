@@ -20,5 +20,8 @@ social_assets/
 # Server runtime cache files (must never be overwritten by git deploy)
 data/.version_config_runtime_cache.json
 data/.maintenance_git_reset_fixed_*
+data/bible_cache/
+data/bible_user_state.json
+data/church_store.json
 
 

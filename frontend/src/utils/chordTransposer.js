@@ -1,6 +1,6 @@
 const SHARPS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const FLATS = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
-const CHORD_REGEX = /(^|[\s([|])((?:[A-G](?:#|b)?)(?:maj7|maj9|maj|min7|min9|min|m7b5|m7|m9|m|dim7|dim|aug(?:[0-9]+)?|\+(?:[0-9]+)?|sus2|sus4|sus7|sus|add9|add2|add4|add|no5|no3|2|4|5|6|7|9|11|13)?(?:\([#b0-9+\-]+\))?(?:\/[A-G](?:#|b)?)?)(?=[\s)\],:;|]|$)/g;
+const CHORD_REGEX = /(^|[\s([|])((?:[A-G](?:#|b)?)(?:maj7|maj9|maj|min7|min9|min|m7b5|m7|m9|m|dim7|dim|aug(?:[0-9]+)?|\+(?:[0-9]+)?|sus2|sus4|sus7|sus|add9|add2|add4|add|no5|no3|2|4|5|6|7|9|11|13)?(?:\([#b0-9+-]+\))?(?:\/[A-G](?:#|b)?)?)(?=[\s)\],:;|]|$)/g;
 
 export function noteIndex(note) {
   if (note === 'Cb') return 11;
@@ -60,10 +60,43 @@ export function transposeChordText(text = '', semi = 0, useFlats = false) {
   });
 }
 
+export function stripStageNotes(text = '') {
+  if (!text) return '';
+  return String(text)
+    .split('\n')
+    .filter((line) => !line.trimStart().startsWith('!'))
+    .join('\n');
+}
+
+export function renderLyricsWithStageNotes(text = '') {
+  if (!text) return '';
+  return String(text)
+    .split('\n')
+    .map((line) => {
+      const trimmed = line.trimStart();
+      if (trimmed.startsWith('!')) {
+        const note = escapeHtml(trimmed.slice(1).trim());
+        return `<span class="stage-cue-line">🎸 ${note}</span>`;
+      }
+      return escapeHtml(line);
+    })
+    .join('\n');
+}
+
 export function renderWithChords(text = '', semi = 0, useFlats = false) {
   if (!text) return '';
-  const safeText = escapeHtml(transposeChordText(text, semi, useFlats));
-  return safeText.replace(CHORD_REGEX, (match, prefix, chordToken) => {
-    return `${prefix}<span class="chord">${chordToken}</span>`;
-  });
+  return String(text)
+    .split('\n')
+    .map((line) => {
+      const trimmed = line.trimStart();
+      if (trimmed.startsWith('!')) {
+        const note = escapeHtml(trimmed.slice(1).trim());
+        return `<span class="stage-cue-line">🎸 ${note}</span>`;
+      }
+      const safeLine = escapeHtml(transposeChordText(line, semi, useFlats));
+      return safeLine.replace(CHORD_REGEX, (match, prefix, chordToken) => {
+        return `${prefix}<span class="chord">${chordToken}</span>`;
+      });
+    })
+    .join('\n');
 }

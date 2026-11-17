@@ -3,7 +3,13 @@ import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { renderWithChords, transposeRoot } from '../utils/chordTransposer';
+import {
+  renderWithChords,
+  renderLyricsWithStageNotes,
+  stripStageNotes,
+  transposeRoot
+} from '../utils/chordTransposer';
+import SmartMetronome from '../components/SmartMetronome';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { normalizeSavedSongSort, sortSavedSongs } from '../utils/savedSongs';
 import { normalizeSongKey, semitoneOffset, songKeysEqual } from '../utils/songKey';
@@ -241,6 +247,8 @@ export default function SongView() {
   const [isPrintOpen, setIsPrintOpen] = useState(false);
   const [isAIStudioOpen, setIsAIStudioOpen] = useState(false);
   const [stemsOpen, setStemsOpen] = useState(false);
+  const [showToneCapo, setShowToneCapo] = useState(false);
+  const [showInlineMetronome, setShowInlineMetronome] = useState(false);
   const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
   const toolsBtnRef = useRef(null);
   const [toolsMenuPos, setToolsMenuPos] = useState({ top: 80, right: 16 });
@@ -419,14 +427,14 @@ export default function SongView() {
       text += '\n';
 
       if (song.chords) {
-        const rawChords = renderWithChords(song.chords, semi - capo, useFlats).replace(/<[^>]*>?/gm, '');
+        const rawChords = renderWithChords(stripStageNotes(song.chords), semi - capo, useFlats).replace(/<[^>]*>?/gm, '');
         text += `--- ${t('songView.chords', 'Chords')} ---\n`;
         text += rawChords + '\n\n';
       }
 
       if (song.lyrics) {
         text += `--- ${t('songView.lyrics', 'Lyrics')} ---\n`;
-        text += song.lyrics + '\n';
+        text += stripStageNotes(song.lyrics) + '\n';
       }
 
       await navigator.clipboard.writeText(text.trim());
@@ -1495,8 +1503,26 @@ export default function SongView() {
 
       {/* Meta Bar */}
       <div className="sv-meta-row">
-        <div className="sv-meta-pill key-pill">{t('songView.keyPrefix')} {soundingKey || song.song_key || '?'}</div>
-        {Number.parseInt(song.bpm, 10) > 0 && <div className="sv-meta-pill">BPM: {song.bpm}</div>}
+        <button
+          type="button"
+          className={`sv-meta-pill key-pill sv-meta-clickable ${showToneCapo ? 'is-open' : ''}`}
+          onClick={() => setShowToneCapo((v) => !v)}
+          title={t('songView.transpose', 'Տոնայնություն և Կապո')}
+        >
+          <span>{t('songView.keyPrefix')} {soundingKey || song.song_key || '?'}</span>
+          {capo > 0 && <span className="sv-meta-sub">· C{capo}</span>}
+          <span className="sv-meta-caret">{showToneCapo ? '▴' : '▾'}</span>
+        </button>
+        {Number.parseInt(song.bpm, 10) > 0 && (
+          <button
+            type="button"
+            className={`sv-meta-pill sv-meta-clickable ${showInlineMetronome ? 'is-open' : ''}`}
+            onClick={() => setShowInlineMetronome((v) => !v)}
+            title="Smart Metronome"
+          >
+            ♩ {song.bpm} BPM
+          </button>
+        )}
         
         <div className="sv-header-actions" style={{ marginLeft: 'auto' }}>
             {(setlistNavData?.setlist?.id || setlistNavData?.current?.setlist_id) && (
@@ -1568,6 +1594,57 @@ export default function SongView() {
         <button className={`sv-segment ${viewMode === 'both' ? 'active' : ''}`} onClick={() => handleViewModeChange('both')}>{t('songView.bothModes')}</button>
       </div>
 
+      {/* myekklesia-inspired Quick Key & Capo Card */}
+      {showToneCapo && (
+        <section className="sv-tone-capo-card animate-fade-in">
+          <div className="sv-tone-capo-head">
+            <span>{language === 'ru' ? 'ТОН И КАПО' : language === 'en' ? 'KEY & CAPO' : 'ՏՈՆԱՅՆՈՒԹՅՈՒՆ ԵՎ ԿԱՊՈ'}</span>
+            <button type="button" className="sv-tone-reset" onClick={() => { setSemi(0); applyManualCapo(0); }}>
+              {language === 'ru' ? 'Сброс' : language === 'en' ? 'Reset' : 'Վերակայել'}
+            </button>
+          </div>
+          <div className="sv-tone-keys-grid">
+            {KEYS.map((k) => {
+              const isActive = soundingKey ? songKeysEqual(soundingKey, k) : false;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  className={`sv-tone-key-chip ${isActive ? 'active' : ''}`}
+                  onClick={() => handleKeyClick(k)}
+                >
+                  {k}
+                </button>
+              );
+            })}
+          </div>
+          <div className="sv-capo-chips-row">
+            <span className="sv-capo-label">Capo:</span>
+            {[0, 1, 2, 3, 4, 5, 6, 7].map((cVal) => (
+              <button
+                key={cVal}
+                type="button"
+                className={`sv-capo-chip ${capo === cVal ? 'active' : ''}`}
+                onClick={() => applyManualCapo(cVal)}
+              >
+                {cVal === 0 ? 'Off' : cVal}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Inline Smart Metronome Bar */}
+      {showInlineMetronome && (
+        <div className="sv-inline-metronome-wrap animate-fade-in">
+          <SmartMetronome
+            initialBpm={Number.parseInt(song?.bpm, 10) || 120}
+            compact
+            enableScreenPulse
+          />
+        </div>
+      )}
+
       {/* RehearsalMix & Stems Mixer Panel (Opens when requested via tools menu) */}
       {stemsOpen && isEnabled('rehearsal_stems') && (
         <div className="sv-stage-modules">
@@ -1595,10 +1672,10 @@ export default function SongView() {
           <>
             <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
             <div className="sv-divider"></div>
-            <pre className="lyrics-block">{currentLyrics}</pre>
+            <pre className="lyrics-block" dangerouslySetInnerHTML={{ __html: renderLyricsWithStageNotes(currentLyrics) }} />
           </>
         ) : (
-          <pre className="lyrics-block">{currentLyrics}</pre>
+          <pre className="lyrics-block" dangerouslySetInnerHTML={{ __html: renderLyricsWithStageNotes(currentLyrics) }} />
         )}
       </div>
 

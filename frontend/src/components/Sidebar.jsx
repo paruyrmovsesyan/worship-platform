@@ -96,6 +96,12 @@ export default function Sidebar() {
         <Link to="/friends" onClick={(e) => { if (!guardPath('/friends')) e.preventDefault(); }} className={`sidebar-link ${isActive('/friends') ? 'active' : ''}`}>
           <span className="icon">💬</span> {t('nav.friends', 'Ընկերներ / Չաթ')}
         </Link>
+        <Link to="/bible" onClick={(e) => { if (!guardPath('/bible')) e.preventDefault(); }} className={`sidebar-link ${isActive('/bible') ? 'active' : ''}`}>
+          <span className="icon">📖</span> {t('nav.bible', 'Աստվածաշունչ')}
+        </Link>
+        <Link to="/church" onClick={(e) => { if (!guardPath('/church')) e.preventDefault(); }} className={`sidebar-link ${isActive('/church') ? 'active' : ''}`}>
+          <span className="icon">⛪</span> {t('nav.church', 'Եկեղեցի և Աղոթք')}
+        </Link>
         <Link to="/community" onClick={(e) => { if (!guardPath('/community')) e.preventDefault(); }} className={`sidebar-link ${isActive('/community') ? 'active' : ''}`}>
           <span className="icon">🌐</span> {t('nav.community')}
         </Link>

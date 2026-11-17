@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;0,7..72,700;1,7..72,400&display=swap');
 
 :root {
   color-scheme: dark;
@@ -14,6 +14,7 @@
   
   --color-accent-gold: #3A2DFF;
   --color-accent-cyan: #00D4FF;
+  --color-accent-amber: #F7B500;
   --color-accent-red: #FF4A4A;
   
   --color-accent-gold-glow: rgba(58, 45, 255, 0.15);
@@ -22,6 +23,11 @@
   --glass-bg: rgba(18, 18, 26, 0.7);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-border-hover: rgba(255, 255, 255, 0.15);
+
+  --r-card: 14px;
+  --r-ctl: 10px;
+  --r-pill: 999px;
+  --ease-spring: cubic-bezier(0.2, 1.12, 0.32, 1);
 
   --border-radius-sm: 10px;
   --border-radius-md: 16px;
@@ -38,10 +44,109 @@
   --transition-smooth: all 0.2s ease-out;
 
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-scripture: 'Literata', Georgia, 'Times New Roman', serif;
 
   /* Ambient Glow */
   --glow-color-1: rgba(58, 45, 255, 0.12);
   --glow-color-2: rgba(0, 212, 255, 0.05);
+}
+
+/* ─── WARM EDITORIAL (MYEKKLESIA-INSPIRED AMBER THEME) ─── */
+html[data-theme-style="editorial"] {
+  --color-bg: #141519;
+  --bg-body: #141519;
+  --color-surface: #1E1F25;
+  --color-surface-hover: #2A2C33;
+  --color-text-primary: #F1EFE9;
+  --color-text-secondary: #B6B8BF;
+  --color-text-tertiary: #7D818B;
+  --color-accent-gold: #F7B500;
+  --color-accent-cyan: #F7B500;
+  --color-accent-gold-glow: rgba(247, 181, 0, 0.18);
+  --color-accent-cyan-glow: rgba(247, 181, 0, 0.16);
+  --glass-bg: rgba(30, 31, 37, 0.84);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-hover: rgba(247, 181, 0, 0.35);
+  --glow-color-1: rgba(247, 181, 0, 0.09);
+  --glow-color-2: rgba(247, 181, 0, 0.04);
+  background: #141519 !important;
+  background-color: #141519 !important;
+}
+
+html[data-theme="light"][data-theme-style="editorial"],
+body.light-mode.editorial-theme {
+  --color-bg: #FAF7F1;
+  --bg-body: #FAF7F1;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #EFEFF1;
+  --color-text-primary: #1A1B1E;
+  --color-text-secondary: #5F6167;
+  --color-text-tertiary: #95979E;
+  --color-accent-gold: #B38200;
+  --color-accent-cyan: #D99B00;
+  --color-accent-amber: #F7B500;
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(26, 27, 30, 0.09);
+  --glass-border-hover: rgba(26, 27, 30, 0.18);
+  --glow-color-1: rgba(247, 181, 0, 0.08);
+  --glow-color-2: rgba(46, 86, 212, 0.05);
+  background: #FAF7F1 !important;
+  background-color: #FAF7F1 !important;
+  color: #1A1B1E;
+}
+
+body.editorial-theme #root,
+body.editorial-theme .app-container,
+body.editorial-theme main {
+  background-color: var(--color-bg) !important;
+}
+
+body.editorial-theme .chord {
+  color: #F2B544;
+}
+
+body.light-mode.editorial-theme .chord {
+  color: #A15C00;
+}
+
+body.editorial-theme .mobile-bottom-nav .nav-item.active,
+body.editorial-theme .nav-link.active,
+body.editorial-theme .sidebar-link.active {
+  color: #F7B500;
+}
+
+body.light-mode.editorial-theme .mobile-bottom-nav .nav-item.active,
+body.light-mode.editorial-theme .nav-link.active,
+body.light-mode.editorial-theme .sidebar-link.active {
+  color: #B38200;
+}
+
+body.editorial-theme .btn-primary,
+body.editorial-theme .btn-start {
+  background: #F7B500;
+  color: #231603;
+  box-shadow: 0 8px 24px rgba(247, 181, 0, 0.24);
+}
+
+/* Musician-only stage cues (lines starting with !) */
+.stage-cue-line {
+  display: inline-block;
+  margin: 4px 0;
+  padding: 4px 10px;
+  border-radius: 9px;
+  background: rgba(247, 181, 0, 0.14);
+  border: 1px solid rgba(247, 181, 0, 0.35);
+  color: #f7b500;
+  font-family: var(--font-family);
+  font-size: 0.85em;
+  font-weight: 600;
+  white-space: pre-wrap;
+}
+
+body.light-mode .stage-cue-line {
+  background: rgba(247, 181, 0, 0.16);
+  border-color: rgba(179, 130, 0, 0.35);
+  color: #8a5600;
 }
 
 html {

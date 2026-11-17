@@ -5,6 +5,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { usePageReady } from '../hooks/usePageReady';
 import { fallbackNews, getCachedNewsList, fetchNewsList, formatNewsDate, formatNewsVersion, getNewsImageUrl } from '../utils/news';
+import { getTodayDevotional, TOPIC_COLLECTIONS } from '../utils/devotionalData';
+import { nativeShare } from '../utils/nativeFeatures';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -21,6 +23,9 @@ export default function LandingPage() {
   const hasDemoVideo = false;
   const contentRef = useRef(null);
   const SONGS_PER_PAGE = 9;
+  const todayDevotional = getTodayDevotional();
+  const dailyVerse = todayDevotional.verse;
+  const dailyQuote = todayDevotional.quote;
 
   useEffect(() => {
     let cancelled = false;
@@ -213,6 +218,81 @@ export default function LandingPage() {
               </aside>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Today Editorial Band (myekklesia-inspired) */}
+      <section className="lp-today-section">
+        <div className="lp-today-grid">
+          <div className="lp-votd-card" style={{ background: dailyVerse.gradient }}>
+            <span className="lp-today-kicker">
+              {language === 'ru' ? 'СТИХ ДНЯ' : language === 'en' ? 'VERSE OF THE DAY' : 'ՕՐՎԱ ԽՈՍՔ'}
+            </span>
+            <blockquote className="lp-votd-quote">
+              «{dailyVerse.text[language] || dailyVerse.text.am}»
+            </blockquote>
+            <div className="lp-votd-ref">{dailyVerse.ref[language] || dailyVerse.ref.am}</div>
+            <div className="lp-votd-actions">
+              <button
+                type="button"
+                className="lp-amber-btn"
+                onClick={() => navigate(`/bible?book=${dailyVerse.book}&chapter=${dailyVerse.chapter}&verse=${dailyVerse.verse}`)}
+              >
+                {language === 'ru' ? 'Читать главу' : language === 'en' ? 'Read chapter' : 'Կարդալ գլուխը'}
+              </button>
+              <button
+                type="button"
+                className="lp-ghost-pill"
+                onClick={() =>
+                  nativeShare({
+                    title: dailyVerse.ref[language] || dailyVerse.ref.am,
+                    text: `«${dailyVerse.text[language] || dailyVerse.text.am}» — ${dailyVerse.ref[language] || dailyVerse.ref.am}`,
+                  })
+                }
+              >
+                {language === 'ru' ? 'Поделиться' : language === 'en' ? 'Share' : 'Կիսվել'}
+              </button>
+            </div>
+          </div>
+
+          <div className="lp-today-side">
+            <div className="lp-quote-card">
+              <span className="lp-today-kicker">
+                {language === 'ru' ? 'ЦИТАТА ДНЯ' : language === 'en' ? 'QUOTE OF THE DAY' : 'ՕՐՎԱ ՄԵՋԲԵՐՈՒՄ'}
+              </span>
+              <p className="lp-quote-body">«{dailyQuote.text[language] || dailyQuote.text.am}»</p>
+              <div className="lp-quote-meta">
+                <span>{dailyQuote.author[language] || dailyQuote.author.am} · {dailyQuote.years}</span>
+                <Link to="/bible">{language === 'ru' ? 'Библия →' : language === 'en' ? 'Open Bible →' : 'Բացել Աստվածաշունչը →'}</Link>
+              </div>
+            </div>
+
+            <div className="lp-quick-cards">
+              <Link to="/bible" className="lp-quick-tile">
+                <strong>📖 {language === 'ru' ? 'Библия' : language === 'en' ? 'Bible' : 'Աստվածաշունչ'}</strong>
+                <small>{language === 'ru' ? 'Параллельные переводы, заметки и план чтения' : language === 'en' ? 'Parallel translations, notes & plans' : 'Զուգահեռ թարգմանություններ, նշումներ և պլան'}</small>
+              </Link>
+              <Link to="/church" className="lp-quick-tile">
+                <strong>⛪ {language === 'ru' ? 'Церковь и Молитвы' : language === 'en' ? 'Church & Prayer' : 'Եկեղեցի և Աղոթք'}</strong>
+                <small>{language === 'ru' ? 'Объявления, события и молитвенные нужды' : language === 'en' ? 'Announcements, events & prayer requests' : 'Հայտարարություններ, հավաքներ և աղոթքներ'}</small>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="lp-topics-row">
+          {TOPIC_COLLECTIONS.map((topic) => (
+            <button
+              key={topic.id}
+              type="button"
+              className="lp-topic-pill"
+              onClick={() => navigate(`/bible?book=${topic.book}&chapter=${topic.chapter}`)}
+            >
+              <span className="lp-topic-dot" style={{ background: topic.accent }} />
+              <span>{topic.title[language] || topic.title.am}</span>
+              <small>{topic.verse}</small>
+            </button>
+          ))}
         </div>
       </section>
 

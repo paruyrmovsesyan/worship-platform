@@ -44,11 +44,18 @@ body.light-mode {
   color: #111827;
 }
 
-html[data-theme='light'] body,
-body.light-mode #root,
-body.light-mode .app-container,
-body.light-mode main {
+html[data-theme='light']:not([data-theme-style='editorial']) body,
+body.light-mode:not(.editorial-theme) #root,
+body.light-mode:not(.editorial-theme) .app-container,
+body.light-mode:not(.editorial-theme) main {
   background-color: #f4f7fb !important;
+}
+
+html[data-theme='light'][data-theme-style='editorial'] body,
+body.light-mode.editorial-theme #root,
+body.light-mode.editorial-theme .app-container,
+body.light-mode.editorial-theme main {
+  background-color: #FAF7F1 !important;
 }
 
 body.light-mode::before {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useId } from 'react';
+import { useState, useEffect, useCallback, useId, useRef } from 'react';
 import { metronomeEngine } from '../utils/metronomeEngine';
 import { useFeatureFlags } from '../utils/featureFlags';
 import { BetaBadge } from './BetaBadge';
@@ -94,10 +94,36 @@ export default function SmartMetronome({
   }, []);
 
   const handleStepBpm = useCallback((step) => {
-    const newBpm = Math.max(30, Math.min(280, bpm + step));
+    const current = metronomeEngine.bpm || bpm;
+    const newBpm = Math.max(30, Math.min(280, current + step));
     metronomeEngine.setBpm(newBpm);
     setBpm(newBpm);
   }, [bpm]);
+
+  const holdTimerRef = useRef(null);
+  const holdIntervalRef = useRef(null);
+
+  const stopHoldBpm = useCallback(() => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    if (holdIntervalRef.current) {
+      clearInterval(holdIntervalRef.current);
+      holdIntervalRef.current = null;
+    }
+  }, []);
+
+  const startHoldBpm = useCallback((step) => {
+    stopHoldBpm();
+    holdTimerRef.current = setTimeout(() => {
+      holdIntervalRef.current = setInterval(() => {
+        handleStepBpm(step);
+      }, 90);
+    }, 320);
+  }, [handleStepBpm, stopHoldBpm]);
+
+  useEffect(() => () => stopHoldBpm(), [stopHoldBpm]);
 
   const handleTap = useCallback(() => {
     const newBpm = metronomeEngine.tapTempo();
@@ -159,7 +185,11 @@ export default function SmartMetronome({
             type="button"
             className="metronome-step-btn"
             onClick={() => handleStepBpm(-1)}
-            title="-1 BPM"
+            onPointerDown={() => startHoldBpm(-1)}
+            onPointerUp={stopHoldBpm}
+            onPointerLeave={stopHoldBpm}
+            onPointerCancel={stopHoldBpm}
+            title="-1 BPM (պահեք՝ արագ փոխելու համար)"
             aria-label="Decrease BPM"
           >
             −
@@ -174,7 +204,11 @@ export default function SmartMetronome({
             type="button"
             className="metronome-step-btn"
             onClick={() => handleStepBpm(1)}
-            title="+1 BPM"
+            onPointerDown={() => startHoldBpm(1)}
+            onPointerUp={stopHoldBpm}
+            onPointerLeave={stopHoldBpm}
+            onPointerCancel={stopHoldBpm}
+            title="+1 BPM (պահեք՝ արագ փոխելու համար)"
             aria-label="Increase BPM"
           >
             +

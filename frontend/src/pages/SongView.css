@@ -1780,3 +1780,148 @@ body.is-app .song-view-page .sv-pwa-media-section {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* ── myekklesia-inspired Quick Key & Capo Card ── */
+.sv-meta-clickable {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.16s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.sv-meta-clickable:active {
+  transform: scale(0.96);
+}
+
+.sv-meta-clickable.is-open {
+  border-color: #f7b500;
+  color: #f7b500;
+}
+
+.sv-meta-sub {
+  opacity: 0.82;
+  font-size: 0.74rem;
+}
+
+.sv-meta-caret {
+  font-size: 0.68rem;
+  opacity: 0.75;
+}
+
+.sv-tone-capo-card {
+  margin: 0 12px 14px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.25);
+}
+
+.sv-tone-capo-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.sv-tone-capo-head span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #f7b500;
+}
+
+.sv-tone-reset {
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sv-tone-keys-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.sv-tone-key-chip {
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.14s ease, background 0.15s ease;
+}
+
+.sv-tone-key-chip:active {
+  transform: scale(0.95);
+}
+
+.sv-tone-key-chip.active {
+  background: #f7b500;
+  color: #231603;
+  border-color: #f7b500;
+}
+
+.sv-capo-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.sv-capo-chips-row::-webkit-scrollbar {
+  display: none;
+}
+
+.sv-capo-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.sv-capo-chip {
+  height: 30px;
+  min-width: 34px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sv-capo-chip.active {
+  background: rgba(247, 181, 0, 0.16);
+  border-color: #f7b500;
+  color: #f7b500;
+}
+
+.sv-inline-metronome-wrap {
+  margin: 0 12px 14px;
+}
+
+body.light-mode .sv-tone-key-chip,
+body.light-mode .sv-capo-chip {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+body.light-mode .sv-tone-key-chip.active {
+  background: #f7b500;
+  color: #231603;
+}
+
+

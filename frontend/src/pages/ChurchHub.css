@@ -1,0 +1,514 @@
+.church-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 20px 20px 120px;
+  color: var(--color-text-primary);
+}
+
+body.is-app .church-page {
+  padding: 14px 14px calc(var(--bottom-nav-total-offset, 88px) + 40px);
+}
+
+.church-hero-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.church-hero-bar h1 {
+  margin: 0 0 4px;
+  font-size: 1.65rem;
+}
+
+.church-hero-bar p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.church-segmented {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  border: 1px solid var(--glass-border);
+}
+
+.church-segmented button {
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.church-segmented button.active {
+  background: #f7b500;
+  color: #231603;
+}
+
+.church-toast {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(247, 181, 0, 0.14);
+  border: 1px solid rgba(247, 181, 0, 0.35);
+  color: #f7b500;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.church-guest-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--glass-border);
+}
+
+.church-feed-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.church-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.church-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  border: 1px solid var(--glass-border);
+  color: var(--color-text-primary);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.church-pill.small {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 0.8rem;
+}
+
+.church-pill.active {
+  border-color: #f7b500;
+  background: rgba(247, 181, 0, 0.14);
+  color: #f7b500;
+}
+
+.church-amber-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: none;
+  background: #f7b500;
+  color: #231603;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.church-compose-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.church-card {
+  background: var(--color-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.church-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.church-type-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.church-type-selector button {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.church-type-selector button.active {
+  background: rgba(247, 181, 0, 0.15);
+  border-color: #f7b500;
+  color: #f7b500;
+}
+
+.church-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.church-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.church-composer-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.church-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.church-posts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.church-post-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.church-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(247, 181, 0, 0.14);
+  color: #f7b500;
+}
+
+.church-type-badge.event {
+  background: rgba(56, 189, 248, 0.14);
+  color: #38bdf8;
+}
+
+.church-type-badge.prayer {
+  background: rgba(52, 211, 153, 0.14);
+  color: #34d399;
+}
+
+.church-post-meta {
+  font-size: 0.78rem;
+  color: var(--color-text-tertiary);
+}
+
+.church-post-title {
+  margin: 0 0 6px;
+  font-size: 1.04rem;
+}
+
+.church-post-body {
+  margin: 0 0 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.church-event-chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+}
+
+.church-post-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.church-pray-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.church-pray-btn.active {
+  border-color: #34d399;
+  background: rgba(52, 211, 153, 0.16);
+  color: #34d399;
+}
+
+.church-del-btn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 74, 74, 0.3);
+  background: rgba(255, 74, 74, 0.1);
+  color: #ff6b6b;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Directory */
+.church-directory-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.church-search-inp {
+  flex: 1;
+  min-width: 220px;
+}
+
+.church-invite-join {
+  display: flex;
+  gap: 6px;
+}
+
+.church-invite-join .church-input {
+  width: 140px;
+}
+
+.church-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.church-dir-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.church-dir-head h3 {
+  margin: 0;
+  font-size: 1.04rem;
+}
+
+.church-member-badge {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.church-dir-meta {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+}
+
+.church-dir-desc {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin: 8px 0 14px;
+}
+
+.church-pulse-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.church-pulse-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.church-pulse-header h2 {
+  margin: 6px 0 4px;
+}
+
+.church-pulse-header p {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.church-invite-box {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(247, 181, 0, 0.12);
+  border: 1px solid rgba(247, 181, 0, 0.35);
+  text-align: center;
+}
+
+.church-invite-box small {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+}
+
+.church-invite-box strong {
+  font-size: 1.15rem;
+  color: #f7b500;
+  letter-spacing: 0.08em;
+}
+
+.church-members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.church-member-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+}
+
+.church-role-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.74rem;
+}
+
+.church-member-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.church-role-select {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.church-empty {
+  text-align: center;
+  padding: 28px 18px;
+}
+
+.church-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  background: rgba(0, 0, 0, 0.68);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.church-modal {
+  width: min(100%, 460px);
+  background: var(--color-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.church-modal h3 {
+  margin: 0 0 4px;
+}
+
+.church-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+body.light-mode .church-input,
+body.light-mode .church-pray-btn,
+body.light-mode .church-member-row {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+@media (max-width: 640px) {
+  .church-two-col {
+    grid-template-columns: 1fr;
+  }
+}

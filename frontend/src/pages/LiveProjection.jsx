@@ -192,6 +192,7 @@ export default function LiveProjection() {
       lines.forEach((line) => {
         const trimmed = line.trim();
         if (!trimmed) return;
+        if (trimmed.startsWith('!')) return; // Musician-only stage cue hidden from hall screen
         if (isPureChordLine(trimmed)) return;
 
         // Check if bracket header like [Տուն 1] or [Կրկներգ]

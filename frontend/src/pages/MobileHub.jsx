@@ -12,6 +12,8 @@ import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
 import { useHorizontalDragScroll } from '../hooks/useHorizontalDragScroll';
 import { useFeatureFlags } from '../utils/featureFlags';
 import { BetaBadge, ComingSoonBadge } from '../components/BetaBadge';
+import { getTodayDevotional, TOPIC_COLLECTIONS } from '../utils/devotionalData';
+import { nativeShare } from '../utils/nativeFeatures';
 import './MobileHub.css';
 
 function getTodayStr() {
@@ -79,12 +81,22 @@ export default function MobileHub() {
   const [allSongs, setAllSongs] = useState([]);
   const [recentSongs, setRecentSongs] = useState([]);
   const [upcomingSetlist, setUpcomingSetlist] = useState(null);
+  const [userSetlists, setUserSetlists] = useState([]);
+  const [selectedDayStr, setSelectedDayStr] = useState(getTodayStr);
   const [favorites, setFavorites] = useState([]);
   const [newsItems, setNewsItems] = useState(() => getCachedNewsList(language));
   const [logoSrc, setLogoSrc] = useState('/icon-192-v7.png');
   const { guardPath } = usePwaOfflineGuard();
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [lastSyncAt, setLastSyncAt] = useState('');
+  const [lastBibleRead] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('wp_bible_last_read_v1') || 'null');
+    } catch {
+      return null;
+    }
+  });
+  const todayDevotional = useMemo(() => getTodayDevotional(), []);
 
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
@@ -196,12 +208,14 @@ export default function MobileHub() {
         .then(data => {
           if (cancelled || !data) return;
           if (Array.isArray(data) && data.length > 0) {
+            setUserSetlists(data);
             const todayStr = getTodayStr();
             const upcoming = data
               .filter(s => s.service_date && String(s.service_date).slice(0, 10) >= todayStr && s.status !== 'archived')
               .sort((a, b) => String(a.service_date).localeCompare(String(b.service_date)))[0];
             setUpcomingSetlist(upcoming || null);
           } else if (Array.isArray(data)) {
+            setUserSetlists([]);
             setUpcomingSetlist(null);
           }
         })
@@ -303,6 +317,53 @@ export default function MobileHub() {
     language
   ).slice(0, 10), [favorites, language]);
 
+  const greetingText = useMemo(() => {
+    const h = new Date().getHours();
+    const firstName = (user?.name || user?.username || '').split(' ')[0];
+    const greet =
+      language === 'ru'
+        ? h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер'
+        : language === 'en'
+        ? h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'
+        : h < 12 ? 'Բարի լույս' : h < 18 ? 'Բարի օր' : 'Բարի երեկո';
+    return firstName ? `${greet}, ${firstName}` : greet;
+  }, [user, language]);
+
+  const weekDays = useMemo(() => {
+    const today = new Date();
+    const dayIdx = today.getDay();
+    const mondayOffset = dayIdx === 0 ? -6 : 1 - dayIdx;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + mondayOffset);
+    const shortDays =
+      language === 'ru'
+        ? ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+        : language === 'en'
+        ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        : ['Երկ', 'Երք', 'Չոր', 'Հնգ', 'Ուր', 'Շբթ', 'Կիր'];
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${y}-${m}-${day}`;
+      const daySetlists = userSetlists.filter((s) => String(s.service_date || '').slice(0, 10) === dateStr);
+      return {
+        dateStr,
+        dayNum: d.getDate(),
+        label: shortDays[i],
+        isToday: dateStr === getTodayStr(),
+        hasService: daySetlists.length > 0,
+        setlists: daySetlists,
+      };
+    });
+  }, [language, userSetlists]);
+
+  const selectedDayInfo = weekDays.find((d) => d.dateStr === selectedDayStr) || weekDays.find((d) => d.isToday);
+  const dailyVerse = todayDevotional.verse;
+  const dailyQuote = todayDevotional.quote;
+
   return (
     <div className="mobile-hub animate-fade-in">
       <div className="hub-header">
@@ -353,6 +414,97 @@ export default function MobileHub() {
       </div>
 
       <div className="hub-content">
+        <div className="hub-today-greeting">
+          <div>
+            <span className="hub-today-eyebrow">
+              {language === 'ru' ? 'СЕГОДНЯ' : language === 'en' ? 'TODAY' : 'ԱՅՍՕՐ'}
+            </span>
+            <h1 className="hub-today-title">{greetingText}</h1>
+          </div>
+          {lastBibleRead?.book && (
+            <button
+              type="button"
+              className="hub-resume-pill"
+              onClick={() =>
+                guardPath('/bible', () =>
+                  navigate(`/bible?book=${lastBibleRead.book}&chapter=${lastBibleRead.chapter}&tr=${lastBibleRead.translation || ''}`),
+                )
+              }
+            >
+              📖 {lastBibleRead.bookName} {lastBibleRead.chapter}
+            </button>
+          )}
+        </div>
+
+        {/* Verse of the Day Hero Card (myekklesia-inspired) */}
+        <section className="hub-votd-card" style={{ background: dailyVerse.gradient }}>
+          <span className="hub-votd-label">
+            {language === 'ru' ? 'СТИХ ДНЯ' : language === 'en' ? 'VERSE OF THE DAY' : 'ՕՐՎԱ ԽՈՍՔ'}
+          </span>
+          <blockquote className="hub-votd-text">
+            «{dailyVerse.text[language] || dailyVerse.text.am}»
+          </blockquote>
+          <div className="hub-votd-ref">{dailyVerse.ref[language] || dailyVerse.ref.am}</div>
+          <div className="hub-votd-actions">
+            <button
+              type="button"
+              className="hub-votd-btn-primary"
+              onClick={() =>
+                guardPath('/bible', () =>
+                  navigate(`/bible?book=${dailyVerse.book}&chapter=${dailyVerse.chapter}&verse=${dailyVerse.verse}`),
+                )
+              }
+            >
+              {language === 'ru' ? 'Читать главу' : language === 'en' ? 'Read chapter' : 'Կարդալ գլուխը'}
+            </button>
+            <button
+              type="button"
+              className="hub-votd-btn-ghost"
+              onClick={() =>
+                nativeShare({
+                  title: dailyVerse.ref[language] || dailyVerse.ref.am,
+                  text: `«${dailyVerse.text[language] || dailyVerse.text.am}» — ${dailyVerse.ref[language] || dailyVerse.ref.am}`,
+                })
+              }
+            >
+              {language === 'ru' ? 'Поделиться' : language === 'en' ? 'Share' : 'Կիսվել'}
+            </button>
+          </div>
+        </section>
+
+        {/* Weekly Calendar Strip */}
+        <section className="hub-week-card">
+          <div className="hub-week-strip">
+            {weekDays.map((day) => (
+              <button
+                key={day.dateStr}
+                type="button"
+                className={`hub-week-day ${day.isToday ? 'is-today' : ''} ${selectedDayStr === day.dateStr ? 'is-selected' : ''}`}
+                onClick={() => setSelectedDayStr(day.dateStr)}
+              >
+                <span className="hub-week-name">{day.label}</span>
+                <strong className="hub-week-num">{day.dayNum}</strong>
+                {day.hasService && <span className="hub-week-dot" />}
+              </button>
+            ))}
+          </div>
+          {selectedDayInfo?.setlists?.length > 0 ? (
+            <div className="hub-week-detail">
+              <span>🎵 {selectedDayInfo.setlists[0].name}</span>
+              <button
+                type="button"
+                onClick={() =>
+                  guardPath(`/setlists/${selectedDayInfo.setlists[0].id}`, () =>
+                    navigate(`/setlists/${selectedDayInfo.setlists[0].id}`),
+                  )
+                }
+              >
+                Բացել →
+              </button>
+            </div>
+          ) : null}
+        </section>
+
         {isOffline && (
           <div className="hub-offline-card">
             <div className="hub-offline-head">
@@ -423,6 +575,14 @@ export default function MobileHub() {
             <button className="hub-cat-card" onClick={() => guardPath('/friends', () => navigate('/friends'))}>
               <div className="cat-icon bg-green"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
               <span className="cat-text">{t('hub.categories.teams')}</span>
+            </button>
+            <button className="hub-cat-card" onClick={() => guardPath('/bible', () => navigate('/bible'))}>
+              <div className="cat-icon bg-amber"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></div>
+              <span className="cat-text">{language === 'ru' ? 'Библия' : language === 'en' ? 'Bible' : 'Աստվածաշունչ'}</span>
+            </button>
+            <button className="hub-cat-card" onClick={() => guardPath('/church', () => navigate('/church'))}>
+              <div className="cat-icon bg-indigo"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v5"/><path d="M9.5 4.5h5"/><path d="M4 22V11l8-5 8 5v11"/><path d="M9 22v-6h6v6"/></svg></div>
+              <span className="cat-text">{language === 'ru' ? 'Церковь' : language === 'en' ? 'Church' : 'Եկեղեցի և Աղոթք'}</span>
             </button>
             <button className="hub-cat-card" onClick={() => guardPath('/song-request', () => navigate('/song-request'))}>
               <div className="cat-icon bg-orange"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></div>
@@ -604,6 +764,49 @@ export default function MobileHub() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Thematic Topics & Quote of the Day (myekklesia-inspired) */}
+        <div className="section-block">
+          <div className="section-title">
+            <h3>{language === 'ru' ? 'Темы дня' : language === 'en' ? 'Daily Topics' : 'Օրվա թեմաներ'}</h3>
+          </div>
+          <div className="hub-topics-scroll">
+            {TOPIC_COLLECTIONS.map((topic) => (
+              <button
+                key={topic.id}
+                type="button"
+                className="hub-topic-card"
+                onClick={() => guardPath('/bible', () => navigate(`/bible?book=${topic.book}&chapter=${topic.chapter}`))}
+              >
+                <span className="hub-topic-dot" style={{ background: topic.accent }} />
+                <strong>{topic.title[language] || topic.title.am}</strong>
+                <p>{topic.snippet[language] || topic.snippet.am}</p>
+                <small>{topic.verse}</small>
+              </button>
+            ))}
+          </div>
+
+          <div className="hub-quote-card">
+            <span className="hub-quote-label">
+              {language === 'ru' ? 'ЦИТАТА ДНЯ' : language === 'en' ? 'QUOTE OF THE DAY' : 'ՕՐՎԱ ՄԵՋԲԵՐՈՒՄ'}
+            </span>
+            <p className="hub-quote-text">«{dailyQuote.text[language] || dailyQuote.text.am}»</p>
+            <div className="hub-quote-foot">
+              <span>{dailyQuote.author[language] || dailyQuote.author.am} · {dailyQuote.years}</span>
+              <button
+                type="button"
+                onClick={() =>
+                  nativeShare({
+                    title: dailyQuote.author[language] || dailyQuote.author.am,
+                    text: `«${dailyQuote.text[language] || dailyQuote.text.am}» — ${dailyQuote.author[language] || dailyQuote.author.am}`,
+                  })
+                }
+              >
+                {language === 'ru' ? 'Поделиться' : language === 'en' ? 'Share' : 'Կիսվել'}
+              </button>
+            </div>
           </div>
         </div>
 

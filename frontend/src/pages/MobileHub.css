@@ -366,6 +366,276 @@ body.light-mode .hub-search-clear-btn {
 .bg-purple { background: linear-gradient(135deg, #B100FF, #8E2DE2); }
 .bg-orange { background: linear-gradient(135deg, #FF512F, #DD2476); }
 .bg-transpose { background: linear-gradient(135deg, #15b8a6, #2563eb); }
+.bg-amber { background: linear-gradient(135deg, #f7b500, #d97706); }
+.bg-indigo { background: linear-gradient(135deg, #6366f1, #2e56d4); }
+
+/* ── Today / Daily Devotional Blocks (myekklesia-inspired) ── */
+.hub-today-greeting {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.hub-today-eyebrow {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #f7b500;
+  margin-bottom: 2px;
+}
+
+.hub-today-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.hub-resume-pill {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hub-votd-card {
+  position: relative;
+  border-radius: 18px;
+  padding: 18px 16px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f7f4ed;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+}
+
+.hub-votd-label {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #f7b500;
+  margin-bottom: 8px;
+}
+
+.hub-votd-text {
+  margin: 0 0 8px;
+  font-family: var(--font-scripture, Georgia, serif);
+  font-size: 1.08rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.hub-votd-ref {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.78);
+  margin-bottom: 14px;
+}
+
+.hub-votd-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hub-votd-btn-primary {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: none;
+  background: #f7b500;
+  color: #231603;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hub-votd-btn-ghost {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hub-week-card {
+  background: var(--color-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 10px 10px 12px;
+  margin-bottom: 18px;
+}
+
+.hub-week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.hub-week-day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 2px 9px;
+  border-radius: 11px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.hub-week-day.is-today {
+  border-color: rgba(247, 181, 0, 0.45);
+}
+
+.hub-week-day.is-selected {
+  background: #f7b500;
+  color: #231603;
+}
+
+.hub-week-name {
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.hub-week-num {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.hub-week-dot {
+  position: absolute;
+  bottom: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #00d4ff;
+}
+
+.hub-week-day.is-selected .hub-week-dot {
+  background: #231603;
+}
+
+.hub-week-detail {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+}
+
+.hub-week-detail button {
+  border: none;
+  background: transparent;
+  color: #f7b500;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hub-topics-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 14px;
+  scrollbar-width: none;
+}
+
+.hub-topics-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.hub-topic-card {
+  flex: 0 0 185px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--glass-border);
+  color: var(--color-text-primary);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.hub-topic-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.hub-topic-card strong {
+  font-size: 0.88rem;
+}
+
+.hub-topic-card p {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--color-text-secondary);
+  line-height: 1.35;
+}
+
+.hub-topic-card small {
+  color: #f7b500;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.hub-quote-card {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--glass-border);
+}
+
+.hub-quote-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #f7b500;
+  margin-bottom: 6px;
+}
+
+.hub-quote-text {
+  margin: 0 0 10px;
+  font-family: var(--font-scripture, Georgia, serif);
+  font-size: 0.94rem;
+  line-height: 1.5;
+}
+
+.hub-quote-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+}
+
+.hub-quote-foot button {
+  border: none;
+  background: transparent;
+  color: #f7b500;
+  font-weight: 700;
+  cursor: pointer;
+}
 
 /* ── Upcoming Card ── */
 .upcoming-card {

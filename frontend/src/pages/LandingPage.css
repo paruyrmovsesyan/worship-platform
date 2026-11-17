@@ -282,6 +282,196 @@
 .arrow-btn:hover { background: rgba(255,255,255,0.12); }
 
 /* ══════════════════════════════════════════════
+   TODAY EDITORIAL BAND (myekklesia-inspired)
+   ══════════════════════════════════════════════ */
+.lp-today-section {
+  max-width: 1200px;
+  margin: 0 auto 36px;
+  padding: 0 40px;
+}
+
+.lp-today-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.lp-votd-card {
+  border-radius: 18px;
+  padding: 26px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.lp-today-kicker {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #f7b500;
+  margin-bottom: 10px;
+}
+
+.lp-votd-quote {
+  margin: 0 0 10px;
+  font-family: var(--font-scripture, Georgia, serif);
+  font-size: 1.45rem;
+  line-height: 1.42;
+  color: #f7f4ed;
+}
+
+.lp-votd-ref {
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.78);
+  margin-bottom: 18px;
+}
+
+.lp-votd-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lp-amber-btn {
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: none;
+  background: #f7b500;
+  color: #231603;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lp-ghost-pill {
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lp-today-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lp-quote-card {
+  border-radius: 16px;
+  padding: 18px 20px;
+  background: var(--color-surface, #141519);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+}
+
+.lp-quote-body {
+  margin: 0 0 10px;
+  font-family: var(--font-scripture, Georgia, serif);
+  font-size: 1.02rem;
+  line-height: 1.48;
+  color: var(--color-text-primary, #f1efe9);
+}
+
+.lp-quote-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary, #b6b8bf);
+}
+
+.lp-quote-meta a {
+  color: #f7b500;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.lp-quick-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.lp-quick-tile {
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--color-surface, #141519);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+  text-decoration: none;
+  color: var(--color-text-primary, #fff);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: border-color 0.2s ease, transform 0.18s ease;
+}
+
+.lp-quick-tile:hover {
+  border-color: rgba(247, 181, 0, 0.45);
+  transform: translateY(-2px);
+}
+
+.lp-quick-tile strong {
+  font-size: 0.94rem;
+}
+
+.lp-quick-tile small {
+  color: var(--color-text-secondary, #a0a0b0);
+  font-size: 0.78rem;
+  line-height: 1.38;
+}
+
+.lp-topics-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lp-topic-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--color-surface, #141519);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+  color: var(--color-text-primary, #fff);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lp-topic-pill small {
+  color: #f7b500;
+  font-weight: 700;
+}
+
+.lp-topic-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+@media (max-width: 900px) {
+  .lp-today-section {
+    padding: 0 20px;
+  }
+  .lp-today-grid,
+  .lp-quick-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ══════════════════════════════════════════════
    MAIN GRID  (Popular Songs + Right Sidebar)
    ══════════════════════════════════════════════ */
 .main-grid {
