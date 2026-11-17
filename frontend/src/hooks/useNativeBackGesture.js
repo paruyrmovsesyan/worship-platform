@@ -364,7 +364,7 @@ export function useNativeBackGesture({ enabled, pathname, navigate, user }) {
     };
 
     const onTouchEnd = event => {
-      if (!tracking || event.changedTouches.length !== 1) return;
+      if (!tracking || !event.changedTouches || event.changedTouches.length !== 1) return;
       const touch = event.changedTouches[0];
       const dx = touch.clientX - startX;
       const dy = touch.clientY - startY;

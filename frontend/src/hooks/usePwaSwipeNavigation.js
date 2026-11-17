@@ -212,7 +212,11 @@ export function usePwaSwipeNavigation({
         stopTracking();
         return;
       }
-      const touch = event.changedTouches[0];
+      const touch = event.changedTouches?.[0] || event.touches?.[0];
+      if (!touch) {
+        stopTracking();
+        return;
+      }
       const dx = touch.clientX - startX;
       const dy = touch.clientY - startY;
       stopTracking();

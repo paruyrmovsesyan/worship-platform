@@ -16,8 +16,45 @@ body.is-native {
   --native-cyan-soft: rgba(0, 212, 255, 0.14);
   --native-cyan-border: rgba(0, 212, 255, 0.34);
   --native-accent-grad: linear-gradient(135deg, #3a2dff 0%, #00d4ff 100%);
+  --wp-ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --wp-ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --wp-ease-spring: cubic-bezier(0.2, 1.12, 0.32, 1);
+  --wp-dur-1: 140ms;
+  --wp-dur-2: 240ms;
+  --wp-dur-3: 340ms;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes wpPopIn {
+  0% { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes wpPopUpIn {
+  0% { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.97); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+@keyframes wpRiseIn {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes wpToastPop {
+  0% { opacity: 0; transform: translate(-50%, -44%) scale(0.94); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes wpBackdropFade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes wpHeartPop {
+  0% { transform: scale(0.84); }
+  55% { transform: scale(1.22); }
+  100% { transform: scale(1); }
 }
 
 body.is-native.oled-mode {
@@ -42,14 +79,223 @@ body.is-native * {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ── Global Native Header Icon Buttons & Scrollbar Discipline ── */
-body.is-native .icon-btn {
-  border-radius: 12px;
-  transition: transform 0.14s ease, background-color 0.18s ease, border-color 0.18s ease;
+/* ── Global Native Buttons, Tactile Press Physics & Segmented Controls ── */
+body.is-native .btn {
+  min-height: 42px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition:
+    transform var(--wp-dur-1) var(--wp-ease-out),
+    background-color var(--wp-dur-1) var(--wp-ease-soft),
+    border-color var(--wp-dur-1) var(--wp-ease-soft),
+    box-shadow var(--wp-dur-2) var(--wp-ease-soft),
+    opacity var(--wp-dur-1) var(--wp-ease-soft);
 }
 
-body.is-native .icon-btn:active {
-  transform: scale(0.92);
+body.is-native .btn-small {
+  min-height: 34px;
+  padding: 7px 14px;
+  font-size: 0.84rem;
+}
+
+body.is-native .btn-primary {
+  background: var(--native-accent-grad);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 8px 22px rgba(0, 212, 255, 0.22);
+}
+
+body.is-native.editorial-theme .btn-primary {
+  background: #f7b500;
+  color: #231603;
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 20px rgba(247, 181, 0, 0.26);
+}
+
+body.is-native .btn-secondary,
+body.is-native .load-more-btn,
+body.is-native .sv-edit-btn {
+  background: var(--native-surface-2);
+  border: 1px solid var(--native-hairline-strong);
+  color: var(--color-text-primary);
+  box-shadow: var(--native-specular), 0 4px 14px rgba(0, 0, 0, 0.14);
+}
+
+body.is-native .icon-btn,
+body.is-native .action-icon-btn,
+body.is-native .bible-icon-pill,
+body.is-native .seq-btn,
+body.is-native .chord-popover-close-btn,
+body.is-native .search-x,
+body.is-native .hub-search-clear-btn,
+body.is-native .sle-back-btn {
+  border-radius: 12px;
+  transition:
+    transform var(--wp-dur-1) var(--wp-ease-out),
+    background-color var(--wp-dur-1) var(--wp-ease-soft),
+    border-color var(--wp-dur-1) var(--wp-ease-soft),
+    color var(--wp-dur-1) var(--wp-ease-soft),
+    box-shadow var(--wp-dur-1) var(--wp-ease-soft);
+}
+
+body.is-native .icon-btn {
+  background: var(--native-surface-2);
+  border: 1px solid var(--native-hairline);
+  box-shadow: var(--native-specular);
+}
+
+body.is-native .icon-btn.active {
+  background: var(--native-cyan-soft);
+  border-color: var(--native-cyan-border);
+  color: #7ee8ff;
+}
+
+body.is-native.light-mode .icon-btn.active {
+  color: #0284c7;
+}
+
+body.is-native .action-icon-btn.heart-btn.active svg,
+body.is-native .icon-btn.active svg {
+  animation: wpHeartPop 280ms var(--wp-ease-spring);
+}
+
+/* Proportional MyEkklesia Tactile Compression Physics */
+body.is-native :is(
+  .icon-btn,
+  .action-icon-btn,
+  .bible-icon-pill,
+  .seq-btn,
+  .chord-popover-close-btn,
+  .search-x,
+  .hub-search-clear-btn,
+  .sle-back-btn
+):active {
+  transform: scale(0.9);
+}
+
+body.is-native :is(
+  .btn,
+  .random-song-btn,
+  .load-more-btn,
+  .bible-pill-btn,
+  .bible-cta-amber,
+  .sv-meta-pill,
+  .sv-save-key-pill,
+  .sv-segment,
+  .church-segmented button,
+  .bible-segmented button,
+  .chord-instrument-tabs button,
+  .lang-pill-btn,
+  .cat-pill,
+  .kp,
+  .sug-chip,
+  .sv-tone-key-chip,
+  .sv-capo-chip,
+  .sv-tone-reset,
+  .sv-edit-btn,
+  .sle-btn,
+  .sle-stat-chip--clickable,
+  .media-radio-btn,
+  .reset-filters-btn-inline,
+  .songs-tab,
+  .sv-tools-menu-item,
+  .hub-account-prompt-btn-primary,
+  .hub-account-prompt-btn-secondary
+) {
+  transition:
+    transform var(--wp-dur-1) var(--wp-ease-out),
+    background-color var(--wp-dur-1) var(--wp-ease-soft),
+    border-color var(--wp-dur-1) var(--wp-ease-soft),
+    color var(--wp-dur-1) var(--wp-ease-soft),
+    box-shadow var(--wp-dur-2) var(--wp-ease-soft);
+}
+
+body.is-native :is(
+  .btn,
+  .random-song-btn,
+  .load-more-btn,
+  .bible-pill-btn,
+  .bible-cta-amber,
+  .sv-meta-clickable,
+  .sv-save-key-pill,
+  .sv-segment,
+  .church-segmented button,
+  .bible-segmented button,
+  .chord-instrument-tabs button,
+  .lang-pill-btn,
+  .cat-pill,
+  .kp,
+  .sug-chip,
+  .sv-tone-key-chip,
+  .sv-capo-chip,
+  .sv-tone-reset,
+  .sv-edit-btn,
+  .sle-btn,
+  .sle-stat-chip--clickable,
+  .media-radio-btn,
+  .reset-filters-btn-inline,
+  .songs-tab,
+  .sv-tools-menu-item,
+  .hub-account-prompt-btn-primary,
+  .hub-account-prompt-btn-secondary
+):active {
+  transform: scale(0.955);
+}
+
+body.is-native :is(
+  .church-post-card,
+  .bible-verse-row,
+  .settings-menu-item,
+  .media-radio-card
+) {
+  transition:
+    transform var(--wp-dur-2) var(--wp-ease-out),
+    background-color var(--wp-dur-1) var(--wp-ease-soft),
+    border-color var(--wp-dur-2) var(--wp-ease-soft);
+}
+
+body.is-native :is(
+  .church-post-card,
+  .bible-verse-row,
+  .settings-menu-item,
+  .media-radio-card
+):active {
+  transform: scale(0.985);
+}
+
+/* Unified Frosted Segmented Capsules & Language Glider */
+body.is-native .lang-switcher-pill {
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--native-surface-1);
+  border: 1px solid var(--native-hairline);
+  box-shadow: var(--native-specular), 0 4px 14px rgba(0, 0, 0, 0.14);
+}
+
+body.is-native .lang-pill-glider {
+  top: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / 3);
+  height: calc(100% - 6px);
+  border-radius: 999px;
+  background: var(--native-accent-grad);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 4px 12px rgba(0, 212, 255, 0.26);
+  transition: transform 280ms var(--wp-ease-out);
+}
+
+body.is-native.editorial-theme .lang-pill-glider {
+  background: #f7b500;
+  box-shadow: 0 3px 10px rgba(247, 181, 0, 0.28);
+}
+
+body.is-native.editorial-theme .lang-pill-btn.active {
+  color: #231603;
+}
+
+body.is-native.light-mode .lang-pill-btn:not(.active) {
+  color: #475569;
 }
 
 /* ==========================================================================
@@ -764,7 +1010,61 @@ body.is-native.light-mode .songs-page .track-bpm-badge {
    4. SONG VIEW, SETLISTS, BIBLE, CHURCH HUB, MEDIA HUB, PROFILE & SETTINGS
    ========================================================================== */
 
-/* SongView Header & Sticky Floating Bar */
+/* Popovers, Floating Bars, Inline Modules, Sheets & Toasts */
+body.is-native :is(
+  .chord-diagram-popover,
+  .sv-tools-menu,
+  .search-suggestions-popover
+) {
+  animation: wpPopIn var(--wp-dur-2) var(--wp-ease-out) both;
+  background: rgba(16, 18, 28, 0.94);
+  border: 1px solid var(--native-hairline-strong);
+  box-shadow: var(--native-specular), 0 18px 42px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+body.is-native.light-mode :is(
+  .chord-diagram-popover,
+  .sv-tools-menu,
+  .search-suggestions-popover
+) {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.14);
+}
+
+body.is-native :is(.sv-tone-capo-card, .sv-inline-metronome-wrap, .hub-week-detail, .church-toast, .settings-msg) {
+  animation: wpRiseIn var(--wp-dur-2) var(--wp-ease-out) both;
+}
+
+body.is-native .toast-message {
+  animation: wpToastPop var(--wp-dur-2) var(--wp-ease-out) both;
+  background: rgba(16, 18, 28, 0.94);
+  border: 1px solid var(--native-hairline-strong);
+  box-shadow: var(--native-specular), 0 14px 36px rgba(0, 0, 0, 0.48);
+}
+
+body.is-native.light-mode .toast-message {
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
+}
+
+body.is-native .sv-sticky-save-bar {
+  animation: wpPopUpIn var(--wp-dur-2) var(--wp-ease-out) both;
+}
+
+body.is-native .seq-nav {
+  animation: wpBackdropFade var(--wp-dur-2) var(--wp-ease-out) both;
+}
+
+body.is-native :is(.sla-modal-overlay, .sv-modal-overlay, .resource-modal-overlay, .modal-overlay) {
+  animation: wpBackdropFade 160ms var(--wp-ease-soft) both !important;
+}
+
+/* SongView Header, Segmented Control & Floating Modules */
 body.is-native .song-view-page .sv-header-actions .icon-btn {
   width: 38px;
   height: 38px;
@@ -773,10 +1073,80 @@ body.is-native .song-view-page .sv-header-actions .icon-btn {
   border: 1px solid var(--native-hairline);
 }
 
+body.is-native .song-view-page .sv-segment-control,
+body.is-native .chord-instrument-tabs,
+body.is-native .bible-segmented {
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--native-surface-1);
+  border: 1px solid var(--native-hairline);
+  box-shadow: var(--native-specular), 0 6px 18px rgba(0, 0, 0, 0.16);
+}
+
+body.is-native .song-view-page .sv-segment,
+body.is-native .chord-instrument-tabs button,
+body.is-native .bible-segmented button {
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+body.is-native .song-view-page .sv-segment.active,
+body.is-native .chord-instrument-tabs button.active,
+body.is-native .bible-segmented button.active {
+  background: var(--native-accent-grad);
+  color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), 0 4px 12px rgba(0, 212, 255, 0.24);
+}
+
+body.is-native.editorial-theme .song-view-page .sv-segment.active,
+body.is-native.editorial-theme .chord-instrument-tabs button.active,
+body.is-native.editorial-theme .bible-segmented button.active {
+  background: #f7b500;
+  color: #231603;
+  box-shadow: 0 4px 12px rgba(247, 181, 0, 0.26);
+}
+
 body.is-native .song-view-page .sv-meta-pill {
   background: var(--native-surface-2);
   border-color: var(--native-hairline);
   padding: 5px 11px;
+  border-radius: 999px;
+}
+
+body.is-native .song-view-page .sv-meta-pill.is-open {
+  background: var(--native-cyan-soft);
+  border-color: var(--native-cyan-border);
+  box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.14);
+}
+
+body.is-native .sv-tone-capo-card {
+  background: var(--native-surface-1);
+  border: 1px solid var(--native-hairline-strong);
+  border-radius: 18px;
+  box-shadow: var(--native-specular), var(--native-card-shadow);
+}
+
+body.is-native .sv-tone-key-chip,
+body.is-native .sv-capo-chip {
+  border-radius: 999px;
+}
+
+body.is-native .sv-tone-key-chip.active,
+body.is-native .sv-capo-chip.active {
+  background: var(--native-accent-grad);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.24);
+}
+
+body.is-native .sv-sticky-save-btn {
+  background: var(--native-accent-grad);
+  border-radius: 999px;
+  transition: transform var(--wp-dur-1) var(--wp-ease-out), box-shadow var(--wp-dur-2) var(--wp-ease-soft);
+}
+
+body.is-native .sv-sticky-save-btn:active {
+  transform: scale(0.95);
 }
 
 /* Setlists */
@@ -811,7 +1181,14 @@ body.is-native .bible-topbar {
   box-shadow: var(--native-specular), 0 12px 28px rgba(0, 0, 0, 0.3);
 }
 
-body.is-native .bible-topbar-left,
+body.is-native .bible-topbar-left {
+  width: 100%;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
 body.is-native .bible-topbar-right {
   gap: 6px;
   max-width: 100%;
@@ -836,11 +1213,13 @@ body.is-native .bible-pill-btn {
 
 body.is-native .bible-tr-select {
   height: 36px;
-  padding: 0 22px 0 10px;
+  padding: 0 26px 0 10px;
   font-size: 0.74rem;
   letter-spacing: -0.015em;
-  flex: 1 1 150px;
-  max-width: none;
+  flex: 1 1 0;
+  min-width: 0;
+  width: 0;
+  max-width: 100%;
   background: var(--native-surface-2);
   border-color: var(--native-hairline);
 }
@@ -904,13 +1283,53 @@ body.is-native .settings-page .settings-menu-item:active {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body.is-native .hub-cat-card,
-  body.is-native .hub-topic-card,
-  body.is-native .hub-fav-card,
-  body.is-native .recent-song-card,
-  body.is-native .sl-card,
-  body.is-native .songs-page .track-item,
-  body.is-native .icon-btn {
+  body.is-native :is(
+    .btn,
+    .icon-btn,
+    .action-icon-btn,
+    .bible-icon-pill,
+    .bible-pill-btn,
+    .bible-cta-amber,
+    .random-song-btn,
+    .load-more-btn,
+    .hub-cat-card,
+    .hub-topic-card,
+    .hub-fav-card,
+    .recent-song-card,
+    .hub-news-card,
+    .upcoming-card,
+    .sl-card,
+    .songs-page .track-item,
+    .church-segmented button,
+    .bible-segmented button,
+    .sv-segment,
+    .lang-pill-btn,
+    .lang-pill-glider,
+    .cat-pill,
+    .kp,
+    .sv-meta-pill,
+    .sv-sticky-save-bar,
+    .seq-nav,
+    .chord-diagram-popover,
+    .sv-tools-menu,
+    .search-suggestions-popover,
+    .sv-tone-capo-card,
+    .sv-inline-metronome-wrap,
+    .toast-message,
+    .church-post-card,
+    .bible-verse-row,
+    .settings-menu-item,
+    .media-radio-card
+  ),
+  body.is-native :is(
+    .btn,
+    .icon-btn,
+    .hub-cat-card,
+    .songs-page .track-item,
+    .sl-card
+  ):active {
+    animation: none !important;
     transition: none !important;
+    transform: none !important;
   }
 }

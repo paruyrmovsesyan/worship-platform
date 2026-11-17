@@ -1453,11 +1453,16 @@ export default function Bible() {
                     }`}
                     style={{ fontSize: `${prefs.fontSize}px` }}
                     onTouchStart={(e) => {
-                      if (e.touches.length === 1) swipeStartXRef.current = e.touches[0].clientX;
+                      if (e.touches && e.touches[0] && e.touches.length === 1) swipeStartXRef.current = e.touches[0].clientX;
                     }}
                     onTouchEnd={(e) => {
                       if (!prefs.pagedMode || swipeStartXRef.current === null) return;
-                      const dx = e.changedTouches[0].clientX - swipeStartXRef.current;
+                      const touch = e.changedTouches?.[0] || e.touches?.[0];
+                      if (!touch) {
+                        swipeStartXRef.current = null;
+                        return;
+                      }
+                      const dx = touch.clientX - swipeStartXRef.current;
                       swipeStartXRef.current = null;
                       if (dx < -48 && clampedPage < totalPages - 1) setReaderPage(clampedPage + 1);
                       else if (dx > 48 && clampedPage > 0) setReaderPage(clampedPage - 1);

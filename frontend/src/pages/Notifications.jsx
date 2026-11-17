@@ -130,12 +130,14 @@ const NotificationCard = ({ notif, language, onAction, onDelete, onAcceptFriend,
   const relativeTime = formatRelativeTime(notif.created_at, language);
 
   const handleTouchStart = (e) => {
-    startX.current = e.touches[0].clientX;
-    isDragging.current = true;
+    if (e.touches && e.touches[0]) {
+      startX.current = e.touches[0].clientX;
+      isDragging.current = true;
+    }
   };
 
   const handleTouchMove = (e) => {
-    if (!isDragging.current) return;
+    if (!isDragging.current || !e.touches || !e.touches[0]) return;
     currentX.current = e.touches[0].clientX;
     const diff = currentX.current - startX.current;
 

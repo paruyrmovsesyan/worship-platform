@@ -260,12 +260,12 @@ export default function Navbar() {
 
         {/* Nav links */}
         <nav className="menu-nav-links">
-          {navSections.map((sec, idx) => (
-            <div key={idx} className="menu-nav-section">
+          {navSections.map((sec, secIdx) => (
+            <div key={sec.title || secIdx} className="menu-nav-section">
               {sec.title && <span className="menu-section-title">{sec.title}</span>}
-              {sec.items.map(item => (
+              {sec.items.map((item, itemIdx) => (
                 <Link
-                  key={item.to + (item.isSoon ? '-soon' : '')}
+                  key={`${secIdx}-${item.id || item.to}-${itemIdx}`}
                   to={item.to}
                   className={`menu-nav-link ${isActive(item.to) ? 'active' : ''} ${item.isSoon ? 'is-disabled-soon' : ''}`}
                   style={item.isSoon ? { cursor: 'not-allowed', pointerEvents: 'none' } : {}}

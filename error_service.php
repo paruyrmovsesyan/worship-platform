@@ -921,6 +921,31 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
+    // 6.5. Duplicate React key warning: Encountered two children with the same key ... #-soon
+    if (stripos($message, 'Encountered two children with the same key') !== false ||
+        (stripos($message, 'same key') !== false && stripos($message, 'soon') !== false)) {
+        $reason = 'Ուղղված է՝ Navbar.jsx-ում navSections-ի բոլոր հղումների key-երը դարձվել են երաշխավորված եզակի (unique)';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
+    // 6.6. WebKit touch gesture null object: null is not an object (evaluating 'a[0]')
+    if (stripos($message, "null is not an object (evaluating 'a[0]')") !== false ||
+        stripos($stackTrace, "null is not an object (evaluating 'a[0]')") !== false ||
+        (stripos($message, "evaluating 'a[0]'") !== false)) {
+        $reason = 'Ուղղված է՝ SongView.jsx-ում և usePwaSwipeNavigation-ում touch gesture-ների (changedTouches/touches) ստուգումը դարձվել է null-անվտանգ (optional chaining)';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
     // 7. Install identity & install_api (caused by closed mysqli in install_service.php, resolved)
     if (stripos($message, 'install_identity_api') !== false || stripos($message, 'install_api') !== false || stripos($message, 'install_service') !== false) {
         $reason = 'install_service.php-ի փակ MySQLi կապի խնդիրը շտկված է (commit e1ad3ee)';

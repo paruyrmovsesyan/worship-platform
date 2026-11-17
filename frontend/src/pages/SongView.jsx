@@ -1476,7 +1476,7 @@ export default function SongView() {
   }
 
   const handleTouchStart = (e) => {
-    if (e.touches.length === 1) {
+    if (e.touches && e.touches[0] && e.touches.length === 1) {
       setTouchStartX(e.touches[0].clientX);
       setTouchStartY(e.touches[0].clientY);
     }
@@ -1489,8 +1489,14 @@ export default function SongView() {
       setTouchStartY(null);
       return;
     }
-    const touchEndX = e.changedTouches[0].clientX;
-    const touchEndY = e.changedTouches[0].clientY;
+    const touch = e.changedTouches?.[0] || e.touches?.[0];
+    if (!touch) {
+      setTouchStartX(null);
+      setTouchStartY(null);
+      return;
+    }
+    const touchEndX = touch.clientX;
+    const touchEndY = touch.clientY;
     const diffX = touchStartX - touchEndX;
     const diffY = touchStartY - touchEndY;
 
@@ -1505,9 +1511,14 @@ export default function SongView() {
     setTouchStartY(null);
   };
 
+  const handleTouchCancel = () => {
+    setTouchStartX(null);
+    setTouchStartY(null);
+  };
+
   return (
     <>
-    <div key={id} className={`song-view-page animate-fade-in ${setlistNavData ? 'has-seq-nav' : ''} ${!isPWA ? 'web-song-pro' : ''} ${isStageFullscreen ? 'is-stage-fullscreen' : ''}`} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+    <div key={id} className={`song-view-page animate-fade-in ${setlistNavData ? 'has-seq-nav' : ''} ${!isPWA ? 'web-song-pro' : ''} ${isStageFullscreen ? 'is-stage-fullscreen' : ''}`} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchCancel}>
       {/* Top Header */}
       <div className="sv-header">
         <div className="sv-header-left">
