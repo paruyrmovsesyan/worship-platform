@@ -10,6 +10,7 @@ import { Capacitor } from '@capacitor/core'
 import App from './App.jsx'
 import './index.css'
 import './styles/LightTheme.css'
+import './styles/NativeAppPolish.css'
 
 const prepareNativeRuntime = Capacitor.isNativePlatform()
   ? Promise.all([

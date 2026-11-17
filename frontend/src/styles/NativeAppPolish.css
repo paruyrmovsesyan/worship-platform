@@ -1,0 +1,916 @@
+/* ==========================================================================
+   NATIVE APP UI/UX POLISH (iOS & Android Capacitor Native Apps ONLY)
+   Strictly scoped under `body.is-native` so Website & PWA remain untouched.
+   Preserves Worship Platform's dark obsidian + cyan (#00D4FF) + indigo
+   (#3A2DFF) + Scripture amber (#F7B500) + Liquid Glass aesthetic.
+   ========================================================================== */
+
+body.is-native {
+  --native-surface-1: rgba(20, 21, 31, 0.84);
+  --native-surface-2: rgba(255, 255, 255, 0.055);
+  --native-surface-press: rgba(255, 255, 255, 0.1);
+  --native-hairline: rgba(255, 255, 255, 0.09);
+  --native-hairline-strong: rgba(255, 255, 255, 0.16);
+  --native-specular: inset 0 1px 0 rgba(255, 255, 255, 0.11);
+  --native-card-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+  --native-cyan-soft: rgba(0, 212, 255, 0.14);
+  --native-cyan-border: rgba(0, 212, 255, 0.34);
+  --native-accent-grad: linear-gradient(135deg, #3a2dff 0%, #00d4ff 100%);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body.is-native.oled-mode {
+  --native-surface-1: rgba(10, 10, 14, 0.94);
+  --native-surface-2: rgba(255, 255, 255, 0.045);
+  --native-hairline: rgba(255, 255, 255, 0.11);
+}
+
+body.is-native.light-mode {
+  --native-surface-1: rgba(255, 255, 255, 0.94);
+  --native-surface-2: rgba(255, 255, 255, 0.9);
+  --native-surface-press: rgba(15, 23, 42, 0.06);
+  --native-hairline: rgba(15, 23, 42, 0.085);
+  --native-hairline-strong: rgba(15, 23, 42, 0.14);
+  --native-specular: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --native-card-shadow: 0 8px 22px rgba(15, 23, 42, 0.075);
+  --native-cyan-soft: rgba(0, 148, 214, 0.1);
+  --native-cyan-border: rgba(0, 148, 214, 0.3);
+}
+
+body.is-native * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Global Native Header Icon Buttons & Scrollbar Discipline ── */
+body.is-native .icon-btn {
+  border-radius: 12px;
+  transition: transform 0.14s ease, background-color 0.18s ease, border-color 0.18s ease;
+}
+
+body.is-native .icon-btn:active {
+  transform: scale(0.92);
+}
+
+/* ==========================================================================
+   1. MOBILE HUB (TODAY HOME SCREEN)
+   ========================================================================== */
+
+body.is-native .mobile-hub {
+  padding-bottom: calc(var(--bottom-nav-total-offset, 88px) + 42px);
+}
+
+body.is-native .mobile-hub .hub-header {
+  padding: 10px 16px 12px !important;
+  gap: 10px;
+}
+
+body.is-native .mobile-hub .hub-logo-img {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  border: 1px solid var(--native-hairline-strong);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+}
+
+body.is-native .mobile-hub .hub-logo-img-square {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+}
+
+body.is-native .mobile-hub .hub-header .icon-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  border-radius: 999px !important;
+  background: var(--native-surface-2);
+  border: 1px solid var(--native-hairline) !important;
+  box-shadow: var(--native-specular), 0 4px 12px rgba(0, 0, 0, 0.14);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-primary);
+}
+
+body.is-native.light-mode .mobile-hub .hub-header .icon-btn {
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.07);
+}
+
+/* Today Greeting & Resume Pill */
+body.is-native .hub-today-greeting {
+  align-items: center;
+  margin-bottom: 14px;
+  padding-top: 2px;
+}
+
+body.is-native .hub-today-eyebrow {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: var(--color-accent-cyan, #00d4ff);
+  opacity: 0.92;
+  margin-bottom: 3px;
+}
+
+body.is-native.editorial-theme .hub-today-eyebrow {
+  color: #f7b500;
+}
+
+body.is-native .hub-today-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.028em;
+  line-height: 1.18;
+}
+
+body.is-native .hub-resume-pill {
+  height: 36px;
+  padding: 0 13px;
+  background: var(--native-cyan-soft);
+  border: 1px solid var(--native-cyan-border);
+  box-shadow: var(--native-specular), 0 6px 16px rgba(0, 212, 255, 0.12);
+  color: var(--color-text-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition: transform 0.14s ease, background-color 0.18s ease;
+}
+
+body.is-native .hub-resume-pill:active {
+  transform: scale(0.95);
+}
+
+/* Verse of the Day Card */
+body.is-native .hub-votd-card {
+  border-radius: 22px;
+  padding: 20px 18px 18px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  overflow: hidden;
+}
+
+body.is-native .hub-votd-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(247, 181, 0, 0.16);
+  border: 1px solid rgba(247, 181, 0, 0.34);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+body.is-native .hub-votd-text {
+  font-size: 1.07rem;
+  line-height: 1.54;
+  margin-bottom: 9px;
+}
+
+body.is-native .hub-votd-ref {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.82);
+  margin-bottom: 15px;
+}
+
+body.is-native .hub-votd-btn-primary,
+body.is-native .hub-votd-btn-ghost {
+  height: 37px;
+  padding: 0 15px;
+  transition: transform 0.14s ease, opacity 0.16s ease;
+}
+
+body.is-native .hub-votd-btn-primary {
+  box-shadow: 0 6px 16px rgba(247, 181, 0, 0.28);
+}
+
+body.is-native .hub-votd-btn-ghost {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+body.is-native .hub-votd-btn-primary:active,
+body.is-native .hub-votd-btn-ghost:active {
+  transform: scale(0.95);
+}
+
+/* Weekly Calendar Strip */
+body.is-native .hub-week-card {
+  background: var(--native-surface-1);
+  border: 1px solid var(--native-hairline);
+  border-radius: 18px;
+  padding: 11px 10px 12px;
+  margin-bottom: 18px;
+  box-shadow: var(--native-specular), var(--native-card-shadow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+body.is-native .hub-week-day {
+  border-radius: 13px;
+  padding: 7px 2px 10px;
+  transition: transform 0.14s ease, background-color 0.18s ease, border-color 0.18s ease;
+}
+
+body.is-native .hub-week-day:active {
+  transform: scale(0.93);
+}
+
+body.is-native .hub-week-day.is-today:not(.is-selected) {
+  border-color: var(--native-cyan-border);
+  background: var(--native-cyan-soft);
+  color: var(--color-text-primary);
+}
+
+body.is-native .hub-week-day.is-selected {
+  background: var(--native-accent-grad);
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(0, 212, 255, 0.28);
+}
+
+body.is-native.editorial-theme .hub-week-day.is-selected {
+  background: #f7b500;
+  color: #231603;
+  box-shadow: 0 6px 16px rgba(247, 181, 0, 0.28);
+}
+
+body.is-native .hub-week-day.is-selected .hub-week-dot {
+  background: #ffffff;
+}
+
+body.is-native.editorial-theme .hub-week-day.is-selected .hub-week-dot {
+  background: #231603;
+}
+
+body.is-native .hub-week-detail button {
+  color: var(--color-accent-cyan, #00d4ff);
+}
+
+body.is-native.editorial-theme .hub-week-detail button {
+  color: #f7b500;
+}
+
+/* Hub Search Box */
+body.is-native .hub-hero {
+  margin-bottom: 24px;
+}
+
+body.is-native .hub-search-box {
+  background: var(--native-surface-1);
+  border: 1px solid var(--native-hairline-strong);
+  border-radius: 18px;
+  padding: 8px 10px 8px 15px;
+  min-height: 50px;
+  margin-bottom: 16px;
+  box-shadow: var(--native-specular), var(--native-card-shadow);
+}
+
+body.is-native .hub-search-box:focus-within {
+  border-color: rgba(0, 212, 255, 0.62);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.16), var(--native-card-shadow);
+}
+
+body.is-native.light-mode .hub-search-icon-btn,
+body.is-native.light-mode .hub-search-icon-btn svg,
+body.is-native.light-mode .hub-search-icon {
+  color: #334155 !important;
+  stroke: #334155 !important;
+  opacity: 1 !important;
+}
+
+body.is-native.light-mode .hub-search-input,
+body.is-native.light-mode .hub-search-input::placeholder {
+  color: #0f172a !important;
+}
+
+body.is-native.light-mode .hub-search-input::placeholder {
+  color: rgba(15, 23, 42, 0.45) !important;
+}
+
+body.is-native .hub-search-btn-badge {
+  border-radius: 12px;
+  padding: 7px 13px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, rgba(58, 45, 255, 0.85), rgba(0, 212, 255, 0.85));
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  transition: transform 0.14s ease;
+}
+
+body.is-native .hub-search-btn-badge:active {
+  transform: scale(0.94);
+}
+
+/* Quick Action Squircle Cards */
+body.is-native .hub-categories-grid {
+  gap: 10px;
+}
+
+body.is-native .hub-cat-card {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.075) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border: 1px solid var(--native-hairline);
+  border-radius: 17px;
+  padding: 11px 10px;
+  gap: 10px;
+  box-shadow: var(--native-specular), 0 6px 18px rgba(0, 0, 0, 0.18);
+  transition: transform 0.14s ease, background-color 0.18s ease, border-color 0.18s ease;
+}
+
+body.is-native .hub-cat-card:active {
+  transform: scale(0.968);
+  background: var(--native-surface-press);
+}
+
+body.is-native.light-mode .hub-cat-card {
+  background: linear-gradient(160deg, #ffffff 0%, #f8faff 100%);
+  border-color: var(--native-hairline);
+  box-shadow: var(--native-specular), var(--native-card-shadow);
+}
+
+body.is-native .hub-cat-card .cat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), 0 6px 14px rgba(0, 0, 0, 0.24);
+}
+
+body.is-native .hub-cat-card .cat-text {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+body.is-native .hub-cat-card-wide {
+  padding: 12px 14px;
+}
+
+/* Upcoming Setlist & Guest Prompt Cards */
+body.is-native .upcoming-card {
+  border-radius: 20px;
+  border: 1px solid rgba(0, 212, 255, 0.22);
+  box-shadow: var(--native-specular), 0 14px 32px rgba(0, 0, 0, 0.26);
+}
+
+body.is-native .upcoming-card-action {
+  border-radius: 12px;
+  transition: transform 0.14s ease, background-color 0.18s ease;
+}
+
+body.is-native .hub-account-prompt-card {
+  border-radius: 20px;
+  box-shadow: var(--native-specular), var(--native-card-shadow);
+}
+
+/* Horizontal Snapping Carousels & Section Chrome */
+body.is-native .section-block {
+  margin-bottom: 28px;
+}
+
+body.is-native .section-title {
+  margin-bottom: 14px;
+}
+
+body.is-native .section-title h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+body.is-native .section-link-btn {
+  border-radius: 999px;
+  padding: 7px 13px;
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  transition: transform 0.14s ease, background-color 0.18s ease;
+}
+
+body.is-native .section-link-btn:active {
+  transform: scale(0.95);
+}
+
+body.is-native .hub-topics-scroll,
+body.is-native .hub-horizontal,
+body.is-native .recent-songs-scroll {
+  scroll-snap-type: x proximity;
+  scroll-padding-left: 16px;
+}
+
+body.is-native .hub-topic-card {
+  scroll-snap-align: start;
+  background: var(--native-surface-1);
+  border: 1px solid var(--native-hairline);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: var(--native-specular), 0 8px 20px rgba(0, 0, 0, 0.18);
+  transition: transform 0.14s ease, border-color 0.18s ease;
+}
+
+body.is-native .hub-topic-card:active {
+  transform: scale(0.97);
+}
+
+body.is-native .hub-fav-card,
+body.is-native .recent-song-card {
+  scroll-snap-align: start;
+  transition: transform 0.14s ease;
+}
+
+body.is-native .hub-fav-card:active,
+body.is-native .recent-song-card:active {
+  transform: scale(0.96);
+}
+
+body.is-native .hub-fav-cover,
+body.is-native .recent-song-cover {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 10px 22px rgba(0, 0, 0, 0.24);
+}
+
+body.is-native .hub-quote-card {
+  background: var(--native-surface-1);
+  border: 1px solid var(--native-hairline);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: var(--native-specular), var(--native-card-shadow);
+}
+
+body.is-native .hub-news-card {
+  background: var(--native-surface-1);
+  border: 1px solid var(--native-hairline);
+  border-radius: 20px;
+  box-shadow: var(--native-specular), var(--native-card-shadow);
+}
+
+body.is-native .hub-news-card:active {
+  transform: scale(0.985);
+}
+
+/* ==========================================================================
+   2. LIQUID GLASS BOTTOM DOCK
+   ========================================================================== */
+
+body.is-native .mobile-bottom-nav {
+  background: linear-gradient(
+    180deg,
+    rgba(28, 30, 44, 0.86) 0%,
+    rgba(14, 15, 24, 0.94) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 18px 40px -8px rgba(0, 0, 0, 0.66),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(28px) saturate(210%);
+  -webkit-backdrop-filter: blur(28px) saturate(210%);
+}
+
+body.is-native.light-mode .mobile-bottom-nav {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(241, 246, 255, 0.86) 100%
+  );
+  border-color: rgba(15, 23, 42, 0.11);
+  box-shadow:
+    0 14px 34px rgba(15, 23, 42, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+body.is-native .nav-liquid-indicator {
+  background: linear-gradient(
+    160deg,
+    rgba(0, 212, 255, 0.22) 0%,
+    rgba(58, 45, 255, 0.18) 100%
+  );
+  border: 1px solid rgba(0, 212, 255, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 4px 14px rgba(0, 212, 255, 0.16);
+}
+
+body.is-native.editorial-theme .nav-liquid-indicator {
+  background: rgba(247, 181, 0, 0.18);
+  border-color: rgba(247, 181, 0, 0.38);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+body.is-native.light-mode .nav-liquid-indicator {
+  background: linear-gradient(
+    160deg,
+    rgba(0, 148, 214, 0.14) 0%,
+    rgba(58, 45, 255, 0.12) 100%
+  );
+  border-color: rgba(0, 148, 214, 0.28);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+}
+
+body.is-native.light-mode .mobile-bottom-nav .nav-item {
+  color: rgba(17, 24, 39, 0.56);
+}
+
+body.is-native.light-mode .mobile-bottom-nav .nav-item.active,
+body.is-native.light-mode .mobile-bottom-nav .nav-item.active .nav-label,
+body.is-native.light-mode .mobile-bottom-nav .nav-item.scrub-hovered .nav-label {
+  color: #0b172a !important;
+}
+
+body.is-native .mobile-bottom-nav .nav-item.active svg {
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.38));
+}
+
+body.is-native.light-mode .mobile-bottom-nav .nav-item.active svg,
+body.is-native.light-mode .mobile-bottom-nav .nav-item.scrub-hovered svg {
+  filter: none !important;
+  color: #0284c7 !important;
+  stroke: #0284c7 !important;
+}
+
+/* ==========================================================================
+   3. SONGS SCREEN — UNIFIED CYAN/INDIGO GLASS HARMONY
+   ========================================================================== */
+
+body.is-native .songs-page {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+body.is-native .songs-page .songs-header {
+  margin-bottom: 14px;
+}
+
+body.is-native .songs-page .songs-title {
+  letter-spacing: -0.025em;
+}
+
+body.is-native .songs-page .count-badge {
+  background: var(--native-cyan-soft);
+  border: 1px solid var(--native-cyan-border);
+  color: #7ee8ff;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+body.is-native.light-mode .songs-page .count-badge {
+  color: #0369a1;
+}
+
+body.is-native .songs-page .random-song-btn {
+  background: var(--native-cyan-soft);
+  border-color: var(--native-cyan-border);
+  color: #e6fbff;
+  border-radius: 14px;
+}
+
+body.is-native.light-mode .songs-page .random-song-btn {
+  color: #0c4a6e;
+}
+
+body.is-native .songs-page .songs-search-box,
+body.is-native .songs-page .search-box {
+  background: var(--native-surface-1) !important;
+  border: 1px solid var(--native-hairline-strong) !important;
+  border-radius: 17px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  box-shadow: var(--native-specular), var(--native-card-shadow) !important;
+}
+
+body.is-native .songs-page .songs-search-box:focus-within,
+body.is-native .songs-page .search-box:focus-within {
+  border-color: rgba(0, 212, 255, 0.62) !important;
+  box-shadow:
+    0 0 0 3px rgba(0, 212, 255, 0.16),
+    var(--native-card-shadow) !important;
+}
+
+body.is-native .songs-page .search-box-icon-btn,
+body.is-native .songs-page .search-box-icon-btn svg,
+body.is-native .songs-page .search-box-icon {
+  color: rgba(255, 255, 255, 0.72) !important;
+  stroke: rgba(255, 255, 255, 0.72) !important;
+}
+
+body.is-native.light-mode .songs-page .search-box-icon-btn,
+body.is-native.light-mode .songs-page .search-box-icon-btn svg,
+body.is-native.light-mode .songs-page .search-box-icon {
+  color: #334155 !important;
+  stroke: #334155 !important;
+}
+
+body.is-native.light-mode .songs-page .songs-search-box:focus-within,
+body.is-native.light-mode .songs-page .search-box:focus-within {
+  border-color: rgba(2, 132, 199, 0.55) !important;
+  box-shadow:
+    0 0 0 3px rgba(2, 132, 199, 0.14),
+    var(--native-card-shadow) !important;
+}
+
+body.is-native .songs-page .songs-tab.active {
+  color: var(--color-accent-cyan, #00d4ff);
+}
+
+body.is-native.light-mode .songs-page .songs-tab.active {
+  color: #0284c7;
+}
+
+body.is-native .songs-page .songs-tab.active::after {
+  background: linear-gradient(90deg, #3a2dff 0%, #00d4ff 100%);
+}
+
+body.is-native.light-mode .songs-page .cat-pill {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #334155;
+}
+
+body.is-native.light-mode .songs-page .cat-counter {
+  background: rgba(15, 23, 42, 0.08);
+  color: #334155;
+}
+
+body.is-native .songs-page .category-scroll-container,
+body.is-native .songs-page .key-scroll-container {
+  scroll-snap-type: x proximity;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - 22px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - 22px),
+    transparent 100%
+  );
+}
+
+body.is-native .songs-page .cat-pill,
+body.is-native .songs-page .kp {
+  scroll-snap-align: start;
+  border-radius: 999px;
+}
+
+body.is-native .songs-page .cat-pill .cat-icon {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  line-height: 1;
+}
+
+body.is-native .songs-page .cat-pill.active,
+body.is-native .songs-page .kp.active {
+  background: linear-gradient(135deg, rgba(58, 45, 255, 0.42), rgba(0, 212, 255, 0.28));
+  border-color: rgba(0, 212, 255, 0.68);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 212, 255, 0.2);
+}
+
+body.is-native.light-mode .songs-page .cat-pill.active,
+body.is-native.light-mode .songs-page .kp.active {
+  background: linear-gradient(135deg, #3a2dff, #0284c7);
+  border-color: transparent;
+  color: #ffffff;
+}
+
+body.is-native .songs-page .cat-pill.active .cat-counter {
+  background: rgba(0, 212, 255, 0.85);
+  color: #031522;
+}
+
+/* Song Rows as Elevated Glass Cards */
+body.is-native .songs-page .track-list {
+  gap: 9px;
+}
+
+body.is-native .songs-page .track-item {
+  background: var(--native-surface-1);
+  border: 1px solid var(--native-hairline);
+  border-radius: 17px;
+  padding: 11px 12px;
+  box-shadow: var(--native-specular), 0 6px 16px rgba(0, 0, 0, 0.16);
+  transition: transform 0.14s ease, background-color 0.16s ease, border-color 0.16s ease;
+}
+
+body.is-native .songs-page .track-item:active {
+  transform: scale(0.982);
+  background: var(--native-surface-press);
+}
+
+body.is-native .songs-page .modern-select {
+  background-color: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  height: auto;
+  min-height: 38px;
+  padding: 8px 34px 8px 14px;
+  line-height: 1.25;
+}
+
+body.is-native.light-mode .songs-page .modern-select {
+  background-color: rgba(255, 255, 255, 0.94);
+  color: #0f172a;
+}
+
+body.is-native .songs-page .modern-select:focus {
+  border-color: rgba(0, 212, 255, 0.55);
+}
+
+body.is-native.light-mode .songs-page .action-icon-btn {
+  color: rgba(15, 23, 42, 0.54);
+}
+
+body.is-native.light-mode .songs-page .action-icon-btn.heart-btn.active {
+  color: #ef4444;
+}
+
+body.is-native .songs-page .track-cover {
+  border-radius: 13px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 5px 12px rgba(0, 0, 0, 0.22);
+}
+
+body.is-native .songs-page .track-key-badge {
+  background: var(--native-cyan-soft);
+  border: 1px solid rgba(0, 212, 255, 0.26);
+  color: #7ee8ff;
+}
+
+body.is-native .songs-page .track-bpm-badge {
+  background: rgba(58, 45, 255, 0.18);
+  border: 1px solid rgba(114, 107, 255, 0.3);
+  color: #b8beff;
+}
+
+body.is-native.light-mode .songs-page .track-key-badge {
+  color: #0369a1;
+  border-color: rgba(2, 132, 199, 0.22);
+}
+
+body.is-native.light-mode .songs-page .track-bpm-badge {
+  background: rgba(58, 45, 255, 0.09);
+  border-color: rgba(58, 45, 255, 0.2);
+  color: #3a2dff;
+}
+
+/* ==========================================================================
+   4. SONG VIEW, SETLISTS, BIBLE, CHURCH HUB, MEDIA HUB, PROFILE & SETTINGS
+   ========================================================================== */
+
+/* SongView Header & Sticky Floating Bar */
+body.is-native .song-view-page .sv-header-actions .icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--native-surface-2);
+  border: 1px solid var(--native-hairline);
+}
+
+body.is-native .song-view-page .sv-meta-pill {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  padding: 5px 11px;
+}
+
+/* Setlists */
+body.is-native .setlists-page .sl-card {
+  background: var(--native-surface-1);
+  border: 1px solid var(--native-hairline);
+  border-radius: 19px;
+  box-shadow: var(--native-specular), var(--native-card-shadow);
+  transition: transform 0.14s ease, border-color 0.16s ease;
+}
+
+body.is-native .setlists-page .sl-card:active {
+  transform: scale(0.982);
+}
+
+body.is-native .setlists-page .btn-new-set {
+  background: var(--native-accent-grad);
+  box-shadow: 0 8px 20px rgba(0, 212, 255, 0.24);
+}
+
+/* Bible Sticky Topbar & Controls */
+body.is-native .bible-topbar-wrap {
+  top: 6px;
+}
+
+body.is-native .bible-topbar {
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  background: rgba(16, 18, 28, 0.88);
+  border: 1px solid var(--native-hairline-strong);
+  box-shadow: var(--native-specular), 0 12px 28px rgba(0, 0, 0, 0.3);
+}
+
+body.is-native .bible-topbar-left,
+body.is-native .bible-topbar-right {
+  gap: 6px;
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+body.is-native.light-mode .bible-topbar {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: var(--native-hairline-strong);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+body.is-native .bible-pill-btn {
+  height: 36px;
+  padding: 0 12px;
+  font-size: 0.79rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+}
+
+body.is-native .bible-tr-select {
+  height: 36px;
+  padding: 0 22px 0 10px;
+  font-size: 0.74rem;
+  letter-spacing: -0.015em;
+  flex: 1 1 150px;
+  max-width: none;
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+}
+
+body.is-native .bible-reader-head h1 {
+  font-size: clamp(1.18rem, 4.9vw, 1.42rem);
+  line-height: 1.15;
+}
+
+/* ChurchHub & MediaHub */
+body.is-native .church-segmented {
+  background: var(--native-surface-1);
+  border: 1px solid var(--native-hairline);
+  box-shadow: var(--native-specular), 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+body.is-native .church-segmented button {
+  transition: transform 0.14s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+body.is-native .church-segmented button.active {
+  background: var(--native-accent-grad);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.25);
+}
+
+body.is-native.editorial-theme .church-segmented button.active {
+  background: #f7b500;
+  color: #231603;
+  box-shadow: 0 4px 12px rgba(247, 181, 0, 0.26);
+}
+
+body.is-native .media-radio-card {
+  background: var(--native-surface-1);
+  border: 1px solid var(--native-hairline);
+  border-radius: 18px;
+  box-shadow: var(--native-specular), var(--native-card-shadow);
+}
+
+/* Profile & Settings */
+body.is-native .profile-page {
+  padding: 12px 14px calc(var(--bottom-nav-total-offset, 88px) + 36px);
+}
+
+body.is-native .profile-page .profile-card {
+  background: var(--native-surface-1);
+  border: 1px solid var(--native-hairline);
+  border-radius: 22px;
+  box-shadow: var(--native-specular), var(--native-card-shadow);
+}
+
+body.is-native .settings-page .settings-menu-list {
+  background: var(--native-surface-1);
+  border: 1px solid var(--native-hairline);
+  border-radius: 20px;
+  box-shadow: var(--native-specular), var(--native-card-shadow);
+}
+
+body.is-native .settings-page .settings-menu-item:active {
+  background: var(--native-surface-press);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.is-native .hub-cat-card,
+  body.is-native .hub-topic-card,
+  body.is-native .hub-fav-card,
+  body.is-native .recent-song-card,
+  body.is-native .sl-card,
+  body.is-native .songs-page .track-item,
+  body.is-native .icon-btn {
+    transition: none !important;
+  }
+}
