@@ -53,7 +53,7 @@ const HIGHLIGHT_COLORS = [
 ];
 
 function defaultTranslationForLang(lang) {
-  if (lang === 'am') return 'easternarmenian';
+  if (lang === 'am') return 'nor_ararat';
   if (lang === 'ru') return 'synodal';
   return 'akjv';
 }
@@ -87,9 +87,14 @@ export default function Bible() {
 
   const [activeTab, setActiveTab] = useState('read'); // 'read' | 'my'
   const [translations, setTranslations] = useState(DEFAULT_BIBLE_TRANSLATIONS);
-  const [translation, setTranslation] = useState(
-    () => searchParams.get('tr') || initialStored?.translation || defaultTranslationForLang(language),
-  );
+  const [translation, setTranslation] = useState(() => {
+    const paramTr = searchParams.get('tr');
+    if (paramTr) return paramTr;
+    if (initialStored?.translation && initialStored.translation !== 'easternarmenian') {
+      return initialStored.translation;
+    }
+    return defaultTranslationForLang(language);
+  });
   const [bookId, setBookId] = useState(() => Number(searchParams.get('book')) || initialStored?.book || 43);
   const [chapter, setChapter] = useState(() => Number(searchParams.get('chapter')) || initialStored?.chapter || 1);
 
@@ -376,11 +381,11 @@ export default function Bible() {
       let mainRes = await loadChapterData(activeTr, bookId, chapter);
       if (cancelled) return;
 
-      // Smart automatic fallback for partial Armenian translations
+      // Smart automatic fallback for partial translations -> prefer full New Ararat first
       if (!mainRes.ok && mainRes.unavailable_in_translation) {
         const fallbackOrder = bookId >= 40
-          ? ['westernarmenian', 'synodal', 'akjv']
-          : ['synodal', 'akjv'];
+          ? ['nor_ararat', 'westernarmenian', 'synodal', 'akjv']
+          : ['nor_ararat', 'synodal', 'akjv'];
         for (const fbTr of fallbackOrder) {
           if (fbTr === activeTr) continue;
           const fbRes = await loadChapterData(fbTr, bookId, chapter);

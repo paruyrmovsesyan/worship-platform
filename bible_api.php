@@ -20,13 +20,22 @@ function wp_bible_out(array $payload, int $code = 200): never {
 function wp_bible_translations_catalog(): array {
     return [
         [
+            'id' => 'nor_ararat',
+            'name' => 'Նոր Արարատ (ՆԱԹ)',
+            'short' => 'ՆԱԹ',
+            'lang' => 'am',
+            'scope' => 'full',
+            'available_books' => range(1, 66),
+            'note' => 'Ամբողջ Աստվածաշունչ (66 գիրք) — Նոր Արարատ թարգմանություն',
+        ],
+        [
             'id' => 'easternarmenian',
-            'name' => 'Արևելահայերեն',
+            'name' => 'Արևելահայերեն (մասն.)',
             'short' => 'ՀԱՅ',
             'lang' => 'am',
             'scope' => 'partial',
             'available_books' => [1, 2, 40, 41, 42, 43],
-            'note' => 'Ծննդոց, Ելից և 4 Ավետարանները (մյուս գրքերի համար ընտրեք Նոր Կտակարան կամ Synodal/KJV)',
+            'note' => 'Ծննդոց, Ելից և 4 Ավետարանները',
         ],
         [
             'id' => 'westernarmenian',
@@ -86,8 +95,8 @@ function wp_bible_translations_catalog(): array {
 }
 
 function wp_bible_valid_translation(string $tr): string {
-    $allowed = ['easternarmenian', 'westernarmenian', 'synodal', 'nrt', 'akjv', 'esv', 'kjv'];
-    return in_array($tr, $allowed, true) ? $tr : 'synodal';
+    $allowed = ['nor_ararat', 'easternarmenian', 'westernarmenian', 'synodal', 'nrt', 'akjv', 'esv', 'kjv'];
+    return in_array($tr, $allowed, true) ? $tr : 'nor_ararat';
 }
 
 function wp_bible_bolls_code(string $tr): ?string {
@@ -155,6 +164,30 @@ function wp_bible_load_chapter(string $tr, int $book, int $chapter): array {
                 'error' => 'This book is not included in the selected translation',
             ];
         }
+    }
+
+    if ($tr === 'nor_ararat') {
+        $natFile = __DIR__ . "/data/bible_nat/{$book}.json";
+        if (is_file($natFile)) {
+            $bookChapters = json_decode((string)@file_get_contents($natFile), true);
+            $chKey = (string)$chapter;
+            if (is_array($bookChapters) && !empty($bookChapters[$chKey]) && is_array($bookChapters[$chKey])) {
+                $verses = array_map(static fn(array $row): array => [
+                    'verse' => (int)($row['v'] ?? 0),
+                    'text' => (string)($row['t'] ?? ''),
+                ], $bookChapters[$chKey]);
+                return [
+                    'ok' => true,
+                    'translation' => 'nor_ararat',
+                    'translation_name' => 'Նոր Արարատ (ՆԱԹ)',
+                    'book' => $book,
+                    'book_name' => '',
+                    'chapter' => $chapter,
+                    'verses' => $verses,
+                ];
+            }
+        }
+        return ['ok' => false, 'error' => 'Unable to load chapter right now'];
     }
 
     $cacheDir = __DIR__ . '/data/bible_cache';
@@ -335,6 +368,35 @@ if ($action === 'search') {
 
     $results = [];
     $seen = [];
+
+    if ($tr === 'nor_ararat') {
+        for ($b = 1; $b <= 66; $b++) {
+            $natFile = __DIR__ . "/data/bible_nat/{$b}.json";
+            if (!is_file($natFile)) continue;
+            $bookChapters = json_decode((string)@file_get_contents($natFile), true);
+            if (!is_array($bookChapters)) continue;
+            foreach ($bookChapters as $chKey => $vs) {
+                if (!is_array($vs)) continue;
+                foreach ($vs as $v) {
+                    $txt = (string)($v['t'] ?? '');
+                    if ($txt !== '' && mb_stripos($txt, $q) !== false) {
+                        $results[] = [
+                            'translation' => 'nor_ararat',
+                            'book' => $b,
+                            'book_name' => '',
+                            'chapter' => (int)$chKey,
+                            'verse' => (int)($v['v'] ?? 0),
+                            'text' => $txt,
+                        ];
+                        if (count($results) >= 40) {
+                            wp_bible_out(['ok' => true, 'results' => $results]);
+                        }
+                    }
+                }
+            }
+        }
+        wp_bible_out(['ok' => true, 'results' => $results]);
+    }
 
     $bollsCode = wp_bible_bolls_code($tr);
     if ($bollsCode !== null) {

@@ -71,7 +71,8 @@ export const BIBLE_BOOKS = [
 ];
 
 export const DEFAULT_BIBLE_TRANSLATIONS = [
-  { id: 'easternarmenian', name: 'Արևելահայերեն', short: 'ՀԱՅ', lang: 'am', scope: 'partial', available_books: [1, 2, 40, 41, 42, 43] },
+  { id: 'nor_ararat', name: 'Նոր Արարատ (ՆԱԹ)', short: 'ՆԱԹ', lang: 'am', scope: 'full', available_books: Array.from({ length: 66 }, (_, i) => i + 1) },
+  { id: 'easternarmenian', name: 'Արևելահայերեն (մասն.)', short: 'ՀԱՅ', lang: 'am', scope: 'partial', available_books: [1, 2, 40, 41, 42, 43] },
   { id: 'westernarmenian', name: 'Արևմտահայերեն (ՆԿ)', short: 'ԱՐՄ', lang: 'am', scope: 'nt', available_books: Array.from({ length: 27 }, (_, i) => 40 + i) },
   { id: 'synodal', name: 'Синодальный', short: 'RST', lang: 'ru', scope: 'full', available_books: Array.from({ length: 66 }, (_, i) => i + 1) },
   { id: 'nrt', name: 'Новый русский', short: 'НРП', lang: 'ru', scope: 'full', available_books: Array.from({ length: 66 }, (_, i) => i + 1) },

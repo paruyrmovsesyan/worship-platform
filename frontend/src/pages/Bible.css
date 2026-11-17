@@ -1076,7 +1076,14 @@ body.light-mode .bible-verse-row:hover {
 }
 
 .bible-reader-card.tint-sepia h1,
-.bible-reader-card.tint-sepia .bible-verse-main {
+.bible-reader-card.tint-sepia .bible-verse-main,
+.bible-reader-card.tint-sepia .bible-verse-parallel {
+  color: #2f2416;
+}
+
+.bible-reader-card.tint-sepia .bible-pill-btn {
+  background: rgba(47, 36, 22, 0.08);
+  border-color: rgba(47, 36, 22, 0.22);
   color: #2f2416;
 }
 
@@ -1084,6 +1091,11 @@ body.light-mode .bible-verse-row:hover {
   background: #000000 !important;
   color: #e5e7eb !important;
   border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.bible-reader-card.tint-amoled .bible-pill-btn,
+.bible-reader-card.tint-amoled .bible-verse-main {
+  color: #f3f4f6;
 }
 
 /* Spoken Audio Highlight */
