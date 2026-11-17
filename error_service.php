@@ -254,15 +254,17 @@ function wp_error_log_record(array $data): array {
         return ['status' => 'ignored', 'reason' => 'Transient 503 Service Unavailable / Maintenance response'];
     }
 
-    // Ignore empty promise rejections / user aborted requests / non-descriptive tokens
+    // Ignore empty promise rejections / user aborted requests / non-descriptive tokens / missing browser push service
     if ($message === 'Unhandled Promise Rejection: {}' ||
         $message === 'Unhandled Promise Rejection: [Object]' ||
         $message === 'Unhandled Promise Rejection' ||
         $message === 'Error: ra' ||
         $message === 'ra' ||
         stripos($message, 'AbortError') !== false ||
-        stripos($message, 'The user aborted a request') !== false) {
-        return ['status' => 'ignored', 'reason' => 'Empty promise rejection or aborted request'];
+        stripos($message, 'The user aborted a request') !== false ||
+        stripos($message, 'Push subscribe failed') !== false ||
+        stripos($message, 'push service not available') !== false) {
+        return ['status' => 'ignored', 'reason' => 'Empty promise rejection, aborted request, or browser push service unavailable'];
     }
 
     // Ignore recursive reporter call stack limit errors
@@ -938,6 +940,32 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         stripos($stackTrace, "null is not an object (evaluating 'a[0]')") !== false ||
         (stripos($message, "evaluating 'a[0]'") !== false)) {
         $reason = 'Ուղղված է՝ SongView.jsx-ում և usePwaSwipeNavigation-ում touch gesture-ների (changedTouches/touches) ստուգումը դարձվել է null-անվտանգ (optional chaining)';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
+    // 6.7. App.jsx useLocation TDZ (Cannot access 'f' before initialization)
+    if (stripos($message, "Cannot access 'f' before initialization") !== false ||
+        stripos($stackTrace, "Cannot access 'f' before initialization") !== false ||
+        (stripos($message, 'before initialization') !== false && stripos((string)$file, 'index.js') !== false)) {
+        $reason = 'Ուղղված է՝ App.jsx-ում useLocation() հուկը տեղափոխվել է matchesRestrictedPage()-ից առաջ, TDZ սխալը վերացված է (commit 7d4f3e7)';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
+    // 6.8. Browser Push Service unavailable (Push subscribe failed / Registration failed - push service not available)
+    if (stripos($message, 'Push subscribe failed') !== false ||
+        stripos($message, 'push service not available') !== false ||
+        stripos($stackTrace, 'push service not available') !== false) {
+        $reason = 'Ուղղված է՝ pwa-init.js-ում Push ծառայություն չունեցող բրաուզերների (Brave/Restricted WebView) սխալը փոխարինվել է անվտանգ console.warn-ով և ֆիլտրված է';
         wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
         $item['is_resolved'] = 1;
         $item['resolved_at'] = date('Y-m-d H:i:s');

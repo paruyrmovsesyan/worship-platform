@@ -240,7 +240,9 @@
         rawMsg.includes('Failed to register a ServiceWorker') ||
         rawMsg.includes('Failed to update a ServiceWorker') ||
         rawMsg.includes('ServiceWorker') ||
-        rawStack.includes('ServiceWorkerContainer')
+        rawStack.includes('ServiceWorkerContainer') ||
+        rawMsg.includes('Push subscribe failed') ||
+        rawMsg.includes('push service not available')
       ) {
         return;
       }

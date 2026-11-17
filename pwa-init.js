@@ -1375,7 +1375,7 @@
           await subscription.unsubscribe();
         }
       } catch (err) {
-        console.error("Push local unsubscribe failed", err);
+        console.warn("Push local unsubscribe failed", err);
       }
 
       setAdminRemoved(true);
@@ -1436,7 +1436,7 @@
         await syncPushStatus(subscription, userMeta);
         return true;
       } catch (err) {
-        console.error("Push subscribe failed", err);
+        console.warn("Push subscribe failed", err);
         return false;
       }
     }
@@ -1466,7 +1466,7 @@
         await syncPushStatus(null);
         return true;
       } catch (err) {
-        console.error("Push unsubscribe failed", err);
+        console.warn("Push unsubscribe failed", err);
         return false;
       }
     }

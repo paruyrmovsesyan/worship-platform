@@ -131,8 +131,8 @@
     var timerId = null;
     var sending = false;
     var lastSentAt = 0;
-    var intervalMs = 5000;
-    var minimumGapMs = 4000;
+    var intervalMs = 30000;
+    var minimumGapMs = 15000;
 
     function canSend() {
       return !document.hidden && navigator.onLine !== false;
@@ -1110,14 +1110,18 @@
           var nextState = isLoggedIn ? ("user:" + String(data.user_id)) : "guest";
 
           if (isLoggedIn) {
+            var syncedUserObj = {
+              id: data.user_id,
+              user_id: data.user_id,
+              name: data.user_name || data.name || "",
+              username: data.username || "",
+              email: data.user_email || data.email || ""
+            };
             try {
-              localStorage.setItem("worship_user", JSON.stringify({
-                id: data.user_id,
-                user_id: data.user_id,
-                name: data.user_name || data.name || "",
-                username: data.username || "",
-                email: data.user_email || data.email || ""
-              }));
+              localStorage.setItem("worship_user", JSON.stringify(syncedUserObj));
+            } catch (e) {}
+            try {
+              window.dispatchEvent(new CustomEvent("wp-auth-synced", { detail: syncedUserObj }));
             } catch (e) {}
 
             if (window.WPPushManager && typeof window.WPPushManager.syncWithUser === "function") {
@@ -1371,7 +1375,7 @@
           await subscription.unsubscribe();
         }
       } catch (err) {
-        console.error("Push local unsubscribe failed", err);
+        console.warn("Push local unsubscribe failed", err);
       }
 
       setAdminRemoved(true);
@@ -1432,7 +1436,7 @@
         await syncPushStatus(subscription, userMeta);
         return true;
       } catch (err) {
-        console.error("Push subscribe failed", err);
+        console.warn("Push subscribe failed", err);
         return false;
       }
     }
@@ -1462,7 +1466,7 @@
         await syncPushStatus(null);
         return true;
       } catch (err) {
-        console.error("Push unsubscribe failed", err);
+        console.warn("Push unsubscribe failed", err);
         return false;
       }
     }

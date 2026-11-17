@@ -1,8 +1,8 @@
 {
   "app_version": "5.4.0",
   "web_version": "5.4.0",
-  "asset_version": "596",
-  "build_timestamp": "2026-11-18T00:47:00+04:00",
+  "asset_version": "598",
+  "build_timestamp": "2026-11-18T01:28:00+04:00",
   "release_type": "minor",
   "release_summary": "myekklesia-inspired Today hub, Bible Reader (parallel translations, notes, highlights, reading plans), Church Community & Prayer Requests, Warm Editorial Amber theme, and SongView Tone/Capo & stage cue notes"
 }
