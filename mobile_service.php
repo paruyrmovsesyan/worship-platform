@@ -77,7 +77,26 @@ function wp_mobile_default_config(): array {
 }
 
 /**
+ * Checks whether an announcement's scheduled end time has passed.
+ */
+function wp_mobile_is_announcement_expired(array $announcement): bool {
+    $endRaw = wp_version_normalize_datetime($announcement['schedule_end_at'] ?? '');
+    if ($endRaw === '') {
+        return false;
+    }
+    try {
+        $tz = wp_version_admin_timezone();
+        $nowTs = (new DateTimeImmutable('now', $tz))->getTimestamp();
+        $endTs = (new DateTimeImmutable($endRaw, $tz))->getTimestamp();
+        return $nowTs >= $endTs;
+    } catch (Throwable $_) {
+        return false;
+    }
+}
+
+/**
  * Loads current mobile config from JSON file with defaults fallback.
+ * Automatically deactivates the announcement if its schedule_end_at has expired.
  */
 function wp_mobile_get_config(): array {
     $defaults = wp_mobile_default_config();
@@ -94,6 +113,15 @@ function wp_mobile_get_config(): array {
     }
 
     $merged = array_replace_recursive($defaults, $data);
+
+    if (!empty($merged['announcement']['enabled']) && wp_mobile_is_announcement_expired($merged['announcement'])) {
+        $merged['announcement']['enabled'] = false;
+        $json = json_encode($merged, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($json !== false) {
+            @file_put_contents(WP_MOBILE_CONFIG_FILE, $json, LOCK_EX);
+        }
+    }
+
     return $merged;
 }
 
@@ -213,6 +241,18 @@ function wp_mobile_get_announcement_history(): array {
             $items = [$seed];
             wp_mobile_save_announcement_history($items);
         }
+    }
+
+    $changed = false;
+    foreach ($items as &$item) {
+        if (!empty($item['enabled']) && wp_mobile_is_announcement_expired($item)) {
+            $item['enabled'] = false;
+            $changed = true;
+        }
+    }
+    unset($item);
+    if ($changed) {
+        wp_mobile_save_announcement_history($items);
     }
 
     return $items;

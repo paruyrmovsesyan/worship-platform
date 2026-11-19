@@ -14,7 +14,19 @@ let activeAnnouncement = null;
 let announcementDismissed = false;
 let isInitialized = false;
 
+function isClientAnnouncementExpired(ann) {
+  if (!ann || !ann.schedule_end_at) return false;
+  const endMs = Date.parse(String(ann.schedule_end_at).trim().replace(' ', 'T'));
+  if (Number.isNaN(endMs)) return false;
+  return Date.now() >= endMs;
+}
+
 export function setAnnouncementRestrictions({ announcement = null, restrictedFeatures = [], restrictedPages = [] } = {}) {
+  if (announcement && isClientAnnouncementExpired(announcement)) {
+    announcement = null;
+    restrictedFeatures = [];
+    restrictedPages = [];
+  }
   const prevKey = activeAnnouncement ? `${activeAnnouncement.title || ''}|${activeAnnouncement.message || ''}` : '';
   const nextKey = announcement ? `${announcement.title || ''}|${announcement.message || ''}` : '';
   activeAnnouncement = announcement || null;
@@ -32,6 +44,11 @@ export function dismissPlatformAnnouncement() {
 }
 
 export function getAnnouncementRestrictions() {
+  if (activeAnnouncement && isClientAnnouncementExpired(activeAnnouncement)) {
+    activeAnnouncement = null;
+    announcementRestrictedFeatures = new Set();
+    announcementRestrictedPages = [];
+  }
   return {
     announcement: activeAnnouncement,
     dismissed: announcementDismissed,
@@ -41,6 +58,12 @@ export function getAnnouncementRestrictions() {
 }
 
 export function isFeatureRestrictedByAnnouncement(featureId) {
+  if (activeAnnouncement && isClientAnnouncementExpired(activeAnnouncement)) {
+    activeAnnouncement = null;
+    announcementRestrictedFeatures = new Set();
+    announcementRestrictedPages = [];
+    return false;
+  }
   return Boolean(featureId && announcementRestrictedFeatures.has(String(featureId)));
 }
 
@@ -135,6 +158,25 @@ export function usePlatformAnnouncement(surface, baseUrl = '') {
       if (surface) document.removeEventListener('visibilitychange', onVisible);
     };
   }, [surface, baseUrl]);
+
+  useEffect(() => {
+    const endRaw = state.announcement?.schedule_end_at;
+    if (!endRaw) return undefined;
+    const endMs = Date.parse(String(endRaw).trim().replace(' ', 'T'));
+    if (Number.isNaN(endMs)) return undefined;
+    const remainingMs = endMs - Date.now();
+    if (remainingMs <= 0) {
+      setAnnouncementRestrictions({ announcement: null, restrictedFeatures: [], restrictedPages: [] });
+      return undefined;
+    }
+    const expiryTimer = window.setTimeout(() => {
+      setAnnouncementRestrictions({ announcement: null, restrictedFeatures: [], restrictedPages: [] });
+      if (surface) {
+        fetchPlatformAnnouncement(surface, baseUrl);
+      }
+    }, Math.min(remainingMs + 250, 2147483647));
+    return () => window.clearTimeout(expiryTimer);
+  }, [state.announcement?.schedule_end_at, surface, baseUrl]);
 
   const recheck = async () => {
     const next = await fetchPlatformAnnouncement(surface || 'web', baseUrl);

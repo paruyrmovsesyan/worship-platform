@@ -878,7 +878,7 @@ export default function Bible() {
   };
 
   return (
-    <div className="bible-page animate-fade-in">
+    <div className={`bible-page animate-fade-in ${isMobileViewport && selectedVerseObj && activeTab === 'read' ? 'has-verse-sheet' : ''}`}>
       {/* Top Bar Wrapper (keeps Aa popover floating cleanly without shifting layout) */}
       <div className={`bible-topbar-wrap ${isTopbarCompact ? 'is-compact' : ''}`}>
       <header className="bible-topbar">
