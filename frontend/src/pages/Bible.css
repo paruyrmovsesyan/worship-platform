@@ -784,10 +784,12 @@ body.light-mode .bible-fallback-btns button {
   display: none;
 }
 
-.bible-modal-backdrop {
-  position: fixed;
+.bible-modal-backdrop,
+body.wp-standalone-app > .bible-modal-backdrop,
+body.is-app > .bible-modal-backdrop {
+  position: fixed !important;
   inset: 0;
-  z-index: 2200;
+  z-index: 2147482500 !important;
   background: rgba(0, 0, 0, 0.68);
   display: flex;
   align-items: center;
@@ -926,15 +928,17 @@ body.light-mode .bible-verse-row:hover {
     padding: 18px 16px;
   }
 
-  .bible-mobile-sheet {
+  .bible-mobile-sheet,
+  body.wp-standalone-app > .bible-mobile-sheet,
+  body.is-app > .bible-mobile-sheet {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    position: fixed;
+    position: fixed !important;
     left: 12px;
     right: 12px;
     bottom: calc(var(--bottom-nav-total-offset, 88px) + 10px);
-    z-index: 60;
+    z-index: 2147481000 !important;
     padding: 12px 14px;
     border-radius: 16px;
     background: var(--color-surface);

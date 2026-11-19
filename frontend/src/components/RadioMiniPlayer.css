@@ -1,8 +1,10 @@
-.radio-mini-pill {
-  position: fixed;
+.radio-mini-pill,
+body.wp-standalone-app > .radio-mini-pill,
+body.is-app > .radio-mini-pill {
+  position: fixed !important;
   right: 16px;
   bottom: calc(var(--bottom-nav-total-offset, 20px) + 12px);
-  z-index: 1100;
+  z-index: 2147480500 !important;
   display: flex;
   align-items: center;
   gap: 8px;

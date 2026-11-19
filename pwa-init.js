@@ -468,7 +468,7 @@
           "body.wp-standalone-app.wp-ios-app{padding-top:max(44px,env(safe-area-inset-top))}" +
           "body.wp-main-app{background:radial-gradient(circle at top left,rgba(107,124,255,.18),transparent 28%),radial-gradient(circle at top right,rgba(87,214,195,.14),transparent 24%),linear-gradient(180deg,#05050A 0%,#10182f 100%)}" +
           "body.wp-standalone-app::before{content:'';position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 22%),radial-gradient(circle at 20% 0%,rgba(255,255,255,.05),transparent 24%);z-index:0}" +
-          "body.wp-standalone-app>*{position:relative;z-index:1}" +
+          "body.wp-standalone-app>#root{position:relative;z-index:1}" +
           "body.wp-standalone-app .container,body.wp-standalone-app .shell{max-width:min(1480px,calc(100vw - 2px));margin-inline:auto}" +
           "body.wp-standalone-app .topbar,body.wp-standalone-app .toolbar,body.wp-standalone-app .header,body.wp-standalone-app .search-card,body.wp-standalone-app .table-card,body.wp-standalone-app .panel,body.wp-standalone-app .card{backdrop-filter:blur(20px) saturate(140%)}" +
           "body.wp-standalone-app .topbar,body.wp-standalone-app .toolbar,body.wp-standalone-app .header{border:1px solid rgba(255,255,255,.07);box-shadow:0 20px 44px rgba(0,0,0,.28)}" +
