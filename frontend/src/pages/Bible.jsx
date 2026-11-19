@@ -941,8 +941,20 @@ export default function Bible() {
               className={`bible-icon-pill ${audioPlaying ? 'active' : ''}`}
               onClick={() => startAudioRead()}
               title={language === 'ru' ? 'Слушать главу' : language === 'en' ? 'Listen to chapter' : 'Լսել գլուխը'}
+              aria-label={language === 'ru' ? 'Слушать главу' : language === 'en' ? 'Listen to chapter' : 'Լսել գլուխը'}
             >
-              {audioPlaying ? '❚❚' : '🔊'}
+              {audioPlaying ? (
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <rect x="6" y="5" width="4" height="14" rx="1" />
+                  <rect x="14" y="5" width="4" height="14" rx="1" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                </svg>
+              )}
             </button>
           )}
           <button
@@ -950,22 +962,29 @@ export default function Bible() {
             className={`bible-icon-pill ${multiSelectMode ? 'active' : ''}`}
             onClick={() => setMultiSelectMode((m) => !m)}
             title={language === 'ru' ? 'Выбрать несколько стихов' : language === 'en' ? 'Multi-select verses' : 'Ընտրել մի քանի համար'}
+            aria-label={language === 'ru' ? 'Выбрать несколько стихов' : language === 'en' ? 'Multi-select verses' : 'Ընտրել մի քանի համար'}
           >
-            ☑
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 11 12 14 22 4" />
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+            </svg>
           </button>
           <button
             type="button"
             className={`bible-icon-pill ${isChapterBookmarked ? 'is-bookmarked' : ''}`}
             onClick={toggleChapterBookmark}
             title={isChapterBookmarked ? ui.bookmarked : ui.bookmarkChapter}
+            aria-label={isChapterBookmarked ? ui.bookmarked : ui.bookmarkChapter}
           >
             <svg
               viewBox="0 0 24 24"
-              width="17"
-              height="17"
+              width="16"
+              height="16"
               fill={isChapterBookmarked ? 'currentColor' : 'none'}
               stroke="currentColor"
               strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
             </svg>
@@ -975,8 +994,9 @@ export default function Bible() {
             className="bible-icon-pill"
             onClick={() => setShowSearchModal(true)}
             title={ui.search}
+            aria-label={ui.search}
           >
-            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
@@ -1383,21 +1403,35 @@ export default function Bible() {
                 <div className="bible-chapter-nav">
                   <button
                     type="button"
-                    className={`bible-pill-btn ${isCurrentBookOffline ? 'is-offline-ready' : ''}`}
+                    className={`bible-pill-btn bible-offline-btn ${isCurrentBookOffline ? 'is-offline-ready' : ''}`}
                     onClick={downloadBookOffline}
                     disabled={Boolean(offlineProgress)}
                     title={language === 'ru' ? 'Скачать книгу для офлайн-чтения' : language === 'en' ? 'Download book offline' : 'Պահել գիրքը օֆլայն'}
                   >
-                    {offlineProgress
-                      ? `⏳ ${offlineProgress.done}/${offlineProgress.total}`
-                      : isCurrentBookOffline
-                      ? `✓ ${language === 'ru' ? 'Офлайн' : language === 'en' ? 'Offline' : 'Օֆլայն'}`
-                      : `📥 ${language === 'ru' ? 'Офлайн' : language === 'en' ? 'Offline' : 'Օֆլայն'}`}
+                    {offlineProgress ? (
+                      <span>{offlineProgress.done}/{offlineProgress.total}</span>
+                    ) : isCurrentBookOffline ? (
+                      <>
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span>{language === 'ru' ? 'Офлайн' : language === 'en' ? 'Offline' : 'Օֆլայն'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="7 10 12 15 17 10" />
+                          <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        <span>{language === 'ru' ? 'Офлайн' : language === 'en' ? 'Offline' : 'Օֆլայն'}</span>
+                      </>
+                    )}
                   </button>
                   {audioPlaying && (
                     <button
                       type="button"
-                      className="bible-pill-btn"
+                      className="bible-pill-btn bible-speed-btn"
                       onClick={() => setAudioSpeed((s) => (s === 1 ? 1.25 : s === 1.25 ? 0.85 : 1))}
                       title="Audio speed"
                     >
@@ -1406,21 +1440,25 @@ export default function Bible() {
                   )}
                   <button
                     type="button"
-                    className="bible-pill-btn"
+                    className="bible-icon-pill bible-ch-step-btn"
                     onClick={() => stepChapter(-1)}
                     disabled={bookId === 1 && chapter === 1}
                     aria-label={ui.prevChapter}
                   >
-                    ‹
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
                   </button>
                   <button
                     type="button"
-                    className="bible-pill-btn"
+                    className="bible-icon-pill bible-ch-step-btn"
                     onClick={() => stepChapter(1)}
                     disabled={bookId === 66 && chapter === currentBook.chapters}
                     aria-label={ui.nextChapter}
                   >
-                    ›
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
                   </button>
                 </div>
               </div>
@@ -1643,11 +1681,15 @@ export default function Bible() {
 
       {/* Mobile Selected Verse Bottom Action Sheet (Portaled, strict mobile <= 900px) */}
       {isMobileViewport && selectedVerseObj && activeTab === 'read' && createPortal(
-        <div className="bible-mobile-sheet">
+        <div className="bible-mobile-sheet" role="dialog" aria-label={ui.verseActions}>
+          <div className="bible-mobile-sheet-handle" />
           <div className="bible-mobile-sheet-head">
-            <strong>
-              {getBookName(bookId, language)} {chapter}:{selectedRangeLabel || selectedVerse}
-            </strong>
+            <div className="bible-sheet-ref-wrap">
+              <span className="bible-sheet-ref-dot" />
+              <strong>
+                {getBookName(bookId, language)} {chapter}:{selectedRangeLabel || selectedVerse}
+              </strong>
+            </div>
             <div className="bible-hl-swatches">
               {HIGHLIGHT_COLORS.map((c) => (
                 <button
@@ -1667,22 +1709,45 @@ export default function Bible() {
                 setSelectedVerse(null);
                 setSelectedVerses([]);
               }}
+              aria-label="Փակել"
             >
-              ✕
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
           </div>
           <div className="bible-mobile-sheet-actions">
-            <button type="button" className="bible-pill-btn" onClick={handleCopyVerse}>
-              {copyFeedback || ui.copy}
+            <button type="button" className="bible-sheet-action-btn" onClick={handleCopyVerse}>
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              <span>{copyFeedback || ui.copy}</span>
             </button>
-            <button type="button" className="bible-pill-btn" onClick={handleShareVerse}>
-              {ui.share}
+            <button type="button" className="bible-sheet-action-btn" onClick={handleShareVerse}>
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+              <span>{ui.share}</span>
             </button>
-            <button type="button" className="bible-pill-btn" onClick={() => openCompareVerse(selectedVerse)}>
-              🔄 {language === 'ru' ? 'Переводы' : language === 'en' ? 'Compare' : 'Համեմատել'}
+            <button type="button" className="bible-sheet-action-btn" onClick={() => openCompareVerse(selectedVerse)}>
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="17 1 21 5 17 9" />
+                <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                <polyline points="7 23 3 19 7 15" />
+                <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+              </svg>
+              <span>{language === 'ru' ? 'Переводы' : language === 'en' ? 'Compare' : 'Համեմատել'}</span>
             </button>
-            <button type="button" className="bible-pill-btn" onClick={() => startAudioRead(selectedVerse)}>
-              🔊 {language === 'ru' ? 'Слушать' : language === 'en' ? 'Listen' : 'Լսել'}
+            <button type="button" className="bible-sheet-action-btn" onClick={() => startAudioRead(selectedVerse)}>
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+              </svg>
+              <span>{language === 'ru' ? 'Слушать' : language === 'en' ? 'Listen' : 'Լսել'}</span>
             </button>
           </div>
           <div className="bible-mobile-note-row">
@@ -1693,7 +1758,7 @@ export default function Bible() {
               onChange={(e) => setNoteDraft(e.target.value)}
             />
             <button type="button" className="bible-cta-amber" onClick={handleSaveNote}>
-              {ui.saveNote}
+              {language === 'ru' ? 'Сохранить' : language === 'en' ? 'Save' : 'Պահպանել'}
             </button>
           </div>
         </div>,

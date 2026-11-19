@@ -128,7 +128,7 @@ function wp_mobile_get_config(): array {
 /**
  * Saves mobile config atomically and records announcement history when announcement content is present.
  */
-function wp_mobile_save_config(array $config, string $updatedBy = 'admin', bool $forceNewHistory = false): bool {
+function wp_mobile_save_config(array $config, string $updatedBy = 'admin', bool $forceNewHistory = false, bool $recordHistory = true): bool {
     $dir = dirname(WP_MOBILE_CONFIG_FILE);
     if (!is_dir($dir)) {
         @mkdir($dir, 0775, true);
@@ -141,7 +141,7 @@ function wp_mobile_save_config(array $config, string $updatedBy = 'admin', bool 
         return false;
     }
     $saved = (bool)@file_put_contents(WP_MOBILE_CONFIG_FILE, $json, LOCK_EX);
-    if ($saved && !empty($config['announcement']) && is_array($config['announcement'])) {
+    if ($saved && $recordHistory && !empty($config['announcement']) && is_array($config['announcement'])) {
         $ann = $config['announcement'];
         $hasText = trim((string)($ann['title'] ?? '')) !== '' || trim((string)($ann['message'] ?? '')) !== '';
         $hasRestrictions = !empty($ann['restricted_pages']) || !empty($ann['restricted_features']);
