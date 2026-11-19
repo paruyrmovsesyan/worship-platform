@@ -267,7 +267,14 @@ export default function Bible() {
 
   // Sync URL params when navigating inside Bible
   useEffect(() => {
-    setSearchParams({ tr: translation, book: String(bookId), chapter: String(chapter) }, { replace: true });
+    setSearchParams((prev) => {
+      const next = { tr: translation, book: String(bookId), chapter: String(chapter) };
+      const existingVerse = prev.get('verse');
+      if (existingVerse && String(prev.get('book') || bookId) === String(bookId) && String(prev.get('chapter') || chapter) === String(chapter)) {
+        next.verse = existingVerse;
+      }
+      return next;
+    }, { replace: true });
     try {
       const payload = {
         translation,
@@ -279,6 +286,19 @@ export default function Bible() {
       localStorage.setItem(LAST_READ_KEY, JSON.stringify(payload));
     } catch { /* ignore storage error */ }
   }, [translation, bookId, chapter, language, setSearchParams]);
+
+  // Smoothly scroll selected verse into view after chapter verses load
+  useEffect(() => {
+    if (!loading && selectedVerse && verses.length > 0 && activeTab === 'read') {
+      const timer = setTimeout(() => {
+        const el = document.querySelector('.bible-verse-row.is-selected');
+        if (el && typeof el.scrollIntoView === 'function') {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 120);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, selectedVerse, verses.length, activeTab]);
 
   // Persist prefs
   useEffect(() => {

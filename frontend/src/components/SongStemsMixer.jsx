@@ -48,22 +48,40 @@ function parseKeyInfo(rawKey) {
 export default function SongStemsMixer({
   songTitle = 'Worship Song',
   audioUrl = null,
+  fallbackAudioUrl = null,
   songKey = 'C',
   initialBpm = 120,
+  songBpm = null,
   onClose,
 }) {
   const { isBeta } = useFeatureFlags();
+  const effectiveAudioUrl = audioUrl || fallbackAudioUrl || null;
+  const effectiveBpmProp = songBpm || initialBpm || 120;
   const [isPlaying, setIsPlaying] = useState(false);
   const [tracks, setTracks] = useState(DEFAULT_STEM_TRACKS);
   const [masterVolume, setMasterVolume] = useState(85);
   const [bpm, setBpm] = useState(() => {
-    const parsed = parseInt(initialBpm, 10);
+    const parsed = parseInt(effectiveBpmProp, 10);
     return parsed >= 40 && parsed <= 240 ? parsed : 118;
   });
   const [selectedKey, setSelectedKey] = useState(() => {
     const info = parseKeyInfo(songKey);
     return info.root + (info.isMinor ? 'm' : '');
   });
+
+  useEffect(() => {
+    const parsed = parseInt(effectiveBpmProp, 10);
+    if (parsed >= 40 && parsed <= 240) {
+      setBpm(parsed);
+    }
+  }, [effectiveBpmProp]);
+
+  useEffect(() => {
+    if (songKey) {
+      const info = parseKeyInfo(songKey);
+      setSelectedKey(info.root + (info.isMinor ? 'm' : ''));
+    }
+  }, [songKey]);
   const [loopActive, setLoopActive] = useState(false);
   const [loopSection, setLoopSection] = useState('Chorus');
   const [currentBeat, setCurrentBeat] = useState(1);
@@ -393,7 +411,7 @@ export default function SongStemsMixer({
     padNodesRef.current = { osc1, osc2, osc3, shimmerOsc, padGain, shimmerGain };
 
     // Sync HTML audio if available
-    if (htmlAudioRef.current && audioUrl) {
+    if (htmlAudioRef.current && effectiveAudioUrl) {
       htmlAudioRef.current.volume = Math.min(1, Math.max(0, getTrackGain('vocal')));
       htmlAudioRef.current.play().catch(() => {});
     }
@@ -408,7 +426,7 @@ export default function SongStemsMixer({
     }, eighthNoteMs);
 
     setIsPlaying(true);
-  }, [audioUrl, getTrackGain, triggerStep]);
+  }, [effectiveAudioUrl, getTrackGain, triggerStep]);
 
   // Adjust interval speed if BPM changes while playing
   useEffect(() => {
@@ -571,10 +589,10 @@ export default function SongStemsMixer({
           ↺ Reset
         </button>
 
-        {audioUrl && (
+        {effectiveAudioUrl && (
           <audio
             ref={htmlAudioRef}
-            src={audioUrl}
+            src={effectiveAudioUrl}
             loop={loopActive}
             style={{ display: 'none' }}
           />

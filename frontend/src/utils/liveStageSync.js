@@ -224,6 +224,18 @@ class LiveStageSyncService {
     this.broadcastState(initialState);
   }
 
+  // Convenience helper to generate a new STAGE-XXXX code and start a Leader session
+  createSession(initialState = {}, leaderName = 'Worship Leader') {
+    const code = 'STAGE-' + Math.floor(1000 + Math.random() * 9000);
+    this.startSession(code, leaderName || this.leaderName || 'Worship Leader', initialState);
+    return code;
+  }
+
+  // Convenience helper to broadcast a live stage cue message to all followers
+  async sendStageMessage(message = '') {
+    return this.broadcastState({ stage_message: String(message || '') });
+  }
+
   // Follower joins stage session
   joinSession(sessionId) {
     this.sessionId = sessionId;

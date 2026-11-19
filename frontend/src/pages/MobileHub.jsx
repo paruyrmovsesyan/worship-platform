@@ -83,6 +83,7 @@ export default function MobileHub() {
   const [recentSongs, setRecentSongs] = useState([]);
   const [upcomingSetlist, setUpcomingSetlist] = useState(null);
   const [userSetlists, setUserSetlists] = useState([]);
+  const [churchCalendarItems, setChurchCalendarItems] = useState([]);
   const [selectedDayStr, setSelectedDayStr] = useState(getTodayStr);
   const [favorites, setFavorites] = useState([]);
   const [newsItems, setNewsItems] = useState(() => getCachedNewsList(language));
@@ -200,6 +201,17 @@ export default function MobileHub() {
           console.warn('Songs sync skipped:', err?.message || err);
         }
       });
+
+    // Fetch church calendar items (services, rehearsals, events) for the 7-day strip
+    fetch('/church_api.php?action=get_calendar', { credentials: 'include', signal })
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (cancelled || !data) return;
+        if (Array.isArray(data.items)) {
+          setChurchCalendarItems(data.items);
+        }
+      })
+      .catch(() => {});
 
     // Fetch user specific data
     if (user) {
@@ -350,16 +362,18 @@ export default function MobileHub() {
       const day = String(d.getDate()).padStart(2, '0');
       const dateStr = `${y}-${m}-${day}`;
       const daySetlists = userSetlists.filter((s) => String(s.service_date || '').slice(0, 10) === dateStr);
+      const dayEvents = churchCalendarItems.filter((ev) => String(ev.date || '').slice(0, 10) === dateStr);
       return {
         dateStr,
         dayNum: d.getDate(),
         label: shortDays[i],
         isToday: dateStr === getTodayStr(),
-        hasService: daySetlists.length > 0,
+        hasService: daySetlists.length > 0 || dayEvents.length > 0,
         setlists: daySetlists,
+        events: dayEvents,
       };
     });
-  }, [language, userSetlists]);
+  }, [language, userSetlists, churchCalendarItems]);
 
   const selectedDayInfo = weekDays.find((d) => d.dateStr === selectedDayStr) || weekDays.find((d) => d.isToday);
   const dailyVerse = todayDevotional.verse;
@@ -501,10 +515,44 @@ export default function MobileHub() {
                   )
                 }
               >
-                Բացել →
+                {language === 'ru' ? 'Открыть →' : language === 'en' ? 'Open →' : 'Բացել →'}
               </button>
             </div>
-          ) : null}
+          ) : selectedDayInfo?.events?.length > 0 ? (
+            <div className="hub-week-detail">
+              <span>
+                {selectedDayInfo.events[0].kind === 'rehearsal' ? '🎸 ' : '⛪ '}
+                {selectedDayInfo.events[0].title}
+                {selectedDayInfo.events[0].time ? ` · ${selectedDayInfo.events[0].time}` : ''}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  guardPath('/church?tab=calendar', () => navigate('/church?tab=calendar'))
+                }
+              >
+                {language === 'ru' ? 'Календарь →' : language === 'en' ? 'Calendar →' : 'Օրացույց →'}
+              </button>
+            </div>
+          ) : (
+            <div className="hub-week-detail is-empty">
+              <span>
+                {language === 'ru'
+                  ? 'На этот день нет запланированных служений'
+                  : language === 'en'
+                  ? 'No services or rehearsals on this day'
+                  : 'Այս օրվա համար գրանցված ծառայություն կամ փորձ չկա'}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  guardPath('/church?tab=calendar', () => navigate('/church?tab=calendar'))
+                }
+              >
+                {language === 'ru' ? 'Календарь →' : language === 'en' ? 'Calendar →' : 'Օրացույց →'}
+              </button>
+            </div>
+          )}
         </section>
 
         {isOffline && (
@@ -620,10 +668,9 @@ export default function MobileHub() {
                 )}
               </button>
             )}
-            <button className="hub-cat-card hub-cat-card-wide" onClick={() => guardPath('/transpose', () => navigate('/transpose'))}>
+            <button className={`hub-cat-card ${!isVisible('pro_studio') ? 'hub-cat-card-wide' : ''}`} onClick={() => guardPath('/transpose', () => navigate('/transpose'))}>
               <div className="cat-icon bg-transpose"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M7 4 4 7l3 3M20 17H4m13-3 3 3-3 3" /></svg></div>
               <span className="cat-text">{t('hub.categories.transposer')}</span>
-              <svg className="hub-cat-arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
             </button>
           </div>
         </div>

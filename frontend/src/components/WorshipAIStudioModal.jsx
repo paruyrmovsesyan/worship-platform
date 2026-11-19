@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFeatureFlags } from '../utils/featureFlags';
 import { BetaBadge } from './BetaBadge';
 import './WorshipAIStudioModal.css';
@@ -6,14 +6,23 @@ import './WorshipAIStudioModal.css';
 export default function WorshipAIStudioModal({
   isOpen,
   onClose,
-  songTitle = '',
-  songKey = 'C',
-  lyrics = '',
-  chords = '',
+  song = null,
+  songTitle: propSongTitle = '',
+  songKey: propSongKey = '',
+  currentKey: propCurrentKey = '',
+  lyrics: propLyrics = '',
+  chords: propChords = '',
   onApplyResult,
+  onApplyChords,
   inline = false,
 }) {
   const { isBeta } = useFeatureFlags();
+  const songTitle = propSongTitle || song?.title_hy || song?.title || '';
+  const songKey = propSongKey || propCurrentKey || song?.song_key || song?.tonality || 'C';
+  const lyrics = propLyrics || song?.lyrics || '';
+  const chords = propChords || song?.chords || '';
+  const effectiveApplyResult = onApplyResult || onApplyChords;
+
   const [activeTab, setActiveTab] = useState('chords'); // 'chords' | 'stylize' | 'translate'
   const [targetKey, setTargetKey] = useState(songKey || 'C');
   const [stylizeMode, setStylizeMode] = useState('enhance'); // 'enhance' | 'simplify'
@@ -23,6 +32,16 @@ export default function WorshipAIStudioModal({
   const [resultText, setResultText] = useState('');
   const [modeNote, setModeNote] = useState('');
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (songKey) {
+      setTargetKey(songKey);
+    }
+  }, [songKey]);
+
+  useEffect(() => {
+    setCustomSourceText(null);
+  }, [songTitle, lyrics, chords]);
 
   const defaultSource = activeTab === 'stylize'
     ? (chords || lyrics || '')
@@ -297,12 +316,12 @@ export default function WorshipAIStudioModal({
                 >
                   {copied ? '✓ Պատճենվեց' : 'Պատճենել'}
                 </button>
-                {onApplyResult && (
+                {effectiveApplyResult && (
                   <button
                     type="button"
                     className="ai-studio-apply-btn"
                     onClick={() => {
-                      onApplyResult(resultText, activeTab);
+                      effectiveApplyResult(resultText, activeTab);
                       if (onClose) onClose();
                     }}
                   >

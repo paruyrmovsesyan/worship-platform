@@ -304,7 +304,7 @@ export default function WorshipStudioHub() {
   // Musical context
   const [transposeSemitones, setTransposeSemitones] = useState(0);
   const [chordFontSize, setChordFontSize] = useState(15);
-  const [showStemsChordPanel, setShowStemsChordPanel] = useState(false);
+  const [showStemsChordPanel, setShowStemsChordPanel] = useState(true);
 
   // Live Stage state
   const [liveSessionState, setLiveSessionState] = useState(() =>
@@ -435,8 +435,9 @@ export default function WorshipStudioHub() {
     setTransposeSemitones(0);
     setProjSlideIndex(0);
 
-    if (selectedSong?.tonality) {
-      const cleanRoot = String(selectedSong.tonality).replace(/m.*$/i, '').trim();
+    const rawSongKey = selectedSong?.song_key || selectedSong?.tonality || '';
+    if (rawSongKey) {
+      const cleanRoot = String(rawSongKey).replace(/m.*$/i, '').trim();
       const matchedPad = PAD_KEYS.find((k) => k.key.toLowerCase() === cleanRoot.toLowerCase());
       if (matchedPad && !padPlaying) {
         setPadKey(matchedPad.key);
@@ -494,9 +495,9 @@ export default function WorshipStudioHub() {
     const q = songSearch.toLowerCase();
     return songs
       .filter((s) => {
-        const title = getLocalizedTitle(s.title || s.title_hy || '', language).toLowerCase();
+        const title = getLocalizedTitle(s, language).toLowerCase();
         const cat = String(s.category || '').toLowerCase();
-        const key = String(s.tonality || '').toLowerCase();
+        const key = String(s.song_key || s.tonality || '').toLowerCase();
         return title.includes(q) || cat.includes(q) || key.includes(q);
       })
       .slice(0, 50);
@@ -504,13 +505,18 @@ export default function WorshipStudioHub() {
 
   const activeSongTitle = useMemo(() => {
     if (!activeSongFull) return 'Ընտրեք երգը...';
-    return getLocalizedTitle(activeSongFull.title || activeSongFull.title_hy || 'Երգ', language);
+    return getLocalizedTitle(activeSongFull, language);
   }, [activeSongFull, language]);
 
   const effectiveTonality = useMemo(() => {
-    const baseKey = activeSongFull?.tonality || 'Am';
+    const baseKey = activeSongFull?.song_key || activeSongFull?.tonality || 'Am';
     return transposeNoteName(baseKey, transposeSemitones);
-  }, [activeSongFull?.tonality, transposeSemitones]);
+  }, [activeSongFull?.song_key, activeSongFull?.tonality, transposeSemitones]);
+
+  const effectiveSongBpm = useMemo(() => {
+    const parsed = Number(activeSongFull?.bpm || activeSongFull?.tempo);
+    return parsed >= 35 && parsed <= 240 ? parsed : 76;
+  }, [activeSongFull?.bpm, activeSongFull?.tempo]);
 
   const transposedChordSheet = useMemo(() => {
     const raw = activeSongFull?.chords || activeSongFull?.lyrics || '';
@@ -697,8 +703,9 @@ export default function WorshipStudioHub() {
         liveStageSync.createSession({
           song_id: activeSongFull?.id || null,
           song_title: activeSongTitle,
-          transpose: transposeSemitones,
-          bpm: Number(activeSongFull?.tempo) || 76,
+          target_key: effectiveTonality,
+          semi: transposeSemitones,
+          bpm: effectiveSongBpm,
           stage_message: cueText,
         });
       } else {
@@ -707,7 +714,7 @@ export default function WorshipStudioHub() {
       setStageNotice(`Ուղարկվեց բեմ՝ «${cueText}»`);
       setTimeout(() => setStageNotice(''), 2800);
     },
-    [activeSongFull, activeSongTitle, transposeSemitones]
+    [activeSongFull, activeSongTitle, effectiveTonality, transposeSemitones, effectiveSongBpm]
   );
 
   // Simple, clear Armenian module definitions
@@ -888,6 +895,8 @@ export default function WorshipStudioHub() {
                     ) : (
                       filteredSongs.map((s) => {
                         const isSel = selectedSong && String(selectedSong.id) === String(s.id);
+                        const optKey = s.song_key || s.tonality || '';
+                        const optBpm = Number(s.bpm || s.tempo) || 0;
                         return (
                           <button
                             key={s.id}
@@ -896,10 +905,11 @@ export default function WorshipStudioHub() {
                             onClick={() => selectSong(s)}
                           >
                             <span className="wsh-song-opt-title">
-                              {getLocalizedTitle(s.title || s.title_hy || 'Երգ', language)}
+                              {getLocalizedTitle(s, language)}
                             </span>
                             <span className="wsh-song-opt-badges">
-                              {s.tonality && <span className="wsh-opt-key">{s.tonality}</span>}
+                              {optKey && <span className="wsh-opt-key">{optKey}</span>}
+                              {optBpm > 0 && <span className="wsh-opt-bpm">{optBpm}</span>}
                             </span>
                           </button>
                         );
@@ -953,74 +963,146 @@ export default function WorshipStudioHub() {
         )}
       </header>
 
-      {/* Simple Tab Switcher when inside a tool */}
-      {activeTab !== 'overview' && (
-        <nav className="wsh-dock-nav" aria-label="Գործիքների ցանկ">
-          <button
-            type="button"
-            className="wsh-dock-tab"
-            onClick={() => setActiveTab('overview')}
-          >
-            <StudioIcon name="overview" size={16} />
-            <span>Բոլորը</span>
-          </button>
+      {/* Persistent Segmented Tool Switcher */}
+      <nav className="wsh-dock-nav" aria-label="Գործիքների ցանկ">
+        <button
+          type="button"
+          className={`wsh-dock-tab ${activeTab === 'overview' ? 'active' : ''}`}
+          style={{ '--tab-accent': '#38bdf8' }}
+          onClick={() => setActiveTab('overview')}
+        >
+          <StudioIcon name="overview" size={16} />
+          <span>Բոլորը</span>
+        </button>
 
-          {studioModules.map((mod) => (
-            <button
-              key={mod.id}
-              type="button"
-              className={`wsh-dock-tab ${activeTab === mod.id ? 'active' : ''} ${isSoon(mod.flag) ? 'is-soon' : ''}`}
-              style={{ '--tab-accent': mod.accent }}
-              onClick={() => setActiveTab(mod.id)}
-            >
-              <StudioIcon name={mod.icon} size={16} />
-              <span>{mod.shortTitle}</span>
-              {isBeta(mod.flag) && <BetaBadge style={{ fontSize: '0.55rem', padding: '1px 5px' }} />}
-              {isSoon(mod.flag) && <ComingSoonBadge style={{ fontSize: '0.55rem', padding: '1px 5px' }} />}
-            </button>
-          ))}
-        </nav>
-      )}
+        {studioModules.map((mod) => (
+          <button
+            key={mod.id}
+            type="button"
+            className={`wsh-dock-tab ${activeTab === mod.id ? 'active' : ''} ${isSoon(mod.flag) ? 'is-soon' : ''}`}
+            style={{ '--tab-accent': mod.accent }}
+            onClick={() => setActiveTab(mod.id)}
+          >
+            <StudioIcon name={mod.icon} size={16} />
+            <span>{mod.shortTitle}</span>
+            {isBeta(mod.flag) && <BetaBadge style={{ fontSize: '0.55rem', padding: '1px 5px' }} />}
+            {isSoon(mod.flag) && <ComingSoonBadge style={{ fontSize: '0.55rem', padding: '1px 5px' }} />}
+          </button>
+        ))}
+      </nav>
 
       {/* Main Content */}
       <div className="wsh-viewport">
         {/* ================= 1. SIMPLE OVERVIEW LAUNCHER ================= */}
         {activeTab === 'overview' && (
-          <div className="wsh-bento-grid">
-            {studioModules.map((mod) => {
-              const modIsSoon = isSoon(mod.flag);
-              const modIsBeta = isBeta(mod.flag);
-              return (
-                <button
-                  key={mod.id}
-                  type="button"
-                  className={`wsh-bento-card ${modIsSoon ? 'wsh-card-soon' : ''}`}
-                  style={{ '--card-accent': mod.accent }}
-                  onClick={() => setActiveTab(mod.id)}
-                >
-                  <div className="wsh-bento-top">
-                    <div className="wsh-bento-icon">
-                      <StudioIcon name={mod.icon} size={24} />
-                    </div>
-                    <div className="wsh-bento-title-wrap">
-                      <h2 style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        {mod.title}
-                        {modIsBeta && <BetaBadge />}
-                        {modIsSoon && <ComingSoonBadge />}
-                      </h2>
+          <>
+            <div className="wsh-quick-strip">
+              <div className={`wsh-strip-card pad-card ${padPlaying ? 'is-playing' : ''}`}>
+                <div className="wsh-strip-head">
+                  <div className="wsh-strip-title">
+                    <StudioIcon name="wave" size={19} />
+                    <div>
+                      <h3>Արագ Ֆոնային Pad</h3>
+                      <span>Մեկ հպումով մեղմ աղոթքի ֆոն ({padKey} Major/Minor)</span>
                     </div>
                   </div>
+                  <button
+                    type="button"
+                    className={`wsh-pad-power-btn ${padPlaying ? 'active' : ''}`}
+                    onClick={() => (padPlaying ? stopAmbientPad() : startAmbientPad(padKey))}
+                  >
+                    {padPlaying ? '⏹ Կանգնեցնել' : `▶ Միացնել (${padKey})`}
+                  </button>
+                </div>
 
-                  <p>{mod.subtitle}</p>
+                <div className="wsh-pad-keys-grid">
+                  {PAD_KEYS.map((k) => (
+                    <button
+                      key={k.key}
+                      type="button"
+                      className={`wsh-pad-key-btn ${padKey === k.key ? 'selected' : ''} ${
+                        padPlaying && padKey === k.key ? 'sounding' : ''
+                      }`}
+                      onClick={() => {
+                        setPadKey(k.key);
+                        if (!padPlaying) startAmbientPad(k.key);
+                      }}
+                    >
+                      <span className="key-name">{k.key}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                  <div className="wsh-bento-footer">
-                    <span className="wsh-bento-cta">{modIsSoon ? '⏳ Շուտով' : mod.cta}</span>
-                    <span className="wsh-bento-arrow">{modIsSoon ? '🔒' : '→'}</span>
+              <div className="wsh-strip-card">
+                <div className="wsh-strip-head">
+                  <div className="wsh-strip-title">
+                    <StudioIcon name="music" size={19} />
+                    <div>
+                      <h3>{activeSongTitle}</h3>
+                      <span>
+                        Տոն՝ <strong>{effectiveTonality}</strong> • Տեմպ՝ <strong>{effectiveSongBpm} BPM</strong>
+                      </span>
+                    </div>
                   </div>
-                </button>
-              );
-            })}
-          </div>
+                  <div className="wsh-snapshot-actions">
+                    <button type="button" onClick={() => setActiveTab('stems')}>
+                      🎛️ Միքսեր
+                    </button>
+                    <button type="button" onClick={() => setActiveTab('projection')}>
+                      📽️ Սլայդներ
+                    </button>
+                  </div>
+                </div>
+
+                <div className="wsh-quick-chords-preview">
+                  {loadingSongDetail ? (
+                    <div className="wsh-preview-placeholder">Բեռնվում են երգի բառերն ու ակորդները...</div>
+                  ) : transposedChordSheet ? (
+                    <pre>{transposedChordSheet}</pre>
+                  ) : (
+                    <div className="wsh-preview-placeholder">Ընտրեք երգը վերևի ցանկից՝ տեքստն ու ակորդները տեսնելու համար։</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="wsh-bento-grid">
+              {studioModules.map((mod) => {
+                const modIsSoon = isSoon(mod.flag);
+                const modIsBeta = isBeta(mod.flag);
+                return (
+                  <button
+                    key={mod.id}
+                    type="button"
+                    className={`wsh-bento-card ${modIsSoon ? 'wsh-card-soon' : ''}`}
+                    style={{ '--card-accent': mod.accent }}
+                    onClick={() => setActiveTab(mod.id)}
+                  >
+                    <div className="wsh-bento-top">
+                      <div className="wsh-bento-icon">
+                        <StudioIcon name={mod.icon} size={24} />
+                      </div>
+                      <div className="wsh-bento-title-wrap">
+                        <h2 style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          {mod.title}
+                          {modIsBeta && <BetaBadge />}
+                          {modIsSoon && <ComingSoonBadge />}
+                        </h2>
+                      </div>
+                    </div>
+
+                    <p>{mod.subtitle}</p>
+
+                    <div className="wsh-bento-footer">
+                      <span className="wsh-bento-cta">{modIsSoon ? '⏳ Շուտով' : mod.cta}</span>
+                      <span className="wsh-bento-arrow">{modIsSoon ? '🔒' : '→'}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {/* ================= 2. STEMS MIXER ================= */}
@@ -1050,8 +1132,10 @@ export default function WorshipStudioHub() {
                     songId={activeSongFull?.id}
                     songTitle={activeSongTitle}
                     songKey={effectiveTonality}
-                    songBpm={Number(activeSongFull?.tempo) || 76}
+                    initialBpm={effectiveSongBpm}
+                    songBpm={effectiveSongBpm}
                     stemsData={activeSongFull?.stems || null}
+                    audioUrl={activeSongFull?.audio_url || ''}
                     fallbackAudioUrl={activeSongFull?.audio_url || ''}
                   />
                 </div>
@@ -1115,16 +1199,20 @@ export default function WorshipStudioHub() {
             {stageNotice && <div className="wsh-stage-toast">{stageNotice}</div>}
 
             <LiveStageBar
-              currentSong={activeSongFull}
-              currentTranspose={transposeSemitones}
+              currentSongId={activeSongFull?.id}
+              currentSongTitle={activeSongTitle}
+              currentKey={effectiveTonality}
+              currentSemi={transposeSemitones}
               currentCapo={0}
-              currentBpm={Number(activeSongFull?.tempo) || 76}
-              onRemoteStateChange={(remote) => {
-                if (remote?.song_id && (!selectedSong || Number(selectedSong.id) !== Number(remote.song_id))) {
-                  const found = songs.find((s) => Number(s.id) === Number(remote.song_id));
+              currentBpm={effectiveSongBpm}
+              onFollowSongChange={(remoteSongId, remote) => {
+                if (remoteSongId && (!selectedSong || Number(selectedSong.id) !== Number(remoteSongId))) {
+                  const found = songs.find((s) => Number(s.id) === Number(remoteSongId));
                   if (found) selectSong(found);
                 }
-                if (typeof remote?.transpose === 'number') {
+                if (typeof remote?.semi === 'number') {
+                  setTransposeSemitones(remote.semi);
+                } else if (typeof remote?.transpose === 'number') {
                   setTransposeSemitones(remote.transpose);
                 }
               }}
@@ -1421,9 +1509,12 @@ export default function WorshipStudioHub() {
                 isOpen={true}
                 onClose={() => setActiveTab('overview')}
                 song={activeSongFull}
-                allSongs={songs}
+                songTitle={activeSongTitle}
+                songKey={effectiveTonality}
                 currentKey={effectiveTonality}
-                onApplyChords={(newChordsText) => {
+                lyrics={activeSongFull?.lyrics || ''}
+                chords={transposedChordSheet || activeSongFull?.chords || ''}
+                onApplyResult={(newChordsText) => {
                   if (activeSongFull?.id) {
                     setSongDetailsCache((prev) => ({
                       ...prev,
@@ -1469,7 +1560,7 @@ export default function WorshipStudioHub() {
               <div className="wsh-metronome-pad-split">
                 <div className="wsh-metronome-col">
                   <SmartMetronome
-                    initialBpm={Number(activeSongFull?.tempo) || 76}
+                    initialBpm={effectiveSongBpm}
                     songTitle={activeSongTitle}
                   />
                 </div>

@@ -140,6 +140,55 @@ function wp_church_open_pdo(): ?PDO {
         try {
             $conn->exec("ALTER TABLE church_members ADD COLUMN ministry VARCHAR(40) NOT NULL DEFAULT ''");
         } catch (Throwable $ignore) {}
+        try {
+            $cntCh = (int)$conn->query("SELECT COUNT(*) FROM churches")->fetchColumn();
+            if ($cntCh === 0) {
+                $stC = $conn->prepare("INSERT INTO churches (name, city, description, service_time, invite_code, church_type, is_open, owner_user_id) VALUES (?, ?, ?, ?, ?, ?, 1, 1)");
+                $stC->execute([
+                    'Worship Platform Ընդհանուր Համայնք',
+                    'Երևան',
+                    'Հայերեն փառաբանության թիմերի, երաժիշտների և եկեղեցական համայնքների միասնական հարթակ՝ աղոթքի, փորձերի և հայտարարությունների համար։',
+                    'Կիրակի 11:00',
+                    'WPMAIN',
+                    'worship_group'
+                ]);
+                $seedCid = (int)$conn->lastInsertId();
+                $nextSun = date('Y-m-d', strtotime('next sunday'));
+                $nextFri = date('Y-m-d', strtotime('next friday'));
+                $stP = $conn->prepare("INSERT INTO church_posts (church_id, user_id, author_name, type, title, body, event_date, location, is_anonymous, pray_count) VALUES (?, 1, ?, ?, ?, ?, ?, ?, 0, ?)");
+                $stP->execute([
+                    $seedCid,
+                    'Worship Platform',
+                    'announcement',
+                    'Բարի գալուստ Եկեղեցական Համայնք և Փորձերի Հարթակ',
+                    'Այստեղ կարող եք կիսվել աղոթքի կարիքներով, հրապարակել եկեղեցական հայտարարություններ, պլանավորել փառաբանության փորձեր և կապել երգացանկերը (Setlists)։',
+                    $nextSun,
+                    'Երևան',
+                    12
+                ]);
+                $stP->execute([
+                    $seedCid,
+                    'Փառաբանության Թիմ',
+                    'prayer',
+                    'Աղոթք կիրակնօրյա ծառայությունների և փառաբանության թիմերի համար',
+                    'Աղոթենք, որ Տերը օրհնի բոլոր եկեղեցիների փառաբանության առաջնորդներին, երաժիշտներին և կիրակնօրյա հավաքույթները։ Սեղմեք «Աղոթում եմ»՝ միանալու համար։',
+                    '',
+                    '',
+                    24
+                ]);
+                $stR = $conn->prepare("INSERT INTO church_rehearsals (church_id, title, rehearsal_date, rehearsal_time, location, repeat_weekly, setlist_id, setlist_title, notes, created_by, created_by_name) VALUES (?, ?, ?, ?, ?, 1, 0, ?, ?, 1, ?)");
+                $stR->execute([
+                    $seedCid,
+                    'Շաբաթական Փառաբանության Փորձ',
+                    $nextFri,
+                    '19:00',
+                    'Գլխավոր Սրահ',
+                    'Կիրակնօրյա Երգացանկ',
+                    'Ձայնային ստուգում (Soundcheck)՝ 18:40-ին։',
+                    'Worship Platform'
+                ]);
+            }
+        } catch (Throwable $ignore) {}
         $pdo = $conn;
     } catch (Throwable $e) {
         $pdo = null;
@@ -149,23 +198,89 @@ function wp_church_open_pdo(): ?PDO {
 
 function wp_church_file_store_load(): array {
     $file = __DIR__ . '/data/church_store.json';
+    $nextSun = date('Y-m-d', strtotime('next sunday'));
+    $nextFri = date('Y-m-d', strtotime('next friday'));
+    $nowStr = date('Y-m-d H:i:s');
     $defaults = [
-        'next_church_id' => 1,
-        'next_post_id' => 1,
-        'next_rehearsal_id' => 1,
-        'churches' => [],
+        'next_church_id' => 2,
+        'next_post_id' => 3,
+        'next_rehearsal_id' => 2,
+        'churches' => [
+            [
+                'id' => 1,
+                'name' => 'Worship Platform Ընդհանուր Համայնք',
+                'city' => 'Երևան',
+                'description' => 'Հայերեն փառաբանության թիմերի, երաժիշտների և եկեղեցական համայնքների միասնական հարթակ՝ աղոթքի, փորձերի և հայտարարությունների համար։',
+                'service_time' => 'Կիրակի 11:00',
+                'invite_code' => 'WPMAIN',
+                'church_type' => 'worship_group',
+                'is_open' => 1,
+                'owner_user_id' => 1,
+                'created_at' => $nowStr,
+            ],
+        ],
         'members' => [],
-        'posts' => [],
+        'posts' => [
+            [
+                'id' => 1,
+                'church_id' => 1,
+                'user_id' => 1,
+                'author_name' => 'Worship Platform',
+                'type' => 'announcement',
+                'title' => 'Բարի գալուստ Եկեղեցական Համայնք և Փորձերի Հարթակ',
+                'body' => 'Այստեղ կարող եք կիսվել աղոթքի կարիքներով, հրապարակել եկեղեցական հայտարարություններ, պլանավորել փառաբանության փորձեր և կապել երգացանկերը (Setlists)։',
+                'event_date' => $nextSun,
+                'location' => 'Երևան',
+                'is_anonymous' => 0,
+                'pray_count' => 12,
+                'created_at' => $nowStr,
+            ],
+            [
+                'id' => 2,
+                'church_id' => 1,
+                'user_id' => 1,
+                'author_name' => 'Փառաբանության Թիմ',
+                'type' => 'prayer',
+                'title' => 'Աղոթք կիրակնօրյա ծառայությունների և փառաբանության թիմերի համար',
+                'body' => 'Աղոթենք, որ Տերը օրհնի բոլոր եկեղեցիների փառաբանության առաջնորդներին, երաժիշտներին և կիրակնօրյա հավաքույթները։ Սեղմեք «Աղոթում եմ»՝ միանալու համար։',
+                'event_date' => '',
+                'location' => '',
+                'is_anonymous' => 0,
+                'pray_count' => 24,
+                'created_at' => $nowStr,
+            ],
+        ],
         'prayers' => [],
-        'rehearsals' => [],
+        'rehearsals' => [
+            [
+                'id' => 1,
+                'church_id' => 1,
+                'title' => 'Շաբաթական Փառաբանության Փորձ',
+                'rehearsal_date' => $nextFri,
+                'rehearsal_time' => '19:00',
+                'location' => 'Գլխավոր Սրահ',
+                'repeat_weekly' => 1,
+                'setlist_id' => 0,
+                'setlist_title' => 'Կիրակնօրյա Երգացանկ',
+                'notes' => 'Ձայնային ստուգում (Soundcheck)՝ 18:40-ին։',
+                'created_by' => 1,
+                'created_by_name' => 'Worship Platform',
+                'created_at' => $nowStr,
+            ],
+        ],
         'rsvps' => [],
         'feedback' => [],
     ];
     if (!is_file($file)) {
+        wp_church_file_store_save($defaults);
         return $defaults;
     }
     $data = json_decode((string)@file_get_contents($file), true);
     if (!is_array($data)) {
+        return $defaults;
+    }
+    if (empty($data['churches']) && empty($data['posts']) && empty($data['rehearsals'])) {
+        wp_church_file_store_save($defaults);
         return $defaults;
     }
     return array_merge($defaults, $data);

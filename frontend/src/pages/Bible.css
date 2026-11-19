@@ -1206,15 +1206,40 @@ body.light-mode .bible-compare-card {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .bible-topbar {
+    gap: 8px;
+    padding: 9px 10px;
+  }
+
   .bible-topbar-left {
     width: 100%;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
 
   .bible-tr-select {
-    flex: 1 1 140px;
+    flex: 1 1 130px;
     min-width: 0;
     max-width: 100%;
+  }
+
+  .bible-topbar-center {
+    flex: 0 0 auto;
+  }
+
+  .bible-segmented button {
+    padding: 0 11px;
+    font-size: 0.78rem;
+  }
+
+  .bible-topbar-right {
+    margin-left: auto;
+    gap: 5px;
+  }
+
+  .bible-icon-pill {
+    width: 33px;
+    height: 33px;
+    font-size: 0.8rem;
   }
 }
 

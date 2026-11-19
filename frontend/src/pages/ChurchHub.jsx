@@ -566,11 +566,15 @@ export default function ChurchHub() {
     return cells;
   }, [calCursor, calMode]);
 
+  const exactDayCalendarItems = useMemo(() => {
+    const byKind = calendarItems.filter((i) => calFilter === 'all' || i.kind === calFilter);
+    return byKind.filter((i) => i.date === selectedCalDate);
+  }, [calendarItems, calFilter, selectedCalDate]);
+
   const dayCalendarItems = useMemo(() => {
     const byKind = calendarItems.filter((i) => calFilter === 'all' || i.kind === calFilter);
-    const exact = byKind.filter((i) => i.date === selectedCalDate);
-    return exact.length > 0 ? exact : byKind;
-  }, [calendarItems, calFilter, selectedCalDate]);
+    return exactDayCalendarItems.length > 0 ? exactDayCalendarItems : byKind;
+  }, [calendarItems, calFilter, exactDayCalendarItems]);
 
   const qrMatrix = useMemo(() => {
     if (!qrInviteTarget?.invite_code) return null;
@@ -917,6 +921,11 @@ export default function ChurchHub() {
           </div>
 
           <div className="church-posts-list">
+            {exactDayCalendarItems.length === 0 && dayCalendarItems.length > 0 && (
+              <div className="church-card" style={{ padding: '12px 16px', fontSize: '0.84rem', color: 'var(--color-text-secondary)' }}>
+                📅 <strong>{selectedCalDate}</strong> ամսաթվին գրանցում չկա — ստորև ցուցադրված են առաջիկա միջոցառումներն ու փորձերը.
+              </div>
+            )}
             {dayCalendarItems.length === 0 ? (
               <div className="church-card church-empty">
                 <p>Ընտրված օրվա կամ համայնքի համար միջոցառումներ և փորձեր դեռ չկան։</p>

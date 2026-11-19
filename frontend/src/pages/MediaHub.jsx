@@ -122,9 +122,20 @@ export default function MediaHub() {
           <div className="media-video-modal" onClick={(e) => e.stopPropagation()}>
             <div className="media-video-modal-head">
               <strong>{activeVideo.title[language] || activeVideo.title.am}</strong>
-              <button type="button" className="media-close-btn" onClick={() => setActiveVideo(null)}>
-                ✕
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <a
+                  href={`https://www.youtube.com/watch?v=${activeVideo.youtubeId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="media-cat-pill"
+                  style={{ textDecoration: 'none', fontSize: '0.76rem' }}
+                >
+                  YouTube ↗
+                </a>
+                <button type="button" className="media-close-btn" onClick={() => setActiveVideo(null)}>
+                  ✕
+                </button>
+              </div>
             </div>
             <div className="media-iframe-wrap">
               <iframe

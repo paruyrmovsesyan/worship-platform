@@ -537,7 +537,13 @@ body.light-mode .hub-search-clear-btn {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.82rem;
+  gap: 8px;
+  font-size: 0.81rem;
+}
+
+.hub-week-detail.is-empty span {
+  color: var(--color-text-secondary);
+  font-size: 0.77rem;
 }
 
 .hub-week-detail button {
@@ -545,6 +551,8 @@ body.light-mode .hub-search-clear-btn {
   background: transparent;
   color: #f7b500;
   font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
   cursor: pointer;
 }
 
