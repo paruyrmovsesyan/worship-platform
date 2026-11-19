@@ -136,6 +136,17 @@ export default function Bible() {
   const lastScrollYRef = useRef(0);
   const swipeStartXRef = useRef(null);
   const audioStopRef = useRef(true);
+  const ttsAudioRef = useRef(null);
+  const audioSpeedRef = useRef(audioSpeed);
+
+  useEffect(() => {
+    audioSpeedRef.current = audioSpeed;
+    if (ttsAudioRef.current) {
+      try {
+        ttsAudioRef.current.playbackRate = audioSpeed;
+      } catch { /* ignore */ }
+    }
+  }, [audioSpeed]);
 
   const [userState, setUserState] = useState(() =>
     readJsonStorage(USER_STATE_KEY, {
@@ -463,6 +474,14 @@ export default function Bible() {
     audioStopRef.current = true;
     setAudioPlaying(false);
     setSpeakingVerse(null);
+    if (ttsAudioRef.current) {
+      try {
+        ttsAudioRef.current.onended = null;
+        ttsAudioRef.current.onerror = null;
+        ttsAudioRef.current.pause();
+        ttsAudioRef.current.removeAttribute('src');
+      } catch { /* ignore */ }
+    }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
         window.speechSynthesis.cancel();
@@ -472,8 +491,34 @@ export default function Bible() {
 
   useEffect(() => () => stopAudioRead(), [stopAudioRead]);
 
+  const splitTtsChunks = (rawText, maxLen = 180) => {
+    const clean = String(rawText || '').replace(/\s+/g, ' ').trim();
+    if (!clean) return [];
+    if (clean.length <= maxLen) return [clean];
+    const parts = clean.split(/(?<=[։.,!?;:])\s+/);
+    const chunks = [];
+    let current = '';
+    for (const p of parts) {
+      if ((current + ' ' + p).trim().length <= maxLen) {
+        current = (current + ' ' + p).trim();
+      } else {
+        if (current) chunks.push(current);
+        if (p.length <= maxLen) {
+          current = p;
+        } else {
+          for (let i = 0; i < p.length; i += maxLen) {
+            chunks.push(p.slice(i, i + maxLen));
+          }
+          current = '';
+        }
+      }
+    }
+    if (current) chunks.push(current);
+    return chunks;
+  };
+
   const startAudioRead = useCallback((startFromVerse = null) => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window) || verses.length === 0) return;
+    if (typeof window === 'undefined' || verses.length === 0) return;
     if (audioPlaying && !startFromVerse) {
       stopAudioRead();
       return;
@@ -489,6 +534,63 @@ export default function Bible() {
       ? Math.max(0, verses.findIndex((v) => v.verse === startFromVerse))
       : 0;
 
+    // Check if the browser/device actually has a native SpeechSynthesis voice for this language
+    const hasNativeSpeech = 'speechSynthesis' in window && typeof window.SpeechSynthesisUtterance !== 'undefined';
+    const availableVoices = hasNativeSpeech ? (window.speechSynthesis.getVoices() || []) : [];
+    const targetPrefix = activeLang === 'am' ? 'hy' : activeLang;
+    const matchingVoice = availableVoices.find((v) => String(v.lang || '').toLowerCase().startsWith(targetPrefix));
+
+    // Armenian (hy-AM) rarely has a native OS voice on iOS/macOS/Android; use server TTS audio stream reliably
+    const useServerTts = activeLang === 'am' ? !matchingVoice : !hasNativeSpeech;
+
+    if (useServerTts) {
+      if (!ttsAudioRef.current) {
+        ttsAudioRef.current = new Audio();
+      }
+      const audioEl = ttsAudioRef.current;
+
+      const playVerseViaServer = (idx) => {
+        if (audioStopRef.current || idx >= verses.length) {
+          stopAudioRead();
+          return;
+        }
+        const vObj = verses[idx];
+        setSpeakingVerse(vObj.verse);
+        const chunks = splitTtsChunks(vObj.text, 180);
+        if (chunks.length === 0) {
+          playVerseViaServer(idx + 1);
+          return;
+        }
+
+        let cIdx = 0;
+        const playNextChunk = () => {
+          if (audioStopRef.current) return;
+          if (cIdx >= chunks.length) {
+            playVerseViaServer(idx + 1);
+            return;
+          }
+          const chunk = chunks[cIdx];
+          cIdx += 1;
+          audioEl.src = `/bible_api.php?action=tts&lang=${encodeURIComponent(activeLang)}&text=${encodeURIComponent(chunk)}`;
+          audioEl.playbackRate = audioSpeedRef.current;
+          audioEl.onended = () => {
+            if (!audioStopRef.current) playNextChunk();
+          };
+          audioEl.onerror = () => {
+            if (!audioStopRef.current) playNextChunk();
+          };
+          audioEl.play().catch(() => {
+            stopAudioRead();
+          });
+        };
+
+        playNextChunk();
+      };
+
+      playVerseViaServer(startIdx);
+      return;
+    }
+
     const speakIndex = (idx) => {
       if (audioStopRef.current || idx >= verses.length) {
         stopAudioRead();
@@ -498,7 +600,8 @@ export default function Bible() {
       setSpeakingVerse(vObj.verse);
       const utter = new SpeechSynthesisUtterance(vObj.text);
       utter.lang = voiceLang;
-      utter.rate = audioSpeed;
+      if (matchingVoice) utter.voice = matchingVoice;
+      utter.rate = audioSpeedRef.current;
       utter.onend = () => {
         if (!audioStopRef.current) speakIndex(idx + 1);
       };
@@ -507,7 +610,7 @@ export default function Bible() {
     };
 
     speakIndex(startIdx);
-  }, [verses, audioPlaying, stopAudioRead, translations, effectiveTranslation, translation, audioSpeed]);
+  }, [verses, audioPlaying, stopAudioRead, translations, effectiveTranslation, translation]);
 
   const isCurrentBookOffline = useMemo(() => {
     void offlineReadyTick;
@@ -935,7 +1038,7 @@ export default function Bible() {
         </div>
 
         <div className="bible-topbar-right">
-          {typeof window !== 'undefined' && 'speechSynthesis' in window && verses.length > 0 && (
+          {verses.length > 0 && (
             <button
               type="button"
               className={`bible-icon-pill ${audioPlaying ? 'active' : ''}`}

@@ -512,6 +512,128 @@ if ($action === 'compare') {
     wp_bible_out(['ok' => true, 'book' => $book, 'chapter' => $chapter, 'verse' => $verseNum, 'comparisons' => $items]);
 }
 
+function wp_bible_transliterate_hy_to_ru_phonetic(string $text): string {
+    // Convert Armenian script to close Russian phonetic equivalents for clear audio TTS
+    // when native Armenian voices are unavailable on the user's device.
+    $text = str_replace(
+        ['ու', 'Ու', 'ՈՒ', 'և', 'Եվ', 'ԵՎ', '«', '»', '։', '՝', '՜', '՞', '՛'],
+        ['у',  'У',  'У',  'ев', 'Ев', 'Ев', '',  '',  '.', ',', '!', '?', ''],
+        $text
+    );
+    // Word-initial ո -> во, ե -> е
+    $text = preg_replace('/(^|[\s.,!?;:\(\)\-"])Ո/u', '$1Во', $text) ?? $text;
+    $text = preg_replace('/(^|[\s.,!?;:\(\)\-"])ո/u', '$1во', $text) ?? $text;
+    $text = preg_replace('/(^|[\s.,!?;:\(\)\-"])Ե/u', '$1Е', $text) ?? $text;
+    $text = preg_replace('/(^|[\s.,!?;:\(\)\-"])ե/u', '$1е', $text) ?? $text;
+
+    $map = [
+        'Ա' => 'А', 'ա' => 'а',
+        'Բ' => 'Б', 'բ' => 'б',
+        'Գ' => 'Г', 'գ' => 'г',
+        'Դ' => 'Д', 'դ' => 'д',
+        'Ե' => 'Э', 'ե' => 'э',
+        'Զ' => 'З', 'զ' => 'з',
+        'Է' => 'Э', 'է' => 'э',
+        'Ը' => 'Ы', 'ը' => 'ы',
+        'Թ' => 'Т', 'թ' => 'т',
+        'Ժ' => 'Ж', 'ժ' => 'ж',
+        'Ի' => 'И', 'ի' => 'и',
+        'Լ' => 'Л', 'լ' => 'л',
+        'Խ' => 'Х', 'խ' => 'х',
+        'Ծ' => 'Ц', 'ծ' => 'ц',
+        'Կ' => 'К', 'կ' => 'к',
+        'Հ' => 'Х', 'հ' => 'х',
+        'Ձ' => 'Дз', 'ձ' => 'дз',
+        'Ղ' => 'Г', 'ղ' => 'г',
+        'Ճ' => 'Ч', 'ճ' => 'ч',
+        'Մ' => 'М', 'մ' => 'м',
+        'Յ' => 'Й', 'յ' => 'й',
+        'Ն' => 'Н', 'ն' => 'н',
+        'Շ' => 'Ш', 'շ' => 'ш',
+        'Ո' => 'О', 'ո' => 'о',
+        'Չ' => 'Ч', 'չ' => 'ч',
+        'Պ' => 'П', 'պ' => 'п',
+        'Ջ' => 'Дж', 'ջ' => 'дж',
+        'Ռ' => 'Р', 'ռ' => 'р',
+        'Ս' => 'С', 'ս' => 'с',
+        'Վ' => 'В', 'վ' => 'в',
+        'Տ' => 'Т', 'տ' => 'т',
+        'Ր' => 'Р', 'ր' => 'р',
+        'Ց' => 'Ц', 'ց' => 'ц',
+        'Ւ' => 'В', 'ւ' => 'в',
+        'Փ' => 'П', 'փ' => 'п',
+        'Ք' => 'К', 'ք' => 'к',
+        'Օ' => 'О', 'օ' => 'о',
+        'Ֆ' => 'Ф', 'ֆ' => 'ф',
+    ];
+    return strtr($text, $map);
+}
+
+if ($action === 'tts') {
+    $text = trim((string)($_GET['text'] ?? ''));
+    $lang = strtolower(trim((string)($_GET['lang'] ?? 'am')));
+    if ($text === '') {
+        http_response_code(400);
+        exit;
+    }
+    if (mb_strlen($text) > 220) {
+        $text = mb_substr($text, 0, 220);
+    }
+
+    $ttsLang = match ($lang) {
+        'ru', 'ru-ru' => 'ru',
+        'en', 'en-us' => 'en',
+        default => 'ru',
+    };
+    $ttsQuery = ($lang === 'am' || $lang === 'hy' || $lang === 'hy-am')
+        ? wp_bible_transliterate_hy_to_ru_phonetic($text)
+        : $text;
+
+    $cacheDir = __DIR__ . '/data/bible_tts_cache';
+    if (!is_dir($cacheDir)) {
+        @mkdir($cacheDir, 0775, true);
+    }
+    $hash = sha1($ttsLang . '|' . $ttsQuery);
+    $cacheFile = $cacheDir . '/' . $hash . '.mp3';
+
+    $mp3 = null;
+    if (is_file($cacheFile) && filesize($cacheFile) > 256) {
+        $mp3 = @file_get_contents($cacheFile);
+    }
+    if (!is_string($mp3) || strlen($mp3) < 256) {
+        $url = 'https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl='
+            . rawurlencode($ttsLang)
+            . '&q=' . rawurlencode($ttsQuery);
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_TIMEOUT => 8,
+                CURLOPT_CONNECTTIMEOUT => 4,
+                CURLOPT_USERAGENT => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            ]);
+            $body = curl_exec($ch);
+            $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            if (is_string($body) && $code >= 200 && $code < 300 && strlen($body) > 256) {
+                $mp3 = $body;
+                @file_put_contents($cacheFile, $mp3, LOCK_EX);
+            }
+        }
+    }
+
+    if (!is_string($mp3) || strlen($mp3) < 256) {
+        wp_bible_out(['ok' => false, 'error' => 'TTS audio unavailable'], 502);
+    }
+
+    header('Content-Type: audio/mpeg');
+    header('Cache-Control: public, max-age=604800');
+    header('Content-Length: ' . strlen($mp3));
+    echo $mp3;
+    exit;
+}
+
 if ($action === 'user_state') {
     if ($uid <= 0) {
         wp_bible_out(['ok' => true, 'guest' => true, 'state' => wp_bible_default_state()]);
