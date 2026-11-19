@@ -138,33 +138,62 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             ? array_map('strval', $_POST['restricted_features'])
             : [];
 
+        $editingHistoryId = trim((string)($_POST['editing_history_id'] ?? ''));
         $submittedTitle   = trim((string)($_POST['announcement_title'] ?? ''));
         $submittedMessage = trim((string)($_POST['announcement_message'] ?? ''));
         $submittedPages   = array_values(array_intersect($allowedPages, $rawRestrictedPages));
         $submittedFeats   = array_values(array_intersect($allowedFeatures, $rawRestrictedFeatures));
         $hasNewAnnouncementInput = ($submittedTitle !== '' || $submittedMessage !== '' || !empty($submittedPages) || !empty($submittedFeats));
 
+        $recordHistoryOnSave = true;
+        $forceNewHistory = false;
+        $wasEditedInPlace = false;
+
         if ($hasNewAnnouncementInput) {
-            $mobileConfig['announcement']['enabled']               = !empty($_POST['announcement_enabled']);
-            $mobileConfig['announcement']['target']                = in_array($_POST['announcement_target'] ?? '', $allowedTargets, true) ? $_POST['announcement_target'] : 'all';
-            $mobileConfig['announcement']['type']                  = in_array($_POST['announcement_type'] ?? '', ['info', 'warning', 'success', 'critical'], true) ? $_POST['announcement_type'] : 'info';
-            $mobileConfig['announcement']['title']                 = $submittedTitle;
-            $mobileConfig['announcement']['message']               = $submittedMessage;
-            $mobileConfig['announcement']['title_ru']              = trim((string)($_POST['announcement_title_ru'] ?? ''));
-            $mobileConfig['announcement']['message_ru']            = trim((string)($_POST['announcement_message_ru'] ?? ''));
-            $mobileConfig['announcement']['title_en']              = trim((string)($_POST['announcement_title_en'] ?? ''));
-            $mobileConfig['announcement']['message_en']            = trim((string)($_POST['announcement_message_en'] ?? ''));
-            $mobileConfig['announcement']['action_text']           = trim((string)($_POST['announcement_action_text'] ?? ''));
-            $mobileConfig['announcement']['action_url']            = trim((string)($_POST['announcement_action_url'] ?? ''));
-            $mobileConfig['announcement']['dismissible']           = !empty($_POST['announcement_dismissible']);
-            $mobileConfig['announcement']['show_countdown']        = !empty($_POST['announcement_show_countdown']);
-            $mobileConfig['announcement']['sync_with_maintenance'] = !empty($_POST['announcement_sync_with_maintenance']);
-            $mobileConfig['announcement']['schedule_start_at']     = wp_version_normalize_datetime($_POST['announcement_schedule_start_at'] ?? '');
-            $mobileConfig['announcement']['schedule_end_at']       = wp_version_normalize_datetime($_POST['announcement_schedule_end_at'] ?? '');
-            $mobileConfig['announcement']['restricted_pages']      = $submittedPages;
-            $mobileConfig['announcement']['restricted_features']   = $submittedFeats;
+            $newAnn = [
+                'enabled'               => !empty($_POST['announcement_enabled']),
+                'target'                => in_array($_POST['announcement_target'] ?? '', $allowedTargets, true) ? $_POST['announcement_target'] : 'all',
+                'type'                  => in_array($_POST['announcement_type'] ?? '', ['info', 'warning', 'success', 'critical'], true) ? $_POST['announcement_type'] : 'info',
+                'title'                 => $submittedTitle,
+                'message'               => $submittedMessage,
+                'title_ru'              => trim((string)($_POST['announcement_title_ru'] ?? '')),
+                'message_ru'            => trim((string)($_POST['announcement_message_ru'] ?? '')),
+                'title_en'              => trim((string)($_POST['announcement_title_en'] ?? '')),
+                'message_en'            => trim((string)($_POST['announcement_message_en'] ?? '')),
+                'action_text'           => trim((string)($_POST['announcement_action_text'] ?? '')),
+                'action_url'            => trim((string)($_POST['announcement_action_url'] ?? '')),
+                'dismissible'           => !empty($_POST['announcement_dismissible']),
+                'show_countdown'        => !empty($_POST['announcement_show_countdown']),
+                'sync_with_maintenance' => !empty($_POST['announcement_sync_with_maintenance']),
+                'schedule_start_at'     => wp_version_normalize_datetime($_POST['announcement_schedule_start_at'] ?? ''),
+                'schedule_end_at'       => wp_version_normalize_datetime($_POST['announcement_schedule_end_at'] ?? ''),
+                'restricted_pages'      => $submittedPages,
+                'restricted_features'   => $submittedFeats,
+            ];
+
+            if ($editingHistoryId !== '') {
+                $oldHistItem = wp_mobile_find_announcement_history($editingHistoryId);
+                if ($oldHistItem !== null) {
+                    $oldHash = (string)($oldHistItem['content_hash'] ?? wp_mobile_announcement_content_hash($oldHistItem));
+                    $currHash = wp_mobile_announcement_content_hash($mobileConfig['announcement'] ?? []);
+                    wp_mobile_update_announcement_history($editingHistoryId, $newAnn, $adminDisplayName);
+                    $wasEditedInPlace = true;
+                    $recordHistoryOnSave = false;
+                    // Update active announcement if we were editing the currently loaded announcement or if enabled is checked
+                    if ($oldHash === $currHash || !empty($newAnn['enabled'])) {
+                        $mobileConfig['announcement'] = $newAnn;
+                    }
+                } else {
+                    $mobileConfig['announcement'] = $newAnn;
+                    $forceNewHistory = true;
+                }
+            } else {
+                $mobileConfig['announcement'] = $newAnn;
+                $forceNewHistory = true;
+            }
         } else {
             $mobileConfig['announcement']['sync_with_maintenance'] = !empty($_POST['announcement_sync_with_maintenance']);
+            $recordHistoryOnSave = false;
         }
 
         // Unified Maintenance settings (Web/PWA + Native iOS/Android)
@@ -185,12 +214,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         $mobileConfig['android']['maintenance_title']   = trim((string)($_POST['android_maintenance_title'] ?? ($mobileConfig['android']['maintenance_title'] ?? '')));
         $mobileConfig['android']['maintenance_message'] = trim((string)($_POST['android_maintenance_message'] ?? ($mobileConfig['android']['maintenance_message'] ?? '')));
 
-        $okMob = wp_mobile_save_config($mobileConfig, $adminDisplayName, false);
+        $okMob = wp_mobile_save_config($mobileConfig, $adminDisplayName, $forceNewHistory, $recordHistoryOnSave);
         $okWeb = wp_version_save($versionConfig, ['action' => 'save_announcements_command_center', 'actor' => $adminDisplayName]);
         if ($okMob && $okWeb) {
-            $flashMessage = $hasNewAnnouncementInput
-                ? '✅ Հայտարարությունը պահպանվեց պատմության մեջ, իսկ մուտքագրման դաշտերը մաքրվեցին։'
-                : '✅ Կարգավորումները հաջողությամբ պահպանվեցին։';
+            if ($wasEditedInPlace) {
+                $flashMessage = '✏️ Հայտարարությունը հաջողությամբ խմբագրվեց և թարմացվեց (մուտքագրման դաշտերը մաքրվեցին)։';
+            } elseif ($hasNewAnnouncementInput) {
+                $flashMessage = '✅ Հայտարարությունը պահպանվեց պատմության մեջ, իսկ մուտքագրման դաշտերը մաքրվեցին։';
+            } else {
+                $flashMessage = '✅ Կարգավորումները հաջողությամբ պահպանվեցին։';
+            }
         } else {
             $flashTone = 'error';
             $flashMessage = 'Սխալ պահպանման ընթացքում։ Ստուգեք գրման իրավունքները։';
@@ -343,7 +376,8 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
               </div>
 
               <div class="ac-history-actions">
-                <button type="button" class="ac-btn ac-btn--ghost ac-btn--sm" onclick="wpCloneFromHistory('<?= htmlspecialchars($hId, ENT_QUOTES) ?>')">📝 Նորը՝ սրա հիման վրա</button>
+                <button type="button" class="ac-btn ac-btn--primary ac-btn--sm" onclick="wpEditFromHistory('<?= htmlspecialchars($hId, ENT_QUOTES) ?>')">✏️ Խմբագրել</button>
+                <button type="button" class="ac-btn ac-btn--ghost ac-btn--sm" onclick="wpCloneFromHistory('<?= htmlspecialchars($hId, ENT_QUOTES) ?>')">📋 Նորը՝ սրա հիման վրա</button>
                 <?php if ($isCurrentMatch && $isAnnNowActive): ?>
                   <button type="button" class="ac-btn ac-btn--danger ac-btn--sm" onclick="wpSubmitMasterAction('deactivate_current', 'Ապաակտիվացնե՞լ այս հայտարարությունը։')">⏹️ Ապաակտիվացնել</button>
                 <?php else: ?>
@@ -507,6 +541,7 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
         <input type="hidden" name="form_action" id="acFormAction" value="save_all" />
         <input type="hidden" name="active_tab" id="acActiveTabInput" value="<?= htmlspecialchars($activeTab) ?>" />
         <input type="hidden" name="history_id" id="acHistoryIdInput" value="" />
+        <input type="hidden" name="editing_history_id" id="acEditingHistoryIdInput" value="" />
 
         <!-- TAB 1: BANNER & SCHEDULING -->
         <section id="acPanelBanner" class="ac-panel <?= $activeTab === 'banner' ? 'is-visible' : '' ?>">
@@ -541,9 +576,10 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
           <div class="ac-card" id="acEditorCard">
             <div class="ac-card-head">
               <div>
-                <div class="ac-card-title">📢 Նոր Հայտարարության Ստեղծում և Պլանավորում</div>
+                <div class="ac-card-title" id="acEditorCardTitle">📢 Նոր Հայտարարության Ստեղծում և Պլանավորում</div>
                 <div id="acCloneNotice" style="display:none; margin-top:6px; font-size:0.82rem; font-weight:700; color:#05cd99;"></div>
               </div>
+              <button type="button" id="acCancelEditBtn" class="ac-btn ac-btn--ghost ac-btn--sm" style="display:none;" onclick="wpResetAnnouncementForm()">✖ Չեղարկել խմբագրումը</button>
             </div>
 
             <div class="ac-grid-3" style="margin-bottom:16px;">
@@ -853,21 +889,36 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
     return parsed <= Date.now();
   }
 
-  function wpCloneFromHistory(historyId) {
+  function wpFindHistoryItem(historyId) {
     var list = Array.isArray(window.WP_ANN_HISTORY) ? window.WP_ANN_HISTORY : [];
-    var item = null;
     for (var i = 0; i < list.length; i++) {
       if (list[i] && String(list[i].id) === String(historyId)) {
-        item = list[i];
-        break;
+        return list[i];
       }
     }
+    return null;
+  }
+
+  function wpPopulateFormFromHistoryItem(item, isEditMode) {
     if (!item) return;
 
     wpSwitchAcTab('banner');
 
+    var editingInput = document.getElementById('acEditingHistoryIdInput');
+    if (editingInput) editingInput.value = isEditMode ? String(item.id || '') : '';
+
+    var cancelBtn = document.getElementById('acCancelEditBtn');
+    if (cancelBtn) cancelBtn.style.display = isEditMode ? 'inline-flex' : 'none';
+
+    var cardTitle = document.getElementById('acEditorCardTitle');
+    if (cardTitle) {
+      cardTitle.textContent = isEditMode
+        ? '✏️ Հայտարարության Խմբագրում'
+        : '📢 Նոր Հայտարարության Ստեղծում և Պլանավորում';
+    }
+
     var enabledInput = document.querySelector('input[name="announcement_enabled"]');
-    if (enabledInput) enabledInput.checked = true;
+    if (enabledInput) enabledInput.checked = isEditMode ? !!item.enabled : true;
 
     var dismissInput = document.querySelector('input[name="announcement_dismissible"]');
     if (dismissInput) dismissInput.checked = item.dismissible !== false;
@@ -910,7 +961,7 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
 
     var startInput = document.querySelector('input[name="announcement_schedule_start_at"]');
     var endInput = document.querySelector('input[name="announcement_schedule_end_at"]');
-    var expired = wpIsExpiredIso(item.schedule_end_at);
+    var expired = !isEditMode && wpIsExpiredIso(item.schedule_end_at);
     if (startInput) startInput.value = expired ? '' : wpToDatetimeLocalValue(item.schedule_start_at);
     if (endInput) endInput.value = expired ? '' : wpToDatetimeLocalValue(item.schedule_end_at);
 
@@ -931,7 +982,9 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
     var notice = document.getElementById('acCloneNotice');
     if (notice) {
       notice.style.display = 'block';
-      notice.textContent = '✨ Հին հայտարարության տվյալները բեռնվեցին ձևի մեջ։ Կարող եք փոփոխել և սեղմել «💾 Պահպանել»։';
+      notice.textContent = isEditMode
+        ? '✏️ Խմբագրման ռեժիմ՝ փոփոխեք տվյալները և սեղմեք «💾 Պահպանել»՝ այս հայտարարությունը թարմացնելու համար։'
+        : '📋 Հին հայտարարության տվյալները բեռնվեցին որպես նմուշ․ փոփոխեք և սեղմեք «💾 Պահպանել»՝ նորը ստեղծելու համար։';
     }
 
     var editorCard = document.getElementById('acEditorCard');
@@ -943,8 +996,29 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
     }
   }
 
+  function wpEditFromHistory(historyId) {
+    var item = wpFindHistoryItem(historyId);
+    if (!item) return;
+    wpPopulateFormFromHistoryItem(item, true);
+  }
+
+  function wpCloneFromHistory(historyId) {
+    var item = wpFindHistoryItem(historyId);
+    if (!item) return;
+    wpPopulateFormFromHistoryItem(item, false);
+  }
+
   function wpResetAnnouncementForm() {
     wpSwitchAcTab('banner');
+
+    var editingInput = document.getElementById('acEditingHistoryIdInput');
+    if (editingInput) editingInput.value = '';
+
+    var cancelBtn = document.getElementById('acCancelEditBtn');
+    if (cancelBtn) cancelBtn.style.display = 'none';
+
+    var cardTitle = document.getElementById('acEditorCardTitle');
+    if (cardTitle) cardTitle.textContent = '📢 Նոր Հայտարարության Ստեղծում և Պլանավորում';
 
     var enabledInput = document.querySelector('input[name="announcement_enabled"]');
     if (enabledInput) enabledInput.checked = true;
@@ -981,8 +1055,8 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
 
     var notice = document.getElementById('acCloneNotice');
     if (notice) {
-      notice.style.display = 'block';
-      notice.textContent = '➕ Ձևը մաքրվեց նոր հայտարարություն ստեղծելու համար (նախորդ հայտարարությունները պահպանված են պատմության մեջ)։';
+      notice.style.display = 'none';
+      notice.textContent = '';
     }
 
     var editorCard = document.getElementById('acEditorCard');

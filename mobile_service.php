@@ -320,6 +320,28 @@ function wp_mobile_find_announcement_history(string $id): ?array {
 }
 
 /**
+ * Updates an existing announcement history item in-place by ID.
+ */
+function wp_mobile_update_announcement_history(string $id, array $ann, string $actor = 'admin'): ?array {
+    if ($id === '') return null;
+    $items = wp_mobile_get_announcement_history();
+    foreach ($items as $idx => $existing) {
+        if ((string)($existing['id'] ?? '') === $id) {
+            $updated = wp_mobile_normalize_announcement_record(
+                $ann,
+                $actor,
+                $id,
+                (string)($existing['created_at'] ?? '')
+            );
+            $items[$idx] = $updated;
+            wp_mobile_save_announcement_history($items);
+            return $updated;
+        }
+    }
+    return null;
+}
+
+/**
  * Deletes a single announcement history item by ID.
  */
 function wp_mobile_delete_announcement_history(string $id): bool {
