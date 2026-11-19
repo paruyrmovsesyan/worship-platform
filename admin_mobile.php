@@ -1060,6 +1060,7 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
           </div>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
             <a href="/admin_announcements.php" class="m-btn m-btn--secondary">🧭 Առանձին Կառավարման Էջ</a>
+            <a href="/admin_announcements.php?tab=history" class="m-btn m-btn--secondary">📜 Պատմություն և Կրկնօրինակում</a>
             <button type="button" class="m-btn m-btn--secondary" onclick="wpFillUpgradeAnnouncementPreset()">⚡ Վերազինման ձևանմուշ</button>
             <button type="submit" class="m-btn m-btn--primary">💾 <?= htmlspecialchars($t['save_changes']) ?></button>
           </div>

@@ -20,7 +20,7 @@ if (isset($_GET['lang']) && in_array($_GET['lang'], ['hy', 'ru', 'en'], true)) {
 }
 
 $activeTab = (string)($_GET['tab'] ?? $_POST['active_tab'] ?? 'banner');
-if (!in_array($activeTab, ['banner', 'restrictions', 'maintenance'], true)) {
+if (!in_array($activeTab, ['banner', 'restrictions', 'maintenance', 'history'], true)) {
     $activeTab = 'banner';
 }
 
@@ -52,8 +52,86 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $flashTone = 'error';
             $flashMessage = 'Չհաջողվեց թարմացնել կարգավորումների ֆայլերը։';
         }
+    } elseif ($formAction === 'deactivate_current') {
+        // Record current state in history before turning off
+        if (!empty($mobileConfig['announcement']['title']) || !empty($mobileConfig['announcement']['message'])) {
+            wp_mobile_record_announcement_history($mobileConfig['announcement'], $adminDisplayName, false);
+        }
+        $mobileConfig['announcement']['enabled'] = false;
+        if (wp_mobile_save_config($mobileConfig, $adminDisplayName)) {
+            $flashMessage = '⏹️ Ընթացիկ հայտարարությունն անջատվեց (այն պահպանված է պատմության մեջ)։';
+        } else {
+            $flashTone = 'error';
+            $flashMessage = 'Չհաջողվեց անջատել հայտարարությունը։';
+        }
+    } elseif ($formAction === 'activate_from_history') {
+        $historyId = trim((string)($_POST['history_id'] ?? ''));
+        $histItem = wp_mobile_find_announcement_history($historyId);
+        if ($histItem === null) {
+            $flashTone = 'error';
+            $flashMessage = 'Պատմության գրառումը չգտնվեց։';
+        } else {
+            // Archive current announcement first if it had distinct content
+            if (!empty($mobileConfig['announcement']['title']) || !empty($mobileConfig['announcement']['message'])) {
+                wp_mobile_record_announcement_history($mobileConfig['announcement'], $adminDisplayName, false);
+            }
+
+            $startRaw = wp_version_normalize_datetime($histItem['schedule_start_at'] ?? '');
+            $endRaw = wp_version_normalize_datetime($histItem['schedule_end_at'] ?? '');
+            $expiredCleared = false;
+            if ($endRaw !== '') {
+                try {
+                    $tz = wp_version_admin_timezone();
+                    $nowTs = (new DateTimeImmutable('now', $tz))->getTimestamp();
+                    $endTs = (new DateTimeImmutable($endRaw, $tz))->getTimestamp();
+                    if ($endTs <= $nowTs) {
+                        $startRaw = '';
+                        $endRaw = '';
+                        $expiredCleared = true;
+                    }
+                } catch (Throwable $_) {}
+            }
+
+            $mobileConfig['announcement'] = [
+                'enabled'               => true,
+                'target'                => in_array($histItem['target'] ?? '', $allowedTargets, true) ? $histItem['target'] : 'all',
+                'type'                  => in_array($histItem['type'] ?? '', ['info', 'warning', 'success', 'critical'], true) ? $histItem['type'] : 'info',
+                'title'                 => trim((string)($histItem['title'] ?? '')),
+                'message'               => trim((string)($histItem['message'] ?? '')),
+                'title_ru'              => trim((string)($histItem['title_ru'] ?? '')),
+                'message_ru'            => trim((string)($histItem['message_ru'] ?? '')),
+                'title_en'              => trim((string)($histItem['title_en'] ?? '')),
+                'message_en'            => trim((string)($histItem['message_en'] ?? '')),
+                'action_text'           => trim((string)($histItem['action_text'] ?? '')),
+                'action_url'            => trim((string)($histItem['action_url'] ?? '')),
+                'dismissible'           => !isset($histItem['dismissible']) || !empty($histItem['dismissible']),
+                'show_countdown'        => !empty($histItem['show_countdown']),
+                'sync_with_maintenance' => !empty($histItem['sync_with_maintenance']),
+                'schedule_start_at'     => $startRaw,
+                'schedule_end_at'       => $endRaw,
+                'restricted_pages'      => array_values(array_intersect($allowedPages, array_map('strval', (array)($histItem['restricted_pages'] ?? [])))),
+                'restricted_features'   => array_values(array_intersect($allowedFeatures, array_map('strval', (array)($histItem['restricted_features'] ?? [])))),
+            ];
+
+            if (wp_mobile_save_config($mobileConfig, $adminDisplayName, false)) {
+                $flashMessage = '🚀 Հայտարարությունը պատմությունից հաջողությամբ ակտիվացվեց։'
+                    . ($expiredCleared ? ' (Նախկին ավարտված ժամանակացույցը մաքրվեց անմիջապես ակտիվացնելու համար)' : '');
+            } else {
+                $flashTone = 'error';
+                $flashMessage = 'Սխալ հայտարարության ակտիվացման ժամանակ։';
+            }
+        }
+    } elseif ($formAction === 'delete_history_item') {
+        $historyId = trim((string)($_POST['history_id'] ?? ''));
+        if (wp_mobile_delete_announcement_history($historyId)) {
+            $flashMessage = '🗑️ Պատմության գրառումը ջնջվեց։';
+        } else {
+            $flashTone = 'error';
+            $flashMessage = 'Չհաջողվեց ջնջել պատմության գրառումը։';
+        }
     } else {
         // Save announcement + restrictions + maintenance settings together
+        $forceNewAndActivate = ($formAction === 'save_new_and_activate');
         $rawRestrictedPages = isset($_POST['restricted_pages']) && is_array($_POST['restricted_pages'])
             ? array_map('strval', $_POST['restricted_pages'])
             : [];
@@ -61,7 +139,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             ? array_map('strval', $_POST['restricted_features'])
             : [];
 
-        $mobileConfig['announcement']['enabled']               = !empty($_POST['announcement_enabled']);
+        $mobileConfig['announcement']['enabled']               = $forceNewAndActivate ? true : !empty($_POST['announcement_enabled']);
         $mobileConfig['announcement']['target']                = in_array($_POST['announcement_target'] ?? '', $allowedTargets, true) ? $_POST['announcement_target'] : 'all';
         $mobileConfig['announcement']['type']                  = in_array($_POST['announcement_type'] ?? '', ['info', 'warning', 'success', 'critical'], true) ? $_POST['announcement_type'] : 'info';
         $mobileConfig['announcement']['title']                 = trim((string)($_POST['announcement_title'] ?? ''));
@@ -98,10 +176,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         $mobileConfig['android']['maintenance_title']   = trim((string)($_POST['android_maintenance_title'] ?? ($mobileConfig['android']['maintenance_title'] ?? '')));
         $mobileConfig['android']['maintenance_message'] = trim((string)($_POST['android_maintenance_message'] ?? ($mobileConfig['android']['maintenance_message'] ?? '')));
 
-        $okMob = wp_mobile_save_config($mobileConfig, $adminDisplayName);
+        $okMob = wp_mobile_save_config($mobileConfig, $adminDisplayName, $forceNewAndActivate);
         $okWeb = wp_version_save($versionConfig, ['action' => 'save_announcements_command_center', 'actor' => $adminDisplayName]);
         if ($okMob && $okWeb) {
-            $flashMessage = 'Բոլոր հայտարարությունները, սահմանափակումները և տեխնիկական դադարի կարգավորումները պահպանվեցին։';
+            $flashMessage = $forceNewAndActivate
+                ? '🚀 Նոր հայտարարությունը ստեղծվեց, պահպանվեց պատմության մեջ և անմիջապես ակտիվացվեց։'
+                : 'Բոլոր հայտարարությունները, սահմանափակումները և տեխնիկական դադարի կարգավորումները պահպանվեցին (պատմությունը թարմացվեց)։';
         } else {
             $flashTone = 'error';
             $flashMessage = 'Սխալ պահպանման ընթացքում։ Ստուգեք գրման իրավունքները։';
@@ -112,6 +192,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 $mobileConfig = wp_mobile_get_config();
 $versionConfig = wp_version_load();
 $ann = $mobileConfig['announcement'] ?? [];
+$annHistory = wp_mobile_get_announcement_history();
+$currentAnnHash = wp_mobile_announcement_content_hash($ann);
 $isAnnNowActive = wp_mobile_is_announcement_active($ann, $versionConfig);
 $isWebMaintActive = wp_version_is_maintenance_active($versionConfig);
 $iosStatus = (string)($mobileConfig['ios']['status'] ?? 'live');
@@ -132,6 +214,113 @@ $featureGroups = [
     'Pro Studio և Բեմ' => ['pro_studio', 'live_stage_follower', 'rehearsal_stems', 'lyrics_projection', 'worship_ai_studio', 'service_planner', 'smart_metronome'],
     'Երգարան, Չաթ և Օֆլայն' => ['chord_chart_transpose_capo', 'audio_calls', 'setlists_sync', 'offline_mode', 'song_lyrics_copy', 'setlist_creation', 'chat_messaging', 'song_requests_submit'],
 ];
+
+$targetLabels = [
+    'all' => '🌐 Ամբողջ համակարգը',
+    'web_pwa' => '🖥️ Կայք և PWA',
+    'web' => '🌍 Միայն Կայք',
+    'pwa' => '📲 Միայն PWA',
+    'native' => '📱 iOS և Android',
+    'ios' => '🍏 Միայն iOS',
+    'android' => '🤖 Միայն Android',
+];
+
+$typeLabels = [
+    'info' => ['label' => 'ℹ️ Տեղեկատվական', 'cls' => 'ac-badge--on'],
+    'warning' => ['label' => '⚠️ Վերազինում', 'cls' => 'ac-badge--warn'],
+    'success' => ['label' => '✅ Թարմացում', 'cls' => 'ac-badge--on'],
+    'critical' => ['label' => '🚨 Հրատապ', 'cls' => 'ac-badge--danger'],
+];
+
+$renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAnnNowActive, $ann, $targetLabels, $typeLabels, $restrictablePages, $restrictableFeatures): void {
+    ?>
+    <div class="ac-card">
+      <div class="ac-card-head">
+        <div>
+          <div class="ac-card-title">📜 Հայտարարությունների Պատմություն (<?= count($annHistory) ?>)</div>
+          <div style="font-size:0.8rem; color:var(--muted); margin-top:4px;">Բոլոր պահպանված հայտարարությունները․ կարող եք ցանկացած հին հայտարարության հիման վրա ստեղծել նորը (բեռնել ձևի մեջ, խմբագրել) կամ մեկ սեղմումով նորից ակտիվացնել։</div>
+        </div>
+        <button type="button" class="ac-btn ac-btn--ghost ac-btn--sm" onclick="wpResetAnnouncementForm()">➕ Ստեղծել նոր դատարկ հայտարարություն</button>
+      </div>
+
+      <?php if (empty($annHistory)): ?>
+        <div style="padding:26px; text-align:center; color:var(--muted); font-size:0.9rem; background:var(--bg); border:1px dashed var(--line); border-radius:12px;">
+          Պահպանված հայտարարությունների պատմություն դեռ չկա։ Երբ պահպանեք կամ ակտիվացնեք հայտարարություն, այն ավտոմատ կհայտնվի այստեղ։
+        </div>
+      <?php else: ?>
+        <div class="ac-history-list">
+          <?php foreach ($annHistory as $hItem):
+            $hId = (string)($hItem['id'] ?? '');
+            $hHash = (string)($hItem['content_hash'] ?? wp_mobile_announcement_content_hash($hItem));
+            $isCurrentMatch = ($hHash === $currentAnnHash) && (trim((string)($ann['title'] ?? '')) !== '' || trim((string)($ann['message'] ?? '')) !== '');
+            $hType = (string)($hItem['type'] ?? 'info');
+            $hTypeMeta = $typeLabels[$hType] ?? $typeLabels['info'];
+            $hTarget = (string)($hItem['target'] ?? 'all');
+            $hTargetLabel = $targetLabels[$hTarget] ?? $targetLabels['all'];
+            $hPages = array_values(array_filter((array)($hItem['restricted_pages'] ?? [])));
+            $hFeatures = array_values(array_filter((array)($hItem['restricted_features'] ?? [])));
+            $hHasRu = trim((string)($hItem['title_ru'] ?? '')) !== '' || trim((string)($hItem['message_ru'] ?? '')) !== '';
+            $hHasEn = trim((string)($hItem['title_en'] ?? '')) !== '' || trim((string)($hItem['message_en'] ?? '')) !== '';
+          ?>
+            <div class="ac-history-item <?= ($isCurrentMatch && $isAnnNowActive) ? 'is-current' : '' ?>">
+              <div style="flex:1; min-width:260px;">
+                <div class="ac-history-meta">
+                  <?php if ($isCurrentMatch && $isAnnNowActive): ?>
+                    <span class="ac-badge ac-badge--on">● Այժմ Ակտիվ է</span>
+                  <?php elseif ($isCurrentMatch && !empty($ann['enabled'])): ?>
+                    <span class="ac-badge ac-badge--warn">⏳ Ընթացիկ պլանավորված</span>
+                  <?php elseif ($isCurrentMatch): ?>
+                    <span class="ac-badge ac-badge--off">○ Ընթացիկ ձևում (Անջատված)</span>
+                  <?php endif; ?>
+                  <span class="ac-badge <?= htmlspecialchars($hTypeMeta['cls']) ?>"><?= htmlspecialchars($hTypeMeta['label']) ?></span>
+                  <span class="ac-badge ac-badge--off"><?= htmlspecialchars($hTargetLabel) ?></span>
+                  <?php if (!empty($hPages) || !empty($hFeatures)): ?>
+                    <span class="ac-badge ac-badge--warn">🔒 <?= count($hPages) ?> էջ · <?= count($hFeatures) ?> ֆունկցիա</span>
+                  <?php endif; ?>
+                  <?php if ($hHasRu): ?><span class="ac-badge ac-badge--off">🇷🇺 RU</span><?php endif; ?>
+                  <?php if ($hHasEn): ?><span class="ac-badge ac-badge--off">🇺🇸 EN</span><?php endif; ?>
+                </div>
+
+                <h4 class="ac-history-title"><?= htmlspecialchars(($hItem['title'] ?? '') !== '' ? (string)$hItem['title'] : '— Առանց վերնագրի —') ?></h4>
+                <p class="ac-history-msg"><?= htmlspecialchars((string)($hItem['message'] ?? '')) ?></p>
+
+                <?php if (!empty($hPages) || !empty($hFeatures)): ?>
+                  <div style="font-size:0.76rem; color:var(--muted); margin-bottom:8px;">
+                    <?php if (!empty($hPages)): ?>
+                      <div><strong>Փակ էջեր՝</strong> <?= htmlspecialchars(implode(', ', array_map(static fn($p) => $restrictablePages[$p] ?? $p, $hPages))) ?></div>
+                    <?php endif; ?>
+                    <?php if (!empty($hFeatures)): ?>
+                      <div><strong>Փակ ֆունկցիաներ՝</strong> <?= htmlspecialchars(implode(', ', array_map(static fn($f) => $restrictableFeatures[$f] ?? $f, $hFeatures))) ?></div>
+                    <?php endif; ?>
+                  </div>
+                <?php endif; ?>
+
+                <div class="ac-history-foot">
+                  <span>🕒 Պահպանվել է՝ <?= htmlspecialchars((string)($hItem['updated_at'] ?? $hItem['created_at'] ?? '')) ?></span>
+                  <?php if (!empty($hItem['actor'])): ?>
+                    <span>👤 <?= htmlspecialchars((string)$hItem['actor']) ?></span>
+                  <?php endif; ?>
+                  <?php if (!empty($hItem['action_text'])): ?>
+                    <span>🔗 Կոճակ՝ <?= htmlspecialchars((string)$hItem['action_text']) ?> (<?= htmlspecialchars((string)($hItem['action_url'] ?? '')) ?>)</span>
+                  <?php endif; ?>
+                  <?php if (!empty($hItem['schedule_start_at']) || !empty($hItem['schedule_end_at'])): ?>
+                    <span>📅 <?= htmlspecialchars((string)($hItem['schedule_start_at'] ?: '—')) ?> → <?= htmlspecialchars((string)($hItem['schedule_end_at'] ?: '—')) ?></span>
+                  <?php endif; ?>
+                </div>
+              </div>
+
+              <div class="ac-history-actions">
+                <button type="button" class="ac-btn ac-btn--ghost ac-btn--sm" onclick="wpCloneFromHistory('<?= htmlspecialchars($hId, ENT_QUOTES) ?>')">📝 Նորը՝ սրա հիման վրա</button>
+                <button type="button" class="ac-btn ac-btn--success ac-btn--sm" onclick="wpActivateHistoryItem('<?= htmlspecialchars($hId, ENT_QUOTES) ?>')">🚀 Ակտիվացնել հիմա</button>
+                <button type="button" class="ac-btn ac-btn--danger ac-btn--sm" onclick="wpDeleteHistoryItem('<?= htmlspecialchars($hId, ENT_QUOTES) ?>')" title="Ջնջել պատմությունից">🗑️</button>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+    </div>
+    <?php
+};
 ?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars($adminLang) ?>">
@@ -188,6 +377,22 @@ $featureGroups = [
     .ac-panel.is-visible { display:block; }
     .ac-flash { padding:14px 18px; border-radius:12px; margin-bottom:18px; font-weight:700; background:rgba(5,205,153,0.14); border:1px solid rgba(5,205,153,0.35); color:#05cd99; }
     .ac-flash.is-error { background:rgba(238,93,80,0.14); border-color:rgba(238,93,80,0.35); color:#ee5d50; }
+    .ac-history-list { display:flex; flex-direction:column; gap:12px; }
+    .ac-history-item { background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:16px 18px; display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; transition:border-color .18s ease, box-shadow .18s ease; }
+    .ac-history-item:hover { border-color:var(--primary); }
+    .ac-history-item.is-current { border-color:rgba(5,205,153,0.55); box-shadow:0 0 0 1px rgba(5,205,153,0.25); }
+    .ac-history-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+    .ac-history-title { font-size:1rem; font-weight:800; color:var(--text); margin:0 0 4px; }
+    .ac-history-msg { font-size:0.86rem; color:var(--muted); margin:0 0 8px; line-height:1.48; white-space:pre-line; }
+    .ac-history-foot { display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:0.76rem; color:var(--muted); }
+    .ac-history-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; flex-shrink:0; }
+    .ac-btn--sm { padding:7px 12px; font-size:0.8rem; border-radius:9px; }
+    @keyframes acHighlightPulse {
+      0% { box-shadow: 0 0 0 0 rgba(67, 24, 255, 0.55); border-color: var(--primary); }
+      70% { box-shadow: 0 0 0 10px rgba(67, 24, 255, 0); border-color: var(--primary); }
+      100% { box-shadow: 0 0 0 0 rgba(67, 24, 255, 0); }
+    }
+    .ac-card.is-cloned-highlight { animation: acHighlightPulse 1.4s ease; }
   </style>
 </head>
 <body class="wp-admin-app">
@@ -211,10 +416,15 @@ $featureGroups = [
       <div class="ac-hero">
         <div>
           <h1 class="ac-title">📢 Հայտարարություններ, Սահմանափակումներ և Դադար</h1>
-          <p class="ac-sub">Ամբողջական կառավարման կենտրոն՝ Կայքի, PWA-ի, iOS-ի և Android-ի համար․ հայտարարությունների պլանավորում, ըստ էջերի ու ֆունկցիաների սահմանափակում և տեխնիկական դադարի միասնական կառավարում։</p>
+          <p class="ac-sub">Ամբողջական կառավարման կենտրոն՝ Կայքի, PWA-ի, iOS-ի և Android-ի համար․ հայտարարությունների պլանավորում, պատմության պահպանում, հնի հիման վրա նորի ստեղծում, ըստ էջերի ու ֆունկցիաների սահմանափակում և տեխնիկական դադարի միասնական կառավարում։</p>
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button type="button" class="ac-btn ac-btn--primary" onclick="document.getElementById('acMainForm').submit();">💾 Պահպանել ամենը</button>
+          <button type="button" class="ac-btn ac-btn--ghost" onclick="wpResetAnnouncementForm();">➕ Նոր հայտարարություն</button>
+          <?php if (!empty($ann['enabled'])): ?>
+            <button type="button" class="ac-btn ac-btn--danger" onclick="wpSubmitMasterAction('deactivate_current', 'Անջատե՞լ ընթացիկ հայտարարությունը (այն կմնա պատմության մեջ)։');">⏹️ Անջատել ընթացիկը</button>
+          <?php endif; ?>
+          <button type="button" class="ac-btn ac-btn--success" onclick="document.getElementById('acFormAction').value='save_new_and_activate'; document.getElementById('acMainForm').submit();">🚀 Պահպանել որպես նոր և Ակտիվացնել</button>
+          <button type="button" class="ac-btn ac-btn--primary" onclick="document.getElementById('acFormAction').value='save_all'; document.getElementById('acMainForm').submit();">💾 Պահպանել ամենը</button>
         </div>
       </div>
 
@@ -245,25 +455,23 @@ $featureGroups = [
           </div>
         </div>
         <div class="ac-stat">
-          <div class="ac-stat-label">iOS / Android Native</div>
-          <div class="ac-stat-val">
-            <span class="ac-badge <?= ($iosStatus === 'maintenance' || $androidStatus === 'maintenance') ? 'ac-badge--danger' : 'ac-badge--on' ?>">
-              iOS: <?= htmlspecialchars($iosStatus) ?> · Android: <?= htmlspecialchars($androidStatus) ?>
-            </span>
-          </div>
+          <div class="ac-stat-label">Պահպանված Պատմություն</div>
+          <div class="ac-stat-val"><?= count($annHistory) ?> հայտարարություն</div>
         </div>
       </div>
 
       <!-- SECTION TABS -->
       <div class="ac-tabs" role="tablist">
-        <button type="button" class="ac-tab <?= $activeTab === 'banner' ? 'is-active' : '' ?>" onclick="wpSwitchAcTab('banner', this)">📢 1. Հայտարարություն, Բաններ և Պլանավորում</button>
-        <button type="button" class="ac-tab <?= $activeTab === 'restrictions' ? 'is-active' : '' ?>" onclick="wpSwitchAcTab('restrictions', this)">🔒 2. Էջերի և Ֆունկցիաների Սահմանափակում</button>
-        <button type="button" class="ac-tab <?= $activeTab === 'maintenance' ? 'is-active' : '' ?>" onclick="wpSwitchAcTab('maintenance', this)">🛠️ 3. Միասնական Տեխնիկական Աշխատանքներ</button>
+        <button type="button" id="acTabBtnBanner" class="ac-tab <?= $activeTab === 'banner' ? 'is-active' : '' ?>" onclick="wpSwitchAcTab('banner', this)">📢 1. Հայտարարություն, Բաններ և Պլանավորում</button>
+        <button type="button" id="acTabBtnRestrictions" class="ac-tab <?= $activeTab === 'restrictions' ? 'is-active' : '' ?>" onclick="wpSwitchAcTab('restrictions', this)">🔒 2. Էջերի և Ֆունկցիաների Սահմանափակում</button>
+        <button type="button" id="acTabBtnMaintenance" class="ac-tab <?= $activeTab === 'maintenance' ? 'is-active' : '' ?>" onclick="wpSwitchAcTab('maintenance', this)">🛠️ 3. Միասնական Տեխնիկական Աշխատանքներ</button>
+        <button type="button" id="acTabBtnHistory" class="ac-tab <?= $activeTab === 'history' ? 'is-active' : '' ?>" onclick="wpSwitchAcTab('history', this)">📜 4. Հայտարարությունների Պատմություն (<?= count($annHistory) ?>)</button>
       </div>
 
       <form id="acMainForm" method="POST">
         <input type="hidden" name="form_action" id="acFormAction" value="save_all" />
         <input type="hidden" name="active_tab" id="acActiveTabInput" value="<?= htmlspecialchars($activeTab) ?>" />
+        <input type="hidden" name="history_id" id="acHistoryIdInput" value="" />
 
         <!-- TAB 1: BANNER & SCHEDULING -->
         <section id="acPanelBanner" class="ac-panel <?= $activeTab === 'banner' ? 'is-visible' : '' ?>">
@@ -295,9 +503,16 @@ $featureGroups = [
             </div>
           </div>
 
-          <div class="ac-card">
+          <div class="ac-card" id="acEditorCard">
             <div class="ac-card-head">
-              <div class="ac-card-title">📢 Հիմնական Կարգավորումներ և Պլանավորում</div>
+              <div>
+                <div class="ac-card-title">📢 Հիմնական Կարգավորումներ և Պլանավորում</div>
+                <div id="acCloneNotice" style="display:none; margin-top:6px; font-size:0.82rem; font-weight:700; color:#05cd99;"></div>
+              </div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" class="ac-btn ac-btn--ghost ac-btn--sm" onclick="wpResetAnnouncementForm()">➕ Մաքրել ձևը (Նոր հայտարարություն)</button>
+                <button type="button" class="ac-btn ac-btn--success ac-btn--sm" onclick="document.getElementById('acFormAction').value='save_new_and_activate'; document.getElementById('acMainForm').submit();">🚀 Պահպանել որպես նոր և Ակտիվացնել</button>
+              </div>
             </div>
 
             <div class="ac-grid-3" style="margin-bottom:16px;">
@@ -402,6 +617,8 @@ $featureGroups = [
               </div>
             </div>
           </div>
+
+          <?php $renderHistoryCard(); ?>
         </section>
 
         <!-- TAB 2: GRANULAR RESTRICTIONS -->
@@ -554,7 +771,13 @@ $featureGroups = [
           </div>
         </section>
 
-        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+        <!-- TAB 4: ANNOUNCEMENTS HISTORY -->
+        <section id="acPanelHistory" class="ac-panel <?= $activeTab === 'history' ? 'is-visible' : '' ?>">
+          <?php $renderHistoryCard(); ?>
+        </section>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; margin-top:16px;">
+          <button type="submit" class="ac-btn ac-btn--success" onclick="document.getElementById('acFormAction').value='save_new_and_activate';">🚀 Պահպանել որպես նոր և Ակտիվացնել</button>
           <button type="submit" class="ac-btn ac-btn--primary" onclick="document.getElementById('acFormAction').value='save_all';">💾 Պահպանել բոլոր փոփոխությունները</button>
         </div>
       </form>
@@ -563,13 +786,194 @@ $featureGroups = [
 </div>
 
 <script>
+  window.WP_ANN_HISTORY = <?= json_encode($annHistory, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+
   function wpSwitchAcTab(tab, btn) {
     document.getElementById('acActiveTabInput').value = tab;
     document.querySelectorAll('.ac-tab').forEach(function (el) { el.classList.remove('is-active'); });
-    if (btn) btn.classList.add('is-active');
+    if (btn) {
+      btn.classList.add('is-active');
+    } else {
+      var mapBtn = {
+        banner: 'acTabBtnBanner',
+        restrictions: 'acTabBtnRestrictions',
+        maintenance: 'acTabBtnMaintenance',
+        history: 'acTabBtnHistory'
+      };
+      var found = document.getElementById(mapBtn[tab] || 'acTabBtnBanner');
+      if (found) found.classList.add('is-active');
+    }
     document.getElementById('acPanelBanner').classList.toggle('is-visible', tab === 'banner');
     document.getElementById('acPanelRestrictions').classList.toggle('is-visible', tab === 'restrictions');
     document.getElementById('acPanelMaintenance').classList.toggle('is-visible', tab === 'maintenance');
+    var histPanel = document.getElementById('acPanelHistory');
+    if (histPanel) histPanel.classList.toggle('is-visible', tab === 'history');
+  }
+
+  function wpToDatetimeLocalValue(raw) {
+    if (!raw || typeof raw !== 'string') return '';
+    var clean = raw.trim().replace(' ', 'T');
+    return clean.length >= 16 ? clean.slice(0, 16) : '';
+  }
+
+  function wpIsExpiredIso(raw) {
+    if (!raw || typeof raw !== 'string') return false;
+    var parsed = Date.parse(raw.trim().replace(' ', 'T'));
+    if (isNaN(parsed)) return false;
+    return parsed <= Date.now();
+  }
+
+  function wpCloneFromHistory(historyId) {
+    var list = Array.isArray(window.WP_ANN_HISTORY) ? window.WP_ANN_HISTORY : [];
+    var item = null;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] && String(list[i].id) === String(historyId)) {
+        item = list[i];
+        break;
+      }
+    }
+    if (!item) return;
+
+    wpSwitchAcTab('banner');
+
+    var enabledInput = document.querySelector('input[name="announcement_enabled"]');
+    if (enabledInput) enabledInput.checked = true;
+
+    var dismissInput = document.querySelector('input[name="announcement_dismissible"]');
+    if (dismissInput) dismissInput.checked = item.dismissible !== false;
+
+    var countdownInput = document.querySelector('input[name="announcement_show_countdown"]');
+    if (countdownInput) countdownInput.checked = !!item.show_countdown;
+
+    var syncMaintInput = document.querySelector('input[name="announcement_sync_with_maintenance"]');
+    if (syncMaintInput) syncMaintInput.checked = !!item.sync_with_maintenance;
+
+    var targetSelect = document.querySelector('select[name="announcement_target"]');
+    if (targetSelect) targetSelect.value = item.target || 'all';
+
+    var typeSelect = document.getElementById('acTypeSelect');
+    if (typeSelect) typeSelect.value = item.type || 'info';
+
+    var titleInput = document.getElementById('acTitleInput');
+    if (titleInput) titleInput.value = item.title || '';
+
+    var msgInput = document.getElementById('acMsgInput');
+    if (msgInput) msgInput.value = item.message || '';
+
+    var titleRu = document.getElementById('acTitleRu');
+    if (titleRu) titleRu.value = item.title_ru || '';
+
+    var msgRu = document.getElementById('acMsgRu');
+    if (msgRu) msgRu.value = item.message_ru || '';
+
+    var titleEn = document.getElementById('acTitleEn');
+    if (titleEn) titleEn.value = item.title_en || '';
+
+    var msgEn = document.getElementById('acMsgEn');
+    if (msgEn) msgEn.value = item.message_en || '';
+
+    var actText = document.getElementById('acActionTextInput');
+    if (actText) actText.value = item.action_text || '';
+
+    var actUrl = document.querySelector('input[name="announcement_action_url"]');
+    if (actUrl) actUrl.value = item.action_url || '';
+
+    var startInput = document.querySelector('input[name="announcement_schedule_start_at"]');
+    var endInput = document.querySelector('input[name="announcement_schedule_end_at"]');
+    var expired = wpIsExpiredIso(item.schedule_end_at);
+    if (startInput) startInput.value = expired ? '' : wpToDatetimeLocalValue(item.schedule_start_at);
+    if (endInput) endInput.value = expired ? '' : wpToDatetimeLocalValue(item.schedule_end_at);
+
+    var pagesSet = {};
+    (Array.isArray(item.restricted_pages) ? item.restricted_pages : []).forEach(function (p) { pagesSet[String(p)] = true; });
+    document.querySelectorAll('input[name="restricted_pages[]"]').forEach(function (chk) {
+      chk.checked = !!pagesSet[chk.value];
+    });
+
+    var featSet = {};
+    (Array.isArray(item.restricted_features) ? item.restricted_features : []).forEach(function (f) { featSet[String(f)] = true; });
+    document.querySelectorAll('input[name="restricted_features[]"]').forEach(function (chk) {
+      chk.checked = !!featSet[chk.value];
+    });
+
+    wpUpdatePreview();
+
+    var notice = document.getElementById('acCloneNotice');
+    if (notice) {
+      notice.style.display = 'block';
+      notice.textContent = '✨ Հին հայտարարության տվյալները բեռնվեցին ձևի մեջ։ Կարող եք փոփոխել և սեղմել «🚀 Պահպանել որպես նոր և Ակտիվացնել»։';
+    }
+
+    var editorCard = document.getElementById('acEditorCard');
+    if (editorCard) {
+      editorCard.classList.remove('is-cloned-highlight');
+      void editorCard.offsetWidth;
+      editorCard.classList.add('is-cloned-highlight');
+      editorCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function wpResetAnnouncementForm() {
+    wpSwitchAcTab('banner');
+
+    var enabledInput = document.querySelector('input[name="announcement_enabled"]');
+    if (enabledInput) enabledInput.checked = true;
+
+    var dismissInput = document.querySelector('input[name="announcement_dismissible"]');
+    if (dismissInput) dismissInput.checked = true;
+
+    var countdownInput = document.querySelector('input[name="announcement_show_countdown"]');
+    if (countdownInput) countdownInput.checked = false;
+
+    var targetSelect = document.querySelector('select[name="announcement_target"]');
+    if (targetSelect) targetSelect.value = 'all';
+
+    var typeSelect = document.getElementById('acTypeSelect');
+    if (typeSelect) typeSelect.value = 'info';
+
+    ['acTitleInput', 'acMsgInput', 'acTitleRu', 'acMsgRu', 'acTitleEn', 'acMsgEn', 'acActionTextInput'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+
+    var actUrl = document.querySelector('input[name="announcement_action_url"]');
+    if (actUrl) actUrl.value = '';
+
+    var startInput = document.querySelector('input[name="announcement_schedule_start_at"]');
+    if (startInput) startInput.value = '';
+
+    var endInput = document.querySelector('input[name="announcement_schedule_end_at"]');
+    if (endInput) endInput.value = '';
+
+    wpSetChecks('restricted_pages[]', false);
+    wpSetChecks('restricted_features[]', false);
+    wpUpdatePreview();
+
+    var notice = document.getElementById('acCloneNotice');
+    if (notice) {
+      notice.style.display = 'block';
+      notice.textContent = '➕ Ձևը մաքրվեց նոր հայտարարություն ստեղծելու համար (նախորդ հայտարարությունները պահպանված են պատմության մեջ)։';
+    }
+
+    var editorCard = document.getElementById('acEditorCard');
+    if (editorCard) {
+      editorCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    var titleEl = document.getElementById('acTitleInput');
+    if (titleEl) titleEl.focus();
+  }
+
+  function wpActivateHistoryItem(historyId) {
+    document.getElementById('acHistoryIdInput').value = historyId;
+    document.getElementById('acFormAction').value = 'activate_from_history';
+    document.getElementById('acMainForm').submit();
+  }
+
+  function wpDeleteHistoryItem(historyId) {
+    if (!window.confirm('Ջնջե՞լ այս հայտարարությունը պատմությունից։')) return;
+    document.getElementById('acHistoryIdInput').value = historyId;
+    document.getElementById('acFormAction').value = 'delete_history_item';
+    document.getElementById('acMainForm').submit();
   }
 
   function wpSetChecks(name, checked) {

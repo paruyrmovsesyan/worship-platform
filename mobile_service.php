@@ -7,6 +7,8 @@ require_once __DIR__ . '/error_service.php';
 require_once __DIR__ . '/push_service.php';
 
 const WP_MOBILE_CONFIG_FILE = __DIR__ . '/data/mobile_app_config.json';
+const WP_ANNOUNCEMENTS_HISTORY_FILE = __DIR__ . '/data/announcements_history.json';
+const WP_ANNOUNCEMENTS_HISTORY_MAX = 100;
 
 /**
  * Returns default mobile apps configuration.
@@ -96,9 +98,9 @@ function wp_mobile_get_config(): array {
 }
 
 /**
- * Saves mobile config atomically.
+ * Saves mobile config atomically and records announcement history when announcement content is present.
  */
-function wp_mobile_save_config(array $config, string $updatedBy = 'admin'): bool {
+function wp_mobile_save_config(array $config, string $updatedBy = 'admin', bool $forceNewHistory = false): bool {
     $dir = dirname(WP_MOBILE_CONFIG_FILE);
     if (!is_dir($dir)) {
         @mkdir($dir, 0775, true);
@@ -110,7 +112,184 @@ function wp_mobile_save_config(array $config, string $updatedBy = 'admin'): bool
     if ($json === false) {
         return false;
     }
-    return (bool)@file_put_contents(WP_MOBILE_CONFIG_FILE, $json, LOCK_EX);
+    $saved = (bool)@file_put_contents(WP_MOBILE_CONFIG_FILE, $json, LOCK_EX);
+    if ($saved && !empty($config['announcement']) && is_array($config['announcement'])) {
+        $ann = $config['announcement'];
+        $hasText = trim((string)($ann['title'] ?? '')) !== '' || trim((string)($ann['message'] ?? '')) !== '';
+        $hasRestrictions = !empty($ann['restricted_pages']) || !empty($ann['restricted_features']);
+        if ($hasText || $hasRestrictions) {
+            wp_mobile_record_announcement_history($ann, $updatedBy, $forceNewHistory);
+        }
+    }
+    return $saved;
+}
+
+/**
+ * Computes a deterministic content fingerprint for an announcement so edits vs status toggles are distinguished.
+ */
+function wp_mobile_announcement_content_hash(array $ann): string {
+    $pages = array_values(array_map('strval', (array)($ann['restricted_pages'] ?? [])));
+    $features = array_values(array_map('strval', (array)($ann['restricted_features'] ?? [])));
+    sort($pages);
+    sort($features);
+
+    $payload = [
+        'target' => (string)($ann['target'] ?? 'all'),
+        'type' => (string)($ann['type'] ?? 'info'),
+        'title' => trim((string)($ann['title'] ?? '')),
+        'message' => trim((string)($ann['message'] ?? '')),
+        'title_ru' => trim((string)($ann['title_ru'] ?? '')),
+        'message_ru' => trim((string)($ann['message_ru'] ?? '')),
+        'title_en' => trim((string)($ann['title_en'] ?? '')),
+        'message_en' => trim((string)($ann['message_en'] ?? '')),
+        'action_text' => trim((string)($ann['action_text'] ?? '')),
+        'action_url' => trim((string)($ann['action_url'] ?? '')),
+        'restricted_pages' => $pages,
+        'restricted_features' => $features,
+    ];
+    return sha1((string)json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+}
+
+/**
+ * Normalizes an announcement array into a history item structure.
+ */
+function wp_mobile_normalize_announcement_record(array $ann, string $actor = 'admin', ?string $id = null, ?string $createdAt = null): array {
+    $now = date('Y-m-d H:i:s');
+    $recordId = ($id !== null && $id !== '') ? $id : ('ann_' . date('Ymd_His') . '_' . substr(bin2hex(random_bytes(4)), 0, 6));
+    return [
+        'id' => $recordId,
+        'content_hash' => wp_mobile_announcement_content_hash($ann),
+        'enabled' => !empty($ann['enabled']),
+        'target' => (string)($ann['target'] ?? 'all'),
+        'type' => (string)($ann['type'] ?? 'info'),
+        'title' => trim((string)($ann['title'] ?? '')),
+        'message' => trim((string)($ann['message'] ?? '')),
+        'title_ru' => trim((string)($ann['title_ru'] ?? '')),
+        'message_ru' => trim((string)($ann['message_ru'] ?? '')),
+        'title_en' => trim((string)($ann['title_en'] ?? '')),
+        'message_en' => trim((string)($ann['message_en'] ?? '')),
+        'action_text' => trim((string)($ann['action_text'] ?? '')),
+        'action_url' => trim((string)($ann['action_url'] ?? '')),
+        'dismissible' => !isset($ann['dismissible']) || !empty($ann['dismissible']),
+        'show_countdown' => !empty($ann['show_countdown']),
+        'sync_with_maintenance' => !empty($ann['sync_with_maintenance']),
+        'schedule_start_at' => (string)($ann['schedule_start_at'] ?? ''),
+        'schedule_end_at' => (string)($ann['schedule_end_at'] ?? ''),
+        'restricted_pages' => array_values(array_map('strval', (array)($ann['restricted_pages'] ?? []))),
+        'restricted_features' => array_values(array_map('strval', (array)($ann['restricted_features'] ?? []))),
+        'actor' => $actor !== '' ? $actor : 'admin',
+        'created_at' => ($createdAt !== null && $createdAt !== '') ? $createdAt : $now,
+        'updated_at' => $now,
+    ];
+}
+
+/**
+ * Loads announcement history list (most recent first). Auto-seeds from current config if history file does not exist yet.
+ */
+function wp_mobile_get_announcement_history(): array {
+    $items = [];
+    if (is_file(WP_ANNOUNCEMENTS_HISTORY_FILE)) {
+        $raw = @file_get_contents(WP_ANNOUNCEMENTS_HISTORY_FILE);
+        if ($raw) {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                $items = array_values(array_filter($decoded, 'is_array'));
+            }
+        }
+    }
+
+    if (empty($items)) {
+        $cfg = wp_mobile_get_config();
+        $ann = is_array($cfg['announcement'] ?? null) ? $cfg['announcement'] : [];
+        $hasText = trim((string)($ann['title'] ?? '')) !== '' || trim((string)($ann['message'] ?? '')) !== '';
+        $hasRestrictions = !empty($ann['restricted_pages']) || !empty($ann['restricted_features']);
+        if ($hasText || $hasRestrictions) {
+            $seed = wp_mobile_normalize_announcement_record(
+                $ann,
+                (string)($cfg['updated_by'] ?? 'admin'),
+                null,
+                (string)($cfg['updated_at'] ?? date('Y-m-d H:i:s'))
+            );
+            $items = [$seed];
+            wp_mobile_save_announcement_history($items);
+        }
+    }
+
+    return $items;
+}
+
+/**
+ * Persists announcement history array to disk.
+ */
+function wp_mobile_save_announcement_history(array $items): bool {
+    $dir = dirname(WP_ANNOUNCEMENTS_HISTORY_FILE);
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0775, true);
+    }
+    $trimmed = array_slice(array_values($items), 0, WP_ANNOUNCEMENTS_HISTORY_MAX);
+    $json = json_encode($trimmed, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($json === false) {
+        return false;
+    }
+    return (bool)@file_put_contents(WP_ANNOUNCEMENTS_HISTORY_FILE, $json, LOCK_EX);
+}
+
+/**
+ * Records or updates an announcement snapshot in history.
+ */
+function wp_mobile_record_announcement_history(array $ann, string $actor = 'admin', bool $forceNew = false): ?array {
+    $items = wp_mobile_get_announcement_history();
+    $hash = wp_mobile_announcement_content_hash($ann);
+
+    if (!$forceNew && !empty($items)) {
+        // If any existing item has the exact same content hash, update and promote it to top
+        foreach ($items as $idx => $existing) {
+            $existingHash = (string)($existing['content_hash'] ?? wp_mobile_announcement_content_hash($existing));
+            if ($existingHash === $hash) {
+                $updated = wp_mobile_normalize_announcement_record(
+                    $ann,
+                    $actor,
+                    (string)($existing['id'] ?? ''),
+                    (string)($existing['created_at'] ?? '')
+                );
+                array_splice($items, $idx, 1);
+                array_unshift($items, $updated);
+                wp_mobile_save_announcement_history($items);
+                return $updated;
+            }
+        }
+    }
+
+    $record = wp_mobile_normalize_announcement_record($ann, $actor);
+    array_unshift($items, $record);
+    wp_mobile_save_announcement_history($items);
+    return $record;
+}
+
+/**
+ * Finds a single announcement history item by ID.
+ */
+function wp_mobile_find_announcement_history(string $id): ?array {
+    if ($id === '') return null;
+    foreach (wp_mobile_get_announcement_history() as $item) {
+        if ((string)($item['id'] ?? '') === $id) {
+            return $item;
+        }
+    }
+    return null;
+}
+
+/**
+ * Deletes a single announcement history item by ID.
+ */
+function wp_mobile_delete_announcement_history(string $id): bool {
+    if ($id === '') return false;
+    $items = wp_mobile_get_announcement_history();
+    $filtered = array_values(array_filter($items, static fn(array $item): bool => (string)($item['id'] ?? '') !== $id));
+    if (count($filtered) === count($items)) {
+        return false;
+    }
+    return wp_mobile_save_announcement_history($filtered);
 }
 
 /**
