@@ -362,18 +362,36 @@ if ($action === 'chapter') {
     wp_bible_out($result, !empty($result['ok']) ? 200 : (!empty($result['unavailable_in_translation']) ? 200 : 404));
 }
 
+function wp_bible_normalize_search_text(string $text): string {
+    $t = mb_strtolower($text, 'UTF-8');
+    // Normalize Armenian ligatures (և -> եւ) and strip punctuation/quotes/extra spaces
+    $t = str_replace(['և', '«', '»', '։', '՝', '՜', '՞', '՛', '—', '–', '-', ',', '.', ';', ':', '!', '?', '"', "'", '(', ')'], ['եւ', ' ', ' ', ' ', ' ', ' ', ' ', '', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], $t);
+    $t = preg_replace('/\s+/u', ' ', $t) ?? $t;
+    return trim($t);
+}
+
 if ($action === 'search') {
     $q = trim((string)($_GET['q'] ?? ''));
-    $tr = wp_bible_valid_translation((string)($_GET['tr'] ?? 'synodal'));
+    $tr = wp_bible_valid_translation((string)($_GET['tr'] ?? 'nor_ararat'));
+    $testament = strtolower(trim((string)($_GET['testament'] ?? 'all'))); // all | old | new
     if (mb_strlen($q) < 2) {
-        wp_bible_out(['ok' => true, 'results' => []]);
+        wp_bible_out(['ok' => true, 'results' => [], 'total' => 0]);
     }
+
+    $normQ = wp_bible_normalize_search_text($q);
+    $words = array_values(array_filter(explode(' ', $normQ), static fn($w) => mb_strlen($w, 'UTF-8') >= 2));
 
     $results = [];
     $seen = [];
 
-    if ($tr === 'nor_ararat') {
-        for ($b = 1; $b <= 66; $b++) {
+    $minBook = $testament === 'new' ? 40 : 1;
+    $maxBook = $testament === 'old' ? 39 : 66;
+
+    // Full local search across all 66 books for Armenian translations (Nor Ararat)
+    if ($tr === 'nor_ararat' || $tr === 'easternarmenian' || $tr === 'westernarmenian') {
+        $exactMatches = [];
+        $wordMatches = [];
+        for ($b = $minBook; $b <= $maxBook; $b++) {
             $natFile = __DIR__ . "/data/bible_nat/{$b}.json";
             if (!is_file($natFile)) continue;
             $bookChapters = json_decode((string)@file_get_contents($natFile), true);
@@ -382,23 +400,48 @@ if ($action === 'search') {
                 if (!is_array($vs)) continue;
                 foreach ($vs as $v) {
                     $txt = (string)($v['t'] ?? '');
-                    if ($txt !== '' && mb_stripos($txt, $q) !== false) {
-                        $results[] = [
-                            'translation' => 'nor_ararat',
+                    if ($txt === '') continue;
+                    $normTxt = wp_bible_normalize_search_text($txt);
+                    if ($normQ !== '' && mb_strpos($normTxt, $normQ, 0, 'UTF-8') !== false) {
+                        $exactMatches[] = [
+                            'translation' => $tr,
                             'book' => $b,
                             'book_name' => '',
                             'chapter' => (int)$chKey,
                             'verse' => (int)($v['v'] ?? 0),
                             'text' => $txt,
+                            'match_type' => 'exact',
                         ];
-                        if (count($results) >= 40) {
-                            wp_bible_out(['ok' => true, 'results' => $results]);
+                    } elseif (count($words) >= 2 && count($wordMatches) < 60) {
+                        $allFound = true;
+                        foreach ($words as $w) {
+                            if (mb_strpos($normTxt, $w, 0, 'UTF-8') === false) {
+                                $allFound = false;
+                                break;
+                            }
+                        }
+                        if ($allFound) {
+                            $wordMatches[] = [
+                                'translation' => $tr,
+                                'book' => $b,
+                                'book_name' => '',
+                                'chapter' => (int)$chKey,
+                                'verse' => (int)($v['v'] ?? 0),
+                                'text' => $txt,
+                                'match_type' => 'words',
+                            ];
                         }
                     }
                 }
             }
         }
-        wp_bible_out(['ok' => true, 'results' => $results]);
+        $merged = array_merge($exactMatches, $wordMatches);
+        $total = count($merged);
+        wp_bible_out([
+            'ok' => true,
+            'total' => $total,
+            'results' => array_slice($merged, 0, 80),
+        ]);
     }
 
     $bollsCode = wp_bible_bolls_code($tr);
@@ -407,6 +450,7 @@ if ($action === 'search') {
         if ($remoteSearch && !empty($remoteSearch['results']) && is_array($remoteSearch['results'])) {
             foreach ($remoteSearch['results'] as $item) {
                 $b = (int)($item['book'] ?? 0);
+                if ($b < $minBook || $b > $maxBook) continue;
                 $c = (int)($item['chapter'] ?? 0);
                 $v = (int)($item['verse'] ?? 0);
                 $withoutStrongs = preg_replace('/<S>.*?<\/S>/si', '', (string)($item['text'] ?? ''));
@@ -421,9 +465,10 @@ if ($action === 'search') {
                         'chapter' => $c,
                         'verse' => $v,
                         'text' => $cleanText,
+                        'match_type' => 'exact',
                     ];
-                    if (count($results) >= 40) {
-                        wp_bible_out(['ok' => true, 'results' => $results]);
+                    if (count($results) >= 80) {
+                        wp_bible_out(['ok' => true, 'total' => count($results), 'results' => $results]);
                     }
                 }
             }
@@ -436,10 +481,22 @@ if ($action === 'search') {
         foreach ($files as $file) {
             $data = json_decode((string)@file_get_contents($file), true);
             if (!is_array($data) || empty($data['verses'])) continue;
+            $b = (int)$data['book'];
+            if ($b < $minBook || $b > $maxBook) continue;
             foreach ($data['verses'] as $v) {
                 $text = (string)($v['text'] ?? '');
-                if (mb_stripos($text, $q) !== false) {
-                    $b = (int)$data['book'];
+                $normTxt = wp_bible_normalize_search_text($text);
+                $matched = ($normQ !== '' && mb_strpos($normTxt, $normQ, 0, 'UTF-8') !== false);
+                if (!$matched && count($words) >= 2) {
+                    $matched = true;
+                    foreach ($words as $w) {
+                        if (mb_strpos($normTxt, $w, 0, 'UTF-8') === false) {
+                            $matched = false;
+                            break;
+                        }
+                    }
+                }
+                if ($matched) {
                     $c = (int)$data['chapter'];
                     $vn = (int)$v['verse'];
                     $k = "{$b}_{$c}_{$vn}";
@@ -452,15 +509,16 @@ if ($action === 'search') {
                         'chapter' => $c,
                         'verse' => $vn,
                         'text' => $text,
+                        'match_type' => 'exact',
                     ];
-                    if (count($results) >= 40) {
-                        wp_bible_out(['ok' => true, 'results' => $results]);
+                    if (count($results) >= 80) {
+                        wp_bible_out(['ok' => true, 'total' => count($results), 'results' => $results]);
                     }
                 }
             }
         }
     }
-    wp_bible_out(['ok' => true, 'results' => $results]);
+    wp_bible_out(['ok' => true, 'total' => count($results), 'results' => $results]);
 }
 
 function wp_bible_align_psalm(string $mainTr, string $targetTr, int $book, int $chapter): int {

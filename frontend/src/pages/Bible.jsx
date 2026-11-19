@@ -160,9 +160,11 @@ export default function Bible() {
 
   const [noteDraft, setNoteDraft] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchTestament, setSearchTestament] = useState('all'); // 'all' | 'old' | 'new'
   const [searchResults, setSearchResults] = useState([]);
+  const [searchTotal, setSearchTotal] = useState(0);
+  const [searchSubmitted, setSearchSubmitted] = useState(false);
   const [searching, setSearching] = useState(false);
-  const [showSearchModal, setShowSearchModal] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState('');
 
   const ui = useMemo(() => {
@@ -243,7 +245,7 @@ export default function Bible() {
       newTest: 'Նոր Կտակարան',
       books: 'Գրքեր',
       search: 'Որոնում',
-      searchPlaceholder: 'Որոնել ընթերցված գլուխներում...',
+      searchPlaceholder: 'Որոնել բառ, բառակապակցություն կամ նախադասություն (օր.՝ Սաղմոս 23, սեր, Տերն է իմ հովիվը)...',
       parallel: 'Զուգահեռ թարգմանություն',
       fontSize: 'Տառաչափ',
       fontType: 'Տառատեսակ',
@@ -748,7 +750,7 @@ export default function Bible() {
   useEffect(() => {
     const onKey = (e) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName)) return;
-      if (showBookDrawer || showSearchModal || showCompareModal) return;
+      if (showBookDrawer || activeTab === 'search' || showCompareModal) return;
       if (e.key === 'ArrowRight') {
         if (chapter < currentBook.chapters) selectBookChapter(bookId, chapter + 1);
       } else if (e.key === 'ArrowLeft') {
@@ -887,11 +889,13 @@ export default function Bible() {
     await nativeShare({ title: passage.title, text: passage.text, url: window.location.href });
   };
 
-  const runBibleSearch = async (e) => {
+  const runBibleSearch = async (e, overrideQuery = null, overrideTestament = null) => {
     e?.preventDefault();
-    const q = searchQuery.trim();
+    const q = String(overrideQuery !== null ? overrideQuery : searchQuery).trim();
+    const scope = overrideTestament !== null ? overrideTestament : searchTestament;
     if (q.length < 2) return;
     setSearching(true);
+    setSearchSubmitted(true);
 
     // Direct book/chapter/verse reference jump
     const refHits = [];
@@ -912,21 +916,45 @@ export default function Bible() {
           chapter: chNum,
           verse: vNum,
           text: `${getBookName(matchedBook.id, language)} ${chNum}${refMatch[3] ? `:${vNum}` : ''}`,
+          isRefJump: true,
         });
       }
     }
 
     try {
       const res = await fetch(
-        `/bible_api.php?action=search&tr=${encodeURIComponent(effectiveTranslation || translation)}&q=${encodeURIComponent(q)}`,
+        `/bible_api.php?action=search&tr=${encodeURIComponent(effectiveTranslation || translation)}&testament=${encodeURIComponent(scope)}&q=${encodeURIComponent(q)}`,
       );
       const data = await res.json();
       const apiHits = data?.ok && Array.isArray(data.results) ? data.results : [];
       setSearchResults([...refHits, ...apiHits]);
+      setSearchTotal(typeof data?.total === 'number' ? data.total + refHits.length : refHits.length + apiHits.length);
     } catch {
       setSearchResults(refHits);
+      setSearchTotal(refHits.length);
     }
     setSearching(false);
+  };
+
+  const renderHighlightedSearchText = (text, query) => {
+    const cleanQ = String(query || '').trim();
+    if (!cleanQ || !text) return text;
+    const words = cleanQ
+      .split(/\s+/)
+      .map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      .filter((w) => w.length >= 2);
+    if (words.length === 0) return text;
+    const regex = new RegExp(`(${words.join('|')})`, 'gi');
+    const parts = String(text).split(regex);
+    return parts.map((part, idx) =>
+      idx % 2 === 1 ? (
+        <mark key={idx} className="bible-search-mark">
+          {part}
+        </mark>
+      ) : (
+        part
+      ),
+    );
   };
 
   const activeTranslationMeta = translations.find((tr) => tr.id === (effectiveTranslation || translation));
@@ -1094,8 +1122,8 @@ export default function Bible() {
           </button>
           <button
             type="button"
-            className="bible-icon-pill"
-            onClick={() => setShowSearchModal(true)}
+            className={`bible-icon-pill ${activeTab === 'search' ? 'active' : ''}`}
+            onClick={() => setActiveTab((prev) => (prev === 'search' ? 'read' : 'search'))}
             title={ui.search}
             aria-label={ui.search}
           >
@@ -1263,7 +1291,186 @@ export default function Bible() {
       )}
       </div>
 
-      {activeTab === 'my' ? (
+      {activeTab === 'search' ? (
+        <section className="bible-search-page">
+          <div className="bible-card bible-search-hero">
+            <div className="bible-search-page-head">
+              <div>
+                <span className="bible-reader-kicker">
+                  {activeTranslationMeta?.name || effectiveTranslation || translation}
+                </span>
+                <h2>
+                  {language === 'ru'
+                    ? 'Поиск по Библии'
+                    : language === 'en'
+                    ? 'Search Scripture'
+                    : 'Աստվածաշնչյան որոնում'}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="bible-pill-btn"
+                onClick={() => setActiveTab('read')}
+              >
+                ← {ui.readTab}
+              </button>
+            </div>
+
+            <form className="bible-search-form bible-search-page-form" onSubmit={(e) => runBibleSearch(e)}>
+              <input
+                type="search"
+                placeholder={ui.searchPlaceholder}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="bible-icon-pill"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSearchResults([]);
+                    setSearchTotal(0);
+                    setSearchSubmitted(false);
+                  }}
+                  aria-label="Մաքրել"
+                >
+                  ✕
+                </button>
+              )}
+              <button type="submit" className="bible-cta-amber" disabled={searching || searchQuery.trim().length < 2}>
+                {searching ? '...' : ui.search}
+              </button>
+            </form>
+
+            <div className="bible-search-filters">
+              {[
+                { id: 'all', label: language === 'ru' ? 'Вся Библия' : language === 'en' ? 'All Books' : 'Ամբողջ Աստվածաշունչ' },
+                { id: 'old', label: ui.oldTest },
+                { id: 'new', label: ui.newTest },
+              ].map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  className={`bible-pill-btn ${searchTestament === opt.id ? 'is-active-filter' : ''}`}
+                  onClick={() => {
+                    setSearchTestament(opt.id);
+                    if (searchQuery.trim().length >= 2) {
+                      runBibleSearch(null, searchQuery, opt.id);
+                    }
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {!searchSubmitted && (
+              <div className="bible-search-suggestions">
+                <span>{language === 'ru' ? 'Популярные запросы:' : language === 'en' ? 'Quick searches:' : 'Արագ որոնումներ՝'}</span>
+                <div className="bible-chip-wrap">
+                  {(language === 'ru'
+                    ? ['любовь', 'Господь Пастырь мой', 'не бойся', 'мир вам', 'Псалом 22']
+                    : language === 'en'
+                    ? ['love', 'The Lord is my shepherd', 'fear not', 'grace', 'John 3:16']
+                    : ['սեր', 'Տերն է իմ հովիվը', 'մի վախեցիր', 'խաղաղություն', 'Սաղմոս 23']
+                  ).map((chip) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      className="bible-pill-btn"
+                      onClick={() => {
+                        setSearchQuery(chip);
+                        runBibleSearch(null, chip, searchTestament);
+                      }}
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="bible-search-page-results">
+            {searching ? (
+              <div className="bible-card bible-loading">
+                <div className="bible-skeleton-line" />
+                <div className="bible-skeleton-line short" />
+                <div className="bible-skeleton-line" />
+                <div className="bible-skeleton-line short" />
+              </div>
+            ) : searchSubmitted && searchResults.length === 0 ? (
+              <div className="bible-card bible-unavailable-box">
+                <h3>
+                  {language === 'ru'
+                    ? 'Ничего не найдено'
+                    : language === 'en'
+                    ? 'No matching verses found'
+                    : 'Համընկնող խոսքեր չգտնվեցին'}
+                </h3>
+                <p className="bible-empty-copy">
+                  {language === 'ru'
+                    ? 'Попробуйте другое слово, более короткую фразу или проверьте выбранный Завет.'
+                    : language === 'en'
+                    ? 'Try another word, shorter phrase, or switch the Testament filter.'
+                    : 'Փորձեք այլ բառ, ավելի կարճ բառակապակցություն կամ ընտրեք «Ամբողջ Աստվածաշունչ» զտիչը։'}
+                </p>
+              </div>
+            ) : searchResults.length > 0 ? (
+              <>
+                <div className="bible-search-meta-bar">
+                  <span>
+                    {language === 'ru'
+                      ? `Найдено совпадений: ${searchTotal}`
+                      : language === 'en'
+                      ? `Found ${searchTotal} matching verses`
+                      : `Գտնվել է ${searchTotal} արդյունք`}
+                  </span>
+                  {searchTotal > searchResults.length && (
+                    <small>
+                      {language === 'ru'
+                        ? `Показаны первые ${searchResults.length}`
+                        : language === 'en'
+                        ? `Showing first ${searchResults.length}`
+                        : `Ցուցադրվում է առաջին ${searchResults.length}-ը`}
+                    </small>
+                  )}
+                </div>
+
+                <div className="bible-search-results-grid">
+                  {searchResults.map((r, i) => (
+                    <button
+                      key={`${r.book}_${r.chapter}_${r.verse}_${i}`}
+                      type="button"
+                      className="bible-search-hit bible-search-result-card"
+                      onClick={() => {
+                        selectBookChapter(r.book, r.chapter);
+                        setSelectedVerse(r.verse);
+                        setSelectedVerses(r.verse ? [r.verse] : []);
+                        setActiveTab('read');
+                      }}
+                    >
+                      <div className="bible-search-hit-head">
+                        <strong>
+                          {getBookName(r.book, language)} {r.chapter}:{r.verse}
+                        </strong>
+                        <span className="bible-search-open-tag">
+                          {language === 'ru' ? 'Открыть →' : language === 'en' ? 'Read →' : 'Կարդալ →'}
+                        </span>
+                      </div>
+                      <p className="bible-search-hit-text">
+                        {r.isRefJump ? r.text : renderHighlightedSearchText(r.text, searchQuery)}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : null}
+          </div>
+        </section>
+      ) : activeTab === 'my' ? (
         <div className="bible-my-wrap">
           <div className="bible-stats-row">
             <div className="bible-stat-chip">
@@ -1989,57 +2196,7 @@ export default function Bible() {
         document.body
       )}
 
-      {/* Search Modal (Portaled) */}
-      {showSearchModal && createPortal(
-        <div className="bible-modal-backdrop" onClick={() => setShowSearchModal(false)}>
-          <div className="bible-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="bible-modal-head">
-              <h3>{ui.search}</h3>
-              <button type="button" className="bible-sheet-close" onClick={() => setShowSearchModal(false)}>
-                ✕
-              </button>
-            </div>
-            <form className="bible-search-form" onSubmit={runBibleSearch}>
-              <input
-                type="search"
-                placeholder={ui.searchPlaceholder}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                autoFocus
-              />
-              <button type="submit" className="bible-cta-amber">
-                {ui.search}
-              </button>
-            </form>
-            <div className="bible-search-results">
-              {searching ? (
-                <p className="bible-empty-copy">...</p>
-              ) : searchResults.length === 0 ? (
-                <p className="bible-empty-copy">{ui.searchPlaceholder}</p>
-              ) : (
-                searchResults.map((r, i) => (
-                  <button
-                    key={`${r.book}_${r.chapter}_${r.verse}_${i}`}
-                    type="button"
-                    className="bible-search-hit"
-                    onClick={() => {
-                      selectBookChapter(r.book, r.chapter);
-                      setSelectedVerse(r.verse);
-                      setShowSearchModal(false);
-                    }}
-                  >
-                    <strong>
-                      {getBookName(r.book, language)} {r.chapter}:{r.verse}
-                    </strong>
-                    <span>{r.text}</span>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      {/* End of Modals */}
     </div>
   );
 }

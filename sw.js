@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v605";
+const CACHE_VERSION = "worship-v606";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -37,8 +37,8 @@ const APP_SHELL = [
   "/app.js",
   "/site_guard.js",
   "/fav_bridge.js",
-  "/assets/index.css?v=v605",
-  "/assets/index.js?v=v605",
+  "/assets/index.css?v=v606",
+  "/assets/index.js?v=v606",
   "/assets/preload-helper.js",
   "/assets/dist.js",
   "/assets/base.js",
