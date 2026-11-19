@@ -369,7 +369,7 @@ body.light-mode .hub-search-clear-btn {
 .bg-amber { background: linear-gradient(135deg, #f7b500, #d97706); }
 .bg-indigo { background: linear-gradient(135deg, #6366f1, #2e56d4); }
 
-/* ── Today / Daily Devotional Blocks (myekklesia-inspired) ── */
+/* ── Today / Daily Devotional Blocks (MyEkklesia Editorial Refinement) ── */
 .hub-today-greeting {
   display: flex;
   align-items: flex-end;
@@ -381,63 +381,97 @@ body.light-mode .hub-search-clear-btn {
 
 .hub-today-eyebrow {
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: #f7b500;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
 }
 
 .hub-today-title {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.48rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
 }
 
 .hub-resume-pill {
   height: 34px;
-  padding: 0 12px;
+  padding: 0 13px;
   border-radius: 999px;
-  border: 1px solid var(--glass-border);
-  background: var(--color-surface);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: var(--color-text-primary);
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.hub-resume-pill:hover {
+  border-color: rgba(247, 181, 0, 0.45);
 }
 
 .hub-votd-card {
   position: relative;
-  border-radius: 18px;
-  padding: 18px 16px;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: 20px 18px 18px;
   margin-bottom: 14px;
   border: 1px solid rgba(255, 255, 255, 0.14);
+  border-top-color: rgba(255, 255, 255, 0.24);
   color: #f7f4ed;
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.hub-votd-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 88% 12%, rgba(247, 181, 0, 0.22), transparent 52%);
+  pointer-events: none;
+}
+
+.hub-votd-top,
+.hub-votd-text,
+.hub-votd-ref,
+.hub-votd-actions {
+  position: relative;
+  z-index: 1;
 }
 
 .hub-votd-label {
-  display: inline-block;
-  font-size: 0.68rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.67rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #f7b500;
-  margin-bottom: 8px;
+  letter-spacing: 0.09em;
+  color: #fbbf24;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(247, 181, 0, 0.28);
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 12px;
 }
 
 .hub-votd-text {
-  margin: 0 0 8px;
-  font-family: var(--font-scripture, Georgia, serif);
-  font-size: 1.08rem;
-  line-height: 1.5;
+  margin: 0 0 10px;
+  font-family: var(--font-scripture, 'Literata', Georgia, serif);
+  font-size: 1.15rem;
+  line-height: 1.56;
   font-weight: 500;
+  letter-spacing: -0.005em;
 }
 
 .hub-votd-ref {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.78);
-  margin-bottom: 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.82);
+  margin-bottom: 16px;
 }
 
 .hub-votd-actions {
@@ -447,35 +481,82 @@ body.light-mode .hub-search-clear-btn {
 }
 
 .hub-votd-btn-primary {
-  height: 36px;
-  padding: 0 14px;
+  height: 38px;
+  padding: 0 16px;
   border-radius: 999px;
   border: none;
-  background: #f7b500;
-  color: #231603;
-  font-size: 0.8rem;
-  font-weight: 700;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #1f1402;
+  font-size: 0.82rem;
+  font-weight: 800;
   cursor: pointer;
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.34);
+  transition: transform 0.16s ease, box-shadow 0.2s ease;
+}
+
+.hub-votd-btn-primary:active {
+  transform: scale(0.96);
 }
 
 .hub-votd-btn-ghost {
-  height: 36px;
-  padding: 0 14px;
+  height: 38px;
+  padding: 0 15px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #ffffff;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  transition: background 0.18s ease, transform 0.16s ease;
+}
+
+.hub-votd-btn-ghost:active {
+  transform: scale(0.96);
 }
 
 .hub-week-card {
-  background: var(--color-surface);
-  border: 1px solid var(--glass-border);
-  border-radius: 14px;
-  padding: 10px 10px 12px;
+  background: linear-gradient(165deg, rgba(26, 28, 38, 0.9), rgba(16, 18, 26, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 20px;
+  padding: 13px 12px 12px;
   margin-bottom: 18px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+}
+
+body.light-mode .hub-week-card {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.hub-week-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px 10px;
+}
+
+.hub-week-date-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-transform: capitalize;
+  color: var(--color-text-primary);
+}
+
+.hub-week-cal-pill {
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-secondary);
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .hub-week-strip {
@@ -490,21 +571,29 @@ body.light-mode .hub-search-clear-btn {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 7px 2px 9px;
-  border-radius: 11px;
+  padding: 8px 2px 11px;
+  border-radius: 13px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--color-text-secondary);
   cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
+}
+
+.hub-week-day:active {
+  transform: scale(0.94);
 }
 
 .hub-week-day.is-today {
-  border-color: rgba(247, 181, 0, 0.45);
+  border-color: rgba(247, 181, 0, 0.5);
+  background: rgba(247, 181, 0, 0.08);
 }
 
 .hub-week-day.is-selected {
-  background: #f7b500;
-  color: #231603;
+  background: linear-gradient(145deg, #fbbf24, #f59e0b);
+  color: #1f1402;
+  border-color: transparent;
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.34);
 }
 
 .hub-week-name {
@@ -570,63 +659,88 @@ body.light-mode .hub-search-clear-btn {
 }
 
 .hub-topic-card {
-  flex: 0 0 185px;
-  padding: 12px;
-  border-radius: 14px;
-  background: var(--color-surface);
-  border: 1px solid var(--glass-border);
+  position: relative;
+  flex: 0 0 198px;
+  padding: 14px 14px 13px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(26, 28, 38, 0.92), rgba(16, 18, 26, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.09);
   color: var(--color-text-primary);
   text-align: left;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
   cursor: pointer;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+  transition: transform 0.18s ease, border-color 0.2s ease;
+}
+
+.hub-topic-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(247, 181, 0, 0.42);
+}
+
+body.light-mode .hub-topic-card {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
 }
 
 .hub-topic-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  width: 24px;
+  height: 4px;
+  border-radius: 999px;
 }
 
 .hub-topic-card strong {
-  font-size: 0.88rem;
+  font-size: 0.92rem;
+  font-weight: 800;
 }
 
 .hub-topic-card p {
   margin: 0;
-  font-size: 0.76rem;
+  font-size: 0.77rem;
   color: var(--color-text-secondary);
-  line-height: 1.35;
+  line-height: 1.42;
 }
 
 .hub-topic-card small {
-  color: #f7b500;
-  font-size: 0.72rem;
+  color: #fbbf24;
+  font-size: 0.73rem;
   font-weight: 700;
+  margin-top: auto;
 }
 
 .hub-quote-card {
-  padding: 14px 16px;
-  border-radius: 14px;
-  background: var(--color-surface);
-  border: 1px solid var(--glass-border);
+  padding: 18px 18px 16px;
+  border-radius: 20px;
+  background: linear-gradient(160deg, rgba(28, 30, 42, 0.92), rgba(16, 18, 26, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-left: 3px solid #f7b500;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+}
+
+body.light-mode .hub-quote-card {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+  border-left: 3px solid #f59e0b;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
 }
 
 .hub-quote-label {
   display: block;
-  font-size: 0.68rem;
+  font-size: 0.67rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
-  color: #f7b500;
-  margin-bottom: 6px;
+  letter-spacing: 0.09em;
+  color: #fbbf24;
+  margin-bottom: 8px;
 }
 
 .hub-quote-text {
-  margin: 0 0 10px;
-  font-family: var(--font-scripture, Georgia, serif);
-  font-size: 0.94rem;
-  line-height: 1.5;
+  margin: 0 0 12px;
+  font-family: var(--font-scripture, 'Literata', Georgia, serif);
+  font-size: 1rem;
+  line-height: 1.56;
 }
 
 .hub-quote-foot {

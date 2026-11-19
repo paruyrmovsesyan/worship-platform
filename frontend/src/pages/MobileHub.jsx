@@ -452,11 +452,18 @@ export default function MobileHub() {
           )}
         </div>
 
-        {/* Verse of the Day Hero Card (myekklesia-inspired) */}
+        {/* Verse of the Day Hero Card (MyEkklesia Editorial Style) */}
         <section className="hub-votd-card" style={{ background: dailyVerse.gradient }}>
-          <span className="hub-votd-label">
-            {language === 'ru' ? 'СТИХ ДНЯ' : language === 'en' ? 'VERSE OF THE DAY' : 'ՕՐՎԱ ԽՈՍՔ'}
-          </span>
+          <div className="hub-votd-top">
+            <span className="hub-votd-label">
+              {language === 'ru' ? 'СТИХ ДНЯ' : language === 'en' ? 'VERSE OF THE DAY' : 'ՕՐՎԱ ԽՈՍՔ'}
+              {' · '}
+              {new Date().toLocaleDateString(
+                language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : 'hy-AM',
+                { day: 'numeric', month: 'long' }
+              ).toUpperCase()}
+            </span>
+          </div>
           <blockquote className="hub-votd-text">
             «{dailyVerse.text[language] || dailyVerse.text.am}»
           </blockquote>
@@ -490,6 +497,21 @@ export default function MobileHub() {
 
         {/* Weekly Calendar Strip */}
         <section className="hub-week-card">
+          <div className="hub-week-header">
+            <strong className="hub-week-date-title">
+              {new Date(`${selectedDayStr}T12:00:00`).toLocaleDateString(
+                language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : 'hy-AM',
+                { weekday: 'long', day: 'numeric', month: 'long' }
+              )}
+            </strong>
+            <button
+              type="button"
+              className="hub-week-cal-pill"
+              onClick={() => guardPath('/church?tab=calendar', () => navigate('/church?tab=calendar'))}
+            >
+              {language === 'ru' ? 'Месяц ›' : language === 'en' ? 'Month ›' : 'Ամիս ›'}
+            </button>
+          </div>
           <div className="hub-week-strip">
             {weekDays.map((day) => (
               <button

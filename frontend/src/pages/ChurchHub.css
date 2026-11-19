@@ -40,9 +40,16 @@ body.is-app .church-page {
   scrollbar-width: none;
   padding: 4px;
   border-radius: 999px;
-  background: var(--color-surface);
-  border: 1px solid var(--glass-border);
+  background: rgba(20, 22, 31, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   box-sizing: border-box;
+}
+
+body.light-mode .church-segmented {
+  background: rgba(15, 23, 42, 0.06);
+  border-color: rgba(15, 23, 42, 0.08);
 }
 
 .church-segmented::-webkit-scrollbar {
@@ -51,21 +58,23 @@ body.is-app .church-page {
 
 .church-segmented button {
   height: 34px;
-  padding: 0 14px;
+  padding: 0 15px;
   border-radius: 999px;
   border: none;
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 0.84rem;
+  font-size: 0.83rem;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
 .church-segmented button.active {
-  background: #f7b500;
-  color: #231603;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #1f1402;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
 
 .church-toast {
@@ -139,15 +148,21 @@ body.is-app .church-page {
   justify-content: center;
   gap: 6px;
   height: 38px;
-  padding: 0 16px;
+  padding: 0 17px;
   border-radius: 999px;
   border: none;
-  background: #f7b500;
-  color: #231603;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #1f1402;
   font-size: 0.84rem;
-  font-weight: 700;
+  font-weight: 800;
   text-decoration: none;
   cursor: pointer;
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.28);
+  transition: transform 0.16s ease, box-shadow 0.18s ease;
+}
+
+.church-amber-btn:active {
+  transform: scale(0.96);
 }
 
 .church-compose-bar {
@@ -159,10 +174,21 @@ body.is-app .church-page {
 }
 
 .church-card {
-  background: var(--color-surface);
-  border: 1px solid var(--glass-border);
-  border-radius: 14px;
-  padding: 16px;
+  background: linear-gradient(160deg, rgba(26, 28, 38, 0.92), rgba(16, 18, 26, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 20px;
+  padding: 18px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+}
+
+body.light-mode .church-card {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+}
+
+.church-post {
+  border-left: 3px solid rgba(251, 191, 36, 0.55);
 }
 
 .church-composer {
