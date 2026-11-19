@@ -370,6 +370,58 @@ function wp_bible_normalize_search_text(string $text): string {
     return trim($t);
 }
 
+/**
+ * Semantic / morphological Armenian word patterns so searching e.g. "սեր"
+ * matches "սեր", "սերը", "սիրո", "սիրել", "սիրով" etc. WITHOUT matching
+ * unrelated words that only share letters like "սերմ", "սերունդ", "սերնդի".
+ */
+function wp_bible_build_word_regex(string $word): string {
+    static $semanticGroups = [
+        'սեր' => '(?:սեր(?:ը|ն|ս|դ)?|սիր(?:ո|ով|ուց|ում|ել|եց|ում|իր|են|ենք|եք|ած|ող|ելի|ելիս|ելով|եք|եցի|եցիր|եցին|եցինք|եցիք|ելու|եի|եիր|եին)?)',
+        'սերը' => '(?:սեր(?:ը|ն|ս|դ)?|սիր(?:ո|ով|ուց|ում|ել|եց|ում|իր|են|ենք|եք|ած|ող|ելի)?)',
+        'սիրո' => '(?:սեր(?:ը|ն|ս|դ)?|սիր(?:ո|ով|ուց|ում|ել|եց|ում|իր|են|ենք|եք|ած|ող|ելի)?)',
+        'սիրել' => '(?:սեր(?:ը|ն|ս|դ)?|սիր(?:ո|ով|ուց|ում|ել|եց|ում|իր|են|ենք|եք|ած|ող|ելի)?)',
+        'տեր' => '(?:տեր(?:ը|ն|ս|դ|եր|երի|երից)?|տիր(?:ոջ|ոջը|ոջից|ոջով|ոջն))',
+        'տերը' => '(?:տեր(?:ը|ն|ս|դ)?|տիր(?:ոջ|ոջը|ոջից|ոջով|ոջն))',
+        'աստված' => '(?:աստված(?:ը|ն|ս|դ|ներ|ների)?|աստծու(?:ն|ց|ով|ս)?|աստծո(?:ն|ց|ով)?)',
+        'հոգի' => '(?:հոգ(?:ի|ին|ու|ուն|ուց|ով|իներ|իների|եւոր))',
+        'հույս' => '(?:հույս(?:ը|ն|ս|դ|ի|ով|ից)?|հուս(?:ալ|աց|ում|ով|անք))',
+        'հավատ' => '(?:հավատ(?:ը|ն|ք|քը|քի|քով|քից|ալ|աց|ում|ացյալ|ացող|ացեք|ա))',
+        'հավատք' => '(?:հավատ(?:ը|ն|ք|քը|քի|քով|քից|ալ|աց|ում|ացյալ|ացող|ացեք|ա))',
+        'լույս' => '(?:լույս(?:ը|ն|ս|ի|ով|ից)?|լուս(?:ավոր|ի|ով|ից))',
+        'կյանք' => '(?:կյանք(?:ը|ն|ս|դ|ի|ով|ից|ում)?)',
+        'մեղք' => '(?:մեղք(?:ը|ն|ս|դ|ի|ով|ից|եր|երը|երի|երից|երով)?|մեղավոր(?:ներ|ների|ի)?)',
+        'աղոթք' => '(?:աղոթ(?:ք|քը|քի|քով|քից|քներ|ել|եց|ում|եք|ենք|իր))',
+        'աղոթել' => '(?:աղոթ(?:ք|քը|քի|քով|քից|քներ|ել|եց|ում|եք|ենք|իր))',
+        'խաղաղություն' => '(?:խաղաղ(?:ություն|ությունը|ության|ությամբ|ությանը|ությանից|արար|վեք)?)',
+        'շնորհ' => '(?:շնորհ(?:ը|ն|ի|իվ|ով|ից|ք|քը|քի|քով|քից|ել|եց|ում))',
+        'շնորհք' => '(?:շնորհ(?:ը|ն|ի|իվ|ով|ից|ք|քը|քի|քով|քից|ել|եց|ում))',
+        'փրկություն' => '(?:փրկ(?:ություն|ությունը|ության|ությամբ|իչ|չի|չին|ել|եց|ում|վի|վել|ված))',
+        'ողորմություն' => '(?:ողորմ(?:ություն|ությունը|ության|ությամբ|ած|ել|եց|իր|ում))',
+    ];
+
+    if (isset($semanticGroups[$word])) {
+        return '/(?<![\p{L}\p{N}])' . $semanticGroups[$word] . '(?![\p{L}\p{N}])/u';
+    }
+
+    $escaped = preg_quote($word, '/');
+    $len = mb_strlen($word, 'UTF-8');
+
+    // For short words (<= 4 chars), enforce strict whole-word or standard Armenian inflectional endings
+    // so e.g. "տուն" matches "տուն", "տունը", "տան", NOT unrelated longer words; "հաց" matches "հաց", "հացը", "հացի", NOT "հացահատիկ"
+    if ($len <= 4) {
+        return '/(?<![\p{L}\p{N}])' . $escaped . '(?:ը|ն|ս|դ|ի|ին|ից|ով|ում|եր|երը|երի|երից|երով|ներ|ները|ների|ներից|ներով)?(?![\p{L}\p{N}])/u';
+    }
+
+    // For longer words (>= 5 chars), match at word start with up to 5 inflectional suffix letters
+    return '/(?<![\p{L}\p{N}])' . $escaped . '[\p{L}]{0,5}(?![\p{L}\p{N}])/u';
+}
+
+function wp_bible_build_phrase_regex(string $normPhrase): string {
+    $escaped = preg_quote($normPhrase, '/');
+    return '/(?<![\p{L}\p{N}])' . $escaped . '(?:ը|ն|ս|դ|ի|ին|ից|ով|ում)?(?![\p{L}\p{N}])/u';
+}
+
 if ($action === 'search') {
     $q = trim((string)($_GET['q'] ?? ''));
     $tr = wp_bible_valid_translation((string)($_GET['tr'] ?? 'nor_ararat'));
@@ -383,6 +435,9 @@ if ($action === 'search') {
 
     $normQ = wp_bible_normalize_search_text($q);
     $words = array_values(array_filter(explode(' ', $normQ), static fn($w) => mb_strlen($w, 'UTF-8') >= 2));
+    $phraseRegex = $normQ !== '' ? wp_bible_build_phrase_regex($normQ) : '';
+    $wordRegexes = array_map('wp_bible_build_word_regex', $words);
+    $isSingleWord = count($words) === 1;
 
     $results = [];
     $seen = [];
@@ -408,14 +463,28 @@ if ($action === 'search') {
                     $txt = (string)($v['t'] ?? '');
                     if ($txt === '') continue;
                     $normTxt = wp_bible_normalize_search_text($txt);
-                    $isExact = ($normQ !== '' && mb_strpos($normTxt, $normQ, 0, 'UTF-8') !== false);
+
+                    $isExact = false;
                     $isWords = false;
-                    if (!$isExact && count($words) >= 2) {
-                        $isWords = true;
-                        foreach ($words as $w) {
-                            if (mb_strpos($normTxt, $w, 0, 'UTF-8') === false) {
-                                $isWords = false;
-                                break;
+
+                    if ($isSingleWord) {
+                        // Single-word semantic & whole-word boundary matching
+                        if ($phraseRegex !== '' && preg_match($phraseRegex, $normTxt) === 1) {
+                            $isExact = true;
+                        } elseif (!empty($wordRegexes[0]) && preg_match($wordRegexes[0], $normTxt) === 1) {
+                            $isWords = true;
+                        }
+                    } else {
+                        // Multi-word phrase / sentence matching
+                        if ($phraseRegex !== '' && preg_match($phraseRegex, $normTxt) === 1) {
+                            $isExact = true;
+                        } elseif (count($wordRegexes) >= 2) {
+                            $isWords = true;
+                            foreach ($wordRegexes as $wr) {
+                                if (preg_match($wr, $normTxt) !== 1) {
+                                    $isWords = false;
+                                    break;
+                                }
                             }
                         }
                     }
