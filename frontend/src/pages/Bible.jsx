@@ -6,10 +6,12 @@ import { useLanguage } from '../context/LanguageContext';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import {
   BIBLE_BOOKS,
+  BIBLE_BOOK_GENRES,
   BIBLE_READING_PLAN,
   BIBLICAL_MEASURES,
   DEFAULT_BIBLE_TRANSLATIONS,
   getAlignedParallelChapter,
+  getBookGenre,
   getBookName,
   matchMeasureToken,
 } from '../utils/bibleData';
@@ -1747,20 +1749,32 @@ export default function Bible() {
                 onChange={(e) => setBookSearch(e.target.value)}
               />
               <div className="bible-book-list">
-                {filteredBooks.map((b) => {
-                  const available =
-                    !activeTranslationMeta?.available_books ||
-                    activeTranslationMeta.available_books.includes(b.id);
+                {BIBLE_BOOK_GENRES.filter((g) => bookSearch.trim() || g.test === testamentFilter).map((genre) => {
+                  const groupBooks = filteredBooks.filter((b) => b.id >= genre.range[0] && b.id <= genre.range[1]);
+                  if (groupBooks.length === 0) return null;
                   return (
-                    <button
-                      key={b.id}
-                      type="button"
-                      className={`bible-book-item ${b.id === bookId ? 'active' : ''} ${!available ? 'dimmed' : ''}`}
-                      onClick={() => selectBookChapter(b.id, 1)}
-                    >
-                      <span>{b[language] || b.am}</span>
-                      <small>{b.chapters}</small>
-                    </button>
+                    <div key={genre.id} className="bible-genre-group" style={{ '--genre-color': genre.color }}>
+                      <div className="bible-genre-label">
+                        <span className="bible-genre-dot" />
+                        <span>{genre[language] || genre.am}</span>
+                      </div>
+                      {groupBooks.map((b) => {
+                        const available =
+                          !activeTranslationMeta?.available_books ||
+                          activeTranslationMeta.available_books.includes(b.id);
+                        return (
+                          <button
+                            key={b.id}
+                            type="button"
+                            className={`bible-book-item ${b.id === bookId ? 'active' : ''} ${!available ? 'dimmed' : ''}`}
+                            onClick={() => selectBookChapter(b.id, 1)}
+                          >
+                            <span>{b[language] || b.am}</span>
+                            <small>{b.chapters}</small>
+                          </button>
+                        );
+                      })}
+                    </div>
                   );
                 })}
               </div>
@@ -1768,7 +1782,12 @@ export default function Bible() {
 
             <div className="bible-card bible-chapter-card">
               <div className="bible-chapter-card-head">
-                <strong>{getBookName(bookId, language)}</strong>
+                <div>
+                  <span className="bible-chapter-genre" style={{ color: getBookGenre(bookId).color }}>
+                    ● {getBookGenre(bookId)[language] || getBookGenre(bookId).am}
+                  </span>
+                  <strong>{getBookName(bookId, language)}</strong>
+                </div>
                 <small>{currentBook.chapters}</small>
               </div>
               <div className="bible-chapters-grid">
@@ -2196,20 +2215,32 @@ export default function Bible() {
             />
             <div className="bible-modal-columns">
               <div className="bible-book-list">
-                {filteredBooks.map((b) => (
-                  <button
-                    key={b.id}
-                    type="button"
-                    className={`bible-book-item ${b.id === bookId ? 'active' : ''}`}
-                    onClick={() => {
-                      setBookId(b.id);
-                      setChapter(1);
-                    }}
-                  >
-                    <span>{b[language] || b.am}</span>
-                    <small>{b.chapters}</small>
-                  </button>
-                ))}
+                {BIBLE_BOOK_GENRES.filter((g) => bookSearch.trim() || g.test === testamentFilter).map((genre) => {
+                  const groupBooks = filteredBooks.filter((b) => b.id >= genre.range[0] && b.id <= genre.range[1]);
+                  if (groupBooks.length === 0) return null;
+                  return (
+                    <div key={genre.id} className="bible-genre-group" style={{ '--genre-color': genre.color }}>
+                      <div className="bible-genre-label">
+                        <span className="bible-genre-dot" />
+                        <span>{genre[language] || genre.am}</span>
+                      </div>
+                      {groupBooks.map((b) => (
+                        <button
+                          key={b.id}
+                          type="button"
+                          className={`bible-book-item ${b.id === bookId ? 'active' : ''}`}
+                          onClick={() => {
+                            setBookId(b.id);
+                            setChapter(1);
+                          }}
+                        >
+                          <span>{b[language] || b.am}</span>
+                          <small>{b.chapters}</small>
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })}
               </div>
               <div className="bible-chapters-grid">
                 {Array.from({ length: currentBook.chapters }, (_, i) => i + 1).map((ch) => (

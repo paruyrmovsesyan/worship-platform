@@ -95,6 +95,16 @@ body.light-mode.editorial-theme {
   color: #1A1B1E;
 }
 
+body.light-mode.editorial-theme #root,
+body.light-mode.editorial-theme .app-container,
+body.light-mode.editorial-theme main {
+  background:
+    radial-gradient(760px 460px at 10% 3%, rgba(247, 181, 0, 0.13), transparent 68%),
+    radial-gradient(640px 460px at 92% 16%, rgba(251, 146, 60, 0.09), transparent 66%),
+    radial-gradient(620px 520px at 25% 88%, rgba(56, 189, 248, 0.08), transparent 66%),
+    var(--color-bg, #FAF7F1) !important;
+}
+
 body.editorial-theme #root,
 body.editorial-theme .app-container,
 body.editorial-theme main {

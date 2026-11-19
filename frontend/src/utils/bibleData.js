@@ -188,6 +188,27 @@ export const BIBLICAL_MEASURES = [
   },
 ];
 
+export const BIBLE_BOOK_GENRES = [
+  { id: 'law', test: 'old', color: '#3b82f6', range: [1, 5], am: 'Հնգամատյան (Օրենք)', ru: 'Пятикнижие', en: 'Pentateuch (Law)' },
+  { id: 'history', test: 'old', color: '#14b8a6', range: [6, 17], am: 'Պատմական գրքեր', ru: 'Исторические', en: 'Historical Books' },
+  { id: 'poetry', test: 'old', color: '#f7b500', range: [18, 22], am: 'Իմաստություն և Պոեզիա', ru: 'Поэтические', en: 'Wisdom & Poetry' },
+  { id: 'major_prophets', test: 'old', color: '#a855f7', range: [23, 27], am: 'Մեծ Մարգարեներ', ru: 'Большие пророки', en: 'Major Prophets' },
+  { id: 'minor_prophets', test: 'old', color: '#f97316', range: [28, 39], am: 'Փոքր Մարգարեներ', ru: 'Малые пророки', en: 'Minor Prophets' },
+  { id: 'gospels', test: 'new', color: '#38bdf8', range: [40, 43], am: 'Ավետարաններ', ru: 'Евангелия', en: 'Gospels' },
+  { id: 'acts', test: 'new', color: '#10b981', range: [44, 44], am: 'Գործք Առաքելոց', ru: 'Деяния', en: 'Acts' },
+  { id: 'pauline', test: 'new', color: '#8b5cf6', range: [45, 57], am: 'Պողոսի Նամակներ', ru: 'Послания Павла', en: 'Pauline Epistles' },
+  { id: 'general', test: 'new', color: '#ec4899', range: [58, 65], am: 'Ընդհանուր Նամակներ', ru: 'Соборные послания', en: 'General Epistles' },
+  { id: 'revelation', test: 'new', color: '#f59e0b', range: [66, 66], am: 'Հայտնություն', ru: 'Откровение', en: 'Revelation' },
+];
+
+export function getBookGenre(bookId) {
+  const id = Number(bookId);
+  return (
+    BIBLE_BOOK_GENRES.find((g) => id >= g.range[0] && id <= g.range[1]) ||
+    BIBLE_BOOK_GENRES[5]
+  );
+}
+
 export function matchMeasureToken(token) {
   for (const item of BIBLICAL_MEASURES) {
     if (item.pattern.test(token)) return item;

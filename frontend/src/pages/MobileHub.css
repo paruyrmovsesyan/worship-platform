@@ -645,6 +645,260 @@ body.light-mode .hub-week-card {
   cursor: pointer;
 }
 
+.hub-week-segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 3px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body.light-mode .hub-week-segmented {
+  background: rgba(15, 23, 42, 0.06);
+  border-color: rgba(15, 23, 42, 0.07);
+}
+
+.hub-week-segmented button {
+  height: 30px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hub-week-segmented button.active {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--color-text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+body.light-mode .hub-week-segmented button.active {
+  background: #ffffff;
+  color: #111827;
+}
+
+.hub-week-events-stack,
+.hub-week-news-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.hub-week-event-row {
+  margin-top: 8px;
+  padding: 9px 4px 2px;
+  border: none;
+  border-top: 1px solid var(--glass-border);
+  background: transparent;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hub-week-event-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hub-week-event-info strong {
+  font-size: 0.84rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hub-week-event-info small {
+  font-size: 0.74rem;
+  color: var(--color-text-secondary);
+}
+
+.hub-week-live-time {
+  color: #10b981;
+  font-weight: 700;
+}
+
+.hub-week-open-arrow {
+  font-size: 1.15rem;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.hub-week-detail .hub-week-rsvp-btn {
+  height: 30px;
+  padding: 0 13px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #1f1402;
+  font-size: 0.76rem;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.28);
+}
+
+.hub-week-detail .hub-week-rsvp-btn.is-going {
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  color: #34d399;
+  box-shadow: none;
+}
+
+/* ── Word of Encouragement Story Card (MyEkklesia-inspired) ── */
+.hub-encourage-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: 15px 16px 16px;
+  margin-bottom: 14px;
+  background: linear-gradient(160deg, rgba(26, 28, 40, 0.94), rgba(14, 16, 24, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+}
+
+.hub-encourage-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--topic-accent, #f7b500) 20%, transparent), transparent 58%);
+  pointer-events: none;
+}
+
+body.light-mode .hub-encourage-card {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.07);
+}
+
+.hub-encourage-bars {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12px, 1fr));
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.hub-encourage-bar {
+  height: 3.5px;
+  border-radius: 999px;
+  border: none;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.16);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+body.light-mode .hub-encourage-bar {
+  background: rgba(15, 23, 42, 0.12);
+}
+
+.hub-encourage-bar.active {
+  background: var(--topic-accent, #fbbf24);
+}
+
+.hub-encourage-pills {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.hub-encourage-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-secondary);
+  font-size: 0.77rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.hub-encourage-pill.active {
+  border-color: var(--pill-color, #fbbf24);
+  background: color-mix(in srgb, var(--pill-color, #fbbf24) 18%, transparent);
+  color: var(--color-text-primary);
+}
+
+.hub-encourage-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pill-color, #fbbf24);
+}
+
+.hub-encourage-body {
+  position: relative;
+  z-index: 1;
+}
+
+.hub-encourage-quote {
+  margin: 0 0 12px;
+  font-family: var(--font-scripture, 'Literata', Georgia, serif);
+  font-size: 1.02rem;
+  line-height: 1.56;
+  color: var(--color-text-primary);
+}
+
+.hub-encourage-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.hub-encourage-foot strong {
+  font-size: 0.82rem;
+  color: var(--topic-accent, #fbbf24);
+}
+
+.hub-encourage-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hub-encourage-step {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.hub-encourage-read-btn {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #1f1402;
+  font-size: 0.76rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .hub-topics-scroll {
   display: flex;
   gap: 10px;

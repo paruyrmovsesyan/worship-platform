@@ -49,6 +49,39 @@ import {
 import { useFeatureFlags } from '../utils/featureFlags';
 import { BetaBadge, ComingSoonBadge } from '../components/BetaBadge';
 
+function getSectionRibbonMeta(rawLabel) {
+  const clean = String(rawLabel || '').replace(/[\[\]:]/g, '').trim();
+  const lower = clean.toLowerCase();
+  if (/intro|նախերգ|вступ/i.test(lower)) return { label: clean, short: 'Ն', color: '#14b8a6' };
+  if (/pre|նախակրկն|предприп/i.test(lower)) return { label: clean, short: 'ՆԿ', color: '#f59e0b' };
+  if (/chorus|կրկն|припев/i.test(lower)) return { label: clean, short: 'Կ', color: '#ef4444' };
+  if (/bridge|կամուրջ|бридж|мост/i.test(lower)) return { label: clean, short: 'ԿՄ', color: '#a855f7' };
+  if (/outro|ending|ավարտ|конец|кода/i.test(lower)) return { label: clean, short: 'Ա', color: '#10b981' };
+  if (/interlude|solo|սոլո|պրոիգ|проигр|инструм/i.test(lower)) return { label: clean, short: 'Ս', color: '#ec4899' };
+  if (/verse|տուն|куплет|^\d/i.test(lower)) {
+    const num = clean.match(/\d+/)?.[0] || '';
+    return { label: clean, short: `Տ${num}`, color: '#3b82f6' };
+  }
+  return { label: clean, short: clean.slice(0, 3).toUpperCase(), color: '#f7b500' };
+}
+
+function parseArrangementSections(rawText) {
+  if (!rawText) return [];
+  const lines = String(rawText).split(/\r?\n/);
+  const sections = [];
+  const sectionPattern = /^\s*(?:\[([^\]]+)\]|((?:Տուն|Կրկներգ|Կամուրջ|Նախերգ|Նախակրկներգ|Ավարտ|Սոլո|Verse|Chorus|Pre-?Chorus|Bridge|Intro|Outro|Interlude|Куплет|Припев|Предприпев|Бридж|Вступление|Конец|Проигрыш)(?:\s*\d+)?)\s*:?)\s*$/i;
+  lines.forEach((line, lineIdx) => {
+    const m = line.match(sectionPattern);
+    if (m) {
+      const lbl = (m[1] || m[2] || '').trim();
+      if (lbl && !/^[A-G][#b]?(?:m|maj|min|dim|aug|sus|add)?\d*(?:\/[A-G][#b]?)?$/i.test(lbl)) {
+        sections.push({ ...getSectionRibbonMeta(lbl), lineIdx, ratio: lineIdx / Math.max(1, lines.length) });
+      }
+    }
+  });
+  return sections;
+}
+
 function resolveMediaUrl(url) {
   if (!url) return '';
   const trimmed = String(url).trim();
@@ -1708,6 +1741,37 @@ export default function SongView() {
           )}
         </div>
       )}
+
+      {/* Color-Coded Song Arrangement Ribbon (MyEkklesia-inspired) */}
+      {(() => {
+        const arrSections = parseArrangementSections(song?.chords || song?.lyrics || '');
+        if (arrSections.length < 2) return null;
+        return (
+          <div className="sv-arrangement-ribbon" aria-label="Երգի կառուցվածք">
+            {arrSections.map((sec, idx) => (
+              <button
+                key={`${sec.label}_${idx}`}
+                type="button"
+                className="sv-arr-pill"
+                style={{ '--arr-color': sec.color }}
+                title={sec.label}
+                onClick={() => {
+                  const sheetEl = document.querySelector('.sv-sheet');
+                  if (sheetEl) {
+                    const rect = sheetEl.getBoundingClientRect();
+                    const absTop = rect.top + window.scrollY;
+                    const targetY = absTop + Math.max(0, sheetEl.scrollHeight * sec.ratio - 90);
+                    window.scrollTo({ top: targetY, behavior: 'smooth' });
+                  }
+                }}
+              >
+                <span className="sv-arr-badge">{sec.short}</span>
+                <span className="sv-arr-name">{sec.label}</span>
+              </button>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Sheet Music / Lyrics Content */}
       <div

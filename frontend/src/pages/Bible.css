@@ -391,11 +391,47 @@ body.light-mode .bible-fallback-btns button {
 }
 
 .bible-book-list {
-  max-height: 280px;
+  max-height: 310px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+
+.bible-genre-group {
+  display: flex;
+  flex-direction: column;
   gap: 2px;
+  padding-left: 9px;
+  border-left: 2.5px solid var(--genre-color, #f7b500);
+}
+
+.bible-genre-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--genre-color, #f7b500);
+  padding: 2px 4px 4px;
+}
+
+.bible-genre-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--genre-color, #f7b500);
+}
+
+.bible-chapter-genre {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
 }
 
 .bible-book-item {

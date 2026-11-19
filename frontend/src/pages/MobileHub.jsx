@@ -85,6 +85,9 @@ export default function MobileHub() {
   const [userSetlists, setUserSetlists] = useState([]);
   const [churchCalendarItems, setChurchCalendarItems] = useState([]);
   const [selectedDayStr, setSelectedDayStr] = useState(getTodayStr);
+  const [weekTab, setWeekTab] = useState('upcoming'); // 'upcoming' | 'news'
+  const [activeTopicIdx, setActiveTopicIdx] = useState(0);
+  const [rsvpState, setRsvpState] = useState({});
   const [favorites, setFavorites] = useState([]);
   const [newsItems, setNewsItems] = useState(() => getCachedNewsList(language));
   const [logoSrc, setLogoSrc] = useState('/icon-192-v7.png');
@@ -378,6 +381,23 @@ export default function MobileHub() {
   const selectedDayInfo = weekDays.find((d) => d.dateStr === selectedDayStr) || weekDays.find((d) => d.isToday);
   const dailyVerse = todayDevotional.verse;
   const dailyQuote = todayDevotional.quote;
+  const activeTopic = TOPIC_COLLECTIONS[activeTopicIdx] || TOPIC_COLLECTIONS[0];
+
+  const handleQuickEventRsvp = async (ev) => {
+    const key = `${ev.kind || 'event'}_${ev.id}`;
+    const already = rsvpState[key] === 'going' || ev.my_rsvp === 'going';
+    const nextStatus = already ? 'cant' : 'going';
+    setRsvpState((prev) => ({ ...prev, [key]: nextStatus }));
+    if (!user) return;
+    try {
+      await fetch('/church_api.php?action=set_rsvp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ target_type: ev.kind || 'event', target_id: ev.id, status: nextStatus }),
+      });
+    } catch {}
+  };
 
   return (
     <div className="mobile-hub animate-fade-in">
@@ -526,35 +546,88 @@ export default function MobileHub() {
               </button>
             ))}
           </div>
-          {selectedDayInfo?.setlists?.length > 0 ? (
+          <div className="hub-week-segmented" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={weekTab === 'upcoming'}
+              className={weekTab === 'upcoming' ? 'active' : ''}
+              onClick={() => setWeekTab('upcoming')}
+            >
+              {language === 'ru' ? 'Предстоит' : language === 'en' ? 'Upcoming' : 'Առաջիկա'}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={weekTab === 'news'}
+              className={weekTab === 'news' ? 'active' : ''}
+              onClick={() => setWeekTab('news')}
+            >
+              {language === 'ru' ? 'Новости' : language === 'en' ? 'Updates' : 'Նորություններ'}
+            </button>
+          </div>
+
+          {weekTab === 'news' ? (
+            <div className="hub-week-news-list">
+              {newsItems.slice(0, 2).map((item, idx) => (
+                <button
+                  key={item.slug || idx}
+                  type="button"
+                  className="hub-week-event-row"
+                  onClick={() => guardPath(`/news/${item.slug}`, () => navigate(`/news/${item.slug}`))}
+                >
+                  <div className="hub-week-event-info">
+                    <strong>{item.title}</strong>
+                    <small>{formatNewsDate(item.published_at || item.date, language)}</small>
+                  </div>
+                  <span className="hub-week-open-arrow">›</span>
+                </button>
+              ))}
+            </div>
+          ) : selectedDayInfo?.setlists?.length > 0 ? (
             <div className="hub-week-detail">
-              <span>🎵 {selectedDayInfo.setlists[0].name}</span>
+              <div className="hub-week-event-info">
+                <strong>🎵 {selectedDayInfo.setlists[0].name}</strong>
+                <small>{language === 'ru' ? 'Список песен на служение' : language === 'en' ? 'Worship Setlist' : 'Ծառայության երգացանկ'}</small>
+              </div>
               <button
                 type="button"
+                className="hub-week-rsvp-btn"
                 onClick={() =>
                   guardPath(`/setlists/${selectedDayInfo.setlists[0].id}`, () =>
                     navigate(`/setlists/${selectedDayInfo.setlists[0].id}`),
                   )
                 }
               >
-                {language === 'ru' ? 'Открыть →' : language === 'en' ? 'Open →' : 'Բացել →'}
+                {language === 'ru' ? 'Открыть' : language === 'en' ? 'Open' : 'Բացել'}
               </button>
             </div>
           ) : selectedDayInfo?.events?.length > 0 ? (
-            <div className="hub-week-detail">
-              <span>
-                {selectedDayInfo.events[0].kind === 'rehearsal' ? '🎸 ' : '⛪ '}
-                {selectedDayInfo.events[0].title}
-                {selectedDayInfo.events[0].time ? ` · ${selectedDayInfo.events[0].time}` : ''}
-              </span>
-              <button
-                type="button"
-                onClick={() =>
-                  guardPath('/church?tab=calendar', () => navigate('/church?tab=calendar'))
-                }
-              >
-                {language === 'ru' ? 'Календарь →' : language === 'en' ? 'Calendar →' : 'Օրացույց →'}
-              </button>
+            <div className="hub-week-events-stack">
+              {selectedDayInfo.events.slice(0, 2).map((ev) => {
+                const rKey = `${ev.kind || 'event'}_${ev.id}`;
+                const isGoing = rsvpState[rKey] ? rsvpState[rKey] === 'going' : ev.my_rsvp === 'going';
+                return (
+                  <div key={rKey} className="hub-week-detail">
+                    <div className="hub-week-event-info">
+                      <strong>{ev.title}</strong>
+                      <small>
+                        {ev.location ? `${ev.location} · ` : ''}
+                        <span className="hub-week-live-time">{ev.time || '19:00'}</span>
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      className={`hub-week-rsvp-btn ${isGoing ? 'is-going' : ''}`}
+                      onClick={() => handleQuickEventRsvp(ev)}
+                    >
+                      {isGoing
+                        ? (language === 'ru' ? 'Иду ✓' : language === 'en' ? 'Going ✓' : 'Կգամ ✓')
+                        : (language === 'ru' ? 'Приду' : language === 'en' ? 'RSVP' : 'Կգամ')}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="hub-week-detail is-empty">
@@ -846,26 +919,74 @@ export default function MobileHub() {
           </div>
         </div>
 
-        {/* Thematic Topics & Quote of the Day (myekklesia-inspired) */}
+        {/* Word of Encouragement Interactive Story Switcher & Quote of the Day (MyEkklesia-inspired) */}
         <div className="section-block">
           <div className="section-title">
-            <h3>{language === 'ru' ? 'Темы дня' : language === 'en' ? 'Daily Topics' : 'Օրվա թեմաներ'}</h3>
+            <h3>{language === 'ru' ? 'Слово ободрения' : language === 'en' ? 'Word of Encouragement' : 'Քաջալերանքի խոսք'}</h3>
           </div>
-          <div className="hub-topics-scroll">
-            {TOPIC_COLLECTIONS.map((topic) => (
-              <button
-                key={topic.id}
-                type="button"
-                className="hub-topic-card"
-                onClick={() => guardPath('/bible', () => navigate(`/bible?book=${topic.book}&chapter=${topic.chapter}`))}
-              >
-                <span className="hub-topic-dot" style={{ background: topic.accent }} />
-                <strong>{topic.title[language] || topic.title.am}</strong>
-                <p>{topic.snippet[language] || topic.snippet.am}</p>
-                <small>{topic.verse}</small>
-              </button>
-            ))}
-          </div>
+
+          <section className="hub-encourage-card" style={{ '--topic-accent': activeTopic?.accent || '#f7b500' }}>
+            <div className="hub-encourage-bars" aria-hidden="true">
+              {TOPIC_COLLECTIONS.map((tp, idx) => (
+                <button
+                  key={tp.id}
+                  type="button"
+                  className={`hub-encourage-bar ${idx === activeTopicIdx ? 'active' : ''}`}
+                  onClick={() => setActiveTopicIdx(idx)}
+                  aria-label={tp.title[language] || tp.title.am}
+                />
+              ))}
+            </div>
+
+            <div className="hub-encourage-pills">
+              {TOPIC_COLLECTIONS.map((topic, idx) => (
+                <button
+                  key={topic.id}
+                  type="button"
+                  className={`hub-encourage-pill ${idx === activeTopicIdx ? 'active' : ''}`}
+                  style={{ '--pill-color': topic.accent }}
+                  onClick={() => setActiveTopicIdx(idx)}
+                >
+                  <span className="hub-encourage-dot" />
+                  <span>{topic.title[language] || topic.title.am}</span>
+                </button>
+              ))}
+            </div>
+
+            {activeTopic && (
+              <div className="hub-encourage-body">
+                <p className="hub-encourage-quote">«{activeTopic.snippet[language] || activeTopic.snippet.am}»</p>
+                <div className="hub-encourage-foot">
+                  <strong>{activeTopic.verse}</strong>
+                  <div className="hub-encourage-nav">
+                    <button
+                      type="button"
+                      className="hub-encourage-step"
+                      onClick={() => setActiveTopicIdx((i) => (i - 1 + TOPIC_COLLECTIONS.length) % TOPIC_COLLECTIONS.length)}
+                      aria-label="Prev"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      className="hub-encourage-step"
+                      onClick={() => setActiveTopicIdx((i) => (i + 1) % TOPIC_COLLECTIONS.length)}
+                      aria-label="Next"
+                    >
+                      ›
+                    </button>
+                    <button
+                      type="button"
+                      className="hub-encourage-read-btn"
+                      onClick={() => guardPath('/bible', () => navigate(`/bible?book=${activeTopic.book}&chapter=${activeTopic.chapter}`))}
+                    >
+                      {language === 'ru' ? 'Открыть →' : language === 'en' ? 'Read →' : 'Կարդալ →'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
 
           <div className="hub-quote-card">
             <span className="hub-quote-label">
