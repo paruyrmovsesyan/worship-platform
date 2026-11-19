@@ -1051,6 +1051,17 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
         return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
     }
 
+    // 9.5. PHP 8.5 curl_close() deprecation warning (fixed: guarded with PHP_VERSION_ID < 80000)
+    if (stripos($message, 'curl_close()') !== false && stripos($message, 'deprecated') !== false) {
+        $reason = 'PHP 8.5-ում հնացած curl_close() կանչերը պաշտպանված են PHP_VERSION_ID < 80000 պայմանով';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
     // 10. Check if previously marked in resolutions file
     if (!empty($knownRes['is_resolved'])) {
         $item['is_resolved'] = 1;

@@ -122,7 +122,10 @@ function wp_bible_fetch_remote(string $url): ?array {
         ]);
         $body = curl_exec($ch);
         $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        if (PHP_VERSION_ID < 80000) {
+            curl_close($ch);
+        }
+        unset($ch);
         if ($status >= 200 && $status < 300 && is_string($body) && $body !== '') {
             $decoded = json_decode($body, true);
             if (is_array($decoded)) {

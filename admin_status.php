@@ -483,7 +483,10 @@ foreach ($apiEndpoints as $ep) {
         $response = curl_exec($ch);
         $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $apiMs    = round((microtime(true) - $t0) * 1000, 1);
-        curl_close($ch);
+        if (PHP_VERSION_ID < 80000) {
+            curl_close($ch);
+        }
+        unset($ch);
 
         $ok = $httpCode >= 200 && $httpCode < 500;
     } catch (Throwable $e) {

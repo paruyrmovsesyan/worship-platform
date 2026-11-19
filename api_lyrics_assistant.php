@@ -125,7 +125,10 @@ function wp_lyrics_gemini_request(string $apiKey, string $model, array $contents
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlErr = curl_error($ch);
-    curl_close($ch);
+    if (PHP_VERSION_ID < 80000) {
+        curl_close($ch);
+    }
+    unset($ch);
 
     if ($curlErr) {
         throw new RuntimeException('Ցանցային սխալ (Gemini cURL): ' . $curlErr);
@@ -175,7 +178,10 @@ function wp_lyrics_openai_request(string $apiKey, string $model, array $messages
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlErr = curl_error($ch);
-    curl_close($ch);
+    if (PHP_VERSION_ID < 80000) {
+        curl_close($ch);
+    }
+    unset($ch);
 
     if ($curlErr) {
         throw new RuntimeException('Ցանցային սխալ (OpenAI cURL): ' . $curlErr);

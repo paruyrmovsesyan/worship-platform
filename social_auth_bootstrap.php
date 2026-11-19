@@ -217,7 +217,10 @@ function wp_social_auth_http_request(string $method, string $url, array $headers
         $responseBody = curl_exec($ch);
         $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         $error = curl_error($ch);
-        curl_close($ch);
+        if (PHP_VERSION_ID < 80000) {
+            curl_close($ch);
+        }
+        unset($ch);
 
         return [
             'status' => $status,
