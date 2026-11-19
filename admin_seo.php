@@ -41,7 +41,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ]);
     $message = $saved ? 'SEO կարգավորումները պահպանվեցին։' : 'Չհաջողվեց պահպանել SEO կարգավորումները։';
     $messageType = $saved ? 'success' : 'error';
-    $config = wp_version_load();
+    header('Location: /admin_seo.php?' . http_build_query(['msg' => $message, 'type' => $messageType]), true, 303);
+    exit;
+}
+
+if (isset($_GET['msg'])) {
+    $message = trim((string)$_GET['msg']);
+    $messageType = (($_GET['type'] ?? 'success') === 'error') ? 'error' : 'success';
 }
 
 $activePage = 'seo';

@@ -229,6 +229,23 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $flashMessage = 'Սխալ պահպանման ընթացքում։ Ստուգեք գրման իրավունքները։';
         }
     }
+
+    $redirectParams = [];
+    if ($activeTab !== 'banner') {
+        $redirectParams['tab'] = $activeTab;
+    }
+    if ($flashMessage !== '') {
+        $redirectParams['msg'] = $flashMessage;
+        $redirectParams['type'] = $flashTone;
+    }
+    $redirectUrl = '/admin_announcements.php' . (!empty($redirectParams) ? '?' . http_build_query($redirectParams) : '');
+    header('Location: ' . $redirectUrl, true, 303);
+    exit;
+}
+
+if (isset($_GET['msg'])) {
+    $flashMessage = trim((string)$_GET['msg']);
+    $flashTone = (($_GET['type'] ?? 'success') === 'error') ? 'error' : 'success';
 }
 
 $mobileConfig = wp_mobile_get_config();

@@ -249,6 +249,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $flashMessage = $isRes ? 'Սխալը նշվեց որպես լուծված:' : 'Սխալը վերաբացվեց:';
         }
     }
+
+    $redirectQuery = $_GET;
+    unset($redirectQuery['msg'], $redirectQuery['type']);
+    if ($flashMessage !== '') {
+        $redirectQuery['msg'] = $flashMessage;
+        $redirectQuery['type'] = $flashType;
+    }
+    $redirectUrl = '/admin_mobile.php' . (!empty($redirectQuery) ? '?' . http_build_query($redirectQuery) : '');
+    header('Location: ' . $redirectUrl, true, 303);
+    exit;
+}
+
+if (isset($_GET['msg'])) {
+    $flashMessage = trim((string)$_GET['msg']);
+    $flashType = (($_GET['type'] ?? 'success') === 'error') ? 'error' : 'success';
 }
 
 // ── LOAD DATA ──

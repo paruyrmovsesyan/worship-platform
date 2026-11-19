@@ -27,4 +27,5 @@ function wp_admin_render_pwa_head(string $title, array $options = []): void
     echo '<link rel="apple-touch-icon" href="' . htmlspecialchars($icon, ENT_QUOTES) . '" type="image/png">' . "\n";
     echo '<link rel="icon" href="' . htmlspecialchars($icon, ENT_QUOTES) . '" type="image/png">' . "\n";
     echo '<script src="/pwa-init.js" defer></script>' . "\n";
+    echo '<script>(function(){try{if(!window.history||!window.history.replaceState)return;var u=new URL(window.location.href);var keys=["msg","type","cleaned","error"];var changed=false;for(var i=0;i<keys.length;i++){if(u.searchParams.has(keys[i])){u.searchParams.delete(keys[i]);changed=true;}}window.history.replaceState(null,"",changed?(u.pathname+(u.search||"")+(u.hash||"")):window.location.href);}catch(_){}})();</script>' . "\n";
 }
