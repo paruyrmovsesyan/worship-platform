@@ -131,7 +131,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         }
     } else {
         // Save announcement + restrictions + maintenance settings together
-        $forceNewAndActivate = ($formAction === 'save_new_and_activate');
         $rawRestrictedPages = isset($_POST['restricted_pages']) && is_array($_POST['restricted_pages'])
             ? array_map('strval', $_POST['restricted_pages'])
             : [];
@@ -139,24 +138,34 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             ? array_map('strval', $_POST['restricted_features'])
             : [];
 
-        $mobileConfig['announcement']['enabled']               = $forceNewAndActivate ? true : !empty($_POST['announcement_enabled']);
-        $mobileConfig['announcement']['target']                = in_array($_POST['announcement_target'] ?? '', $allowedTargets, true) ? $_POST['announcement_target'] : 'all';
-        $mobileConfig['announcement']['type']                  = in_array($_POST['announcement_type'] ?? '', ['info', 'warning', 'success', 'critical'], true) ? $_POST['announcement_type'] : 'info';
-        $mobileConfig['announcement']['title']                 = trim((string)($_POST['announcement_title'] ?? ''));
-        $mobileConfig['announcement']['message']               = trim((string)($_POST['announcement_message'] ?? ''));
-        $mobileConfig['announcement']['title_ru']              = trim((string)($_POST['announcement_title_ru'] ?? ''));
-        $mobileConfig['announcement']['message_ru']            = trim((string)($_POST['announcement_message_ru'] ?? ''));
-        $mobileConfig['announcement']['title_en']              = trim((string)($_POST['announcement_title_en'] ?? ''));
-        $mobileConfig['announcement']['message_en']            = trim((string)($_POST['announcement_message_en'] ?? ''));
-        $mobileConfig['announcement']['action_text']           = trim((string)($_POST['announcement_action_text'] ?? ''));
-        $mobileConfig['announcement']['action_url']            = trim((string)($_POST['announcement_action_url'] ?? ''));
-        $mobileConfig['announcement']['dismissible']           = !empty($_POST['announcement_dismissible']);
-        $mobileConfig['announcement']['show_countdown']        = !empty($_POST['announcement_show_countdown']);
-        $mobileConfig['announcement']['sync_with_maintenance'] = !empty($_POST['announcement_sync_with_maintenance']);
-        $mobileConfig['announcement']['schedule_start_at']     = wp_version_normalize_datetime($_POST['announcement_schedule_start_at'] ?? '');
-        $mobileConfig['announcement']['schedule_end_at']       = wp_version_normalize_datetime($_POST['announcement_schedule_end_at'] ?? '');
-        $mobileConfig['announcement']['restricted_pages']      = array_values(array_intersect($allowedPages, $rawRestrictedPages));
-        $mobileConfig['announcement']['restricted_features']   = array_values(array_intersect($allowedFeatures, $rawRestrictedFeatures));
+        $submittedTitle   = trim((string)($_POST['announcement_title'] ?? ''));
+        $submittedMessage = trim((string)($_POST['announcement_message'] ?? ''));
+        $submittedPages   = array_values(array_intersect($allowedPages, $rawRestrictedPages));
+        $submittedFeats   = array_values(array_intersect($allowedFeatures, $rawRestrictedFeatures));
+        $hasNewAnnouncementInput = ($submittedTitle !== '' || $submittedMessage !== '' || !empty($submittedPages) || !empty($submittedFeats));
+
+        if ($hasNewAnnouncementInput) {
+            $mobileConfig['announcement']['enabled']               = !empty($_POST['announcement_enabled']);
+            $mobileConfig['announcement']['target']                = in_array($_POST['announcement_target'] ?? '', $allowedTargets, true) ? $_POST['announcement_target'] : 'all';
+            $mobileConfig['announcement']['type']                  = in_array($_POST['announcement_type'] ?? '', ['info', 'warning', 'success', 'critical'], true) ? $_POST['announcement_type'] : 'info';
+            $mobileConfig['announcement']['title']                 = $submittedTitle;
+            $mobileConfig['announcement']['message']               = $submittedMessage;
+            $mobileConfig['announcement']['title_ru']              = trim((string)($_POST['announcement_title_ru'] ?? ''));
+            $mobileConfig['announcement']['message_ru']            = trim((string)($_POST['announcement_message_ru'] ?? ''));
+            $mobileConfig['announcement']['title_en']              = trim((string)($_POST['announcement_title_en'] ?? ''));
+            $mobileConfig['announcement']['message_en']            = trim((string)($_POST['announcement_message_en'] ?? ''));
+            $mobileConfig['announcement']['action_text']           = trim((string)($_POST['announcement_action_text'] ?? ''));
+            $mobileConfig['announcement']['action_url']            = trim((string)($_POST['announcement_action_url'] ?? ''));
+            $mobileConfig['announcement']['dismissible']           = !empty($_POST['announcement_dismissible']);
+            $mobileConfig['announcement']['show_countdown']        = !empty($_POST['announcement_show_countdown']);
+            $mobileConfig['announcement']['sync_with_maintenance'] = !empty($_POST['announcement_sync_with_maintenance']);
+            $mobileConfig['announcement']['schedule_start_at']     = wp_version_normalize_datetime($_POST['announcement_schedule_start_at'] ?? '');
+            $mobileConfig['announcement']['schedule_end_at']       = wp_version_normalize_datetime($_POST['announcement_schedule_end_at'] ?? '');
+            $mobileConfig['announcement']['restricted_pages']      = $submittedPages;
+            $mobileConfig['announcement']['restricted_features']   = $submittedFeats;
+        } else {
+            $mobileConfig['announcement']['sync_with_maintenance'] = !empty($_POST['announcement_sync_with_maintenance']);
+        }
 
         // Unified Maintenance settings (Web/PWA + Native iOS/Android)
         $versionConfig['maintenance_enabled']     = !empty($_POST['web_maintenance_enabled']);
@@ -176,12 +185,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         $mobileConfig['android']['maintenance_title']   = trim((string)($_POST['android_maintenance_title'] ?? ($mobileConfig['android']['maintenance_title'] ?? '')));
         $mobileConfig['android']['maintenance_message'] = trim((string)($_POST['android_maintenance_message'] ?? ($mobileConfig['android']['maintenance_message'] ?? '')));
 
-        $okMob = wp_mobile_save_config($mobileConfig, $adminDisplayName, $forceNewAndActivate);
+        $okMob = wp_mobile_save_config($mobileConfig, $adminDisplayName, false);
         $okWeb = wp_version_save($versionConfig, ['action' => 'save_announcements_command_center', 'actor' => $adminDisplayName]);
         if ($okMob && $okWeb) {
-            $flashMessage = $forceNewAndActivate
-                ? '🚀 Նոր հայտարարությունը ստեղծվեց, պահպանվեց պատմության մեջ և անմիջապես ակտիվացվեց։'
-                : 'Բոլոր հայտարարությունները, սահմանափակումները և տեխնիկական դադարի կարգավորումները պահպանվեցին (պատմությունը թարմացվեց)։';
+            $flashMessage = $hasNewAnnouncementInput
+                ? '✅ Հայտարարությունը պահպանվեց պատմության մեջ, իսկ մուտքագրման դաշտերը մաքրվեցին։'
+                : '✅ Կարգավորումները հաջողությամբ պահպանվեցին։';
         } else {
             $flashTone = 'error';
             $flashMessage = 'Սխալ պահպանման ընթացքում։ Ստուգեք գրման իրավունքները։';
@@ -201,8 +210,30 @@ $androidStatus = (string)($mobileConfig['android']['status'] ?? 'live');
 
 $restrictablePages = wp_mobile_restrictable_pages();
 $restrictableFeatures = wp_mobile_restrictable_features();
-$selectedPages = (array)($ann['restricted_pages'] ?? []);
-$selectedFeatures = (array)($ann['restricted_features'] ?? []);
+$activeRestrictedPages = $isAnnNowActive ? (array)($ann['restricted_pages'] ?? []) : [];
+$activeRestrictedFeatures = $isAnnNowActive ? (array)($ann['restricted_features'] ?? []) : [];
+
+// Form fields always start clean after saving so lines are cleared for new announcements
+$formAnn = [
+    'enabled' => true,
+    'dismissible' => true,
+    'show_countdown' => false,
+    'sync_with_maintenance' => !empty($ann['sync_with_maintenance']),
+    'target' => 'all',
+    'type' => 'info',
+    'title' => '',
+    'message' => '',
+    'title_ru' => '',
+    'message_ru' => '',
+    'title_en' => '',
+    'message_en' => '',
+    'action_text' => '',
+    'action_url' => '',
+    'schedule_start_at' => '',
+    'schedule_end_at' => '',
+];
+$selectedPages = [];
+$selectedFeatures = [];
 
 $pageGroups = [
     'Հիմնական բաժիններ' => ['/songs', '/song', '/setlists', '/bible', '/church', '/media', '/news'],
@@ -240,7 +271,6 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
           <div class="ac-card-title">📜 Հայտարարությունների Պատմություն (<?= count($annHistory) ?>)</div>
           <div style="font-size:0.8rem; color:var(--muted); margin-top:4px;">Բոլոր պահպանված հայտարարությունները․ կարող եք ցանկացած հին հայտարարության հիման վրա ստեղծել նորը (բեռնել ձևի մեջ, խմբագրել) կամ մեկ սեղմումով նորից ակտիվացնել։</div>
         </div>
-        <button type="button" class="ac-btn ac-btn--ghost ac-btn--sm" onclick="wpResetAnnouncementForm()">➕ Ստեղծել նոր դատարկ հայտարարություն</button>
       </div>
 
       <?php if (empty($annHistory)): ?>
@@ -253,6 +283,7 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
             $hId = (string)($hItem['id'] ?? '');
             $hHash = (string)($hItem['content_hash'] ?? wp_mobile_announcement_content_hash($hItem));
             $isCurrentMatch = ($hHash === $currentAnnHash) && (trim((string)($ann['title'] ?? '')) !== '' || trim((string)($ann['message'] ?? '')) !== '');
+            $isItemExpired = wp_mobile_is_announcement_expired($hItem);
             $hType = (string)($hItem['type'] ?? 'info');
             $hTypeMeta = $typeLabels[$hType] ?? $typeLabels['info'];
             $hTarget = (string)($hItem['target'] ?? 'all');
@@ -267,10 +298,12 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
                 <div class="ac-history-meta">
                   <?php if ($isCurrentMatch && $isAnnNowActive): ?>
                     <span class="ac-badge ac-badge--on">● Այժմ Ակտիվ է</span>
+                  <?php elseif ($isItemExpired): ?>
+                    <span class="ac-badge ac-badge--off">⏹️ Ժամկետը լրացած (Ապաակտիվացված)</span>
                   <?php elseif ($isCurrentMatch && !empty($ann['enabled'])): ?>
-                    <span class="ac-badge ac-badge--warn">⏳ Ընթացիկ պլանավորված</span>
-                  <?php elseif ($isCurrentMatch): ?>
-                    <span class="ac-badge ac-badge--off">○ Ընթացիկ ձևում (Անջատված)</span>
+                    <span class="ac-badge ac-badge--warn">⏳ Պլանավորված</span>
+                  <?php else: ?>
+                    <span class="ac-badge ac-badge--off">○ Ապաակտիվացված</span>
                   <?php endif; ?>
                   <span class="ac-badge <?= htmlspecialchars($hTypeMeta['cls']) ?>"><?= htmlspecialchars($hTypeMeta['label']) ?></span>
                   <span class="ac-badge ac-badge--off"><?= htmlspecialchars($hTargetLabel) ?></span>
@@ -311,7 +344,11 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
 
               <div class="ac-history-actions">
                 <button type="button" class="ac-btn ac-btn--ghost ac-btn--sm" onclick="wpCloneFromHistory('<?= htmlspecialchars($hId, ENT_QUOTES) ?>')">📝 Նորը՝ սրա հիման վրա</button>
-                <button type="button" class="ac-btn ac-btn--success ac-btn--sm" onclick="wpActivateHistoryItem('<?= htmlspecialchars($hId, ENT_QUOTES) ?>')">🚀 Ակտիվացնել հիմա</button>
+                <?php if ($isCurrentMatch && $isAnnNowActive): ?>
+                  <button type="button" class="ac-btn ac-btn--danger ac-btn--sm" onclick="wpSubmitMasterAction('deactivate_current', 'Ապաակտիվացնե՞լ այս հայտարարությունը։')">⏹️ Ապաակտիվացնել</button>
+                <?php else: ?>
+                  <button type="button" class="ac-btn ac-btn--success ac-btn--sm" onclick="wpActivateHistoryItem('<?= htmlspecialchars($hId, ENT_QUOTES) ?>')">🚀 Ակտիվացնել հիմա</button>
+                <?php endif; ?>
                 <button type="button" class="ac-btn ac-btn--danger ac-btn--sm" onclick="wpDeleteHistoryItem('<?= htmlspecialchars($hId, ENT_QUOTES) ?>')" title="Ջնջել պատմությունից">🗑️</button>
               </div>
             </div>
@@ -419,12 +456,10 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
           <p class="ac-sub">Ամբողջական կառավարման կենտրոն՝ Կայքի, PWA-ի, iOS-ի և Android-ի համար․ հայտարարությունների պլանավորում, պատմության պահպանում, հնի հիման վրա նորի ստեղծում, ըստ էջերի ու ֆունկցիաների սահմանափակում և տեխնիկական դադարի միասնական կառավարում։</p>
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button type="button" class="ac-btn ac-btn--ghost" onclick="wpResetAnnouncementForm();">➕ Նոր հայտարարություն</button>
-          <?php if (!empty($ann['enabled'])): ?>
-            <button type="button" class="ac-btn ac-btn--danger" onclick="wpSubmitMasterAction('deactivate_current', 'Անջատե՞լ ընթացիկ հայտարարությունը (այն կմնա պատմության մեջ)։');">⏹️ Անջատել ընթացիկը</button>
+          <?php if ($isAnnNowActive || !empty($ann['enabled'])): ?>
+            <button type="button" class="ac-btn ac-btn--danger" onclick="wpSubmitMasterAction('deactivate_current', 'Ապաակտիվացնե՞լ ընթացիկ հայտարարությունը (այն կմնա պատմության մեջ)։');">⏹️ Ապաակտիվացնել ընթացիկը</button>
           <?php endif; ?>
-          <button type="button" class="ac-btn ac-btn--success" onclick="document.getElementById('acFormAction').value='save_new_and_activate'; document.getElementById('acMainForm').submit();">🚀 Պահպանել որպես նոր և Ակտիվացնել</button>
-          <button type="button" class="ac-btn ac-btn--primary" onclick="document.getElementById('acFormAction').value='save_all'; document.getElementById('acMainForm').submit();">💾 Պահպանել ամենը</button>
+          <button type="button" class="ac-btn ac-btn--primary" onclick="document.getElementById('acFormAction').value='save_all'; document.getElementById('acMainForm').submit();">💾 Պահպանել</button>
         </div>
       </div>
 
@@ -444,7 +479,7 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
         </div>
         <div class="ac-stat">
           <div class="ac-stat-label">Ակտիվ Սահմանափակումներ</div>
-          <div class="ac-stat-val"><?= count($selectedPages) ?> էջ · <?= count($selectedFeatures) ?> ֆունկցիա</div>
+          <div class="ac-stat-val"><?= count($activeRestrictedPages) ?> էջ · <?= count($activeRestrictedFeatures) ?> ֆունկցիա</div>
         </div>
         <div class="ac-stat">
           <div class="ac-stat-label">Կայք և PWA Դադար</div>
@@ -489,16 +524,16 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
               <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
                 <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
                   <div class="ac-preview-dot" id="acPrevDot"></div>
-                  <div id="acPrevTitle" style="font-weight:800; font-size:0.9rem; color:#7ee8ff; line-height:1.25;"><?= htmlspecialchars($ann['title'] ?: 'Հայտարարության վերնագիր') ?></div>
+                  <div id="acPrevTitle" style="font-weight:800; font-size:0.9rem; color:#7ee8ff; line-height:1.25;"><?= htmlspecialchars($formAnn['title'] ?: 'Հայտարարության վերնագիր') ?></div>
                 </div>
                 <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-                  <span id="acPrevCountdown" style="display:<?= !empty($ann['show_countdown']) ? 'inline-flex' : 'none' ?>; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; background:rgba(0,212,255,0.16); border:1px solid rgba(0,212,255,0.38); color:#fff; font-size:0.74rem; font-weight:700; font-variant-numeric:tabular-nums;">⏳ 01:45:00</span>
-                  <span id="acPrevClose" style="display:<?= (!isset($ann['dismissible']) || !empty($ann['dismissible'])) ? 'inline-flex' : 'none' ?>; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); color:rgba(255,255,255,0.85); font-size:0.76rem;">✕</span>
+                  <span id="acPrevCountdown" style="display:<?= !empty($formAnn['show_countdown']) ? 'inline-flex' : 'none' ?>; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; background:rgba(0,212,255,0.16); border:1px solid rgba(0,212,255,0.38); color:#fff; font-size:0.74rem; font-weight:700; font-variant-numeric:tabular-nums;">⏳ 01:45:00</span>
+                  <span id="acPrevClose" style="display:<?= (!isset($formAnn['dismissible']) || !empty($formAnn['dismissible'])) ? 'inline-flex' : 'none' ?>; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); color:rgba(255,255,255,0.85); font-size:0.76rem;">✕</span>
                 </div>
               </div>
-              <div id="acPrevMsg" style="font-size:0.84rem; color:rgba(235,240,248,0.92); line-height:1.48; white-space:pre-line;"><?= htmlspecialchars($ann['message'] ?: 'Այստեղ կցուցադրվի հայտարարության տեքստը օգտատերերի համար։') ?></div>
+              <div id="acPrevMsg" style="font-size:0.84rem; color:rgba(235,240,248,0.92); line-height:1.48; white-space:pre-line;"><?= htmlspecialchars($formAnn['message'] ?: 'Այստեղ կցուցադրվի հայտարարության տեքստը օգտատերերի համար։') ?></div>
               <div>
-                <span id="acPrevBtn" style="display:<?= !empty($ann['action_text']) ? 'inline-block' : 'none' ?>; padding:6px 13px; border-radius:999px; background:rgba(0,212,255,0.2); border:1px solid rgba(0,212,255,0.4); font-size:0.78rem; font-weight:700;"><?= htmlspecialchars($ann['action_text'] ?? '') ?> →</span>
+                <span id="acPrevBtn" style="display:<?= !empty($formAnn['action_text']) ? 'inline-block' : 'none' ?>; padding:6px 13px; border-radius:999px; background:rgba(0,212,255,0.2); border:1px solid rgba(0,212,255,0.4); font-size:0.78rem; font-weight:700;"><?= htmlspecialchars($formAnn['action_text'] ?? '') ?> →</span>
               </div>
             </div>
           </div>
@@ -506,19 +541,15 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
           <div class="ac-card" id="acEditorCard">
             <div class="ac-card-head">
               <div>
-                <div class="ac-card-title">📢 Հիմնական Կարգավորումներ և Պլանավորում</div>
+                <div class="ac-card-title">📢 Նոր Հայտարարության Ստեղծում և Պլանավորում</div>
                 <div id="acCloneNotice" style="display:none; margin-top:6px; font-size:0.82rem; font-weight:700; color:#05cd99;"></div>
-              </div>
-              <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button type="button" class="ac-btn ac-btn--ghost ac-btn--sm" onclick="wpResetAnnouncementForm()">➕ Մաքրել ձևը (Նոր հայտարարություն)</button>
-                <button type="button" class="ac-btn ac-btn--success ac-btn--sm" onclick="document.getElementById('acFormAction').value='save_new_and_activate'; document.getElementById('acMainForm').submit();">🚀 Պահպանել որպես նոր և Ակտիվացնել</button>
               </div>
             </div>
 
             <div class="ac-grid-3" style="margin-bottom:16px;">
               <div class="ac-toggle">
                 <label class="ac-switch">
-                  <input type="checkbox" name="announcement_enabled" value="1" <?= !empty($ann['enabled']) ? 'checked' : '' ?>>
+                  <input type="checkbox" name="announcement_enabled" value="1" <?= !empty($formAnn['enabled']) ? 'checked' : '' ?>>
                   <span class="ac-slider"></span>
                 </label>
                 <div>
@@ -529,7 +560,7 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
 
               <div class="ac-toggle">
                 <label class="ac-switch">
-                  <input type="checkbox" name="announcement_dismissible" value="1" <?= (!isset($ann['dismissible']) || !empty($ann['dismissible'])) ? 'checked' : '' ?>>
+                  <input type="checkbox" name="announcement_dismissible" value="1" <?= (!isset($formAnn['dismissible']) || !empty($formAnn['dismissible'])) ? 'checked' : '' ?>>
                   <span class="ac-slider"></span>
                 </label>
                 <div>
@@ -540,7 +571,7 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
 
               <div class="ac-toggle">
                 <label class="ac-switch">
-                  <input type="checkbox" name="announcement_show_countdown" value="1" <?= !empty($ann['show_countdown']) ? 'checked' : '' ?>>
+                  <input type="checkbox" name="announcement_show_countdown" value="1" <?= !empty($formAnn['show_countdown']) ? 'checked' : '' ?>>
                   <span class="ac-slider"></span>
                 </label>
                 <div>
@@ -554,22 +585,22 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
               <div class="ac-field">
                 <label class="ac-label">Թիրախային Հարթակ</label>
                 <select name="announcement_target" class="ac-select">
-                  <option value="all" <?= ($ann['target'] ?? '') === 'all' ? 'selected' : '' ?>>🌐 Ամբողջ համակարգը (Կայք, PWA, iOS և Android)</option>
-                  <option value="web_pwa" <?= ($ann['target'] ?? '') === 'web_pwa' ? 'selected' : '' ?>>🖥️ Կայք և PWA</option>
-                  <option value="web" <?= ($ann['target'] ?? '') === 'web' ? 'selected' : '' ?>>🌍 Միայն Կայք (Web)</option>
-                  <option value="pwa" <?= ($ann['target'] ?? '') === 'pwa' ? 'selected' : '' ?>>📲 Միայն PWA</option>
-                  <option value="native" <?= ($ann['target'] ?? '') === 'native' ? 'selected' : '' ?>>📱 Միայն iOS և Android Native</option>
-                  <option value="ios" <?= ($ann['target'] ?? '') === 'ios' ? 'selected' : '' ?>>🍏 Միայն iOS</option>
-                  <option value="android" <?= ($ann['target'] ?? '') === 'android' ? 'selected' : '' ?>>🤖 Միայն Android</option>
+                  <option value="all" <?= ($formAnn['target'] ?? '') === 'all' ? 'selected' : '' ?>>🌐 Ամբողջ համակարգը (Կայք, PWA, iOS և Android)</option>
+                  <option value="web_pwa" <?= ($formAnn['target'] ?? '') === 'web_pwa' ? 'selected' : '' ?>>🖥️ Կայք և PWA</option>
+                  <option value="web" <?= ($formAnn['target'] ?? '') === 'web' ? 'selected' : '' ?>>🌍 Միայն Կայք (Web)</option>
+                  <option value="pwa" <?= ($formAnn['target'] ?? '') === 'pwa' ? 'selected' : '' ?>>📲 Միայն PWA</option>
+                  <option value="native" <?= ($formAnn['target'] ?? '') === 'native' ? 'selected' : '' ?>>📱 Միայն iOS և Android Native</option>
+                  <option value="ios" <?= ($formAnn['target'] ?? '') === 'ios' ? 'selected' : '' ?>>🍏 Միայն iOS</option>
+                  <option value="android" <?= ($formAnn['target'] ?? '') === 'android' ? 'selected' : '' ?>>🤖 Միայն Android</option>
                 </select>
               </div>
               <div class="ac-field">
                 <label class="ac-label">Բանների Տեսակ / Գունային շեշտադրում</label>
                 <select id="acTypeSelect" name="announcement_type" class="ac-select" onchange="wpUpdatePreview()">
-                  <option value="info" <?= ($ann['type'] ?? '') === 'info' ? 'selected' : '' ?>>ℹ️ Տեղեկատվական (Երկնագույն)</option>
-                  <option value="warning" <?= ($ann['type'] ?? '') === 'warning' ? 'selected' : '' ?>>⚠️ Վերազինում / Զգուշացում (Ոսկեգույն)</option>
-                  <option value="success" <?= ($ann['type'] ?? '') === 'success' ? 'selected' : '' ?>>✅ Թարմացում / Ավարտ (Կանաչ)</option>
-                  <option value="critical" <?= ($ann['type'] ?? '') === 'critical' ? 'selected' : '' ?>>🚨 Հրատապ դադար (Կարմիր)</option>
+                  <option value="info" <?= ($formAnn['type'] ?? '') === 'info' ? 'selected' : '' ?>>ℹ️ Տեղեկատվական (Երկնագույն)</option>
+                  <option value="warning" <?= ($formAnn['type'] ?? '') === 'warning' ? 'selected' : '' ?>>⚠️ Վերազինում / Զգուշացում (Ոսկեգույն)</option>
+                  <option value="success" <?= ($formAnn['type'] ?? '') === 'success' ? 'selected' : '' ?>>✅ Թարմացում / Ավարտ (Կանաչ)</option>
+                  <option value="critical" <?= ($formAnn['type'] ?? '') === 'critical' ? 'selected' : '' ?>>🚨 Հրատապ դադար (Կարմիր)</option>
                 </select>
               </div>
             </div>
@@ -577,43 +608,43 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
             <div class="ac-grid-2" style="margin-bottom:14px;">
               <div class="ac-field">
                 <label class="ac-label">Պլանավորված մեկնարկ (ըստ Երևանի ժամի, կամընտիր)</label>
-                <input type="datetime-local" name="announcement_schedule_start_at" class="ac-input" value="<?= htmlspecialchars(wp_version_format_datetime_local($ann['schedule_start_at'] ?? '')) ?>">
+                <input type="datetime-local" name="announcement_schedule_start_at" class="ac-input" value="<?= htmlspecialchars(wp_version_format_datetime_local($formAnn['schedule_start_at'] ?? '')) ?>">
               </div>
               <div class="ac-field">
                 <label class="ac-label">Պլանավորված ավարտ (ըստ Երևանի ժամի, կամընտիր)</label>
-                <input type="datetime-local" name="announcement_schedule_end_at" class="ac-input" value="<?= htmlspecialchars(wp_version_format_datetime_local($ann['schedule_end_at'] ?? '')) ?>">
+                <input type="datetime-local" name="announcement_schedule_end_at" class="ac-input" value="<?= htmlspecialchars(wp_version_format_datetime_local($formAnn['schedule_end_at'] ?? '')) ?>">
               </div>
             </div>
 
             <div class="ac-grid-2" style="margin-bottom:14px;">
               <div class="ac-field">
                 <label class="ac-label">Հայերեն Վերնագիր (Հիմնական)</label>
-                <input type="text" id="acTitleInput" name="announcement_title" class="ac-input" value="<?= htmlspecialchars($ann['title'] ?? '') ?>" oninput="wpUpdatePreview()" placeholder="Օրինակ՝ Վերազինման աշխատանքներ">
+                <input type="text" id="acTitleInput" name="announcement_title" class="ac-input" value="<?= htmlspecialchars($formAnn['title'] ?? '') ?>" oninput="wpUpdatePreview()" placeholder="Օրինակ՝ Վերազինման աշխատանքներ">
               </div>
               <div class="ac-field">
                 <label class="ac-label">Գործողության Կոճակ և Հղում (Կամընտիր)</label>
                 <div style="display:flex; gap:8px;">
-                  <input type="text" id="acActionTextInput" name="announcement_action_text" class="ac-input" value="<?= htmlspecialchars($ann['action_text'] ?? '') ?>" oninput="wpUpdatePreview()" placeholder="Կոճակ (օր․ Մանրամասն)">
-                  <input type="text" name="announcement_action_url" class="ac-input" value="<?= htmlspecialchars($ann['action_url'] ?? '') ?>" placeholder="/news կամ https://...">
+                  <input type="text" id="acActionTextInput" name="announcement_action_text" class="ac-input" value="<?= htmlspecialchars($formAnn['action_text'] ?? '') ?>" oninput="wpUpdatePreview()" placeholder="Կոճակ (օր․ Մանրամասն)">
+                  <input type="text" name="announcement_action_url" class="ac-input" value="<?= htmlspecialchars($formAnn['action_url'] ?? '') ?>" placeholder="/news կամ https://...">
                 </div>
               </div>
             </div>
 
             <div class="ac-field" style="margin-bottom:16px;">
               <label class="ac-label">Հայերեն Հաղորդագրություն (Հիմնական)</label>
-              <textarea id="acMsgInput" name="announcement_message" class="ac-textarea" rows="3" oninput="wpUpdatePreview()" placeholder="Գրեք հայտարարության ամբողջական տեքստը..."><?= htmlspecialchars($ann['message'] ?? '') ?></textarea>
+              <textarea id="acMsgInput" name="announcement_message" class="ac-textarea" rows="3" oninput="wpUpdatePreview()" placeholder="Գրեք հայտարարության ամբողջական տեքստը..."><?= htmlspecialchars($formAnn['message'] ?? '') ?></textarea>
             </div>
 
             <div class="ac-grid-2">
               <div class="ac-field">
                 <label class="ac-label">🇷🇺 Русский (Կամընտիր վերնագիր և տեքստ)</label>
-                <input type="text" id="acTitleRu" name="announcement_title_ru" class="ac-input" style="margin-bottom:8px;" value="<?= htmlspecialchars($ann['title_ru'] ?? '') ?>" placeholder="Заголовок на русском">
-                <textarea id="acMsgRu" name="announcement_message_ru" class="ac-textarea" rows="2" placeholder="Текст объявления на русском..."><?= htmlspecialchars($ann['message_ru'] ?? '') ?></textarea>
+                <input type="text" id="acTitleRu" name="announcement_title_ru" class="ac-input" style="margin-bottom:8px;" value="<?= htmlspecialchars($formAnn['title_ru'] ?? '') ?>" placeholder="Заголовок на русском">
+                <textarea id="acMsgRu" name="announcement_message_ru" class="ac-textarea" rows="2" placeholder="Текст объявления на русском..."><?= htmlspecialchars($formAnn['message_ru'] ?? '') ?></textarea>
               </div>
               <div class="ac-field">
                 <label class="ac-label">🇺🇸 English (Optional Title & Message)</label>
-                <input type="text" id="acTitleEn" name="announcement_title_en" class="ac-input" style="margin-bottom:8px;" value="<?= htmlspecialchars($ann['title_en'] ?? '') ?>" placeholder="English title">
-                <textarea id="acMsgEn" name="announcement_message_en" class="ac-textarea" rows="2" placeholder="English announcement text..."><?= htmlspecialchars($ann['message_en'] ?? '') ?></textarea>
+                <input type="text" id="acTitleEn" name="announcement_title_en" class="ac-input" style="margin-bottom:8px;" value="<?= htmlspecialchars($formAnn['title_en'] ?? '') ?>" placeholder="English title">
+                <textarea id="acMsgEn" name="announcement_message_en" class="ac-textarea" rows="2" placeholder="English announcement text..."><?= htmlspecialchars($formAnn['message_en'] ?? '') ?></textarea>
               </div>
             </div>
           </div>
@@ -777,8 +808,7 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
         </section>
 
         <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; margin-top:16px;">
-          <button type="submit" class="ac-btn ac-btn--success" onclick="document.getElementById('acFormAction').value='save_new_and_activate';">🚀 Պահպանել որպես նոր և Ակտիվացնել</button>
-          <button type="submit" class="ac-btn ac-btn--primary" onclick="document.getElementById('acFormAction').value='save_all';">💾 Պահպանել բոլոր փոփոխությունները</button>
+          <button type="submit" class="ac-btn ac-btn--primary" onclick="document.getElementById('acFormAction').value='save_all';">💾 Պահպանել</button>
         </div>
       </form>
     </div>
@@ -901,7 +931,7 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
     var notice = document.getElementById('acCloneNotice');
     if (notice) {
       notice.style.display = 'block';
-      notice.textContent = '✨ Հին հայտարարության տվյալները բեռնվեցին ձևի մեջ։ Կարող եք փոփոխել և սեղմել «🚀 Պահպանել որպես նոր և Ակտիվացնել»։';
+      notice.textContent = '✨ Հին հայտարարության տվյալները բեռնվեցին ձևի մեջ։ Կարող եք փոփոխել և սեղմել «💾 Պահպանել»։';
     }
 
     var editorCard = document.getElementById('acEditorCard');
