@@ -259,13 +259,13 @@ export const PRO_STUDIO_MODULES = [
 ];
 
 export const DEFAULT_FLAG_FALLBACKS = {
-  pro_studio: 'soon',
-  live_stage_follower: 'soon',
-  rehearsal_stems: 'soon',
-  lyrics_projection: 'soon',
-  worship_ai_studio: 'soon',
-  service_planner: 'soon',
-  smart_metronome: 'soon',
+  pro_studio: 'published',
+  live_stage_follower: 'published',
+  rehearsal_stems: 'published',
+  lyrics_projection: 'published',
+  worship_ai_studio: 'published',
+  service_planner: 'published',
+  smart_metronome: 'published',
 };
 
 /**

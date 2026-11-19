@@ -20,7 +20,9 @@ export function isPwaOfflineRouteAllowed(pathname = '/') {
     path === '/studio' ||
     path === '/tools' ||
     path === '/bible' ||
-    path === '/church'
+    path === '/church' ||
+    path === '/media' ||
+    path === '/service-planner'
   ) {
     return true;
   }

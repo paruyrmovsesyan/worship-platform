@@ -182,8 +182,8 @@ $featureGroups = [
     .ac-btn--ghost { background:var(--bg); color:var(--text); border-color:var(--line); }
     .ac-btn--danger { background:rgba(238,93,80,0.16); color:#ee5d50; border-color:rgba(238,93,80,0.35); }
     .ac-btn--success { background:rgba(5,205,153,0.16); color:#05cd99; border-color:rgba(5,205,153,0.35); }
-    .ac-preview-box { background:linear-gradient(160deg, #121420 0%, #090a12 100%); border:1px solid rgba(0,212,255,0.42); color:#fff; border-radius:16px; padding:14px 16px; display:flex; align-items:center; gap:12px; box-shadow:0 14px 30px rgba(0,0,0,0.35); }
-    .ac-preview-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; background:#7ee8ff; box-shadow:0 0 10px #7ee8ff; }
+    .ac-preview-box { background:linear-gradient(165deg, rgba(22,24,36,0.96) 0%, rgba(13,14,22,0.99) 100%); border:1px solid rgba(0,212,255,0.42); color:#fff; border-radius:18px; padding:14px 16px; display:flex; flex-direction:column; gap:8px; box-shadow:inset 0 1px 0 rgba(255,255,255,0.14), 0 14px 30px rgba(0,0,0,0.35); }
+    .ac-preview-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; background:#7ee8ff; box-shadow:0 0 10px #7ee8ff; }
     .ac-panel { display:none; }
     .ac-panel.is-visible { display:block; }
     .ac-flash { padding:14px 18px; border-radius:12px; margin-bottom:18px; font-weight:700; background:rgba(5,205,153,0.14); border:1px solid rgba(5,205,153,0.35); color:#05cd99; }
@@ -278,12 +278,20 @@ $featureGroups = [
             </div>
 
             <div class="ac-preview-box" id="acLivePreview">
-              <div class="ac-preview-dot" id="acPrevDot"></div>
-              <div style="flex:1; min-width:0;">
-                <div id="acPrevTitle" style="font-weight:800; font-size:0.9rem; color:#7ee8ff; margin-bottom:2px;"><?= htmlspecialchars($ann['title'] ?: 'Հայտարարության վերնագիր') ?></div>
-                <div id="acPrevMsg" style="font-size:0.86rem; color:rgba(241,245,249,0.92); line-height:1.4;"><?= htmlspecialchars($ann['message'] ?: 'Այստեղ կցուցադրվի հայտարարության տեքստը օգտատերերի համար։') ?></div>
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
+                  <div class="ac-preview-dot" id="acPrevDot"></div>
+                  <div id="acPrevTitle" style="font-weight:800; font-size:0.9rem; color:#7ee8ff; line-height:1.25;"><?= htmlspecialchars($ann['title'] ?: 'Հայտարարության վերնագիր') ?></div>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                  <span id="acPrevCountdown" style="display:<?= !empty($ann['show_countdown']) ? 'inline-flex' : 'none' ?>; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; background:rgba(0,212,255,0.16); border:1px solid rgba(0,212,255,0.38); color:#fff; font-size:0.74rem; font-weight:700; font-variant-numeric:tabular-nums;">⏳ 01:45:00</span>
+                  <span id="acPrevClose" style="display:<?= (!isset($ann['dismissible']) || !empty($ann['dismissible'])) ? 'inline-flex' : 'none' ?>; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); color:rgba(255,255,255,0.85); font-size:0.76rem;">✕</span>
+                </div>
               </div>
-              <span id="acPrevBtn" style="display:<?= !empty($ann['action_text']) ? 'inline-block' : 'none' ?>; padding:6px 12px; border-radius:999px; background:rgba(0,212,255,0.2); border:1px solid rgba(0,212,255,0.4); font-size:0.78rem; font-weight:700;"><?= htmlspecialchars($ann['action_text'] ?? '') ?></span>
+              <div id="acPrevMsg" style="font-size:0.84rem; color:rgba(235,240,248,0.92); line-height:1.48; white-space:pre-line;"><?= htmlspecialchars($ann['message'] ?: 'Այստեղ կցուցադրվի հայտարարության տեքստը օգտատերերի համար։') ?></div>
+              <div>
+                <span id="acPrevBtn" style="display:<?= !empty($ann['action_text']) ? 'inline-block' : 'none' ?>; padding:6px 13px; border-radius:999px; background:rgba(0,212,255,0.2); border:1px solid rgba(0,212,255,0.4); font-size:0.78rem; font-weight:700;"><?= htmlspecialchars($ann['action_text'] ?? '') ?> →</span>
+              </div>
             </div>
           </div>
 
@@ -573,29 +581,56 @@ $featureGroups = [
     var title = document.getElementById('acTitleInput').value.trim();
     var msg = document.getElementById('acMsgInput').value.trim();
     var btnTxt = document.getElementById('acActionTextInput').value.trim();
+    var dismissChk = document.querySelector('input[name="announcement_dismissible"]');
+    var countChk = document.querySelector('input[name="announcement_show_countdown"]');
     var map = {
-      info: { color: '#7ee8ff', border: 'rgba(0,212,255,0.45)', bg: 'rgba(0,212,255,0.18)' },
-      warning: { color: '#f7b500', border: 'rgba(247,181,0,0.5)', bg: 'rgba(247,181,0,0.2)' },
-      success: { color: '#34d399', border: 'rgba(16,185,129,0.5)', bg: 'rgba(16,185,129,0.2)' },
-      critical: { color: '#ff6961', border: 'rgba(255,69,58,0.5)', bg: 'rgba(255,69,58,0.2)' }
+      info: { color: '#7ee8ff', border: 'rgba(0,212,255,0.45)', bg: 'rgba(0,212,255,0.18)', defaultTitle: 'Հայտարարություն' },
+      warning: { color: '#f7b500', border: 'rgba(247,181,0,0.5)', bg: 'rgba(247,181,0,0.2)', defaultTitle: 'Ուշադրություն' },
+      success: { color: '#34d399', border: 'rgba(16,185,129,0.5)', bg: 'rgba(16,185,129,0.2)', defaultTitle: 'Թարմացում' },
+      critical: { color: '#ff6961', border: 'rgba(255,69,58,0.5)', bg: 'rgba(255,69,58,0.2)', defaultTitle: 'Տեխնիկական հայտարարություն' }
     };
     var pal = map[type] || map.info;
+    var resolvedTitle = title;
+    var resolvedMsg = msg;
+    if (!resolvedTitle && resolvedMsg.indexOf('\n') !== -1) {
+      var lines = resolvedMsg.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(Boolean);
+      if (lines.length >= 2 && lines[0].length <= 80) {
+        resolvedTitle = lines[0];
+        resolvedMsg = lines.slice(1).join('\n');
+      }
+    }
     document.getElementById('acLivePreview').style.borderColor = pal.border;
     document.getElementById('acPrevDot').style.background = pal.color;
     document.getElementById('acPrevDot').style.boxShadow = '0 0 10px ' + pal.color;
     document.getElementById('acPrevTitle').style.color = pal.color;
-    document.getElementById('acPrevTitle').textContent = title || 'Հայտարարության վերնագիր';
-    document.getElementById('acPrevMsg').textContent = msg || 'Այստեղ կցուցադրվի հայտարարության տեքստը օգտատերերի համար։';
+    document.getElementById('acPrevTitle').textContent = resolvedTitle || pal.defaultTitle;
+    document.getElementById('acPrevMsg').textContent = resolvedMsg || 'Այստեղ կցուցադրվի հայտարարության տեքստը օգտատերերի համար։';
+    var prevCountdown = document.getElementById('acPrevCountdown');
+    if (prevCountdown) {
+      prevCountdown.style.display = (countChk && countChk.checked) ? 'inline-flex' : 'none';
+      prevCountdown.style.background = pal.bg;
+      prevCountdown.style.borderColor = pal.border;
+    }
+    var prevClose = document.getElementById('acPrevClose');
+    if (prevClose) {
+      prevClose.style.display = (!dismissChk || dismissChk.checked) ? 'inline-flex' : 'none';
+    }
     var prevBtn = document.getElementById('acPrevBtn');
     if (btnTxt) {
       prevBtn.style.display = 'inline-block';
       prevBtn.style.background = pal.bg;
       prevBtn.style.borderColor = pal.border;
-      prevBtn.textContent = btnTxt;
+      prevBtn.textContent = btnTxt + ' →';
     } else {
       prevBtn.style.display = 'none';
     }
   }
+  document.addEventListener('DOMContentLoaded', function() {
+    wpUpdatePreview();
+    document.querySelectorAll('input[name="announcement_dismissible"], input[name="announcement_show_countdown"]').forEach(function(el) {
+      el.addEventListener('change', wpUpdatePreview);
+    });
+  });
 
   function wpApplyPreset(kind) {
     var presets = {

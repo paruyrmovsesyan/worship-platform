@@ -248,6 +248,12 @@
     if (path === "/resources") return "resources";
     if (path === "/song-request") return "song_request";
     if (path === "/studio" || path === "/tools" || path.indexOf("/studio") === 0 || path.indexOf("/tools") === 0) return "studio";
+    if (path === "/bible" || path.indexOf("/bible") === 0) return "bible";
+    if (path === "/church" || path.indexOf("/church") === 0) return "church";
+    if (path === "/media" || path.indexOf("/media") === 0) return "media";
+    if (path === "/service-planner" || path.indexOf("/service-planner") === 0) return "service_planner";
+    if (path === "/friends" || path.indexOf("/friends") === 0) return "friends";
+    if (path === "/chats" || path.indexOf("/chat/") === 0) return "chats";
     if (
       path === "/loginuser.php" ||
       path === "/registeruser.php" ||
@@ -265,7 +271,7 @@
 
   function normalizePageAppModes(raw) {
     if (!raw || typeof raw !== "object") return null;
-    var keys = ["landing", "main", "song", "favorites", "setlists", "account", "news", "auth"];
+    var keys = ["landing", "main", "song", "favorites", "setlists", "account", "news", "auth", "studio", "bible", "church", "media", "service_planner", "friends", "chats", "song_request"];
     var normalized = {};
     var hasAny = false;
     keys.forEach(function(key) {

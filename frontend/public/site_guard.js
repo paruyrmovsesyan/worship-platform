@@ -18,6 +18,12 @@
       if(path === "/resources") return "resources";
       if(path === "/song-request") return "song_request";
       if(path === "/studio" || path === "/tools" || path.startsWith("/studio") || path.startsWith("/tools")) return "studio";
+      if(path === "/bible" || path.startsWith("/bible")) return "bible";
+      if(path === "/church" || path.startsWith("/church")) return "church";
+      if(path === "/media" || path.startsWith("/media")) return "media";
+      if(path === "/service-planner" || path.startsWith("/service-planner")) return "service_planner";
+      if(path === "/friends" || path.startsWith("/friends")) return "friends";
+      if(path === "/chats" || path.startsWith("/chat/")) return "chats";
       if(path === "/profile" || path === "/settings" || path === "/account" || path === "/account.html") return "account";
       if(
         path === "/loginuser.php" ||
@@ -89,7 +95,13 @@
       "pricing": ["/pricing"],
       "resources": ["/resources"],
       "song_request": ["/song-request"],
-      "studio": ["/studio", "/tools"]
+      "studio": ["/studio", "/tools"],
+      "bible": ["/bible"],
+      "church": ["/church"],
+      "media": ["/media"],
+      "service_planner": ["/service-planner"],
+      "friends": ["/friends"],
+      "chats": ["/chats"]
     };
     let css = "";
     for(const key in modesObj){

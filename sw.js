@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v599";
+const CACHE_VERSION = "worship-v600";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -37,8 +37,8 @@ const APP_SHELL = [
   "/app.js",
   "/site_guard.js",
   "/fav_bridge.js",
-  "/assets/index.css?v=v597",
-  "/assets/index.js?v=v597",
+  "/assets/index.css?v=v600",
+  "/assets/index.js?v=v600",
   "/assets/preload-helper.js",
   "/assets/dist.js",
   "/assets/base.js",
@@ -217,7 +217,9 @@ self.addEventListener("fetch", function(event) {
     url.pathname === "/login_api.php" ||
     url.pathname === "/register_api.php" ||
     url.pathname === "/logout_users.php" ||
-    url.pathname === "/features_api.php"
+    url.pathname === "/features_api.php" ||
+    url.pathname === "/mobile_config_api.php" ||
+    url.pathname === "/version_manifest.php"
   ) {
     return; // Let browser handle it natively — no SW interception
   }

@@ -131,6 +131,36 @@ function wp_version_page_app_registry(): array {
             'path' => '/studio',
             'description' => 'Բեմական և ստուդիական պրո գործիքներ (Live Follower, Stems, Projection, AI, Planner, Metronome)։',
         ],
+        'bible' => [
+            'label' => 'Աստվածաշունչ',
+            'path' => '/bible',
+            'description' => 'Աստվածաշնչի ընթերցիչ՝ Նոր Արարատ, Արարատ, NRT և ESV թարգմանություններով, համեմատմամբ և աուդիոյով։',
+        ],
+        'church' => [
+            'label' => 'Եկեղեցի և Աղոթք',
+            'path' => '/church',
+            'description' => 'Եկեղեցական հայտարարություններ, աղոթքի խնդրանքներ, օրացույց և փորձերի RSVP։',
+        ],
+        'media' => [
+            'label' => 'Մեդիա և 24/7 Ռադիո',
+            'path' => '/media',
+            'description' => '24/7 քրիստոնեական փառաբանության ռադիո, քարոզներ և վիդեո ալիքներ։',
+        ],
+        'service_planner' => [
+            'label' => 'Ծառայության Պլանավորող',
+            'path' => '/service-planner',
+            'description' => 'Կիրակնօրյա ծառայության Run-of-Show պլանավորում և թիմի գրաֆիկ։',
+        ],
+        'friends' => [
+            'label' => 'Ընկերներ և Թիմ',
+            'path' => '/friends',
+            'description' => 'Ընկերների ցանկ, երաժշտական թիմի կապեր և համագործակցություն։',
+        ],
+        'chats' => [
+            'label' => 'Չաթեր և Զանգեր',
+            'path' => '/chats',
+            'description' => 'Թիմային հաղորդագրություններ, ձայնային նամակներ և աուդիո զանգեր։',
+        ],
     ];
 }
 
@@ -340,6 +370,36 @@ function wp_version_page_web_registry(): array {
             'path'        => '/studio',
             'description' => 'Բեմական և ստուդիական պրո գործիքներ (Live Follower, Stems, Projection, AI, Planner, Metronome)։',
         ],
+        'bible' => [
+            'label'       => 'Աստվածաշունչ',
+            'path'        => '/bible',
+            'description' => 'Աստվածաշնչի ընթերցիչ՝ Նոր Արարատ, Արարատ, NRT և ESV թարգմանություններով, համեմատմամբ և աուդիոյով։',
+        ],
+        'church' => [
+            'label'       => 'Եկեղեցի և Աղոթք',
+            'path'        => '/church',
+            'description' => 'Եկեղեցական հայտարարություններ, աղոթքի խնդրանքներ, օրացույց և փորձերի RSVP։',
+        ],
+        'media' => [
+            'label'       => 'Մեդիա և 24/7 Ռադիո',
+            'path'        => '/media',
+            'description' => '24/7 քրիստոնեական փառաբանության ռադիո, քարոզներ և վիդեո ալիքներ։',
+        ],
+        'service_planner' => [
+            'label'       => 'Ծառայության Պլանավորող',
+            'path'        => '/service-planner',
+            'description' => 'Կիրակնօրյա ծառայության Run-of-Show պլանավորում և թիմի գրաֆիկ։',
+        ],
+        'friends' => [
+            'label'       => 'Ընկերներ և Թիմ',
+            'path'        => '/friends',
+            'description' => 'Ընկերների ցանկ, երաժշտական թիմի կապեր և համագործակցություն։',
+        ],
+        'chats' => [
+            'label'       => 'Չաթեր և Զանգեր',
+            'path'        => '/chats',
+            'description' => 'Թիմային հաղորդագրություններ, ձայնային նամակներ և աուդիո զանգեր։',
+        ],
     ];
 }
 
@@ -462,14 +522,14 @@ function wp_version_sanitize_app_about($value): array {
 
 function wp_version_defaults(): array {
     return [
-        'app_version' => '2.6.9',
-        'web_version' => '2.6.9',
-        'app_release_stamp' => '',
-        'web_release_stamp' => '',
+        'app_version' => '5.4.0',
+        'web_version' => '5.4.0',
+        'app_release_stamp' => '2026-11-19T22:10:00+04:00',
+        'web_release_stamp' => '2026-11-19T22:10:00+04:00',
         'app_release_type' => 'feature',
-        'web_release_type' => 'content',
-        'app_release_summary' => '',
-        'web_release_summary' => '',
+        'web_release_type' => 'feature',
+        'app_release_summary' => 'Աստվածաշունչ (Նոր Արարատ, NRT, ESV, համեմատում, աուդիո), Այսօր Հաբ և Օրվա Խոսք, Եկեղեցի և Աղոթք, Օրացույց և Փորձեր, Մեդիա և 24/7 Ռադիո, Pro Studio և Հայտարարությունների ու Սահմանափակումների համակարգ։',
+        'web_release_summary' => 'Աստվածաշունչ (Նոր Արարատ, NRT, ESV, համեմատում, աուդիո), Այսօր Հաբ և Օրվա Խոսք, Եկեղեցի և Աղոթք, Օրացույց և Փորձեր, Մեդիա և 24/7 Ռադիո, Pro Studio և Հայտարարությունների ու Սահմանափակումների համակարգ։',
         'app_title' => 'Ծրագրի նոր տարբերակ',
         'app_message' => 'Ծրագիրը թարմացվել է։ Սեղմեք թարմացնել, որպեսզի օֆֆլայն և օնլայն բովանդակությունը նորացվի։',
         'web_title' => 'Կայքի նոր տարբերակ',
@@ -713,6 +773,74 @@ function wp_version_runtime_cache_file(): string {
     return __DIR__ . '/data/.version_config_runtime_cache.json';
 }
 
+function wp_version_sync_disk_release(array $config): array {
+    $diskFile = __DIR__ . '/version.json';
+    if (!is_file($diskFile)) {
+        return ['config' => $config, 'changed' => false];
+    }
+
+    $disk = @json_decode((string)@file_get_contents($diskFile), true);
+    if (!is_array($disk)) {
+        return ['config' => $config, 'changed' => false];
+    }
+
+    $diskAppVer = trim((string)($disk['app_version'] ?? ''));
+    $diskWebVer = trim((string)($disk['web_version'] ?? $diskAppVer));
+    $diskStamp  = wp_version_normalize_datetime($disk['build_timestamp'] ?? '') ?: wp_version_now_iso();
+    $diskSummary = mb_substr(trim((string)($disk['release_summary'] ?? '')), 0, 240);
+    $diskType = wp_version_sanitize_release_type($disk['release_type'] ?? 'feature');
+
+    $curAppVer = trim((string)($config['app_version'] ?? ''));
+    $changed = false;
+
+    if ($diskAppVer !== '' && ($curAppVer === '' || version_compare($diskAppVer, $curAppVer, '>'))) {
+        $config['app_version'] = $diskAppVer;
+        $config['web_version'] = $diskWebVer !== '' ? $diskWebVer : $diskAppVer;
+        $config['app_release_stamp'] = $diskStamp;
+        $config['web_release_stamp'] = $diskStamp;
+        $config['app_release_type'] = $diskType;
+        $config['web_release_type'] = $diskType;
+        if ($diskSummary !== '') {
+            $config['app_release_summary'] = $diskSummary;
+            $config['web_release_summary'] = $diskSummary;
+        }
+        $config['updated_at'] = $diskStamp;
+        $changed = true;
+    }
+
+    foreach (['studio', 'bible', 'church', 'media', 'service_planner', 'friends', 'chats'] as $newPageKey) {
+        if (!isset($config['page_app_modes'][$newPageKey])) {
+            $config['page_app_modes'][$newPageKey] = true;
+            $changed = true;
+        }
+        if (!isset($config['page_web_modes'][$newPageKey])) {
+            $config['page_web_modes'][$newPageKey] = true;
+            $changed = true;
+        }
+    }
+
+    return ['config' => wp_version_sanitize($config), 'changed' => $changed];
+}
+
+function wp_version_persist_synced_config(array $config, string $cacheFile, string $legacyCacheFile): void {
+    $encodedPretty = json_encode($config, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    @file_put_contents($cacheFile, $encodedPretty);
+    @file_put_contents($legacyCacheFile, $encodedPretty);
+    $json = json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    try {
+        $pdo = wp_runtime_open_pdo();
+        $upStmt = $pdo->prepare("UPDATE sys_settings SET setting_value = ? WHERE setting_key = 'version_config'");
+        $upStmt->execute([$json]);
+    } catch (Throwable $_) {
+        try {
+            $conn = wp_runtime_open_mysqli();
+            $upStmt = $conn->prepare("UPDATE sys_settings SET setting_value = ? WHERE setting_key = 'version_config'");
+            $upStmt->bind_param('s', $json);
+            $upStmt->execute();
+        } catch (Throwable $_2) {}
+    }
+}
+
 function wp_version_load(): array {
     static $configCache = null;
     if ($configCache !== null) {
@@ -729,7 +857,11 @@ function wp_version_load(): array {
         if ($raw) {
             $cached = json_decode($raw, true);
             if (is_array($cached) && !empty($cached['app_version'])) {
-                $configCache = wp_version_sanitize($cached);
+                $synced = wp_version_sync_disk_release($cached);
+                $configCache = $synced['config'];
+                if ($synced['changed']) {
+                    wp_version_persist_synced_config($configCache, $cacheFile, $legacyCacheFile);
+                }
                 return $configCache;
             }
         }
@@ -757,15 +889,14 @@ function wp_version_load(): array {
                     }
                     @file_put_contents($fixMarkerFile, date('c'));
                 }
-                if ($needsDbUpdate) {
-                    try {
-                        $upStmt = $pdo->prepare("UPDATE sys_settings SET setting_value = ? WHERE setting_key = 'version_config'");
-                        $upStmt->execute([json_encode($decoded, JSON_UNESCAPED_UNICODE)]);
-                    } catch (Throwable $eIgnored) {}
+                $synced = wp_version_sync_disk_release($decoded);
+                $configCache = $synced['config'];
+                if ($needsDbUpdate || $synced['changed']) {
+                    wp_version_persist_synced_config($configCache, $cacheFile, $legacyCacheFile);
+                } else {
+                    @file_put_contents($cacheFile, json_encode($configCache, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                    @file_put_contents($legacyCacheFile, json_encode($configCache, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
                 }
-                $configCache = wp_version_sanitize($decoded);
-                @file_put_contents($cacheFile, json_encode($configCache, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-                @file_put_contents($legacyCacheFile, json_encode($configCache, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
                 return $configCache;
             }
         }
@@ -782,16 +913,17 @@ function wp_version_load(): array {
                         $decoded['maintenance_enabled'] = false;
                         @file_put_contents($fixMarkerFile, date('c'));
                     }
-                    $configCache = wp_version_sanitize($decoded);
-                    @file_put_contents($cacheFile, json_encode($configCache, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-                    @file_put_contents($legacyCacheFile, json_encode($configCache, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                    $synced = wp_version_sync_disk_release($decoded);
+                    $configCache = $synced['config'];
+                    wp_version_persist_synced_config($configCache, $cacheFile, $legacyCacheFile);
                     return $configCache;
                 }
             }
         } catch (Throwable $e2) {}
     }
 
-    $configCache = $defaults;
+    $syncedDefault = wp_version_sync_disk_release($defaults);
+    $configCache = $syncedDefault['config'];
     return $configCache;
 }
 

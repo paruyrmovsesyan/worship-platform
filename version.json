@@ -1,8 +1,8 @@
 {
   "app_version": "5.4.0",
   "web_version": "5.4.0",
-  "asset_version": "599",
-  "build_timestamp": "2026-11-18T01:31:00+04:00",
-  "release_type": "minor",
-  "release_summary": "myekklesia-inspired Today hub, Bible Reader (parallel translations, notes, highlights, reading plans), Church Community & Prayer Requests, Warm Editorial Amber theme, and SongView Tone/Capo & stage cue notes"
+  "asset_version": "600",
+  "build_timestamp": "2026-11-19T22:10:00+04:00",
+  "release_type": "feature",
+  "release_summary": "Աստվածաշունչ (Նոր Արարատ, NRT, ESV, համեմատում, աուդիո), Այսօր Հաբ և Օրվա Խոսք, Եկեղեցի և Աղոթք, Օրացույց և Փորձեր, Մեդիա և 24/7 Ռադիո, Pro Studio և Հայտարարությունների ու Սահմանափակումների համակարգ։"
 }
