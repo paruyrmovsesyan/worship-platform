@@ -161,6 +161,11 @@ export default function Bible() {
   const [noteDraft, setNoteDraft] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchTestament, setSearchTestament] = useState('all'); // 'all' | 'old' | 'new'
+  const [searchBookFilter, setSearchBookFilter] = useState(0); // 0 = all books
+  const [searchBookCounts, setSearchBookCounts] = useState([]);
+  const [searchPage, setSearchPage] = useState(1);
+  const [searchHasMore, setSearchHasMore] = useState(false);
+  const [loadingMoreSearch, setLoadingMoreSearch] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [searchTotal, setSearchTotal] = useState(0);
   const [searchSubmitted, setSearchSubmitted] = useState(false);
@@ -889,51 +894,79 @@ export default function Bible() {
     await nativeShare({ title: passage.title, text: passage.text, url: window.location.href });
   };
 
-  const runBibleSearch = async (e, overrideQuery = null, overrideTestament = null) => {
+  const runBibleSearch = async (
+    e,
+    overrideQuery = null,
+    overrideTestament = null,
+    overrideBook = null,
+    nextPage = 1,
+    append = false,
+  ) => {
     e?.preventDefault();
     const q = String(overrideQuery !== null ? overrideQuery : searchQuery).trim();
     const scope = overrideTestament !== null ? overrideTestament : searchTestament;
+    const bFilter = overrideBook !== null ? overrideBook : searchBookFilter;
     if (q.length < 2) return;
-    setSearching(true);
-    setSearchSubmitted(true);
+    if (append) {
+      setLoadingMoreSearch(true);
+    } else {
+      setSearching(true);
+      setSearchSubmitted(true);
+      setSearchPage(1);
+    }
 
-    // Direct book/chapter/verse reference jump
+    // Direct book/chapter/verse reference jump (only on first page)
     const refHits = [];
-    const refMatch = q.match(/^(.+?)\s+(\d+)(?::(\d+))?$/);
-    if (refMatch) {
-      const bookPart = refMatch[1].trim().toLowerCase();
-      const chNum = Number(refMatch[2]);
-      const vNum = Number(refMatch[3] || 1);
-      const matchedBook = BIBLE_BOOKS.find(
-        (b) =>
-          b.am.toLowerCase().includes(bookPart) ||
-          b.ru.toLowerCase().includes(bookPart) ||
-          b.en.toLowerCase().includes(bookPart),
-      );
-      if (matchedBook && chNum >= 1 && chNum <= matchedBook.chapters) {
-        refHits.push({
-          book: matchedBook.id,
-          chapter: chNum,
-          verse: vNum,
-          text: `${getBookName(matchedBook.id, language)} ${chNum}${refMatch[3] ? `:${vNum}` : ''}`,
-          isRefJump: true,
-        });
+    if (!append) {
+      const refMatch = q.match(/^(.+?)\s+(\d+)(?::(\d+))?$/);
+      if (refMatch) {
+        const bookPart = refMatch[1].trim().toLowerCase();
+        const chNum = Number(refMatch[2]);
+        const vNum = Number(refMatch[3] || 1);
+        const matchedBook = BIBLE_BOOKS.find(
+          (b) =>
+            b.am.toLowerCase().includes(bookPart) ||
+            b.ru.toLowerCase().includes(bookPart) ||
+            b.en.toLowerCase().includes(bookPart),
+        );
+        if (matchedBook && chNum >= 1 && chNum <= matchedBook.chapters) {
+          refHits.push({
+            book: matchedBook.id,
+            chapter: chNum,
+            verse: vNum,
+            text: `${getBookName(matchedBook.id, language)} ${chNum}${refMatch[3] ? `:${vNum}` : ''}`,
+            isRefJump: true,
+          });
+        }
       }
     }
 
     try {
       const res = await fetch(
-        `/bible_api.php?action=search&tr=${encodeURIComponent(effectiveTranslation || translation)}&testament=${encodeURIComponent(scope)}&q=${encodeURIComponent(q)}`,
+        `/bible_api.php?action=search&tr=${encodeURIComponent(effectiveTranslation || translation)}&testament=${encodeURIComponent(scope)}&book=${bFilter}&page=${nextPage}&limit=50&q=${encodeURIComponent(q)}`,
       );
       const data = await res.json();
       const apiHits = data?.ok && Array.isArray(data.results) ? data.results : [];
-      setSearchResults([...refHits, ...apiHits]);
-      setSearchTotal(typeof data?.total === 'number' ? data.total + refHits.length : refHits.length + apiHits.length);
+      if (append) {
+        setSearchResults((prev) => [...prev, ...apiHits]);
+      } else {
+        setSearchResults([...refHits, ...apiHits]);
+      }
+      setSearchTotal(typeof data?.total === 'number' ? data.total + (append ? 0 : refHits.length) : refHits.length + apiHits.length);
+      setSearchHasMore(Boolean(data?.has_more));
+      setSearchPage(nextPage);
+      if (Array.isArray(data?.book_counts)) {
+        setSearchBookCounts(data.book_counts);
+      }
     } catch {
-      setSearchResults(refHits);
-      setSearchTotal(refHits.length);
+      if (!append) {
+        setSearchResults(refHits);
+        setSearchTotal(refHits.length);
+        setSearchHasMore(false);
+      }
     }
     setSearching(false);
+    setLoadingMoreSearch(false);
   };
 
   const renderHighlightedSearchText = (text, query) => {
@@ -1316,7 +1349,7 @@ export default function Bible() {
               </button>
             </div>
 
-            <form className="bible-search-form bible-search-page-form" onSubmit={(e) => runBibleSearch(e)}>
+            <form className="bible-search-form bible-search-page-form" onSubmit={(e) => { setSearchBookFilter(0); runBibleSearch(e, searchQuery, searchTestament, 0, 1, false); }}>
               <input
                 type="search"
                 placeholder={ui.searchPlaceholder}
@@ -1331,7 +1364,10 @@ export default function Bible() {
                   onClick={() => {
                     setSearchQuery('');
                     setSearchResults([]);
+                    setSearchBookCounts([]);
+                    setSearchBookFilter(0);
                     setSearchTotal(0);
+                    setSearchHasMore(false);
                     setSearchSubmitted(false);
                   }}
                   aria-label="Մաքրել"
@@ -1356,8 +1392,9 @@ export default function Bible() {
                   className={`bible-pill-btn ${searchTestament === opt.id ? 'is-active-filter' : ''}`}
                   onClick={() => {
                     setSearchTestament(opt.id);
+                    setSearchBookFilter(0);
                     if (searchQuery.trim().length >= 2) {
-                      runBibleSearch(null, searchQuery, opt.id);
+                      runBibleSearch(null, searchQuery, opt.id, 0, 1, false);
                     }
                   }}
                 >
@@ -1365,6 +1402,34 @@ export default function Bible() {
                 </button>
               ))}
             </div>
+
+            {searchBookCounts.length > 1 && (
+              <div className="bible-search-book-chips">
+                <button
+                  type="button"
+                  className={`bible-pill-btn ${searchBookFilter === 0 ? 'is-active-filter' : ''}`}
+                  onClick={() => {
+                    setSearchBookFilter(0);
+                    runBibleSearch(null, searchQuery, searchTestament, 0, 1, false);
+                  }}
+                >
+                  {language === 'ru' ? 'Все книги' : language === 'en' ? 'All Books' : 'Բոլոր գրքերը'} ({searchBookCounts.length})
+                </button>
+                {searchBookCounts.map((bc) => (
+                  <button
+                    key={bc.book}
+                    type="button"
+                    className={`bible-pill-btn ${searchBookFilter === bc.book ? 'is-active-filter' : ''}`}
+                    onClick={() => {
+                      setSearchBookFilter(bc.book);
+                      runBibleSearch(null, searchQuery, searchTestament, bc.book, 1, false);
+                    }}
+                  >
+                    {getBookName(bc.book, language)} <small>({bc.count})</small>
+                  </button>
+                ))}
+              </div>
+            )}
 
             {!searchSubmitted && (
               <div className="bible-search-suggestions">
@@ -1466,6 +1531,27 @@ export default function Bible() {
                     </button>
                   ))}
                 </div>
+
+                {searchHasMore && (
+                  <div className="bible-search-load-more">
+                    <button
+                      type="button"
+                      className="bible-cta-amber"
+                      disabled={loadingMoreSearch}
+                      onClick={() =>
+                        runBibleSearch(null, searchQuery, searchTestament, searchBookFilter, searchPage + 1, true)
+                      }
+                    >
+                      {loadingMoreSearch
+                        ? '...'
+                        : language === 'ru'
+                        ? `Загрузить ещё (${searchResults.length} / ${searchTotal})`
+                        : language === 'en'
+                        ? `Load more (${searchResults.length} / ${searchTotal})`
+                        : `Բեռնել ավելին (${searchResults.length} / ${searchTotal})`}
+                    </button>
+                  </div>
+                )}
               </>
             ) : null}
           </div>

@@ -374,8 +374,11 @@ if ($action === 'search') {
     $q = trim((string)($_GET['q'] ?? ''));
     $tr = wp_bible_valid_translation((string)($_GET['tr'] ?? 'nor_ararat'));
     $testament = strtolower(trim((string)($_GET['testament'] ?? 'all'))); // all | old | new
+    $bookFilter = (int)($_GET['book'] ?? 0); // 0 = all books, 1..66 = specific book
+    $page = max(1, (int)($_GET['page'] ?? 1));
+    $perPage = min(100, max(20, (int)($_GET['limit'] ?? 50)));
     if (mb_strlen($q) < 2) {
-        wp_bible_out(['ok' => true, 'results' => [], 'total' => 0]);
+        wp_bible_out(['ok' => true, 'results' => [], 'total' => 0, 'book_counts' => [], 'page' => 1, 'has_more' => false]);
     }
 
     $normQ = wp_bible_normalize_search_text($q);
@@ -384,14 +387,17 @@ if ($action === 'search') {
     $results = [];
     $seen = [];
 
-    $minBook = $testament === 'new' ? 40 : 1;
-    $maxBook = $testament === 'old' ? 39 : 66;
+    $minBook = $bookFilter >= 1 && $bookFilter <= 66 ? $bookFilter : ($testament === 'new' ? 40 : 1);
+    $maxBook = $bookFilter >= 1 && $bookFilter <= 66 ? $bookFilter : ($testament === 'old' ? 39 : 66);
 
     // Full local search across all 66 books for Armenian translations (Nor Ararat)
     if ($tr === 'nor_ararat' || $tr === 'easternarmenian' || $tr === 'westernarmenian') {
         $exactMatches = [];
         $wordMatches = [];
-        for ($b = $minBook; $b <= $maxBook; $b++) {
+        $bookCounts = [];
+        $scanMin = $testament === 'new' ? 40 : 1;
+        $scanMax = $testament === 'old' ? 39 : 66;
+        for ($b = $scanMin; $b <= $scanMax; $b++) {
             $natFile = __DIR__ . "/data/bible_nat/{$b}.json";
             if (!is_file($natFile)) continue;
             $bookChapters = json_decode((string)@file_get_contents($natFile), true);
@@ -402,45 +408,56 @@ if ($action === 'search') {
                     $txt = (string)($v['t'] ?? '');
                     if ($txt === '') continue;
                     $normTxt = wp_bible_normalize_search_text($txt);
-                    if ($normQ !== '' && mb_strpos($normTxt, $normQ, 0, 'UTF-8') !== false) {
-                        $exactMatches[] = [
-                            'translation' => $tr,
-                            'book' => $b,
-                            'book_name' => '',
-                            'chapter' => (int)$chKey,
-                            'verse' => (int)($v['v'] ?? 0),
-                            'text' => $txt,
-                            'match_type' => 'exact',
-                        ];
-                    } elseif (count($words) >= 2 && count($wordMatches) < 60) {
-                        $allFound = true;
+                    $isExact = ($normQ !== '' && mb_strpos($normTxt, $normQ, 0, 'UTF-8') !== false);
+                    $isWords = false;
+                    if (!$isExact && count($words) >= 2) {
+                        $isWords = true;
                         foreach ($words as $w) {
                             if (mb_strpos($normTxt, $w, 0, 'UTF-8') === false) {
-                                $allFound = false;
+                                $isWords = false;
                                 break;
                             }
                         }
-                        if ($allFound) {
-                            $wordMatches[] = [
-                                'translation' => $tr,
-                                'book' => $b,
-                                'book_name' => '',
-                                'chapter' => (int)$chKey,
-                                'verse' => (int)($v['v'] ?? 0),
-                                'text' => $txt,
-                                'match_type' => 'words',
-                            ];
-                        }
+                    }
+                    if (!$isExact && !$isWords) continue;
+
+                    $bookCounts[$b] = ($bookCounts[$b] ?? 0) + 1;
+                    if ($bookFilter >= 1 && $bookFilter <= 66 && $b !== $bookFilter) {
+                        continue;
+                    }
+                    $entry = [
+                        'translation' => $tr,
+                        'book' => $b,
+                        'book_name' => '',
+                        'chapter' => (int)$chKey,
+                        'verse' => (int)($v['v'] ?? 0),
+                        'text' => $txt,
+                        'match_type' => $isExact ? 'exact' : 'words',
+                    ];
+                    if ($isExact) {
+                        $exactMatches[] = $entry;
+                    } else {
+                        $wordMatches[] = $entry;
                     }
                 }
             }
         }
         $merged = array_merge($exactMatches, $wordMatches);
         $total = count($merged);
+        $offset = ($page - 1) * $perPage;
+        $slice = array_slice($merged, $offset, $perPage);
+        $bookSummary = [];
+        foreach ($bookCounts as $bid => $cnt) {
+            $bookSummary[] = ['book' => (int)$bid, 'count' => (int)$cnt];
+        }
         wp_bible_out([
             'ok' => true,
             'total' => $total,
-            'results' => array_slice($merged, 0, 80),
+            'page' => $page,
+            'per_page' => $perPage,
+            'has_more' => ($offset + count($slice)) < $total,
+            'book_counts' => $bookSummary,
+            'results' => $slice,
         ]);
     }
 

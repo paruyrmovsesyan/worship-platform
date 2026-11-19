@@ -1490,6 +1490,36 @@ body.light-mode .bible-search-hero {
   gap: 8px;
 }
 
+.bible-search-book-chips {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.bible-search-book-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.bible-search-book-chips .bible-pill-btn {
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 11px;
+  font-size: 0.78rem;
+}
+
+.bible-search-book-chips small {
+  opacity: 0.75;
+  font-weight: 700;
+}
+
+.bible-search-load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
 .bible-pill-btn.is-active-filter {
   background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.1));
   border-color: rgba(251, 191, 36, 0.52);
