@@ -133,7 +133,7 @@ export function getBookName(bookId, lang = 'am') {
 
 export const BIBLICAL_MEASURES = [
   {
-    pattern: /(կանգուն(?:ներ(?:ով|ի)?)?|cubit(?:s)?|локт[яейь]+|локоть)/i,
+    pattern: /(?:կանգուն(?:ներ(?:ով|ի)?)?|cubit(?:s)?|локт[яейь]+|локоть)/i,
     label: { am: 'Կանգուն', ru: 'Локоть', en: 'Cubit' },
     info: {
       am: '1 կանգուն ≈ 45 սմ (արմունկից մինչև միջնամատի ծայրը)',
@@ -142,7 +142,7 @@ export const BIBLICAL_MEASURES = [
     },
   },
   {
-    pattern: /(տաղանդ(?:ներ(?:ով|ի)?)?|տալանտ(?:ներ)?|talent(?:s)?|талант(?:а|ов|ы)?)/i,
+    pattern: /(?:տաղանդ(?:ներ(?:ով|ի)?)?|տալանտ(?:ներ)?|talent(?:s)?|талант(?:а|ов|ы)?)/i,
     label: { am: 'Տաղանդ', ru: 'Талант', en: 'Talent' },
     info: {
       am: '1 տաղանդ ≈ 34 կգ արծաթ կամ ոսկի (~6000 դենար / ~20 տարվա վարձ)',
@@ -151,7 +151,7 @@ export const BIBLICAL_MEASURES = [
     },
   },
   {
-    pattern: /(սիկղ(?:եր)?|shekel(?:s)?|сикл[яейь]*)/i,
+    pattern: /(?:սիկղ(?:եր)?|shekel(?:s)?|сикл[яейь]*)/i,
     label: { am: 'Սիկղ', ru: 'Сикль', en: 'Shekel' },
     info: {
       am: '1 սիկղ ≈ 11.4 գրամ արծաթ (~4 օրվա աշխատավարձ)',
@@ -160,7 +160,7 @@ export const BIBLICAL_MEASURES = [
     },
   },
   {
-    pattern: /(դենար(?:ներ|ի)?|denari(?:us|i)?|динари(?:й|я|ев)?)/i,
+    pattern: /(?:դենար(?:ներ|ի)?|denari(?:us|i)?|динари(?:й|я|ев)?)/i,
     label: { am: 'Դենար', ru: 'Динарий', en: 'Denarius' },
     info: {
       am: '1 դենար ≈ 1 օրվա աշխատավարձ (Հռոմեական արծաթե դրամ)',
@@ -169,7 +169,7 @@ export const BIBLICAL_MEASURES = [
     },
   },
   {
-    pattern: /(եփա(?:յով|ի)?|ephah(?:s)?|еф[аыу])/i,
+    pattern: /(?:եփա(?:յով|ի)?|ephah(?:s)?|еф[аыу])/i,
     label: { am: 'Եփա', ru: 'Ефа', en: 'Ephah' },
     info: {
       am: '1 եփա ≈ 22 լիտր չոր ապրանքի չափ (ցորեն, ալյուր)',
@@ -178,7 +178,7 @@ export const BIBLICAL_MEASURES = [
     },
   },
   {
-    pattern: /(ասպարեզ(?:ներ)?|stadi(?:a|um)|furlong(?:s)?|стади(?:й|я|ев))/i,
+    pattern: /(?:ասպարեզ(?:ներ)?|stadi(?:a|um)|furlong(?:s)?|стади(?:й|я|ев))/i,
     label: { am: 'Ասպարեզ', ru: 'Стадий', en: 'Stadia' },
     info: {
       am: '1 ասպարեզ ≈ 185 մետր',
