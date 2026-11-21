@@ -32,36 +32,53 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 10px;
   margin-bottom: 12px;
 }
 
 .sv-header-left {
   display: flex;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 10px;
   flex: 1;
   min-width: 0;
+}
+
+.sv-back-btn {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .sv-title-area {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  padding-top: 2px;
 }
 
 .sv-title {
-  font-size: 1.4rem;
+  font-size: 1.32rem;
   font-weight: 800;
   margin: 0;
-  line-height: 1.25;
+  line-height: 1.22;
+  letter-spacing: -0.02em;
   color: var(--color-text-primary);
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
 .sv-artist {
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   color: var(--color-text-secondary);
-  margin: 4px 0 0 0;
+  margin: 3px 0 0 0;
   line-height: 1.3;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -69,59 +86,157 @@
 
 .sv-header-actions {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   align-items: center;
   flex-shrink: 0;
 }
 
 .sv-header-actions .icon-btn {
-  padding: 6px;
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.14s ease;
 }
 
-/* Meta Row (Key, BPM) */
+.sv-header-actions .icon-btn:active {
+  transform: scale(0.94);
+}
+
+.sv-header-actions .icon-btn.sv-fav-active {
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.14);
+  border-color: rgba(244, 63, 94, 0.35);
+}
+
+body.light-mode .sv-back-btn,
+body.light-mode .sv-header-actions .icon-btn {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+/* Compact Meta & Quick Controls Row */
 .sv-meta-row {
   display: flex;
   flex-wrap: nowrap;
-  gap: 6px;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin-bottom: 14px;
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  box-sizing: border-box;
+}
+
+.sv-meta-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
-.sv-meta-row::-webkit-scrollbar {
+.sv-meta-left::-webkit-scrollbar {
   display: none;
 }
 
 .sv-meta-pill {
+  height: 34px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 4px 10px;
-  border-radius: 99px;
+  padding: 0 11px;
+  border-radius: 999px;
   font-size: 0.8rem;
   color: var(--color-text-secondary);
-  font-weight: 500;
+  font-weight: 650;
   white-space: nowrap;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-sizing: border-box;
 }
 
 .sv-meta-pill.key-pill {
   color: var(--sv-accent);
   background: var(--sv-accent-glow);
-  border-color: var(--sv-accent);
-  font-weight: 700;
+  border-color: color-mix(in srgb, var(--sv-accent) 55%, transparent);
+  font-weight: 750;
 }
 
-.sv-meta-pill.capo-pill {
-  color: var(--sv-accent);
-  background: var(--sv-accent-glow);
-  border-color: var(--sv-accent);
+.sv-meta-caret-svg {
+  opacity: 0.78;
+  transition: transform 0.18s ease;
+  flex-shrink: 0;
+}
+
+.sv-meta-caret-svg.is-open {
+  transform: rotate(180deg);
+}
+
+/* Quick Inline Font Size Control */
+.sv-quick-font {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sv-quick-font-btn {
+  height: 100%;
+  padding: 0 10px;
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+  font-size: 0.78rem;
   font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.sv-quick-font-btn:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.sv-quick-font-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.sv-quick-font-val {
+  min-width: 24px;
+  text-align: center;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  border-inline: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0 4px;
+  line-height: 34px;
+}
+
+body.light-mode .sv-meta-pill:not(.key-pill),
+body.light-mode .sv-quick-font {
+  background: rgba(15, 23, 42, 0.045);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+body.light-mode .sv-quick-font-val {
+  border-inline-color: rgba(15, 23, 42, 0.09);
 }
 
 .sv-save-key-pill {
@@ -312,271 +427,45 @@
   box-shadow: 0 4px 14px rgba(0, 180, 219, 0.25);
 }
 
-/* Default (Web) UI */
-.sv-control-panel { display: none; }
-
-/* PWA / Native App UI */
-@media all and (display-mode: standalone) {
-  .sv-inline-controls { display: none !important; }
-  .sv-control-panel { display: block; }
-}
-
-body.is-app .sv-inline-controls,
-body.mobile-theme .sv-inline-controls,
-body.wp-main-app.song-view-active .sv-inline-controls {
-  display: none !important;
-}
-
-body.is-app .sv-control-panel,
-body.mobile-theme .sv-control-panel,
-body.wp-main-app.song-view-active .sv-control-panel {
-  display: block !important;
-}
-
-/* Inline Controls (Old Web UI) */
-.sv-inline-controls {
-  background: rgba(0,0,0,0.2);
-  border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 16px;
-  padding: 12px;
-  margin-top: 24px;
-  margin-bottom: 24px;
-}
-
-.sv-keys-scroll {
-  display: flex;
-  overflow-x: auto;
-  gap: 6px;
-  padding-bottom: 12px;
-  margin-bottom: 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.sv-keys-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.sv-key-btn {
-  flex: 0 0 auto;
-  min-width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.03);
-  color: var(--color-text-primary);
-  font-size: 1rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.sv-key-btn:active {
-  transform: scale(0.95);
-}
-
-.sv-key-btn.active {
-  background: var(--sv-accent);
-  color: #000;
-  border-color: transparent;
-  box-shadow: 0 0 12px var(--sv-accent-glow);
-}
-
-.sv-secondary-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
-.sv-control-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.sv-capo-select {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: #fff;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  outline: none;
-  cursor: pointer;
-}
-
-.sv-font-item {
-  margin-left: auto;
-  background: rgba(255,255,255,0.05);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  padding: 4px;
-}
-
-.sv-font-btn {
-  background: transparent;
-  border: none;
-  color: var(--color-text-primary);
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border-radius: 6px;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .sv-font-btn:hover {
-    background: rgba(255,255,255,0.1);
-  }
-}
-
-.sv-font-val {
-  font-size: 0.9rem;
-  font-weight: 700;
-  width: 24px;
-  text-align: center;
-}
-
-/* Premium Control Panel (New PWA UI) */
-.sv-control-panel {
-  background: var(--color-surface);
-  border: 1px solid var(--color-surface-hover);
-  border-radius: 16px;
-  padding: 16px;
-  margin-top: 24px;
-  margin-bottom: 24px;
-}
-
-.sv-control-row {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-  align-items: stretch;
-}
-.sv-control-row:last-child {
-  margin-bottom: 0;
-}
-
-.sv-stepper-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.sv-stepper-label {
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 600;
-  padding-left: 4px;
-}
-
-.sv-stepper {
-  display: flex;
-  align-items: center;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
-  overflow: hidden;
-  height: 40px;
-}
-
-.sv-step-btn {
-  flex: 1;
-  height: 100%;
-  background: transparent;
-  border: none;
-  color: var(--color-text-primary);
-  font-size: 1.1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .sv-step-btn:hover:not(:disabled) {
-    background: rgba(255,255,255,0.1);
-  }
-}
-
-.sv-step-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.sv-step-val {
-  flex: 1.5;
-  text-align: center;
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: var(--sv-accent);
-  border-left: 1px solid rgba(255,255,255,0.08);
-  border-right: 1px solid rgba(255,255,255,0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
-.sv-toggle-btn {
-  height: 40px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  color: var(--color-text-primary);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.sv-toggle-btn.active {
-  background: rgba(0, 229, 255, 0.15);
-  border-color: var(--sv-accent);
-  color: var(--sv-accent);
-}
-
-
 /* Segmented Control */
 .sv-segment-control {
   display: flex;
   background: var(--color-surface);
   padding: 4px;
-  border-radius: 12px;
-  margin-bottom: 24px;
+  border-radius: 13px;
+  margin-bottom: 14px;
   border: 1px solid var(--color-surface-hover);
+  gap: 3px;
+  box-sizing: border-box;
 }
 
 .sv-segment {
   flex: 1;
+  min-width: 0;
   background: transparent;
   border: none;
   color: var(--color-text-secondary);
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  padding: 9px 10px;
+  border-radius: 9px;
+  font-size: 0.86rem;
+  font-weight: 650;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sv-segment.active {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.11);
   color: #fff;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+body.light-mode .sv-segment.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
 }
 
 /* Sheet Music */
@@ -736,20 +625,6 @@ body.is-app .song-view-page .seq-nav {
   line-height: 1.15 !important;
 }
 
-.sv-edit-action {
-  display: flex;
-  justify-content: center;
-  margin: 16px 0 24px;
-}
-
-.sv-edit-btn {
-  gap: 8px;
-  padding: 10px 20px;
-  border-radius: 20px;
-  opacity: 0.8;
-  font-size: 0.9rem;
-}
-
 /* Mobile/PWA song view should use one stable full-width layout. */
 body.mobile-theme .song-view-page,
 body.is-app .song-view-page,
@@ -758,7 +633,7 @@ body.wp-main-app.song-view-active .song-view-page {
   max-width: none;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
-  padding: 12px 0 16px;
+  padding: 12px 0 calc(var(--bottom-nav-total-offset, 88px) + 56px);
 }
 
 body.wp-standalone-app .song-view-page.has-seq-nav,
@@ -766,7 +641,7 @@ body.wp-main-app .song-view-page.has-seq-nav,
 body.mobile-theme .song-view-page.has-seq-nav,
 body.is-app .song-view-page.has-seq-nav,
 .song-view-page.has-seq-nav {
-  padding-bottom: 24px !important;
+  padding-bottom: calc(var(--bottom-nav-total-offset, 88px) + 110px) !important;
 }
 
 body.song-view-active.wp-main-app #root,
@@ -818,16 +693,16 @@ body.is-native .song-view-page {
 
 body.mobile-theme .song-view-page .sv-segment-control,
 body.mobile-theme .song-view-page .sv-sheet,
-body.mobile-theme .song-view-page .sv-control-panel,
-body.mobile-theme .song-view-page .sv-inline-controls,
+body.mobile-theme .song-view-page .sv-stage-modules,
+body.mobile-theme .song-view-page .sv-arrangement-ribbon,
 body.is-app .song-view-page .sv-segment-control,
 body.is-app .song-view-page .sv-sheet,
-body.is-app .song-view-page .sv-control-panel,
-body.is-app .song-view-page .sv-inline-controls,
+body.is-app .song-view-page .sv-stage-modules,
+body.is-app .song-view-page .sv-arrangement-ribbon,
 body.wp-main-app.song-view-active .song-view-page .sv-segment-control,
 body.wp-main-app.song-view-active .song-view-page .sv-sheet,
-body.wp-main-app.song-view-active .song-view-page .sv-control-panel,
-body.wp-main-app.song-view-active .song-view-page .sv-inline-controls {
+body.wp-main-app.song-view-active .song-view-page .sv-stage-modules,
+body.wp-main-app.song-view-active .song-view-page .sv-arrangement-ribbon {
   max-width: none;
   margin-left: 16px;
   margin-right: 16px;
@@ -840,21 +715,6 @@ body.wp-main-app.song-view-active .song-view-page .sv-sheet {
   padding: 16px;
 }
 
-body.mobile-theme .song-view-page .sv-control-panel,
-body.mobile-theme .song-view-page .sv-inline-controls,
-body.is-app .song-view-page .sv-control-panel,
-body.is-app .song-view-page .sv-inline-controls,
-body.wp-main-app.song-view-active .song-view-page .sv-control-panel,
-body.wp-main-app.song-view-active .song-view-page .sv-inline-controls {
-  padding-left: 16px;
-  padding-right: 16px;
-}
-
-body.mobile-theme .song-view-page.has-seq-nav .sv-control-panel,
-body.is-app .song-view-page.has-seq-nav .sv-control-panel {
-  margin-bottom: 18px;
-}
-
 @media (max-width: 900px), all and (display-mode: standalone) {
   .song-view-page .sv-header,
   .song-view-page .sv-meta-row {
@@ -864,8 +724,9 @@ body.is-app .song-view-page.has-seq-nav .sv-control-panel {
 
   .song-view-page .sv-segment-control,
   .song-view-page .sv-sheet,
-  .song-view-page .sv-control-panel,
-  .song-view-page .sv-inline-controls {
+  .song-view-page .sv-stage-modules,
+  .song-view-page .sv-arrangement-ribbon,
+  .song-view-page .sv-pwa-media-section {
     width: calc(100% - 32px);
     max-width: none;
     margin-left: 16px;
@@ -874,26 +735,6 @@ body.is-app .song-view-page.has-seq-nav .sv-control-panel {
 
   .song-view-page .sv-sheet {
     padding: 16px;
-  }
-
-  .song-view-page .sv-control-panel,
-  .song-view-page .sv-inline-controls {
-    padding-left: 16px;
-    padding-right: 16px;
-    margin-bottom: 16px;
-  }
-
-  .song-view-page.has-seq-nav .sv-control-panel {
-    margin-bottom: 18px;
-  }
-
-  .song-view-page .sv-edit-action {
-    margin-top: 8px;
-    margin-bottom: 12px;
-  }
-
-  .song-view-page.has-seq-nav .sv-edit-action {
-    margin-bottom: 24px !important;
   }
 }
 
@@ -1810,9 +1651,9 @@ body.is-app .song-view-page .sv-pwa-media-section {
 }
 
 .sv-tone-capo-card {
-  margin: 0 12px 14px;
+  margin: 0 0 12px;
   padding: 14px;
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--color-surface);
   border: 1px solid var(--glass-border);
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.25);
@@ -1822,23 +1663,50 @@ body.is-app .song-view-page .sv-pwa-media-section {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   margin-bottom: 10px;
 }
 
-.sv-tone-capo-head span {
+.sv-tone-capo-head > span {
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.06em;
-  color: #f7b500;
+  color: var(--sv-accent, #f7b500);
+}
+
+.sv-tone-capo-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sv-tone-flats-btn {
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.sv-tone-flats-btn.active {
+  background: var(--sv-accent-glow);
+  border-color: var(--sv-accent);
+  color: var(--sv-accent);
 }
 
 .sv-tone-reset {
   border: none;
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 650;
   cursor: pointer;
+  padding: 2px 4px;
 }
 
 .sv-tone-keys-grid {
@@ -1910,11 +1778,85 @@ body.is-app .song-view-page .sv-pwa-media-section {
 }
 
 .sv-inline-metronome-wrap {
-  margin: 0 12px 14px;
+  margin: 0 0 12px;
+}
+
+.sv-pwa-media-add-inline {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Floating Auto-Scroll Mini Controller (PWA / compact screens) */
+.sv-autoscroll-pill {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(max(20px, env(safe-area-inset-bottom, 20px)) + 74px);
+  z-index: 2147483100;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(16, 20, 32, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+}
+
+.sv-autoscroll-pill.has-seq-nav {
+  bottom: calc(max(20px, env(safe-area-inset-bottom, 20px)) + 132px);
+}
+
+.sv-autoscroll-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sv-autoscroll-speed {
+  min-width: 38px;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--sv-accent, #39d8ff);
+}
+
+.sv-autoscroll-stop {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--sv-accent, #39d8ff);
+  color: #061018;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
 }
 
 body.light-mode .sv-tone-key-chip,
-body.light-mode .sv-capo-chip {
+body.light-mode .sv-capo-chip,
+body.light-mode .sv-tone-flats-btn {
   background: rgba(15, 23, 42, 0.04);
   border-color: rgba(15, 23, 42, 0.1);
 }

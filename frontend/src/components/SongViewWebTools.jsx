@@ -1,4 +1,3 @@
-import { API_BASE_URL } from '../utils/nativeConfig';
 import { useFeatureFlags } from '../utils/featureFlags';
 import { BetaBadge, ComingSoonBadge } from './BetaBadge';
 
@@ -9,25 +8,6 @@ const CHORD_COLORS = [
   { id: 'amber', value: '#f4b942', label: 'Amber' },
   { id: 'rose', value: '#ff7f9f', label: 'Rose' },
 ];
-
-function resolveMediaUrl(url) {
-  if (!url) return '';
-  const trimmed = String(url).trim();
-  if (/^(https?:|\/\/|blob:|data:)/i.test(trimmed)) {
-    return trimmed;
-  }
-  const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-  return `${API_BASE_URL}${cleanPath}`;
-}
-
-function isAudioAttachment(att) {
-  if (!att) return false;
-  const type = String(att.type || '').toLowerCase();
-  if (type === 'audio') return true;
-  const url = String(att.url || '').toLowerCase();
-  const clean = url.split('?')[0].split('#')[0];
-  return clean.endsWith('.mp3') || clean.endsWith('.m4a') || clean.endsWith('.wav') || clean.endsWith('.ogg') || clean.endsWith('.aac') || clean.endsWith('.flac');
-}
 
 function ToolIcon({ children }) {
   return <svg viewBox="0 0 24 24" aria-hidden="true">{children}</svg>;
@@ -48,7 +28,6 @@ export default function SongViewWebTools({
   onAutoScrollSpeedChange,
   chordColor,
   onChordColorChange,
-  attachments,
   onOpenPrint,
   useFlats,
   onToggleFlats,
@@ -64,6 +43,7 @@ export default function SongViewWebTools({
   onToggleStems,
   stemsOpen,
   songId,
+  hasChords = true,
 }) {
   const { isEnabled, isBeta, isSoon, isVisible } = useFeatureFlags();
 
@@ -74,14 +54,14 @@ export default function SongViewWebTools({
           <span>SONG CONTROLS</span>
           <strong>Կատարման գործիքներ</strong>
         </div>
-        <span className="web-song-console__status">{keepAwakeActive ? '💡 Կենդանի բեմ' : 'Պատրաստ'}</span>
+        <span className="web-song-console__status">{keepAwakeActive ? 'Կենդանի բեմ' : 'Պատրաստ'}</span>
       </div>
 
       {/* Stage Performance Quick Controls */}
       <section className="web-tool-section web-stage-section">
         <div className="web-tool-label">
           <span>Բեմական ռեժիմ</span>
-          <span className="web-shortcut-hint">Hotkeys: F, Space, [ ], C</span>
+          <span className="web-shortcut-hint">F · Space · [ ] · C</span>
         </div>
         <div className="web-stage-grid">
           <button
@@ -117,15 +97,17 @@ export default function SongViewWebTools({
             <span>{isStageFullscreen ? 'Ելք' : 'Fullscreen'}</span>
           </button>
 
-          <button
-            type="button"
-            className={`web-stage-btn ${viewMode === 'lyrics' ? 'active' : ''}`}
-            onClick={onToggleViewMode}
-            title="Անջատել / միացնել ակորդների ցուցադրությունը (C)"
-          >
-            <ToolIcon><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></ToolIcon>
-            <span>{viewMode === 'lyrics' ? 'Միայն բառեր' : 'Ակորդներ'}</span>
-          </button>
+          {hasChords && (
+            <button
+              type="button"
+              className={`web-stage-btn ${viewMode === 'lyrics' ? 'active' : ''}`}
+              onClick={onToggleViewMode}
+              title="Անջատել / միացնել ակորդների ցուցադրությունը (C)"
+            >
+              <ToolIcon><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></ToolIcon>
+              <span>{viewMode === 'lyrics' ? 'Միայն բառեր' : 'Ակորդներ'}</span>
+            </button>
+          )}
 
           {isVisible('rehearsal_stems') && (
             <button
@@ -136,7 +118,7 @@ export default function SongViewWebTools({
             >
               <ToolIcon><path d="M4 6h16M4 12h16M4 18h16" /></ToolIcon>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                {stemsOpen ? 'Փակել Stems' : '🎛️ Stems'}
+                {stemsOpen ? 'Փակել Stems' : 'Stems'}
                 {isBeta('rehearsal_stems') && <BetaBadge style={{ fontSize: '0.62rem', padding: '1px 5px' }} />}
                 {isSoon('rehearsal_stems') && <ComingSoonBadge style={{ fontSize: '0.62rem', padding: '1px 5px' }} />}
               </span>
@@ -153,7 +135,7 @@ export default function SongViewWebTools({
               >
                 <ToolIcon><path d="M2 3h20v14H2zM8 21h8M12 17v4" /></ToolIcon>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  📽️ Projection
+                  Projection
                   <ComingSoonBadge style={{ fontSize: '0.62rem', padding: '1px 5px' }} />
                 </span>
               </button>
@@ -168,7 +150,7 @@ export default function SongViewWebTools({
               >
                 <ToolIcon><path d="M2 3h20v14H2zM8 21h8M12 17v4" /></ToolIcon>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  📽️ Projection
+                  Projection
                   {isBeta('lyrics_projection') && <BetaBadge style={{ fontSize: '0.62rem', padding: '1px 5px' }} />}
                 </span>
               </a>
@@ -177,27 +159,31 @@ export default function SongViewWebTools({
         </div>
       </section>
 
-      <section className="web-tool-section">
-        <div className="web-tool-label">
-          <span>Տոնայնություն</span>
-          <button type="button" className={useFlats ? 'active' : ''} onClick={onToggleFlats}>{useFlats ? '♭ Flats' : '♯ Sharps'}</button>
-        </div>
-        <div className="web-key-grid">
-          {keys.map(key => (
-            <button type="button" key={key} className={activeKey === key ? 'active' : ''} onClick={() => onKeyClick(key)}>{key}</button>
-          ))}
-        </div>
-      </section>
+      {hasChords && (
+        <section className="web-tool-section">
+          <div className="web-tool-label">
+            <span>Տոնայնություն</span>
+            <button type="button" className={useFlats ? 'active' : ''} onClick={onToggleFlats}>{useFlats ? '♭ Flats' : '♯ Sharps'}</button>
+          </div>
+          <div className="web-key-grid">
+            {keys.map(key => (
+              <button type="button" key={key} className={activeKey === key ? 'active' : ''} onClick={() => onKeyClick(key)}>{key}</button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="web-tool-section web-tool-grid">
-        <label>
-          <span>Capo</span>
-          <select value={capo} onChange={event => onCapoChange(Number(event.target.value))}>
-            <option value="0">Առանց capo</option>
-            {[1,2,3,4,5,6,7,8,9,10,11,12].map(value => <option key={value} value={value}>Capo {value}</option>)}
-          </select>
-        </label>
-        <div className="web-font-control">
+        {hasChords && (
+          <label>
+            <span>Capo</span>
+            <select value={capo} onChange={event => onCapoChange(Number(event.target.value))}>
+              <option value="0">Առանց capo</option>
+              {[1,2,3,4,5,6,7,8,9,10,11,12].map(value => <option key={value} value={value}>Capo {value}</option>)}
+            </select>
+          </label>
+        )}
+        <div className="web-font-control" style={!hasChords ? { gridColumn: '1 / -1' } : undefined}>
           <span>Տառաչափ</span>
           <div>
             <button type="button" onClick={onDecreaseFont}>A−</button>
@@ -224,56 +210,24 @@ export default function SongViewWebTools({
         </div>
       </section>
 
-      <section className="web-tool-section">
-        <div className="web-tool-label"><span>Ակորդների գույն</span></div>
-        <div className="web-chord-swatches">
-          {CHORD_COLORS.map(color => (
-            <button
-              type="button"
-              key={color.id}
-              className={chordColor === color.value ? 'active' : ''}
-              style={{ '--swatch': color.value }}
-              onClick={() => onChordColorChange(color.value)}
-              aria-label={color.label}
-              title={color.label}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="web-tool-section web-media-card">
-        <span>Մեդիա և նյութեր</span>
-        {attachments?.length ? (
-          attachments.slice(0, 5).map(attachment => {
-            const resolvedUrl = resolveMediaUrl(attachment.url);
-            const isAudio = isAudioAttachment(attachment);
-            return (
-              <div key={attachment.id || attachment.url} style={{ marginBottom: '8px' }}>
-                <a href={resolvedUrl} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <ToolIcon><path d="M8 5v14l11-7Z" /></ToolIcon>
-                  <span>{attachment.title || 'Բացել նյութը'}</span>
-                </a>
-                {isAudio && (
-                  <audio
-                    controls
-                    playsInline
-                    src={resolvedUrl}
-                    preload="metadata"
-                    style={{ width: '100%', height: '32px', marginTop: '6px' }}
-                  >
-                    Ձեր դիտարկիչը չի աջակցում աուդիո նվագարկիչը:
-                  </audio>
-                )}
-              </div>
-            );
-          })
-        ) : (
-          <div className="web-media-empty">
-            <ToolIcon><path d="M8 5v14l11-7Z" /></ToolIcon>
-            <span>YouTube / Audio նյութ չկա</span>
+      {hasChords && (
+        <section className="web-tool-section">
+          <div className="web-tool-label"><span>Ակորդների գույն</span></div>
+          <div className="web-chord-swatches">
+            {CHORD_COLORS.map(color => (
+              <button
+                type="button"
+                key={color.id}
+                className={chordColor === color.value ? 'active' : ''}
+                style={{ '--swatch': color.value }}
+                onClick={() => onChordColorChange(color.value)}
+                aria-label={color.label}
+                title={color.label}
+              />
+            ))}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
       {isEnabled('worship_ai_studio') && (
         <button

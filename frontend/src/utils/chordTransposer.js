@@ -76,7 +76,7 @@ export function renderLyricsWithStageNotes(text = '') {
       const trimmed = line.trimStart();
       if (trimmed.startsWith('!')) {
         const note = escapeHtml(trimmed.slice(1).trim());
-        return `<span class="stage-cue-line">🎸 ${note}</span>`;
+        return `<span class="stage-cue-line">${note}</span>`;
       }
       return escapeHtml(line);
     })
@@ -91,7 +91,7 @@ export function renderWithChords(text = '', semi = 0, useFlats = false) {
       const trimmed = line.trimStart();
       if (trimmed.startsWith('!')) {
         const note = escapeHtml(trimmed.slice(1).trim());
-        return `<span class="stage-cue-line">🎸 ${note}</span>`;
+        return `<span class="stage-cue-line">${note}</span>`;
       }
       const safeLine = escapeHtml(transposeChordText(line, semi, useFlats));
       return safeLine.replace(CHORD_REGEX, (match, prefix, chordToken) => {

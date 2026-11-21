@@ -9,6 +9,7 @@ import {
   stripStageNotes,
   transposeRoot,
   extractChordsOnlyChart,
+  isPureChordLine,
 } from '../utils/chordTransposer';
 import SmartMetronome from '../components/SmartMetronome';
 import { getLocalizedTitle } from '../utils/titleParser';
@@ -80,6 +81,28 @@ function parseArrangementSections(rawText) {
     }
   });
   return sections;
+}
+
+function hasEmbeddedLyricsInChords(chordsText) {
+  if (!chordsText) return false;
+  const lines = String(chordsText).split(/\r?\n/);
+  let lyricLines = 0;
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('!') || line.startsWith('[')) continue;
+    if (/^(?:Տուն|Կրկներգ|Կամուրջ|Նախերգ|Նախակրկներգ|Ավարտ|Սոլո|Անցում|Ներածություն|Վերջաբան|Verse|Chorus|Pre[- ]?Chorus|Bridge|Intro|Outro|Tag|Ending|Interlude|Instrumental|Куплет|Припев|Предприпев|Бридж|Мост|Вступление|Конец|Кода|Проигрыш)\s*\d*\s*:?$/i.test(line)) {
+      continue;
+    }
+    if (isPureChordLine(line)) continue;
+    const withoutInline = line
+      .replace(/\[[A-G][#b]?[^\]]*\]/g, '')
+      .replace(/[|/\\–—\-.,:;!?()\d\s]+/g, '');
+    if (withoutInline.length >= 3) {
+      lyricLines += 1;
+      if (lyricLines >= 2) return true;
+    }
+  }
+  return false;
 }
 
 function resolveMediaUrl(url) {
@@ -1346,16 +1369,73 @@ export default function SongView() {
     (!songKeysEqual(soundingKey, setlistCurrentKey) || Number(capo || 0) !== setlistCurrentCapo)
   );
 
+  const hasChords = Boolean(song?.chords && song.chords.trim());
+  const hasLyrics = Boolean(song?.lyrics && song.lyrics.trim());
+  const chordsHasLyrics = useMemo(
+    () => hasEmbeddedLyricsInChords(song?.chords || ''),
+    [song?.chords]
+  );
+
   const currentChords = useMemo(
-    () => (song?.chords ? renderWithChords(song.chords, semi - capo, useFlats) : ''),
-    [song?.chords, semi, capo, useFlats]
+    () => (hasChords ? renderWithChords(song.chords, semi - capo, useFlats) : ''),
+    [hasChords, song?.chords, semi, capo, useFlats]
   );
   const chordsOnlySections = useMemo(
-    () => (song?.chords ? extractChordsOnlyChart(song.chords, semi - capo, useFlats) : []),
-    [song?.chords, semi, capo, useFlats]
+    () => (hasChords ? extractChordsOnlyChart(song.chords, semi - capo, useFlats) : []),
+    [hasChords, song?.chords, semi, capo, useFlats]
+  );
+  const arrangementSections = useMemo(
+    () => parseArrangementSections(song?.chords || song?.lyrics || ''),
+    [song?.chords, song?.lyrics]
   );
   const currentLyrics = song?.lyrics || t('songView.noLyrics');
   const displayTitle = song?.title ? getLocalizedTitle(song.title, language) : (song?.title_hy || song?.title || 'Worship Song');
+
+  // Build non-redundant view mode tabs based on actual song content
+  const viewModeTabs = useMemo(() => {
+    if (!hasChords || !hasLyrics) return [];
+    if (chordsHasLyrics) {
+      const tabs = [
+        { id: 'chords', label: t('songView.chordsOnly', 'Ակորդներ') },
+        { id: 'lyrics', label: t('songView.lyricsOnly', 'Բառեր') },
+      ];
+      if (chordsOnlySections.length > 0) {
+        tabs.push({
+          id: 'chords_chart',
+          label: language === 'ru' ? 'Схема' : language === 'en' ? 'Chart' : 'Սխեմա',
+        });
+      }
+      return tabs;
+    }
+    return [
+      { id: 'both', label: t('songView.bothModes', 'Երկուսն էլ') },
+      { id: 'chords', label: t('songView.chordsOnly', 'Ակորդներ') },
+      { id: 'lyrics', label: t('songView.lyricsOnly', 'Բառեր') },
+    ];
+  }, [hasChords, hasLyrics, chordsHasLyrics, chordsOnlySections.length, t, language]);
+
+  const effectiveViewMode = useMemo(() => {
+    if (!hasChords) return 'lyrics';
+    if (!hasLyrics) return 'chords';
+    if (chordsHasLyrics) {
+      if (viewMode === 'lyrics') return 'lyrics';
+      if (viewMode === 'chords_chart' && chordsOnlySections.length > 0) return 'chords_chart';
+      return 'chords';
+    }
+    if (viewMode === 'lyrics') return 'lyrics';
+    if (viewMode === 'chords' || viewMode === 'chords_chart') return 'chords';
+    return 'both';
+  }, [hasChords, hasLyrics, chordsHasLyrics, chordsOnlySections.length, viewMode]);
+
+  const defaultChordsViewMode = chordsHasLyrics ? 'chords' : 'both';
+
+  const promptAddAttachment = () => {
+    const title = window.prompt('Մուտքագրեք հղման անվանումը (օր.՝ YouTube Track)');
+    if (!title) return;
+    const url = window.prompt('Մուտքագրեք հղումը (URL)');
+    if (!url) return;
+    addAttachment(title, url);
+  };
 
   const openChordPopover = event => {
     const chordElement = event.target.closest?.('.chord');
@@ -1467,7 +1547,9 @@ export default function SongView() {
         toggleStageFullscreen();
       } else if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
-        handleViewModeChange(viewMode === 'lyrics' ? 'both' : 'lyrics');
+        if (hasChords && hasLyrics) {
+          handleViewModeChange(effectiveViewMode === 'lyrics' ? defaultChordsViewMode : 'lyrics');
+        }
       } else if (e.key === '[' || e.key === '-') {
         if (e.shiftKey) {
           e.preventDefault();
@@ -1491,7 +1573,7 @@ export default function SongView() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setlistNavData, viewMode, pedalMode]);
+  }, [setlistNavData, effectiveViewMode, defaultChordsViewMode, hasChords, hasLyrics, pedalMode]);
 
   if (loading || (!song && authLoading)) {
     return null;
@@ -1551,162 +1633,215 @@ export default function SongView() {
 
   return (
     <>
-    <div key={id} className={`song-view-page animate-fade-in ${setlistNavData ? 'has-seq-nav' : ''} ${!isPWA ? 'web-song-pro' : ''} ${isStageFullscreen ? 'is-stage-fullscreen' : ''}`} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchCancel}>
+    <div key={id} className={`song-view-page ${setlistNavData ? 'has-seq-nav' : ''} ${!isPWA ? 'web-song-pro' : ''} ${isStageFullscreen ? 'is-stage-fullscreen' : ''}`} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchCancel}>
       {/* Top Header */}
       <div className="sv-header">
         <div className="sv-header-left">
-          <button className="icon-btn" data-native-route-back="true" onClick={handleSongBack} style={{ background: 'rgba(255,255,255,0.05)', padding: '8px', borderRadius: '12px' }}>
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <button
+            type="button"
+            className="icon-btn sv-back-btn"
+            data-native-route-back="true"
+            onClick={handleSongBack}
+            aria-label={t('songView.back', 'Հետ գնալ')}
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
           </button>
           <div className="sv-title-area">
-            <h1 className="sv-title">{getLocalizedTitle(song.title, language)}</h1>
-            <p className="sv-artist">{song.artist}</p>
+            <h1 className="sv-title">{displayTitle}</h1>
+            {song.artist && <p className="sv-artist">{song.artist}</p>}
           </div>
         </div>
 
-      </div>
+        <div className="sv-header-actions">
+          <button
+            type="button"
+            className={`icon-btn ${isFavorite ? 'active sv-fav-active' : ''}`}
+            onClick={toggleFavorite}
+            title={isFavorite ? t('songView.removeFav') : t('songView.addFav')}
+            aria-label={isFavorite ? t('songView.removeFav') : t('songView.addFav')}
+          >
+            <svg viewBox="0 0 24 24" width="19" height="19" fill={isFavorite ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          </button>
 
-      {/* Meta Bar */}
-      <div className="sv-meta-row">
-        <button
-          type="button"
-          className={`sv-meta-pill key-pill sv-meta-clickable ${showToneCapo ? 'is-open' : ''}`}
-          onClick={() => setShowToneCapo((v) => !v)}
-          title={t('songView.transpose', 'Տոնայնություն և Կապո')}
-        >
-          <span>{t('songView.keyPrefix')} {soundingKey || song.song_key || '?'}</span>
-          {capo > 0 && <span className="sv-meta-sub">· C{capo}</span>}
-          <span className="sv-meta-caret">{showToneCapo ? '▴' : '▾'}</span>
-        </button>
-        <button
-          type="button"
-          className={`sv-meta-pill sv-meta-clickable ${showInlineMetronome ? 'is-open' : ''}`}
-          onClick={() => setShowInlineMetronome((v) => !v)}
-          title="Smart Metronome"
-        >
-          ♩ {Number.parseInt(song.bpm, 10) > 0 ? `${song.bpm} BPM` : (language === 'ru' ? 'Метроном' : language === 'en' ? 'Metronome' : 'Մետրոնոմ')}
-        </button>
-        <button
-          type="button"
-          className={`sv-meta-pill sv-meta-clickable ${pedalMode ? 'is-open' : ''}`}
-          onClick={() => {
-            setPedalMode((v) => {
-              const next = !v;
-              localStorage.setItem('wp_pedal_mode_v1', String(next));
-              return next;
-            });
-          }}
-          title={language === 'ru' ? 'Bluetooth педаль (PageDown/Up, стрелки, Space)' : language === 'en' ? 'Bluetooth Pedal Mode (PageDown/Up, Arrows, Space)' : 'Bluetooth էջաթերթման ոտնակ'}
-        >
-          🦶 {language === 'ru' ? 'Педаль' : language === 'en' ? 'Pedal' : 'Ոտնակ'}{pedalMode ? ' •' : ''}
-        </button>
-        
-        <div className="sv-header-actions" style={{ marginLeft: 'auto' }}>
-            {(setlistNavData?.setlist?.id || setlistNavData?.current?.setlist_id) && (
-              <button 
-                className="icon-btn highlight-btn"
-                onClick={() => {
-                  const targetId = setlistNavData.setlist?.id || setlistNavData.current.setlist_id;
-                  const isFromLive = new URLSearchParams(location.search).get('from_live') === '1';
-                  navigate(isFromLive ? `/setlists/${targetId}/live` : `/setlists/${targetId}`);
-                }}
-                title={new URLSearchParams(location.search).get('from_live') === '1' ? 'Վերադառնալ Live ռեժիմ' : t('songView.backToSetlist')}
-              >
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-              </button>
-            )}
-            <button className="icon-btn" onClick={copySongContent} title={t('songView.copyContent', 'Copy Song')}>
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-            </button>
-            <button className="icon-btn" onClick={openSetlistModal} title={t('songView.addToSetlist', 'Ավելացնել երգացանկում')}>
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="16" y1="16" x2="16" y2="22"></line><line x1="13" y1="19" x2="19" y2="19"></line></svg>
-            </button>
-            <button className="icon-btn" onClick={openShareModal} title={t('chat.send', 'Ուղարկել Չաթով')}>
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-            </button>
-            <button className="icon-btn" onClick={copyShareLink} title={t('songView.copyLink')}>
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-            </button>
-            {!isPWA && (
-              <button 
-                className="sv-web-edit-btn"
-                onClick={() => navigate(`/song-request?song_id=${song.id}`)} 
-                title={t('songView.requestEdit')}
-              >
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-                <span>{t('songView.requestEdit')}</span>
-              </button>
-            )}
-            <button className={`icon-btn ${isFavorite ? 'active' : ''}`} onClick={toggleFavorite} title={isFavorite ? t('songView.removeFav') : t('songView.addFav')}>
-              <svg viewBox="0 0 24 24" width="20" height="20" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-            </button>
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={openSetlistModal}
+            title={t('songView.addToSetlist', 'Ավելացնել երգացանկում')}
+            aria-label={t('songView.addToSetlist', 'Ավելացնել երգացանկում')}
+          >
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6" />
+              <line x1="8" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="3.01" y2="6" />
+              <line x1="3" y1="12" x2="3.01" y2="12" />
+              <line x1="16" y1="16" x2="16" y2="22" />
+              <line x1="13" y1="19" x2="19" y2="19" />
+            </svg>
+          </button>
 
-            {/* Pro Ministry Tools Dropdown Trigger (•••) */}
-            <div className="sv-tools-menu-container">
-              <button
-                ref={toolsBtnRef}
-                type="button"
-                className={`icon-btn sv-tools-menu-btn ${isToolsMenuOpen ? 'active' : ''}`}
-                onClick={toggleToolsMenu}
-                title="Worship Pro Գործիքներ"
-                aria-label="Worship Pro Studio Tools"
-              >
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                  <circle cx="12" cy="5" r="2" />
-                  <circle cx="12" cy="12" r="2" />
-                  <circle cx="12" cy="19" r="2" />
-                </svg>
-              </button>
-            </div>
+          <div className="sv-tools-menu-container">
+            <button
+              ref={toolsBtnRef}
+              type="button"
+              className={`icon-btn sv-tools-menu-btn ${isToolsMenuOpen ? 'active' : ''}`}
+              onClick={toggleToolsMenu}
+              title={language === 'ru' ? 'Ещё' : language === 'en' ? 'More' : 'Ավելին'}
+              aria-label={language === 'ru' ? 'Ещё' : language === 'en' ? 'More' : 'Ավելին'}
+            >
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor">
+                <circle cx="12" cy="5" r="1.8" />
+                <circle cx="12" cy="12" r="1.8" />
+                <circle cx="12" cy="19" r="1.8" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Segmented Control for View Mode */}
-      <div className="sv-segment-control">
-        <button className={`sv-segment ${viewMode === 'lyrics' ? 'active' : ''}`} onClick={() => handleViewModeChange('lyrics')}>
-          {language === 'ru' ? 'Простой' : language === 'en' ? 'Simple' : 'Պարզ'}
-        </button>
-        <button className={`sv-segment ${viewMode === 'chords' ? 'active' : ''}`} onClick={() => handleViewModeChange('chords')}>{t('songView.chordsOnly')}</button>
-        {song.chords && (
-          <button className={`sv-segment ${viewMode === 'chords_chart' ? 'active' : ''}`} onClick={() => handleViewModeChange('chords_chart')}>
-            {language === 'ru' ? 'Без слов' : language === 'en' ? 'Chart' : 'Առանց բառերի'}
+      {/* Compact Meta & Quick Controls Bar */}
+      <div className="sv-meta-row">
+        <div className="sv-meta-left">
+          {hasChords && (
+            <button
+              type="button"
+              className={`sv-meta-pill key-pill sv-meta-clickable ${showToneCapo ? 'is-open' : ''}`}
+              onClick={() => setShowToneCapo((v) => !v)}
+              title={t('songView.transpose', 'Տոնայնություն և Կապո')}
+            >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18V5l12-2v13" />
+                <circle cx="6" cy="18" r="3" />
+                <circle cx="18" cy="16" r="3" />
+              </svg>
+              <span>{soundingKey || song.song_key || '—'}</span>
+              {capo > 0 && <span className="sv-meta-sub">· C{capo}</span>}
+              <svg className={`sv-meta-caret-svg ${showToneCapo ? 'is-open' : ''}`} viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+          )}
+
+          <button
+            type="button"
+            className={`sv-meta-pill sv-meta-clickable ${showInlineMetronome ? 'is-open' : ''}`}
+            onClick={() => setShowInlineMetronome((v) => !v)}
+            title={language === 'ru' ? 'Метроном' : language === 'en' ? 'Metronome' : 'Մետրոնոմ'}
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L5 21h14L12 2z" />
+              <line x1="12" y1="15" x2="17" y2="7" />
+            </svg>
+            <span>{Number.parseInt(song.bpm, 10) > 0 ? `${song.bpm} BPM` : (language === 'ru' ? 'Метроном' : language === 'en' ? 'Metronome' : 'Մետրոնոմ')}</span>
           </button>
-        )}
-        <button className={`sv-segment ${viewMode === 'both' ? 'active' : ''}`} onClick={() => handleViewModeChange('both')}>{t('songView.bothModes')}</button>
+
+          {pedalMode && (
+            <button
+              type="button"
+              className="sv-meta-pill sv-meta-clickable is-open"
+              onClick={() => {
+                setPedalMode(false);
+                localStorage.setItem('wp_pedal_mode_v1', 'false');
+              }}
+              title={language === 'ru' ? 'Отключить Bluetooth педаль' : language === 'en' ? 'Disable Bluetooth Pedal' : 'Անջատել Bluetooth ոտնակը'}
+            >
+              <span>{language === 'ru' ? 'Педаль' : language === 'en' ? 'Pedal' : 'Ոտնակ'} •</span>
+            </button>
+          )}
+        </div>
+
+        <div className="sv-quick-font" aria-label={t('songView.fontSize', 'Տառաչափ')}>
+          <button
+            type="button"
+            className="sv-quick-font-btn"
+            onClick={decreaseFontSize}
+            disabled={fontSize <= 14}
+            aria-label="Փոքրացնել տառաչափը"
+          >
+            A−
+          </button>
+          <span className="sv-quick-font-val">{fontSize}</span>
+          <button
+            type="button"
+            className="sv-quick-font-btn"
+            onClick={increaseFontSize}
+            disabled={fontSize >= 40}
+            aria-label="Մեծացնել տառաչափը"
+          >
+            A+
+          </button>
+        </div>
       </div>
 
-      {/* Stage Modules Container (fits SongViewWebPro grid-area: stage cleanly) */}
-      {(showToneCapo || showInlineMetronome || (stemsOpen && isEnabled('rehearsal_stems'))) && (
+      {/* Non-Redundant View Mode Segmented Control */}
+      {viewModeTabs.length > 1 && (
+        <div className="sv-segment-control">
+          {viewModeTabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className={`sv-segment ${effectiveViewMode === tab.id ? 'active' : ''}`}
+              onClick={() => handleViewModeChange(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Stage Modules Container (Single Unified Key & Capo Card + Inline Metronome + Stems) */}
+      {((showToneCapo && hasChords) || showInlineMetronome || (stemsOpen && isEnabled('rehearsal_stems'))) && (
         <div className="sv-stage-modules">
-          {showToneCapo && (
-            <section className="sv-tone-capo-card animate-fade-in">
+          {showToneCapo && hasChords && (
+            <section className="sv-tone-capo-card">
               <div className="sv-tone-capo-head">
                 <span>{language === 'ru' ? 'ТОН И КАПО' : language === 'en' ? 'KEY & CAPO' : 'ՏՈՆԱՅՆՈՒԹՅՈՒՆ ԵՎ ԿԱՊՈ'}</span>
-                <button type="button" className="sv-tone-reset" onClick={() => { setSemi(0); applyManualCapo(0); }}>
-                  {language === 'ru' ? 'Сброс' : language === 'en' ? 'Reset' : 'Վերակայել'}
-                </button>
+                <div className="sv-tone-capo-head-actions">
+                  <button
+                    type="button"
+                    className={`sv-tone-flats-btn ${useFlats ? 'active' : ''}`}
+                    onClick={() => setUseFlats((f) => !f)}
+                  >
+                    {useFlats ? '♭ Flats' : '♯ Sharps'}
+                  </button>
+                  {(semi !== 0 || capo !== 0) && (
+                    <button
+                      type="button"
+                      className="sv-tone-reset"
+                      onClick={() => {
+                        userManuallyAdjustedKeyRef.current = true;
+                        setSemi(0);
+                        applyManualCapo(0);
+                      }}
+                    >
+                      {language === 'ru' ? 'Сброс' : language === 'en' ? 'Reset' : 'Վերակայել'}
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="sv-tone-keys-grid">
                 {KEYS.map((k) => {
+                  const displayK = getTransposedFullKey(k, 0);
                   const isActive = soundingKey ? songKeysEqual(soundingKey, k) : false;
                   return (
                     <button
                       key={k}
                       type="button"
                       className={`sv-tone-key-chip ${isActive ? 'active' : ''}`}
-                      onClick={() => handleKeyClick(k)}
+                      onClick={() => handleKeyClick(displayK)}
                     >
-                      {k}
+                      {displayK}
                     </button>
                   );
                 })}
               </div>
               <div className="sv-capo-chips-row">
                 <span className="sv-capo-label">Capo:</span>
-                {[0, 1, 2, 3, 4, 5, 6, 7].map((cVal) => (
+                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((cVal) => (
                   <button
                     key={cVal}
                     type="button"
@@ -1721,7 +1856,7 @@ export default function SongView() {
           )}
 
           {showInlineMetronome && (
-            <div className="sv-inline-metronome-wrap animate-fade-in">
+            <div className="sv-inline-metronome-wrap">
               <SmartMetronome
                 initialBpm={Number.parseInt(song?.bpm, 10) || 120}
                 compact
@@ -1742,52 +1877,48 @@ export default function SongView() {
         </div>
       )}
 
-      {/* Color-Coded Song Arrangement Ribbon (MyEkklesia-inspired) */}
-      {(() => {
-        const arrSections = parseArrangementSections(song?.chords || song?.lyrics || '');
-        if (arrSections.length < 2) return null;
-        return (
-          <div className="sv-arrangement-ribbon" aria-label="Երգի կառուցվածք">
-            {arrSections.map((sec, idx) => (
-              <button
-                key={`${sec.label}_${idx}`}
-                type="button"
-                className="sv-arr-pill"
-                style={{ '--arr-color': sec.color }}
-                title={sec.label}
-                onClick={() => {
-                  const sheetEl = document.querySelector('.sv-sheet');
-                  if (sheetEl) {
-                    const rect = sheetEl.getBoundingClientRect();
-                    const absTop = rect.top + window.scrollY;
-                    const targetY = absTop + Math.max(0, sheetEl.scrollHeight * sec.ratio - 90);
-                    window.scrollTo({ top: targetY, behavior: 'smooth' });
-                  }
-                }}
-              >
-                <span className="sv-arr-badge">{sec.short}</span>
-                <span className="sv-arr-name">{sec.label}</span>
-              </button>
-            ))}
-          </div>
-        );
-      })()}
+      {/* Color-Coded Song Arrangement Ribbon */}
+      {arrangementSections.length >= 2 && effectiveViewMode !== 'chords_chart' && (
+        <div className="sv-arrangement-ribbon" aria-label="Երգի կառուցվածք">
+          {arrangementSections.map((sec, idx) => (
+            <button
+              key={`${sec.label}_${idx}`}
+              type="button"
+              className="sv-arr-pill"
+              style={{ '--arr-color': sec.color }}
+              title={sec.label}
+              onClick={() => {
+                const sheetEl = document.querySelector('.sv-sheet');
+                if (sheetEl) {
+                  const rect = sheetEl.getBoundingClientRect();
+                  const absTop = rect.top + window.scrollY;
+                  const targetY = absTop + Math.max(0, sheetEl.scrollHeight * sec.ratio - 90);
+                  window.scrollTo({ top: targetY, behavior: 'smooth' });
+                }
+              }}
+            >
+              <span className="sv-arr-badge">{sec.short}</span>
+              <span className="sv-arr-name">{sec.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Sheet Music / Lyrics Content */}
       <div
-        className={`sv-sheet ${viewMode === 'lyrics' ? 'lyrics-mode' : ''} ${isTwoColumn ? 'web-two-column' : ''}`}
+        className={`sv-sheet ${effectiveViewMode === 'lyrics' ? 'lyrics-mode' : ''} ${isTwoColumn ? 'web-two-column' : ''}`}
         style={{ fontSize: `${fontSize}px` }}
         onMouseOver={openChordPopover}
         onMouseOut={closeChordPopover}
         onClick={openChordPopover}
       >
-        {viewMode === 'chords_chart' && song.chords ? (
+        {effectiveViewMode === 'chords_chart' && hasChords ? (
           <div className="sv-chords-only-grid">
             {chordsOnlySections.length > 0 ? chordsOnlySections.map((sec, idx) => (
               <section key={`${sec.label}_${idx}`} className="sv-chart-section">
                 <header className="sv-chart-sec-title">{sec.label}</header>
                 {sec.cues.map((cue, cIdx) => (
-                  <div key={cIdx} className="sv-chart-cue">🎸 {cue}</div>
+                  <div key={cIdx} className="sv-chart-cue">{cue}</div>
                 ))}
                 <div className="sv-chart-bars">
                   {sec.bars.map((bar, bIdx) => (
@@ -1808,9 +1939,9 @@ export default function SongView() {
               <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
             )}
           </div>
-        ) : viewMode === 'chords' && song.chords ? (
+        ) : effectiveViewMode === 'chords' && hasChords ? (
           <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
-        ) : viewMode === 'both' && song.chords ? (
+        ) : effectiveViewMode === 'both' && hasChords && hasLyrics ? (
           <>
             <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
             <div className="sv-divider"></div>
@@ -1821,349 +1952,217 @@ export default function SongView() {
         )}
       </div>
 
-      {/* Attachments & Media UI — shown for all users whenever attachments exist */}
-      {(song.attachments?.length > 0 || user?.role === 'admin' || user?.role === 'owner') && (
+      {/* Attachments & Media UI — rendered ONLY when media attachments exist */}
+      {song.attachments?.length > 0 && (
         <div className="sv-pwa-media-section sv-attachments">
           <div className="sv-pwa-media-header">
             <div className="sv-pwa-media-title-group">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m22 8-6 4 6 4V8Z" />
                 <rect width="14" height="12" x="2" y="6" rx="2" ry="2" />
               </svg>
               <h3>{t('songView.mediaAndMaterials', 'Մեդիա և նյութեր')}</h3>
-            </div>
-            {song.attachments?.length > 0 && (
               <span className="sv-pwa-media-count">{song.attachments.length}</span>
+            </div>
+            {(user?.role === 'admin' || user?.role === 'owner') && (
+              <button
+                type="button"
+                onClick={promptAddAttachment}
+                className="sv-pwa-media-add-inline"
+                title="Ավելացնել նյութ"
+              >
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </button>
             )}
           </div>
 
-          {song.attachments?.length > 0 ? (
-            <div className="sv-pwa-media-list">
-              {song.attachments.map(att => {
-                const attType = getAttachmentType(att);
-                const resolvedUrl = resolveMediaUrl(att.url);
-                const embedUrl = getYouTubeEmbedUrl(att.url);
-                const driveEmbedUrl = getGoogleDriveEmbedUrl(att.url);
-                const isEmbedActive = activeEmbedId === att.id;
+          <div className="sv-pwa-media-list">
+            {song.attachments.map(att => {
+              const attType = getAttachmentType(att);
+              const resolvedUrl = resolveMediaUrl(att.url);
+              const embedUrl = getYouTubeEmbedUrl(att.url);
+              const driveEmbedUrl = getGoogleDriveEmbedUrl(att.url);
+              const isEmbedActive = activeEmbedId === att.id;
 
-                return (
-                  <div key={att.id} className="sv-pwa-media-card-item">
-                    <div className="sv-pwa-media-item-main">
-                      <div className={`sv-pwa-media-icon-badge ${attType}`}>
-                        {attType === 'youtube' && (
-                          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                          </svg>
-                        )}
-                        {attType === 'audio' && (
-                          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
-                          </svg>
-                        )}
-                        {attType === 'video' && (
-                          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-                          </svg>
-                        )}
-                        {attType === 'drive' && (
-                          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
-                          </svg>
-                        )}
-                        {attType === 'image' && (
-                          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
-                          </svg>
-                        )}
-                        {attType === 'link' && (
-                          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                          </svg>
-                        )}
-                      </div>
-
-                      <div className="sv-pwa-media-info">
-                        <span className="sv-pwa-media-title">{att.title || 'Բացել նյութը'}</span>
-                        <span className="sv-pwa-media-sub">
-                          {attType === 'youtube'
-                            ? 'YouTube Video'
-                            : attType === 'audio'
-                            ? 'Ձայնագրություն (Audio Track)'
-                            : attType === 'video'
-                            ? 'Տեսանյութ (Video)'
-                            : attType === 'drive'
-                            ? 'Փաստաթուղթ (Document)'
-                            : attType === 'image'
-                            ? 'Նկար (Image)'
-                            : 'Հղում (Link)'}
-                        </span>
-                      </div>
-
-                      <div className="sv-pwa-media-actions">
-                        {(embedUrl || driveEmbedUrl || (!embedUrl && !driveEmbedUrl && attType === 'video')) && (
-                          <button
-                            type="button"
-                            className={`sv-pwa-media-btn ${isEmbedActive ? 'active' : ''}`}
-                            onClick={() => setActiveEmbedId(isEmbedActive ? null : att.id)}
-                            title={isEmbedActive ? 'Փակել' : 'Դիտել'}
-                          >
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                              {isEmbedActive ? (
-                                <>
-                                  <line x1="18" y1="6" x2="6" y2="18" />
-                                  <line x1="6" y1="6" x2="18" y2="18" />
-                                </>
-                              ) : (
-                                <polygon points="5 3 19 12 5 21 5 3" />
-                              )}
-                            </svg>
-                            <span>{isEmbedActive ? 'Փակել' : 'Դիտել'}</span>
-                          </button>
-                        )}
-
-                        <a
-                          href={resolvedUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="sv-pwa-media-btn sv-pwa-media-ext-btn"
-                          title="Բացել նոր պատուհանում"
-                        >
-                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
-                          </svg>
-                        </a>
-
-                        {(user?.role === 'admin' || user?.role === 'owner') && (
-                          <button
-                            type="button"
-                            onClick={() => removeAttachment(att.id)}
-                            className="sv-pwa-media-btn sv-pwa-media-del-btn"
-                            title="Հեռացնել"
-                          >
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                            </svg>
-                          </button>
-                        )}
-                      </div>
+              return (
+                <div key={att.id} className="sv-pwa-media-card-item">
+                  <div className="sv-pwa-media-item-main">
+                    <div className={`sv-pwa-media-icon-badge ${attType}`}>
+                      {attType === 'youtube' && (
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                        </svg>
+                      )}
+                      {attType === 'audio' && (
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
+                        </svg>
+                      )}
+                      {attType === 'video' && (
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                        </svg>
+                      )}
+                      {attType === 'drive' && (
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
+                        </svg>
+                      )}
+                      {attType === 'image' && (
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
+                        </svg>
+                      )}
+                      {attType === 'link' && (
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                        </svg>
+                      )}
                     </div>
 
-                    {/* Inline Audio Player for Audio Tracks */}
-                    {!embedUrl && !driveEmbedUrl && attType === 'audio' && (
-                      <div className="sv-pwa-media-audio-box" style={{
-                        marginTop: '8px',
-                        padding: '8px 12px',
-                        background: 'rgba(0, 0, 0, 0.3)',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(57, 216, 255, 0.22)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '6px'
-                      }}>
-                        <audio
-                          controls
-                          playsInline
-                          src={resolvedUrl}
-                          preload="metadata"
-                          style={{ width: '100%', height: '40px', outline: 'none' }}
+                    <div className="sv-pwa-media-info">
+                      <span className="sv-pwa-media-title">{att.title || 'Բացել նյութը'}</span>
+                      <span className="sv-pwa-media-sub">
+                        {attType === 'youtube'
+                          ? 'YouTube'
+                          : attType === 'audio'
+                          ? 'Աուդիո'
+                          : attType === 'video'
+                          ? 'Տեսանյութ'
+                          : attType === 'drive'
+                          ? 'Փաստաթուղթ'
+                          : attType === 'image'
+                          ? 'Նկար'
+                          : 'Հղում'}
+                      </span>
+                    </div>
+
+                    <div className="sv-pwa-media-actions">
+                      {(embedUrl || driveEmbedUrl || (!embedUrl && !driveEmbedUrl && attType === 'video')) && (
+                        <button
+                          type="button"
+                          className={`sv-pwa-media-btn ${isEmbedActive ? 'active' : ''}`}
+                          onClick={() => setActiveEmbedId(isEmbedActive ? null : att.id)}
+                          title={isEmbedActive ? 'Փակել' : 'Դիտել'}
                         >
-                          Ձեր դիտարկիչը չի աջակցում աուդիո նվագարկիչը:
-                        </audio>
-                      </div>
-                    )}
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                            {isEmbedActive ? (
+                              <>
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                              </>
+                            ) : (
+                              <polygon points="5 3 19 12 5 21 5 3" />
+                            )}
+                          </svg>
+                          <span>{isEmbedActive ? 'Փակել' : 'Դիտել'}</span>
+                        </button>
+                      )}
 
-                    {/* Inline Video Player ONLY for local/direct video files (NOT YouTube/Drive) */}
-                    {!embedUrl && !driveEmbedUrl && attType === 'video' && isEmbedActive && (
-                      <div className="sv-pwa-media-video-box" style={{
-                        marginTop: '10px',
-                        borderRadius: '12px',
-                        overflow: 'hidden',
-                        background: '#000000'
-                      }}>
-                        <video
-                          controls
-                          playsInline
-                          src={resolvedUrl}
-                          preload="metadata"
-                          style={{ width: '100%', maxHeight: '360px', display: 'block' }}
-                        />
-                      </div>
-                    )}
+                      <a
+                        href={resolvedUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="sv-pwa-media-btn sv-pwa-media-ext-btn"
+                        title="Բացել նոր պատուհանում"
+                      >
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+                        </svg>
+                      </a>
 
-                    {/* YouTube Embed Player */}
-                    {embedUrl && isEmbedActive && (
-                      <div className="sv-pwa-media-player-container">
-                        <iframe
-                          src={embedUrl}
-                          title={att.title || 'YouTube video'}
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
-                      </div>
-                    )}
-
-                    {/* Google Drive Embed Preview */}
-                    {!embedUrl && driveEmbedUrl && isEmbedActive && (
-                      <div className="sv-pwa-media-player-container">
-                        <iframe
-                          src={driveEmbedUrl}
-                          title={att.title || 'Google Drive Document'}
-                          allow="autoplay"
-                        />
-                      </div>
-                    )}
+                      {(user?.role === 'admin' || user?.role === 'owner') && (
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment(att.id)}
+                          className="sv-pwa-media-btn sv-pwa-media-del-btn"
+                          title="Հեռացնել"
+                        >
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="sv-pwa-media-empty">
-              <span>Կցված մեդիա նյութեր չկան</span>
-            </div>
-          )}
 
-          {(user?.role === 'admin' || user?.role === 'owner') && (
-            <div className="sv-pwa-media-add-wrap">
-              <button
-                type="button"
-                onClick={() => {
-                  const title = window.prompt("Մուտքագրեք հղման անվանումը (օր.՝ YouTube Track)");
-                  if (!title) return;
-                  const url = window.prompt("Մուտքագրեք հղումը (URL)");
-                  if (!url) return;
-                  addAttachment(title, url);
-                }}
-                className="sv-pwa-media-add-btn"
-              >
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                <span>Ավելացնել նյութ</span>
-              </button>
-            </div>
-          )}
+                  {/* Inline Audio Player for Audio Tracks */}
+                  {!embedUrl && !driveEmbedUrl && attType === 'audio' && (
+                    <div className="sv-pwa-media-audio-box" style={{
+                      marginTop: '8px',
+                      padding: '8px 12px',
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(57, 216, 255, 0.22)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px'
+                    }}>
+                      <audio
+                        controls
+                        playsInline
+                        src={resolvedUrl}
+                        preload="metadata"
+                        style={{ width: '100%', height: '40px', outline: 'none' }}
+                      >
+                        Ձեր դիտարկիչը չի աջակցում աուդիո նվագարկիչը:
+                      </audio>
+                    </div>
+                  )}
+
+                  {/* Inline Video Player ONLY for local/direct video files */}
+                  {!embedUrl && !driveEmbedUrl && attType === 'video' && isEmbedActive && (
+                    <div className="sv-pwa-media-video-box" style={{
+                      marginTop: '10px',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      background: '#000000'
+                    }}>
+                      <video
+                        controls
+                        playsInline
+                        src={resolvedUrl}
+                        preload="metadata"
+                        style={{ width: '100%', maxHeight: '360px', display: 'block' }}
+                      />
+                    </div>
+                  )}
+
+                  {/* YouTube Embed Player */}
+                  {embedUrl && isEmbedActive && (
+                    <div className="sv-pwa-media-player-container">
+                      <iframe
+                        src={embedUrl}
+                        title={att.title || 'YouTube video'}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  )}
+
+                  {/* Google Drive Embed Preview */}
+                  {!embedUrl && driveEmbedUrl && isEmbedActive && (
+                    <div className="sv-pwa-media-player-container">
+                      <iframe
+                        src={driveEmbedUrl}
+                        title={att.title || 'Google Drive Document'}
+                        allow="autoplay"
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
-      {/* Web Controls (Hidden in PWA) */}
-      <div className="sv-inline-controls web-legacy-controls">
-        <div className="sv-keys-scroll">
-          {KEYS.map(k => {
-            let isActive = false;
-            if (soundingKey) {
-              isActive = songKeysEqual(soundingKey, k);
-            }
-            return (
-              <button key={k} className={`sv-key-btn ${isActive ? 'active' : ''}`} onClick={() => handleKeyClick(k)}>
-                {k}
-              </button>
-            );
-          })}
-        </div>
-        
-        <div className="sv-secondary-controls">
-          <div className="sv-control-item">
-            <label className="checkbox-label" style={{ margin: 0, padding: '6px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>
-              <input type="checkbox" checked={useFlats} onChange={e => setUseFlats(e.target.checked)} /> {t('songView.useFlats')}
-            </label>
-          </div>
-
-          <div className="sv-control-item sv-capo-item">
-            <select 
-              className="sv-capo-select" 
-              value={capo} 
-              onChange={e => applyManualCapo(e.target.value)}
-            >
-              <option value="0">{t('songView.noCapo')}</option>
-              {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => <option key={n} value={n}>Capo {n}</option>)}
-            </select>
-          </div>
-
-          <div className="sv-control-item sv-font-item">
-            <button className="sv-font-btn" onClick={decreaseFontSize}>A-</button>
-            <span className="sv-font-val">{fontSize}</span>
-            <button className="sv-font-btn" onClick={increaseFontSize}>A+</button>
-          </div>
-        </div>
-      </div>
-
-      {/* Premium Controls Panel (Hidden in Web, Shown in PWA) */}
-      <div className="sv-control-panel">
-        <div className="sv-control-row">
-          <div className="sv-stepper-group">
-            <span className="sv-stepper-label">{t('songView.transpose')}</span>
-            <div className="sv-stepper">
-              <button className="sv-step-btn" onClick={() => { userManuallyAdjustedKeyRef.current = true; setSemi(s => s - 1); }}>-</button>
-              <select 
-                className="sv-step-val" 
-                value={soundingKey ? getTransposedFullKey(soundingKey, 0) : ''}
-                onChange={(e) => handleKeyClick(e.target.value)}
-                style={{ appearance: 'none', WebkitAppearance: 'none', background: 'transparent', border: 'none', borderLeft: '1px solid rgba(255,255,255,0.08)', borderRight: '1px solid rgba(255,255,255,0.08)', outline: 'none', color: 'var(--sv-accent)', textAlign: 'center', textAlignLast: 'center', cursor: 'pointer', fontFamily: 'inherit' }}
-              >
-                <option value="" disabled>{song?.song_key || t('songView.originalKey', 'Սկզբնական')}</option>
-                {KEYS.map(k => {
-                  const displayK = getTransposedFullKey(k, 0);
-                  return <option key={k} value={displayK} style={{background: 'var(--color-surface)', color: 'var(--color-text-primary)'}}>{displayK}</option>;
-                })}
-              </select>
-              <button className="sv-step-btn" onClick={() => { userManuallyAdjustedKeyRef.current = true; setSemi(s => s + 1); }}>+</button>
-            </div>
-          </div>
-          <div className="sv-stepper-group">
-            <span className="sv-stepper-label">{t('songView.capoSub')}</span>
-            <div className="sv-stepper">
-              <button className="sv-step-btn" onClick={() => applyManualCapo(capo - 1)} disabled={capo <= 0}>-</button>
-              <select 
-                className="sv-step-val" 
-                value={capo}
-                onChange={(e) => applyManualCapo(e.target.value)}
-                style={{ appearance: 'none', WebkitAppearance: 'none', background: 'transparent', border: 'none', borderLeft: '1px solid rgba(255,255,255,0.08)', borderRight: '1px solid rgba(255,255,255,0.08)', outline: 'none', color: 'var(--sv-accent)', textAlign: 'center', textAlignLast: 'center', cursor: 'pointer', fontFamily: 'inherit' }}
-              >
-                <option value="0" style={{background: 'var(--color-surface)', color: 'var(--color-text-primary)'}}>{t('songView.noCapo')}</option>
-                {[1,2,3,4,5,6,7,8,9,10,11,12].map(n => <option key={n} value={n} style={{background: 'var(--color-surface)', color: 'var(--color-text-primary)'}}>Capo {n}</option>)}
-              </select>
-              <button className="sv-step-btn" onClick={() => applyManualCapo(capo + 1)} disabled={capo >= 12}>+</button>
-            </div>
-          </div>
-        </div>
-        <div className="sv-control-row" style={{ marginTop: '16px' }}>
-          <div className="sv-stepper-group">
-            <span className="sv-stepper-label">{t('songView.fontSize')}</span>
-            <div className="sv-stepper">
-              <button className="sv-step-btn" onClick={decreaseFontSize}>A-</button>
-              <div className="sv-step-val">{fontSize}</div>
-              <button className="sv-step-btn" onClick={increaseFontSize}>A+</button>
-            </div>
-          </div>
-          <div className="sv-stepper-group">
-            <span className="sv-stepper-label">{t('songView.signs')}</span>
-            <button 
-              className={`sv-toggle-btn ${useFlats ? 'active' : ''}`}
-              onClick={() => setUseFlats(!useFlats)}
-            >
-              {useFlats ? t('songView.flats') : t('songView.sharps')}
-            </button>
-          </div>
-        </div>
-        
-        {/* When outside a setlist, show favorite key save button if key changed */}
-        {!isFromSetlist && isFavorite && (hasUnsavedKeyChange || favKeySavedFeedback) && (
-          <button
-            className={`btn btn-primary btn-sm w-100 ${favKeySavedFeedback ? 'btn-success' : ''}`}
-            style={{ marginTop: '12px' }}
-            onClick={handleSaveFavoriteKey}
-            disabled={savingFavKey}
-          >
-            {savingFavKey ? '⏳ Պահպանվում է...' : favKeySavedFeedback ? '✓ Պահպանված է' : t('songView.saveKey')}
-          </button>
-        )}
-
-      </div>
-
       {!isPWA && song && (
         <SongViewWebTools
-          keys={KEYS}
-          activeKey={soundingKey ? KEYS.find(k => songKeysEqual(k, soundingKey)) || '' : ''}
+          keys={KEYS.map(k => getTransposedFullKey(k, 0))}
+          activeKey={soundingKey ? getTransposedFullKey(soundingKey, 0) : ''}
           onKeyClick={handleKeyClick}
           capo={capo}
           onCapoChange={applyManualCapo}
@@ -2176,7 +2175,6 @@ export default function SongView() {
           onAutoScrollSpeedChange={setAutoScrollSpeed}
           chordColor={chordColor}
           onChordColorChange={setChordColor}
-          attachments={song.attachments || []}
           onOpenPrint={() => setIsPrintOpen(true)}
           useFlats={useFlats}
           onToggleFlats={() => setUseFlats(f => !f)}
@@ -2186,12 +2184,13 @@ export default function SongView() {
           onToggleKeepAwake={toggleKeepAwake}
           isStageFullscreen={isStageFullscreen}
           onToggleStageFullscreen={toggleStageFullscreen}
-          viewMode={viewMode}
-          onToggleViewMode={() => handleViewModeChange(viewMode === 'lyrics' ? 'both' : 'lyrics')}
+          viewMode={effectiveViewMode}
+          onToggleViewMode={() => handleViewModeChange(effectiveViewMode === 'lyrics' ? defaultChordsViewMode : 'lyrics')}
           onOpenAIStudio={() => setIsAIStudioOpen(true)}
           onToggleStems={() => setStemsOpen(!stemsOpen)}
           stemsOpen={stemsOpen}
           songId={song?.id}
+          hasChords={hasChords}
         />
       )}
       </div>
@@ -2267,7 +2266,7 @@ export default function SongView() {
             disabled={isFromSetlist ? savingKeyToSetlist : savingFavKey}
           >
             {(isFromSetlist ? savingKeyToSetlist : savingFavKey) ? (
-              <span>⏳ {t('common.saving', 'Պահպանվում է...')}</span>
+              <span>{t('common.saving', 'Պահպանվում է...')}</span>
             ) : (isFromSetlist ? keySavedFeedback : favKeySavedFeedback) ? (
               <>
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -2291,16 +2290,39 @@ export default function SongView() {
       document.body
     )}
 
-    {isPWA && (
-      <div className="sv-edit-action">
-        <button className="btn btn-secondary sv-edit-btn" onClick={() => navigate(`/song-request?song_id=${song.id}`)}>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-          </svg>
-          {t('songView.requestEdit')}
+    {/* Floating Auto-Scroll Mini Controller (only shown while active on PWA / compact screens) */}
+    {autoScrollActive && createPortal(
+      <div className={`sv-autoscroll-pill ${setlistNavData ? 'has-seq-nav' : ''}`} role="region" aria-label="Ավտոմատ սահք">
+        <button
+          type="button"
+          className="sv-autoscroll-btn"
+          onClick={() => setAutoScrollSpeed((s) => Math.max(0.5, Number((s - 0.2).toFixed(1))))}
+          aria-label="Դանդաղեցնել"
+        >
+          −
         </button>
-      </div>
+        <span className="sv-autoscroll-speed">{autoScrollSpeed.toFixed(1)}×</span>
+        <button
+          type="button"
+          className="sv-autoscroll-btn"
+          onClick={() => setAutoScrollSpeed((s) => Math.min(3.0, Number((s + 0.2).toFixed(1))))}
+          aria-label="Արագացնել"
+        >
+          +
+        </button>
+        <button
+          type="button"
+          className="sv-autoscroll-stop"
+          onClick={() => setAutoScrollActive(false)}
+          aria-label="Կանգնեցնել ավտոմատ սահքը"
+        >
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+            <rect x="6" y="5" width="4" height="14" rx="1" />
+            <rect x="14" y="5" width="4" height="14" rx="1" />
+          </svg>
+        </button>
+      </div>,
+      document.body
     )}
 
     {/* Print Studio */}
@@ -2318,7 +2340,7 @@ export default function SongView() {
           lyrics: currentLyrics,
         }]}
         documentTitle={getLocalizedTitle(song.title, language)}
-        defaultShowChords={viewMode !== 'lyrics'}
+        defaultShowChords={effectiveViewMode !== 'lyrics'}
       />
     )}
 
@@ -2400,7 +2422,7 @@ export default function SongView() {
               className={`sv-modal-new-btn ${isCreatingSetlist ? 'active' : ''}`}
               onClick={() => setIsCreatingSetlist(!isCreatingSetlist)}
             >
-              {isCreatingSetlist ? '✕ Փակել' : '➕ Նոր'}
+              {isCreatingSetlist ? 'Փակել' : '+ Նոր'}
             </button>
           </div>
 
@@ -2468,7 +2490,7 @@ export default function SongView() {
                       </div>
                       <div className="sv-setlist-row__meta">
                         {dateLabel && (
-                          <span className="sv-setlist-row__date">📅 {dateLabel}</span>
+                          <span className="sv-setlist-row__date">{dateLabel}</span>
                         )}
                         <span className="sv-setlist-row__count">{sl.items_count || 0} երգ</span>
                       </div>
@@ -2505,7 +2527,7 @@ export default function SongView() {
                     className="sv-empty-create-btn"
                     onClick={() => setIsCreatingSetlist(true)}
                   >
-                    ➕ Ստեղծել նոր երգացանկ
+                    + Ստեղծել նոր երգացանկ
                   </button>
                 )}
               </div>
@@ -2555,7 +2577,7 @@ export default function SongView() {
               shareChats.map(chat => (
                 <div key={chat.id} onClick={() => handleShareToChat(chat.id)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '14px', background: 'rgba(255,255,255,0.06)', cursor: 'pointer' }}>
                   <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: '1rem', flexShrink: 0 }}>
-                    {chat.type === 'group' ? '👥' : (chat.participant_names ? chat.participant_names.charAt(0).toUpperCase() : '👤')}
+                    {chat.type === 'group' ? (chat.name ? chat.name.charAt(0).toUpperCase() : 'G') : (chat.participant_names ? chat.participant_names.charAt(0).toUpperCase() : 'U')}
                   </div>
                   <div style={{ fontWeight: 600, color: '#fff', fontSize: '0.95rem' }}>
                     {chat.type === 'group' ? chat.name : chat.participant_names}
@@ -2569,7 +2591,7 @@ export default function SongView() {
       document.body
     )}
 
-      {/* Pro Ministry Tools Portal Dropdown Menu */}
+      {/* Clean Song Actions & Stage Tools Sheet (•••) */}
       {isToolsMenuOpen && createPortal(
         <div className="sv-tools-portal-overlay" onClick={() => setIsToolsMenuOpen(false)}>
           <div
@@ -2581,132 +2603,334 @@ export default function SongView() {
             onClick={e => e.stopPropagation()}
           >
             <div className="sv-tools-dropdown-header">
-              <span>🎛️ Pro Studio Գործիքներ</span>
-              <button type="button" onClick={() => setIsToolsMenuOpen(false)} aria-label="Փակել">✕</button>
+              <span>{language === 'ru' ? 'Действия с песней' : language === 'en' ? 'Song Actions' : 'Երգի գործողություններ'}</span>
+              <button type="button" onClick={() => setIsToolsMenuOpen(false)} aria-label="Փակել">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
+
             <div className="sv-tools-dropdown-items">
-              {isVisible('pro_studio') && (
+              <button
+                type="button"
+                className="sv-tools-menu-item"
+                onClick={() => {
+                  setIsToolsMenuOpen(false);
+                  copyShareLink();
+                }}
+              >
+                <span className="sv-tools-item-icon">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
+                </span>
+                <div className="sv-tools-item-text">
+                  <strong>{t('songView.copyLink', 'Կիսվել հղումով')}</strong>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className="sv-tools-menu-item"
+                onClick={() => {
+                  setIsToolsMenuOpen(false);
+                  openShareModal();
+                }}
+              >
+                <span className="sv-tools-item-icon">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13" />
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                  </svg>
+                </span>
+                <div className="sv-tools-item-text">
+                  <strong>{t('chat.send', 'Ուղարկել չաթով')}</strong>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className="sv-tools-menu-item"
+                onClick={() => {
+                  setIsToolsMenuOpen(false);
+                  copySongContent();
+                }}
+              >
+                <span className="sv-tools-item-icon">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                </span>
+                <div className="sv-tools-item-text">
+                  <strong>{t('songView.copyContent', 'Պատճենել տեքստը')}</strong>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                className={`sv-tools-menu-item sv-tools-compact-only ${autoScrollActive ? 'is-active' : ''}`}
+                onClick={() => {
+                  setIsToolsMenuOpen(false);
+                  setAutoScrollActive((a) => !a);
+                }}
+              >
+                <span className="sv-tools-item-icon">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    {autoScrollActive ? (
+                      <>
+                        <rect x="6" y="4" width="4" height="16" />
+                        <rect x="14" y="4" width="4" height="16" />
+                      </>
+                    ) : (
+                      <polygon points="5 3 19 12 5 21 5 3" />
+                    )}
+                  </svg>
+                </span>
+                <div className="sv-tools-item-text">
+                  <strong>{language === 'ru' ? 'Автопрокрутка' : language === 'en' ? 'Auto-scroll' : 'Ավտոմատ սահք'}</strong>
+                </div>
+                {autoScrollActive && <span className="sv-tools-status-pill">ON</span>}
+              </button>
+
+              <button
+                type="button"
+                className={`sv-tools-menu-item sv-tools-compact-only ${keepAwakeActive ? 'is-active' : ''}`}
+                onClick={() => {
+                  toggleKeepAwake();
+                }}
+              >
+                <span className="sv-tools-item-icon">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                  </svg>
+                </span>
+                <div className="sv-tools-item-text">
+                  <strong>{language === 'ru' ? 'Не гасить экран' : language === 'en' ? 'Keep Screen Awake' : 'Էկրանը պահել վառ'}</strong>
+                </div>
+                {keepAwakeActive && <span className="sv-tools-status-pill">ON</span>}
+              </button>
+
+              <button
+                type="button"
+                className={`sv-tools-menu-item ${pedalMode ? 'is-active' : ''}`}
+                onClick={() => {
+                  setPedalMode((v) => {
+                    const next = !v;
+                    localStorage.setItem('wp_pedal_mode_v1', String(next));
+                    return next;
+                  });
+                }}
+              >
+                <span className="sv-tools-item-icon">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="6" width="20" height="12" rx="3" />
+                    <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8" />
+                  </svg>
+                </span>
+                <div className="sv-tools-item-text">
+                  <strong>{language === 'ru' ? 'Bluetooth педаль' : language === 'en' ? 'Bluetooth Pedal' : 'Bluetooth ոտնակ'}</strong>
+                  <small>{language === 'ru' ? 'PageUp / PageDown / Стрелки' : language === 'en' ? 'PageUp / PageDown / Arrows' : 'Էջաթերթում ստեղներով'}</small>
+                </div>
+                {pedalMode && <span className="sv-tools-status-pill">ON</span>}
+              </button>
+
+              {!isPWA && (
                 <button
                   type="button"
-                  className={`sv-tools-menu-item ${isSoon('pro_studio') ? 'is-disabled is-disabled-soon' : ''}`}
-                  disabled={isSoon('pro_studio')}
+                  className="sv-tools-menu-item sv-tools-compact-web-only"
                   onClick={() => {
-                    if (isSoon('pro_studio')) return;
                     setIsToolsMenuOpen(false);
-                    navigate('/studio?song=' + (song?.id || id));
+                    setIsPrintOpen(true);
                   }}
-                  style={isSoon('pro_studio') ? { opacity: 0.6, cursor: 'not-allowed', pointerEvents: 'none' } : {}}
-                  title={isSoon('pro_studio') ? 'Worship Pro Studio-ն շուտով հասանելի կլինի' : undefined}
                 >
-                  <span className="sv-tools-item-icon">🎛️</span>
+                  <span className="sv-tools-item-icon">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 9V2h12v7" />
+                      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                      <rect x="6" y="14" width="12" height="8" />
+                    </svg>
+                  </span>
                   <div className="sv-tools-item-text">
-                    <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      Worship Pro Studio Hub
-                      {isSoon('pro_studio') ? (
-                        <ComingSoonBadge />
-                      ) : (
-                        (isBeta('pro_studio') || isBeta('rehearsal_stems') || isBeta('lyrics_projection') || isBeta('live_stage_follower')) && <BetaBadge />
-                      )}
-                    </strong>
-                    <small>Բոլոր բեմական գործիքները մեկ տեղում</small>
+                    <strong>Print & PDF Studio</strong>
                   </div>
                 </button>
               )}
 
-              {isVisible('rehearsal_stems') && (
+              <button
+                type="button"
+                className="sv-tools-menu-item"
+                onClick={() => {
+                  setIsToolsMenuOpen(false);
+                  navigate(`/song-request?song_id=${song.id}`);
+                }}
+              >
+                <span className="sv-tools-item-icon">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </span>
+                <div className="sv-tools-item-text">
+                  <strong>{t('songView.requestEdit', 'Առաջարկել խմբագրում')}</strong>
+                </div>
+              </button>
+
+              {(user?.role === 'admin' || user?.role === 'owner') && (
                 <button
                   type="button"
-                  className={`sv-tools-menu-item ${isSoon('rehearsal_stems') ? 'is-disabled' : ''}`}
+                  className="sv-tools-menu-item"
                   onClick={() => {
                     setIsToolsMenuOpen(false);
-                    if (isSoon('rehearsal_stems')) {
-                      alert('RehearsalMix & Stems միքսերը շուտով հասանելի կլինի ծրագրում։');
-                      return;
-                    }
-                    setStemsOpen(v => !v);
+                    promptAddAttachment();
                   }}
                 >
-                  <span className="sv-tools-item-icon">🎛️</span>
+                  <span className="sv-tools-item-icon">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="16" />
+                      <line x1="8" y1="12" x2="16" y2="12" />
+                    </svg>
+                  </span>
                   <div className="sv-tools-item-text">
-                    <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      {stemsOpen ? 'Փակել Stems Միքշերը' : 'RehearsalMix & Stems'}
-                      {isSoon('rehearsal_stems') ? <ComingSoonBadge /> : (isBeta('rehearsal_stems') && <BetaBadge />)}
-                    </strong>
-                    <small>8-ալիքային բազմաթրեկ միքշեր</small>
+                    <strong>Ավելացնել մեդիա նյութ</strong>
                   </div>
                 </button>
               )}
 
-              {isVisible('worship_ai_studio') && (
-                <button
-                  type="button"
-                  className={`sv-tools-menu-item ${isSoon('worship_ai_studio') ? 'is-disabled' : ''}`}
-                  onClick={() => {
-                    setIsToolsMenuOpen(false);
-                    if (isSoon('worship_ai_studio')) {
-                      alert('Worship AI Studio-ն շուտով հասանելի կլինի ծրագրում։');
-                      return;
-                    }
-                    setIsAIStudioOpen(true);
-                  }}
-                >
-                  <span className="sv-tools-item-icon">✨</span>
-                  <div className="sv-tools-item-text">
-                    <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      Worship AI Studio
-                      {isSoon('worship_ai_studio') ? <ComingSoonBadge /> : (isBeta('worship_ai_studio') && <BetaBadge />)}
-                    </strong>
-                    <small>Ակորդների գեներացում և հարստացում</small>
+              {(isVisible('pro_studio') || isVisible('rehearsal_stems') || isVisible('worship_ai_studio') || isVisible('lyrics_projection')) && (
+                <>
+                  <div className="sv-tools-section-label">
+                    {language === 'ru' ? 'Сценические инструменты' : language === 'en' ? 'Stage & Studio' : 'Բեմական գործիքներ'}
                   </div>
-                </button>
-              )}
 
-              {isVisible('lyrics_projection') && (
-                <button
-                  type="button"
-                  className={`sv-tools-menu-item ${isSoon('lyrics_projection') ? 'is-disabled' : ''}`}
-                  onClick={() => {
-                    setIsToolsMenuOpen(false);
-                    if (isSoon('lyrics_projection')) {
-                      alert('Live Projection & OBS համակարգը շուտով հասանելի կլինի ծրագրում։');
-                      return;
-                    }
-                    window.open(`/projection/${song.id}`, '_blank');
-                  }}
-                >
-                  <span className="sv-tools-item-icon">📽️</span>
-                  <div className="sv-tools-item-text">
-                    <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      Live Projection & OBS
-                      {isSoon('lyrics_projection') ? <ComingSoonBadge /> : (isBeta('lyrics_projection') && <BetaBadge />)}
-                    </strong>
-                    <small>Դահլիճի պրոյեկտոր և ուղիղ եթեր</small>
-                  </div>
-                </button>
-              )}
+                  {isVisible('rehearsal_stems') && (
+                    <button
+                      type="button"
+                      className={`sv-tools-menu-item sv-tools-compact-only ${isSoon('rehearsal_stems') ? 'is-disabled' : ''} ${stemsOpen ? 'is-active' : ''}`}
+                      onClick={() => {
+                        setIsToolsMenuOpen(false);
+                        if (isSoon('rehearsal_stems')) {
+                          alert('RehearsalMix & Stems միքսերը շուտով հասանելի կլինի ծրագրում։');
+                          return;
+                        }
+                        setStemsOpen(v => !v);
+                      }}
+                    >
+                      <span className="sv-tools-item-icon">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
+                          <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
+                          <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
+                          <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+                        </svg>
+                      </span>
+                      <div className="sv-tools-item-text">
+                        <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          {stemsOpen ? 'Փակել Stems Միքշերը' : 'RehearsalMix & Stems'}
+                          {isSoon('rehearsal_stems') ? <ComingSoonBadge /> : (isBeta('rehearsal_stems') && <BetaBadge />)}
+                        </strong>
+                        <small>Բազմաթրեկ միքշեր</small>
+                      </div>
+                    </button>
+                  )}
 
-              {isVisible('service_planner') && (
-                <button
-                  type="button"
-                  className={`sv-tools-menu-item ${isSoon('service_planner') ? 'is-disabled' : ''}`}
-                  onClick={() => {
-                    setIsToolsMenuOpen(false);
-                    if (isSoon('service_planner')) {
-                      alert('Ծառայության Պլանավորողը շուտով հասանելի կլինի ծրագրում։');
-                      return;
-                    }
-                    navigate('/service-planner');
-                  }}
-                >
-                  <span className="sv-tools-item-icon">📅</span>
-                  <div className="sv-tools-item-text">
-                    <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      Service Planner
-                      {isSoon('service_planner') ? <ComingSoonBadge /> : (isBeta('service_planner') && <BetaBadge />)}
-                    </strong>
-                    <small>Ծառայության պլանավորող և թիմի գրաֆիկ</small>
-                  </div>
-                </button>
+                  {isVisible('worship_ai_studio') && (
+                    <button
+                      type="button"
+                      className={`sv-tools-menu-item sv-tools-compact-only ${isSoon('worship_ai_studio') ? 'is-disabled' : ''}`}
+                      onClick={() => {
+                        setIsToolsMenuOpen(false);
+                        if (isSoon('worship_ai_studio')) {
+                          alert('Worship AI Studio-ն շուտով հասանելի կլինի ծրագրում։');
+                          return;
+                        }
+                        setIsAIStudioOpen(true);
+                      }}
+                    >
+                      <span className="sv-tools-item-icon">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z" />
+                        </svg>
+                      </span>
+                      <div className="sv-tools-item-text">
+                        <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          Worship AI Studio
+                          {isSoon('worship_ai_studio') ? <ComingSoonBadge /> : (isBeta('worship_ai_studio') && <BetaBadge />)}
+                        </strong>
+                        <small>Ակորդների գեներացում և հարստացում</small>
+                      </div>
+                    </button>
+                  )}
+
+                  {isVisible('lyrics_projection') && (
+                    <button
+                      type="button"
+                      className={`sv-tools-menu-item sv-tools-compact-only ${isSoon('lyrics_projection') ? 'is-disabled' : ''}`}
+                      onClick={() => {
+                        setIsToolsMenuOpen(false);
+                        if (isSoon('lyrics_projection')) {
+                          alert('Live Projection & OBS համակարգը շուտով հասանելի կլինի ծրագրում։');
+                          return;
+                        }
+                        window.open(`/projection/${song.id}`, '_blank');
+                      }}
+                    >
+                      <span className="sv-tools-item-icon">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="2" y="3" width="20" height="14" rx="2" />
+                          <line x1="8" y1="21" x2="16" y2="21" />
+                          <line x1="12" y1="17" x2="12" y2="21" />
+                        </svg>
+                      </span>
+                      <div className="sv-tools-item-text">
+                        <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          Live Projection & OBS
+                          {isSoon('lyrics_projection') ? <ComingSoonBadge /> : (isBeta('lyrics_projection') && <BetaBadge />)}
+                        </strong>
+                        <small>Դահլիճի պրոյեկտոր և ուղիղ եթեր</small>
+                      </div>
+                    </button>
+                  )}
+
+                  {isVisible('pro_studio') && (
+                    <button
+                      type="button"
+                      className={`sv-tools-menu-item ${isSoon('pro_studio') ? 'is-disabled is-disabled-soon' : ''}`}
+                      disabled={isSoon('pro_studio')}
+                      onClick={() => {
+                        if (isSoon('pro_studio')) return;
+                        setIsToolsMenuOpen(false);
+                        navigate('/studio?song=' + (song?.id || id));
+                      }}
+                      style={isSoon('pro_studio') ? { opacity: 0.6, cursor: 'not-allowed', pointerEvents: 'none' } : {}}
+                    >
+                      <span className="sv-tools-item-icon">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="7" height="7" rx="1" />
+                          <rect x="14" y="3" width="7" height="7" rx="1" />
+                          <rect x="14" y="14" width="7" height="7" rx="1" />
+                          <rect x="3" y="14" width="7" height="7" rx="1" />
+                        </svg>
+                      </span>
+                      <div className="sv-tools-item-text">
+                        <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          Pro Studio Hub
+                          {isSoon('pro_studio') ? (
+                            <ComingSoonBadge />
+                          ) : (
+                            (isBeta('pro_studio') || isBeta('rehearsal_stems') || isBeta('lyrics_projection') || isBeta('live_stage_follower')) && <BetaBadge />
+                          )}
+                        </strong>
+                        <small>Բեմական գործիքների կենտրոն</small>
+                      </div>
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
