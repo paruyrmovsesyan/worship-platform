@@ -58,12 +58,16 @@ body.light-mode.wp-standalone-app .bible-topbar-wrap {
   flex-wrap: wrap;
   padding: 10px 14px;
   border-radius: 20px;
-  background: linear-gradient(155deg, rgba(24, 27, 38, 0.92), rgba(14, 16, 24, 0.96));
+  background: linear-gradient(155deg, rgba(24, 27, 38, 0.96), rgba(14, 16, 24, 0.98));
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-top-color: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(26px) saturate(1.7);
-  -webkit-backdrop-filter: blur(26px) saturate(1.7);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 body.light-mode .bible-topbar {
@@ -1240,12 +1244,9 @@ body.light-mode .bible-verse-row:hover {
 }
 
 .bible-topbar-wrap {
-  transition: transform 0.22s ease, opacity 0.22s ease;
-}
-
-.bible-topbar-wrap.is-compact {
-  transform: none;
-  opacity: 0.98;
+  will-change: position;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .bible-icon-pill.active {

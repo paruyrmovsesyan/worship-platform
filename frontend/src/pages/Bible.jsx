@@ -125,7 +125,6 @@ export default function Bible() {
   });
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [readerPage, setReaderPage] = useState(0);
-  const [isTopbarCompact, setIsTopbarCompact] = useState(false);
   const [activeMeasure, setActiveMeasure] = useState(null);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [speakingVerse, setSpeakingVerse] = useState(null);
@@ -135,7 +134,6 @@ export default function Bible() {
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [compareItems, setCompareItems] = useState([]);
   const [loadingCompare, setLoadingCompare] = useState(false);
-  const lastScrollYRef = useRef(0);
   const swipeStartXRef = useRef(null);
   const audioStopRef = useRef(true);
   const ttsAudioRef = useRef(null);
@@ -696,21 +694,6 @@ export default function Bible() {
     }));
   };
 
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY || document.documentElement.scrollTop || 0;
-      const goingDown = y > lastScrollYRef.current;
-      if (y > 120 && goingDown) {
-        setIsTopbarCompact(true);
-      } else if (!goingDown || y < 60) {
-        setIsTopbarCompact(false);
-      }
-      lastScrollYRef.current = y;
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
   const handleSelectVerse = useCallback((verseNum, event) => {
     const isMulti = multiSelectMode || event?.shiftKey || event?.ctrlKey || event?.metaKey;
     if (isMulti) {
@@ -1044,9 +1027,9 @@ export default function Bible() {
   };
 
   return (
-    <div className={`bible-page animate-fade-in ${isMobileViewport && selectedVerseObj && activeTab === 'read' ? 'has-verse-sheet' : ''}`}>
+    <div className={`bible-page ${isMobileViewport && selectedVerseObj && activeTab === 'read' ? 'has-verse-sheet' : ''}`}>
       {/* Top Bar Wrapper (keeps Aa popover floating cleanly without shifting layout) */}
-      <div className={`bible-topbar-wrap ${isTopbarCompact ? 'is-compact' : ''}`}>
+      <div className="bible-topbar-wrap">
       <header className="bible-topbar">
         <div className="bible-topbar-left">
           <button
