@@ -17,23 +17,37 @@ body.is-app .bible-page.has-verse-sheet {
   position: sticky;
   top: 76px;
   z-index: 30;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
-body.is-app .bible-topbar-wrap {
+body.is-app .bible-topbar-wrap,
+body.wp-standalone-app .bible-topbar-wrap {
+  position: sticky;
   top: 0;
-  margin: 0 -14px 14px;
-  padding: max(8px, env(safe-area-inset-top, 0px)) 14px 10px;
-  background: linear-gradient(180deg, var(--color-bg, #05050A) 72%, rgba(5, 5, 10, 0) 100%);
+  z-index: 40;
+  margin: 0 -14px 12px;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 14px 10px;
+  background: linear-gradient(180deg, var(--color-bg, #05050A) 82%, rgba(5, 5, 10, 0) 100%);
 }
 
+/* On iOS standalone PWA (notch / Dynamic Island), keep topbar cleanly BELOW the status bar during scroll
+   while masking the status bar area so scrolling verses never peek above it */
 body.is-app.is-ios:not(.is-native) .bible-topbar-wrap,
 body.wp-standalone-app.is-ios:not(.is-native) .bible-topbar-wrap {
-  padding-top: max(46px, env(safe-area-inset-top, 46px));
+  top: 0;
+  margin-top: calc(-1 * max(env(safe-area-inset-top, 0px), 44px));
+  padding-top: calc(max(env(safe-area-inset-top, 54px), 54px) + 10px);
 }
 
-body.light-mode.is-app .bible-topbar-wrap {
-  background: linear-gradient(180deg, var(--color-bg, #FAF7F1) 72%, rgba(250, 247, 241, 0) 100%);
+body.is-native .bible-topbar-wrap {
+  top: 0;
+  margin-top: calc(-1 * env(safe-area-inset-top, 0px));
+  padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+}
+
+body.light-mode.is-app .bible-topbar-wrap,
+body.light-mode.wp-standalone-app .bible-topbar-wrap {
+  background: linear-gradient(180deg, var(--color-bg, #FAF7F1) 82%, rgba(250, 247, 241, 0) 100%);
 }
 
 .bible-topbar {
