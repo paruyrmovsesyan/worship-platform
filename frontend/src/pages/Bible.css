@@ -778,18 +778,37 @@ body.light-mode .bible-verse-row.is-selected .bible-verse-num {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.bible-my-grid > .bible-card {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .bible-card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   margin-bottom: 12px;
+  min-width: 0;
+}
+
+.bible-card-head > div {
+  min-width: 0;
 }
 
 .bible-card-head h3 {
   margin: 0;
   font-size: 1.02rem;
+  overflow-wrap: anywhere;
 }
 
 .bible-badge-pill {
@@ -799,6 +818,8 @@ body.light-mode .bible-verse-row.is-selected .bible-verse-num {
   color: #f7b500;
   font-size: 0.78rem;
   font-weight: 700;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .bible-plan-subtitle {
@@ -811,10 +832,15 @@ body.light-mode .bible-verse-row.is-selected .bible-verse-num {
 .bible-plan-tabs {
   display: flex;
   gap: 6px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   margin-bottom: 12px;
   padding-bottom: 2px;
+  box-sizing: border-box;
 }
 
 .bible-plan-tabs::-webkit-scrollbar {
@@ -845,6 +871,8 @@ body.light-mode .bible-verse-row.is-selected .bible-verse-num {
 
 .bible-plan-next-cta {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -859,6 +887,14 @@ body.light-mode .bible-verse-row.is-selected .bible-verse-num {
   font-weight: 700;
   cursor: pointer;
   text-align: left;
+  min-width: 0;
+}
+
+.bible-plan-next-cta > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bible-plan-next-cta svg {
@@ -938,12 +974,16 @@ body.light-mode .bible-plan-tab-pill:not(.active) {
   font-weight: 600;
   text-align: left;
   cursor: pointer;
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
 }
 
 .bible-saved-stack {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
 }
 
 .bible-saved-item {
@@ -952,6 +992,10 @@ body.light-mode .bible-plan-tab-pill:not(.active) {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--glass-border);
   cursor: pointer;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
 }
 
 .bible-saved-ref {
@@ -1139,11 +1183,11 @@ body.light-mode .bible-verse-row:hover {
 
 @media (max-width: 900px) {
   .bible-workspace {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .bible-verses-body.is-parallel .bible-verse-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 6px;
   }
 
@@ -1153,7 +1197,7 @@ body.light-mode .bible-verse-row:hover {
   }
 
   .bible-my-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .bible-reader-card {
@@ -1471,12 +1515,19 @@ body.is-app > .bible-measure-popover {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .bible-stats-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .bible-stat-chip {
@@ -1487,6 +1538,8 @@ body.is-app > .bible-measure-popover {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .bible-stat-chip strong {

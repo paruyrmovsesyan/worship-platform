@@ -9,7 +9,6 @@ import {
   renderLyricsWithStageNotes,
   stripStageNotes,
   transposeRoot,
-  isPureChordLine,
 } from '../utils/chordTransposer';
 import SmartMetronome from '../components/SmartMetronome';
 import { getLocalizedTitle } from '../utils/titleParser';
@@ -82,29 +81,6 @@ function parseArrangementSections(rawText) {
     }
   });
   return sections;
-}
-
-function extractPlainLyricsFromChords(chordsText) {
-  if (!chordsText) return '';
-  const kept = [];
-  let lyricLines = 0;
-  for (const rawLine of String(chordsText).split(/\r?\n/)) {
-    const trimmed = rawLine.trim();
-    if (!trimmed) {
-      kept.push('');
-      continue;
-    }
-    if (trimmed.startsWith('!')) continue;
-    if (isPureChordLine(trimmed)) continue;
-    const stripped = rawLine.replace(/\[[A-G][#b]?[^\]]*\]/g, '').trimEnd();
-    if (!stripped.trim()) continue;
-    kept.push(stripped);
-    if (!/^\[[^\]]+\]$/.test(trimmed)) {
-      const alpha = stripped.replace(/[|/\\–—\-.,:;!?()\d\s]+/g, '');
-      if (alpha.length >= 3) lyricLines += 1;
-    }
-  }
-  return lyricLines >= 2 ? kept.join('\n').replace(/\n{3,}/g, '\n\n').trim() : '';
 }
 
 function resolveMediaUrl(url) {
@@ -1389,15 +1365,11 @@ export default function SongView() {
     () => (hasChords ? renderWithChords(song.chords, semi - capo, useFlats) : ''),
     [hasChords, song?.chords, semi, capo, useFlats]
   );
-  const extractedChordsLyrics = useMemo(
-    () => (!hasLyrics && hasChords ? extractPlainLyricsFromChords(song.chords) : ''),
-    [hasLyrics, hasChords, song?.chords]
-  );
   const arrangementSections = useMemo(
     () => parseArrangementSections(song?.chords || song?.lyrics || ''),
     [song?.chords, song?.lyrics]
   );
-  const currentLyrics = song?.lyrics || extractedChordsLyrics || t('songView.noLyrics');
+  const currentLyrics = hasLyrics ? song.lyrics : '';
   const displayTitle = song?.title ? getLocalizedTitle(song.title, language) : (song?.title_hy || song?.title || 'Worship Song');
 
   // Always show the exact same 3 consistent tabs across every song (normal, favorites, setlists)
@@ -2027,7 +1999,7 @@ export default function SongView() {
             <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
           ) : (
             <p className="sv-empty-mode-msg">
-              {language === 'ru' ? 'Аккорды для этой песни пока не добавлены' : language === 'en' ? 'Chords are not available for this song yet' : 'Ակորդները դեռ ավելացված չեն'}
+              {language === 'ru' ? 'Аккорды недоступны' : language === 'en' ? 'Chords are unavailable' : 'Ակորդները հասանելի չեն'}
             </p>
           )
         ) : effectiveViewMode === 'both' ? (
@@ -2038,12 +2010,20 @@ export default function SongView() {
               <pre className="lyrics-block" dangerouslySetInnerHTML={{ __html: renderLyricsWithStageNotes(currentLyrics) }} />
             </>
           ) : hasChords ? (
-            <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
-          ) : (
+            <>
+              <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
+              <div className="sv-divider"></div>
+              <p className="sv-empty-mode-msg">{t('songView.noLyrics', 'Բառերը հասանելի չեն')}</p>
+            </>
+          ) : hasLyrics ? (
             <pre className="lyrics-block" dangerouslySetInnerHTML={{ __html: renderLyricsWithStageNotes(currentLyrics) }} />
+          ) : (
+            <p className="sv-empty-mode-msg">{t('songView.noLyrics', 'Բառերը հասանելի չեն')}</p>
           )
-        ) : (
+        ) : hasLyrics ? (
           <pre className="lyrics-block">{stripStageNotes(currentLyrics)}</pre>
+        ) : (
+          <p className="sv-empty-mode-msg">{t('songView.noLyrics', 'Բառերը հասանելի չեն')}</p>
         )}
       </div>
 

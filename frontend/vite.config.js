@@ -33,7 +33,11 @@ export default defineConfig({
       output: {
         entryFileNames: `assets/[name].js`,
         chunkFileNames: `assets/[name]-[hash].js`,
-        assetFileNames: `assets/[name].[ext]`
+        assetFileNames: (assetInfo) => {
+          const name = assetInfo.names?.[0] || assetInfo.name || '';
+          if (name === 'index.css') return 'assets/index.css';
+          return 'assets/[name]-[hash][extname]';
+        },
       }
     }
   },
