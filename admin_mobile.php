@@ -791,7 +791,9 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
         <input type="hidden" name="form_action" value="save_ios">
         <div class="m-card-header">
           <div class="m-card-title">🍏 iOS Հավելվածի Պարամետրեր (App Store / TestFlight)</div>
-          <button type="submit" class="m-btn m-btn--primary">💾 <?= htmlspecialchars($t['save_changes']) ?></button>
+          <span class="badge badge--<?= htmlspecialchars($mobileConfig['ios']['status'] === 'live' ? 'live' : ($mobileConfig['ios']['status'] === 'review' ? 'review' : 'maint')) ?>">
+            <?= htmlspecialchars(strtoupper($mobileConfig['ios']['status'])) ?>
+          </span>
         </div>
 
         <div class="m-form-row">
@@ -834,8 +836,8 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
             <span class="m-slider"></span>
           </label>
           <div>
-            <div style="font-weight:700; color:#fff; font-size:0.92rem;"><?= htmlspecialchars($t['force_update']) ?></div>
-            <div style="font-size:0.8rem; color:#94a3b8;"><?= htmlspecialchars($t['force_update_desc']) ?></div>
+            <div style="font-weight:700; color:var(--text); font-size:0.92rem;"><?= htmlspecialchars($t['force_update']) ?></div>
+            <div style="font-size:0.8rem; color:var(--muted);"><?= htmlspecialchars($t['force_update_desc']) ?></div>
           </div>
         </div>
 
@@ -873,7 +875,9 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
         <input type="hidden" name="form_action" value="save_android">
         <div class="m-card-header">
           <div class="m-card-title">🤖 Android Հավելվածի Պարամետրեր (Google Play & APK)</div>
-          <button type="submit" class="m-btn m-btn--primary">💾 <?= htmlspecialchars($t['save_changes']) ?></button>
+          <span class="badge badge--<?= htmlspecialchars($mobileConfig['android']['status'] === 'live' ? 'live' : ($mobileConfig['android']['status'] === 'review' ? 'review' : 'maint')) ?>">
+            <?= htmlspecialchars(strtoupper($mobileConfig['android']['status'])) ?>
+          </span>
         </div>
 
         <div class="m-form-row">
@@ -920,8 +924,8 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
             <span class="m-slider"></span>
           </label>
           <div>
-            <div style="font-weight:700; color:#fff; font-size:0.92rem;"><?= htmlspecialchars($t['force_update']) ?></div>
-            <div style="font-size:0.8rem; color:#94a3b8;"><?= htmlspecialchars($t['force_update_desc']) ?></div>
+            <div style="font-weight:700; color:var(--text); font-size:0.92rem;"><?= htmlspecialchars($t['force_update']) ?></div>
+            <div style="font-size:0.8rem; color:var(--muted);"><?= htmlspecialchars($t['force_update_desc']) ?></div>
           </div>
         </div>
 

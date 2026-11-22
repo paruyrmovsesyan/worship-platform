@@ -202,9 +202,12 @@ export async function fetchMobileAppStatus() {
       appInfo = await App.getInfo();
     } catch (_) {}
 
-    const res = await fetch(`${CONFIG_ENDPOINT}?platform=${platform}&version=${appInfo.version}&build=${appInfo.build}`, {
-      cache: 'no-store',
-    });
+    const res = await fetch(
+      `${CONFIG_ENDPOINT}?platform=${encodeURIComponent(platform)}&version=${encodeURIComponent(appInfo.version)}&build=${encodeURIComponent(appInfo.build)}&_t=${Date.now()}`,
+      {
+        cache: 'no-store',
+      },
+    );
     if (!res.ok) return null;
     return await res.json();
   } catch (_) {
