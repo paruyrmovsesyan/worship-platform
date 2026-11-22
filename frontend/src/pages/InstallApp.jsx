@@ -249,7 +249,7 @@ export default function InstallApp() {
             <div className="install-app-orbit" />
             <div className="install-app-phone">
               <div className="install-app-speaker" />
-              <img src="/apple-touch-icon-v7.png" alt="" />
+              <img src="/apple-touch-icon-v8.png" alt="" />
               <strong>Worship</strong>
               <small>Platform</small>
             </div>

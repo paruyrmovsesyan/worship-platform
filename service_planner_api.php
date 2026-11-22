@@ -1,13 +1,11 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/auth_bootstrap.php';
 require_once __DIR__ . '/runtime_config.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -20,6 +18,14 @@ function sp_json_response(array $data, int $status = 200): void {
     http_response_code($status);
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
+}
+
+function sp_require_auth(): int {
+    $uid = !empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+    if ($uid <= 0) {
+        sp_json_response(['ok' => false, 'error' => 'Authentication required'], 401);
+    }
+    return $uid;
 }
 
 function sp_load_plans(): array {
@@ -81,6 +87,7 @@ if ($action === 'get_plan') {
 // ACTION: save_plan
 // =========================================================================
 if ($action === 'save_plan') {
+    sp_require_auth();
     $rawInput = file_get_contents('php://input');
     $payload = @json_decode($rawInput, true) ?: $_POST;
 
@@ -124,6 +131,7 @@ if ($action === 'save_plan') {
 // ACTION: update_roster_status
 // =========================================================================
 if ($action === 'update_roster_status') {
+    sp_require_auth();
     $rawInput = file_get_contents('php://input');
     $payload = @json_decode($rawInput, true) ?: $_POST;
 
@@ -161,6 +169,7 @@ if ($action === 'update_roster_status') {
 // ACTION: delete_plan
 // =========================================================================
 if ($action === 'delete_plan') {
+    sp_require_auth();
     $rawInput = file_get_contents('php://input');
     $payload = @json_decode($rawInput, true) ?: $_POST;
     $id = trim((string)($payload['id'] ?? $_GET['id'] ?? ''));

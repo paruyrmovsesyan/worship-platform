@@ -164,7 +164,7 @@ export default function MobileHub() {
     }
   });
   const [newsItems, setNewsItems] = useState(() => getCachedNewsList(language));
-  const [logoSrc, setLogoSrc] = useState('/icon-192-v7.png');
+  const [logoSrc, setLogoSrc] = useState('/icon-192-v8.png');
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [lastSyncAt, setLastSyncAt] = useState(() => {
     try {

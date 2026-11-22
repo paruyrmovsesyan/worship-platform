@@ -188,6 +188,7 @@ export default function SetlistEditorApp() {
     currentTargetId: null,
     didMove: false,
   });
+  const activeTouchListenersRef = useRef(null);
   const dragCooldownRef = useRef(0);
   const autoScrollFrameRef = useRef(null);
   const draggedCardElementRef = useRef(null);
@@ -746,9 +747,13 @@ export default function SetlistEditorApp() {
 
     triggerHaptic('Medium');
 
-    window.removeEventListener('touchmove', handleTouchMoveReorder);
-    window.removeEventListener('touchend', handleTouchEndReorder);
-    window.removeEventListener('touchcancel', handleTouchEndReorder);
+    if (activeTouchListenersRef.current) {
+      const prev = activeTouchListenersRef.current;
+      window.removeEventListener('touchmove', prev.move);
+      window.removeEventListener('touchend', prev.end);
+      window.removeEventListener('touchcancel', prev.end);
+    }
+    activeTouchListenersRef.current = { move: handleTouchMoveReorder, end: handleTouchEndReorder };
     window.addEventListener('touchmove', handleTouchMoveReorder, { passive: false });
     window.addEventListener('touchend', handleTouchEndReorder, { passive: false });
     window.addEventListener('touchcancel', handleTouchEndReorder, { passive: false });
@@ -758,9 +763,13 @@ export default function SetlistEditorApp() {
     return () => {
       stopAutoScroll();
       if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
-      window.removeEventListener('touchmove', handleTouchMoveReorder);
-      window.removeEventListener('touchend', handleTouchEndReorder);
-      window.removeEventListener('touchcancel', handleTouchEndReorder);
+      if (activeTouchListenersRef.current) {
+        const active = activeTouchListenersRef.current;
+        window.removeEventListener('touchmove', active.move);
+        window.removeEventListener('touchend', active.end);
+        window.removeEventListener('touchcancel', active.end);
+        activeTouchListenersRef.current = null;
+      }
       if (typeof window !== 'undefined') {
         window.__wpIsDragging = false;
         document.body.classList.remove('is-touch-dragging-active');

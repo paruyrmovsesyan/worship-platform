@@ -1,13 +1,11 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/auth_bootstrap.php';
 require_once __DIR__ . '/runtime_config.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -20,6 +18,14 @@ function stage_json_response(array $data, int $status = 200): void {
     http_response_code($status);
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
+}
+
+function stage_require_auth(): int {
+    $uid = !empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+    if ($uid <= 0) {
+        stage_json_response(['ok' => false, 'error' => 'Authentication required'], 401);
+    }
+    return $uid;
 }
 
 function stage_load_sessions(): array {
@@ -61,6 +67,7 @@ $action = trim((string)($_GET['action'] ?? $_POST['action'] ?? ''));
 // ACTION: broadcast_state (Leader pushes new stage state)
 // =========================================================================
 if ($action === 'broadcast_state') {
+    stage_require_auth();
     $rawInput = file_get_contents('php://input');
     $payload = @json_decode($rawInput, true) ?: $_POST;
 

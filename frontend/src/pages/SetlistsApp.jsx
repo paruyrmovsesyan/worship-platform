@@ -263,7 +263,7 @@ export default function SetlistsApp() {
         );
         fetchSetlists();
       } else {
-        alert(data.error || 'Duplicate failed');
+        showToast(data.error || 'Duplicate failed');
       }
     } catch (err) {
       console.error(err);
@@ -320,7 +320,7 @@ export default function SetlistsApp() {
               : 'Setlist removed from your account')
         );
       } else {
-        alert(data.error || 'Delete failed');
+        showToast(data.error || 'Delete failed');
       }
     } catch (err) {
       console.error(err);
@@ -523,10 +523,10 @@ export default function SetlistsApp() {
             : 'Invite sent in chat'
         );
       } else {
-        alert(data.error || 'Failed to send invite');
+        showToast(data.error || 'Failed to send invite');
       }
-    } catch (e) {
-      alert('Network error');
+    } catch {
+      showToast(t('setlists.networkError', 'Network error'));
     } finally {
       setSendingInviteChatId(null);
     }
@@ -565,13 +565,13 @@ export default function SetlistsApp() {
         if (directData.ok && (directData.chat_id || directData.id)) {
           targetChatId = directData.chat_id || directData.id;
         } else {
-          alert(directData.error || 'Failed to create chat');
+          showToast(directData.error || 'Failed to create chat');
           setSendingInviteChatId(null);
           return;
         }
       } catch (err) {
         console.error(err);
-        alert('Network error');
+        showToast(t('setlists.networkError', 'Network error'));
         setSendingInviteChatId(null);
         return;
       }
@@ -612,12 +612,12 @@ export default function SetlistsApp() {
         fetchSetlists();
         navigate(`/setlists/${data.id}`);
       } else if (data.error === 'limit_reached') {
-        alert(data.message || t('setlists.limitReached', 'Setlist limit reached.'));
+        showToast(data.message || t('setlists.limitReached', 'Setlist limit reached.'));
       } else {
-        alert(data.error || t('setlists.createFailed', 'Failed to create setlist'));
+        showToast(data.error || t('setlists.createFailed', 'Failed to create setlist'));
       }
-    } catch (err) {
-      alert(t('setlists.networkError', 'Network error'));
+    } catch {
+      showToast(t('setlists.networkError', 'Network error'));
     } finally {
       setIsCreating(false);
     }

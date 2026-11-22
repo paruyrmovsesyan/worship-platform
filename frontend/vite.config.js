@@ -38,6 +38,18 @@ export default defineConfig({
           if (name === 'index.css') return 'assets/index.css';
           return 'assets/[name]-[hash][extname]';
         },
+        manualChunks(id) {
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/') || id.includes('node_modules/react-router')) {
+            return 'vendor-react';
+          }
+          if (id.includes('node_modules/@capacitor')) {
+            return 'vendor-capacitor';
+          }
+          if (id.includes('node_modules/glisse')) {
+            return 'vendor-glisse';
+          }
+          return undefined;
+        },
       }
     }
   },
