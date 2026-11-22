@@ -1,6 +1,22 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 
-const AuthContext = createContext();
+const missingAuthProvider = () => {
+  console.error('Auth action ignored because AuthProvider is unavailable');
+};
+
+// Keep a stale/mixed PWA bundle from crashing the entire route. The real
+// provider replaces this value during a normal mount; this fallback only
+// represents a signed-out, already-loaded state while update recovery runs.
+const DEFAULT_AUTH_CONTEXT = Object.freeze({
+  user: null,
+  loading: false,
+  setUser: missingAuthProvider,
+  checkAuth: async () => null,
+  logout: async () => null,
+  refetchUser: async () => null,
+});
+
+const AuthContext = createContext(DEFAULT_AUTH_CONTEXT);
 
 export const useAuth = () => useContext(AuthContext);
 

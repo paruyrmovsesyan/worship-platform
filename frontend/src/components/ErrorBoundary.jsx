@@ -39,7 +39,9 @@ export default class ErrorBoundary extends React.Component {
             userEmail = parsed.email || null;
           }
         }
-      } catch (_) {}
+      } catch {
+        // Error reporting must not fail when storage is unavailable.
+      }
 
       const fullStack = (error?.stack || String(error)) + (errorInfo?.componentStack ? '\n\nReact Component Stack:\n' + errorInfo.componentStack : '');
       const payload = {
@@ -77,8 +79,45 @@ export default class ErrorBoundary extends React.Component {
           body: body,
           keepalive: true
         }).catch(() => {});
-      } catch (_) {}
-    } catch (_) {}
+      } catch {
+        // The global reporter above remains the fallback transport.
+      }
+    } catch {
+      // Never let diagnostic reporting replace the original render error.
+    }
+
+    this.recoverFromMixedBundle(error);
+  }
+
+  recoverFromMixedBundle(error) {
+    const message = String(error?.message || error || '');
+    const isProviderMismatch =
+      /Cannot destructure property ['"](?:user|t)['"]/.test(message) ||
+      /useNavigate\(\) may be used only in the context of a <Router>/.test(message);
+
+    if (!isProviderMismatch || navigator.onLine === false) return;
+
+    const entryResource = performance
+      .getEntriesByType('resource')
+      .find((entry) => entry.name.includes('/assets/index.js'));
+    let releaseToken = 'unknown';
+    try {
+      releaseToken = new URL(entryResource?.name || window.location.href).searchParams.get('v') || 'unknown';
+    } catch {
+      // An unknown token still receives one guarded recovery attempt.
+    }
+    const recoveryKey = `wp_mixed_bundle_recovery_${releaseToken}`;
+    try {
+      if (sessionStorage.getItem(recoveryKey)) return;
+      sessionStorage.setItem(recoveryKey, String(Date.now()));
+    } catch {
+      return;
+    }
+
+    // The service worker refreshes the entry asset in the background. A
+    // single delayed reload then mounts the entry and lazy chunks from the
+    // same release without creating a reload loop.
+    window.setTimeout(() => window.location.reload(), 700);
   }
 
   render() {

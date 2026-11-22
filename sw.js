@@ -331,7 +331,7 @@ async function handleStaticAssetRequest(event) {
       await cache.delete(request);
     }));
   }
-  const refreshPromise = fetch(request.url).then(async function(response) {
+  const refreshPromise = fetch(request, { cache: "no-store" }).then(async function(response) {
     if (isValidStaticAssetResponse(url, response)) {
       const cache = await caches.open(RUNTIME_CACHE);
       await cache.put(request, response.clone());
@@ -342,6 +342,27 @@ async function handleStaticAssetRequest(event) {
     }
     return response;
   });
+
+  // The unhashed entry files define the shared React contexts used by all
+  // hashed lazy chunks. Serving an old entry with new chunks creates two
+  // incompatible context graphs (Auth/Language/Router). Keep these two files
+  // network-first so every online launch uses one coherent build.
+  const isEntryAsset =
+    url.pathname === "/assets/index.js" ||
+    url.pathname === "/assets/index.css";
+
+  if (isEntryAsset) {
+    try {
+      return await refreshPromise;
+    } catch (err) {
+      if (validCached) return cached;
+      return new Response("Offline", {
+        status: 503,
+        statusText: "Offline",
+        headers: { "X-SW-Offline": "1", "Access-Control-Expose-Headers": "X-SW-Offline" }
+      });
+    }
+  }
 
   if (validCached) {
     event.waitUntil(refreshPromise.catch(function() {}));

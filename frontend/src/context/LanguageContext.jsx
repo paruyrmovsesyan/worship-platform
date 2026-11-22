@@ -3075,7 +3075,18 @@ const translations = {
   }
 };
 
-const LanguageContext = createContext();
+const fallbackTranslate = (key, fallbackText = null) =>
+  (typeof fallbackText === 'string' ? fallbackText : key);
+
+const DEFAULT_LANGUAGE_CONTEXT = Object.freeze({
+  language: 'am',
+  lang: 'am',
+  setLanguage: () => {},
+  setLang: () => {},
+  t: fallbackTranslate,
+});
+
+const LanguageContext = createContext(DEFAULT_LANGUAGE_CONTEXT);
 
 export function LanguageProvider({ children }) {
   const [language, setLanguage] = useState(localStorage.getItem('worship_lang') || 'am');
