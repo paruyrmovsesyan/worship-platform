@@ -264,12 +264,19 @@ export default function NativePlatformServices() {
         performNativeNavigation(path);
       }));
       addHandle(PushNotifications.addListener('pushNotificationReceived', async (notification) => {
-        // The in-app call screen owns the foreground ringtone. Scheduling a
-        // second local notification here makes two call sounds overlap.
+        // The in-app call screen owns the foreground ringtone.
         if (notification?.data?.type === 'call') {
           window.dispatchEvent(new CustomEvent('wp-native-resume'));
           return;
         }
+
+        // On Android, Capacitor PushNotifications plugin already builds and displays
+        // the system notification banner in foreground via showForegroundNotification().
+        // Scheduling a LocalNotification here would duplicate it!
+        if (Capacitor.getPlatform() === 'android') {
+          return;
+        }
+
         // If user is already actively viewing this exact chat thread, skip redundant banner
         const targetPath = notificationPath(notification?.data || {});
         if (targetPath && targetPath.startsWith('/chat/') && window.location.pathname === targetPath) {
@@ -277,23 +284,12 @@ export default function NativePlatformServices() {
         }
         const localPermission = await LocalNotifications.checkPermissions().catch(() => ({ display: 'denied' }));
         if (localPermission.display !== 'granted') return;
-        const notifType = notification?.data?.type || '';
-        let channelId = 'worship-default';
-        if (Capacitor.getPlatform() === 'android') {
-          if (notifType === 'chat' || notifType === 'message' || targetPath?.startsWith('/chat/')) {
-            channelId = 'worship-chat';
-          } else if (notifType === 'setlist' || targetPath?.startsWith('/setlists/')) {
-            channelId = 'worship-team';
-          } else if (notifType === 'announcement' || targetPath?.startsWith('/news/')) {
-            channelId = 'worship-news';
-          }
-        }
+
         await LocalNotifications.schedule({
           notifications: [{
             id: Math.floor(Date.now() % 2147483647),
             title: notification.title || notification?.data?.title || 'Worship Platform',
             body: notification.body || notification?.data?.body || '',
-            channelId: Capacitor.getPlatform() === 'android' ? channelId : undefined,
             smallIcon: 'ic_stat_notification',
             iconColor: '#9D72FF',
             extra: notification.data || {},
