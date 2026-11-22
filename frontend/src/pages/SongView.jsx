@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react';
+import React, { Suspense, useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { createPortal } from 'react-dom';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
@@ -27,10 +28,11 @@ import { usePageReady } from '../hooks/usePageReady';
 import './SongView.css';
 import './SongViewWebPro.css';
 import SongViewWebTools from '../components/SongViewWebTools';
-import PrintStudio from '../components/PrintStudio';
 import ChordDiagramPopover from '../components/ChordDiagramPopover';
-import SongStemsMixer from '../components/SongStemsMixer';
-import WorshipAIStudioModal from '../components/WorshipAIStudioModal';
+
+const PrintStudio = lazyWithRetry(() => import('../components/PrintStudio'), 'PrintStudio');
+const SongStemsMixer = lazyWithRetry(() => import('../components/SongStemsMixer'), 'SongStemsMixer');
+const WorshipAIStudioModal = lazyWithRetry(() => import('../components/WorshipAIStudioModal'), 'WorshipAIStudioModal');
 import { useIsAppMode } from '../hooks/useIsPWA';
 import { nativeShare } from '../utils/nativeFeatures';
 import {
@@ -308,6 +310,14 @@ export default function SongView() {
   const [showInlineMetronome, setShowInlineMetronome] = useState(false);
   const [pedalMode, setPedalMode] = useState(() => localStorage.getItem('wp_pedal_mode_v1') === 'true');
   const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
+  const [activeSectionIdx, setActiveSectionIdx] = useState(0);
+  const [personalNote, setPersonalNote] = useState(() => {
+    try { return localStorage.getItem(`wp_song_note_${id}`) || ''; } catch { return ''; }
+  });
+  const [noteDraft, setNoteDraft] = useState('');
+  const [showNoteEditor, setShowNoteEditor] = useState(false);
+  const sheetRef = useRef(null);
+  const ribbonRef = useRef(null);
   const toolsBtnRef = useRef(null);
   const [toolsMenuPos, setToolsMenuPos] = useState({ top: 80, right: 16 });
 
@@ -1507,7 +1517,73 @@ export default function SongView() {
     window.scrollTo(0, 0);
     const mainEl = document.querySelector('main') || document.documentElement;
     if (mainEl && mainEl.scrollTop > 0) mainEl.scrollTop = 0;
+    setActiveSectionIdx(0);
+    setShowNoteEditor(false);
+    try {
+      const saved = localStorage.getItem(`wp_song_note_${id}`) || '';
+      setPersonalNote(saved);
+      setNoteDraft(saved);
+    } catch {
+      setPersonalNote('');
+      setNoteDraft('');
+    }
   }, [id]);
+
+  // Auto-highlight active arrangement section while scrolling
+  useEffect(() => {
+    if (arrangementSections.length < 2 || effectiveViewMode === 'chords_chart') return undefined;
+    let rafId = 0;
+    const updateActiveSection = () => {
+      rafId = 0;
+      const sheetEl = sheetRef.current;
+      if (!sheetEl || sheetEl.scrollHeight <= 0) return;
+      const rect = sheetEl.getBoundingClientRect();
+      const absTop = rect.top + window.scrollY;
+      const viewportProbe = window.scrollY + Math.min(220, window.innerHeight * 0.28);
+      const progress = Math.max(0, Math.min(1, (viewportProbe - absTop) / Math.max(1, sheetEl.scrollHeight)));
+      let foundIdx = 0;
+      for (let i = 0; i < arrangementSections.length; i += 1) {
+        if (arrangementSections[i].ratio <= progress + 0.04) {
+          foundIdx = i;
+        }
+      }
+      setActiveSectionIdx((prev) => (prev === foundIdx ? prev : foundIdx));
+    };
+    const onScroll = () => {
+      if (!rafId) rafId = window.requestAnimationFrame(updateActiveSection);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
+  }, [arrangementSections, effectiveViewMode]);
+
+  // Keep active pill gently visible inside horizontal arrangement ribbon
+  useEffect(() => {
+    const ribbon = ribbonRef.current;
+    if (!ribbon) return;
+    const activePill = ribbon.children[activeSectionIdx];
+    if (activePill && typeof activePill.scrollIntoView === 'function') {
+      try {
+        activePill.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+      } catch {}
+    }
+  }, [activeSectionIdx]);
+
+  const handleSavePersonalNote = () => {
+    const cleaned = noteDraft.trim();
+    setPersonalNote(cleaned);
+    try {
+      if (cleaned) localStorage.setItem(`wp_song_note_${id}`, cleaned);
+      else localStorage.removeItem(`wp_song_note_${id}`);
+    } catch {}
+    setShowNoteEditor(false);
+    setFavMsg(cleaned
+      ? (language === 'ru' ? 'Заметка сохранена' : language === 'en' ? 'Note saved' : 'Նշումը պահպանվեց')
+      : (language === 'ru' ? 'Заметка удалена' : language === 'en' ? 'Note cleared' : 'Նշումը մաքրվեց'));
+    setTimeout(() => setFavMsg(''), 1800);
+  };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -1866,29 +1942,93 @@ export default function SongView() {
           )}
 
           {stemsOpen && isEnabled('rehearsal_stems') && (
-            <SongStemsMixer
-              songTitle={displayTitle}
-              songKey={soundingKey || song?.song_key || 'C'}
-              initialBpm={song?.bpm || 120}
-              audioUrl={resolveMediaUrl(song?.audio_url || (song?.attachments?.[0]?.url))}
-              onClose={() => setStemsOpen(false)}
-            />
+            <Suspense fallback={null}>
+              <SongStemsMixer
+                songTitle={displayTitle}
+                songKey={soundingKey || song?.song_key || 'C'}
+                initialBpm={song?.bpm || 120}
+                audioUrl={resolveMediaUrl(song?.audio_url || (song?.attachments?.[0]?.url))}
+                onClose={() => setStemsOpen(false)}
+              />
+            </Suspense>
           )}
         </div>
       )}
 
-      {/* Color-Coded Song Arrangement Ribbon */}
+      {/* Personal Musician Stage Note (collapsible inline editor / crisp banner when saved) */}
+      {(showNoteEditor || personalNote) && (
+        <div className="sv-personal-note-box">
+          {showNoteEditor ? (
+            <div className="sv-personal-note-editor">
+              <div className="sv-personal-note-head">
+                <span>
+                  {language === 'ru' ? 'Личная заметка' : language === 'en' ? 'Personal Stage Note' : 'Իմ բեմական նշումը'}
+                </span>
+                <button type="button" className="sv-tone-reset" onClick={() => setShowNoteEditor(false)}>
+                  {language === 'ru' ? 'Отмена' : language === 'en' ? 'Cancel' : 'Չեղարկել'}
+                </button>
+              </div>
+              <textarea
+                className="sv-personal-note-input"
+                rows={2}
+                value={noteDraft}
+                onChange={(e) => setNoteDraft(e.target.value)}
+                placeholder={language === 'ru' ? 'Напр.: начать с пианино, припев 2×...' : language === 'en' ? 'e.g. Piano intro, Chorus 2×...' : 'Օր.՝ սկսել դաշնամուրով, կրկներգը 2×...'}
+                autoFocus
+              />
+              <div className="sv-personal-note-actions">
+                {personalNote && (
+                  <button
+                    type="button"
+                    className="sv-note-clear-btn"
+                    onClick={() => {
+                      setNoteDraft('');
+                      setPersonalNote('');
+                      try { localStorage.removeItem(`wp_song_note_${id}`); } catch {}
+                      setShowNoteEditor(false);
+                    }}
+                  >
+                    {language === 'ru' ? 'Удалить' : language === 'en' ? 'Delete' : 'Ջնջել'}
+                  </button>
+                )}
+                <button type="button" className="sv-note-save-btn" onClick={handleSavePersonalNote}>
+                  {language === 'ru' ? 'Сохранить' : language === 'en' ? 'Save' : 'Պահպանել'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="sv-personal-note-banner"
+              onClick={() => {
+                setNoteDraft(personalNote);
+                setShowNoteEditor(true);
+              }}
+              title={language === 'ru' ? 'Редактировать заметку' : language === 'en' ? 'Edit note' : 'Խմբագրել նշումը'}
+            >
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+              <span>{personalNote}</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Color-Coded Song Arrangement Ribbon (Auto-highlights active section on scroll) */}
       {arrangementSections.length >= 2 && effectiveViewMode !== 'chords_chart' && (
-        <div className="sv-arrangement-ribbon" aria-label="Երգի կառուցվածք">
+        <div ref={ribbonRef} className="sv-arrangement-ribbon" aria-label="Երգի կառուցվածք">
           {arrangementSections.map((sec, idx) => (
             <button
               key={`${sec.label}_${idx}`}
               type="button"
-              className="sv-arr-pill"
+              className={`sv-arr-pill ${activeSectionIdx === idx ? 'is-active' : ''}`}
               style={{ '--arr-color': sec.color }}
               title={sec.label}
               onClick={() => {
-                const sheetEl = document.querySelector('.sv-sheet');
+                setActiveSectionIdx(idx);
+                const sheetEl = sheetRef.current || document.querySelector('.sv-sheet');
                 if (sheetEl) {
                   const rect = sheetEl.getBoundingClientRect();
                   const absTop = rect.top + window.scrollY;
@@ -1906,6 +2046,7 @@ export default function SongView() {
 
       {/* Sheet Music / Lyrics Content */}
       <div
+        ref={sheetRef}
         className={`sv-sheet ${effectiveViewMode === 'lyrics' ? 'lyrics-mode' : ''} ${isTwoColumn ? 'web-two-column' : ''}`}
         style={{ fontSize: `${fontSize}px` }}
         onMouseOver={openChordPopover}
@@ -2326,22 +2467,24 @@ export default function SongView() {
     )}
 
     {/* Print Studio */}
-    {!isPWA && (
-      <PrintStudio
-        isOpen={isPrintOpen}
-        onClose={() => setIsPrintOpen(false)}
-        documents={[{
-          id: song.id,
-          title: getLocalizedTitle(song.title, language),
-          artist: song.artist,
-          key: soundingKey || song.song_key,
-          bpm: song.bpm,
-          chords: currentChords,
-          lyrics: currentLyrics,
-        }]}
-        documentTitle={getLocalizedTitle(song.title, language)}
-        defaultShowChords={effectiveViewMode !== 'lyrics'}
-      />
+    {!isPWA && isPrintOpen && (
+      <Suspense fallback={null}>
+        <PrintStudio
+          isOpen={isPrintOpen}
+          onClose={() => setIsPrintOpen(false)}
+          documents={[{
+            id: song.id,
+            title: getLocalizedTitle(song.title, language),
+            artist: song.artist,
+            key: soundingKey || song.song_key,
+            bpm: song.bpm,
+            chords: currentChords,
+            lyrics: currentLyrics,
+          }]}
+          documentTitle={getLocalizedTitle(song.title, language)}
+          defaultShowChords={effectiveViewMode !== 'lyrics'}
+        />
+      </Suspense>
     )}
 
     {popoverChord && popoverPos && (
@@ -2763,6 +2906,30 @@ export default function SongView() {
 
               <button
                 type="button"
+                className={`sv-tools-menu-item ${personalNote ? 'is-active' : ''}`}
+                onClick={() => {
+                  setIsToolsMenuOpen(false);
+                  setNoteDraft(personalNote);
+                  setShowNoteEditor(true);
+                }}
+              >
+                <span className="sv-tools-item-icon">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                  </svg>
+                </span>
+                <div className="sv-tools-item-text">
+                  <strong>{language === 'ru' ? 'Моя заметка к песне' : language === 'en' ? 'Personal Stage Note' : 'Իմ նշումը երգի համար'}</strong>
+                  <small>{language === 'ru' ? 'Видно только вам на этом устройстве' : language === 'en' ? 'Private cue saved on this device' : 'Պահվում է միայն քո սարքում'}</small>
+                </div>
+                {personalNote && <span className="sv-tools-status-pill">ON</span>}
+              </button>
+
+              <button
+                type="button"
                 className="sv-tools-menu-item"
                 onClick={() => {
                   setIsToolsMenuOpen(false);
@@ -2938,22 +3105,26 @@ export default function SongView() {
         document.body
       )}
 
-      <WorshipAIStudioModal
-        isOpen={isAIStudioOpen}
-        onClose={() => setIsAIStudioOpen(false)}
-        songTitle={displayTitle}
-        songKey={soundingKey || song?.song_key || 'C'}
-        lyrics={currentLyrics}
-        chords={song?.chords || ''}
-        onApplyResult={(newText, modeType) => {
-          if (modeType === 'chords' || modeType === 'stylize' || newText.includes('[') || /^[A-G][#b]?/.test(newText)) {
-            setSong(prev => ({ ...prev, chords: newText }));
-            setViewMode('chords');
-          } else {
-            setSong(prev => ({ ...prev, lyrics: newText }));
-          }
-        }}
-      />
+      {isAIStudioOpen && (
+        <Suspense fallback={null}>
+          <WorshipAIStudioModal
+            isOpen={isAIStudioOpen}
+            onClose={() => setIsAIStudioOpen(false)}
+            songTitle={displayTitle}
+            songKey={soundingKey || song?.song_key || 'C'}
+            lyrics={currentLyrics}
+            chords={song?.chords || ''}
+            onApplyResult={(newText, modeType) => {
+              if (modeType === 'chords' || modeType === 'stylize' || newText.includes('[') || /^[A-G][#b]?/.test(newText)) {
+                setSong(prev => ({ ...prev, chords: newText }));
+                setViewMode('chords');
+              } else {
+                setSong(prev => ({ ...prev, lyrics: newText }));
+              }
+            }}
+          />
+        </Suspense>
+      )}
 
     </>
   );

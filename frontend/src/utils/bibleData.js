@@ -125,6 +125,60 @@ export const BIBLE_READING_PLAN = [
   { day: 14, book: 19, chapter: 150, label: { am: 'Սաղմոս 150 — Ամեն շունչ թող օրհնի Տիրոջը', ru: 'Псалом 150 — Всё дышащее да хвалит Господа', en: 'Psalm 150 — Let Everything Praise the Lord' } },
 ];
 
+export const BIBLE_READING_PLANS = [
+  {
+    id: 'essentials_14',
+    title: { am: 'Հավատքի հիմքեր', ru: 'Основы веры', en: 'Faith Essentials' },
+    subtitle: { am: '14 օր · Ընտրյալ գլուխներ', ru: '14 дней · Избранные главы', en: '14 Days · Selected Chapters' },
+    days: BIBLE_READING_PLAN,
+  },
+  {
+    id: 'john_21',
+    title: { am: 'Հովհաննեսի Ավետարան', ru: 'Евангелие от Иоанна', en: 'Gospel of John' },
+    subtitle: { am: '21 օր · Ամեն օր 1 գլուխ', ru: '21 день · По 1 главе в день', en: '21 Days · 1 Chapter / Day' },
+    days: Array.from({ length: 21 }, (_, idx) => ({
+      day: idx + 1,
+      book: 43,
+      chapter: idx + 1,
+      label: {
+        am: `Հովհաննես ${idx + 1}`,
+        ru: `От Иоанна ${idx + 1}`,
+        en: `John ${idx + 1}`,
+      },
+    })),
+  },
+  {
+    id: 'proverbs_31',
+    title: { am: 'Իմաստություն ամեն օր', ru: 'Мудрость на каждый день', en: 'Daily Wisdom (Proverbs)' },
+    subtitle: { am: '31 օր · Առակներ 1–31', ru: '31 день · Притчи 1–31', en: '31 Days · Proverbs 1–31' },
+    days: Array.from({ length: 31 }, (_, idx) => ({
+      day: idx + 1,
+      book: 20,
+      chapter: idx + 1,
+      label: {
+        am: `Առակներ ${idx + 1}`,
+        ru: `Притчи ${idx + 1}`,
+        en: `Proverbs ${idx + 1}`,
+      },
+    })),
+  },
+  {
+    id: 'psalms_30',
+    title: { am: 'Սաղմոսներ՝ 30 օրում', ru: 'Псалмы за 30 дней', en: 'Psalms in 30 Days' },
+    subtitle: { am: '30 օր · Փառաբանություն և աղոթք', ru: '30 дней · Хвала и молитва', en: '30 Days · Praise & Prayer' },
+    days: [1, 8, 16, 19, 23, 25, 27, 32, 34, 37, 40, 42, 46, 51, 62, 63, 73, 84, 90, 91, 95, 100, 103, 118, 119, 121, 136, 139, 145, 150].map((ch, idx) => ({
+      day: idx + 1,
+      book: 19,
+      chapter: ch,
+      label: {
+        am: `Սաղմոս ${ch}`,
+        ru: `Псалом ${ch}`,
+        en: `Psalm ${ch}`,
+      },
+    })),
+  },
+];
+
 export function getBookName(bookId, lang = 'am') {
   const book = BIBLE_BOOKS.find((b) => b.id === Number(bookId));
   if (!book) return `Book ${bookId}`;

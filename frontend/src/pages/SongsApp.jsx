@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { getSongCoverStyle } from '../utils/songCover';
 import { usePageReady } from '../hooks/usePageReady';
-import { scoreSongSearch } from '../utils/searchMatcher';
+import { scoreSongSearch, highlightText } from '../utils/searchMatcher';
 import {
   getRecentSongSearches,
   saveRecentSongSearch,
@@ -105,14 +105,15 @@ export default function SongsApp() {
   const filterEffectReady = useRef(false);
   const scrollRestored = useRef(false);
 
-  // Categories config
+  // Categories config (clean SVG-ready labels, zero raw emojis)
   const categories = useMemo(() => [
-    { id: 'all', label: language === 'am' ? 'Բոլորը' : language === 'ru' ? 'Все' : 'All', icon: null },
-    ...(user ? [{ id: 'favorites', label: language === 'am' ? 'Իմ ընտրանին' : language === 'ru' ? 'Избранное' : 'Favorites', icon: '❤️' }] : []),
-    { id: 'chords', label: language === 'am' ? 'Ակորդներով' : language === 'ru' ? 'С аккордами' : 'With Chords', icon: null },
-    { id: 'lyrics', label: language === 'am' ? 'Տեքստեր' : language === 'ru' ? 'Только текст' : 'Lyrics Only', icon: '📄' },
-    { id: 'fast', label: language === 'am' ? 'Արագ' : language === 'ru' ? 'Быстрые' : 'Fast', icon: '⚡' },
-    { id: 'slow', label: language === 'am' ? 'Խաղաղ' : language === 'ru' ? 'Спокойные' : 'Slow', icon: '🕊' },
+    { id: 'all', label: language === 'am' ? 'Բոլորը' : language === 'ru' ? 'Все' : 'All' },
+    ...(user ? [{ id: 'favorites', label: language === 'am' ? 'Իմ ընտրանին' : language === 'ru' ? 'Избранное' : 'Favorites' }] : []),
+    { id: 'chords', label: language === 'am' ? 'Ակորդներով' : language === 'ru' ? 'С аккордами' : 'With Chords' },
+    { id: 'lyrics', label: language === 'am' ? 'Տեքստեր' : language === 'ru' ? 'Только текст' : 'Lyrics Only' },
+    { id: 'slow', label: language === 'am' ? 'Դանդաղ' : language === 'ru' ? 'Медленные' : 'Slow' },
+    { id: 'medium', label: language === 'am' ? 'Միջին' : language === 'ru' ? 'Средние' : 'Medium' },
+    { id: 'fast', label: language === 'am' ? 'Արագ' : language === 'ru' ? 'Быстрые' : 'Fast' },
   ], [language, user]);
 
   // Extract available keys dynamically
@@ -350,8 +351,6 @@ export default function SongsApp() {
         }
         const res = scoreSongSearch(s, searchQuery, language);
         if (!res.matches) return null;
-        s._searchSnippet = res.snippet;
-        s._matchedTitle = res.matchedTitle;
         return { song: s, score: res.score, snippet: res.snippet, matchedTitle: res.matchedTitle };
       })
       .filter(item => {
@@ -383,11 +382,15 @@ export default function SongsApp() {
         }
 
         const bpmNum = parseInt(s.bpm, 10) || 0;
-        if (activeCategory === 'fast' && bpmNum < 100) {
+        if (activeCategory === 'fast' && bpmNum < 115) {
           return false;
         }
 
-        if (activeCategory === 'slow' && (bpmNum <= 0 || bpmNum >= 100)) {
+        if (activeCategory === 'medium' && (bpmNum < 80 || bpmNum >= 115)) {
+          return false;
+        }
+
+        if (activeCategory === 'slow' && (bpmNum <= 0 || bpmNum >= 80)) {
           return false;
         }
 
@@ -414,7 +417,8 @@ export default function SongsApp() {
       .map(item => ({
         ...item.song,
         _searchScore: item.score,
-        _searchSnippet: item.snippet
+        _searchSnippet: item.snippet,
+        _matchedTitle: item.matchedTitle || null,
       }));
   }, [songs, searchQuery, selectedKey, activeCategory, favorites, sortBy, language]);
 
@@ -631,7 +635,13 @@ export default function SongsApp() {
             title={language === 'am' ? 'Պատահական երգ' : language === 'ru' ? 'Случайная песня' : 'Random Song'}
             aria-label={language === 'am' ? 'Պատահական երգ' : 'Random Song'}
           >
-            <span className="random-dice-icon">🎲</span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="16 3 21 3 21 8" />
+              <line x1="4" y1="20" x2="21" y2="3" />
+              <polyline points="21 16 21 21 16 21" />
+              <line x1="15" y1="15" x2="21" y2="21" />
+              <line x1="4" y1="4" x2="9" y2="9" />
+            </svg>
             <span className="random-label desk-only-inline">{language === 'am' ? 'Պատահական' : 'Random'}</span>
           </button>
         </div>
@@ -713,7 +723,8 @@ export default function SongsApp() {
                 <div className="sug-section">
                   <div className="sug-header">
                     <span className="sug-title">
-                      <span className="sug-icon">🕒</span> {language === 'am' ? 'Վերջին որոնումները' : language === 'ru' ? 'Недавние' : 'Recent'}
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      {language === 'am' ? 'Վերջին որոնումները' : language === 'ru' ? 'Недавние' : 'Recent'}
                     </span>
                     <button
                       type="button"
@@ -762,7 +773,8 @@ export default function SongsApp() {
               <div className="sug-section">
                 <div className="sug-header">
                   <span className="sug-title">
-                    <span className="sug-icon">💡</span> {language === 'am' ? 'Հաճախ որոնվող' : language === 'ru' ? 'Популярные' : 'Popular'}
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    {language === 'am' ? 'Հաճախ որոնվող' : language === 'ru' ? 'Популярные' : 'Popular'}
                   </span>
                 </div>
                 <div className="sug-chips">
@@ -849,13 +861,13 @@ export default function SongsApp() {
         <div className="filter-sort-row">
           <select className="sort-sel modern-select" value={sortBy} onChange={e => setSortBy(e.target.value)}>
             {searchQuery && (
-              <option value="relevance">🎯 {language === 'am' ? 'Ըստ համապատասխանության' : language === 'ru' ? 'По релевантности' : 'By Relevance'}</option>
+              <option value="relevance">{language === 'am' ? 'Ըստ համապատասխանության' : language === 'ru' ? 'По релевантности' : 'By Relevance'}</option>
             )}
-            <option value="recent">⏱ {t('songs.sortRecent', 'Նոր ավելացված')}</option>
-            <option value="title">🔤 {t('songs.sortTitle', 'Այբբենական')}</option>
-            <option value="bpm_desc">⚡ Տեմպ (արագից դանդաղ)</option>
-            <option value="bpm_asc">🕊 Տեմպ (դանդաղից արագ)</option>
-            <option value="key">🎵 {t('songs.sortKey', 'Տոնայնություն')}</option>
+            <option value="recent">{t('songs.sortRecent', 'Նոր ավելացված')}</option>
+            <option value="title">{t('songs.sortTitle', 'Այբբենական')}</option>
+            <option value="bpm_desc">{language === 'am' ? 'Տեմպ՝ արագից դանդաղ' : language === 'ru' ? 'Темп: быстрые → медленные' : 'Tempo: Fast → Slow'}</option>
+            <option value="bpm_asc">{language === 'am' ? 'Տեմպ՝ դանդաղից արագ' : language === 'ru' ? 'Темп: медленные → быстрые' : 'Tempo: Slow → Fast'}</option>
+            <option value="key">{t('songs.sortKey', 'Տոնայնություն')}</option>
           </select>
           {hasActiveFilters && (
             <button 
@@ -927,10 +939,16 @@ export default function SongsApp() {
                 </div>
 
                 <div className="track-info">
-                  <span className="track-title">{getLocalizedTitle(song, language)}</span>
+                  <span className="track-title">
+                    {searchQuery
+                      ? highlightText(getLocalizedTitle(song, language), searchQuery).map((chunk, cIdx) =>
+                          chunk.highlight ? <mark key={cIdx} className="search-hl-mark">{chunk.text}</mark> : <React.Fragment key={cIdx}>{chunk.text}</React.Fragment>
+                        )
+                      : getLocalizedTitle(song, language)}
+                  </span>
                   {searchQuery && song._matchedTitle && (
                     <span className="track-matched-title" title="Համընկնում այլընտրանքային վերնագրում">
-                      🔍 {song._matchedTitle}
+                      {song._matchedTitle}
                     </span>
                   )}
                   <div className="track-subinfo">
@@ -944,8 +962,11 @@ export default function SongsApp() {
                   </div>
                   {searchQuery && song._searchSnippet && (
                     <div className="track-snippet" title="Համընկնում տեքստում">
-                      <span className="snippet-icon">💬</span>
-                      <span className="snippet-text">«{song._searchSnippet}»</span>
+                      <span className="snippet-text">
+                        «{highlightText(song._searchSnippet, searchQuery).map((chunk, cIdx) =>
+                          chunk.highlight ? <mark key={cIdx} className="search-hl-mark">{chunk.text}</mark> : <React.Fragment key={cIdx}>{chunk.text}</React.Fragment>
+                        )}»
+                      </span>
                     </div>
                   )}
                 </div>

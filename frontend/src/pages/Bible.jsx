@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
 import {
   BIBLE_BOOKS,
   BIBLE_BOOK_GENRES,
   BIBLE_READING_PLAN,
+  BIBLE_READING_PLANS,
   BIBLICAL_MEASURES,
   DEFAULT_BIBLE_TRANSLATIONS,
   getAlignedParallelChapter,
@@ -17,6 +19,42 @@ import {
 } from '../utils/bibleData';
 import { nativeShare } from '../utils/nativeFeatures';
 import './Bible.css';
+
+const VerseShareCardModal = lazyWithRetry(
+  () => import('../components/VerseShareCardModal'),
+  'VerseShareCardModal',
+);
+
+const BIBLE_STREAK_KEY = 'wp_bible_streak_v1';
+const BIBLE_PLANS_PROGRESS_KEY = 'wp_bible_plans_progress_v1';
+
+function getTodayIsoDate() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function recordReadingStreak() {
+  const today = getTodayIsoDate();
+  try {
+    const raw = JSON.parse(localStorage.getItem(BIBLE_STREAK_KEY) || 'null');
+    if (raw && raw.lastDate === today) return raw;
+    let nextCount = 1;
+    if (raw && raw.lastDate) {
+      const prevD = new Date(`${raw.lastDate}T00:00:00`);
+      const curD = new Date(`${today}T00:00:00`);
+      const diffDays = Math.round((curD - prevD) / (1000 * 60 * 60 * 24));
+      if (diffDays === 1) nextCount = (Number(raw.count) || 0) + 1;
+    }
+    const updated = { count: nextCount, lastDate: today };
+    localStorage.setItem(BIBLE_STREAK_KEY, JSON.stringify(updated));
+    return updated;
+  } catch {
+    return { count: 1, lastDate: today };
+  }
+}
 
 const MEASURES_SPLIT_REGEX = new RegExp(
   `(${BIBLICAL_MEASURES.map((m) => m.pattern.source).join('|')})`,
@@ -131,6 +169,22 @@ export default function Bible() {
   const [audioSpeed, setAudioSpeed] = useState(1.0);
   const [offlineProgress, setOfflineProgress] = useState(null); // { done, total }
   const [offlineReadyTick, setOfflineReadyTick] = useState(0);
+  const [showShareCardModal, setShowShareCardModal] = useState(false);
+  const [activePlanId, setActivePlanId] = useState('essentials_14');
+  const [extraPlanProgress, setExtraPlanProgress] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(BIBLE_PLANS_PROGRESS_KEY) || '{}') || {};
+    } catch {
+      return {};
+    }
+  });
+  const [readingStreak, setReadingStreak] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(BIBLE_STREAK_KEY) || 'null') || { count: 0, lastDate: '' };
+    } catch {
+      return { count: 0, lastDate: '' };
+    }
+  });
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [compareItems, setCompareItems] = useState([]);
   const [loadingCompare, setLoadingCompare] = useState(false);
@@ -734,6 +788,7 @@ export default function Bible() {
     setReaderPage(0);
     setShowBookDrawer(false);
     setActiveTab('read');
+    setReadingStreak(recordReadingStreak());
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -838,13 +893,40 @@ export default function Bible() {
     });
   };
 
+  const activePlan = useMemo(
+    () => BIBLE_READING_PLANS.find((p) => p.id === activePlanId) || BIBLE_READING_PLANS[0],
+    [activePlanId],
+  );
+
+  const activePlanCompletedDays = useMemo(() => {
+    if (activePlan.id === 'essentials_14') return userState.plan_days || [];
+    const arr = extraPlanProgress[activePlan.id];
+    return Array.isArray(arr) ? arr : [];
+  }, [activePlan.id, userState.plan_days, extraPlanProgress]);
+
   const togglePlanDay = (day) => {
-    persistUserState((prev) => {
-      const exists = prev.plan_days.includes(day);
-      return {
+    setReadingStreak(recordReadingStreak());
+    if (activePlan.id === 'essentials_14') {
+      persistUserState((prev) => {
+        const exists = prev.plan_days.includes(day);
+        return {
+          ...prev,
+          plan_days: exists ? prev.plan_days.filter((d) => d !== day) : [...prev.plan_days, day],
+        };
+      });
+      return;
+    }
+    setExtraPlanProgress((prev) => {
+      const list = Array.isArray(prev[activePlan.id]) ? prev[activePlan.id] : [];
+      const exists = list.includes(day);
+      const next = {
         ...prev,
-        plan_days: exists ? prev.plan_days.filter((d) => d !== day) : [...prev.plan_days, day],
+        [activePlan.id]: exists ? list.filter((d) => d !== day) : [...list, day],
       };
+      try {
+        localStorage.setItem(BIBLE_PLANS_PROGRESS_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
     });
   };
 
@@ -1544,8 +1626,17 @@ export default function Bible() {
       ) : activeTab === 'my' ? (
         <div className="bible-my-wrap">
           <div className="bible-stats-row">
+            <div className="bible-stat-chip bible-stat-streak">
+              <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#f7b500" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                </svg>
+                {readingStreak.count || 0}
+              </strong>
+              <span>{language === 'ru' ? 'Дней подряд' : language === 'en' ? 'Day Streak' : 'Օր անընդմեջ'}</span>
+            </div>
             <div className="bible-stat-chip">
-              <strong>{userState.plan_days.length} / {BIBLE_READING_PLAN.length}</strong>
+              <strong>{activePlanCompletedDays.length} / {activePlan.days.length}</strong>
               <span>{language === 'ru' ? 'Дней плана' : language === 'en' ? 'Plan Days' : 'Պլանի օրեր'}</span>
             </div>
             <div className="bible-stat-chip">
@@ -1553,35 +1644,74 @@ export default function Bible() {
               <span>{ui.bookmarks}</span>
             </div>
             <div className="bible-stat-chip">
-              <strong>{userState.notes.length}</strong>
-              <span>{ui.notes}</span>
-            </div>
-            <div className="bible-stat-chip">
-              <strong>{userState.highlights.length}</strong>
-              <span>{ui.highlights}</span>
+              <strong>{userState.notes.length + userState.highlights.length}</strong>
+              <span>{language === 'ru' ? 'Заметки' : language === 'en' ? 'Saved' : 'Նշումներ'}</span>
             </div>
           </div>
 
         <div className="bible-my-grid">
-          {/* Reading Plan */}
+          {/* Multi Reading Plans */}
           <section className="bible-card">
             <div className="bible-card-head">
-              <h3>{ui.readingPlan}</h3>
+              <div>
+                <h3>{activePlan.title[language] || activePlan.title.am}</h3>
+                <small className="bible-plan-subtitle">{activePlan.subtitle[language] || activePlan.subtitle.am}</small>
+              </div>
               <span className="bible-badge-pill">
-                {userState.plan_days.length} / {BIBLE_READING_PLAN.length}
+                {activePlanCompletedDays.length} / {activePlan.days.length}
               </span>
             </div>
+
+            <div className="bible-plan-tabs" role="tablist" aria-label="Ընթերցման պլաններ">
+              {BIBLE_READING_PLANS.map((plan) => (
+                <button
+                  key={plan.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activePlan.id === plan.id}
+                  className={`bible-plan-tab-pill ${activePlan.id === plan.id ? 'active' : ''}`}
+                  onClick={() => setActivePlanId(plan.id)}
+                >
+                  {plan.title[language] || plan.title.am}
+                </button>
+              ))}
+            </div>
+
             <div className="bible-plan-progress">
               <div
                 className="bible-plan-fill"
-                style={{ width: `${Math.round((userState.plan_days.length / BIBLE_READING_PLAN.length) * 100)}%` }}
+                style={{ width: `${Math.round((activePlanCompletedDays.length / Math.max(1, activePlan.days.length)) * 100)}%` }}
               />
             </div>
+
+            {(() => {
+              const nextDay = activePlan.days.find((d) => !activePlanCompletedDays.includes(d.day));
+              if (!nextDay) return null;
+              return (
+                <button
+                  type="button"
+                  className="bible-plan-next-cta"
+                  onClick={() => selectBookChapter(nextDay.book, nextDay.chapter)}
+                >
+                  <span>
+                    {language === 'ru'
+                      ? `Читать день ${nextDay.day}: ${nextDay.label.ru}`
+                      : language === 'en'
+                      ? `Read Day ${nextDay.day}: ${nextDay.label.en}`
+                      : `Կարդալ Օր ${nextDay.day}՝ ${nextDay.label.am}`}
+                  </span>
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              );
+            })()}
+
             <div className="bible-plan-list">
-              {BIBLE_READING_PLAN.map((item) => {
-                const done = userState.plan_days.includes(item.day);
+              {activePlan.days.map((item) => {
+                const done = activePlanCompletedDays.includes(item.day);
                 return (
-                  <div key={item.day} className={`bible-plan-item ${done ? 'is-done' : ''}`}>
+                  <div key={`${activePlan.id}_${item.day}`} className={`bible-plan-item ${done ? 'is-done' : ''}`}>
                     <button
                       type="button"
                       className="bible-plan-check"
@@ -2041,11 +2171,14 @@ export default function Bible() {
                     <button type="button" className="bible-pill-btn" onClick={handleShareVerse}>
                       {ui.share}
                     </button>
+                    <button type="button" className="bible-pill-btn" onClick={() => setShowShareCardModal(true)}>
+                      {language === 'ru' ? 'Карточка' : language === 'en' ? 'Image Card' : 'Նկար-քարտ'}
+                    </button>
                     <button type="button" className="bible-pill-btn" onClick={() => openCompareVerse(selectedVerse)}>
-                      🔄 {language === 'ru' ? 'Сравнить' : language === 'en' ? 'Compare' : 'Համեմատել'}
+                      {language === 'ru' ? 'Сравнить' : language === 'en' ? 'Compare' : 'Համեմատել'}
                     </button>
                     <button type="button" className="bible-pill-btn" onClick={findMatchingSongs}>
-                      🎵 {language === 'ru' ? 'Песни' : language === 'en' ? 'Songs' : 'Երգեր'}
+                      {language === 'ru' ? 'Песни' : language === 'en' ? 'Songs' : 'Երգեր'}
                     </button>
                   </div>
 
@@ -2130,6 +2263,14 @@ export default function Bible() {
                 <line x1="12" y1="2" x2="12" y2="15" />
               </svg>
               <span>{ui.share}</span>
+            </button>
+            <button type="button" className="bible-sheet-action-btn" onClick={() => setShowShareCardModal(true)}>
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+              <span>{language === 'ru' ? 'Карточка' : language === 'en' ? 'Card' : 'Նկար'}</span>
             </button>
             <button type="button" className="bible-sheet-action-btn" onClick={() => openCompareVerse(selectedVerse)}>
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -2247,7 +2388,7 @@ export default function Bible() {
       {activeMeasure && createPortal(
         <div className="bible-measure-popover" onClick={() => setActiveMeasure(null)}>
           <div>
-            <strong>📏 {activeMeasure.label[language] || activeMeasure.label.am}</strong>
+            <strong>{activeMeasure.label[language] || activeMeasure.label.am}</strong>
             <span>{activeMeasure.info[language] || activeMeasure.info.am}</span>
           </div>
           <button type="button" className="bible-sheet-close" onClick={() => setActiveMeasure(null)}>
@@ -2255,6 +2396,27 @@ export default function Bible() {
           </button>
         </div>,
         document.body
+      )}
+
+      {/* Verse Share Card Image Generator Modal */}
+      {showShareCardModal && selectedVerseObj && (
+        <Suspense fallback={null}>
+          <VerseShareCardModal
+            isOpen={showShareCardModal}
+            onClose={() => setShowShareCardModal(false)}
+            verseText={
+              selectedVerses.length > 1
+                ? selectedVerses
+                    .map((num) => verses.find((v) => v.verse === num)?.text)
+                    .filter(Boolean)
+                    .join(' ')
+                : selectedVerseObj.text
+            }
+            reference={`${getBookName(bookId, language)} ${chapter}:${selectedRangeLabel || selectedVerse}`}
+            translationName={activeTranslationMeta?.name || ''}
+            language={language}
+          />
+        </Suspense>
       )}
 
       {/* Compare Translations Modal (Portaled) */}

@@ -1072,7 +1072,15 @@ export default function Settings() {
                 <label>{t('settings.security.oldPassword')}</label>
                 <div className="inp-icon-wrap">
                   <input type={showCurPass ? 'text' : 'password'} value={curPass} onChange={e => setCurPass(e.target.value)} placeholder="••••••••" />
-                  <button className="eye-btn" onClick={() => setShowCurPass(!showCurPass)}>👁</button>
+                  <button type="button" className="eye-btn" onClick={() => setShowCurPass(!showCurPass)} aria-label="Ցույց տալ գաղտնաբառը">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      {showCurPass ? (
+                        <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></>
+                      ) : (
+                        <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>
+                      )}
+                    </svg>
+                  </button>
                 </div>
               </div>
 
@@ -1080,7 +1088,15 @@ export default function Settings() {
                 <label>{t('settings.security.newPassword')}</label>
                 <div className="inp-icon-wrap">
                   <input type={showNewPass ? 'text' : 'password'} value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="••••••••" />
-                  <button className="eye-btn" onClick={() => setShowNewPass(!showNewPass)}>👁</button>
+                  <button type="button" className="eye-btn" onClick={() => setShowNewPass(!showNewPass)} aria-label="Ցույց տալ գաղտնաբառը">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      {showNewPass ? (
+                        <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></>
+                      ) : (
+                        <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>
+                      )}
+                    </svg>
+                  </button>
                 </div>
               </div>
 
@@ -1187,11 +1203,11 @@ export default function Settings() {
                     </div>
                     
                     <div className="req-meta" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '0.25rem' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(0, 240, 255, 0.1)', color: 'var(--color-accent-cyan)', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 500 }}>
-                        {r.request_type === 'new' ? '🎵' : '✏️'} {r.request_type_label}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(0, 240, 255, 0.1)', color: 'var(--color-accent-cyan)', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 500 }}>
+                        {r.request_type_label}
                       </span>
                       <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                        🕒 {new Date(r.created_at).toLocaleString()}
+                        {new Date(r.created_at).toLocaleString()}
                       </span>
                     </div>
                     

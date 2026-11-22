@@ -1,9 +1,16 @@
-import LandingPage from './LandingPage';
-import MobileHub from './MobileHub';
+import React, { Suspense } from 'react';
 import { useIsAppMode } from '../hooks/useIsPWA';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
+
+const LandingPage = lazyWithRetry(() => import('./LandingPage'), 'LandingPage');
+const MobileHub = lazyWithRetry(() => import('./MobileHub'), 'MobileHub');
 
 export default function Home() {
   const isAppMode = useIsAppMode();
 
-  return isAppMode ? <MobileHub /> : <LandingPage />;
+  return (
+    <Suspense fallback={null}>
+      {isAppMode ? <MobileHub /> : <LandingPage />}
+    </Suspense>
+  );
 }

@@ -1632,7 +1632,7 @@ export default function SetlistEditorApp() {
   }
 
   return (
-    <div className="sla-page animate-fade-in">
+    <div className="sla-page">
       {/* ── Toast notice ── */}
       {toastNotice && (
         <div className="sla-toast-notice animate-fade-in">
@@ -1643,7 +1643,7 @@ export default function SetlistEditorApp() {
       {/* ── Offline banner ── */}
       {!isOnline && (
         <div className="sla-offline-banner animate-fade-in">
-          <span>📡 Օֆլայն ռեժիմ</span> — Դիտում եք քեշից: Փոփոխությունները կպահպանվեն կապը վերականգնելուց հետո:
+          <strong>Օֆլայն ռեժիմ</strong> — Դիտում եք քեշից: Փոփոխությունները կպահպանվեն կապը վերականգնելուց հետո:
         </div>
       )}
 
@@ -1732,7 +1732,8 @@ export default function SetlistEditorApp() {
         <div className="sla-meta-chips">
           {setlistData.service_date && (
             <span className="sla-chip sla-chip--date">
-              📅 {setlistData.service_date}
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span>{setlistData.service_date}</span>
             </span>
           )}
           {durationStats.total > 0 && (
@@ -1740,15 +1741,18 @@ export default function SetlistEditorApp() {
               className="sla-chip sla-chip--duration"
               title={durationStats.isEstimate ? `Մոտավոր տևողություն (${durationStats.missingCount} երգ չունի տևողություն, լռելյայն ~4.5 ր/երգ)` : 'Ընդհանուր տևողություն'}
             >
-              ⏱ {durationStats.isEstimate ? `~${durationStats.total}` : durationStats.total} րոպե
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span>{durationStats.isEstimate ? `~${durationStats.total}` : durationStats.total} րոպե</span>
             </span>
           )}
           <span className="sla-chip">
-            🎵 {songItems.length} երգ
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            <span>{songItems.length} երգ</span>
           </span>
           {team.length > 0 && (
             <span className="sla-chip sla-chip--team" onClick={openTeamModal} title="Տեսնել թիմը">
-              👥 {team.length} անդամ
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <span>{team.length} անդամ</span>
             </span>
           )}
           {teamChatId ? (
@@ -1763,13 +1767,15 @@ export default function SetlistEditorApp() {
               onClick={() => navigate(`/chat/${teamChatId}`)}
               title="Բացել թիմային չաթը"
             >
-              💬 Թիմի չաթ
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span>Թիմի չաթ</span>
             </span>
           ) : null}
           {isOwner && (
             <>
               <span className="sla-chip sla-chip--views" title={t('setlists.viewsCountTooltip', 'Դիտումների քանակ հղումով')}>
-                👁 {setlistData.views_count || 0} {t('setlists.viewsCount', 'դիտում')}
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span>{setlistData.views_count || 0} {t('setlists.viewsCount', 'դիտում')}</span>
               </span>
               {(allCoUsers.length > 0 || (setlistData.saves_count && setlistData.saves_count > 0) || (setlistData.collaborators_count && setlistData.collaborators_count > 0)) && (
                 <span
@@ -1778,7 +1784,8 @@ export default function SetlistEditorApp() {
                   style={{ cursor: 'pointer', background: 'rgba(0, 212, 255, 0.12)', color: '#00d4ff', borderColor: 'rgba(0, 212, 255, 0.3)' }}
                   title="Տեսնել և կառավարել համատեղ օգտագործողներին"
                 >
-                  🤝 {allCoUsers.length || setlistData.collaborators_count || setlistData.saves_count} {t('setlists.coUsersCount', 'մասնակից')}
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+                  <span>{allCoUsers.length || setlistData.collaborators_count || setlistData.saves_count} {t('setlists.coUsersCount', 'մասնակից')}</span>
                 </span>
               )}
             </>
@@ -1805,7 +1812,7 @@ export default function SetlistEditorApp() {
           color: '#fff'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
-            <span style={{ fontSize: '22px' }}>📋</span>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#00d4ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: '13px', fontWeight: 700 }}>
                 {t('setlists.sharedSetlistBannerTitle', 'Համատեղ երգացանկ')}
@@ -2068,7 +2075,9 @@ export default function SetlistEditorApp() {
                       </span>
                     )}
                     <div className="sla-section-info">
-                      <span className="sla-section-icon">📌</span>
+                      <span className="sla-section-icon">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                      </span>
                       <h4 className="sla-section-title">{item.title}</h4>
                     </div>
 
@@ -2243,7 +2252,7 @@ export default function SetlistEditorApp() {
                             <span className="sla-capo-pill">Capo {item.capo}</span>
                           )}
                           {item.duration ? (
-                            <span className="sla-bpm-pill">⏱ {item.duration}ր</span>
+                            <span className="sla-bpm-pill">{item.duration}ր</span>
                           ) : null}
                         </div>
                       </div>
@@ -2351,10 +2360,10 @@ export default function SetlistEditorApp() {
                         {item.transition_type && (
                           <span className="sla-transition-chip">
                             {item.transition_type === 'crossfade'
-                              ? '🔄 Սահուն անցում (Crossfade)'
+                              ? 'Սահուն անցում (Crossfade)'
                               : item.transition_type === 'stop'
-                              ? '🛑 Դադար (Stop)'
-                              : '💬 Խոսք / Աղոթք (Talk)'}
+                              ? 'Դադար (Stop)'
+                              : 'Խոսք / Աղոթք (Talk)'}
                           </span>
                         )}
                         {harmonicFlow && (
@@ -2369,9 +2378,9 @@ export default function SetlistEditorApp() {
                               borderRadius: '10px',
                               fontWeight: 500
                             }}
-                            title={`Անցում ${currentKey} ➔ ${nextKey}`}
+                            title={`Անցում ${currentKey} → ${nextKey}`}
                           >
-                            🎵 {harmonicFlow.label}
+                            {harmonicFlow.label}
                           </span>
                         )}
                       </div>
@@ -3055,10 +3064,10 @@ export default function SetlistEditorApp() {
                       onChange={(e) => setShareSearchQuery(e.target.value)}
                       placeholder={
                         language === 'am'
-                          ? '🔍 Որոնել չաթեր կամ ընկերներ...'
+                          ? 'Որոնել չաթեր կամ ընկերներ...'
                           : language === 'ru'
-                          ? '🔍 Поиск чатов или друзей...'
-                          : '🔍 Search chats or friends...'
+                          ? 'Поиск чатов или друзей...'
+                          : 'Search chats or friends...'
                       }
                       style={{
                         width: '100%',
@@ -3333,7 +3342,7 @@ export default function SetlistEditorApp() {
 
                 {canDelete && (
                   <button type="button" className="sla-btn-danger" onClick={handleDeleteSetlist}>
-                    🗑️ {t('setlists.deleteBtn', 'Ջնջել երգացանկը')}
+                    {t('setlists.deleteBtn', 'Ջնջել երգացանկը')}
                   </button>
                 )}
               </div>

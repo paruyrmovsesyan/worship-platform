@@ -88,6 +88,20 @@ body.website-theme > .songs-back-to-top {
   margin-bottom: 20px;
 }
 
+.search-hl-mark {
+  background: rgba(247, 181, 0, 0.22);
+  color: inherit;
+  border-radius: 4px;
+  padding: 0 2px;
+  font-weight: 700;
+}
+
+.sug-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .songs-header-top {
   display: flex;
   align-items: center;

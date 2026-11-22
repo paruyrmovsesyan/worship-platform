@@ -1,21 +1,35 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useIsAppMode } from '../hooks/useIsPWA';
 import { useAuth } from '../context/AuthContext';
-import SetlistEditorApp from './SetlistEditorApp';
-import SetlistEditorWeb from './SetlistEditorWeb';
-import SetlistPublicWeb from './SetlistPublicWeb';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
+
+const SetlistEditorApp = lazyWithRetry(() => import('./SetlistEditorApp'), 'SetlistEditorApp');
+const SetlistEditorWeb = lazyWithRetry(() => import('./SetlistEditorWeb'), 'SetlistEditorWeb');
+const SetlistPublicWeb = lazyWithRetry(() => import('./SetlistPublicWeb'), 'SetlistPublicWeb');
 
 export default function SetlistEditor() {
   const isAppMode = useIsAppMode();
   const { user, loading: authLoading } = useAuth();
 
   if (isAppMode) {
-    return <SetlistEditorApp />;
+    return (
+      <Suspense fallback={null}>
+        <SetlistEditorApp />
+      </Suspense>
+    );
   }
 
   if (!authLoading && !user) {
-    return <SetlistPublicWeb />;
+    return (
+      <Suspense fallback={null}>
+        <SetlistPublicWeb />
+      </Suspense>
+    );
   }
 
-  return <SetlistEditorWeb />;
+  return (
+    <Suspense fallback={null}>
+      <SetlistEditorWeb />
+    </Suspense>
+  );
 }

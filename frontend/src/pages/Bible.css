@@ -801,6 +801,81 @@ body.light-mode .bible-verse-row.is-selected .bible-verse-num {
   font-weight: 700;
 }
 
+.bible-plan-subtitle {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.bible-plan-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 12px;
+  padding-bottom: 2px;
+}
+
+.bible-plan-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.bible-plan-tab-pill {
+  flex-shrink: 0;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-secondary);
+  font-size: 0.76rem;
+  font-weight: 650;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.16s ease;
+}
+
+.bible-plan-tab-pill.active {
+  background: #f7b500;
+  border-color: #f7b500;
+  color: #231603;
+  font-weight: 750;
+}
+
+.bible-plan-next-cta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(247, 181, 0, 0.35);
+  background: rgba(247, 181, 0, 0.14);
+  color: var(--color-text-primary);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+
+.bible-plan-next-cta svg {
+  color: #f7b500;
+  flex-shrink: 0;
+}
+
+.bible-stat-streak {
+  border-color: rgba(247, 181, 0, 0.3) !important;
+  background: rgba(247, 181, 0, 0.08) !important;
+}
+
+body.light-mode .bible-plan-tab-pill:not(.active) {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
 .bible-plan-progress {
   height: 7px;
   border-radius: 999px;
@@ -1173,8 +1248,8 @@ body.light-mode .bible-verse-row:hover {
 
   .bible-mobile-sheet-actions {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 7px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
   }
 
   .bible-sheet-action-btn {
@@ -1183,12 +1258,12 @@ body.light-mode .bible-verse-row:hover {
     align-items: center;
     justify-content: center;
     gap: 4px;
-    padding: 8px 4px;
-    border-radius: 14px;
+    padding: 8px 3px;
+    border-radius: 13px;
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.09);
     color: var(--color-text-primary);
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
     cursor: pointer;
     transition: transform 0.14s ease, background 0.18s ease, border-color 0.18s ease;

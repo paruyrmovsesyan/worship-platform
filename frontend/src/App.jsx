@@ -1,6 +1,7 @@
-import React, { useEffect, useLayoutEffect } from 'react';
+import React, { Suspense, useEffect, useLayoutEffect } from 'react';
 import { usePageLoading } from './context/PageLoadingContext';
 import { Routes, Route, useLocation, useNavigate, useNavigationType, Navigate } from 'react-router-dom';
+import { lazyWithRetry } from './utils/lazyWithRetry';
 
 const LegacySongRedirect = () => {
   const params = new URLSearchParams(window.location.search);
@@ -20,47 +21,49 @@ import Songs from './pages/Songs';
 import SongView from './pages/SongView';
 import Setlists from './pages/Setlists';
 import SetlistEditor from './pages/SetlistEditor';
-import SetlistLive from './pages/SetlistLive';
-import SetlistPublicWeb from './pages/SetlistPublicWeb';
 import Favorites from './pages/Favorites';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import { useAuth } from './context/AuthContext';
-import News from './pages/News';
-import NewsArticle from './pages/NewsArticle';
-import Friends from './pages/Friends';
-import Chat from './pages/Chat';
-import Community from './pages/Community';
-import Resources from './pages/Resources';
-import Contact from './pages/Contact';
-import About from './pages/About';
-import Blog from './pages/Blog';
-import Careers from './pages/Careers';
-import Documentation from './pages/Documentation';
-import Tutorials from './pages/Tutorials';
-import NotFound from './pages/NotFound';
-import ServerError from './pages/ServerError';
-import Forbidden from './pages/Forbidden';
 import ErrorBoundary from './components/ErrorBoundary';
-import Support from './pages/Support';
-import Privacy from './pages/Privacy';
-import Terms from './pages/Terms';
-import Cookies from './pages/Cookies';
-import Profile from './pages/Profile';
-import UserProfile from './pages/UserProfile';
-import Settings from './pages/Settings';
-import SongRequest from './pages/SongRequest';
-import Notifications from './pages/Notifications';
-import ChatsList from './pages/ChatsList';
-import TransposeTool from './pages/TransposeTool';
-import InstallApp from './pages/InstallApp';
-import LiveProjection from './pages/LiveProjection';
-import ServicePlanner from './pages/ServicePlanner';
-import WorshipStudioHub from './pages/WorshipStudioHub';
-import Bible from './pages/Bible';
-import ChurchHub from './pages/ChurchHub';
-import MediaHub from './pages/MediaHub';
 import RadioMiniPlayer from './components/RadioMiniPlayer';
+
+// Lazy-loaded secondary & heavy routes for dramatically faster initial startup
+const SetlistLive = lazyWithRetry(() => import('./pages/SetlistLive'), 'SetlistLive');
+const SetlistPublicWeb = lazyWithRetry(() => import('./pages/SetlistPublicWeb'), 'SetlistPublicWeb');
+const Register = lazyWithRetry(() => import('./pages/Register'), 'Register');
+const News = lazyWithRetry(() => import('./pages/News'), 'News');
+const NewsArticle = lazyWithRetry(() => import('./pages/NewsArticle'), 'NewsArticle');
+const Friends = lazyWithRetry(() => import('./pages/Friends'), 'Friends');
+const Chat = lazyWithRetry(() => import('./pages/Chat'), 'Chat');
+const ChatsList = lazyWithRetry(() => import('./pages/ChatsList'), 'ChatsList');
+const Community = lazyWithRetry(() => import('./pages/Community'), 'Community');
+const Resources = lazyWithRetry(() => import('./pages/Resources'), 'Resources');
+const Contact = lazyWithRetry(() => import('./pages/Contact'), 'Contact');
+const About = lazyWithRetry(() => import('./pages/About'), 'About');
+const Blog = lazyWithRetry(() => import('./pages/Blog'), 'Blog');
+const Careers = lazyWithRetry(() => import('./pages/Careers'), 'Careers');
+const Documentation = lazyWithRetry(() => import('./pages/Documentation'), 'Documentation');
+const Tutorials = lazyWithRetry(() => import('./pages/Tutorials'), 'Tutorials');
+const Support = lazyWithRetry(() => import('./pages/Support'), 'Support');
+const Privacy = lazyWithRetry(() => import('./pages/Privacy'), 'Privacy');
+const Terms = lazyWithRetry(() => import('./pages/Terms'), 'Terms');
+const Cookies = lazyWithRetry(() => import('./pages/Cookies'), 'Cookies');
+const Profile = lazyWithRetry(() => import('./pages/Profile'), 'Profile');
+const UserProfile = lazyWithRetry(() => import('./pages/UserProfile'), 'UserProfile');
+const Settings = lazyWithRetry(() => import('./pages/Settings'), 'Settings');
+const SongRequest = lazyWithRetry(() => import('./pages/SongRequest'), 'SongRequest');
+const Notifications = lazyWithRetry(() => import('./pages/Notifications'), 'Notifications');
+const TransposeTool = lazyWithRetry(() => import('./pages/TransposeTool'), 'TransposeTool');
+const InstallApp = lazyWithRetry(() => import('./pages/InstallApp'), 'InstallApp');
+const LiveProjection = lazyWithRetry(() => import('./pages/LiveProjection'), 'LiveProjection');
+const ServicePlanner = lazyWithRetry(() => import('./pages/ServicePlanner'), 'ServicePlanner');
+const WorshipStudioHub = lazyWithRetry(() => import('./pages/WorshipStudioHub'), 'WorshipStudioHub');
+const Bible = lazyWithRetry(() => import('./pages/Bible'), 'Bible');
+const ChurchHub = lazyWithRetry(() => import('./pages/ChurchHub'), 'ChurchHub');
+const MediaHub = lazyWithRetry(() => import('./pages/MediaHub'), 'MediaHub');
+const NotFound = lazyWithRetry(() => import('./pages/NotFound'), 'NotFound');
+const ServerError = lazyWithRetry(() => import('./pages/ServerError'), 'ServerError');
+const Forbidden = lazyWithRetry(() => import('./pages/Forbidden'), 'Forbidden');
 import { Capacitor } from '@capacitor/core';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useIsNativeApp, useIsPWA } from './hooks/useIsPWA';
@@ -814,6 +817,7 @@ function App() {
                 language={language}
               />
             ) : (
+            <Suspense fallback={<div className="route-lazy-fallback" style={{ minHeight: '60vh' }} />}>
             <Routes key={refreshKey}>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
@@ -879,6 +883,7 @@ function App() {
               {/* Catch-all 404 Not Found Route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
             )}
           </ErrorBoundary>
         </div>

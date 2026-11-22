@@ -1367,7 +1367,7 @@ export default function SetlistsApp() {
                   className="sl-app-quick-date-btn"
                   onClick={() => setNewSetDate(getNextSundayDate())}
                 >
-                  📅 {language === 'am' ? 'Հաջորդ կիրակին' : language === 'ru' ? 'След. воскресенье' : 'Next Sunday'}
+                  {language === 'am' ? 'Հաջորդ կիրակին' : language === 'ru' ? 'След. воскресенье' : 'Next Sunday'}
                 </button>
               </div>
               <input
@@ -1511,10 +1511,10 @@ export default function SetlistsApp() {
                   onChange={(e) => setInviteSearchQuery(e.target.value)}
                   placeholder={
                     language === 'am'
-                      ? '🔍 Որոնել չաթեր կամ ընկերներ...'
+                      ? 'Որոնել չաթեր կամ ընկերներ...'
                       : language === 'ru'
-                      ? '🔍 Поиск чатов или друзей...'
-                      : '🔍 Search chats or friends...'
+                      ? 'Поиск чатов или друзей...'
+                      : 'Search chats or friends...'
                   }
                   style={{
                     width: '100%',

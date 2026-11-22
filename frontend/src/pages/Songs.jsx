@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useIsAppMode } from '../hooks/useIsPWA';
-import SongsApp from './SongsApp';
-import SongsWeb from './SongsWeb';
+import { lazyWithRetry } from '../utils/lazyWithRetry';
+
+const SongsApp = lazyWithRetry(() => import('./SongsApp'), 'SongsApp');
+const SongsWeb = lazyWithRetry(() => import('./SongsWeb'), 'SongsWeb');
 
 export default function Songs() {
   const isAppMode = useIsAppMode();
-  
-  if (isAppMode) {
-    return <SongsApp />;
-  }
-  
-  return <SongsWeb />;
+
+  return (
+    <Suspense fallback={null}>
+      {isAppMode ? <SongsApp /> : <SongsWeb />}
+    </Suspense>
+  );
 }

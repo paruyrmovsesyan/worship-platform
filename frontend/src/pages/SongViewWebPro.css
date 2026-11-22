@@ -7,6 +7,7 @@ body.website-theme .song-view-page.web-song-pro {
     "meta tools"
     "tabs tools"
     "stage tools"
+    "note tools"
     "ribbon tools"
     "sheet tools"
     "attachments tools";
@@ -39,6 +40,7 @@ body.website-theme .web-song-pro > .sv-stage-modules .sv-tone-capo-card,
 body.website-theme .web-song-pro > .sv-stage-modules .sv-inline-metronome-wrap {
   margin: 0 0 14px;
 }
+body.website-theme .web-song-pro > .sv-personal-note-box { grid-area: note; }
 body.website-theme .web-song-pro > .sv-arrangement-ribbon { grid-area: ribbon; }
 body.website-theme .web-song-pro > .sv-sheet { grid-area: sheet; }
 body.website-theme .web-song-pro > .sv-attachments { grid-area: attachments; }

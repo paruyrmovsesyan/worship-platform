@@ -30,11 +30,14 @@ export default function OfflineStorageManager() {
     const res = await triggerManualOfflineSync((percent, text) => {
       setProgress(percent);
       setProgressText(text);
-    });
+    }, { includeSetlists: true, includeBible: true });
 
     setIsSyncing(false);
     if (res.ok) {
-      setFeedback({ type: 'success', text: `Հաջողությամբ պահպանվեց ${res.count} երգ օֆֆլայն աշխատանքի համար։` });
+      const parts = [`${res.count} երգ`];
+      if (res.setlistsCount > 0) parts.push(`${res.setlistsCount} երգացանկ`);
+      if (res.bibleCount > 0) parts.push(`${res.bibleCount} Աստվածաշնչի գլուխ`);
+      setFeedback({ type: 'success', text: `Պահպանվեց օֆլայն՝ ${parts.join(', ')}։` });
       loadStats();
     } else {
       setFeedback({ type: 'error', text: res.error || 'Սինքրոնացման սխալ' });
@@ -99,17 +102,24 @@ export default function OfflineStorageManager() {
 
       <div className="osm-metrics">
         <div className="osm-metric-card">
-          <span className="osm-metric-label">Պահպանված երգեր</span>
-          <strong className="osm-metric-value">{stats?.songsCount || 0} երգ</strong>
+          <span className="osm-metric-label">Երգեր</span>
+          <strong className="osm-metric-value">{stats?.songsCount || 0}</strong>
         </div>
         <div className="osm-metric-card">
-          <span className="osm-metric-label">Զբաղեցրած տեղ</span>
+          <span className="osm-metric-label">Երգացանկեր</span>
+          <strong className="osm-metric-value">{stats?.setlistsCount || 0}</strong>
+        </div>
+        <div className="osm-metric-card">
+          <span className="osm-metric-label">Աստվածաշունչ</span>
+          <strong className="osm-metric-value">{stats?.bibleChaptersCount || 0} գլ.</strong>
+        </div>
+        <div className="osm-metric-card">
+          <span className="osm-metric-label">Պահոց</span>
           <strong className="osm-metric-value">{stats?.quotaUsedMB || '0.0'} MB</strong>
         </div>
-        <div className="osm-metric-card">
-          <span className="osm-metric-label">Վերջին թարմացում</span>
-          <strong className="osm-metric-value osm-date">{formatDate(stats?.lastSyncedAt)}</strong>
-        </div>
+      </div>
+      <div style={{ fontSize: '0.76rem', color: 'var(--color-text-secondary)', marginBottom: '12px' }}>
+        Վերջին թարմացում՝ {formatDate(stats?.lastSyncedAt)}
       </div>
 
       {isSyncing && (
@@ -143,7 +153,7 @@ export default function OfflineStorageManager() {
             <path d="M3 22v-6h6"></path>
             <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
           </svg>
-          <span>{isSyncing ? 'Սինքրոնացվում է...' : 'Ներբեռնել բոլոր երգերը օֆֆլայնի համար'}</span>
+          <span>{isSyncing ? 'Պատրաստվում է օֆլայն փաթեթը...' : 'Պատրաստել ամբողջ օֆլայն փաթեթը (1 կոճակով)'}</span>
         </button>
 
         <button

@@ -369,12 +369,14 @@ export function extractLyricsSnippet(lyrics, query) {
 
     const lineNorm = normalizeSearchText(cleanLine);
     const linePhonetic = normalizePhonetic(cleanLine);
+    const lineArmLat = transliterateArmToLat(lineNorm);
 
     const isDirectMatch = lineNorm.includes(qNorm);
     const isPhoneticMatch = qPhonetic.length >= 3 && linePhonetic.includes(qPhonetic);
-    const isTokenMatch = qTokens.length > 1 && qTokens.every(tok => lineNorm.includes(tok));
+    const isTokenMatch = qTokens.length > 1 && qTokens.every(tok => lineNorm.includes(tok) || lineArmLat.includes(tok));
     const isTranslitMatch = (qRu && qRu.length >= 3 && lineNorm.includes(qRu)) ||
-                            (qArm && qArm.length >= 3 && lineNorm.includes(qArm));
+                            (qArm && qArm.length >= 3 && lineNorm.includes(qArm)) ||
+                            (qNorm.length >= 3 && lineArmLat.includes(qNorm));
 
     if (isDirectMatch || isPhoneticMatch || isTokenMatch || isTranslitMatch) {
       if (cleanLine.length > 70) {
@@ -562,9 +564,13 @@ export function scoreSongSearch(song, query, language = 'am') {
     }
   }
 
-  // 5. Lyrics Evaluation & Snippet Extraction
-  if (lyrics) {
-    const lyricsSnippet = extractLyricsSnippet(lyrics, rawQuery);
+  // 5. Lyrics & Embedded Chords-Sheet Evaluation + Snippet Extraction
+  const searchableBody = lyrics || song.chords || '';
+  if (searchableBody) {
+    let lyricsSnippet = lyrics ? extractLyricsSnippet(lyrics, rawQuery) : null;
+    if (!lyricsSnippet && song.chords) {
+      lyricsSnippet = extractLyricsSnippet(song.chords, rawQuery);
+    }
     if (lyricsSnippet) {
       if (score < 140) {
         score = 140;
@@ -647,11 +653,12 @@ export function highlightText(text, query) {
   }
 
   const pattern = Array.from(expandedTokens).map(t => escapeRegex(t)).join('|');
-  const regex = new RegExp(`(${pattern})`, 'gi');
-  const parts = text.split(regex);
+  const splitRegex = new RegExp(`(${pattern})`, 'gi');
+  const exactRegex = new RegExp(`^(?:${pattern})$`, 'i');
+  const parts = text.split(splitRegex);
 
   return parts.filter(Boolean).map(part => ({
     text: part,
-    highlight: regex.test(part)
+    highlight: exactRegex.test(part)
   }));
 }
