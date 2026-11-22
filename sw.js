@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v643";
+const CACHE_VERSION = "worship-v644";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -184,6 +184,12 @@ self.addEventListener("fetch", function(event) {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  // Server-rendered PHP navigations (admin panel, songs.php, login, etc.) must
+  // bypass SW interception so sessions, cookies, and 302/303 redirects work natively.
+  if (request.mode === "navigate" && url.pathname.endsWith(".php")) {
+    return;
+  }
+
   // Auth & flags PHP endpoints must bypass all SW caching and interception logic so that
   // sessions, cookies, 302 redirects, and live admin flags are handled natively.
   if (
@@ -295,7 +301,7 @@ function isUserCacheableRequest(url) {
   return false;
 }
 
-function fetchWithTimeout(requestOrUrl, timeoutMs) {
+function fetchWithTimeout(requestOrUrl, timeoutMs, extraInit) {
   const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
   let timer = null;
   if (controller) {
@@ -305,10 +311,11 @@ function fetchWithTimeout(requestOrUrl, timeoutMs) {
   }
 
   const targetUrl = typeof requestOrUrl === "string" ? requestOrUrl : (requestOrUrl && requestOrUrl.url ? requestOrUrl.url : requestOrUrl);
-
-  return fetch(targetUrl, {
+  const init = Object.assign({}, extraInit || {}, {
     signal: controller ? controller.signal : undefined
-  }).finally(function() {
+  });
+
+  return fetch(targetUrl, init).finally(function() {
     if (timer) clearTimeout(timer);
   });
 }
@@ -456,8 +463,8 @@ async function handleNavigateRequest(event) {
   }
 
   try {
-    const networkResponse = await fetchWithTimeout(request, NAVIGATION_TIMEOUT_MS);
-    if (networkResponse && networkResponse.status === 200) {
+    const networkResponse = await fetchWithTimeout(request, NAVIGATION_TIMEOUT_MS, { redirect: "manual" });
+    if (networkResponse && networkResponse.status === 200 && !networkResponse.redirected && networkResponse.type !== "opaqueredirect") {
       const copy = networkResponse.clone();
       const cache = await caches.open(RUNTIME_CACHE);
       for (const key of cacheKeys) {
