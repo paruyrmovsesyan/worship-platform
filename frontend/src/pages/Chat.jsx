@@ -365,6 +365,7 @@ export default function Chat() {
     const root = document.documentElement;
 
     const applyChatViewport = () => {
+      if (isNativeApp) return;
       const viewport = window.visualViewport;
       const height = viewport ? viewport.height : window.innerHeight;
       const offsetTop = viewport ? viewport.offsetTop : 0;
@@ -377,15 +378,17 @@ export default function Chat() {
       }
     };
 
-    applyChatViewport();
-    window.visualViewport?.addEventListener('resize', applyChatViewport);
-    window.visualViewport?.addEventListener('scroll', applyChatViewport);
-    window.addEventListener('resize', applyChatViewport);
-    window.addEventListener('orientationchange', applyChatViewport);
+    if (!isNativeApp) {
+      applyChatViewport();
+      window.visualViewport?.addEventListener('resize', applyChatViewport);
+      window.visualViewport?.addEventListener('scroll', applyChatViewport);
+      window.addEventListener('resize', applyChatViewport);
+      window.addEventListener('orientationchange', applyChatViewport);
+    }
 
     let removeShow = null;
     let removeHide = null;
-    if (typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()) {
+    if (isNativeApp) {
       import('@capacitor/keyboard').then(({ Keyboard }) => {
         Keyboard.addListener('keyboardWillShow', (info) => {
           document.body.classList.add('keyboard-open');
@@ -402,7 +405,7 @@ export default function Chat() {
 
         Keyboard.addListener('keyboardWillHide', () => {
           document.body.classList.remove('keyboard-open');
-          root.style.setProperty('--chat-vh', `${window.innerHeight}px`);
+          root.style.removeProperty('--chat-vh');
           if (window.scrollY !== 0) {
             window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
           }

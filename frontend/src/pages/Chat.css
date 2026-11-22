@@ -517,9 +517,22 @@ body.wp-standalone-app .chat-input-area {
   margin-bottom: 0 !important;
 }
 
+body.is-native .chat-page-container {
+  top: 0 !important;
+  bottom: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
+body.is-native.keyboard-open .chat-page-container {
+  bottom: auto !important;
+  height: var(--chat-vh, 100dvh) !important;
+  max-height: var(--chat-vh, 100dvh) !important;
+}
+
 body.is-native .chat-input-area {
   padding-top: 8px !important;
-  padding-bottom: max(10px, calc(env(safe-area-inset-bottom, 10px) - 16px)) !important;
+  padding-bottom: max(12px, calc(env(safe-area-inset-bottom, 12px) - 14px)) !important;
 }
 
 body.is-native.keyboard-open .chat-input-area {
