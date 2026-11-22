@@ -86,6 +86,37 @@ export default function Settings() {
   const [chordColor, setChordColor] = useState(localStorage.getItem('chordColor') || 'white');
   const [outlinedChords, setOutlinedChords] = useState(localStorage.getItem('outlinedChords') === 'true');
   const [appInfo, setAppInfo] = useState(getCachedAppInfo);
+  const [channelStatus, setChannelStatus] = useState(() => {
+    try {
+      if (window.NativeRuntime?.getChannelStatusJson) {
+        return JSON.parse(window.NativeRuntime.getChannelStatusJson() || '{}');
+      }
+    } catch {}
+    return {
+      'worship-chat': true,
+      'worship-team': true,
+      'worship-news': true,
+      'worship-default': true,
+    };
+  });
+
+  const refreshChannelStatus = useCallback(() => {
+    try {
+      if (window.NativeRuntime?.getChannelStatusJson) {
+        const json = window.NativeRuntime.getChannelStatusJson();
+        if (json) setChannelStatus(JSON.parse(json));
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('focus', refreshChannelStatus);
+    document.addEventListener('visibilitychange', refreshChannelStatus);
+    return () => {
+      window.removeEventListener('focus', refreshChannelStatus);
+      document.removeEventListener('visibilitychange', refreshChannelStatus);
+    };
+  }, [refreshChannelStatus]);
 
   // Profile States
   const [name, setName] = useState(user?.name || '');
@@ -881,6 +912,67 @@ export default function Settings() {
               </div>
 
               <OfflineStorageManager />
+
+              {Capacitor.getPlatform() === 'android' && (
+                <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <div>
+                      <strong style={{ fontSize: '1.05rem', color: '#fff', display: 'block' }}>
+                        {t('settings.app.notificationsTitle', 'Android Ծանուցումների ալիքներ')}
+                      </strong>
+                      <span className="text-muted" style={{ fontSize: '0.85rem' }}>
+                        {t('settings.app.notificationsDesc', 'Կառավարեք ծանուցումների ձայնը, թրթիռը և առաջնահերթությունը ըստ բաժինների։')}
+                      </span>
+                    </div>
+                  </div>
+
+                  {[
+                    { id: 'worship-chat', name: 'Չատ և Զանգեր', desc: 'Անձնական նամակներ և զանգեր', icon: '💬' },
+                    { id: 'worship-team', name: 'Երգացանկ և Թիմ', desc: 'Ծառայությունների և երգացանկի թարմացումներ', icon: '🎵' },
+                    { id: 'worship-news', name: 'Հայտարարություններ և Նորություններ', desc: 'Համակարգի նորություններ', icon: '📢' },
+                    { id: 'worship-default', name: 'Worship Platform', desc: 'Ընդհանուր համակարգային ծանուցումներ', icon: '🔔' },
+                  ].map((ch) => {
+                    const isEnabled = channelStatus[ch.id] !== false;
+                    return (
+                      <div
+                        key={ch.id}
+                        className="remember-device-card settings-switch-card"
+                        style={{ marginBottom: '0.75rem', cursor: 'pointer' }}
+                        onClick={() => {
+                          if (window.NativeRuntime?.openChannelSettings) {
+                            window.NativeRuntime.openChannelSettings(ch.id);
+                          }
+                        }}
+                      >
+                        <div className="remember-device-copy" style={{ flex: 1 }}>
+                          <div className="remember-device-title-row" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span>{ch.icon}</span>
+                            <strong>{ch.name}</strong>
+                          </div>
+                          <p className="text-muted" style={{ margin: '4px 0 0 0', fontSize: '0.8rem' }}>
+                            {ch.desc}
+                          </p>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span
+                            style={{
+                              fontSize: '0.75rem',
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              background: isEnabled ? 'rgba(74, 222, 128, 0.15)' : 'rgba(255, 74, 74, 0.15)',
+                              color: isEnabled ? '#4ade80' : '#ff4a4a',
+                              fontWeight: '600',
+                            }}
+                          >
+                            {isEnabled ? 'Միացված' : 'Անջատված'}
+                          </span>
+                          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '1rem' }}>⚙️</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}

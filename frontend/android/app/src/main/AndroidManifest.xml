@@ -53,6 +53,20 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/notification_icon_color" />
+
+        <!-- Custom Firebase Messaging Service with Direct Reply and Mark Read -->
+        <service
+            android:name=".WorshipFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter android:priority="100">
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- Broadcast receiver for chat actions (Direct Reply & Mark as Read) -->
+        <receiver
+            android:name=".ChatNotificationActionReceiver"
+            android:exported="false" />
     </application>
 
     <!-- Permissions -->

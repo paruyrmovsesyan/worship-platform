@@ -1,6 +1,8 @@
 package am.pmstudio.worship;
 
+import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.media.AudioDeviceInfo;
 import android.media.AudioAttributes;
@@ -136,6 +138,47 @@ public class MainActivity extends BridgeActivity {
                 return false;
             }
             return false;
+        }
+
+        @JavascriptInterface
+        public String getChannelStatusJson() {
+            org.json.JSONObject result = new org.json.JSONObject();
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                    if (nm != null) {
+                        for (android.app.NotificationChannel ch : nm.getNotificationChannels()) {
+                            boolean enabled = ch.getImportance() != NotificationManager.IMPORTANCE_NONE;
+                            result.put(ch.getId(), enabled);
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {}
+            return result.toString();
+        }
+
+        @JavascriptInterface
+        public void openChannelSettings(String channelId) {
+            runOnUiThread(() -> {
+                try {
+                    Intent intent = new Intent();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && channelId != null && !channelId.isEmpty()) {
+                        intent.setAction(android.provider.Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS);
+                        intent.putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName());
+                        intent.putExtra(android.provider.Settings.EXTRA_CHANNEL_ID, channelId);
+                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        intent.setAction(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+                        intent.putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName());
+                    } else {
+                        intent.setAction(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        intent.setData(android.net.Uri.parse("package:" + getPackageName()));
+                    }
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+            });
         }
     }
 

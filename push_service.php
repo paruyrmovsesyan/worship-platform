@@ -1999,7 +1999,24 @@ function wp_push_send_native_android($pdo, ?int $userId, string $title, string $
         if ($tok === '' || isset($seenTokens[$tok])) continue;
         $seenTokens[$tok] = true;
 
-        $res = wp_push_send_fcm_token($tok, $title, $body, $url, $extra, $fcmAuth);
+        $userSpecificExtra = $extra;
+        if ($userId !== null && $userId > 0) {
+            $userSpecificExtra['target_user_id'] = (string)$userId;
+            $chatId = (int)($extra['chat_id'] ?? 0);
+            if ($chatId <= 0 && preg_match('#/chat/(\d+)#', $url, $m)) {
+                $chatId = (int)$m[1];
+            }
+            if ($chatId > 0) {
+                $ts = time();
+                $secret = function_exists('wp_runtime_app_secret') ? wp_runtime_app_secret() : 'worship_secret_key';
+                $sig = hash_hmac('sha256', "chat:{$chatId}:user:{$userId}:ts:{$ts}", $secret);
+                $userSpecificExtra['action_chat_id'] = (string)$chatId;
+                $userSpecificExtra['action_ts'] = (string)$ts;
+                $userSpecificExtra['action_sig'] = $sig;
+            }
+        }
+
+        $res = wp_push_send_fcm_token($tok, $title, $body, $url, $userSpecificExtra, $fcmAuth);
         if (!empty($res['ok'])) {
             $out['success']++;
         } else {

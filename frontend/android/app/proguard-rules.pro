@@ -21,6 +21,8 @@
 # Keep FirebaseApp and Firebase Messaging for runtime push delivery & reflection check
 -keep class com.google.firebase.** { *; }
 -dontwarn com.google.firebase.**
+-keep class am.pmstudio.worship.WorshipFirebaseMessagingService { *; }
+-keep class am.pmstudio.worship.ChatNotificationActionReceiver { *; }
 
 # Preserve line numbers for readable crash traces
 -keepattributes SourceFile,LineNumberTable

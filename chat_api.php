@@ -798,7 +798,10 @@ if ($action === 'send_message' && $method === 'POST') {
         
         $push_title = wp_chat_compact_push_title((string)$senderName);
         $push_msg = wp_chat_compact_push_body((string)$message, $setlist_id > 0, (string)($setlist_name ?? ''));
-        wp_push_send_to_user($pdo, $oid, $push_title, $push_msg, "/chat/$chat_id");
+        wp_push_send_to_user($pdo, $oid, $push_title, $push_msg, "/chat/$chat_id", [
+            'type' => 'chat',
+            'chat_id' => $chat_id,
+        ]);
     }
     
     $st = $pdo->prepare("SELECT u.name as user_name, m.created_at FROM chat_messages m JOIN users u ON u.id = m.user_id WHERE m.id = ?");
