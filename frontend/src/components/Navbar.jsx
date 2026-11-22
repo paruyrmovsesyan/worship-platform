@@ -16,7 +16,7 @@ const NavbarGlassBackdrop = memo(function NavbarGlassBackdrop() {
 });
 
 export default function Navbar() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user, logout } = useAuth();
   const { isEnabled, isBeta, isSoon, isVisible } = useFeatureFlags();
   const navigate = useNavigate();
@@ -89,7 +89,8 @@ export default function Navbar() {
     const onResize = () => syncPillToActiveItem(true);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, language]);
 
   const handleMenuEnter = (e, menuName) => {
     updatePillPosition(e.currentTarget, false);
