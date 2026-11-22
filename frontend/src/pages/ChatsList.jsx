@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useIsAppMode } from '../hooks/useIsPWA';
 import { usePageReady } from '../hooks/usePageReady';
+import { triggerHaptic } from '../utils/nativeFeatures';
 import './ChatsList.css';
 
 export default function ChatsList({ isEmbedded = false }) {
@@ -520,27 +521,158 @@ export default function ChatsList({ isEmbedded = false }) {
   }
 
   // ════════════════════════════════════════════════════════════════
-  // PWA & EMBEDDED MODE DISPLAY (100% UNTOUCHED ORIGINAL LAYOUT)
+  // APP & EMBEDDED MODE DISPLAY
   // ════════════════════════════════════════════════════════════════
-  const containerProps = isEmbedded ? { className: "embedded-chats" } : { className: "page-container animate-fade-in chats-list-page", style: { paddingBottom: '100px' } };
+  const directCount = chats.filter((c) => c.type !== 'group').length;
+  const groupCount = chats.filter((c) => c.type === 'group').length;
+  const unreadChatsCount = chats.filter((c) => Number(c.unread_count || 0) > 0).length;
+  const totalUnreadMessages = chats.reduce((sum, c) => sum + Number(c.unread_count || 0), 0);
+
+  const renderAppAvatar = (chat) => {
+    if (chat.type === 'group') {
+      return (
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      );
+    }
+    const letter = (chat.participant_names || '').trim().charAt(0).toUpperCase();
+    if (letter) return letter;
+    return (
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+    );
+  };
+
+  const renderAppPreview = (chat) => {
+    if (!chat.last_message) {
+      return chat.type === 'group'
+        ? t('chat.emptyTitle', 'Սկսեք զրույցը')
+        : t('chat.emptySubtitle', 'Գրեք առաջին հաղորդագրությունը...');
+    }
+    if (chat.last_message.startsWith('CALL:')) {
+      const parts = chat.last_message.split(':');
+      const status = parts[1];
+      let callLabel = t('chat.audioCall', 'Աուդիոզանգ');
+      if (status === 'missed') callLabel = t('chat.missedCall', 'Բաց թողնված աուդիոզանգ');
+      else if (status === 'declined') callLabel = t('chat.declinedCall', 'Մերժված աուդիոզանգ');
+      else if (status === 'ended') {
+        const sec = parseInt(parts[2], 10) || 0;
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        callLabel = `${callLabel} (${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')})`;
+      }
+      return (
+        <span className="chat-preview-inline">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+          </svg>
+          <span>{callLabel}</span>
+        </span>
+      );
+    }
+    const songMatch = chat.last_message.match(/^\[SONG\|id:\d+\|key:[+-]?\d+\|capo:\d+\|title:([^\]]*)/);
+    if (songMatch) {
+      return (
+        <span className="chat-preview-inline">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18V5l12-2v13" />
+            <circle cx="6" cy="18" r="3" />
+            <circle cx="18" cy="16" r="3" />
+          </svg>
+          <span>{songMatch[1].replace(/\.\.\.$/, '')}</span>
+        </span>
+      );
+    }
+    if (/^(https?:\/\/|www\.)/i.test(chat.last_message.trim())) {
+      return (
+        <span className="chat-preview-inline">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+          <span>{chat.last_message}</span>
+        </span>
+      );
+    }
+    return chat.last_message;
+  };
+
+  const containerProps = isEmbedded
+    ? { className: 'embedded-chats' }
+    : { className: 'page-container animate-fade-in chats-list-page' };
 
   return (
     <div {...containerProps}>
       {!isEmbedded && (
-        <div className="page-header" style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 className="page-title" style={{ margin: 0 }}>{t('friends.tabs.chats')}</h1>
+        <header className="pwa-chats-header">
+          <div className="pwa-chats-heading">
+            <h1 className="pwa-chats-title">{t('friends.tabs.chats', 'Չաթեր')}</h1>
+            {totalUnreadMessages > 0 && (
+              <span className="pwa-chats-unread-pill">
+                {totalUnreadMessages > 99 ? '99+' : totalUnreadMessages}
+              </span>
+            )}
+          </div>
           {!isCreatingGroup && (
-            <button className="btn btn-primary btn-small" onClick={() => setIsCreatingGroup(true)}>
-              + {t('chat.group')}
-            </button>
+            <div className="pwa-chats-header-actions">
+              <button
+                type="button"
+                className="pwa-chats-icon-btn"
+                onClick={() => {
+                  triggerHaptic('light');
+                  navigate('/friends');
+                }}
+                aria-label={t('nav.friends', 'Ընկերներ')}
+                title={t('nav.friends', 'Ընկերներ')}
+              >
+                <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                {incomingRequests.length > 0 && <span className="pwa-chats-req-dot" />}
+              </button>
+              <button
+                type="button"
+                className="pwa-chats-new-group-btn"
+                onClick={() => {
+                  triggerHaptic('light');
+                  setIsCreatingGroup(true);
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                <span>{t('chat.group', 'Խումբ')}</span>
+              </button>
+            </div>
           )}
-        </div>
+        </header>
       )}
-      
+
       {isEmbedded && !isCreatingGroup && (
         <div className="embedded-chats-toolbar">
-          <button className="btn btn-primary btn-small" onClick={() => setIsCreatingGroup(true)}>
-            + {t('chat.group')}
+          <button
+            type="button"
+            className="pwa-chats-new-group-btn"
+            onClick={() => {
+              triggerHaptic('light');
+              setIsCreatingGroup(true);
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span>{t('chat.group', 'Խումբ')}</span>
           </button>
         </div>
       )}
@@ -554,41 +686,127 @@ export default function ChatsList({ isEmbedded = false }) {
             <span>{t('friends.activeFriends', 'Ակտիվ Ընկերներ')} ({onlineFriends.length})</span>
           </div>
           <div className="pwa-active-friends-row">
-            {onlineFriends.map(f => (
-              <div key={f.friend_id} className="pwa-active-friend-item" onClick={() => startDirectChatWithFriend(f.friend_id)}>
+            {onlineFriends.map((f) => (
+              <button
+                type="button"
+                key={f.friend_id}
+                className="pwa-active-friend-item"
+                onClick={() => {
+                  triggerHaptic('light');
+                  startDirectChatWithFriend(f.friend_id);
+                }}
+              >
                 <div className="pwa-active-friend-avatar" style={f.avatar_gradient ? { background: f.avatar_gradient } : undefined}>
                   {(f.name || 'U').charAt(0).toUpperCase()}
                   <span className="pwa-active-friend-badge" />
                 </div>
                 <span className="pwa-active-friend-name">{f.name}</span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
       )}
 
       {!isCreatingGroup && (
-        <div className="pwa-chats-search-bar">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input
-            type="text"
-            placeholder={t('chats.searchPlaceholder', 'Փնտրել զրույցներ, թիմեր, օգտատերեր...')}
-            value={searchQuery}
-            onChange={handleSearchQueryChange}
-          />
-          {searchQuery && (
-            <button className="pwa-chats-search-clear" onClick={() => setSearchQuery('')}>✕</button>
-          )}
-        </div>
+        <>
+          <div className="pwa-chats-search-bar">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.1" className="pwa-chats-search-ico">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              placeholder={t('chats.searchPlaceholder', 'Փնտրել զրույցներ, թիմեր, օգտատերեր...')}
+              value={searchQuery}
+              onChange={handleSearchQueryChange}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="pwa-chats-search-clear"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSearchResults([]);
+                  setSearchingUsers(false);
+                }}
+                aria-label="Մաքրել"
+              >
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          <div className="pwa-chats-filter-row" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filterTab === 'all'}
+              className={`pwa-chats-filter-pill ${filterTab === 'all' ? 'active' : ''}`}
+              onClick={() => {
+                triggerHaptic('light');
+                setFilterTab('all');
+              }}
+            >
+              <span>{t('common.all', 'Բոլորը')}</span>
+              <em>{chats.length}</em>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filterTab === 'direct'}
+              className={`pwa-chats-filter-pill ${filterTab === 'direct' ? 'active' : ''}`}
+              onClick={() => {
+                triggerHaptic('light');
+                setFilterTab('direct');
+              }}
+            >
+              <span>{t('chats.direct', 'Անձնական')}</span>
+              <em>{directCount}</em>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filterTab === 'groups'}
+              className={`pwa-chats-filter-pill ${filterTab === 'groups' ? 'active' : ''}`}
+              onClick={() => {
+                triggerHaptic('light');
+                setFilterTab('groups');
+              }}
+            >
+              <span>{t('chats.groups', 'Խմբեր')}</span>
+              <em>{groupCount}</em>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filterTab === 'unread'}
+              className={`pwa-chats-filter-pill ${filterTab === 'unread' ? 'active' : ''} ${unreadChatsCount > 0 ? 'has-unread' : ''}`}
+              onClick={() => {
+                triggerHaptic('light');
+                setFilterTab('unread');
+              }}
+            >
+              <span>{t('chats.unread', 'Չկարդացված')}</span>
+              <em>{unreadChatsCount}</em>
+            </button>
+          </div>
+        </>
       )}
 
-      {/* PWA User Search Results (Add Friend / Chat) */}
+      {/* App User Search Results (Add Friend / Chat) */}
       {!isCreatingGroup && searchQuery.trim().length >= 2 && (
         <div className="pwa-user-search-results">
           <div className="pwa-user-search-header">
-            <span>👥 {t('friends.findTitle', 'Գտնել & Ավելացնել Ընկերներ')}</span>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="8.5" cy="7" r="4" />
+              <line x1="20" y1="8" x2="20" y2="14" />
+              <line x1="23" y1="11" x2="17" y2="11" />
+            </svg>
+            <span>{t('friends.findTitle', 'Գտնել և Ավելացնել Ընկերներ')}</span>
           </div>
 
           {searchingUsers ? (
@@ -597,10 +815,14 @@ export default function ChatsList({ isEmbedded = false }) {
             <div className="pwa-user-search-empty">{t('friends.noUsersFound', 'Օգտատերեր չեն գտնվել')}</div>
           ) : (
             <div className="pwa-user-search-list">
-              {searchResults.map(u => {
+              {searchResults.map((u) => {
                 const isAccepted = u.friend_status === 'accepted';
-                const isPendingSent = (u.friend_status === 'pending_sent' || (u.friend_status === 'pending' && Boolean(u.is_requester)));
-                const isPendingReceived = (u.friend_status === 'pending_received' || (u.friend_status === 'pending' && !u.is_requester));
+                const isPendingSent =
+                  u.friend_status === 'pending_sent' ||
+                  (u.friend_status === 'pending' && Boolean(u.is_requester));
+                const isPendingReceived =
+                  u.friend_status === 'pending_received' ||
+                  (u.friend_status === 'pending' && !u.is_requester);
 
                 return (
                   <div key={u.id} className="pwa-user-search-card">
@@ -614,28 +836,31 @@ export default function ChatsList({ isEmbedded = false }) {
                     <div className="pwa-user-search-action">
                       {isAccepted ? (
                         <button
+                          type="button"
                           className="btn-pwa-user-action chat"
                           onClick={() => startDirectChatWithFriend(u.id)}
                         >
-                          💬 {t('friends.tabs.chats', 'Չաթ')}
+                          {t('friends.tabs.chats', 'Չաթ')}
                         </button>
                       ) : isPendingSent ? (
                         <span className="pwa-user-status-badge pending">
-                          ⏳ {t('friends.requestSent', 'Հարցված')}
+                          {t('friends.requestSent', 'Հարցված')}
                         </span>
                       ) : isPendingReceived ? (
                         <button
+                          type="button"
                           className="btn-pwa-user-action accept"
                           onClick={() => acceptFriend(u.id)}
                         >
-                          ✅ {t('friends.accept', 'Ընդունել')}
+                          {t('friends.accept', 'Ընդունել')}
                         </button>
                       ) : (
                         <button
+                          type="button"
                           className="btn-pwa-user-action add"
                           onClick={() => addFriend(u.id)}
                         >
-                          ➕ {t('friends.add', 'Ավելացնել')}
+                          + {t('friends.add', 'Ավելացնել')}
                         </button>
                       )}
                     </div>
@@ -649,55 +874,153 @@ export default function ChatsList({ isEmbedded = false }) {
 
       {isCreatingGroup ? (
         <div className="chat-group-builder">
-          <h3>{t('chat.group')}</h3>
-          <input 
-            type="text" 
-            className="form-control" 
-            placeholder={`${t('chat.group')}...`} 
-            value={groupName}
-            onChange={e => setGroupName(e.target.value)}
-            style={{ marginBottom: '16px' }}
-          />
-          <p className="chat-group-builder-copy">{t('friends.findDesc')}</p>
-          <div className="chat-group-builder-list">
-            {friends.length === 0 && <span className="dim">{t('friends.emptyFriends')}</span>}
-            {friends.map(f => (
-              <label key={f.friend_id} className="chat-group-builder-option">
-                <input 
-                  type="checkbox" 
-                  checked={selectedFriends.includes(f.friend_id)}
-                  onChange={() => toggleFriendSelection(f.friend_id)}
-                />
-                {f.name}
-              </label>
-            ))}
+          <div className="chat-group-builder-head">
+            <div>
+              <h3>{t('chat.group', 'Ստեղծել խումբ')}</h3>
+              <p className="chat-group-builder-copy">{t('friends.findDesc', 'Ընտրեք անդամներին Ձեր ընկերների ցանկից')}</p>
+            </div>
+            <button
+              type="button"
+              className="chat-group-close-btn"
+              onClick={() => setIsCreatingGroup(false)}
+              aria-label={t('friends.cancel', 'Փակել')}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
           </div>
+
+          <input
+            type="text"
+            className="chat-group-name-input"
+            placeholder={`${t('chat.group', 'Խմբի անվանումը')}...`}
+            value={groupName}
+            onChange={(e) => setGroupName(e.target.value)}
+          />
+
+          <div className="chat-group-selected-bar">
+            <span>{t('nav.friends', 'Ընկերներ')}</span>
+            <em>{selectedFriends.length}</em>
+          </div>
+
+          <div className="chat-group-builder-list">
+            {friends.length === 0 ? (
+              <span className="chat-group-empty">{t('friends.emptyFriends', 'Ընկերներ դեռ չունեք')}</span>
+            ) : (
+              friends.map((f) => {
+                const isChecked = selectedFriends.includes(f.friend_id);
+                return (
+                  <button
+                    type="button"
+                    key={f.friend_id}
+                    className={`chat-group-builder-option ${isChecked ? 'is-selected' : ''}`}
+                    onClick={() => {
+                      triggerHaptic('light');
+                      toggleFriendSelection(f.friend_id);
+                    }}
+                  >
+                    <span
+                      className="chat-group-option-avatar"
+                      style={f.avatar_gradient ? { background: f.avatar_gradient } : undefined}
+                    >
+                      {(f.name || 'U').charAt(0).toUpperCase()}
+                    </span>
+                    <span className="chat-group-option-name">{f.name}</span>
+                    <span className={`chat-group-check ${isChecked ? 'is-checked' : ''}`}>
+                      {isChecked && (
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+
           <div className="chat-group-builder-actions">
-            <button className="btn btn-secondary" onClick={() => setIsCreatingGroup(false)}>{t('friends.cancel')}</button>
-            <button className="btn btn-primary" onClick={createGroup} disabled={!groupName.trim() || selectedFriends.length === 0}>{t('chat.group')}</button>
+            <button
+              type="button"
+              className="chat-group-btn-cancel"
+              onClick={() => setIsCreatingGroup(false)}
+            >
+              {t('friends.cancel', 'Չեղարկել')}
+            </button>
+            <button
+              type="button"
+              className="chat-group-btn-submit"
+              onClick={createGroup}
+              disabled={!groupName.trim() || selectedFriends.length === 0}
+            >
+              {t('chat.group', 'Ստեղծել խումբ')}
+            </button>
           </div>
         </div>
       ) : (
         <div className="chat-list-items">
           {filteredChats.length === 0 ? (
-            <div className="empty-state glass-panel">
-              <p className="dim">{searchQuery ? `«${searchQuery}» որոնմամբ զրույց չի գտնվել` : t('chat.emptySubtitle')}</p>
+            <div className="pwa-chats-empty">
+              <span className="pwa-chats-empty-ico">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              </span>
+              <h3>
+                {searchQuery
+                  ? 'Զրույց չի գտնվել'
+                  : filterTab !== 'all'
+                  ? 'Այս բաժնում զրույցներ չկան'
+                  : t('chat.emptyTitle', 'Զրույցներ դեռ չկան')}
+              </h3>
+              <p>
+                {searchQuery
+                  ? `«${searchQuery}» որոնմամբ արդյունք չկա`
+                  : t('chat.emptySubtitle', 'Սկսեք նոր զրույց Ձեր ընկերների հետ կամ ստեղծեք թիմային խումբ')}
+              </p>
+              {!searchQuery && filterTab === 'all' && (
+                <div className="pwa-chats-empty-actions">
+                  <button
+                    type="button"
+                    className="pwa-chats-new-group-btn"
+                    onClick={() => setIsCreatingGroup(true)}
+                  >
+                    + {t('chat.group', 'Ստեղծել խումբ')}
+                  </button>
+                  <button
+                    type="button"
+                    className="pwa-chats-empty-secondary"
+                    onClick={() => navigate('/friends')}
+                  >
+                    {t('nav.friends', 'Ընկերներ')}
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
-            filteredChats.map(chat => {
+            filteredChats.map((chat) => {
               const unreadCount = Number(chat.unread_count || 0);
               const hasUnread = unreadCount > 0;
               const chatTitle = chat.type === 'group' ? chat.name : chat.participant_names;
 
               return (
-                <div 
-                  key={chat.id} 
-                  className={`glass-panel chat-list-card ${hasUnread ? 'unread' : ''}`}
-                  onClick={() => navigate(`/chat/${chat.id}`)}
+                <button
+                  type="button"
+                  key={chat.id}
+                  className={`chat-list-card ${hasUnread ? 'unread' : ''}`}
+                  onClick={() => {
+                    triggerHaptic('light');
+                    navigate(`/chat/${chat.id}`);
+                  }}
                 >
-                  <div className={`chat-list-avatar ${chat.type === 'group' ? 'group' : ''}`} style={chat.type !== 'group' && chat.avatar_gradient ? { background: chat.avatar_gradient } : undefined}>
-                    {getChatAvatar(chat)}
-                    {hasUnread && <span className="chat-list-dot" aria-hidden="true"></span>}
+                  <div
+                    className={`chat-list-avatar ${chat.type === 'group' ? 'group' : ''}`}
+                    style={chat.type !== 'group' && chat.avatar_gradient ? { background: chat.avatar_gradient } : undefined}
+                  >
+                    {renderAppAvatar(chat)}
+                    {hasUnread && <span className="chat-list-dot" aria-hidden="true" />}
                   </div>
                   <div className="chat-list-main">
                     <div className="chat-list-topline">
@@ -706,22 +1029,25 @@ export default function ChatsList({ isEmbedded = false }) {
                       </strong>
                       <div className="chat-list-meta">
                         {chat.last_message_at && (
-                          <span className={`chat-list-time ${hasUnread ? 'unread' : 'dim'}`}>
+                          <span className={`chat-list-time ${hasUnread ? 'unread' : ''}`}>
                             {formatChatDate(chat.last_message_at)}
                           </span>
                         )}
                         {hasUnread && (
                           <span className="chat-list-count-badge">
-                            {unreadCount > 9 ? '9+' : unreadCount}
+                            {unreadCount > 99 ? '99+' : unreadCount}
                           </span>
                         )}
                       </div>
                     </div>
-                    <div className={`chat-list-preview ${hasUnread ? 'unread' : 'dim'}`}>
-                      {getPreviewText(chat)}
+                    <div className={`chat-list-preview ${hasUnread ? 'unread' : ''}`}>
+                      {renderAppPreview(chat)}
                     </div>
                   </div>
-                </div>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" className="chat-list-chevron" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
               );
             })
           )}

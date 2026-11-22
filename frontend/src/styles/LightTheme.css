@@ -479,16 +479,17 @@ body.is-app.light-mode .friend-list-row {
 }
 
 body.is-app.light-mode .chat-list-card {
-  background: transparent !important;
-  border-bottom-color: rgba(15, 23, 42, 0.075) !important;
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
 }
 
 body.is-app.light-mode .chat-list-card:hover {
-  background: rgba(255, 255, 255, 0.72) !important;
+  background: #ffffff;
 }
 
 body.is-app.light-mode .chat-list-card.unread {
-  background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(58, 45, 255, 0.065)) !important;
+  background: linear-gradient(145deg, #fffbeb, #ffffff);
+  border-color: rgba(245, 158, 11, 0.36);
 }
 
 body.light-mode .chat-list-dot {
@@ -496,7 +497,7 @@ body.light-mode .chat-list-dot {
 }
 
 body.light-mode .chat-list-time.unread {
-  color: #334155;
+  color: #b45309;
 }
 
 /* Conversation */
