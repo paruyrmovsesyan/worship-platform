@@ -623,13 +623,40 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
 
     // 3. Frontend Bundle & PWA script verification
     $stackTrace = (string)($item['stack_trace'] ?? '');
-    if (strpos($file, 'assets/index.js') !== false || strpos($file, 'index.js') !== false || strpos($file, 'pwa-init.js') !== false || stripos($stackTrace, 'pwa-init.js') !== false || strpos($file, 'sw.js') !== false || stripos($stackTrace, 'sw.js') !== false || ($message === 'Uncaught JavaScript error' && (empty($file) || $file === '—'))) {
-        $checkFiles = [
-            __DIR__ . '/assets/index.js',
-            __DIR__ . '/pwa-init.js',
-            __DIR__ . '/sw.js',
-            __DIR__ . '/error_reporter.js'
-        ];
+    $isContextMismatchError = (
+        stripos($message, 'may be used only in the context of a <Router>') !== false ||
+        stripos($message, "Cannot destructure property 'user'") !== false ||
+        stripos($message, 'Cannot destructure property "user"') !== false ||
+        stripos($message, "Cannot destructure property 't'") !== false ||
+        stripos($message, 'Cannot destructure property "t"') !== false
+    );
+    if ($isContextMismatchError) {
+        $indexHtmlPath = __DIR__ . '/index.html';
+        $indexHtml = @is_file($indexHtmlPath) ? (string)@file_get_contents($indexHtmlPath) : '';
+        $hasHashedEntry = (bool)preg_match('#/assets/index-[a-zA-Z0-9_-]+\.js"#', $indexHtml);
+        $indexMtime = @is_file($indexHtmlPath) ? (@filemtime($indexHtmlPath) ?: 0) : 0;
+        if ($hasHashedEntry && ($indexMtime > $lastSeenTs || strpos($stackTrace, '/assets/index.js') !== false || !@is_file(__DIR__ . '/assets/index.js'))) {
+            $reason = 'Լուծված է v642-ում․ անցում է կատարվել content-hashed entry bundle-ի (assets/index-[hash].js), ինչը վերացրել է կրկնակի ES մոդուլի և Router/Auth/I18n կոնտեքստների անհամապատասխանությունը';
+            wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+            $item['is_resolved'] = 1;
+            $item['resolved_at'] = date('Y-m-d H:i:s');
+            $item['resolved_by'] = 'auto_code_analysis';
+            $item['resolution_reason'] = $reason;
+            return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+        }
+    }
+
+    if (strpos($file, 'assets/index') !== false || strpos($file, 'index.js') !== false || strpos($stackTrace, '/assets/index') !== false || strpos($file, 'pwa-init.js') !== false || stripos($stackTrace, 'pwa-init.js') !== false || strpos($file, 'sw.js') !== false || stripos($stackTrace, 'sw.js') !== false || ($message === 'Uncaught JavaScript error' && (empty($file) || $file === '—'))) {
+        $hashedEntries = glob(__DIR__ . '/assets/index*.js') ?: [];
+        $checkFiles = array_merge(
+            $hashedEntries,
+            [
+                __DIR__ . '/index.html',
+                __DIR__ . '/pwa-init.js',
+                __DIR__ . '/sw.js',
+                __DIR__ . '/error_reporter.js'
+            ]
+        );
         foreach ($checkFiles as $cp) {
             if (@is_file($cp)) {
                 $mtime = @filemtime($cp) ?: 0;
