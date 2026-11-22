@@ -11,6 +11,7 @@ import App from './App.jsx'
 import './index.css'
 import './styles/LightTheme.css'
 import './styles/NativeAppPolish.css'
+import './styles/GlisseLiquidGlass.css'
 
 const prepareNativeRuntime = Capacitor.isNativePlatform()
   ? Promise.all([

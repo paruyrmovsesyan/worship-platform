@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { generateQrMatrix } from '../utils/qrSvg';
 import { nativeShare } from '../utils/nativeFeatures';
+import { Glass } from 'glisse';
 import './ChurchHub.css';
 
 function toIsoDate(d) {
@@ -590,7 +591,7 @@ export default function ChurchHub() {
           <p>{ui.subtitle}</p>
         </div>
 
-        <div className="church-segmented" role="tablist">
+        <Glass className="church-segmented" role="tablist">
           {['feed', 'calendar', 'rehearsals', 'directory', 'pulse'].map((tab) => (
             <button
               key={tab}
@@ -603,7 +604,7 @@ export default function ChurchHub() {
               {ui.tabs[tab]}
             </button>
           ))}
-        </div>
+        </Glass>
       </header>
 
       {feedback && <div className="church-toast">{feedback}</div>}

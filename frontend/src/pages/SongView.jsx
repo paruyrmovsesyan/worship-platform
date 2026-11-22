@@ -11,6 +11,7 @@ import {
   transposeRoot,
 } from '../utils/chordTransposer';
 import SmartMetronome from '../components/SmartMetronome';
+import { Glass } from 'glisse';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { normalizeSavedSongSort, sortSavedSongs } from '../utils/savedSongs';
 import { normalizeSongKey, semitoneOffset, songKeysEqual } from '../utils/songKey';
@@ -1797,7 +1798,7 @@ export default function SongView() {
       </div>
 
       {/* Consistent 3-Tab View Mode Segmented Control */}
-      <div className="sv-segment-control">
+      <Glass className="sv-segment-control">
         {viewModeTabs.map((tab) => (
           <button
             key={tab.id}
@@ -1808,7 +1809,7 @@ export default function SongView() {
             {tab.label}
           </button>
         ))}
-      </div>
+      </Glass>
 
       {/* Stage Modules Container (Single Unified Key & Capo Card + Inline Metronome + Stems) */}
       {((showToneCapo && hasChords) || showInlineMetronome || (stemsOpen && isEnabled('rehearsal_stems'))) && (

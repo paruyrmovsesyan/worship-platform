@@ -2,6 +2,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useMediaPlayer } from '../utils/mediaData';
 import { useLanguage } from '../context/LanguageContext';
+import { Glass } from 'glisse';
 import './RadioMiniPlayer.css';
 
 export default function RadioMiniPlayer() {
@@ -15,7 +16,7 @@ export default function RadioMiniPlayer() {
   const stationTitle = activeStation.name?.[language] || activeStation.name?.am || 'Radio';
 
   return createPortal(
-    <div className="radio-mini-pill" role="region" aria-label="Radio Player">
+    <Glass className="radio-mini-pill" role="region" aria-label="Radio Player">
       <button
         type="button"
         className="radio-mini-play"
@@ -39,7 +40,7 @@ export default function RadioMiniPlayer() {
       <button type="button" className="radio-mini-icon" onClick={stopRadio} aria-label="Close radio">
         ✕
       </button>
-    </div>,
+    </Glass>,
     document.body,
   );
 }

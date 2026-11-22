@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { Glass } from 'glisse';
 import './LanguageSwitcher.css';
 
 export default function LanguageSwitcher({ className = '', style = {} }) {
@@ -7,7 +8,7 @@ export default function LanguageSwitcher({ className = '', style = {} }) {
   const langs = ['am', 'en', 'ru'];
 
   return (
-    <div className={`lang-switcher-pill ${className}`} style={style}>
+    <Glass className={`lang-switcher-pill ${className}`} style={style}>
       {langs.map((l) => (
         <button
           key={l}
@@ -20,12 +21,13 @@ export default function LanguageSwitcher({ className = '', style = {} }) {
           {l.toUpperCase()}
         </button>
       ))}
-      <div 
+      <Glass 
         className="lang-pill-glider" 
         style={{
           transform: `translateX(${langs.indexOf(language) * 100}%)`
         }} 
+        aria-hidden="true"
       />
-    </div>
+    </Glass>
   );
 }

@@ -17,6 +17,7 @@ import {
   matchMeasureToken,
 } from '../utils/bibleData';
 import { nativeShare, triggerHaptic } from '../utils/nativeFeatures';
+import { Glass } from 'glisse';
 import './Bible.css';
 
 const VerseShareCardModal = lazyWithRetry(
@@ -1236,7 +1237,7 @@ export default function Bible() {
     <div className={`bible-page ${isMobileViewport && selectedVerseObj && activeTab === 'read' ? 'has-verse-sheet' : ''}`}>
       {/* Top Bar Wrapper (keeps Aa popover floating cleanly without shifting layout) */}
       <div className="bible-topbar-wrap">
-      <header className="bible-topbar">
+      <Glass className="bible-topbar" role="banner">
         <div className="bible-topbar-left">
           <button
             type="button"
@@ -1267,7 +1268,7 @@ export default function Bible() {
         </div>
 
         <div className="bible-topbar-center">
-          <div className="bible-segmented" role="tablist">
+          <Glass className="bible-segmented" role="tablist">
             <button
               type="button"
               role="tab"
@@ -1286,7 +1287,7 @@ export default function Bible() {
             >
               {ui.myTab}
             </button>
-          </div>
+          </Glass>
         </div>
 
         <div className="bible-topbar-right">
@@ -1365,7 +1366,7 @@ export default function Bible() {
             Aa
           </button>
         </div>
-      </header>
+      </Glass>
 
       {/* Typography & Parallel Settings Popover */}
       {showAaModal && (

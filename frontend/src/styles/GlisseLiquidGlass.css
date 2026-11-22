@@ -1,0 +1,224 @@
+/* ==========================================================================
+   GLISSE — iOS 26 LIQUID GLASS ENGINE INTEGRATION
+   Applies across Website, PWA, iOS & Android Native Apps.
+   Synchronizes optical refraction (--lg-filter), 1.22px Retina specular rim
+   lighting (--lg-rim), and interactive lifted lenses across all 4 theme states:
+     1. Classic Dark (default)
+     2. Classic Light
+     3. Warm Amber Dark (editorial)
+     4. Warm Amber Light (editorial)
+   ========================================================================== */
+
+:root,
+html[data-theme="dark"] {
+  --lg-foreground: #ffffff;
+  --lg-muted: rgba(226, 232, 245, 0.64);
+  --lg-glass: rgba(18, 22, 36, 0.72);
+  --lg-glass-active: rgba(34, 42, 68, 0.78);
+  --lg-edge: rgba(255, 255, 255, 0.13);
+  --lg-drop: rgba(0, 0, 0, 0.34);
+  --lg-selection: rgba(0, 212, 255, 0.2);
+  --lg-lens: rgba(0, 212, 255, 0.14);
+  --lg-lens-drop: rgba(0, 0, 0, 0.28);
+  --lg-segment-track: rgba(255, 255, 255, 0.04);
+  --lg-segment-thumb: linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%);
+  --lg-segment-label: #ffffff;
+  --lg-surface: rgba(20, 23, 36, 0.88);
+  --lg-surface-edge: rgba(255, 255, 255, 0.14);
+  --lg-shadow: rgba(0, 0, 0, 0.42);
+  --lg-track: rgba(255, 255, 255, 0.22);
+  --lg-rail: rgba(255, 255, 255, 0.12);
+  --lg-on: #00d4ff;
+  --lg-fill: #0ea5e9;
+  --lg-ring: rgba(0, 212, 255, 0.55);
+  --lg-lens-shine: 1;
+  --lg-rim-shine: 0.22;
+  --lg-blur: 18px;
+  --lg-glass-bend: 2.1;
+  --lg-glass-dispersion: 0.65;
+}
+
+/* Warm Amber / Editorial Dark */
+html[data-theme-style="editorial"],
+body.editorial-theme:not(.light-mode) {
+  --lg-foreground: #f3f1eb;
+  --lg-muted: rgba(235, 228, 214, 0.64);
+  --lg-glass: rgba(30, 31, 38, 0.76);
+  --lg-glass-active: rgba(54, 48, 38, 0.82);
+  --lg-edge: rgba(255, 245, 220, 0.14);
+  --lg-selection: rgba(247, 181, 0, 0.22);
+  --lg-lens: rgba(247, 181, 0, 0.16);
+  --lg-segment-thumb: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  --lg-segment-label: #f3f1eb;
+  --lg-surface: rgba(30, 31, 37, 0.9);
+  --lg-surface-edge: rgba(255, 245, 220, 0.15);
+  --lg-on: #f7b500;
+  --lg-fill: #f59e0b;
+  --lg-ring: rgba(247, 181, 0, 0.55);
+  --lg-rim-shine: 0.24;
+}
+
+/* Classic Light */
+html[data-theme="light"],
+body.light-mode:not(.editorial-theme) {
+  --lg-foreground: #0f172a;
+  --lg-muted: rgba(51, 65, 85, 0.66);
+  --lg-glass: rgba(255, 255, 255, 0.78);
+  --lg-glass-active: rgba(235, 243, 254, 0.9);
+  --lg-edge: rgba(15, 23, 42, 0.1);
+  --lg-drop: rgba(15, 23, 42, 0.1);
+  --lg-selection: rgba(2, 132, 199, 0.14);
+  --lg-lens: rgba(2, 132, 199, 0.08);
+  --lg-lens-drop: rgba(15, 23, 42, 0.14);
+  --lg-segment-track: rgba(15, 23, 42, 0.06);
+  --lg-segment-thumb: #ffffff;
+  --lg-segment-label: #0f172a;
+  --lg-surface: rgba(255, 255, 255, 0.92);
+  --lg-surface-edge: rgba(15, 23, 42, 0.1);
+  --lg-shadow: rgba(15, 23, 42, 0.12);
+  --lg-track: rgba(15, 23, 42, 0.22);
+  --lg-rail: rgba(15, 23, 42, 0.12);
+  --lg-on: #0284c7;
+  --lg-fill: #0284c7;
+  --lg-ring: rgba(2, 132, 199, 0.45);
+  --lg-lens-shine: -1.5;
+  --lg-rim-shine: 0.36;
+}
+
+/* Warm Amber / Editorial Light */
+html[data-theme="light"][data-theme-style="editorial"],
+body.light-mode.editorial-theme {
+  --lg-foreground: #1c1917;
+  --lg-muted: rgba(87, 83, 78, 0.68);
+  --lg-glass: rgba(255, 253, 248, 0.8);
+  --lg-glass-active: rgba(248, 241, 227, 0.92);
+  --lg-edge: rgba(120, 82, 26, 0.13);
+  --lg-drop: rgba(92, 60, 14, 0.1);
+  --lg-selection: rgba(217, 119, 6, 0.16);
+  --lg-lens: rgba(217, 119, 6, 0.1);
+  --lg-lens-drop: rgba(92, 60, 14, 0.14);
+  --lg-segment-track: rgba(120, 82, 26, 0.08);
+  --lg-segment-thumb: #fffdf9;
+  --lg-segment-label: #1c1917;
+  --lg-surface: rgba(255, 253, 249, 0.94);
+  --lg-surface-edge: rgba(120, 82, 26, 0.13);
+  --lg-shadow: rgba(92, 60, 14, 0.12);
+  --lg-track: rgba(120, 82, 26, 0.24);
+  --lg-rail: rgba(120, 82, 26, 0.12);
+  --lg-on: #d97706;
+  --lg-fill: #b45309;
+  --lg-ring: rgba(180, 83, 9, 0.45);
+  --lg-lens-shine: -1.5;
+  --lg-rim-shine: 0.36;
+}
+
+/* ── 1. Floating Bottom TabBar (MobileNav) + Lifted Liquid Lens ── */
+.mobile-bottom-nav-glass.lg-glass {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  background-color: transparent;
+  background-image: var(--lg-rim, none);
+  background-size: 100% 100%;
+  -webkit-backdrop-filter: blur(26px) var(--lg-filter, saturate(1.9));
+  backdrop-filter: blur(26px) var(--lg-filter, saturate(1.9));
+}
+
+.nav-liquid-indicator.lg-glass {
+  position: absolute !important;
+  background-image: var(--lg-rim, none), linear-gradient(160deg, var(--lg-selection), transparent) !important;
+  background-size: 100% 100% !important;
+  -webkit-backdrop-filter: blur(12px) var(--lg-filter, saturate(1.8));
+  backdrop-filter: blur(12px) var(--lg-filter, saturate(1.8));
+}
+
+.mobile-bottom-nav.is-scrubbing .nav-liquid-indicator.lg-glass,
+.mobile-bottom-nav.is-long-press .nav-liquid-indicator.lg-glass {
+  box-shadow:
+    0 10px 26px var(--lg-lens-drop),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38) !important;
+}
+
+/* ── 2. Website Top Navbar & Sliding Menu Pill ── */
+.navbar-glass-layer.lg-glass {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-color: transparent;
+  background-image: var(--lg-rim, none);
+  background-size: 100% 100%;
+  -webkit-backdrop-filter: blur(22px) var(--lg-filter, saturate(1.75));
+  backdrop-filter: blur(22px) var(--lg-filter, saturate(1.75));
+}
+
+.navbar > .navbar-container {
+  position: relative;
+  z-index: 1;
+}
+
+.navbar-menu.lg-glass {
+  background-image: var(--lg-rim, none);
+  background-size: 100% 100%;
+  -webkit-backdrop-filter: blur(16px) var(--lg-filter, saturate(1.65));
+  backdrop-filter: blur(16px) var(--lg-filter, saturate(1.65));
+}
+
+.nav-hover-pill.lg-glass {
+  position: absolute !important;
+  background-image: var(--lg-rim, none);
+  background-size: 100% 100%;
+}
+
+/* ── 3. Floating 24/7 Radio Mini Player Pill ── */
+.radio-mini-pill.lg-glass,
+body.wp-standalone-app > .radio-mini-pill.lg-glass,
+body.is-app > .radio-mini-pill.lg-glass {
+  position: fixed !important;
+  background-image: var(--lg-rim, none), linear-gradient(155deg, var(--lg-surface), var(--lg-glass)) !important;
+  background-size: 100% 100% !important;
+  -webkit-backdrop-filter: blur(26px) var(--lg-filter, saturate(1.85)) !important;
+  backdrop-filter: blur(26px) var(--lg-filter, saturate(1.85)) !important;
+}
+
+/* ── 4. Language Switcher Pill & Glider Lens ── */
+.lang-switcher-pill.lg-glass {
+  background-image: var(--lg-rim, none);
+  background-size: 100% 100%;
+  -webkit-backdrop-filter: blur(16px) var(--lg-filter, saturate(1.7));
+  backdrop-filter: blur(16px) var(--lg-filter, saturate(1.7));
+}
+
+.lang-pill-glider.lg-glass {
+  position: absolute !important;
+  background-image: var(--lg-rim, none), var(--native-accent-grad, linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%)) !important;
+  background-size: 100% 100% !important;
+}
+
+body.editorial-theme .lang-pill-glider.lg-glass {
+  background-image: var(--lg-rim, none), linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+}
+
+/* ── 5. Segmented Controls, Sticky Toolbars & Search Bar ── */
+:is(
+  .bible-topbar,
+  .bible-segmented,
+  .church-segmented,
+  .media-segmented,
+  .sv-segment-control,
+  .chord-instrument-tabs,
+  .app-theme-segmented,
+  .hub-search-box
+).lg-glass {
+  background-image: var(--lg-rim, none);
+  background-size: 100% 100%;
+  -webkit-backdrop-filter: blur(18px) var(--lg-filter, saturate(1.7));
+  backdrop-filter: blur(18px) var(--lg-filter, saturate(1.7));
+}
+
+/* ── 6. Glisse iOS 26 Switch Polish in Settings & Profile ── */
+.lg-switch {
+  flex-shrink: 0;
+}

@@ -6,6 +6,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
 import { triggerHaptic } from '../utils/nativeFeatures';
 import { Capacitor } from '@capacitor/core';
+import { Glass } from 'glisse';
 import './MobileNav.css';
 
 // Glass bubble vertical expansion sizes (matching native iOS App Store tab lens)
@@ -496,7 +497,8 @@ export default function MobileNav() {
         onTouchCancel={onTouchCancel}
         onContextMenu={(e) => e.preventDefault()}
       >
-        <div
+        <Glass className="mobile-bottom-nav-glass" aria-hidden="true" />
+        <Glass
           className={`nav-liquid-indicator ${isScrubbing ? 'is-dragging' : ''} ${isLongPressReady ? 'is-lens' : ''}`}
           style={{
             transform: isScrubbing && scrubPosition !== null

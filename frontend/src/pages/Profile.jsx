@@ -6,6 +6,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { usePageReady } from '../hooks/usePageReady';
 import { useIsAppMode } from '../hooks/useIsPWA';
 import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
+import { Switch } from 'glisse';
 import './Profile.css';
 
 export default function Profile() {
@@ -954,10 +955,11 @@ export default function Profile() {
                   <small>{pushEnabled ? t('profile.pushOn') : t('profile.pushOff')}</small>
                 </div>
               </div>
-              <label className="toggle-switch profile-push-toggle">
-                <input type="checkbox" checked={pushEnabled} onChange={togglePush} />
-                <span className="slider"></span>
-              </label>
+              <Switch
+                aria-label={t('notifications.title', 'Ծանուցումներ')}
+                checked={pushEnabled}
+                onCheckedChange={() => togglePush()}
+              />
             </div>
             <div className="profile-push-note">
               {t('profile.pushNote')}

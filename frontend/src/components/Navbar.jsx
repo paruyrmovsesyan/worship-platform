@@ -8,6 +8,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 import { updateAppBadge } from '../utils/webPwaEnhancements';
 import { useFeatureFlags } from '../utils/featureFlags';
 import { BetaBadge, ComingSoonBadge } from './BetaBadge';
+import { Glass } from 'glisse';
 import './Navbar.css';
 
 export default function Navbar() {
@@ -353,6 +354,7 @@ export default function Navbar() {
   return (
     <>
       <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
+        <Glass className="navbar-glass-layer" aria-hidden="true" />
         <div className="navbar-container">
 
           {/* ── LOGO ── */}
@@ -362,8 +364,8 @@ export default function Navbar() {
           </div>
 
           {/* ── NAV LINKS (Desktop only) ── */}
-          <div className="navbar-menu hide-mobile" ref={navMenuRef} onMouseLeave={handleMenuLeaveWrapper}>
-            <div className="nav-hover-pill" style={hoverStyle}></div>
+          <Glass className="navbar-menu hide-mobile" ref={navMenuRef} onMouseLeave={handleMenuLeaveWrapper}>
+            <Glass className="nav-hover-pill" style={hoverStyle} aria-hidden="true" />
 
             <Link 
               to="/" 
@@ -538,7 +540,7 @@ export default function Navbar() {
             >
               {t('megaMenu.contacts')}
             </Link>
-          </div>
+          </Glass>
 
           {/* ── RIGHT SIDE ── */}
           <div className="navbar-right">

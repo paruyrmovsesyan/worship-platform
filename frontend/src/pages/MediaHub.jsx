@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { CHRISTIAN_RADIO_STATIONS, CURATED_MEDIA_CHANNELS, useMediaPlayer } from '../utils/mediaData';
+import { Glass } from 'glisse';
 import './MediaHub.css';
 
 export default function MediaHub() {
@@ -78,7 +79,7 @@ export default function MediaHub() {
           <h1>{ui.title}</h1>
           <p>{ui.subtitle}</p>
         </div>
-        <div className="media-segmented" role="tablist">
+        <Glass className="media-segmented" role="tablist">
           <button
             type="button"
             role="tab"
@@ -97,7 +98,7 @@ export default function MediaHub() {
           >
             ♫ {ui.tabs.radio}
           </button>
-        </div>
+        </Glass>
       </header>
 
       {mediaMode === 'radio' ? (

@@ -15,6 +15,7 @@ import {
 } from '../utils/appTheme';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import OfflineStorageManager from '../components/OfflineStorageManager';
+import { Glass, Switch } from 'glisse';
 import {
   getBiometricStatus,
   isBiometricLoginEnabled,
@@ -718,7 +719,7 @@ export default function Settings() {
                     {isPWA ? t('settings.app.themeModeDesc', 'Ընտրեք ծրագրի բաց կամ մութ տեսքը։') : 'Ընտրեք կայքի բաց կամ մութ տեսքը։'}
                   </p>
                 </div>
-                <div className="app-theme-segmented" role="radiogroup" aria-label={t('settings.app.themeMode', 'Գունային ռեժիմ')}>
+                <Glass className="app-theme-segmented" role="radiogroup" aria-label={t('settings.app.themeMode', 'Գունային ռեժիմ')}>
                   <button
                     type="button"
                     role="radio"
@@ -739,7 +740,7 @@ export default function Settings() {
                     <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41" /></svg>
                     <span>{t('settings.app.lightTheme', 'Բաց')}</span>
                   </button>
-                </div>
+                </Glass>
               </div>
 
               <div className="app-theme-setting" style={{ marginBottom: '1.5rem' }}>
@@ -753,7 +754,7 @@ export default function Settings() {
                       : 'Worship Classic կամ տաք Editorial (Amber) ներկապնակ։'}
                   </p>
                 </div>
-                <div className="app-theme-segmented" role="radiogroup" aria-label="Design Style">
+                <Glass className="app-theme-segmented" role="radiogroup" aria-label="Design Style">
                   <button
                     type="button"
                     role="radio"
@@ -772,7 +773,7 @@ export default function Settings() {
                   >
                     <span style={{ color: themeStyle === THEME_STYLES.EDITORIAL ? 'var(--native-accent-on, #F7B500)' : undefined }}>Warm Amber</span>
                   </button>
-                </div>
+                </Glass>
               </div>
 
               <div className="remember-device-card" style={{ marginBottom: '1.5rem' }}>
@@ -787,17 +788,15 @@ export default function Settings() {
                     {t('settings.app.keepAwakeDesc', 'Երգերի բառերը կարդալիս էկրանը չի անջատվի։')}
                   </p>
                 </div>
-                <button
-                  className="settings-btn secondary small"
-                  onClick={() => {
-                    const newVal = !keepAwake;
+                <Switch
+                  aria-label={t('settings.app.keepAwake', 'Միշտ արթուն էկրան')}
+                  checked={keepAwake}
+                  onCheckedChange={(newVal) => {
                     setKeepAwake(newVal);
                     localStorage.setItem('keepAwake', newVal ? 'true' : 'false');
                     showMsg(t('settings.app.saved', 'Պահպանված է'));
                   }}
-                >
-                  {keepAwake ? t('settings.app.disable', 'Անջատել') : t('settings.app.enable', 'Միացնել')}
-                </button>
+                />
               </div>
 
               <div className="remember-device-card" style={{ marginBottom: '1.5rem' }}>
@@ -812,18 +811,16 @@ export default function Settings() {
                     {t('settings.app.reduceMotionDesc', 'Անջատում է էջերի անցումների էֆեկտները ավելի արագ աշխատանքի համար։')}
                   </p>
                 </div>
-                <button
-                  className="settings-btn secondary small"
-                  onClick={() => {
-                    const newVal = !reduceMotion;
+                <Switch
+                  aria-label={t('settings.app.reduceMotion', 'Պարզեցված անիմացիաներ')}
+                  checked={reduceMotion}
+                  onCheckedChange={(newVal) => {
                     setReduceMotion(newVal);
                     localStorage.setItem('reduceMotion', newVal ? 'true' : 'false');
                     document.body.classList.toggle('reduce-motion', newVal);
                     showMsg(t('settings.app.saved', 'Պահպանված է'));
                   }}
-                >
-                  {reduceMotion ? t('settings.app.disable', 'Անջատել') : t('settings.app.enable', 'Միացնել')}
-                </button>
+                />
               </div>
 
               <div className="remember-device-card" style={{ marginBottom: '1.5rem' }}>
@@ -841,20 +838,18 @@ export default function Settings() {
                     <p className="oled-theme-note">{t('settings.app.oledDarkOnly', 'Հասանելի է միայն մութ ռեժիմում։')}</p>
                   )}
                 </div>
-                <button
-                  className="settings-btn secondary small"
+                <Switch
+                  aria-label={t('settings.app.oledMode', 'OLED Մութ ռեժիմ')}
                   disabled={appTheme === APP_THEMES.LIGHT}
-                  onClick={() => {
-                    const newVal = !oledMode;
+                  checked={oledMode}
+                  onCheckedChange={(newVal) => {
                     setOledMode(newVal);
                     localStorage.setItem('oledMode', newVal ? 'true' : 'false');
                     document.body.classList.toggle('oled-mode', newVal);
                     window.dispatchEvent(new CustomEvent('wp-theme-change'));
                     showMsg(t('settings.app.saved', 'Պահպանված է'));
                   }}
-                >
-                  {oledMode ? t('settings.app.disable', 'Անջատել') : t('settings.app.enable', 'Միացնել')}
-                </button>
+                />
               </div>
 
               <div className="remember-device-card" style={{ marginBottom: '1.5rem' }}>
@@ -869,18 +864,16 @@ export default function Settings() {
                     {t('settings.app.outlinedChordsDesc', 'Ակորդները ցուցադրվում են որպես առանձին կոճակներ՝ ավելի հեշտ կարդալու համար։')}
                   </p>
                 </div>
-                <button
-                  className="settings-btn secondary small"
-                  onClick={() => {
-                    const newVal = !outlinedChords;
+                <Switch
+                  aria-label={t('settings.app.outlinedChords', 'Շրջանակված ակորդներ')}
+                  checked={outlinedChords}
+                  onCheckedChange={(newVal) => {
                     setOutlinedChords(newVal);
                     localStorage.setItem('outlinedChords', newVal ? 'true' : 'false');
                     document.body.classList.toggle('outlined-chords', newVal);
                     showMsg(t('settings.app.saved', 'Պահպանված է'));
                   }}
-                >
-                  {outlinedChords ? t('settings.app.disable', 'Անջատել') : t('settings.app.enable', 'Միացնել')}
-                </button>
+                />
               </div>
 
               <div className="form-group" style={{ padding: '0 10px', marginBottom: '20px' }}>
