@@ -30,7 +30,7 @@ function wp_mobile_default_config(): array {
         ],
         'android' => [
             'current_version' => '5.4.0',
-            'current_build' => '7',
+            'current_build' => '8',
             'min_version' => '1.0',
             'min_build' => '1',
             'force_update' => false,
