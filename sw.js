@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v629";
+const CACHE_VERSION = "worship-v630";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -37,8 +37,8 @@ const APP_SHELL = [
   "/app.js",
   "/site_guard.js",
   "/fav_bridge.js",
-  "/assets/index.css?v=v629",
-  "/assets/index.js?v=v629",
+  "/assets/index.css?v=v630",
+  "/assets/index.js?v=v630",
   "/manifest.json?v=13",
   "/favicon.png?v=2",
   "/apple-touch-icon-v8.png",
