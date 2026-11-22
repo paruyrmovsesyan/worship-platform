@@ -195,6 +195,59 @@ function App() {
   const { t, language } = useLanguage();
 
   useEffect(() => {
+    if (!isNativeApp) return undefined;
+
+    // Preload primary local route chunks and warm core API caches during idle
+    // time so tab switches and detail pages feel instant like native screens.
+    let cancelled = false;
+    const warmNativeApp = () => {
+      if (cancelled) return;
+      const chunkImports = [
+        () => import('./pages/Songs'),
+        () => import('./pages/SongView'),
+        () => import('./pages/Bible'),
+        () => import('./pages/Setlists'),
+        () => import('./pages/SetlistEditor'),
+        () => import('./pages/ChatsList'),
+        () => import('./pages/Profile'),
+        () => import('./pages/Favorites'),
+        () => import('./pages/News'),
+        () => import('./pages/Settings'),
+        () => import('./pages/ChurchHub'),
+        () => import('./pages/MediaHub'),
+        () => import('./pages/WorshipStudioHub'),
+      ];
+      chunkImports.forEach((loader, idx) => {
+        window.setTimeout(() => {
+          if (!cancelled) loader().catch(() => {});
+        }, idx * 70);
+      });
+
+      import('./utils/nativeNetwork.js')
+        .then(({ prewarmNativeCache }) => {
+          if (!cancelled) prewarmNativeCache();
+        })
+        .catch(() => {});
+    };
+
+    let idleId = null;
+    let timerId = null;
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(warmNativeApp, { timeout: 1200 });
+    } else {
+      timerId = window.setTimeout(warmNativeApp, 300);
+    }
+
+    return () => {
+      cancelled = true;
+      if (idleId !== null && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timerId !== null) window.clearTimeout(timerId);
+    };
+  }, [isNativeApp]);
+
+  useEffect(() => {
     document.body.classList.remove('mobile-theme', 'app-desktop-theme', 'website-theme', 'is-app', 'is-pwa', 'is-ios', 'is-android', 'is-native');
     
     if (isNativeApp) {
@@ -782,6 +835,7 @@ function App() {
 
   const handleSoftRefresh = async () => {
     if (isNativeApp) {
+      window.__wpNativeBypassCacheUntil = Date.now() + 5000;
       setNativeRefreshing(true);
       // Never remount the native route tree here. WebKit can race React's DOM
       // cleanup during a keyed remount and throw NotFoundError, leaving the

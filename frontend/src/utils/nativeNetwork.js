@@ -1,12 +1,105 @@
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
-import { readNativeResponseCache, writeNativeResponseCache } from './nativeOffline';
+import {
+  canCacheNativeRequest,
+  normalizeNativeCacheUrl,
+  readNativeResponseCache,
+  writeNativeResponseCache,
+} from './nativeOffline';
 import { API_BASE_URL } from './nativeConfig';
+
+const MAX_RAM_ENTRIES = 160;
+const ramCache = new Map(); // normalizedUrl -> { body, status, headers, cachedAt, pathname }
+const inflightGets = new Map(); // normalizedUrl -> Promise<{ body, status, headers }>
+const backgroundRevalidating = new Set();
+
+const LOCAL_BUNDLE_PREFIXES = ['/assets/', '/favicon', '/apple-touch-icon', '/sounds/', '/icons/'];
+
+function isLocalBundlePath(rawUrl) {
+  if (typeof rawUrl !== 'string' || !rawUrl.startsWith('/') || rawUrl.startsWith('//')) return false;
+  return LOCAL_BUNDLE_PREFIXES.some((prefix) => rawUrl.startsWith(prefix));
+}
+
+function getCacheTtlPolicy(url) {
+  try {
+    const pathname = new URL(url, API_BASE_URL).pathname;
+    if (pathname === '/bible_api.php') {
+      return { freshMs: 30 * 60_000, swrMs: 7 * 24 * 60 * 60_000 };
+    }
+    if (pathname === '/api.php') {
+      return { freshMs: 2 * 60_000, swrMs: 24 * 60 * 60_000 };
+    }
+    if (pathname === '/news_api.php' || pathname === '/media_api.php' || pathname === '/worship_roles_api.php') {
+      return { freshMs: 2 * 60_000, swrMs: 12 * 60 * 60_000 };
+    }
+    if (pathname === '/church_api.php' || pathname === '/today_api.php' || pathname === '/service_planner_api.php') {
+      return { freshMs: 60_000, swrMs: 6 * 60 * 60_000 };
+    }
+    if (pathname === '/account_api.php') {
+      return { freshMs: 30_000, swrMs: 60 * 60_000 };
+    }
+    return { freshMs: 30_000, swrMs: 6 * 60 * 60_000 };
+  } catch {
+    return { freshMs: 30_000, swrMs: 6 * 60 * 60_000 };
+  }
+}
+
+function putRamCache(cacheKey, pathname, entry) {
+  if (ramCache.has(cacheKey)) {
+    ramCache.delete(cacheKey);
+  }
+  ramCache.set(cacheKey, { ...entry, pathname });
+  while (ramCache.size > MAX_RAM_ENTRIES) {
+    const oldestKey = ramCache.keys().next().value;
+    ramCache.delete(oldestKey);
+  }
+}
+
+export function invalidateNativeCacheForUrl(url) {
+  try {
+    const pathname = new URL(url, API_BASE_URL).pathname;
+    const related = new Set([pathname]);
+    if (pathname === '/favorites_api.php' || pathname === '/user_favorites_api.php') {
+      related.add('/favorites_api.php');
+      related.add('/user_favorites_api.php');
+      related.add('/api.php');
+    }
+    if (pathname === '/setlists_api.php') {
+      related.add('/setlists_api.php');
+    }
+    if (pathname === '/account_api.php' || pathname === '/auth_api.php') {
+      related.add('/account_api.php');
+      related.add('/setlists_api.php');
+      related.add('/favorites_api.php');
+      related.add('/user_favorites_api.php');
+    }
+    for (const [key, value] of ramCache.entries()) {
+      if (related.has(value.pathname)) {
+        ramCache.delete(key);
+      }
+    }
+  } catch {
+    ramCache.clear();
+  }
+}
+
+function buildResponse(payload, cacheStatus = 'MISS') {
+  const responseHeaders = new Headers(payload.headers || {});
+  if (cacheStatus) {
+    responseHeaders.set('X-Worship-Native-Cache', cacheStatus);
+  }
+  return new Response(payload.body || '', {
+    status: payload.status || 200,
+    statusText: (payload.status || 200) === 200 ? 'OK' : '',
+    headers: responseHeaders,
+  });
+}
 
 /**
  * Universal Native Network Bridge:
  * In Native App (iOS/Android):
- *   Uses CapacitorHttp native mobile HTTP layer which bypasses WebKit/Chromium
- *   CORS restrictions, same-origin limits, and handles HTTPS cookies natively.
+ *   Uses CapacitorHttp native mobile HTTP layer with 2-tier RAM + Disk
+ *   Stale-While-Revalidate caching and in-flight deduplication so pages open
+ *   instantly from local cache instead of blocking on remote HTTP round-trips.
  * In Web / PWA:
  *   Leaves standard window.fetch 100% untouched.
  */
@@ -15,23 +108,66 @@ export function setupNativeNetwork() {
 
   const originalFetch = window.fetch;
 
-  window.fetch = async function (input, init = {}) {
-    let url = '';
-    if (typeof input === 'string') {
-      url = input;
-    } else if (input instanceof Request) {
-      url = input.url;
-    } else if (input && typeof input.toString === 'function') {
-      url = input.toString();
+  const performNetworkRequest = async (url, method, headers, data, cacheKey, pathname, isCacheable) => {
+    const response = await CapacitorHttp.request({
+      url,
+      method,
+      headers,
+      data,
+      webFetchExtra: {
+        credentials: 'include',
+      },
+    });
+
+    let responseBody = response.data;
+    if (typeof responseBody === 'object' && responseBody !== null) {
+      responseBody = JSON.stringify(responseBody);
+    } else if (responseBody === undefined || responseBody === null) {
+      responseBody = '';
+    } else {
+      responseBody = String(responseBody);
     }
 
-    // Resolve relative paths to production domain
+    const payload = {
+      body: responseBody,
+      status: response.status || 200,
+      headers: response.headers || {},
+      cachedAt: Date.now(),
+    };
+
+    if (isCacheable && payload.status >= 200 && payload.status < 300) {
+      putRamCache(cacheKey, pathname, payload);
+      writeNativeResponseCache(cacheKey, payload).catch(() => {});
+    }
+
+    return payload;
+  };
+
+  window.fetch = async function (input, init = {}) {
+    let rawUrl = '';
+    if (typeof input === 'string') {
+      rawUrl = input;
+    } else if (input instanceof Request) {
+      rawUrl = input.url;
+    } else if (input && typeof input.toString === 'function') {
+      rawUrl = input.toString();
+    }
+
+    // Never redirect local bundled static assets to the remote production server
+    if (isLocalBundlePath(rawUrl)) {
+      return originalFetch.call(this, input, init);
+    }
+
+    let url = rawUrl;
     if (url.startsWith('/') && !url.startsWith('//')) {
       url = `${API_BASE_URL}${url}`;
     } else if (!/^https?:\/\//i.test(url)) {
       try {
         const parsed = new URL(url, window.location.href);
         if (parsed.origin === window.location.origin) {
+          if (isLocalBundlePath(parsed.pathname)) {
+            return originalFetch.call(this, input, init);
+          }
           url = `${API_BASE_URL}${parsed.pathname}${parsed.search}`;
         }
       } catch {
@@ -41,7 +177,6 @@ export function setupNativeNetwork() {
 
     const method = (init.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();
 
-    // Headers processing
     const headers = {};
     if (input instanceof Request && input.headers) {
       input.headers.forEach((value, key) => {
@@ -62,76 +197,149 @@ export function setupNativeNetwork() {
       }
     }
 
-    // Allows the server to expose native-only authentication features without
-    // changing the website/PWA contract.
     headers['X-Worship-Native'] = '1';
     headers['X-Worship-Platform'] = Capacitor.getPlatform();
 
-    // Body processing
+    // Any mutating request immediately invalidates related GET caches
+    if (method !== 'GET' && method !== 'HEAD') {
+      invalidateNativeCacheForUrl(url);
+    }
+
     let data = init.body;
     if (data === undefined && input instanceof Request) {
       try {
         data = await input.clone().text();
       } catch {
-        // Keep the original body when it is not valid JSON.
+        // Keep original body
       }
     }
 
-    // Parse JSON data if header specifies application/json and body is string
     if (typeof data === 'string' && (headers['Content-Type'] || headers['content-type'] || '').includes('application/json')) {
       try {
         data = JSON.parse(data);
-    } catch {
-      // Leave non-JSON payloads untouched.
-    }
+      } catch {
+        // Leave non-JSON payloads untouched
+      }
     }
 
-    try {
-      const response = await CapacitorHttp.request({
-        url,
-        method,
-        headers,
-        data,
-        webFetchExtra: {
-          credentials: 'include'
+    const isCacheable = canCacheNativeRequest(url, method);
+    const bypassCache =
+      init.cache === 'reload' ||
+      headers['X-Bypass-Native-Cache'] === '1' ||
+      (window.__wpNativeBypassCacheUntil && Date.now() < window.__wpNativeBypassCacheUntil);
+
+    if (isCacheable) {
+      const cacheKey = normalizeNativeCacheUrl(url);
+      let pathname = '';
+      try {
+        pathname = new URL(url, API_BASE_URL).pathname;
+      } catch {}
+      const { freshMs, swrMs } = getCacheTtlPolicy(url);
+
+      const triggerBackgroundRevalidate = () => {
+        if (backgroundRevalidating.has(cacheKey) || inflightGets.has(cacheKey)) return;
+        backgroundRevalidating.add(cacheKey);
+        performNetworkRequest(url, method, headers, data, cacheKey, pathname, true)
+          .catch(() => {})
+          .finally(() => {
+            backgroundRevalidating.delete(cacheKey);
+          });
+      };
+
+      if (!bypassCache) {
+        // Tier 1: Instant 0ms RAM cache hit
+        const ramHit = ramCache.get(cacheKey);
+        if (ramHit) {
+          const age = Date.now() - Number(ramHit.cachedAt || 0);
+          if (age < freshMs) {
+            return buildResponse(ramHit, 'RAM-FRESH');
+          }
+          if (age < swrMs) {
+            triggerBackgroundRevalidate();
+            return buildResponse(ramHit, 'RAM-SWR');
+          }
         }
-      });
 
-      // Construct standard Response object for seamless compatibility with response.json(), response.text(), etc.
-      let responseBody = response.data;
-      if (typeof responseBody === 'object' && responseBody !== null) {
-        responseBody = JSON.stringify(responseBody);
-      } else if (responseBody === undefined || responseBody === null) {
-        responseBody = '';
-      } else {
-        responseBody = String(responseBody);
+        // Tier 2: Fast local Disk cache hit (~5-15ms) with silent SWR
+        const diskHit = await readNativeResponseCache(cacheKey);
+        if (diskHit && typeof diskHit.body === 'string') {
+          const age = Date.now() - Number(diskHit.cachedAt || 0);
+          putRamCache(cacheKey, pathname, diskHit);
+          if (age < swrMs) {
+            if (age >= freshMs) {
+              triggerBackgroundRevalidate();
+            }
+            return buildResponse(diskHit, 'DISK-SWR');
+          }
+        }
       }
 
-      if (method === 'GET' && response.status >= 200 && response.status < 300) {
-        writeNativeResponseCache(url, {
-          body: responseBody,
-          status: response.status || 200,
-          headers: response.headers || {},
-        }).catch(() => {});
+      // Tier 3: Deduplicate concurrent identical GET requests
+      if (inflightGets.has(cacheKey)) {
+        try {
+          const shared = await inflightGets.get(cacheKey);
+          return buildResponse(shared, 'DEDUP');
+        } catch {
+          // Fall through to fresh attempt
+        }
       }
 
-      return new Response(responseBody, {
-        status: response.status || 200,
-        statusText: response.status === 200 ? 'OK' : '',
-        headers: new Headers(response.headers || {})
-      });
+      const promise = performNetworkRequest(url, method, headers, data, cacheKey, pathname, true);
+      inflightGets.set(cacheKey, promise);
+      try {
+        const payload = await promise;
+        return buildResponse(payload, 'NETWORK');
+      } catch (err) {
+        console.warn('[NativeHttp] Native request failed, falling back to cache/fetch:', err);
+        const fallback = ramCache.get(cacheKey) || (await readNativeResponseCache(cacheKey));
+        if (fallback) {
+          return buildResponse(fallback, 'OFFLINE-FALLBACK');
+        }
+        return originalFetch.call(this, input, init);
+      } finally {
+        inflightGets.delete(cacheKey);
+      }
+    }
+
+    // Non-cacheable request (mutations, live chat, calls, status checks)
+    try {
+      const payload = await performNetworkRequest(url, method, headers, data, '', '', false);
+      return buildResponse(payload, 'LIVE');
     } catch (err) {
       console.warn('[NativeHttp] Native request failed, falling back to original fetch:', err);
-      if (method === 'GET') {
-        const cached = await readNativeResponseCache(url);
-        if (cached) {
-          return new Response(cached.body || '', {
-            status: cached.status || 200,
-            headers: new Headers({ ...cached.headers, 'X-Worship-Native-Cache': 'HIT' }),
-          });
-        }
-      }
       return originalFetch.call(this, input, init);
     }
   };
+}
+
+let prewarmedOnce = false;
+
+/**
+ * Silently warms core read-only API caches in RAM + Disk right after native boot
+ * so tapping Songs, Setlists, Favorites, or News renders instantaneously.
+ */
+export function prewarmNativeCache() {
+  if (!Capacitor.isNativePlatform() || prewarmedOnce) return;
+  prewarmedOnce = true;
+
+  const coreEndpoints = [
+    '/api.php?action=list',
+    '/setlists_api.php?action=list',
+    '/favorites_api.php?action=list',
+    '/news_api.php?action=list',
+  ];
+
+  const run = () => {
+    coreEndpoints.forEach((endpoint, idx) => {
+      window.setTimeout(() => {
+        window.fetch(endpoint).catch(() => {});
+      }, idx * 140);
+    });
+  };
+
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(run, { timeout: 1500 });
+  } else {
+    window.setTimeout(run, 350);
+  }
 }

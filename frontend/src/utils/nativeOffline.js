@@ -4,7 +4,36 @@ import { Preferences } from '@capacitor/preferences';
 
 const CACHE_DIRECTORY = 'worship-native-cache';
 const QUEUE_KEY = 'wp_native_mutation_queue_v1';
-const CACHEABLE_PATHS = ['/api.php', '/setlists_api.php', '/favorites_api.php', '/user_favorites_api.php', '/account_api.php'];
+const CACHEABLE_PATHS = [
+  '/api.php',
+  '/setlists_api.php',
+  '/favorites_api.php',
+  '/user_favorites_api.php',
+  '/account_api.php',
+  '/bible_api.php',
+  '/news_api.php',
+  '/church_api.php',
+  '/media_api.php',
+  '/friends_api.php',
+  '/worship_roles_api.php',
+  '/today_api.php',
+  '/service_planner_api.php',
+];
+
+const VOLATILE_QUERY_PARAMS = ['t', '_t', 'ts', 'cb', 'nocache', '_'];
+
+export function normalizeNativeCacheUrl(url) {
+  try {
+    const parsed = new URL(url, 'https://worship.pmstudio.am');
+    for (const key of VOLATILE_QUERY_PARAMS) {
+      parsed.searchParams.delete(key);
+    }
+    parsed.searchParams.sort();
+    return `${parsed.origin}${parsed.pathname}${parsed.search}`;
+  } catch {
+    return String(url || '');
+  }
+}
 
 function stableHash(value) {
   let hash = 2166136261;
@@ -19,7 +48,10 @@ export function canCacheNativeRequest(url, method = 'GET') {
   if (!Capacitor.isNativePlatform() || method.toUpperCase() !== 'GET') return false;
   try {
     const parsed = new URL(url, 'https://worship.pmstudio.am');
-    return CACHEABLE_PATHS.includes(parsed.pathname) && !/logout|delete|remove/i.test(parsed.search);
+    return (
+      CACHEABLE_PATHS.includes(parsed.pathname) &&
+      !/logout|delete|remove|send|create|update|poll|signal|call|badge_summary/i.test(parsed.search)
+    );
   } catch {
     return false;
   }
@@ -27,8 +59,9 @@ export function canCacheNativeRequest(url, method = 'GET') {
 
 export async function writeNativeResponseCache(url, payload) {
   if (!canCacheNativeRequest(url)) return;
+  const key = normalizeNativeCacheUrl(url);
   await Filesystem.writeFile({
-    path: `${CACHE_DIRECTORY}/${stableHash(url)}.json`,
+    path: `${CACHE_DIRECTORY}/${stableHash(key)}.json`,
     directory: Directory.Data,
     encoding: Encoding.UTF8,
     recursive: true,
@@ -38,9 +71,10 @@ export async function writeNativeResponseCache(url, payload) {
 
 export async function readNativeResponseCache(url) {
   if (!canCacheNativeRequest(url)) return null;
+  const key = normalizeNativeCacheUrl(url);
   try {
     const result = await Filesystem.readFile({
-      path: `${CACHE_DIRECTORY}/${stableHash(url)}.json`,
+      path: `${CACHE_DIRECTORY}/${stableHash(key)}.json`,
       directory: Directory.Data,
       encoding: Encoding.UTF8,
     });

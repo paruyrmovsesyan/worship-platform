@@ -15,6 +15,14 @@ html.wp-native-bundle {
   text-size-adjust: 100% !important;
 }
 
+body.is-native .hub-header .hub-brand-name {
+  display: none !important;
+}
+
+body.is-native .hub-header .hub-logo-btn {
+  gap: 0 !important;
+}
+
 body.is-native {
   -webkit-text-size-adjust: 100% !important;
   text-size-adjust: 100% !important;
@@ -1535,4 +1543,48 @@ body.is-native.light-mode.editorial-theme .hub-cat-card {
     transition: none !important;
     transform: none !important;
   }
+}
+
+/* ==========================================================================
+   ANDROID WEBVIEW 60/120FPS RENDERING OPTIMIZATION
+   Eliminates costly multi-layer backdrop-filter GPU readbacks on scrolling
+   cards and sticky bars inside Android WebView while keeping crisp translucent
+   native surfaces. Strictly scoped to `body.is-native.is-android`.
+   ========================================================================== */
+body.is-native.is-android :is(
+  .hub-cat-card,
+  .hub-fav-card,
+  .recent-song-card,
+  .songs-page .track-item,
+  .sl-card,
+  .sla-song-card,
+  .church-post-card,
+  .media-card,
+  .media-radio-card,
+  .news-card,
+  .profile-card,
+  .settings-card,
+  .settings-menu-item,
+  .chat-item,
+  .sv-tone-capo-card,
+  .sv-inline-metronome-wrap,
+  .bible-verse-row,
+  .bible-card
+) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.is-native.is-android :is(
+  .sv-header,
+  .sla-header,
+  .songs-search-bar,
+  .bible-topbar,
+  .chats-header,
+  .church-header,
+  .media-header
+) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-color: var(--native-surface-elevated, rgba(16, 18, 30, 0.96)) !important;
 }

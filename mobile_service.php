@@ -29,8 +29,8 @@ function wp_mobile_default_config(): array {
             'update_message' => 'Խնդրում ենք թարմացնել Worship Platform-ը App Store-ից՝ շարունակելու համար:',
         ],
         'android' => [
-            'current_version' => '5.4.0',
-            'current_build' => '8',
+            'current_version' => '5.4.1',
+            'current_build' => '11',
             'min_version' => '1.0',
             'min_build' => '1',
             'force_update' => false,
