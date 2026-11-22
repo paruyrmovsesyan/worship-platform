@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import androidx.annotation.NonNull;
+import androidx.core.app.Person;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.RemoteInput;
 import com.capacitorjs.plugins.pushnotifications.PushNotificationsPlugin;
@@ -142,9 +143,20 @@ public class WorshipFirebaseMessagingService extends FirebaseMessagingService {
          .setAllowGeneratedReplies(true)
          .build();
 
+        // Telegram / WhatsApp style NotificationCompat.MessagingStyle
+        Person senderPerson = new Person.Builder()
+            .setName(title)
+            .setKey("user_" + (data.get("sender_id") != null ? data.get("sender_id") : chatId))
+            .build();
+
+        NotificationCompat.MessagingStyle messagingStyle = new NotificationCompat.MessagingStyle(senderPerson)
+            .setConversationTitle(null)
+            .addMessage(body, System.currentTimeMillis(), senderPerson);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_stat_notification)
             .setColor(Color.parseColor("#9D72FF"))
+            .setStyle(messagingStyle)
             .setContentTitle(title)
             .setContentText(body)
             .setAutoCancel(true)

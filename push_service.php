@@ -1905,8 +1905,9 @@ function wp_push_send_fcm_token(string $fcmToken, string $title, string $body, s
     }
 
     $notifType = (string)($extra['type'] ?? '');
+    $isChat = ($notifType === 'chat' || $notifType === 'message' || str_starts_with($url, '/chat/'));
     $channelId = 'worship-default';
-    if ($notifType === 'chat' || $notifType === 'message' || str_starts_with($url, '/chat/')) {
+    if ($isChat) {
         $channelId = 'worship-chat';
     } elseif ($notifType === 'setlist' || str_starts_with($url, '/setlists/')) {
         $channelId = 'worship-team';
@@ -1914,24 +1915,31 @@ function wp_push_send_fcm_token(string $fcmToken, string $title, string $body, s
         $channelId = 'worship-news';
     }
 
-    $message = [
-        'message' => [
-            'token' => $fcmToken,
-            'notification' => [
-                'title' => $title !== '' ? $title : 'Worship Platform',
-                'body'  => $body,
-            ],
-            'data' => $dataMap,
-            'android' => [
-                'priority' => 'high',
-                'notification' => [
-                    'channel_id' => $channelId,
-                    'sound'      => 'default',
-                    'icon'       => 'ic_stat_notification',
-                    'color'      => '#9D72FF',
-                ],
-            ],
+    $messagePayload = [
+        'token' => $fcmToken,
+        'data'  => $dataMap,
+        'android' => [
+            'priority' => 'high',
         ],
+    ];
+
+    // For non-chat notifications, include top-level notification block
+    // For chat notifications, omit it so WorshipFirebaseMessagingService renders Telegram-style MessagingStyle + Reply actions
+    if (!$isChat) {
+        $messagePayload['notification'] = [
+            'title' => $title !== '' ? $title : 'Worship Platform',
+            'body'  => $body,
+        ];
+        $messagePayload['android']['notification'] = [
+            'channel_id' => $channelId,
+            'sound'      => 'default',
+            'icon'       => 'ic_stat_notification',
+            'color'      => '#9D72FF',
+        ];
+    }
+
+    $message = [
+        'message' => $messagePayload,
     ];
 
     $ch = curl_init($endpoint);
