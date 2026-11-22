@@ -388,6 +388,7 @@ export default function Chat() {
     if (typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()) {
       import('@capacitor/keyboard').then(({ Keyboard }) => {
         Keyboard.addListener('keyboardWillShow', (info) => {
+          document.body.classList.add('keyboard-open');
           const kbHeight = info.keyboardHeight || 0;
           const h = window.innerHeight - kbHeight;
           if (h > 150) {
@@ -400,6 +401,7 @@ export default function Chat() {
         }).then((sub) => { removeShow = sub; }).catch(() => {});
 
         Keyboard.addListener('keyboardWillHide', () => {
+          document.body.classList.remove('keyboard-open');
           root.style.setProperty('--chat-vh', `${window.innerHeight}px`);
           if (window.scrollY !== 0) {
             window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -415,6 +417,7 @@ export default function Chat() {
       window.removeEventListener('orientationchange', applyChatViewport);
       removeShow?.remove?.();
       removeHide?.remove?.();
+      document.body.classList.remove('keyboard-open');
       root.style.removeProperty('--chat-vh');
       root.style.removeProperty('--chat-viewport-offset');
     };

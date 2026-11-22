@@ -518,7 +518,12 @@ body.wp-standalone-app .chat-input-area {
 }
 
 body.is-native .chat-input-area {
-  padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)) !important;
+  padding-top: 8px !important;
+  padding-bottom: max(10px, calc(env(safe-area-inset-bottom, 10px) - 16px)) !important;
+}
+
+body.is-native.keyboard-open .chat-input-area {
+  padding-bottom: 8px !important;
 }
 
 body.mobile-theme .chat-input-area.hidden,
