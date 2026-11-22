@@ -488,6 +488,11 @@ body.is-app.light-mode .chat-list-card:hover {
 }
 
 body.is-app.light-mode .chat-list-card.unread {
+  background: linear-gradient(145deg, #f0f9ff, #ffffff);
+  border-color: rgba(2, 132, 199, 0.34);
+}
+
+body.is-app.light-mode.editorial-theme .chat-list-card.unread {
   background: linear-gradient(145deg, #fffbeb, #ffffff);
   border-color: rgba(245, 158, 11, 0.36);
 }
@@ -497,6 +502,10 @@ body.light-mode .chat-list-dot {
 }
 
 body.light-mode .chat-list-time.unread {
+  color: #0284c7;
+}
+
+body.light-mode.editorial-theme .chat-list-time.unread {
   color: #b45309;
 }
 

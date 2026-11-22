@@ -543,8 +543,66 @@
 }
 
 /* ════════════════════════════════════════════════════════════
-   APP & EMBEDDED CHATS LIST (Self-contained, Warm Obsidian/Gold)
+   APP & EMBEDDED CHATS LIST (Dual Theme: Classic + Warm Amber)
    ════════════════════════════════════════════════════════════ */
+
+.chats-list-page,
+.embedded-chats {
+  --chat-accent: #00d4ff;
+  --chat-accent-grad: linear-gradient(135deg, #00d4ff, #2563eb);
+  --chat-accent-on: #ffffff;
+  --chat-accent-soft: rgba(0, 212, 255, 0.13);
+  --chat-accent-border: rgba(0, 212, 255, 0.32);
+  --chat-accent-border-strong: rgba(0, 212, 255, 0.52);
+  --chat-accent-glow: rgba(0, 212, 255, 0.26);
+  --chat-card-bg: linear-gradient(165deg, rgba(18, 22, 36, 0.9), rgba(10, 12, 22, 0.95));
+  --chat-unread-bg: linear-gradient(145deg, rgba(0, 212, 255, 0.11), rgba(14, 18, 34, 0.96));
+  --chat-avatar-bg: linear-gradient(135deg, #3a2dff, #00c6ff);
+  --chat-req-bg: linear-gradient(155deg, rgba(0, 212, 255, 0.09), rgba(255, 255, 255, 0.025));
+}
+
+body.light-mode .chats-list-page,
+body.light-mode .embedded-chats {
+  --chat-accent: #0284c7;
+  --chat-accent-grad: linear-gradient(135deg, #0ea5e9, #2563eb);
+  --chat-accent-on: #ffffff;
+  --chat-accent-soft: rgba(14, 165, 233, 0.12);
+  --chat-accent-border: rgba(2, 132, 199, 0.3);
+  --chat-accent-border-strong: rgba(2, 132, 199, 0.5);
+  --chat-accent-glow: rgba(14, 165, 233, 0.22);
+  --chat-card-bg: #ffffff;
+  --chat-unread-bg: linear-gradient(145deg, #f0f9ff, #ffffff);
+  --chat-req-bg: #f0f9ff;
+}
+
+body.editorial-theme .chats-list-page,
+body.editorial-theme .embedded-chats {
+  --chat-accent: #fbbf24;
+  --chat-accent-grad: linear-gradient(135deg, #fbbf24, #f59e0b);
+  --chat-accent-on: #1f1402;
+  --chat-accent-soft: rgba(247, 181, 0, 0.14);
+  --chat-accent-border: rgba(247, 181, 0, 0.32);
+  --chat-accent-border-strong: rgba(247, 181, 0, 0.52);
+  --chat-accent-glow: rgba(245, 158, 11, 0.28);
+  --chat-card-bg: linear-gradient(165deg, rgba(26, 28, 38, 0.9), rgba(16, 18, 26, 0.96));
+  --chat-unread-bg: linear-gradient(145deg, rgba(247, 181, 0, 0.11), rgba(20, 22, 32, 0.96));
+  --chat-avatar-bg: linear-gradient(135deg, #f59e0b, #b45309);
+  --chat-req-bg: linear-gradient(155deg, rgba(247, 181, 0, 0.08), rgba(255, 255, 255, 0.025));
+}
+
+body.light-mode.editorial-theme .chats-list-page,
+body.light-mode.editorial-theme .embedded-chats {
+  --chat-accent: #b45309;
+  --chat-accent-grad: linear-gradient(135deg, #fbbf24, #f59e0b);
+  --chat-accent-on: #1f1402;
+  --chat-accent-soft: rgba(245, 158, 11, 0.14);
+  --chat-accent-border: rgba(245, 158, 11, 0.34);
+  --chat-accent-border-strong: rgba(217, 119, 6, 0.5);
+  --chat-accent-glow: rgba(245, 158, 11, 0.24);
+  --chat-card-bg: #ffffff;
+  --chat-unread-bg: linear-gradient(145deg, #fffbeb, #ffffff);
+  --chat-req-bg: #fffbeb;
+}
 
 .chats-list-page {
   width: 100%;
@@ -616,8 +674,8 @@ body.is-native .chats-list-page {
   height: 24px;
   padding: 0 7px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: #1f1402;
+  background: var(--chat-accent-grad);
+  color: var(--chat-accent-on);
   font-size: 0.74rem;
   font-weight: 850;
 }
@@ -646,7 +704,7 @@ body.is-native .chats-list-page {
 
 .pwa-chats-icon-btn:active {
   transform: scale(0.93);
-  border-color: rgba(247, 181, 0, 0.42);
+  border-color: var(--chat-accent-border);
 }
 
 .pwa-chats-req-dot {
@@ -665,8 +723,8 @@ body.is-native .chats-list-page {
   padding: 0 14px;
   border-radius: 999px;
   border: none;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: #1f1402;
+  background: var(--chat-accent-grad);
+  color: var(--chat-accent-on);
   font-family: inherit;
   font-size: 0.8rem;
   font-weight: 800;
@@ -674,7 +732,7 @@ body.is-native .chats-list-page {
   align-items: center;
   gap: 5px;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.28);
+  box-shadow: 0 6px 16px var(--chat-accent-glow);
   transition: transform 0.14s ease;
   white-space: nowrap;
 }
@@ -687,9 +745,9 @@ body.is-native .chats-list-page {
 .chat-friend-requests {
   margin: 0 0 16px;
   padding: 14px;
-  border: 1px solid rgba(247, 181, 0, 0.24);
+  border: 1px solid var(--chat-accent-border);
   border-radius: 18px;
-  background: linear-gradient(155deg, rgba(247, 181, 0, 0.08), rgba(255, 255, 255, 0.025));
+  background: var(--chat-req-bg);
 }
 
 .chat-friend-requests-heading {
@@ -707,8 +765,8 @@ body.is-native .chats-list-page {
   height: 34px;
   flex: 0 0 34px;
   border-radius: 11px;
-  color: #fbbf24;
-  background: rgba(247, 181, 0, 0.15);
+  color: var(--chat-accent);
+  background: var(--chat-accent-soft);
 }
 
 .chat-friend-requests-icon svg {
@@ -750,7 +808,7 @@ body.is-native .chats-list-page {
   margin-left: auto;
   padding: 5px 8px;
   border: 0;
-  color: #fbbf24;
+  color: var(--chat-accent);
   background: transparent;
   font: inherit;
   font-size: 0.76rem;
@@ -780,8 +838,8 @@ body.is-native .chats-list-page {
   height: 40px;
   flex: 0 0 40px;
   border-radius: 50%;
-  color: #1f1402;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: var(--chat-accent-on);
+  background: var(--chat-accent-grad);
   font-size: 0.92rem;
   font-weight: 850;
 }
@@ -893,14 +951,14 @@ body.is-native .chats-list-page {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+  background: var(--chat-avatar-bg);
   color: #fff;
   font-size: 1.08rem;
   font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid rgba(247, 181, 0, 0.32);
+  border: 2px solid var(--chat-accent-border);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.24);
   transition: transform 0.14s ease;
 }
@@ -946,8 +1004,8 @@ body.is-native .chats-list-page {
 
 .pwa-chats-search-bar:focus-within {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(247, 181, 0, 0.5);
-  box-shadow: 0 6px 20px rgba(247, 181, 0, 0.1);
+  border-color: var(--chat-accent-border-strong);
+  box-shadow: 0 6px 20px var(--chat-accent-soft);
 }
 
 .pwa-chats-search-ico {
@@ -956,7 +1014,7 @@ body.is-native .chats-list-page {
 }
 
 .pwa-chats-search-bar:focus-within .pwa-chats-search-ico {
-  color: #fbbf24;
+  color: var(--chat-accent);
 }
 
 .pwa-chats-search-bar input {
@@ -1037,21 +1095,21 @@ body.is-native .chats-list-page {
 }
 
 .pwa-chats-filter-pill.active {
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  background: var(--chat-accent-grad);
   border-color: transparent;
-  color: #1f1402;
+  color: var(--chat-accent-on);
   font-weight: 800;
 }
 
 .pwa-chats-filter-pill.active em {
-  background: rgba(31, 20, 2, 0.16);
-  color: #1f1402;
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--chat-accent-on);
 }
 
 /* User Search Results */
 .pwa-user-search-results {
-  background: linear-gradient(160deg, rgba(26, 28, 38, 0.92), rgba(16, 18, 26, 0.96));
-  border: 1px solid rgba(247, 181, 0, 0.24);
+  background: var(--chat-card-bg);
+  border: 1px solid var(--chat-accent-border);
   border-radius: 18px;
   padding: 13px 14px;
   margin-bottom: 16px;
@@ -1063,7 +1121,7 @@ body.is-native .chats-list-page {
   gap: 7px;
   font-size: 0.74rem;
   font-weight: 800;
-  color: #fbbf24;
+  color: var(--chat-accent);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 10px;
@@ -1096,7 +1154,7 @@ body.is-native .chats-list-page {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+  background: var(--chat-avatar-bg);
   color: #fff;
   font-size: 0.92rem;
   font-weight: 800;
@@ -1144,14 +1202,14 @@ body.is-native .chats-list-page {
 }
 
 .btn-pwa-user-action.chat {
-  background: rgba(247, 181, 0, 0.16);
-  color: #fbbf24;
-  border: 1px solid rgba(247, 181, 0, 0.32);
+  background: var(--chat-accent-soft);
+  color: var(--chat-accent);
+  border: 1px solid var(--chat-accent-border);
 }
 
 .btn-pwa-user-action.add {
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: #1f1402;
+  background: var(--chat-accent-grad);
+  color: var(--chat-accent-on);
 }
 
 .btn-pwa-user-action.accept {
@@ -1166,10 +1224,10 @@ body.is-native .chats-list-page {
   padding: 0 10px;
   font-size: 0.74rem;
   font-weight: 750;
-  color: #fbbf24;
-  background: rgba(247, 181, 0, 0.12);
+  color: var(--chat-accent);
+  background: var(--chat-accent-soft);
   border-radius: 999px;
-  border: 1px solid rgba(247, 181, 0, 0.26);
+  border: 1px solid var(--chat-accent-border);
 }
 
 /* ── Self-Contained Chat List Items & Cards ── */
@@ -1192,7 +1250,7 @@ body.is-native .chats-list-page {
   text-align: left;
   font-family: inherit;
   color: var(--color-text-primary);
-  background: linear-gradient(165deg, rgba(26, 28, 38, 0.88), rgba(16, 18, 26, 0.94));
+  background: var(--chat-card-bg);
   border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   box-sizing: border-box;
@@ -1201,12 +1259,12 @@ body.is-native .chats-list-page {
 
 .chat-list-card:active {
   transform: scale(0.985);
-  border-color: rgba(247, 181, 0, 0.34);
+  border-color: var(--chat-accent-border);
 }
 
 .chat-list-card.unread {
-  background: linear-gradient(145deg, rgba(247, 181, 0, 0.11), rgba(20, 22, 32, 0.96));
-  border-color: rgba(247, 181, 0, 0.32);
+  background: var(--chat-unread-bg);
+  border-color: var(--chat-accent-border);
 }
 
 .chat-list-avatar {
@@ -1221,7 +1279,7 @@ body.is-native .chats-list-page {
   color: #ffffff;
   font-size: 1.06rem;
   font-weight: 850;
-  background: linear-gradient(135deg, #f59e0b, #b45309);
+  background: var(--chat-avatar-bg);
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
 }
 
@@ -1286,7 +1344,7 @@ body.is-native .chats-list-page {
 }
 
 .chat-list-time.unread {
-  color: #fbbf24;
+  color: var(--chat-accent);
   font-weight: 750;
 }
 
@@ -1298,8 +1356,8 @@ body.is-native .chats-list-page {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: #1f1402;
+  background: var(--chat-accent-grad);
+  color: var(--chat-accent-on);
   font-size: 0.7rem;
   font-weight: 850;
   line-height: 1;
@@ -1329,7 +1387,7 @@ body.is-native .chats-list-page {
 }
 
 .chat-preview-inline svg {
-  color: #fbbf24;
+  color: var(--chat-accent);
   flex-shrink: 0;
 }
 
@@ -1350,7 +1408,7 @@ body.is-native .chats-list-page {
   padding: 16px;
   margin-bottom: 14px;
   border-radius: 20px;
-  background: linear-gradient(165deg, rgba(26, 28, 38, 0.94), rgba(15, 17, 25, 0.98));
+  background: var(--chat-card-bg);
   border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
@@ -1406,7 +1464,7 @@ body.is-native .chats-list-page {
 }
 
 .chat-group-name-input:focus {
-  border-color: rgba(247, 181, 0, 0.55);
+  border-color: var(--chat-accent-border-strong);
 }
 
 .chat-group-selected-bar {
@@ -1424,8 +1482,8 @@ body.is-native .chats-list-page {
   font-style: normal;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(247, 181, 0, 0.16);
-  color: #fbbf24;
+  background: var(--chat-accent-soft);
+  color: var(--chat-accent);
 }
 
 .chat-group-builder-list {
@@ -1461,15 +1519,15 @@ body.is-native .chats-list-page {
 }
 
 .chat-group-builder-option.is-selected {
-  border-color: rgba(247, 181, 0, 0.45);
-  background: rgba(247, 181, 0, 0.1);
+  border-color: var(--chat-accent-border);
+  background: var(--chat-accent-soft);
 }
 
 .chat-group-option-avatar {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f59e0b, #b45309);
+  background: var(--chat-avatar-bg);
   color: #fff;
   font-size: 0.84rem;
   font-weight: 800;
@@ -1499,9 +1557,9 @@ body.is-native .chats-list-page {
 }
 
 .chat-group-check.is-checked {
-  background: #f7b500;
-  border-color: #f7b500;
-  color: #1f1402;
+  background: var(--chat-accent-grad);
+  border-color: transparent;
+  color: var(--chat-accent-on);
 }
 
 .chat-group-builder-actions {
@@ -1529,8 +1587,8 @@ body.is-native .chats-list-page {
 
 .chat-group-btn-submit {
   border: none;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: #1f1402;
+  background: var(--chat-accent-grad);
+  color: var(--chat-accent-on);
 }
 
 .chat-group-btn-submit:disabled {
@@ -1555,8 +1613,8 @@ body.is-native .chats-list-page {
   width: 52px;
   height: 52px;
   border-radius: 16px;
-  background: rgba(247, 181, 0, 0.14);
-  color: #fbbf24;
+  background: var(--chat-accent-soft);
+  color: var(--chat-accent);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1629,15 +1687,6 @@ body.light-mode .pwa-chats-filter-pill:not(.active) em {
   background: rgba(15, 23, 42, 0.07);
 }
 
-body.light-mode .chat-friend-requests {
-  background: #fffbeb;
-  border-color: rgba(245, 158, 11, 0.28);
-}
-
-body.light-mode .chat-friend-requests-all {
-  color: #b45309;
-}
-
 body.light-mode .chat-friend-request-row {
   border-top-color: rgba(15, 23, 42, 0.08);
 }
@@ -1650,16 +1699,8 @@ body.light-mode .pwa-chats-req-dot {
 
 body.light-mode .pwa-user-search-results,
 body.light-mode .chat-group-builder {
-  background: #ffffff;
   border-color: rgba(15, 23, 42, 0.1);
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-}
-
-body.light-mode .pwa-user-search-header,
-body.light-mode .btn-pwa-user-action.chat,
-body.light-mode .chat-list-time.unread,
-body.light-mode .chat-preview-inline svg {
-  color: #b45309;
 }
 
 body.light-mode .pwa-user-search-card,
@@ -1678,14 +1719,8 @@ body.light-mode .chat-group-check:not(.is-checked) {
 }
 
 body.light-mode .chat-list-card {
-  background: #ffffff;
   border-color: rgba(15, 23, 42, 0.08);
   box-shadow: 0 5px 16px rgba(15, 23, 42, 0.045);
-}
-
-body.light-mode .chat-list-card.unread {
-  background: linear-gradient(145deg, #fffbeb, #ffffff);
-  border-color: rgba(245, 158, 11, 0.38);
 }
 
 body.light-mode .pwa-chats-empty {

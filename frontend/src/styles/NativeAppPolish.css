@@ -404,8 +404,8 @@ body.is-native .hub-votd-label {
   align-items: center;
   padding: 3px 9px;
   border-radius: 999px;
-  background: rgba(247, 181, 0, 0.16);
-  border: 1px solid rgba(247, 181, 0, 0.34);
+  background: var(--hub-accent-soft, rgba(0, 212, 255, 0.16));
+  border: 1px solid var(--hub-accent-border, rgba(0, 212, 255, 0.34));
   font-size: 0.66rem;
   letter-spacing: 0.08em;
   margin-bottom: 10px;

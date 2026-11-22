@@ -1003,7 +1003,7 @@ export default function MobileHub() {
         )}
 
         {/* Verse of the Day Editorial Hero Card */}
-        <section className="hub-votd-card" style={{ background: dailyVerse.gradient }}>
+        <section className="hub-votd-card" style={{ '--votd-editorial-bg': dailyVerse.gradient }}>
           <div className="hub-votd-top">
             <span className="hub-votd-label">
               {language === 'ru' ? 'СТИХ ДНЯ' : language === 'en' ? 'VERSE OF THE DAY' : 'ՕՐՎԱ ԽՈՍՔ'}
@@ -1192,7 +1192,7 @@ export default function MobileHub() {
             <div className="hub-week-detail">
               <div className="hub-week-event-info">
                 <strong className="hub-week-event-title-row">
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#f7b500" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--hub-accent, #00d4ff)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M9 18V5l12-2v13" />
                     <circle cx="6" cy="18" r="3" />
                     <circle cx="18" cy="16" r="3" />
@@ -1386,7 +1386,7 @@ export default function MobileHub() {
             <h3>{language === 'ru' ? 'Слово ободрения' : language === 'en' ? 'Word of Encouragement' : 'Քաջալերանքի խոսք'}</h3>
           </div>
 
-          <div className="hub-encourage-card" style={{ '--topic-accent': activeTopic?.accent || '#f7b500' }}>
+          <div className="hub-encourage-card" style={{ '--topic-accent': activeTopic?.accent || 'var(--hub-accent, #00d4ff)' }}>
             <div className="hub-encourage-bars" aria-hidden="true">
               {TOPIC_COLLECTIONS.map((tp, idx) => (
                 <button
