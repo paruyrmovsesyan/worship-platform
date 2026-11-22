@@ -11,7 +11,7 @@ import {
   transposeRoot,
 } from '../utils/chordTransposer';
 import SmartMetronome from '../components/SmartMetronome';
-import { Glass } from 'glisse';
+import { SegmentedControl } from 'glisse';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { normalizeSavedSongSort, sortSavedSongs } from '../utils/savedSongs';
 import { normalizeSongKey, semitoneOffset, songKeysEqual } from '../utils/songKey';
@@ -1798,18 +1798,17 @@ export default function SongView() {
       </div>
 
       {/* Consistent 3-Tab View Mode Segmented Control */}
-      <Glass className="sv-segment-control">
-        {viewModeTabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            className={`sv-segment ${effectiveViewMode === tab.id ? 'active' : ''}`}
-            onClick={() => handleViewModeChange(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </Glass>
+      <div className="sv-segment-control-wrap" style={{ display: 'flex', justifyContent: 'center', margin: '10px 0 14px' }}>
+        <SegmentedControl
+          className="wp-glisse-segmented-3"
+          aria-label="Song view mode"
+          items={viewModeTabs.map((tab) => ({ value: tab.id, label: tab.label }))}
+          value={effectiveViewMode}
+          onValueChange={(val) => {
+            if (val) handleViewModeChange(val);
+          }}
+        />
+      </div>
 
       {/* Stage Modules Container (Single Unified Key & Capo Card + Inline Metronome + Stems) */}
       {((showToneCapo && hasChords) || showInlineMetronome || (stemsOpen && isEnabled('rehearsal_stems'))) && (

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { memo, useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -10,6 +10,10 @@ import { useFeatureFlags } from '../utils/featureFlags';
 import { BetaBadge, ComingSoonBadge } from './BetaBadge';
 import { Glass } from 'glisse';
 import './Navbar.css';
+
+const NavbarGlassBackdrop = memo(function NavbarGlassBackdrop() {
+  return <Glass className="navbar-glass-layer" aria-hidden="true" />;
+});
 
 export default function Navbar() {
   const { t } = useLanguage();
@@ -354,7 +358,7 @@ export default function Navbar() {
   return (
     <>
       <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-        <Glass className="navbar-glass-layer" aria-hidden="true" />
+        <NavbarGlassBackdrop />
         <div className="navbar-container">
 
           {/* ── LOGO ── */}
@@ -364,8 +368,8 @@ export default function Navbar() {
           </div>
 
           {/* ── NAV LINKS (Desktop only) ── */}
-          <Glass className="navbar-menu hide-mobile" ref={navMenuRef} onMouseLeave={handleMenuLeaveWrapper}>
-            <Glass className="nav-hover-pill" style={hoverStyle} aria-hidden="true" />
+          <div className="navbar-menu hide-mobile" ref={navMenuRef} onMouseLeave={handleMenuLeaveWrapper}>
+            <div className="nav-hover-pill" style={hoverStyle}></div>
 
             <Link 
               to="/" 
@@ -540,7 +544,7 @@ export default function Navbar() {
             >
               {t('megaMenu.contacts')}
             </Link>
-          </Glass>
+          </div>
 
           {/* ── RIGHT SIDE ── */}
           <div className="navbar-right">

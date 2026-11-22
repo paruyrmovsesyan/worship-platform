@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { generateQrMatrix } from '../utils/qrSvg';
 import { nativeShare } from '../utils/nativeFeatures';
-import { Glass } from 'glisse';
+import { SegmentedControl } from 'glisse';
 import './ChurchHub.css';
 
 function toIsoDate(d) {
@@ -591,20 +591,18 @@ export default function ChurchHub() {
           <p>{ui.subtitle}</p>
         </div>
 
-        <Glass className="church-segmented" role="tablist">
-          {['feed', 'calendar', 'rehearsals', 'directory', 'pulse'].map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab}
-              className={activeTab === tab ? 'active' : ''}
-              onClick={() => setActiveTab(tab)}
-            >
-              {ui.tabs[tab]}
-            </button>
-          ))}
-        </Glass>
+        <SegmentedControl
+          className="wp-glisse-segmented-5"
+          aria-label="Church Hub Tabs"
+          items={['feed', 'calendar', 'rehearsals', 'directory', 'pulse'].map((tab) => ({
+            value: tab,
+            label: ui.tabs[tab],
+          }))}
+          value={activeTab}
+          onValueChange={(val) => {
+            if (val) setActiveTab(val);
+          }}
+        />
       </header>
 
       {feedback && <div className="church-toast">{feedback}</div>}

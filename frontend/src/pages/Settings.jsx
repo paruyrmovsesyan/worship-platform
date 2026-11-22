@@ -15,7 +15,7 @@ import {
 } from '../utils/appTheme';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import OfflineStorageManager from '../components/OfflineStorageManager';
-import { Glass, Switch } from 'glisse';
+import { SegmentedControl, Switch } from 'glisse';
 import {
   getBiometricStatus,
   isBiometricLoginEnabled,
@@ -719,28 +719,18 @@ export default function Settings() {
                     {isPWA ? t('settings.app.themeModeDesc', 'Ընտրեք ծրագրի բաց կամ մութ տեսքը։') : 'Ընտրեք կայքի բաց կամ մութ տեսքը։'}
                   </p>
                 </div>
-                <Glass className="app-theme-segmented" role="radiogroup" aria-label={t('settings.app.themeMode', 'Գունային ռեժիմ')}>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={appTheme === APP_THEMES.DARK}
-                    className={appTheme === APP_THEMES.DARK ? 'active' : ''}
-                    onClick={() => handleAppThemeChange(APP_THEMES.DARK)}
-                  >
-                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.8 6.8 0 0 0 21 12.8Z" /></svg>
-                    <span>{t('settings.app.darkTheme', 'Մութ')}</span>
-                  </button>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={appTheme === APP_THEMES.LIGHT}
-                    className={appTheme === APP_THEMES.LIGHT ? 'active' : ''}
-                    onClick={() => handleAppThemeChange(APP_THEMES.LIGHT)}
-                  >
-                    <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41" /></svg>
-                    <span>{t('settings.app.lightTheme', 'Բաց')}</span>
-                  </button>
-                </Glass>
+                <SegmentedControl
+                  className="wp-glisse-segmented-2"
+                  aria-label={t('settings.app.themeMode', 'Գունային ռեժիմ')}
+                  items={[
+                    { value: APP_THEMES.DARK, label: t('settings.app.darkTheme', 'Մութ') },
+                    { value: APP_THEMES.LIGHT, label: t('settings.app.lightTheme', 'Բաց') },
+                  ]}
+                  value={appTheme}
+                  onValueChange={(val) => {
+                    if (val) handleAppThemeChange(val);
+                  }}
+                />
               </div>
 
               <div className="app-theme-setting" style={{ marginBottom: '1.5rem' }}>
@@ -754,26 +744,18 @@ export default function Settings() {
                       : 'Worship Classic կամ տաք Editorial (Amber) ներկապնակ։'}
                   </p>
                 </div>
-                <Glass className="app-theme-segmented" role="radiogroup" aria-label="Design Style">
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={themeStyle === THEME_STYLES.CLASSIC}
-                    className={themeStyle === THEME_STYLES.CLASSIC ? 'active' : ''}
-                    onClick={() => handleThemeStyleChange(THEME_STYLES.CLASSIC)}
-                  >
-                    <span>Classic</span>
-                  </button>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={themeStyle === THEME_STYLES.EDITORIAL}
-                    className={themeStyle === THEME_STYLES.EDITORIAL ? 'active' : ''}
-                    onClick={() => handleThemeStyleChange(THEME_STYLES.EDITORIAL)}
-                  >
-                    <span style={{ color: themeStyle === THEME_STYLES.EDITORIAL ? 'var(--native-accent-on, #F7B500)' : undefined }}>Warm Amber</span>
-                  </button>
-                </Glass>
+                <SegmentedControl
+                  className="wp-glisse-segmented-2"
+                  aria-label="Design Style"
+                  items={[
+                    { value: THEME_STYLES.CLASSIC, label: 'Classic' },
+                    { value: THEME_STYLES.EDITORIAL, label: 'Warm Amber' },
+                  ]}
+                  value={themeStyle}
+                  onValueChange={(val) => {
+                    if (val) handleThemeStyleChange(val);
+                  }}
+                />
               </div>
 
               <div className="remember-device-card" style={{ marginBottom: '1.5rem' }}>

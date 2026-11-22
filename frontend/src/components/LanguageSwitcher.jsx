@@ -1,33 +1,28 @@
-import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Glass } from 'glisse';
+import { SegmentedControl } from 'glisse';
 import './LanguageSwitcher.css';
+
+const LANG_ITEMS = [
+  { value: 'am', label: 'AM' },
+  { value: 'en', label: 'EN' },
+  { value: 'ru', label: 'RU' },
+];
 
 export default function LanguageSwitcher({ className = '', style = {} }) {
   const { language, setLanguage } = useLanguage();
-  const langs = ['am', 'en', 'ru'];
 
   return (
-    <Glass className={`lang-switcher-pill ${className}`} style={style}>
-      {langs.map((l) => (
-        <button
-          key={l}
-          className={`lang-pill-btn ${language === l ? 'active' : ''}`}
-          onClick={(e) => {
-            e.preventDefault();
-            setLanguage(l);
-          }}
-        >
-          {l.toUpperCase()}
-        </button>
-      ))}
-      <Glass 
-        className="lang-pill-glider" 
-        style={{
-          transform: `translateX(${langs.indexOf(language) * 100}%)`
-        }} 
-        aria-hidden="true"
-      />
-    </Glass>
+    <SegmentedControl
+      className={`wp-glisse-lang ${className}`.trim()}
+      style={style}
+      aria-label="Language"
+      items={LANG_ITEMS}
+      value={language}
+      onValueChange={(nextLang) => {
+        if (nextLang && nextLang !== language) {
+          setLanguage(nextLang);
+        }
+      }}
+    />
   );
 }

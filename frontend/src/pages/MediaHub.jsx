@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { CHRISTIAN_RADIO_STATIONS, CURATED_MEDIA_CHANNELS, useMediaPlayer } from '../utils/mediaData';
-import { Glass } from 'glisse';
+import { SegmentedControl } from 'glisse';
 import './MediaHub.css';
 
 export default function MediaHub() {
@@ -79,26 +79,18 @@ export default function MediaHub() {
           <h1>{ui.title}</h1>
           <p>{ui.subtitle}</p>
         </div>
-        <Glass className="media-segmented" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mediaMode === 'video'}
-            className={mediaMode === 'video' ? 'active' : ''}
-            onClick={() => setMediaMode('video')}
-          >
-            ▶ {ui.tabs.video}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mediaMode === 'radio'}
-            className={mediaMode === 'radio' ? 'active' : ''}
-            onClick={() => setMediaMode('radio')}
-          >
-            ♫ {ui.tabs.radio}
-          </button>
-        </Glass>
+        <SegmentedControl
+          className="wp-glisse-segmented-2"
+          aria-label="Media Mode"
+          items={[
+            { value: 'video', label: `▶ ${ui.tabs.video}` },
+            { value: 'radio', label: `♫ ${ui.tabs.radio}` },
+          ]}
+          value={mediaMode}
+          onValueChange={(val) => {
+            if (val) setMediaMode(val);
+          }}
+        />
       </header>
 
       {mediaMode === 'radio' ? (

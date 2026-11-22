@@ -17,7 +17,7 @@ import {
   matchMeasureToken,
 } from '../utils/bibleData';
 import { nativeShare, triggerHaptic } from '../utils/nativeFeatures';
-import { Glass } from 'glisse';
+import { SegmentedControl } from 'glisse';
 import './Bible.css';
 
 const VerseShareCardModal = lazyWithRetry(
@@ -1237,7 +1237,7 @@ export default function Bible() {
     <div className={`bible-page ${isMobileViewport && selectedVerseObj && activeTab === 'read' ? 'has-verse-sheet' : ''}`}>
       {/* Top Bar Wrapper (keeps Aa popover floating cleanly without shifting layout) */}
       <div className="bible-topbar-wrap">
-      <Glass className="bible-topbar" role="banner">
+      <header className="bible-topbar">
         <div className="bible-topbar-left">
           <button
             type="button"
@@ -1268,26 +1268,18 @@ export default function Bible() {
         </div>
 
         <div className="bible-topbar-center">
-          <Glass className="bible-segmented" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'read'}
-              className={activeTab === 'read' ? 'active' : ''}
-              onClick={() => setActiveTab('read')}
-            >
-              {ui.readTab}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'my'}
-              className={activeTab === 'my' ? 'active' : ''}
-              onClick={() => setActiveTab('my')}
-            >
-              {ui.myTab}
-            </button>
-          </Glass>
+          <SegmentedControl
+            className="wp-glisse-segmented-2-compact"
+            aria-label="Bible section"
+            items={[
+              { value: 'read', label: ui.readTab },
+              { value: 'my', label: ui.myTab },
+            ]}
+            value={activeTab === 'my' ? 'my' : 'read'}
+            onValueChange={(val) => {
+              if (val) setActiveTab(val);
+            }}
+          />
         </div>
 
         <div className="bible-topbar-right">
@@ -1366,7 +1358,7 @@ export default function Bible() {
             Aa
           </button>
         </div>
-      </Glass>
+      </header>
 
       {/* Typography & Parallel Settings Popover */}
       {showAaModal && (

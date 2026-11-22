@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Glass } from 'glisse';
+import { SegmentedControl } from 'glisse';
 import { noteIndex } from '../utils/chordTransposer';
 
 // Comprehensive Dictionary for all 12 chromatic keys (Major & Minor) + Common Extensions
@@ -315,10 +315,18 @@ export default function ChordDiagramPopover({ chord, position, onMouseEnter, onM
             </button>
           )}
         </div>
-        <Glass className="chord-instrument-tabs">
-          <button type="button" className={instrument === 'guitar' ? 'active' : ''} onClick={() => handleSelectInstrument('guitar')}>Կիթառ</button>
-          <button type="button" className={instrument === 'piano' ? 'active' : ''} onClick={() => handleSelectInstrument('piano')}>Դաշնամուր</button>
-        </Glass>
+        <SegmentedControl
+          className="wp-glisse-segmented-2-compact"
+          aria-label="Chord instrument"
+          items={[
+            { value: 'guitar', label: 'Կիթառ' },
+            { value: 'piano', label: 'Դաշնամուր' },
+          ]}
+          value={instrument}
+          onValueChange={(val) => {
+            if (val) handleSelectInstrument(val);
+          }}
+        />
       </header>
       {instrument === 'guitar' ? <GuitarDiagram chord={chord} /> : <PianoDiagram chord={chord} />}
     </aside>

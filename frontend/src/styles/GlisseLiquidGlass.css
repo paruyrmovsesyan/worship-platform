@@ -1,157 +1,284 @@
 /* ==========================================================================
-   GLISSE — iOS 26 LIQUID GLASS ENGINE INTEGRATION
-   Applies across Website, PWA, iOS & Android Native Apps.
-   Synchronizes optical refraction (--lg-filter), 1.22px Retina specular rim
-   lighting (--lg-rim), and interactive lifted lenses across all 4 theme states:
-     1. Classic Dark (default)
-     2. Classic Light
-     3. Warm Amber Dark (editorial)
-     4. Warm Amber Light (editorial)
+   GLISSE — AUTHENTIC iOS 26 LIQUID GLASS SYSTEM
+   Loaded AFTER index.css, LightTheme.css, NativeAppPolish.css, and glisse/styles.css.
+   Important:
+   - Never use CSS gradients for `--lg-*` colour variables because glisse's
+     `parseColour()` parses them via 2D Canvas `ctx.fillStyle`.
+   - Preserve `box-sizing: content-box` inside `.lg-tab-bar`, `.lg-segmented`,
+     `.lg-switch`, and `.lg-slider` so glisse's lens math and negative room
+     margins (`--lg-room-x`, `--lg-room-y`) stay pixel-accurate.
+   - Never nest a moving `backdrop-filter` child inside another `backdrop-filter`.
    ========================================================================== */
 
+/* 1. Protect Glisse geometry & spring physics from global CSS resets */
+:is(.lg-tab-bar, .lg-segmented, .lg-switch, .lg-slider),
+:is(.lg-tab-bar, .lg-segmented, .lg-switch, .lg-slider) *,
+:is(.lg-tab-bar, .lg-segmented, .lg-switch, .lg-slider) *::before,
+:is(.lg-tab-bar, .lg-segmented, .lg-switch, .lg-slider) *::after {
+  box-sizing: content-box;
+}
+
+body.is-native :is(.lg-tab, .lg-switch, .lg-button):active {
+  transform: none;
+}
+
+/* 2. 4-Way Theme Palette for Glisse (Solid sRGB/RGBA colours only!) */
+
+/* Classic Dark (Default) */
 :root,
 html[data-theme="dark"] {
-  --lg-foreground: #ffffff;
-  --lg-muted: rgba(226, 232, 245, 0.64);
-  --lg-glass: rgba(18, 22, 36, 0.72);
-  --lg-glass-active: rgba(34, 42, 68, 0.78);
-  --lg-edge: rgba(255, 255, 255, 0.13);
-  --lg-drop: rgba(0, 0, 0, 0.34);
-  --lg-selection: rgba(0, 212, 255, 0.2);
-  --lg-lens: rgba(0, 212, 255, 0.14);
-  --lg-lens-drop: rgba(0, 0, 0, 0.28);
-  --lg-segment-track: rgba(255, 255, 255, 0.04);
-  --lg-segment-thumb: linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%);
-  --lg-segment-label: #ffffff;
-  --lg-surface: rgba(20, 23, 36, 0.88);
-  --lg-surface-edge: rgba(255, 255, 255, 0.14);
-  --lg-shadow: rgba(0, 0, 0, 0.42);
-  --lg-track: rgba(255, 255, 255, 0.22);
-  --lg-rail: rgba(255, 255, 255, 0.12);
-  --lg-on: #00d4ff;
-  --lg-fill: #0ea5e9;
-  --lg-ring: rgba(0, 212, 255, 0.55);
+  --lg-foreground: rgb(255 255 255);
+  --lg-muted: rgb(226 232 245 / 0.62);
+  --lg-glass: rgb(24 28 44 / 0.66);
+  --lg-glass-active: rgb(44 52 78 / 0.72);
+  --lg-edge: rgb(255 255 255 / 0.12);
+  --lg-drop: rgb(0 0 0 / 0.32);
+  --lg-selection: rgb(0 212 255 / 0.18);
+  --lg-lens: rgb(255 255 255 / 0.07);
+  --lg-lens-drop: transparent;
+  --lg-segment-track: rgb(255 255 255 / 0.04);
+  --lg-segment-thumb: rgb(0 212 255 / 0.24);
+  --lg-segment-label: rgb(255 255 255);
+  --lg-segment-lens: transparent;
+  --lg-surface: rgb(22 25 38 / 0.88);
+  --lg-surface-edge: rgb(255 255 255 / 0.14);
+  --lg-shadow: rgb(0 0 0 / 0.42);
+  --lg-highlight: rgb(235 235 245 / 0.13);
+  --lg-separator: rgb(235 235 245 / 0.16);
+  --lg-destructive: #ff4245;
+  --lg-track: rgb(235 235 245 / 0.28);
+  --lg-rail: rgb(255 255 255 / 0.12);
+  --lg-on: #00b8e6;
+  --lg-fill: #00d4ff;
+  --lg-ring: rgb(0 212 255 / 0.5);
   --lg-lens-shine: 1;
-  --lg-rim-shine: 0.22;
-  --lg-blur: 18px;
-  --lg-glass-bend: 2.1;
-  --lg-glass-dispersion: 0.65;
+  --lg-rim-shine: 0.16;
 }
 
 /* Warm Amber / Editorial Dark */
 html[data-theme-style="editorial"],
 body.editorial-theme:not(.light-mode) {
-  --lg-foreground: #f3f1eb;
-  --lg-muted: rgba(235, 228, 214, 0.64);
-  --lg-glass: rgba(30, 31, 38, 0.76);
-  --lg-glass-active: rgba(54, 48, 38, 0.82);
-  --lg-edge: rgba(255, 245, 220, 0.14);
-  --lg-selection: rgba(247, 181, 0, 0.22);
-  --lg-lens: rgba(247, 181, 0, 0.16);
-  --lg-segment-thumb: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-  --lg-segment-label: #f3f1eb;
-  --lg-surface: rgba(30, 31, 37, 0.9);
-  --lg-surface-edge: rgba(255, 245, 220, 0.15);
-  --lg-on: #f7b500;
-  --lg-fill: #f59e0b;
-  --lg-ring: rgba(247, 181, 0, 0.55);
-  --lg-rim-shine: 0.24;
+  --lg-foreground: rgb(243 241 235);
+  --lg-muted: rgb(230 223 210 / 0.62);
+  --lg-glass: rgb(32 31 36 / 0.68);
+  --lg-glass-active: rgb(56 50 40 / 0.74);
+  --lg-edge: rgb(255 244 218 / 0.13);
+  --lg-selection: rgb(247 181 0 / 0.22);
+  --lg-lens: rgb(255 248 230 / 0.075);
+  --lg-segment-track: rgb(255 248 230 / 0.04);
+  --lg-segment-thumb: rgb(247 181 0 / 0.26);
+  --lg-segment-label: rgb(243 241 235);
+  --lg-surface: rgb(30 31 37 / 0.9);
+  --lg-surface-edge: rgb(255 244 218 / 0.15);
+  --lg-on: #f59e0b;
+  --lg-fill: #fbbf24;
+  --lg-ring: rgb(247 181 0 / 0.5);
+  --lg-lens-shine: 1;
+  --lg-rim-shine: 0.17;
 }
 
 /* Classic Light */
 html[data-theme="light"],
 body.light-mode:not(.editorial-theme) {
-  --lg-foreground: #0f172a;
-  --lg-muted: rgba(51, 65, 85, 0.66);
-  --lg-glass: rgba(255, 255, 255, 0.78);
-  --lg-glass-active: rgba(235, 243, 254, 0.9);
-  --lg-edge: rgba(15, 23, 42, 0.1);
-  --lg-drop: rgba(15, 23, 42, 0.1);
-  --lg-selection: rgba(2, 132, 199, 0.14);
-  --lg-lens: rgba(2, 132, 199, 0.08);
-  --lg-lens-drop: rgba(15, 23, 42, 0.14);
-  --lg-segment-track: rgba(15, 23, 42, 0.06);
-  --lg-segment-thumb: #ffffff;
-  --lg-segment-label: #0f172a;
-  --lg-surface: rgba(255, 255, 255, 0.92);
-  --lg-surface-edge: rgba(15, 23, 42, 0.1);
-  --lg-shadow: rgba(15, 23, 42, 0.12);
-  --lg-track: rgba(15, 23, 42, 0.22);
-  --lg-rail: rgba(15, 23, 42, 0.12);
+  --lg-foreground: rgb(15 23 42 / 0.92);
+  --lg-muted: rgb(71 85 105 / 0.68);
+  --lg-glass: rgb(255 255 255 / 0.72);
+  --lg-glass-active: rgb(236 242 252 / 0.88);
+  --lg-edge: rgb(15 23 42 / 0.09);
+  --lg-drop: rgb(15 23 42 / 0.08);
+  --lg-selection: rgb(2 132 199 / 0.14);
+  --lg-lens: rgb(0 0 0 / 0.035);
+  --lg-lens-drop: rgb(15 23 42 / 0.14);
+  --lg-segment-track: rgb(100 116 139 / 0.13);
+  --lg-segment-thumb: rgb(255 255 255);
+  --lg-segment-label: rgb(15 23 42);
+  --lg-segment-lens: rgb(0 0 0 / 0.035);
+  --lg-surface: rgb(255 255 255 / 0.9);
+  --lg-surface-edge: rgb(15 23 42 / 0.09);
+  --lg-shadow: rgb(15 23 42 / 0.12);
+  --lg-highlight: rgb(15 23 42 / 0.07);
+  --lg-separator: rgb(15 23 42 / 0.12);
+  --lg-destructive: #ff383c;
+  --lg-track: rgb(100 116 139 / 0.28);
+  --lg-rail: rgb(15 23 42 / 0.1);
   --lg-on: #0284c7;
   --lg-fill: #0284c7;
-  --lg-ring: rgba(2, 132, 199, 0.45);
+  --lg-ring: rgb(2 132 199 / 0.42);
   --lg-lens-shine: -1.5;
-  --lg-rim-shine: 0.36;
+  --lg-rim-shine: 0.3;
 }
 
 /* Warm Amber / Editorial Light */
 html[data-theme="light"][data-theme-style="editorial"],
 body.light-mode.editorial-theme {
-  --lg-foreground: #1c1917;
-  --lg-muted: rgba(87, 83, 78, 0.68);
-  --lg-glass: rgba(255, 253, 248, 0.8);
-  --lg-glass-active: rgba(248, 241, 227, 0.92);
-  --lg-edge: rgba(120, 82, 26, 0.13);
-  --lg-drop: rgba(92, 60, 14, 0.1);
-  --lg-selection: rgba(217, 119, 6, 0.16);
-  --lg-lens: rgba(217, 119, 6, 0.1);
-  --lg-lens-drop: rgba(92, 60, 14, 0.14);
-  --lg-segment-track: rgba(120, 82, 26, 0.08);
-  --lg-segment-thumb: #fffdf9;
-  --lg-segment-label: #1c1917;
-  --lg-surface: rgba(255, 253, 249, 0.94);
-  --lg-surface-edge: rgba(120, 82, 26, 0.13);
-  --lg-shadow: rgba(92, 60, 14, 0.12);
-  --lg-track: rgba(120, 82, 26, 0.24);
-  --lg-rail: rgba(120, 82, 26, 0.12);
+  --lg-foreground: rgb(28 25 23 / 0.92);
+  --lg-muted: rgb(87 83 78 / 0.68);
+  --lg-glass: rgb(255 252 245 / 0.76);
+  --lg-glass-active: rgb(247 239 224 / 0.9);
+  --lg-edge: rgb(120 82 26 / 0.11);
+  --lg-drop: rgb(92 60 14 / 0.08);
+  --lg-selection: rgb(217 119 6 / 0.16);
+  --lg-lens: rgb(92 60 14 / 0.04);
+  --lg-lens-drop: rgb(92 60 14 / 0.14);
+  --lg-segment-track: rgb(120 82 26 / 0.12);
+  --lg-segment-thumb: rgb(255 253 249);
+  --lg-segment-label: rgb(28 25 23);
+  --lg-segment-lens: rgb(92 60 14 / 0.04);
+  --lg-surface: rgb(255 253 249 / 0.92);
+  --lg-surface-edge: rgb(120 82 26 / 0.11);
+  --lg-shadow: rgb(92 60 14 / 0.12);
+  --lg-highlight: rgb(120 82 26 / 0.08);
+  --lg-separator: rgb(120 82 26 / 0.14);
+  --lg-track: rgb(120 82 26 / 0.26);
+  --lg-rail: rgb(120 82 26 / 0.12);
   --lg-on: #d97706;
   --lg-fill: #b45309;
-  --lg-ring: rgba(180, 83, 9, 0.45);
+  --lg-ring: rgb(180 83 9 / 0.42);
   --lg-lens-shine: -1.5;
-  --lg-rim-shine: 0.36;
+  --lg-rim-shine: 0.3;
 }
 
-/* ── 1. Floating Bottom TabBar (MobileNav) + Lifted Liquid Lens ── */
-.mobile-bottom-nav-glass.lg-glass {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
+/* 3. Floating Bottom TabBar Wrapper & Glisse <TabBar> */
+.mobile-bottom-nav-wrap {
+  position: fixed !important;
+  bottom: var(--bottom-nav-safe-gap, max(16px, env(safe-area-inset-bottom, 16px))) !important;
+  left: 50% !important;
+  transform: translate3d(-50%, 0, 0) !important;
+  z-index: 2147483000 !important;
+  display: flex;
+  justify-content: center;
   pointer-events: none;
-  z-index: 0;
-  background-color: transparent;
-  background-image: var(--lg-rim, none);
-  background-size: 100% 100%;
-  -webkit-backdrop-filter: blur(26px) var(--lg-filter, saturate(1.9));
-  backdrop-filter: blur(26px) var(--lg-filter, saturate(1.9));
+  transition:
+    opacity 0.22s ease,
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.nav-liquid-indicator.lg-glass {
-  position: absolute !important;
-  background-image: var(--lg-rim, none), linear-gradient(160deg, var(--lg-selection), transparent) !important;
-  background-size: 100% 100% !important;
-  -webkit-backdrop-filter: blur(12px) var(--lg-filter, saturate(1.8));
-  backdrop-filter: blur(12px) var(--lg-filter, saturate(1.8));
+.mobile-bottom-nav-wrap.keyboard-hidden,
+body.keyboard-open .mobile-bottom-nav-wrap,
+body.pwa-reader-fullscreen .mobile-bottom-nav-wrap {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translate3d(-50%, 130%, 0) !important;
 }
 
-.mobile-bottom-nav.is-scrubbing .nav-liquid-indicator.lg-glass,
-.mobile-bottom-nav.is-long-press .nav-liquid-indicator.lg-glass {
-  box-shadow:
-    0 10px 26px var(--lg-lens-drop),
-    inset 0 1px 0 rgba(255, 255, 255, 0.38) !important;
+@media (min-width: 901px) {
+  body:not(.is-native) .mobile-bottom-nav-wrap {
+    display: none !important;
+  }
 }
 
-/* ── 2. Website Top Navbar & Sliding Menu Pill ── */
+.wp-glisse-tabbar.lg-tab-bar[data-icons] {
+  --lg-tab-width: clamp(68px, calc((100vw - 36px) / 4), 90px);
+  --lg-tab-height: 54px;
+  --lg-tab-inset: 4px;
+  --lg-lens-grow-x: 24px;
+  --lg-lens-grow-y: 16px;
+  --lg-blur: 16px;
+  pointer-events: auto;
+  box-shadow: 0 16px 38px rgb(0 0 0 / 0.35);
+}
+
+body.light-mode .wp-glisse-tabbar.lg-tab-bar[data-icons] {
+  box-shadow: 0 14px 34px rgb(15 23 42 / 0.14);
+}
+
+.wp-glisse-tabbar.lg-tab-bar[data-icons] :is(.lg-tab, .lg-tab-copy) {
+  gap: 2px;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.wp-glisse-tabbar .lg-tab-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wp-glisse-tabbar .lg-tab-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.wp-glisse-tabbar .nav-count-badge {
+  position: absolute;
+  top: -5px;
+  right: -9px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ff3b30;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(255, 59, 48, 0.45);
+}
+
+/* 4. Glisse <SegmentedControl> Sizes across Header, Pages & Popovers */
+.wp-glisse-lang.lg-segmented {
+  --lg-tab-width: 38px;
+  --lg-tab-height: 32px;
+  --lg-lens-grow-x: 16px;
+  --lg-lens-grow-y: 12px;
+}
+
+.wp-glisse-lang.lg-segmented :is(.lg-tab, .lg-tab-copy) {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.wp-glisse-segmented-2.lg-segmented {
+  --lg-tab-width: clamp(92px, 28vw, 124px);
+  --lg-tab-height: 36px;
+}
+
+.wp-glisse-segmented-2-compact.lg-segmented {
+  --lg-tab-width: clamp(78px, 23vw, 102px);
+  --lg-tab-height: 34px;
+}
+
+.wp-glisse-segmented-3.lg-segmented {
+  --lg-tab-width: clamp(86px, calc((100vw - 44px) / 3), 124px);
+  --lg-tab-height: 36px;
+}
+
+.wp-glisse-segmented-5.lg-segmented {
+  --lg-tab-width: clamp(58px, calc((100vw - 36px) / 5), 108px);
+  --lg-tab-height: 36px;
+}
+
+.wp-glisse-segmented-5.lg-segmented :is(.lg-tab, .lg-tab-copy) {
+  font-size: clamp(11px, 2.7vw, 13px);
+}
+
+:is(
+  .wp-glisse-segmented-2,
+  .wp-glisse-segmented-2-compact,
+  .wp-glisse-segmented-3,
+  .wp-glisse-segmented-5
+).lg-segmented :is(.lg-tab, .lg-tab-copy)[data-selected] {
+  color: var(--lg-fill);
+  font-weight: 700;
+}
+
+/* 5. Website Top Navbar Static Glisse Layer (Single backdrop-filter, zero nesting) */
+.navbar {
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
 .navbar-glass-layer.lg-glass {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background-color: transparent;
-  background-image: var(--lg-rim, none);
-  background-size: 100% 100%;
-  -webkit-backdrop-filter: blur(22px) var(--lg-filter, saturate(1.75));
-  backdrop-filter: blur(22px) var(--lg-filter, saturate(1.75));
+  --lg-blur: 18px;
 }
 
 .navbar > .navbar-container {
@@ -159,66 +286,27 @@ body.light-mode.editorial-theme {
   z-index: 1;
 }
 
-.navbar-menu.lg-glass {
-  background-image: var(--lg-rim, none);
-  background-size: 100% 100%;
-  -webkit-backdrop-filter: blur(16px) var(--lg-filter, saturate(1.65));
-  backdrop-filter: blur(16px) var(--lg-filter, saturate(1.65));
-}
-
-.nav-hover-pill.lg-glass {
-  position: absolute !important;
-  background-image: var(--lg-rim, none);
-  background-size: 100% 100%;
-}
-
-/* ── 3. Floating 24/7 Radio Mini Player Pill ── */
+/* 6. Floating 24/7 Radio Mini Player Pill (Single backdrop-filter, zero nesting) */
 .radio-mini-pill.lg-glass,
 body.wp-standalone-app > .radio-mini-pill.lg-glass,
 body.is-app > .radio-mini-pill.lg-glass {
   position: fixed !important;
-  background-image: var(--lg-rim, none), linear-gradient(155deg, var(--lg-surface), var(--lg-glass)) !important;
+  --lg-blur: 20px;
+  background-color: var(--lg-surface) !important;
+  background-image: var(--lg-rim, none) !important;
   background-size: 100% 100% !important;
-  -webkit-backdrop-filter: blur(26px) var(--lg-filter, saturate(1.85)) !important;
-  backdrop-filter: blur(26px) var(--lg-filter, saturate(1.85)) !important;
+  -webkit-backdrop-filter: blur(20px) var(--lg-filter, saturate(1.8)) !important;
+  backdrop-filter: blur(20px) var(--lg-filter, saturate(1.8)) !important;
 }
 
-/* ── 4. Language Switcher Pill & Glider Lens ── */
-.lang-switcher-pill.lg-glass {
-  background-image: var(--lg-rim, none);
-  background-size: 100% 100%;
-  -webkit-backdrop-filter: blur(16px) var(--lg-filter, saturate(1.7));
-  backdrop-filter: blur(16px) var(--lg-filter, saturate(1.7));
+/* 7. Settings & Profile Switch / Segmented Layout Alignment */
+.remember-device-card:has(.lg-switch) {
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
 }
 
-.lang-pill-glider.lg-glass {
-  position: absolute !important;
-  background-image: var(--lg-rim, none), var(--native-accent-grad, linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%)) !important;
-  background-size: 100% 100% !important;
-}
-
-body.editorial-theme .lang-pill-glider.lg-glass {
-  background-image: var(--lg-rim, none), linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
-}
-
-/* ── 5. Segmented Controls, Sticky Toolbars & Search Bar ── */
-:is(
-  .bible-topbar,
-  .bible-segmented,
-  .church-segmented,
-  .media-segmented,
-  .sv-segment-control,
-  .chord-instrument-tabs,
-  .app-theme-segmented,
-  .hub-search-box
-).lg-glass {
-  background-image: var(--lg-rim, none);
-  background-size: 100% 100%;
-  -webkit-backdrop-filter: blur(18px) var(--lg-filter, saturate(1.7));
-  backdrop-filter: blur(18px) var(--lg-filter, saturate(1.7));
-}
-
-/* ── 6. Glisse iOS 26 Switch Polish in Settings & Profile ── */
-.lg-switch {
-  flex-shrink: 0;
+.app-theme-setting .lg-segmented {
+  align-self: flex-start;
 }

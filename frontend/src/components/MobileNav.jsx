@@ -6,14 +6,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { usePwaOfflineGuard } from '../hooks/usePwaOfflineGuard';
 import { triggerHaptic } from '../utils/nativeFeatures';
 import { Capacitor } from '@capacitor/core';
-import { Glass } from 'glisse';
+import { TabBar } from 'glisse';
 import './MobileNav.css';
-
-// Glass bubble vertical expansion sizes (matching native iOS App Store tab lens)
-// X scale remains 1.0 so the lens never exceeds dock left/right borders and stays 100% centered
-// Y scale expands vertically above and below dock
-const LENS_SCALE_Y = 1.28;
-const DRAG_SCALE_Y = 1.18;
 
 export default function MobileNav() {
   const { user } = useAuth();
@@ -26,18 +20,6 @@ export default function MobileNav() {
 
   const [chatBadgeCount, setChatBadgeCount] = useState(0);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-  const [isScrubbing, setIsScrubbing] = useState(false);
-  const [isLongPressReady, setIsLongPressReady] = useState(false);
-  const [pressedIndex, setPressedIndex] = useState(null);
-  const [scrubPosition, setScrubPosition] = useState(null);
-  const [hoveredIndex, setHoveredIndex] = useState(null);
-
-  const dockRef = useRef(null);
-  const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
-  const isScrubbingRef = useRef(false);
-  const isLongPressReadyRef = useRef(false);
-  const longPressTimerRef = useRef(null);
-  const lastHoveredIndexRef = useRef(null);
   const tabTransitionRef = useRef(null);
 
   useEffect(() => {
@@ -152,50 +134,55 @@ export default function MobileNav() {
     };
   }, [user]);
 
-  const getActiveIndex = () => {
+  const profilePath = user ? '/profile' : '/login?next=/profile';
+
+  const getActiveValue = () => {
     const path = location.pathname;
-    if (path === '/') return 0;
-    if (path === '/songs' || path === '/transpose' || path.startsWith('/song/')) return 1;
-    if (path === '/chats' || path.startsWith('/chat/')) return 2;
-    if (path === '/profile' || path === '/login' || path === '/settings') return 3;
-    return -1;
+    if (path === '/') return '/';
+    if (path === '/songs' || path === '/transpose' || path.startsWith('/song/')) return '/songs';
+    if (path === '/chats' || path.startsWith('/chat/')) return '/chats';
+    if (path === '/profile' || path === '/login' || path === '/settings') return profilePath;
+    return null;
   };
 
-  const activeIndex = getActiveIndex();
+  const activeValue = getActiveValue();
+  const chatBadge = user && chatBadgeCount > 0 ? (chatBadgeCount > 9 ? '9+' : chatBadgeCount) : null;
 
   const mainTabs = [
     {
-      path: '/',
+      value: '/',
       label: t('nav.home', 'Գլխավոր'),
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
           <polyline points="9 22 9 12 15 12 15 22"></polyline>
         </svg>
-      )
+      ),
     },
     {
-      path: '/songs',
+      value: '/songs',
       label: t('nav.songs', 'Երգեր'),
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-      )
+      ),
     },
     {
-      path: '/chats',
+      value: '/chats',
       label: t('chats.chats', 'Չաթեր'),
-      badge: user && chatBadgeCount > 0 ? (chatBadgeCount > 9 ? '9+' : chatBadgeCount) : null,
       icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-        </svg>
-      )
+        <>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+          </svg>
+          {chatBadge && <span className="nav-count-badge">{chatBadge}</span>}
+        </>
+      ),
     },
     {
-      path: user ? '/profile' : '/login?next=/profile',
+      value: profilePath,
       label: user ? t('profile.title', 'Պրոֆիլ') : t('nav.login', 'Մուտք'),
       icon: user ? (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -208,37 +195,9 @@ export default function MobileNav() {
           <polyline points="10 17 15 12 10 7"></polyline>
           <line x1="15" y1="12" x2="3" y2="12"></line>
         </svg>
-      )
-    }
+      ),
+    },
   ];
-
-  // Helper to compute dock pill position from touch X
-  // Ensure the indicator NEVER crosses the dock's left or right borders
-  const computePillFromTouch = (clientX) => {
-    if (!dockRef.current) return { clampedPillLeft: 0, currentTab: 0 };
-    const rect = dockRef.current.getBoundingClientRect();
-    const padding = 5;
-    const innerWidth = rect.width - padding * 2;
-    const tabWidth = innerWidth / 4;
-
-    const fingerRelativeX = clientX - rect.left - padding;
-    const currentTab = Math.max(0, Math.min(3, Math.floor(fingerRelativeX / tabWidth)));
-
-    const minLeft = 0;
-    const maxLeft = innerWidth - tabWidth;
-
-    const targetPillLeft = fingerRelativeX - tabWidth / 2;
-    const clampedPillLeft = Math.max(minLeft, Math.min(maxLeft, targetPillLeft));
-
-    return { clampedPillLeft, currentTab };
-  };
-
-  const clearLongPressTimer = () => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-  };
 
   const switchNativeTab = useCallback((path) => {
     if (path === location.pathname || tabTransitionRef.current || window.__wpNativeTransitionInFlight) return;
@@ -248,9 +207,6 @@ export default function MobileNav() {
       return;
     }
 
-    // Primary tabs swap without a page slide. Reuse the destination's last
-    // compositor snapshot while React mounts it, then reveal the live route at
-    // its preserved scroll position. This avoids a loading/top-frame flash.
     const transitionToken = {};
     tabTransitionRef.current = transitionToken;
     window.__wpNativeTransitionInFlight = true;
@@ -274,7 +230,7 @@ export default function MobileNav() {
 
     let timeoutId = null;
     let completed = false;
-    const finishTabSwitch = event => {
+    const finishTabSwitch = (event) => {
       if (completed || (event?.detail?.pathname && event.detail.pathname !== path)) return;
       completed = true;
       window.removeEventListener('wp-native-scroll-restored', finishTabSwitch);
@@ -310,7 +266,7 @@ export default function MobileNav() {
     };
     const onStart = (event) => {
       if (event.touches.length !== 1 || tabTransitionRef.current ||
-        event.target.closest('input, textarea, select, button, a, [contenteditable], [data-no-swipe], .no-swipe-nav, .mobile-bottom-nav') ||
+        event.target.closest('input, textarea, select, button, a, [contenteditable], [data-no-swipe], .no-swipe-nav, .mobile-bottom-nav-wrap, .lg-tab-bar, .lg-segmented') ||
         isHorizontalScroller(event.target)) return;
       const touch = event.touches[0];
       start = { x: touch.clientX, y: touch.clientY };
@@ -335,215 +291,38 @@ export default function MobileNav() {
     };
   }, [isNativeApp, location.pathname, user, guardPath, switchNativeTab]);
 
-  const handleNavClick = (path, e) => {
-    e?.preventDefault?.();
-    if (isScrubbingRef.current || isLongPressReadyRef.current) {
-      return;
-    }
-    if (!guardPath(path)) {
-      return;
-    }
+  const handleTabChange = (nextPath) => {
+    if (!nextPath || !guardPath(nextPath)) return;
     triggerHaptic('Light');
-    if (location.pathname !== path) {
+    if (location.pathname !== nextPath) {
       if (isNativeApp) {
-        // Native bottom navigation behaves as independent persistent tabs.
-        switchNativeTab(path);
+        switchNativeTab(nextPath);
       } else {
-        startTransition(() => navigate(path));
+        startTransition(() => navigate(nextPath));
       }
-    }
-  };
-
-  // Touch scrubbing and Long Press across bottom dock tabs (iOS Stock Style)
-  const onTouchStart = (e) => {
-    if (e.touches.length !== 1) return;
-    const touch = e.touches[0];
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
-    isScrubbingRef.current = false;
-    isLongPressReadyRef.current = false;
-
-    // Detect which tab was pressed down
-    const { currentTab } = computePillFromTouch(touch.clientX);
-    setPressedIndex(currentTab);
-
-    clearLongPressTimer();
-
-    // Start iOS long-press timer (~280ms): lens expands on that tab
-    // We do NOT set scrubPosition here to avoid any offset jumps: it stays anchored to currentTab
-    longPressTimerRef.current = setTimeout(() => {
-      isLongPressReadyRef.current = true;
-      setIsLongPressReady(true);
-      setHoveredIndex(currentTab);
-      lastHoveredIndexRef.current = currentTab;
-      triggerHaptic('Medium');
-    }, 280);
-  };
-
-  const onTouchMove = (e) => {
-    if (e.touches.length !== 1) return;
-    const touch = e.touches[0];
-    const dx = touch.clientX - touchStartRef.current.x;
-    const dy = touch.clientY - touchStartRef.current.y;
-
-    // If user moved finger noticeably before long press timer fired, treat as scrubbing gesture
-    if (!isLongPressReadyRef.current && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
-      clearLongPressTimer();
-    }
-
-    // If user dragged far vertically away (> 75px up or down), cancel gracefully
-    if (isScrubbingRef.current && (dy < -75 || dy > 55)) {
-      clearLongPressTimer();
-      isScrubbingRef.current = false;
-      isLongPressReadyRef.current = false;
-      setIsScrubbing(false);
-      setIsLongPressReady(false);
-      setPressedIndex(null);
-      setScrubPosition(null);
-      setHoveredIndex(null);
-      return;
-    }
-
-    // Activate scrubbing after horizontal drag threshold
-    if (!isScrubbingRef.current && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
-      clearLongPressTimer();
-      isScrubbingRef.current = true;
-      setIsScrubbing(true);
-      triggerHaptic('Light');
-    }
-
-    if (isScrubbingRef.current && dockRef.current) {
-      if (e.cancelable) {
-        e.preventDefault();
-      }
-      const { clampedPillLeft, currentTab } = computePillFromTouch(touch.clientX);
-
-      setScrubPosition(clampedPillLeft);
-
-      if (currentTab !== lastHoveredIndexRef.current) {
-        lastHoveredIndexRef.current = currentTab;
-        setHoveredIndex(currentTab);
-        triggerHaptic('Light');
-      }
-    }
-  };
-
-  const onTouchEnd = () => {
-    clearLongPressTimer();
-
-    if (isScrubbingRef.current || isLongPressReadyRef.current) {
-      const finalTabIdx = lastHoveredIndexRef.current !== null
-        ? lastHoveredIndexRef.current
-        : (pressedIndex !== null ? pressedIndex : activeIndex);
-      const targetTab = mainTabs[finalTabIdx];
-
-      setIsScrubbing(false);
-      setIsLongPressReady(false);
-      setPressedIndex(null);
-      setScrubPosition(null);
-      setHoveredIndex(null);
-
-      if (targetTab && guardPath(targetTab.path)) {
-        triggerHaptic('Medium');
-        if (isNativeApp) {
-          switchNativeTab(targetTab.path);
-        } else {
-          startTransition(() => navigate(targetTab.path));
-        }
-      }
-
-      setTimeout(() => {
-        isScrubbingRef.current = false;
-        isLongPressReadyRef.current = false;
-        lastHoveredIndexRef.current = null;
-      }, 60);
     } else {
-      setIsScrubbing(false);
-      setIsLongPressReady(false);
-      setPressedIndex(null);
-      setScrubPosition(null);
-      setHoveredIndex(null);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  const onTouchCancel = () => {
-    clearLongPressTimer();
-    isScrubbingRef.current = false;
-    isLongPressReadyRef.current = false;
-    setIsScrubbing(false);
-    setIsLongPressReady(false);
-    setPressedIndex(null);
-    setScrubPosition(null);
-    setHoveredIndex(null);
-    lastHoveredIndexRef.current = null;
-  };
-
-  // A conversation owns the entire viewport and its composer must always sit
-  // directly above the device safe area. Never leave the app dock mounted
-  // behind it, even during route-transition frames.
   if (location.pathname.startsWith('/chat/') || isKeyboardOpen) {
     return null;
   }
 
   return createPortal(
-    <>
-      {/* iOS Liquid Glass Bottom Dock */}
-      <nav
-        id="wpAppDock"
-        ref={dockRef}
-        className={`mobile-bottom-nav ${isKeyboardOpen ? 'keyboard-hidden' : ''} ${isScrubbing ? 'is-scrubbing' : ''} ${isLongPressReady ? 'is-long-press' : ''}`}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onTouchCancel={onTouchCancel}
-        onContextMenu={(e) => e.preventDefault()}
-      >
-        <Glass className="mobile-bottom-nav-glass" aria-hidden="true" />
-        <Glass
-          className={`nav-liquid-indicator ${isScrubbing ? 'is-dragging' : ''} ${isLongPressReady ? 'is-lens' : ''}`}
-          style={{
-            transform: isScrubbing && scrubPosition !== null
-              ? `translate3d(${scrubPosition}px, 0, 0)`
-              : `translate3d(${(isLongPressReady && hoveredIndex !== null ? hoveredIndex : Math.max(0, activeIndex)) * 100}%, 0, 0)`,
-            transformOrigin: 'center center',
-            opacity: activeIndex >= 0 || (isLongPressReady && hoveredIndex !== null) ? 1 : 0,
-            scale: isScrubbing
-              ? `1 ${DRAG_SCALE_Y}`
-              : isLongPressReady
-                ? `1 ${LENS_SCALE_Y}`
-                : '1 1'
-          }}
-          aria-hidden="true"
-        />
-
-        {mainTabs.map((tab, idx) => {
-          const isCurrent = activeIndex === idx;
-          const isHovered = (isScrubbing || isLongPressReady) && (hoveredIndex === idx || (hoveredIndex === null && pressedIndex === idx));
-
-          return (
-            <button
-              key={tab.path}
-              type="button"
-              role="tab"
-              aria-selected={isCurrent}
-              aria-label={tab.label}
-              onClick={(e) => handleNavClick(tab.path, e)}
-              onContextMenu={(e) => e.preventDefault()}
-              className={`nav-item ${isCurrent && !isScrubbing ? 'active' : ''} ${isHovered ? 'scrub-hovered active' : ''}`}
-            >
-              <span className="nav-icon-wrap">
-                {tab.icon}
-                {tab.badge && (
-                  <span className="nav-count-badge">
-                    {tab.badge}
-                  </span>
-                )}
-              </span>
-              <span className="nav-label">{tab.label}</span>
-            </button>
-          );
-        })}
-      </nav>
-    </>,
-    document.body
+    <div
+      id="wpAppDock"
+      className={`mobile-bottom-nav-wrap ${isKeyboardOpen ? 'keyboard-hidden' : ''}`}
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      <TabBar
+        className="wp-glisse-tabbar"
+        aria-label={t('nav.main', 'Main navigation')}
+        items={mainTabs}
+        value={activeValue}
+        onValueChange={handleTabChange}
+      />
+    </div>,
+    document.body,
   );
 }
