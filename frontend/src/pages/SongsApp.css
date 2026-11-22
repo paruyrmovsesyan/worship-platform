@@ -1465,3 +1465,45 @@ body.light-mode .songs-search-box .search-x {
   white-space: nowrap;
   pointer-events: none;
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .songs-page .sug-chip {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  color: var(--native-text-2);
+}
+
+body.is-native .songs-page .sug-chip:active,
+body.is-native .songs-page .sug-chip.active,
+body.is-native .songs-page .reset-filters-btn-inline {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .songs-page .songs-back-to-top {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.25);
+}
+
+body.is-native .songs-page mark {
+  background: var(--native-mark-bg);
+  color: var(--native-mark-color);
+  border-radius: 4px;
+}
+
+body.is-native .songs-toast {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-accent-border);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .songs-page .track-title {
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .songs-page .track-artist {
+  color: var(--native-text-2);
+}

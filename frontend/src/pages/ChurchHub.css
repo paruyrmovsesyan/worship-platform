@@ -713,3 +713,91 @@ body.light-mode .church-rsvp-btn:not(.active) {
   border-color: rgba(15, 23, 42, 0.1);
 }
 
+/* ==========================================================================
+   NATIVE APP 4-WAY DESIGN SYSTEM (Classic & Warm Amber / Dark & Light)
+   Strictly scoped to `body.is-native` so Website & PWA remain untouched.
+   ========================================================================== */
+
+body.is-native .church-segmented button.active,
+body.is-native .church-amber-btn,
+body.is-native .church-cal-cell.is-selected {
+  background: var(--native-accent-grad);
+  border-color: transparent;
+  color: var(--native-accent-on);
+  box-shadow: 0 6px 18px var(--native-accent-glow);
+}
+
+body.is-native .church-cal-cell.is-selected .church-cal-dot {
+  background: var(--native-accent-on);
+}
+
+body.is-native .church-toast,
+body.is-native .church-pill.active,
+body.is-native .church-type-selector button.active,
+body.is-native .church-type-badge:not(.event):not(.prayer),
+body.is-native .church-invite-box {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .church-invite-box strong {
+  color: var(--native-accent-text);
+}
+
+body.is-native .church-post {
+  border-left-color: var(--native-accent-border-strong);
+}
+
+body.is-native .church-cal-cell.is-today:not(.is-selected) {
+  border-color: var(--native-accent-border-strong);
+  background: var(--native-accent-soft);
+  color: var(--native-text);
+}
+
+body.is-native .church-cal-dot:not(.rehearsal) {
+  background: var(--native-accent);
+}
+
+body.is-native .church-card,
+body.is-native .church-post-card,
+body.is-native .church-cal-card,
+body.is-native .church-modal {
+  background: var(--native-surface-1);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .church-card,
+body.is-native.light-mode .church-post-card,
+body.is-native.light-mode .church-cal-card,
+body.is-native.light-mode .church-modal {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode .church-pill:not(.active),
+body.is-native.light-mode .church-type-selector button:not(.active),
+body.is-native.light-mode .church-cal-cell:not(.is-selected):not(.is-today),
+body.is-native.light-mode .church-rsvp-btn:not(.active) {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  color: var(--native-text-2);
+}
+
+body.is-native.light-mode .church-page input,
+body.is-native.light-mode .church-page textarea,
+body.is-native.light-mode .church-page select {
+  background: var(--native-input-bg);
+  border-color: var(--native-hairline-strong);
+  color: var(--native-text);
+}
+
+body.is-native .church-page input:focus,
+body.is-native .church-page textarea:focus,
+body.is-native .church-page select:focus {
+  border-color: var(--native-accent-border-strong);
+  box-shadow: 0 0 0 3px var(--native-accent-ring);
+}
+

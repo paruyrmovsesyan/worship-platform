@@ -1898,3 +1898,115 @@ body.quick-drawer-open .mobile-bottom-nav {
   white-space: nowrap;
 }
 
+/* ==========================================================================
+   NATIVE APP 4-WAY DESIGN SYSTEM (Classic & Warm Amber / Dark & Light)
+   Strictly scoped to `body.is-native` so Website & PWA remain untouched.
+   ========================================================================== */
+
+body.is-native .sl-app-new-btn,
+body.is-native .sl-btn-primary,
+body.is-native .sl-app-empty-state .sl-app-empty-action,
+body.is-native .sl-timeframe-tab.active {
+  background: var(--native-accent-grad) !important;
+  border-color: transparent !important;
+  color: var(--native-accent-on) !important;
+  box-shadow: 0 6px 18px var(--native-accent-glow) !important;
+}
+
+body.is-native .sl-timeframe-tab.active .sl-tab-badge {
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--native-accent-on);
+}
+
+body.is-native.editorial-theme .sl-timeframe-tab.active .sl-tab-badge {
+  background: rgba(31, 20, 2, 0.16);
+  color: var(--native-accent-on);
+}
+
+body.is-native .sle-duration-chip,
+body.is-native .sle-stat-chip--clickable,
+body.is-native .prompt-icon,
+body.is-native .sl-app-stat-icon.sets-icon,
+body.is-native .sl-app-cat-chip.active,
+body.is-native .sl-app-rel-badge.tone-soon,
+body.is-native .sl-app-empty-state .sl-app-empty-glow,
+body.is-native .sl-app-quick-date-btn,
+body.is-native .sl-team-role-badge,
+body.is-native .sl-app-preset-chip:hover {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .sl-app-cat-chip.active .sl-chip-badge {
+  background: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .sl-team-avatar {
+  background: var(--native-accent-grad);
+  color: var(--native-accent-on);
+}
+
+body.is-native .sl-toast-notice {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-accent-border);
+  color: var(--native-text);
+}
+
+body.is-native .sl-toast-notice span,
+body.is-native .sl-app-stat-card.upcoming-card:hover .sl-app-upcoming-arrow {
+  color: var(--native-accent-text);
+}
+
+body.is-native .sl-input:focus,
+body.is-native .sl-app-search-input:focus,
+body.is-native .sl-app-sort-select:focus,
+body.is-native .sl-card.sl-app-card:hover {
+  border-color: var(--native-accent-border-strong);
+}
+
+body.is-native .sl-app-spinner {
+  border-top-color: var(--native-accent);
+}
+
+body.is-native .sl-card.sl-app-card,
+body.is-native .sl-app-stat-card,
+body.is-native .sl-modal {
+  background: var(--native-surface-1);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .sl-card.sl-app-card,
+body.is-native.light-mode .sl-app-stat-card,
+body.is-native.light-mode .sl-modal {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode .sl-app-search-input,
+body.is-native.light-mode .sl-app-sort-select,
+body.is-native.light-mode .sl-input,
+body.is-native.light-mode .sl-select,
+body.is-native.light-mode .sl-app-cat-chip:not(.active),
+body.is-native.light-mode .sl-timeframe-tab:not(.active),
+body.is-native.light-mode .sl-app-preset-chip {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .sl-title,
+body.is-native.light-mode .sl-app-stat-value,
+body.is-native.light-mode .sl-modal-header h2 {
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .sl-date,
+body.is-native.light-mode .sl-app-stat-label,
+body.is-native.light-mode .sl-meta-info {
+  color: var(--native-text-2);
+}
+

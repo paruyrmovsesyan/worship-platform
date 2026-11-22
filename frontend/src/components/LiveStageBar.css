@@ -445,3 +445,27 @@
   border-radius: 10px;
   cursor: pointer;
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .live-stage-pill-btn--join,
+body.is-native .live-stage-preset-chip,
+body.is-native .live-stage-refresh-btn {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .live-stage-msg-send,
+body.is-native .live-stage-join-now-btn,
+body.is-native .live-stage-submit-btn {
+  background: var(--native-accent-grad);
+  color: var(--native-accent-on);
+  box-shadow: 0 4px 14px var(--native-accent-glow);
+}
+
+body.is-native.light-mode .live-stage-bar,
+body.is-native.light-mode .live-stage-modal {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}

@@ -648,3 +648,61 @@ body.light-mode .sca-tab-btn.active {
   color: #0f172a;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .sca-channel-icon.email-icon,
+body.is-native .sca-chip.active,
+body.is-native .sca-help-banner {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .sca-channel-badge,
+body.is-native .sca-faq-item.open .sca-faq-chevron {
+  color: var(--native-accent-text);
+}
+
+body.is-native .sca-faq-item.open,
+body.is-native .sca-search-input:focus,
+body.is-native .sca-field input:focus,
+body.is-native .sca-field select:focus,
+body.is-native .sca-field textarea:focus {
+  border-color: var(--native-accent-border-strong);
+}
+
+body.is-native .sca-spinner {
+  border-top-color: var(--native-accent);
+}
+
+body.is-native .sca-help-btn,
+body.is-native .sca-submit-btn,
+body.is-native .sca-tab-btn.active {
+  background: var(--native-accent-grad);
+  border-color: transparent;
+  color: var(--native-accent-on);
+  box-shadow: 0 5px 16px var(--native-accent-glow);
+}
+
+body.is-native.light-mode .sca-tab-switch {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+}
+
+body.is-native.light-mode .sca-card,
+body.is-native.light-mode .sca-faq-item,
+body.is-native.light-mode .sca-channel-card {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode .sca-search-input,
+body.is-native.light-mode .sca-field input,
+body.is-native.light-mode .sca-field select,
+body.is-native.light-mode .sca-field textarea {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}

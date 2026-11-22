@@ -1264,3 +1264,133 @@ body.is-app .settings-page.settings-menu-screen .settings-menu-list,
     transform: translateY(-2px);
   }
 }
+
+/* ==========================================================================
+   NATIVE APP 4-WAY DESIGN SYSTEM (Classic & Warm Amber / Dark & Light)
+   Strictly scoped to `body.is-native` so Website & PWA remain untouched.
+   ========================================================================== */
+
+body.is-native .settings-page .menu-icon svg,
+body.is-native .settings-page .guest-locked-icon svg,
+body.is-native .settings-page .settings-back-btn,
+body.is-native .settings-page .about-version-block strong,
+body.is-native .settings-page .oled-theme-note {
+  stroke: var(--native-accent-text);
+  color: var(--native-accent-text);
+}
+
+body.is-native .settings-page .settings-guest-status-card,
+body.is-native .settings-page .settings-card.settings-guest-inline-card,
+body.is-native .settings-page .guest-locked-icon {
+  background: linear-gradient(135deg, var(--native-accent-soft), var(--native-accent-soft-2));
+  border-color: var(--native-accent-border);
+}
+
+body.is-native .settings-page .about-release-summary {
+  border-left-color: var(--native-accent);
+}
+
+body.is-native .settings-page .settings-btn:not(.secondary):not(.danger) {
+  background: var(--native-accent-grad);
+  color: var(--native-accent-on);
+  box-shadow: 0 6px 18px var(--native-accent-glow);
+}
+
+body.is-native .settings-page .form-group input:focus,
+body.is-native .settings-page .form-group select:focus,
+body.is-native .settings-page .full-width-inp:focus {
+  border-color: var(--native-accent-border-strong);
+  box-shadow: 0 0 0 3px var(--native-accent-ring);
+}
+
+/* Theme & Design Style Segmented Controls — Crystal Clear Active State in All 4 Modes */
+body.is-native .settings-page .app-theme-segmented {
+  background: var(--native-surface-2);
+  border: 1px solid var(--native-hairline);
+}
+
+body.is-native .settings-page .app-theme-segmented button {
+  color: var(--native-text-2);
+}
+
+body.is-native .settings-page .app-theme-segmented button.active {
+  background: var(--native-accent-grad);
+  color: var(--native-accent-on);
+  box-shadow: 0 4px 12px var(--native-accent-glow);
+}
+
+body.is-native .settings-page .app-theme-segmented button.active svg {
+  stroke: var(--native-accent-on);
+  color: var(--native-accent-on);
+}
+
+body.is-native .settings-page .settings-card,
+body.is-native .settings-page .remember-device-card,
+body.is-native .settings-page .session-item,
+body.is-native .settings-page .request-item,
+body.is-native .settings-page .email-status-box,
+body.is-native .settings-page .app-theme-setting {
+  background: var(--native-surface-1);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .settings-page .settings-card,
+body.is-native.light-mode .settings-page .settings-menu-list {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode .settings-page .remember-device-card,
+body.is-native.light-mode .settings-page .session-item,
+body.is-native.light-mode .settings-page .request-item,
+body.is-native.light-mode .settings-page .email-status-box,
+body.is-native.light-mode .settings-page .app-theme-setting,
+body.is-native.light-mode .settings-page .form-group input,
+body.is-native.light-mode .settings-page .form-group select,
+body.is-native.light-mode .settings-page .full-width-inp {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .settings-page .settings-btn.secondary {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline-strong);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .settings-page .settings-menu-item {
+  border-bottom-color: var(--native-hairline);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .settings-page .menu-icon {
+  background: var(--native-accent-soft);
+}
+
+body.is-native.light-mode .settings-page .text-muted,
+body.is-native.light-mode .settings-page .session-meta {
+  color: var(--native-text-2);
+}
+
+body.is-native .settings-page .settings-req-type-chip {
+  background: var(--native-accent-soft);
+  color: var(--native-accent-text);
+}
+
+body.is-native .settings-page .settings-remembered-badge {
+  background: var(--native-surface-2);
+  border: 1px solid var(--native-hairline);
+  color: var(--native-text-2);
+}
+
+body.is-native .settings-page .settings-review-note-box {
+  background: var(--native-surface-2);
+  border-left-color: var(--native-accent);
+}
+
+body.is-native .settings-page .settings-review-note-text {
+  color: var(--native-text);
+}

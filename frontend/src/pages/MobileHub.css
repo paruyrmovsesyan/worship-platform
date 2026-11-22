@@ -2097,3 +2097,23 @@ body.light-mode .hub-news-card .news-release-version {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Native App 4-Way Contrast & Token Parity */
+body.is-native .mobile-hub {
+  --hub-accent: var(--native-accent);
+  --hub-accent-strong: var(--native-accent-strong);
+  --hub-accent-grad: var(--native-accent-grad);
+  --hub-accent-on: var(--native-accent-on);
+  --hub-accent-soft: var(--native-accent-soft);
+  --hub-accent-soft-2: var(--native-accent-soft-2);
+  --hub-accent-border: var(--native-accent-border);
+  --hub-accent-border-strong: var(--native-accent-border-strong);
+  --hub-accent-glow: var(--native-accent-glow);
+  --hub-mark-bg: var(--native-mark-bg);
+  --hub-mark-color: var(--native-mark-color);
+}
+
+body.is-native.light-mode.editorial-theme .mobile-hub {
+  --hub-card-bg: #fffdf9;
+  --hub-prompt-bg: #fffdf9;
+}

@@ -204,3 +204,42 @@
     font-size: 1.75rem;
   }
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .error-card {
+  background: var(--native-surface-1);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode .error-card {
+  background: var(--native-surface-elevated);
+}
+
+body.is-native .error-hero-glow {
+  background: radial-gradient(circle, var(--native-accent-soft) 0%, transparent 70%);
+}
+
+body.is-native .error-badge {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .error-search-box svg,
+body.is-native .error-footer-links a {
+  color: var(--native-accent-text);
+}
+
+body.is-native .error-search-box input:focus {
+  border-color: var(--native-accent-border-strong);
+  box-shadow: 0 0 0 3px var(--native-accent-ring);
+}
+
+body.is-native .btn-error-search,
+body.is-native .btn-error.primary {
+  background: var(--native-accent-grad);
+  color: var(--native-accent-on);
+  box-shadow: 0 6px 18px var(--native-accent-glow);
+}

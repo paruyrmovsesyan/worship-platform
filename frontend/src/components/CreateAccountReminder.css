@@ -223,3 +223,27 @@ body.keyboard-open .create-account-reminder {
     transform: none;
   }
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .create-account-reminder {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-accent-border);
+  color: var(--native-text);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.45), 0 0 28px var(--native-accent-ring);
+}
+
+body.is-native.light-mode .create-account-reminder {
+  box-shadow: 0 18px 46px rgba(15, 23, 42, 0.16);
+}
+
+body.is-native .reminder-badge {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .reminder-primary-btn {
+  background: var(--native-accent-grad);
+  color: var(--native-accent-on);
+  box-shadow: 0 8px 22px var(--native-accent-glow);
+}

@@ -1748,3 +1748,28 @@ body.light-mode .pwa-chats-empty {
   }
 }
 
+/* Native App 4-Way Contrast & Token Parity */
+body.is-native .chats-app-page {
+  --chat-accent: var(--native-accent);
+  --chat-accent-grad: var(--native-accent-grad);
+  --chat-accent-on: var(--native-accent-on);
+  --chat-accent-soft: var(--native-accent-soft);
+  --chat-accent-border: var(--native-accent-border);
+  --chat-accent-border-strong: var(--native-accent-border-strong);
+  --chat-accent-glow: var(--native-accent-glow);
+}
+
+body.is-native.light-mode .chats-app-page .chat-list-card:not(.unread) {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+}
+
+body.is-native.light-mode .chats-app-page .chat-list-card.unread {
+  background: linear-gradient(145deg, var(--native-accent-soft), var(--native-surface-elevated));
+  border-color: var(--native-accent-border-strong);
+}
+
+body.is-native.light-mode .chats-app-page .chat-list-time.unread {
+  color: var(--native-accent-text);
+}
+

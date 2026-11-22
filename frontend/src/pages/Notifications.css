@@ -358,3 +358,53 @@ body.light-mode .notif-tab {
 body.light-mode .notif-card.unread {
   background: rgba(0, 212, 255, 0.06);
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .notif-unread-badge,
+body.is-native .notif-action-btn.primary,
+body.is-native .icon-friend,
+body.is-native .btn-view,
+body.is-native .notif-empty-icon {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .icon-system {
+  background: var(--native-secondary-soft);
+  color: var(--native-secondary-text);
+}
+
+body.is-native .notif-tab.active,
+body.is-native .btn-accept {
+  background: var(--native-accent-grad);
+  border-color: transparent;
+  color: var(--native-accent-on);
+  box-shadow: 0 4px 14px var(--native-accent-glow);
+}
+
+body.is-native .notif-card.unread {
+  background: var(--native-accent-soft-2);
+  border-color: var(--native-accent-border);
+  border-left: 4px solid var(--native-accent);
+}
+
+body.is-native.light-mode .notif-page {
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .notif-card,
+body.is-native.light-mode .notif-empty,
+body.is-native.light-mode .notif-action-btn:not(.primary),
+body.is-native.light-mode .notif-tab:not(.active) {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode .notif-card.unread {
+  background: linear-gradient(145deg, var(--native-accent-soft), var(--native-surface-elevated));
+  border-color: var(--native-accent-border);
+  border-left: 4px solid var(--native-accent);
+}

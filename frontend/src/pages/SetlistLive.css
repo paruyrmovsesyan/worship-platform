@@ -1103,3 +1103,52 @@ body.wp-standalone-app:not(.is-ios) .sll-header {
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.8);
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .sll-dur-badge,
+body.is-native .sll-chip--sheet,
+body.is-native .sll-key-badge,
+body.is-native .sll-pedal-tip-box {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .sll-card--focused {
+  border-color: var(--native-accent) !important;
+  box-shadow: 0 0 18px var(--native-accent-glow) !important;
+}
+
+body.is-native .sll-modal-open-full {
+  background: var(--native-accent-grad);
+  color: var(--native-accent-on);
+  box-shadow: 0 6px 18px var(--native-accent-glow);
+}
+
+body.is-native .sll-chords-render .chord {
+  color: var(--song-chord-color, var(--native-accent-text));
+}
+
+body.is-native.light-mode .sll-page,
+body.is-native.light-mode .sll-container {
+  background: var(--native-bg);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .sll-card,
+body.is-native.light-mode .sll-modal {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode .sll-key-desc {
+  color: var(--native-text-2);
+}
+
+body.is-native.light-mode .sll-card-notes {
+  background: var(--native-accent-soft-2);
+  border-left-color: var(--native-accent);
+  color: var(--native-text-2);
+}

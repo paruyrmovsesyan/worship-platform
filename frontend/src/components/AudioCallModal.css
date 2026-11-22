@@ -390,3 +390,19 @@ body.light-mode .audio-call-output select {
   .audio-call-overlay,
   .audio-call-pulse { animation: none; }
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .audio-call-pulse {
+  border-color: var(--native-accent-border-strong);
+}
+
+body.is-native .audio-call-resume {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native.light-mode .audio-call-card {
+  background: var(--native-bg);
+  color: var(--native-text);
+}

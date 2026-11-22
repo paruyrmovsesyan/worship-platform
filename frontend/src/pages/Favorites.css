@@ -809,3 +809,54 @@ body.is-app > .fav-filter-backdrop {
     display: none;
   }
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .fav-cta-btn {
+  background: var(--native-accent-grad);
+  color: var(--native-accent-on);
+  box-shadow: 0 6px 18px var(--native-accent-glow);
+}
+
+body.is-native .fav-filter-key-grid button.active,
+body.is-native .fav-filter-apply {
+  background: var(--native-accent-grad);
+  border-color: transparent;
+  color: var(--native-accent-on);
+  box-shadow: 0 4px 14px var(--native-accent-glow);
+}
+
+body.is-native .fav-track-badge {
+  background: var(--native-accent-soft);
+  border: 1px solid var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .fav-track-item {
+  border-radius: 15px;
+}
+
+body.is-native.light-mode.editorial-theme .favorites-page {
+  background:
+    radial-gradient(circle at top left, rgba(245, 158, 11, 0.14), transparent 38%),
+    radial-gradient(circle at top center, rgba(255, 89, 122, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(255, 253, 249, 0.85) 0%, rgba(250, 247, 241, 0) 32%);
+}
+
+body.is-native.light-mode .fav-filter-sheet,
+body.is-native.light-mode .fav-reorder-bar,
+body.is-native.light-mode .fav-filter-trigger,
+body.is-native.light-mode .fav-action-pill.secondary,
+body.is-native.light-mode .fav-empty {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .fav-filter-key-grid button:not(.active),
+body.is-native.light-mode .fav-filter-select-wrap select,
+body.is-native.light-mode .fav-filter-close,
+body.is-native.light-mode .fav-filter-reset {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  color: var(--native-text-2);
+}

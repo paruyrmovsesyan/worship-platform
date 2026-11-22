@@ -1126,3 +1126,68 @@ body.is-app .friends-search-input {
   }
 }
 
+/* ==========================================================================
+   NATIVE APP 4-WAY DESIGN SYSTEM (Classic & Warm Amber / Dark & Light)
+   Strictly scoped to `body.is-native` so Website & PWA remain untouched.
+   ========================================================================== */
+
+body.is-native .friends-view-btn.active,
+body.is-native .friend-avatar,
+body.is-native .friend-card-avatar,
+body.is-native .btn-action.primary {
+  background: var(--native-accent-grad);
+  border-color: transparent;
+  color: var(--native-accent-on);
+  box-shadow: 0 5px 16px var(--native-accent-glow);
+}
+
+body.is-native .friends-search-pill.active,
+body.is-native .friends-search-pill:focus-within {
+  border-color: var(--native-accent-border-strong);
+  box-shadow: 0 0 0 3px var(--native-accent-ring);
+}
+
+body.is-native .friends-summary-card.active,
+body.is-native .friends-summary-card.accent,
+body.is-native .stats-card:hover,
+body.is-native .stats-card.active {
+  background: linear-gradient(160deg, var(--native-accent-soft), var(--native-surface-1));
+  border-color: var(--native-accent-border);
+}
+
+body.is-native .friends-panel,
+body.is-native .friends-shell-panel,
+body.is-native .friends-summary-card,
+body.is-native .friend-list-row {
+  background: var(--native-surface-1);
+  border-color: var(--native-hairline);
+}
+
+body.is-native.light-mode .friends-panel,
+body.is-native.light-mode .friends-shell-panel,
+body.is-native.light-mode .friends-summary-card,
+body.is-native.light-mode .friend-list-row,
+body.is-native.light-mode .friends-search-pill,
+body.is-native.light-mode .friends-icon-btn,
+body.is-native.light-mode .friends-inline-back,
+body.is-native.light-mode .friends-view-btn:not(.active) {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode .friends-search-pill input,
+body.is-native.light-mode .friend-main strong,
+body.is-native.light-mode .friends-section-title,
+body.is-native.light-mode .friends-summary-card strong {
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .friend-main span,
+body.is-native.light-mode .friends-summary-card span,
+body.is-native.light-mode .friends-section-head p,
+body.is-native.light-mode .friends-muted-message {
+  color: var(--native-text-2);
+}
+

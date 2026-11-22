@@ -334,3 +334,50 @@
     display: none;
   }
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .transpose-kicker,
+body.is-native .transpose-step-value strong,
+body.is-native .transpose-output .chord,
+body.is-native .transpose-copy {
+  color: var(--native-accent-text);
+}
+
+body.is-native .transpose-notation button.active {
+  background: var(--native-accent-soft);
+  color: var(--native-accent-text);
+}
+
+body.is-native .transpose-controls,
+body.is-native .transpose-panel {
+  background: var(--native-surface-1);
+  border-color: var(--native-hairline);
+}
+
+body.is-native.light-mode .transpose-controls,
+body.is-native.light-mode .transpose-panel {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode .transpose-key-preview strong,
+body.is-native.light-mode .transpose-clear,
+body.is-native.light-mode .transpose-stepper button,
+body.is-native.light-mode .transpose-input,
+body.is-native.light-mode .transpose-output {
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .transpose-clear,
+body.is-native.light-mode .transpose-copy,
+body.is-native.light-mode .transpose-stepper,
+body.is-native.light-mode .transpose-notation {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+}
+
+body.is-native.light-mode .transpose-input::placeholder,
+body.is-native.light-mode .transpose-empty {
+  color: var(--native-text-3);
+}

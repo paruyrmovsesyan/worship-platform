@@ -404,3 +404,37 @@
 .pwa-register-page .register-form-header {
   margin-bottom: 18px;
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .register-page-container,
+body.is-native .register-form-section,
+body.is-native .pwa-register-page {
+  background: var(--native-bg);
+  color: var(--native-text);
+}
+
+body.is-native .register-back-link:hover,
+body.is-native .register-input-group input:focus ~ label,
+body.is-native .register-input-group input:not(:placeholder-shown) ~ label,
+body.is-native .register-text-link:hover {
+  color: var(--native-accent-text);
+}
+
+body.is-native .register-input-group input:focus {
+  background: var(--native-accent-soft-2);
+  border-color: var(--native-accent-border-strong);
+  box-shadow: 0 0 0 4px var(--native-accent-ring);
+}
+
+body.is-native .register-btn-primary {
+  background: var(--native-accent-grad);
+  color: var(--native-accent-on);
+  box-shadow: 0 8px 24px var(--native-accent-glow);
+}
+
+body.is-native.light-mode .register-input-group input,
+body.is-native.light-mode .register-social-btn {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline-strong);
+  color: var(--native-text);
+}

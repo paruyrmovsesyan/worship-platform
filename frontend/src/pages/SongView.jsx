@@ -2629,34 +2629,35 @@ export default function SongView() {
         padding: '16px',
       }} onClick={() => setIsShareModalOpen(false)}>
         <div style={{
-          background: '#1a1a2e',
+          background: 'var(--native-surface-elevated, #1a1a2e)',
+          border: '1px solid var(--native-hairline-strong, rgba(255,255,255,0.1))',
           width: '100%',
           maxWidth: '480px',
           borderRadius: '24px',
           padding: '24px',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
           display: 'flex',
           flexDirection: 'column',
           maxHeight: '70vh',
         }} onClick={e => e.stopPropagation()}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600, color: '#fff' }}>{t('chat.send', 'Ուղարկել Չաթով')}</h3>
-            <button onClick={() => setIsShareModalOpen(false)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--native-hairline, rgba(255,255,255,0.1))', paddingBottom: '12px' }}>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600, color: 'var(--native-text, #fff)' }}>{t('chat.send', 'Ուղարկել Չաթով')}</h3>
+            <button onClick={() => setIsShareModalOpen(false)} style={{ background: 'var(--native-surface-2, rgba(255,255,255,0.1))', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--native-text, #fff)' }}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
           <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {shareLoading ? (
-              <div style={{ textAlign: 'center', padding: '24px', color: '#aaa' }}>Loading...</div>
+              <div style={{ textAlign: 'center', padding: '24px', color: 'var(--native-text-2, #aaa)' }}>Loading...</div>
             ) : shareChats.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '24px', color: '#aaa' }}>{t('chat.emptySubtitle', 'Չաթեր չկան')}</div>
+              <div style={{ textAlign: 'center', padding: '24px', color: 'var(--native-text-2, #aaa)' }}>{t('chat.emptySubtitle', 'Չաթեր չկան')}</div>
             ) : (
               shareChats.map(chat => (
-                <div key={chat.id} onClick={() => handleShareToChat(chat.id)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '14px', background: 'rgba(255,255,255,0.06)', cursor: 'pointer' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: '1rem', flexShrink: 0 }}>
+                <div key={chat.id} onClick={() => handleShareToChat(chat.id)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '14px', background: 'var(--native-surface-2, rgba(255,255,255,0.06))', border: '1px solid var(--native-hairline, transparent)', cursor: 'pointer' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--native-accent-grad, rgba(255,255,255,0.15))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'var(--native-accent-on, #fff)', fontSize: '1rem', flexShrink: 0 }}>
                     {chat.type === 'group' ? (chat.name ? chat.name.charAt(0).toUpperCase() : 'G') : (chat.participant_names ? chat.participant_names.charAt(0).toUpperCase() : 'U')}
                   </div>
-                  <div style={{ fontWeight: 600, color: '#fff', fontSize: '0.95rem' }}>
+                  <div style={{ fontWeight: 600, color: 'var(--native-text, #fff)', fontSize: '0.95rem' }}>
                     {chat.type === 'group' ? chat.name : chat.participant_names}
                   </div>
                 </div>

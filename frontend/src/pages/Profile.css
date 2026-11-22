@@ -2235,3 +2235,89 @@ body.light-mode .custom-role-cancel-btn {
 body.light-mode .custom-role-cancel-btn:hover {
   background: #cbd5e1;
 }
+
+/* ==========================================================================
+   NATIVE APP 4-WAY DESIGN SYSTEM (Classic & Warm Amber / Dark & Light)
+   Strictly scoped to `body.is-native` so Website & PWA remain untouched.
+   ========================================================================== */
+
+body.is-native .profile-card::before {
+  background: var(--native-accent-grad);
+}
+
+body.is-native .profile-nickname-tag,
+body.is-native .profile-lang-icon-badge,
+body.is-native .profile-role-badge-tag,
+body.is-native .add-custom-role-trigger,
+body.is-native .emoji-chip-btn.active {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .upgrade-btn {
+  color: var(--native-accent-text);
+  border-color: var(--native-accent-border-strong);
+  background: var(--native-accent-soft-2);
+}
+
+body.is-native .profile-link-btn svg,
+body.is-native .plan-badge.plan-pro {
+  color: var(--native-accent-text);
+}
+
+body.is-native .profile-lang-item.active,
+body.is-native .role-option-card.active {
+  background: var(--native-accent-soft) !important;
+  border-color: var(--native-accent-border-strong) !important;
+  box-shadow: 0 4px 18px var(--native-accent-ring) !important;
+}
+
+body.is-native .profile-lang-item.active .profile-lang-primary {
+  color: var(--native-accent-text);
+}
+
+body.is-native .profile-lang-item.active .profile-lang-radio,
+body.is-native .role-check,
+body.is-native .toggle-switch input:checked + .slider,
+body.is-native .support-submit-btn,
+body.is-native .custom-role-submit-btn,
+body.is-native .role-modal-save-btn {
+  background: var(--native-accent-grad);
+  border-color: transparent;
+  color: var(--native-accent-on);
+  box-shadow: 0 4px 14px var(--native-accent-glow);
+}
+
+body.is-native .custom-role-form-card {
+  background: var(--native-surface-2);
+  border-color: var(--native-accent-border);
+}
+
+body.is-native .custom-role-input-group input:focus {
+  border-color: var(--native-accent-border-strong);
+}
+
+body.is-native.light-mode .profile-username,
+body.is-native.light-mode .profile-lang-item:not(.active),
+body.is-native.light-mode .role-option-card:not(.active),
+body.is-native.light-mode .custom-role-input-group input,
+body.is-native.light-mode .custom-role-cancel-btn {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .profile-menu-item,
+body.is-native.light-mode .profile-lang-modal,
+body.is-native.light-mode .profile-support-modal {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .email-btn {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}

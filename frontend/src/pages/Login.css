@@ -1011,3 +1011,60 @@ body.light-mode .btn-welcome-ghost:hover {
 .login-btn-biometric:active {
   transform: scale(0.98);
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .login-page-container,
+body.is-native .login-form-section,
+body.is-native .pwa-login-page {
+  background: var(--native-bg);
+  color: var(--native-text);
+}
+
+body.is-native .pwa-login-page.is-welcome {
+  background:
+    radial-gradient(circle at 82% 24%, var(--native-accent-soft) 0%, transparent 45%),
+    var(--native-bg);
+}
+
+body.is-native .welcome-app-logo {
+  filter: drop-shadow(0 12px 26px var(--native-accent-glow)) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+}
+
+body.is-native .biometric-face-orb,
+body.is-native .login-back-link,
+body.is-native .welcome-badge-tag,
+body.is-native .btn-welcome-biometric,
+body.is-native .login-btn-biometric {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .welcome-pill svg,
+body.is-native .login-input-group input:focus ~ label,
+body.is-native .login-input-group input:not(:placeholder-shown) ~ label,
+body.is-native .login-text-link:hover,
+body.is-native .btn-welcome-ghost:hover {
+  color: var(--native-accent-text);
+}
+
+body.is-native .login-input-group input:focus {
+  background: var(--native-accent-soft-2);
+  border-color: var(--native-accent-border-strong);
+  box-shadow: 0 0 0 4px var(--native-accent-ring);
+}
+
+body.is-native .login-btn-primary,
+body.is-native .btn-welcome-primary {
+  background: var(--native-accent-grad);
+  color: var(--native-accent-on);
+  box-shadow: 0 8px 24px var(--native-accent-glow);
+}
+
+body.is-native.light-mode .login-input-group input,
+body.is-native.light-mode .login-social-btn,
+body.is-native.light-mode .welcome-pill {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline-strong);
+  color: var(--native-text);
+}

@@ -182,3 +182,23 @@
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .osm-btn-primary {
+  background: var(--native-accent-grad);
+  color: var(--native-accent-on);
+  box-shadow: 0 5px 14px var(--native-accent-glow);
+}
+
+body.is-native.light-mode .osm-card,
+body.is-native.light-mode .osm-container {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .osm-btn-ghost {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  color: var(--native-text-2);
+}

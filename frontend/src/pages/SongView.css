@@ -2117,5 +2117,129 @@ body.light-mode .sv-arr-pill {
   color: #111827;
 }
 
+/* ==========================================================================
+   NATIVE APP 4-WAY DESIGN SYSTEM (Classic & Warm Amber / Dark & Light)
+   Strictly scoped to `body.is-native` so Website & PWA remain untouched.
+   Preserves user's custom `--song-chord-color` setting when set.
+   ========================================================================== */
+
+body.is-native .song-view-page,
+body.is-native .song-view-container {
+  --sv-accent: var(--native-accent);
+  --sv-accent-glow: var(--native-accent-soft);
+}
+
+body.is-native .sv-meta-pill.key-pill,
+body.is-native .sv-meta-clickable.is-open,
+body.is-native .sv-save-key-pill,
+body.is-native .sv-modal-song-pill__key,
+body.is-native .sv-modal-new-btn,
+body.is-native .sv-empty-create-btn,
+body.is-native .sv-tone-flats-btn.active,
+body.is-native .sv-capo-chip.active,
+body.is-native .sv-chart-chord-pill,
+body.is-native .sv-personal-note-banner,
+body.is-native .sv-setlist-row:hover .sv-setlist-row__btn:not(.added) {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .sv-save-key-pill:hover,
+body.is-native .sv-modal-new-btn:hover,
+body.is-native .sv-empty-create-btn:hover {
+  border-color: var(--native-accent-border-strong);
+}
+
+body.is-native .sv-btn-submit,
+body.is-native .sv-pwa-media-btn.active,
+body.is-native .sv-tone-key-chip.active,
+body.is-native .sv-autoscroll-stop,
+body.is-native .sv-note-save-btn {
+  background: var(--native-accent-grad);
+  border-color: transparent;
+  color: var(--native-accent-on);
+  box-shadow: 0 4px 14px var(--native-accent-glow);
+}
+
+body.is-native .seq-count,
+body.is-native .sv-pwa-media-title-group svg,
+body.is-native .sv-tone-capo-head > span,
+body.is-native .sv-autoscroll-speed,
+body.is-native .sv-chart-sec-title,
+body.is-native .sv-personal-note-banner svg,
+body.is-native .sv-personal-note-head {
+  color: var(--native-accent-text) !important;
+}
+
+body.is-native .sv-modal-create-box {
+  background: var(--native-accent-soft-2);
+  border-bottom-color: var(--native-accent-border);
+}
+
+body.is-native .sv-modal-search-input:focus,
+body.is-native .sv-modal-create-input:focus,
+body.is-native .sv-personal-note-input:focus {
+  border-color: var(--native-accent-border-strong);
+}
+
+body.is-native .loading-spinner-sm {
+  border-top-color: var(--native-accent);
+}
+
+body.is-native .chord-piano span.active,
+body.is-native .chord-piano .white.active,
+body.is-native .chord-piano .black.active {
+  background: var(--native-accent-grad) !important;
+  color: var(--native-accent-on) !important;
+  border-color: var(--native-accent-strong) !important;
+  box-shadow: 0 0 18px var(--native-accent-glow), inset 0 -4px 8px rgba(0, 0, 0, 0.14) !important;
+}
+
+body.is-native .sv-modal-card,
+body.is-native .sv-tools-dropdown-portal,
+body.is-native .sv-autoscroll-bar,
+body.is-native .sv-pwa-media-card {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline-strong);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .sv-modal-card,
+body.is-native.light-mode .sv-tools-dropdown-portal,
+body.is-native.light-mode .sv-autoscroll-bar,
+body.is-native.light-mode .sv-pwa-media-card,
+body.is-native.light-mode .seq-nav {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode .sv-segment:not(.active),
+body.is-native.light-mode .sv-tone-key-chip:not(.active),
+body.is-native.light-mode .sv-capo-chip:not(.active),
+body.is-native.light-mode .sv-tools-menu-item,
+body.is-native.light-mode .sv-personal-note-input {
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .sv-modal-search-input,
+body.is-native.light-mode .sv-modal-create-input,
+body.is-native.light-mode .sv-personal-note-input {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline-strong);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .sv-arr-pill {
+  background: color-mix(in srgb, var(--arr-color, var(--native-accent)) 10%, var(--native-surface-elevated));
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .sv-arr-pill.is-active {
+  background: color-mix(in srgb, var(--arr-color, var(--native-accent)) 22%, var(--native-surface-elevated));
+}
+
 
 

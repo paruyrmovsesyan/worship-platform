@@ -104,3 +104,35 @@ body.light-mode .radio-mini-icon {
     bottom: calc(var(--bottom-nav-total-offset, 84px) + 10px);
   }
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native > .radio-mini-pill,
+body.is-native .radio-mini-pill {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-accent-border);
+  color: var(--native-text);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45), var(--native-specular);
+}
+
+body.is-native.light-mode > .radio-mini-pill,
+body.is-native.light-mode .radio-mini-pill {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-accent-border);
+  color: var(--native-text);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14);
+}
+
+body.is-native .radio-mini-play {
+  background: var(--native-accent-grad);
+  color: var(--native-accent-on);
+  box-shadow: 0 4px 12px var(--native-accent-glow);
+}
+
+body.is-native .radio-mini-info small {
+  color: var(--native-text-2);
+}
+
+body.is-native .radio-mini-icon {
+  background: var(--native-surface-2);
+  color: var(--native-text);
+}

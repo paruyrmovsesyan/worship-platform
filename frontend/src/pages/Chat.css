@@ -972,3 +972,97 @@ body.is-native .chat-messages-container {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
 }
+
+/* ==========================================================================
+   NATIVE APP 4-WAY DESIGN SYSTEM (Classic & Warm Amber / Dark & Light)
+   Strictly scoped to `body.is-native` so Website & PWA remain untouched.
+   ========================================================================== */
+
+body.is-native .chat-page-container {
+  background: var(--native-bg) !important;
+}
+
+body.is-native .chat-header,
+body.is-native .chat-input-area {
+  background: var(--native-surface-1);
+  border-color: var(--native-hairline);
+}
+
+body.is-native .chat-header-avatar,
+body.is-native .chat-message-row.me .chat-bubble,
+body.is-native .chat-send-btn {
+  background: var(--native-accent-grad);
+  color: var(--native-accent-on);
+}
+
+body.is-native .chat-message-row.me .chat-bubble {
+  box-shadow: 0 6px 18px var(--native-accent-ring);
+}
+
+body.is-native .chat-message-row.me .chat-bubble .chat-link,
+body.is-native .chat-message-row.me .chat-bubble a {
+  color: var(--native-accent-on);
+  text-decoration: underline;
+}
+
+body.is-native .chat-message-row.me .chat-timestamp {
+  color: var(--native-accent-on);
+  opacity: 0.78;
+}
+
+body.is-native .chat-send-btn {
+  box-shadow: 0 4px 14px var(--native-accent-glow);
+}
+
+body.is-native .chat-empty-circle,
+body.is-native .chat-link-icon-box,
+body.is-native .chat-link-btn:hover {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .chat-sender-name,
+body.is-native .chat-link,
+body.is-native .chat-link-preview-label,
+body.is-native .chat-link-preview-action,
+body.is-native .chat-editing-banner-icon,
+body.is-native .chat-editing-banner-title,
+body.is-native .chat-seen-state.seen {
+  color: var(--native-accent-text);
+}
+
+body.is-native .chat-input-form:focus-within,
+body.is-native .chat-link-preview-card:hover {
+  border-color: var(--native-accent-border-strong);
+}
+
+body.is-native .chat-editing-banner {
+  border-top-color: var(--native-accent-border-strong);
+  background: var(--native-accent-soft);
+}
+
+body.is-native.light-mode .chat-input-form,
+body.is-native.light-mode .chat-date-separator span {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+}
+
+body.is-native.light-mode .chat-message-row.other .chat-bubble,
+body.is-native.light-mode .chat-modal-content,
+body.is-native.light-mode .group-info-panel {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .chat-link-preview-card {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+}
+
+body.is-native.light-mode .chat-copy-toast {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline-strong);
+  color: var(--native-text);
+}

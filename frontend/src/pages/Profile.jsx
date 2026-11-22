@@ -508,7 +508,7 @@ export default function Profile() {
             </button>
           </div>
           <div style={{ padding: '0 20px 24px' }}>
-            <p style={{ fontSize: '0.86rem', color: '#8fa0b5', lineHeight: '1.45', margin: '0 0 16px' }}>
+            <p style={{ fontSize: '0.86rem', color: 'var(--native-text-2, #8fa0b5)', lineHeight: '1.45', margin: '0 0 16px' }}>
               {language === 'am'
                 ? 'Ձեր եզակի @նիկնեյմը, որով ընկերներն ու երաժիշտները կարող են ձեզ արագ գտնել որոնման մեջ և ավելացնել երգացանկերում։'
                 : language === 'ru'
@@ -523,7 +523,7 @@ export default function Profile() {
                   left: '14px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  color: '#00d4ff',
+                  color: 'var(--native-accent-text, #00d4ff)',
                   fontWeight: 700,
                   fontSize: '1rem',
                   pointerEvents: 'none'
@@ -543,15 +543,15 @@ export default function Profile() {
                   spellCheck="false"
                   style={{
                     width: '100%',
-                    background: 'rgba(255,255,255,0.06)',
+                    background: 'var(--native-input-bg, rgba(255,255,255,0.06))',
                     border: nicknameStatus === 'available'
                       ? '1px solid rgba(46, 204, 113, 0.7)'
                       : (nicknameStatus === 'taken' || nicknameStatus === 'invalid')
                       ? '1px solid rgba(255, 71, 87, 0.7)'
-                      : '1px solid rgba(0, 212, 255, 0.35)',
+                      : '1px solid var(--native-accent-border, rgba(0, 212, 255, 0.35))',
                     borderRadius: '12px',
                     padding: '12px 42px 12px 34px',
-                    color: '#fff',
+                    color: 'var(--native-text, #fff)',
                     fontSize: '1rem',
                     fontWeight: 600,
                     outline: 'none',
@@ -608,9 +608,9 @@ export default function Profile() {
                     flex: 1,
                     padding: '12px',
                     borderRadius: '12px',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    background: 'transparent',
-                    color: '#fff',
+                    border: '1px solid var(--native-hairline-strong, rgba(255,255,255,0.12))',
+                    background: 'var(--native-surface-2, transparent)',
+                    color: 'var(--native-text, #fff)',
                     fontWeight: 600,
                     cursor: 'pointer'
                   }}
@@ -625,11 +625,11 @@ export default function Profile() {
                     padding: '12px',
                     borderRadius: '12px',
                     border: 'none',
-                    background: canSave ? 'linear-gradient(135deg, #00d4ff, #0072ff)' : 'rgba(255,255,255,0.08)',
-                    color: canSave ? '#fff' : '#68778d',
+                    background: canSave ? 'var(--native-accent-grad, linear-gradient(135deg, #00d4ff, #0072ff))' : 'var(--native-surface-2, rgba(255,255,255,0.08))',
+                    color: canSave ? 'var(--native-accent-on, #fff)' : 'var(--native-text-3, #68778d)',
                     fontWeight: 700,
                     cursor: canSave ? 'pointer' : 'not-allowed',
-                    boxShadow: canSave ? '0 4px 15px rgba(0, 212, 255, 0.3)' : 'none',
+                    boxShadow: canSave ? '0 4px 15px var(--native-accent-glow, rgba(0, 212, 255, 0.3))' : 'none',
                     transition: 'all 0.2s'
                   }}
                 >
@@ -1060,10 +1060,10 @@ export default function Profile() {
             <div className="modal-content profile-support-modal" onClick={e => e.stopPropagation()}>
               <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#00d4ff" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--native-accent, #00d4ff)" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                   <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{t('profile.supportTitle', 'Աջակցություն և կապ')}</h3>
                 </div>
-                <button className="modal-close" onClick={() => setIsSupportModalOpen(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}>
+                <button className="modal-close" onClick={() => setIsSupportModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--native-text, #fff)', cursor: 'pointer' }}>
                   <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
               </div>

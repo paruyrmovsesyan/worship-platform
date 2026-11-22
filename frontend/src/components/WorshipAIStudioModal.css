@@ -374,3 +374,27 @@
     gap: 10px;
   }
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .ai-studio-title {
+  background: var(--native-accent-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body.is-native .ai-studio-result-badge {
+  color: var(--native-accent-text);
+}
+
+body.is-native .ai-studio-result-box {
+  background: var(--native-surface-2);
+  border-color: var(--native-accent-border);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .ai-studio-modal {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}

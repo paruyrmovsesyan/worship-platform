@@ -1327,3 +1327,43 @@ body.website-theme .news-page.web-news-article-state {
   .news-reader-copy,
   .news-reader-contents button { transition: none; }
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .news-eyebrow {
+  color: var(--native-accent-text);
+}
+
+body.is-native .news-tag {
+  background: var(--native-accent-soft);
+  border: 1px solid var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .news-list-card {
+  background: var(--native-surface-1);
+  border-color: var(--native-hairline);
+}
+
+body.is-native .news-list-card:hover {
+  border-color: var(--native-accent-border-strong);
+}
+
+body.is-native .news-reader-progress span {
+  background: var(--native-accent-grad);
+}
+
+body.is-native.light-mode .news-list-card,
+body.is-native.light-mode .news-article-content {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode .news-reader-back,
+body.is-native.light-mode .news-reader-copy,
+body.is-native.light-mode .news-back-btn {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}

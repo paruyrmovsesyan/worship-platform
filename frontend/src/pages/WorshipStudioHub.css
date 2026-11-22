@@ -1612,3 +1612,54 @@
   opacity: 0.85;
 }
 
+/* Native App 4-Way Theme Support */
+body.is-native .wsh-strip-title,
+body.is-native .wsh-pane-title,
+body.is-native .wsh-cs-key,
+body.is-native .wsh-mon-title-bar em,
+body.is-native .wsh-preset-pill strong,
+body.is-native .wsh-snapshot-actions button:hover {
+  color: var(--native-accent-text);
+}
+
+body.is-native .wsh-tap-btn,
+body.is-native .wsh-toggle-chord-pane-btn,
+body.is-native .wsh-sb-pill,
+body.is-native .wsh-mc-toggle.active {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .wsh-custom-cue-form button,
+body.is-native .wsh-proj-window-btn {
+  background: var(--native-accent-grad);
+  border-color: transparent;
+  color: var(--native-accent-on);
+  box-shadow: 0 5px 16px var(--native-accent-glow);
+}
+
+body.is-native .wsh-bento-card {
+  background: var(--native-surface-1);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .wsh-bento-card,
+body.is-native.light-mode .wsh-bento-card.wsh-card-soon,
+body.is-native.light-mode .wsh-cue-pad {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode .wsh-bento-icon {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+}
+
+body.is-native.light-mode .wsh-bento-footer {
+  border-top-color: var(--native-hairline);
+}
+

@@ -76,6 +76,7 @@ import { useNativeBackGesture } from './hooks/useNativeBackGesture';
 import { showPwaOfflineBlockedNotice } from './utils/pwaOfflineGuard';
 import { useLanguage } from './context/LanguageContext';
 import { applyAppTheme, getStoredAppTheme } from './utils/appTheme';
+import { updateNativeStatusBar } from './utils/nativeFeatures';
 import WebCommandPalette from './components/WebCommandPalette';
 import CreateAccountReminder from './components/CreateAccountReminder';
 import NativeAppLock from './components/NativeAppLock';
@@ -225,32 +226,45 @@ function App() {
   useEffect(() => {
     const syncThemeColor = () => {
       const meta = document.querySelector('meta[name="theme-color"]');
-      if (!meta) return;
-
       const storedTheme = localStorage.getItem('theme');
       const isLight = document.documentElement.dataset.theme === 'light' ||
         document.body.classList.contains('light-mode') ||
         storedTheme === 'light';
+      const isEditorial = document.documentElement.dataset.themeStyle === 'editorial' ||
+        document.body.classList.contains('editorial-theme') ||
+        localStorage.getItem('themeStyle') === 'editorial';
       const isOled = document.body.classList.contains('oled-mode') || localStorage.getItem('oledMode') === 'true';
-      const color = isLight ? '#F7F8FC' : (isOled ? '#000000' : '#05050A');
 
-      meta.setAttribute('content', color);
+      const color = isNativeApp
+        ? (isLight
+            ? (isEditorial ? '#FAF7F1' : '#F4F7FB')
+            : (isOled ? '#000000' : (isEditorial ? '#141519' : '#05050A')))
+        : (isLight ? '#F7F8FC' : (isOled ? '#000000' : '#05050A'));
+
+      if (meta) {
+        meta.setAttribute('content', color);
+      }
       document.documentElement.style.colorScheme = isLight ? 'light' : 'dark';
+      if (isNativeApp) {
+        updateNativeStatusBar(!isLight);
+      }
     };
 
     syncThemeColor();
     const observer = new MutationObserver(syncThemeColor);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme', 'data-theme-style'] });
     observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     window.addEventListener('storage', syncThemeColor);
     window.addEventListener('wp-theme-change', syncThemeColor);
+    window.addEventListener('wp-theme-style-change', syncThemeColor);
 
     return () => {
       observer.disconnect();
       window.removeEventListener('storage', syncThemeColor);
       window.removeEventListener('wp-theme-change', syncThemeColor);
+      window.removeEventListener('wp-theme-style-change', syncThemeColor);
     };
-  }, []);
+  }, [isNativeApp]);
 
   // Listen for push notification navigation from service worker
   useEffect(() => {

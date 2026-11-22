@@ -770,7 +770,7 @@ export default function Settings() {
                     className={themeStyle === THEME_STYLES.EDITORIAL ? 'active' : ''}
                     onClick={() => handleThemeStyleChange(THEME_STYLES.EDITORIAL)}
                   >
-                    <span style={{ color: themeStyle === THEME_STYLES.EDITORIAL ? '#F7B500' : undefined }}>Warm Amber</span>
+                    <span style={{ color: themeStyle === THEME_STYLES.EDITORIAL ? 'var(--native-accent-on, #F7B500)' : undefined }}>Warm Amber</span>
                   </button>
                 </div>
               </div>
@@ -1163,7 +1163,7 @@ export default function Settings() {
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
                         {s.is_current && <span className="badge badge-success">{t('settings.sessions.currentDevice')}</span>}
-                        {s.remembered && <span className="badge" style={{ background: 'rgba(255, 255, 255, 0.1)', color: '#fff' }}>{t('settings.sessions.remembered')}</span>}
+                        {s.remembered && <span className="badge settings-remembered-badge" style={{ background: 'var(--native-surface-2, rgba(255, 255, 255, 0.1))', color: 'var(--native-text-2, #fff)' }}>{t('settings.sessions.remembered')}</span>}
                       </div>
                     </div>
                     {!s.is_current && (
@@ -1203,7 +1203,7 @@ export default function Settings() {
                     </div>
                     
                     <div className="req-meta" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '0.25rem' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(0, 240, 255, 0.1)', color: 'var(--color-accent-cyan)', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 500 }}>
+                      <span className="settings-req-type-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'var(--native-accent-soft, rgba(0, 240, 255, 0.1))', color: 'var(--native-accent-text, var(--color-accent-cyan))', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 500 }}>
                         {r.request_type_label}
                       </span>
                       <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
@@ -1212,9 +1212,9 @@ export default function Settings() {
                     </div>
                     
                     {r.review_note && (
-                      <div className="req-note" style={{ marginTop: '0.5rem', background: 'rgba(255, 255, 255, 0.03)', padding: '1rem', borderRadius: '10px', borderLeft: '4px solid var(--color-accent-cyan)' }}>
+                      <div className="req-note settings-review-note-box" style={{ marginTop: '0.5rem', background: 'var(--native-surface-2, rgba(255, 255, 255, 0.03))', padding: '1rem', borderRadius: '10px', borderLeft: '4px solid var(--native-accent, var(--color-accent-cyan))' }}>
                         <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>{t('settings.requests.adminNote')}</div>
-                        <div style={{ color: '#e2e8f0', fontSize: '0.95rem', lineHeight: '1.5' }}>{r.review_note}</div>
+                        <div className="settings-review-note-text" style={{ color: 'var(--native-text, #e2e8f0)', fontSize: '0.95rem', lineHeight: '1.5' }}>{r.review_note}</div>
                       </div>
                     )}
                   </div>

@@ -362,3 +362,53 @@ body.light-mode .sr-chord-chip {
   color: #8a5d00;
 }
 
+/* Native App 4-Way Theme Support */
+body.is-native .song-request-tab-btn.active,
+body.is-native .song-request-hint-box,
+body.is-native .song-request-badge.badge-new,
+body.is-native .preview-toggle-btn,
+body.is-native .sr-smart-import-box,
+body.is-native .sr-chord-chip:not(.is-meta) {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .preview-toggle-btn.active,
+body.is-native .song-request-submit-btn {
+  background: var(--native-accent-grad);
+  border-color: transparent;
+  color: var(--native-accent-on);
+  box-shadow: 0 6px 20px var(--native-accent-glow);
+}
+
+body.is-native .song-request-input:focus,
+body.is-native .song-request-select:focus,
+body.is-native .song-request-textarea:focus {
+  border-color: var(--native-accent-border-strong);
+  box-shadow: 0 0 0 3px var(--native-accent-ring);
+}
+
+body.is-native .song-request-card {
+  background: var(--native-surface-1);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .song-request-card {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode .song-request-input,
+body.is-native.light-mode .song-request-select,
+body.is-native.light-mode .song-request-textarea,
+body.is-native.light-mode .song-request-tab-btn:not(.active),
+body.is-native.light-mode .sr-chord-chip.is-meta {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
+

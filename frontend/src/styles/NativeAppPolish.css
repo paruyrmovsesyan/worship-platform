@@ -1,21 +1,53 @@
 /* ==========================================================================
-   NATIVE APP UI/UX POLISH (iOS & Android Capacitor Native Apps ONLY)
+   NATIVE APP UI/UX POLISH & 4-WAY DESIGN SYSTEM
+   (iOS & Android Capacitor Native Apps ONLY)
    Strictly scoped under `body.is-native` so Website & PWA remain untouched.
-   Preserves Worship Platform's dark obsidian + cyan (#00D4FF) + indigo
-   (#3A2DFF) + Scripture amber (#F7B500) + Liquid Glass aesthetic.
+   Supports all 4 modes + OLED:
+     1. Classic Dark (default)        — Deep Space + Electric Cyan/Cobalt
+     2. Classic Light                 — Crisp Sky Ivory + Deep Cobalt/Sky
+     3. Warm Amber Dark (editorial)   — Warm Charcoal + Golden Amber
+     4. Warm Amber Light (editorial)  — Warm Parchment + Burnished Amber
    ========================================================================== */
 
 body.is-native {
-  --native-surface-1: rgba(20, 21, 31, 0.84);
+  /* Classic Dark (Default) */
+  --native-bg: #05050a;
+  --native-surface-1: rgba(20, 22, 34, 0.88);
   --native-surface-2: rgba(255, 255, 255, 0.055);
+  --native-surface-elevated: rgba(24, 27, 42, 0.96);
   --native-surface-press: rgba(255, 255, 255, 0.1);
+  --native-input-bg: rgba(15, 18, 30, 0.88);
   --native-hairline: rgba(255, 255, 255, 0.09);
   --native-hairline-strong: rgba(255, 255, 255, 0.16);
   --native-specular: inset 0 1px 0 rgba(255, 255, 255, 0.11);
   --native-card-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
-  --native-cyan-soft: rgba(0, 212, 255, 0.14);
-  --native-cyan-border: rgba(0, 212, 255, 0.34);
-  --native-accent-grad: linear-gradient(135deg, #3a2dff 0%, #00d4ff 100%);
+
+  --native-text: #ffffff;
+  --native-text-2: #a5acc0;
+  --native-text-3: #6f778d;
+
+  --native-accent: #00d4ff;
+  --native-accent-strong: #38bdf8;
+  --native-accent-text: #7ee8ff;
+  --native-accent-grad: linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%);
+  --native-accent-on: #ffffff;
+  --native-accent-soft: rgba(0, 212, 255, 0.14);
+  --native-accent-soft-2: rgba(58, 45, 255, 0.16);
+  --native-accent-border: rgba(0, 212, 255, 0.34);
+  --native-accent-border-strong: rgba(0, 212, 255, 0.58);
+  --native-accent-glow: rgba(0, 212, 255, 0.26);
+  --native-accent-ring: rgba(0, 212, 255, 0.18);
+
+  --native-secondary-soft: rgba(58, 45, 255, 0.18);
+  --native-secondary-border: rgba(114, 107, 255, 0.32);
+  --native-secondary-text: #b8beff;
+  --native-mark-bg: rgba(0, 212, 255, 0.24);
+  --native-mark-color: #bae6fd;
+
+  /* Legacy aliases synced to current design style */
+  --native-cyan-soft: var(--native-accent-soft);
+  --native-cyan-border: var(--native-accent-border);
+
   --wp-ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
   --wp-ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
   --wp-ease-spring: cubic-bezier(0.2, 1.12, 0.32, 1);
@@ -57,22 +89,177 @@ body.is-native {
   100% { transform: scale(1); }
 }
 
+/* Classic OLED Dark */
 body.is-native.oled-mode {
-  --native-surface-1: rgba(10, 10, 14, 0.94);
+  --native-bg: #000000;
+  --native-surface-1: rgba(11, 12, 17, 0.95);
   --native-surface-2: rgba(255, 255, 255, 0.045);
+  --native-surface-elevated: rgba(15, 16, 22, 0.98);
+  --native-input-bg: rgba(12, 13, 18, 0.95);
   --native-hairline: rgba(255, 255, 255, 0.11);
 }
 
+/* Classic Light */
 body.is-native.light-mode {
-  --native-surface-1: rgba(255, 255, 255, 0.94);
-  --native-surface-2: rgba(255, 255, 255, 0.9);
+  --native-bg: #f4f7fb;
+  --native-surface-1: rgba(255, 255, 255, 0.96);
+  --native-surface-2: rgba(241, 245, 251, 0.92);
+  --native-surface-elevated: #ffffff;
   --native-surface-press: rgba(15, 23, 42, 0.06);
-  --native-hairline: rgba(15, 23, 42, 0.085);
-  --native-hairline-strong: rgba(15, 23, 42, 0.14);
-  --native-specular: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --native-input-bg: #ffffff;
+  --native-hairline: rgba(15, 23, 42, 0.09);
+  --native-hairline-strong: rgba(15, 23, 42, 0.16);
+  --native-specular: inset 0 1px 0 rgba(255, 255, 255, 0.96);
   --native-card-shadow: 0 8px 22px rgba(15, 23, 42, 0.075);
-  --native-cyan-soft: rgba(0, 148, 214, 0.1);
-  --native-cyan-border: rgba(0, 148, 214, 0.3);
+
+  --native-text: #0f172a;
+  --native-text-2: #475569;
+  --native-text-3: #64748b;
+
+  --native-accent: #0284c7;
+  --native-accent-strong: #0369a1;
+  --native-accent-text: #0369a1;
+  --native-accent-grad: linear-gradient(135deg, #2563eb 0%, #0284c7 100%);
+  --native-accent-on: #ffffff;
+  --native-accent-soft: rgba(2, 132, 199, 0.11);
+  --native-accent-soft-2: rgba(37, 99, 235, 0.09);
+  --native-accent-border: rgba(2, 132, 199, 0.3);
+  --native-accent-border-strong: rgba(2, 132, 199, 0.54);
+  --native-accent-glow: rgba(2, 132, 199, 0.24);
+  --native-accent-ring: rgba(2, 132, 199, 0.16);
+
+  --native-secondary-soft: rgba(58, 45, 255, 0.09);
+  --native-secondary-border: rgba(58, 45, 255, 0.22);
+  --native-secondary-text: #3730a3;
+  --native-mark-bg: rgba(14, 165, 233, 0.22);
+  --native-mark-color: #075985;
+
+  --color-accent-cyan: #0284c7;
+  --color-accent-gold: #2563eb;
+}
+
+/* Warm Amber / Editorial Dark */
+body.is-native.editorial-theme {
+  --native-bg: #141519;
+  --native-surface-1: rgba(30, 31, 37, 0.9);
+  --native-surface-2: rgba(255, 248, 235, 0.055);
+  --native-surface-elevated: rgba(36, 37, 45, 0.96);
+  --native-surface-press: rgba(247, 181, 0, 0.1);
+  --native-input-bg: rgba(24, 25, 31, 0.92);
+  --native-hairline: rgba(255, 248, 235, 0.095);
+  --native-hairline-strong: rgba(255, 248, 235, 0.16);
+  --native-specular: inset 0 1px 0 rgba(255, 248, 235, 0.1);
+  --native-card-shadow: 0 10px 26px rgba(0, 0, 0, 0.32);
+
+  --native-text: #f3f1eb;
+  --native-text-2: #b8bac2;
+  --native-text-3: #838793;
+
+  --native-accent: #fbbf24;
+  --native-accent-strong: #f7b500;
+  --native-accent-text: #fcd34d;
+  --native-accent-grad: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  --native-accent-on: #1f1402;
+  --native-accent-soft: rgba(247, 181, 0, 0.14);
+  --native-accent-soft-2: rgba(245, 158, 11, 0.1);
+  --native-accent-border: rgba(247, 181, 0, 0.36);
+  --native-accent-border-strong: rgba(247, 181, 0, 0.58);
+  --native-accent-glow: rgba(245, 158, 11, 0.3);
+  --native-accent-ring: rgba(247, 181, 0, 0.18);
+
+  --native-secondary-soft: rgba(251, 146, 60, 0.15);
+  --native-secondary-border: rgba(251, 146, 60, 0.32);
+  --native-secondary-text: #fdba74;
+  --native-mark-bg: rgba(251, 191, 36, 0.26);
+  --native-mark-color: #fde68a;
+
+  --color-accent-cyan: #fbbf24;
+  --color-accent-gold: #f7b500;
+}
+
+/* Warm Amber OLED Dark */
+body.is-native.oled-mode.editorial-theme {
+  --native-bg: #000000;
+  --native-surface-1: rgba(15, 14, 12, 0.96);
+  --native-surface-2: rgba(255, 248, 235, 0.048);
+  --native-surface-elevated: rgba(20, 19, 16, 0.98);
+  --native-input-bg: rgba(14, 13, 11, 0.96);
+}
+
+/* Warm Amber / Editorial Light */
+body.is-native.light-mode.editorial-theme {
+  --native-bg: #faf7f1;
+  --native-surface-1: rgba(255, 253, 249, 0.96);
+  --native-surface-2: rgba(244, 238, 228, 0.9);
+  --native-surface-elevated: #fffdf9;
+  --native-surface-press: rgba(180, 83, 9, 0.08);
+  --native-input-bg: #fffdf9;
+  --native-hairline: rgba(120, 82, 26, 0.12);
+  --native-hairline-strong: rgba(120, 82, 26, 0.22);
+  --native-specular: inset 0 1px 0 rgba(255, 255, 255, 0.96);
+  --native-card-shadow: 0 8px 22px rgba(92, 60, 14, 0.08);
+
+  --native-text: #1c1917;
+  --native-text-2: #57534e;
+  --native-text-3: #78716c;
+
+  --native-accent: #b45309;
+  --native-accent-strong: #92400e;
+  --native-accent-text: #92400e;
+  --native-accent-grad: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  --native-accent-on: #1f1402;
+  --native-accent-soft: rgba(217, 119, 6, 0.12);
+  --native-accent-soft-2: rgba(180, 83, 9, 0.09);
+  --native-accent-border: rgba(180, 83, 9, 0.3);
+  --native-accent-border-strong: rgba(180, 83, 9, 0.54);
+  --native-accent-glow: rgba(217, 119, 6, 0.26);
+  --native-accent-ring: rgba(217, 119, 6, 0.18);
+
+  --native-secondary-soft: rgba(180, 83, 9, 0.1);
+  --native-secondary-border: rgba(180, 83, 9, 0.24);
+  --native-secondary-text: #9a3412;
+  --native-mark-bg: rgba(245, 158, 11, 0.26);
+  --native-mark-color: #78350f;
+
+  --color-accent-cyan: #b45309;
+  --color-accent-gold: #d97706;
+  --color-text-primary: #1c1917;
+  --color-text-secondary: #57534e;
+  --color-text-tertiary: #78716c;
+}
+
+/* Native 4-Way Atmospheric Canvas Glow */
+body.is-native:not(.light-mode):not(.editorial-theme):not(.oled-mode) {
+  background-color: #05050a;
+}
+
+body.is-native.light-mode:not(.editorial-theme)::before {
+  background: radial-gradient(ellipse at 50% 0%, rgba(14, 165, 233, 0.1) 0%, rgba(37, 99, 235, 0.05) 30%, transparent 65%);
+}
+
+body.is-native.editorial-theme:not(.light-mode):not(.oled-mode)::before {
+  background: radial-gradient(ellipse at 50% 0%, rgba(247, 181, 0, 0.11) 0%, rgba(245, 158, 11, 0.04) 28%, transparent 64%);
+}
+
+body.is-native.light-mode.editorial-theme::before {
+  background: radial-gradient(ellipse at 50% 0%, rgba(247, 181, 0, 0.12) 0%, rgba(217, 119, 6, 0.05) 30%, transparent 65%);
+}
+
+/* Sync native light-mode Warm Amber canvas */
+body.is-native.light-mode.editorial-theme .nav-transition-veil,
+body.is-native.light-mode.editorial-theme .skeleton-overlay {
+  background: #faf7f1;
+}
+
+body.is-native .nav-spinner {
+  border-top-color: var(--native-accent);
+}
+
+/* Global Native Stage Cue Line (follows Classic vs Warm Amber) */
+body.is-native .stage-cue-line {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
 }
 
 body.is-native * {
@@ -102,16 +289,16 @@ body.is-native .btn-small {
 
 body.is-native .btn-primary {
   background: var(--native-accent-grad);
-  color: #ffffff;
+  color: var(--native-accent-on);
   border: 1px solid rgba(255, 255, 255, 0.22);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 8px 22px rgba(0, 212, 255, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 8px 22px var(--native-accent-glow);
 }
 
 body.is-native.editorial-theme .btn-primary {
-  background: #f7b500;
-  color: #231603;
+  background: var(--native-accent-grad);
+  color: var(--native-accent-on);
   border-color: rgba(255, 255, 255, 0.25);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 20px rgba(247, 181, 0, 0.26);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 20px var(--native-accent-glow);
 }
 
 body.is-native .btn-secondary,
@@ -119,8 +306,17 @@ body.is-native .load-more-btn,
 body.is-native .sv-edit-btn {
   background: var(--native-surface-2);
   border: 1px solid var(--native-hairline-strong);
-  color: var(--color-text-primary);
+  color: var(--native-text);
   box-shadow: var(--native-specular), 0 4px 14px rgba(0, 0, 0, 0.14);
+}
+
+body.is-native.light-mode .btn-secondary,
+body.is-native.light-mode .load-more-btn,
+body.is-native.light-mode .sv-edit-btn {
+  background: var(--native-surface-1) !important;
+  border-color: var(--native-hairline-strong) !important;
+  color: var(--native-text) !important;
+  box-shadow: var(--native-specular), 0 4px 12px rgba(15, 23, 42, 0.06);
 }
 
 body.is-native .icon-btn,
@@ -147,13 +343,9 @@ body.is-native .icon-btn {
 }
 
 body.is-native .icon-btn.active {
-  background: var(--native-cyan-soft);
-  border-color: var(--native-cyan-border);
-  color: #7ee8ff;
-}
-
-body.is-native.light-mode .icon-btn.active {
-  color: #0284c7;
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
 }
 
 body.is-native .action-icon-btn.heart-btn.active svg,
@@ -281,21 +473,16 @@ body.is-native .lang-pill-glider {
   height: calc(100% - 6px);
   border-radius: 999px;
   background: var(--native-accent-grad);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 4px 12px rgba(0, 212, 255, 0.26);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 4px 12px var(--native-accent-glow);
   transition: transform 280ms var(--wp-ease-out);
 }
 
-body.is-native.editorial-theme .lang-pill-glider {
-  background: #f7b500;
-  box-shadow: 0 3px 10px rgba(247, 181, 0, 0.28);
-}
-
-body.is-native.editorial-theme .lang-pill-btn.active {
-  color: #231603;
+body.is-native .lang-pill-btn.active {
+  color: var(--native-accent-on);
 }
 
 body.is-native.light-mode .lang-pill-btn:not(.active) {
-  color: #475569;
+  color: var(--native-text-2);
 }
 
 /* ==========================================================================
@@ -355,13 +542,9 @@ body.is-native .hub-today-greeting {
 body.is-native .hub-today-eyebrow {
   font-size: 0.68rem;
   letter-spacing: 0.1em;
-  color: var(--color-accent-cyan, #00d4ff);
-  opacity: 0.92;
+  color: var(--native-accent);
+  opacity: 0.94;
   margin-bottom: 3px;
-}
-
-body.is-native.editorial-theme .hub-today-eyebrow {
-  color: #f7b500;
 }
 
 body.is-native .hub-today-title {
@@ -374,10 +557,10 @@ body.is-native .hub-today-title {
 body.is-native .hub-resume-pill {
   height: 36px;
   padding: 0 13px;
-  background: var(--native-cyan-soft);
-  border: 1px solid var(--native-cyan-border);
-  box-shadow: var(--native-specular), 0 6px 16px rgba(0, 212, 255, 0.12);
-  color: var(--color-text-primary);
+  background: var(--native-accent-soft);
+  border: 1px solid var(--native-accent-border);
+  box-shadow: var(--native-specular), 0 6px 16px var(--native-accent-ring);
+  color: var(--native-text);
   font-size: 0.78rem;
   font-weight: 700;
   transition: transform 0.14s ease, background-color 0.18s ease;
@@ -432,7 +615,7 @@ body.is-native .hub-votd-btn-ghost {
 }
 
 body.is-native .hub-votd-btn-primary {
-  box-shadow: 0 6px 16px rgba(247, 181, 0, 0.28);
+  box-shadow: 0 6px 16px var(--native-accent-glow);
 }
 
 body.is-native .hub-votd-btn-ghost {
@@ -468,37 +651,23 @@ body.is-native .hub-week-day:active {
 }
 
 body.is-native .hub-week-day.is-today:not(.is-selected) {
-  border-color: var(--native-cyan-border);
-  background: var(--native-cyan-soft);
-  color: var(--color-text-primary);
+  border-color: var(--native-accent-border);
+  background: var(--native-accent-soft);
+  color: var(--native-text);
 }
 
 body.is-native .hub-week-day.is-selected {
   background: var(--native-accent-grad);
-  color: #ffffff;
-  box-shadow: 0 6px 16px rgba(0, 212, 255, 0.28);
-}
-
-body.is-native.editorial-theme .hub-week-day.is-selected {
-  background: #f7b500;
-  color: #231603;
-  box-shadow: 0 6px 16px rgba(247, 181, 0, 0.28);
+  color: var(--native-accent-on);
+  box-shadow: 0 6px 16px var(--native-accent-glow);
 }
 
 body.is-native .hub-week-day.is-selected .hub-week-dot {
-  background: #ffffff;
-}
-
-body.is-native.editorial-theme .hub-week-day.is-selected .hub-week-dot {
-  background: #231603;
+  background: var(--native-accent-on);
 }
 
 body.is-native .hub-week-detail button {
-  color: var(--color-accent-cyan, #00d4ff);
-}
-
-body.is-native.editorial-theme .hub-week-detail button {
-  color: #f7b500;
+  color: var(--native-accent);
 }
 
 /* Hub Search Box */
@@ -517,25 +686,25 @@ body.is-native .hub-search-box {
 }
 
 body.is-native .hub-search-box:focus-within {
-  border-color: rgba(0, 212, 255, 0.62);
-  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.16), var(--native-card-shadow);
+  border-color: var(--native-accent-border-strong);
+  box-shadow: 0 0 0 3px var(--native-accent-ring), var(--native-card-shadow);
 }
 
 body.is-native.light-mode .hub-search-icon-btn,
 body.is-native.light-mode .hub-search-icon-btn svg,
 body.is-native.light-mode .hub-search-icon {
-  color: #334155 !important;
-  stroke: #334155 !important;
+  color: var(--native-text-2) !important;
+  stroke: var(--native-text-2) !important;
   opacity: 1 !important;
 }
 
 body.is-native.light-mode .hub-search-input,
 body.is-native.light-mode .hub-search-input::placeholder {
-  color: #0f172a !important;
+  color: var(--native-text) !important;
 }
 
 body.is-native.light-mode .hub-search-input::placeholder {
-  color: rgba(15, 23, 42, 0.45) !important;
+  color: var(--native-text-3) !important;
 }
 
 body.is-native .hub-search-btn-badge {
@@ -543,9 +712,10 @@ body.is-native .hub-search-btn-badge {
   padding: 7px 13px;
   font-size: 0.8rem;
   font-weight: 700;
-  background: linear-gradient(135deg, rgba(58, 45, 255, 0.85), rgba(0, 212, 255, 0.85));
-  color: #ffffff;
+  background: var(--native-accent-grad);
+  color: var(--native-accent-on);
   border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 12px var(--native-accent-glow);
   transition: transform 0.14s ease;
 }
 
@@ -598,8 +768,12 @@ body.is-native .hub-cat-card-wide {
 /* Upcoming Setlist & Guest Prompt Cards */
 body.is-native .upcoming-card {
   border-radius: 20px;
-  border: 1px solid rgba(0, 212, 255, 0.22);
+  border: 1px solid var(--native-accent-border);
   box-shadow: var(--native-specular), 0 14px 32px rgba(0, 0, 0, 0.26);
+}
+
+body.is-native.light-mode .upcoming-card {
+  box-shadow: var(--native-specular), var(--native-card-shadow);
 }
 
 body.is-native .upcoming-card-action {
@@ -698,14 +872,14 @@ body.is-native .hub-news-card:active {
 }
 
 /* ==========================================================================
-   2. LIQUID GLASS BOTTOM DOCK
+   2. LIQUID GLASS BOTTOM DOCK (4-WAY CLASSIC + WARM AMBER / DARK + LIGHT)
    ========================================================================== */
 
 body.is-native .mobile-bottom-nav {
   background: linear-gradient(
     180deg,
-    rgba(28, 30, 44, 0.86) 0%,
-    rgba(14, 15, 24, 0.94) 100%
+    rgba(24, 27, 42, 0.88) 0%,
+    rgba(12, 14, 24, 0.95) 100%
   );
   border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow:
@@ -715,11 +889,20 @@ body.is-native .mobile-bottom-nav {
   -webkit-backdrop-filter: blur(28px) saturate(210%);
 }
 
+body.is-native.editorial-theme .mobile-bottom-nav {
+  background: linear-gradient(
+    180deg,
+    rgba(34, 33, 38, 0.9) 0%,
+    rgba(20, 20, 24, 0.96) 100%
+  );
+  border-color: rgba(255, 245, 225, 0.15);
+}
+
 body.is-native.light-mode .mobile-bottom-nav {
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.92) 0%,
-    rgba(241, 246, 255, 0.86) 100%
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(241, 246, 255, 0.88) 100%
   );
   border-color: rgba(15, 23, 42, 0.11);
   box-shadow:
@@ -727,57 +910,71 @@ body.is-native.light-mode .mobile-bottom-nav {
     inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 
+body.is-native.light-mode.editorial-theme .mobile-bottom-nav {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 253, 249, 0.95) 0%,
+    rgba(249, 243, 232, 0.9) 100%
+  );
+  border-color: rgba(120, 82, 26, 0.14);
+  box-shadow:
+    0 14px 34px rgba(92, 60, 14, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
 body.is-native .nav-liquid-indicator {
   background: linear-gradient(
     160deg,
-    rgba(0, 212, 255, 0.22) 0%,
-    rgba(58, 45, 255, 0.18) 100%
+    var(--native-accent-soft) 0%,
+    var(--native-accent-soft-2) 100%
   );
-  border: 1px solid rgba(0, 212, 255, 0.34);
+  border: 1px solid var(--native-accent-border);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    0 4px 14px rgba(0, 212, 255, 0.16);
-}
-
-body.is-native.editorial-theme .nav-liquid-indicator {
-  background: rgba(247, 181, 0, 0.18);
-  border-color: rgba(247, 181, 0, 0.38);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 4px 14px var(--native-accent-ring);
 }
 
 body.is-native.light-mode .nav-liquid-indicator {
   background: linear-gradient(
     160deg,
-    rgba(0, 148, 214, 0.14) 0%,
-    rgba(58, 45, 255, 0.12) 100%
+    var(--native-accent-soft) 0%,
+    var(--native-accent-soft-2) 100%
   );
-  border-color: rgba(0, 148, 214, 0.28);
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+  border-color: var(--native-accent-border);
+  box-shadow: 0 2px 10px var(--native-accent-ring);
 }
 
 body.is-native.light-mode .mobile-bottom-nav .nav-item {
-  color: rgba(17, 24, 39, 0.56);
+  color: var(--native-text-3);
+}
+
+body.is-native .mobile-bottom-nav .nav-item.active,
+body.is-native .mobile-bottom-nav .nav-item.active .nav-label,
+body.is-native .mobile-bottom-nav .nav-item.scrub-hovered .nav-label {
+  color: var(--native-accent-text) !important;
 }
 
 body.is-native.light-mode .mobile-bottom-nav .nav-item.active,
 body.is-native.light-mode .mobile-bottom-nav .nav-item.active .nav-label,
 body.is-native.light-mode .mobile-bottom-nav .nav-item.scrub-hovered .nav-label {
-  color: #0b172a !important;
+  color: var(--native-accent-strong) !important;
 }
 
 body.is-native .mobile-bottom-nav .nav-item.active svg {
-  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.38));
+  color: var(--native-accent);
+  stroke: var(--native-accent);
+  filter: drop-shadow(0 0 8px var(--native-accent-glow));
 }
 
 body.is-native.light-mode .mobile-bottom-nav .nav-item.active svg,
 body.is-native.light-mode .mobile-bottom-nav .nav-item.scrub-hovered svg {
   filter: none !important;
-  color: #0284c7 !important;
-  stroke: #0284c7 !important;
+  color: var(--native-accent) !important;
+  stroke: var(--native-accent) !important;
 }
 
 /* ==========================================================================
-   3. SONGS SCREEN — UNIFIED CYAN/INDIGO GLASS HARMONY
+   3. SONGS SCREEN — UNIFIED 4-WAY THEME HARMONY
    ========================================================================== */
 
 body.is-native .songs-page {
@@ -791,29 +988,22 @@ body.is-native .songs-page .songs-header {
 
 body.is-native .songs-page .songs-title {
   letter-spacing: -0.025em;
+  color: var(--native-text);
 }
 
 body.is-native .songs-page .count-badge {
-  background: var(--native-cyan-soft);
-  border: 1px solid var(--native-cyan-border);
-  color: #7ee8ff;
+  background: var(--native-accent-soft);
+  border: 1px solid var(--native-accent-border);
+  color: var(--native-accent-text);
   font-size: 0.78rem;
   font-weight: 700;
 }
 
-body.is-native.light-mode .songs-page .count-badge {
-  color: #0369a1;
-}
-
 body.is-native .songs-page .random-song-btn {
-  background: var(--native-cyan-soft);
-  border-color: var(--native-cyan-border);
-  color: #e6fbff;
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
   border-radius: 14px;
-}
-
-body.is-native.light-mode .songs-page .random-song-btn {
-  color: #0c4a6e;
 }
 
 body.is-native .songs-page .songs-search-box,
@@ -828,55 +1018,40 @@ body.is-native .songs-page .search-box {
 
 body.is-native .songs-page .songs-search-box:focus-within,
 body.is-native .songs-page .search-box:focus-within {
-  border-color: rgba(0, 212, 255, 0.62) !important;
+  border-color: var(--native-accent-border-strong) !important;
   box-shadow:
-    0 0 0 3px rgba(0, 212, 255, 0.16),
+    0 0 0 3px var(--native-accent-ring),
     var(--native-card-shadow) !important;
 }
 
 body.is-native .songs-page .search-box-icon-btn,
 body.is-native .songs-page .search-box-icon-btn svg,
 body.is-native .songs-page .search-box-icon {
-  color: rgba(255, 255, 255, 0.72) !important;
-  stroke: rgba(255, 255, 255, 0.72) !important;
+  color: var(--native-text-2) !important;
+  stroke: var(--native-text-2) !important;
 }
 
-body.is-native.light-mode .songs-page .search-box-icon-btn,
-body.is-native.light-mode .songs-page .search-box-icon-btn svg,
-body.is-native.light-mode .songs-page .search-box-icon {
-  color: #334155 !important;
-  stroke: #334155 !important;
-}
-
-body.is-native.light-mode .songs-page .songs-search-box:focus-within,
-body.is-native.light-mode .songs-page .search-box:focus-within {
-  border-color: rgba(2, 132, 199, 0.55) !important;
-  box-shadow:
-    0 0 0 3px rgba(2, 132, 199, 0.14),
-    var(--native-card-shadow) !important;
+body.is-native .songs-page .songs-tab {
+  color: var(--native-text-2);
 }
 
 body.is-native .songs-page .songs-tab.active {
-  color: var(--color-accent-cyan, #00d4ff);
-}
-
-body.is-native.light-mode .songs-page .songs-tab.active {
-  color: #0284c7;
+  color: var(--native-accent-text) !important;
 }
 
 body.is-native .songs-page .songs-tab.active::after {
-  background: linear-gradient(90deg, #3a2dff 0%, #00d4ff 100%);
+  background: var(--native-accent-grad);
 }
 
 body.is-native.light-mode .songs-page .cat-pill {
-  background: rgba(255, 255, 255, 0.88);
-  border-color: rgba(15, 23, 42, 0.12);
-  color: #334155;
+  background: var(--native-surface-1);
+  border-color: var(--native-hairline-strong);
+  color: var(--native-text-2);
 }
 
 body.is-native.light-mode .songs-page .cat-counter {
-  background: rgba(15, 23, 42, 0.08);
-  color: #334155;
+  background: var(--native-surface-press);
+  color: var(--native-text-2);
 }
 
 body.is-native .songs-page .category-scroll-container,
@@ -915,22 +1090,20 @@ body.is-native .songs-page .cat-pill .cat-icon {
 
 body.is-native .songs-page .cat-pill.active,
 body.is-native .songs-page .kp.active {
-  background: linear-gradient(135deg, rgba(58, 45, 255, 0.42), rgba(0, 212, 255, 0.28));
-  border-color: rgba(0, 212, 255, 0.68);
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(0, 212, 255, 0.2);
-}
-
-body.is-native.light-mode .songs-page .cat-pill.active,
-body.is-native.light-mode .songs-page .kp.active {
-  background: linear-gradient(135deg, #3a2dff, #0284c7);
-  border-color: transparent;
-  color: #ffffff;
+  background: var(--native-accent-grad) !important;
+  border-color: transparent !important;
+  color: var(--native-accent-on) !important;
+  box-shadow: 0 4px 14px var(--native-accent-glow);
 }
 
 body.is-native .songs-page .cat-pill.active .cat-counter {
-  background: rgba(0, 212, 255, 0.85);
-  color: #031522;
+  background: rgba(255, 255, 255, 0.24);
+  color: var(--native-accent-on);
+}
+
+body.is-native.editorial-theme .songs-page .cat-pill.active .cat-counter {
+  background: rgba(31, 20, 2, 0.18);
+  color: var(--native-accent-on);
 }
 
 /* Song Rows as Elevated Glass Cards */
@@ -943,8 +1116,12 @@ body.is-native .songs-page .track-item {
   border: 1px solid var(--native-hairline);
   border-radius: 17px;
   padding: 11px 12px;
-  box-shadow: var(--native-specular), 0 6px 16px rgba(0, 0, 0, 0.16);
+  box-shadow: var(--native-specular), 0 6px 16px rgba(0, 0, 0, 0.14);
   transition: transform 0.14s ease, background-color 0.16s ease, border-color 0.16s ease;
+}
+
+body.is-native.light-mode .songs-page .track-item {
+  box-shadow: var(--native-specular), var(--native-card-shadow);
 }
 
 body.is-native .songs-page .track-item:active {
@@ -955,6 +1132,7 @@ body.is-native .songs-page .track-item:active {
 body.is-native .songs-page .modern-select {
   background-color: var(--native-surface-2);
   border-color: var(--native-hairline);
+  color: var(--native-text);
   height: auto;
   min-height: 38px;
   padding: 8px 34px 8px 14px;
@@ -962,16 +1140,16 @@ body.is-native .songs-page .modern-select {
 }
 
 body.is-native.light-mode .songs-page .modern-select {
-  background-color: rgba(255, 255, 255, 0.94);
-  color: #0f172a;
+  background-color: var(--native-surface-1);
+  color: var(--native-text);
 }
 
 body.is-native .songs-page .modern-select:focus {
-  border-color: rgba(0, 212, 255, 0.55);
+  border-color: var(--native-accent-border-strong);
 }
 
 body.is-native.light-mode .songs-page .action-icon-btn {
-  color: rgba(15, 23, 42, 0.54);
+  color: var(--native-text-3);
 }
 
 body.is-native.light-mode .songs-page .action-icon-btn.heart-btn.active {
@@ -984,26 +1162,15 @@ body.is-native .songs-page .track-cover {
 }
 
 body.is-native .songs-page .track-key-badge {
-  background: var(--native-cyan-soft);
-  border: 1px solid rgba(0, 212, 255, 0.26);
-  color: #7ee8ff;
+  background: var(--native-accent-soft);
+  border: 1px solid var(--native-accent-border);
+  color: var(--native-accent-text);
 }
 
 body.is-native .songs-page .track-bpm-badge {
-  background: rgba(58, 45, 255, 0.18);
-  border: 1px solid rgba(114, 107, 255, 0.3);
-  color: #b8beff;
-}
-
-body.is-native.light-mode .songs-page .track-key-badge {
-  color: #0369a1;
-  border-color: rgba(2, 132, 199, 0.22);
-}
-
-body.is-native.light-mode .songs-page .track-bpm-badge {
-  background: rgba(58, 45, 255, 0.09);
-  border-color: rgba(58, 45, 255, 0.2);
-  color: #3a2dff;
+  background: var(--native-secondary-soft);
+  border: 1px solid var(--native-secondary-border);
+  color: var(--native-secondary-text);
 }
 
 /* ==========================================================================
@@ -1017,9 +1184,9 @@ body.is-native :is(
   .search-suggestions-popover
 ) {
   animation: wpPopIn var(--wp-dur-2) var(--wp-ease-out) both;
-  background: rgba(16, 18, 28, 0.94);
+  background: var(--native-surface-elevated);
   border: 1px solid var(--native-hairline-strong);
-  box-shadow: var(--native-specular), 0 18px 42px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--native-specular), 0 18px 42px rgba(0, 0, 0, 0.42);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
@@ -1029,8 +1196,8 @@ body.is-native.light-mode :is(
   .sv-tools-menu,
   .search-suggestions-popover
 ) {
-  background: rgba(255, 255, 255, 0.96);
-  border-color: rgba(15, 23, 42, 0.12);
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline-strong);
   box-shadow: 0 14px 36px rgba(15, 23, 42, 0.14);
 }
 
@@ -1040,15 +1207,16 @@ body.is-native :is(.sv-tone-capo-card, .sv-inline-metronome-wrap, .hub-week-deta
 
 body.is-native .toast-message {
   animation: wpToastPop var(--wp-dur-2) var(--wp-ease-out) both;
-  background: rgba(16, 18, 28, 0.94);
+  background: var(--native-surface-elevated);
+  color: var(--native-text);
   border: 1px solid var(--native-hairline-strong);
-  box-shadow: var(--native-specular), 0 14px 36px rgba(0, 0, 0, 0.48);
+  box-shadow: var(--native-specular), 0 14px 36px rgba(0, 0, 0, 0.42);
 }
 
 body.is-native.light-mode .toast-message {
-  background: rgba(255, 255, 255, 0.96);
-  color: #0f172a;
-  border-color: rgba(15, 23, 42, 0.12);
+  background: var(--native-surface-elevated);
+  color: var(--native-text);
+  border-color: var(--native-hairline-strong);
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
 }
 
@@ -1080,7 +1248,7 @@ body.is-native .bible-segmented {
   border-radius: 999px;
   background: var(--native-surface-1);
   border: 1px solid var(--native-hairline);
-  box-shadow: var(--native-specular), 0 6px 18px rgba(0, 0, 0, 0.16);
+  box-shadow: var(--native-specular), 0 6px 18px rgba(0, 0, 0, 0.14);
 }
 
 body.is-native .song-view-page .sv-segment,
@@ -1094,16 +1262,8 @@ body.is-native .song-view-page .sv-segment.active,
 body.is-native .chord-instrument-tabs button.active,
 body.is-native .bible-segmented button.active {
   background: var(--native-accent-grad);
-  color: #ffffff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), 0 4px 12px rgba(0, 212, 255, 0.24);
-}
-
-body.is-native.editorial-theme .song-view-page .sv-segment.active,
-body.is-native.editorial-theme .chord-instrument-tabs button.active,
-body.is-native.editorial-theme .bible-segmented button.active {
-  background: #f7b500;
-  color: #231603;
-  box-shadow: 0 4px 12px rgba(247, 181, 0, 0.26);
+  color: var(--native-accent-on);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), 0 4px 12px var(--native-accent-glow);
 }
 
 body.is-native .song-view-page .sv-meta-pill {
@@ -1114,9 +1274,10 @@ body.is-native .song-view-page .sv-meta-pill {
 }
 
 body.is-native .song-view-page .sv-meta-pill.is-open {
-  background: var(--native-cyan-soft);
-  border-color: var(--native-cyan-border);
-  box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.14);
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+  box-shadow: 0 0 0 2px var(--native-accent-ring);
 }
 
 body.is-native .sv-tone-capo-card {
@@ -1135,13 +1296,15 @@ body.is-native .sv-tone-key-chip.active,
 body.is-native .sv-capo-chip.active {
   background: var(--native-accent-grad);
   border-color: transparent;
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.24);
+  color: var(--native-accent-on);
+  box-shadow: 0 4px 12px var(--native-accent-glow);
 }
 
 body.is-native .sv-sticky-save-btn {
-  background: var(--native-accent-grad);
+  background: var(--native-accent-grad) !important;
+  color: var(--native-accent-on) !important;
   border-radius: 999px;
+  box-shadow: 0 8px 20px var(--native-accent-glow);
   transition: transform var(--wp-dur-1) var(--wp-ease-out), box-shadow var(--wp-dur-2) var(--wp-ease-soft);
 }
 
@@ -1164,7 +1327,8 @@ body.is-native .setlists-page .sl-card:active {
 
 body.is-native .setlists-page .btn-new-set {
   background: var(--native-accent-grad);
-  box-shadow: 0 8px 20px rgba(0, 212, 255, 0.24);
+  color: var(--native-accent-on);
+  box-shadow: 0 8px 20px var(--native-accent-glow);
 }
 
 /* Bible Sticky Topbar & Controls */
@@ -1176,9 +1340,9 @@ body.is-native .bible-topbar {
   gap: 8px;
   padding: 10px 12px;
   border-radius: 18px;
-  background: rgba(16, 18, 28, 0.88);
+  background: var(--native-surface-1);
   border: 1px solid var(--native-hairline-strong);
-  box-shadow: var(--native-specular), 0 12px 28px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--native-specular), var(--native-card-shadow);
 }
 
 body.is-native .bible-topbar-left {
@@ -1195,12 +1359,6 @@ body.is-native .bible-topbar-right {
   flex-wrap: wrap;
 }
 
-body.is-native.light-mode .bible-topbar {
-  background: rgba(255, 255, 255, 0.92);
-  border-color: var(--native-hairline-strong);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-}
-
 body.is-native .bible-pill-btn {
   height: 36px;
   padding: 0 12px;
@@ -1209,6 +1367,7 @@ body.is-native .bible-pill-btn {
   flex-shrink: 0;
   background: var(--native-surface-2);
   border-color: var(--native-hairline);
+  color: var(--native-text);
 }
 
 body.is-native .bible-tr-select {
@@ -1227,6 +1386,7 @@ body.is-native .bible-tr-select {
   background-repeat: no-repeat;
   background-position: right 9px center;
   border-color: var(--native-hairline);
+  color: var(--native-text);
 }
 
 body.is-native.light-mode .bible-tr-select {
@@ -1239,26 +1399,23 @@ body.is-native .bible-reader-head h1 {
 }
 
 /* ChurchHub & MediaHub */
-body.is-native .church-segmented {
+body.is-native .church-segmented,
+body.is-native .media-segmented {
   background: var(--native-surface-1);
   border: 1px solid var(--native-hairline);
-  box-shadow: var(--native-specular), 0 6px 18px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--native-specular), var(--native-card-shadow);
 }
 
-body.is-native .church-segmented button {
+body.is-native .church-segmented button,
+body.is-native .media-segmented button {
   transition: transform 0.14s ease, background-color 0.18s ease, color 0.18s ease;
 }
 
-body.is-native .church-segmented button.active {
+body.is-native .church-segmented button.active,
+body.is-native .media-segmented button.active {
   background: var(--native-accent-grad);
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.25);
-}
-
-body.is-native.editorial-theme .church-segmented button.active {
-  background: #f7b500;
-  color: #231603;
-  box-shadow: 0 4px 12px rgba(247, 181, 0, 0.26);
+  color: var(--native-accent-on);
+  box-shadow: 0 4px 12px var(--native-accent-glow);
 }
 
 body.is-native .media-radio-card {
@@ -1289,6 +1446,19 @@ body.is-native .settings-page .settings-menu-list {
 
 body.is-native .settings-page .settings-menu-item:active {
   background: var(--native-surface-press);
+}
+
+/* Warm Amber Light surface parity for global cards & modals */
+body.is-native.light-mode.editorial-theme :is(.modal-content, .modal-card, .settings-card, .profile-card, .profile-menu-item) {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode.editorial-theme .hub-cat-card {
+  background: linear-gradient(160deg, #fffdf9 0%, #f8f2e7 100%);
+  border-color: var(--native-hairline);
 }
 
 @media (prefers-reduced-motion: reduce) {

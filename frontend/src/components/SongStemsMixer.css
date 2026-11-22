@@ -413,3 +413,23 @@
   color: #fff;
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .stems-key-select,
+body.is-native .stems-bpm-val,
+body.is-native .stem-pct-readout {
+  color: var(--native-accent-text);
+}
+
+body.is-native .stems-master-slider {
+  accent-color: var(--native-accent);
+}
+
+body.is-native .stem-fader-fill {
+  background: var(--native-accent-grad);
+}
+
+body.is-native.light-mode .stems-key-select {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+}

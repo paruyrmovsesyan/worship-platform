@@ -1294,3 +1294,110 @@ body.wp-standalone-app > .sla-modal-overlay > .sla-sheet,
   opacity: 0.22;
   cursor: not-allowed;
 }
+
+/* ==========================================================================
+   NATIVE APP 4-WAY DESIGN SYSTEM (Classic & Warm Amber / Dark & Light)
+   Strictly scoped to `body.is-native` so Website & PWA remain untouched.
+   ========================================================================== */
+
+body.is-native .sla-empty-btn,
+body.is-native .sla-btn-primary,
+body.is-native .sla-drawer-checkbox.checked,
+body.is-native .sla-reorder-badge,
+body.is-native .sla-reorder-done-btn {
+  background: var(--native-accent-grad);
+  border-color: transparent;
+  color: var(--native-accent-on);
+  box-shadow: 0 5px 16px var(--native-accent-glow);
+}
+
+body.is-native .sla-key-pill,
+body.is-native .sla-empty-icon,
+body.is-native .sla-drawer-add-btn,
+body.is-native .sla-drag-handle--prominent,
+body.is-native .sla-drag-handle:active,
+body.is-native .sla-drag-handle:hover,
+body.is-native .sla-preset-tag:active,
+body.is-native .sla-reorder-quick-btn:hover:not(:disabled),
+body.is-native .sla-reorder-quick-btn:active:not(:disabled) {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .sla-drawer-item.is-selected,
+body.is-native .sla-song-card.is-touch-dragging,
+body.is-native .sla-section-card.is-touch-dragging {
+  background: var(--native-accent-soft) !important;
+  border-color: var(--native-accent-border-strong) !important;
+  box-shadow: 0 0 18px var(--native-accent-glow) !important;
+}
+
+body.is-native .sla-song-card.is-touch-target::after,
+body.is-native .sla-section-card.is-touch-target::after {
+  background: var(--native-accent-grad);
+  box-shadow: 0 0 12px var(--native-accent-glow);
+}
+
+body.is-native .sla-reorder-banner {
+  background: linear-gradient(135deg, var(--native-accent-soft), var(--native-accent-soft-2));
+  border-color: var(--native-accent-border-strong);
+  box-shadow: 0 6px 20px var(--native-accent-ring);
+}
+
+body.is-native .sla-toast-notice {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-accent-border);
+  color: var(--native-text);
+}
+
+body.is-native .sla-input:focus,
+body.is-native .sla-select:focus,
+body.is-native .sla-textarea:focus {
+  border-color: var(--native-accent-border-strong);
+  box-shadow: 0 0 0 3px var(--native-accent-ring);
+}
+
+body.is-native .sla-song-card,
+body.is-native .sla-section-card,
+body.is-native .sla-modal-sheet,
+body.is-native .sla-drawer-sheet,
+body.is-native .sla-header-card {
+  background: var(--native-surface-1);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .sla-song-card,
+body.is-native.light-mode .sla-section-card,
+body.is-native.light-mode .sla-modal-sheet,
+body.is-native.light-mode .sla-drawer-sheet,
+body.is-native.light-mode .sla-header-card {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode .sla-input,
+body.is-native.light-mode .sla-select,
+body.is-native.light-mode .sla-textarea,
+body.is-native.light-mode .sla-drawer-item,
+body.is-native.light-mode .sla-back-btn,
+body.is-native.light-mode .sla-btn-secondary,
+body.is-native.light-mode .sla-preset-tag {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .sla-song-title,
+body.is-native.light-mode .sla-title,
+body.is-native.light-mode .sla-modal-title {
+  color: var(--native-text);
+}
+
+body.is-native.light-mode .sla-song-artist,
+body.is-native.light-mode .sla-subtitle {
+  color: var(--native-text-2);
+}

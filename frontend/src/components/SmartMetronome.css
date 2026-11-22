@@ -205,3 +205,19 @@
   0% { opacity: 1; }
   100% { opacity: 0; }
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .beat-dot.active {
+  background: var(--native-accent);
+  box-shadow: 0 0 10px var(--native-accent-glow);
+}
+
+body.is-native .stage-visual-pulse-flash {
+  box-shadow: inset 0 0 0 4px var(--native-accent-border-strong);
+}
+
+body.is-native.light-mode .smart-metronome {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}

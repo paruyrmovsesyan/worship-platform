@@ -2535,4 +2535,185 @@ body.light-mode .bible-search-mark {
   color: #78350f;
 }
 
+/* ==========================================================================
+   NATIVE APP 4-WAY DESIGN SYSTEM (Classic & Warm Amber / Dark & Light)
+   Strictly scoped to `body.is-native` so Website & PWA remain untouched.
+   ========================================================================== */
+
+body.is-native .bible-book-trigger {
+  background: linear-gradient(135deg, var(--native-accent-soft), var(--native-accent-soft-2));
+  border-color: var(--native-accent-border);
+  color: var(--native-text);
+}
+
+body.is-native .bible-dot,
+body.is-native .bible-note-dot,
+body.is-native .bible-sheet-ref-dot,
+body.is-native .bible-plan-context-dot {
+  background: var(--native-accent);
+  box-shadow: 0 0 8px var(--native-accent-glow);
+}
+
+body.is-native .bible-tr-select:focus,
+body.is-native .bible-mobile-note-row input:focus {
+  border-color: var(--native-accent-border-strong);
+}
+
+body.is-native .bible-segmented button.active,
+body.is-native .bible-cta-amber,
+body.is-native .bible-aa-pills button.active,
+body.is-native .bible-plan-tab-pill.active,
+body.is-native .bible-plan-hero-pill,
+body.is-native .bible-plan-mark-btn {
+  background: var(--native-accent-grad);
+  border-color: transparent;
+  color: var(--native-accent-on);
+  box-shadow: 0 6px 18px var(--native-accent-glow);
+}
+
+body.is-native .bible-plan-tab-pill.active .bible-plan-tab-meta {
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--native-accent-on);
+}
+
+body.is-native.editorial-theme .bible-plan-tab-pill.active .bible-plan-tab-meta {
+  background: rgba(31, 20, 2, 0.16);
+  color: var(--native-accent-on);
+}
+
+body.is-native .bible-icon-pill.is-bookmarked,
+body.is-native .bible-icon-pill.active,
+body.is-native .bible-testament-tabs button.active,
+body.is-native .bible-book-item.active,
+body.is-native .bible-ch-cell.active,
+body.is-native .bible-reader-kicker,
+body.is-native .bible-badge-pill,
+body.is-native .bible-plan-item.is-next .bible-plan-check,
+body.is-native .bible-plan-status.is-next,
+body.is-native .bible-saved-empty-ico,
+body.is-native .bible-fallback-btns button,
+body.is-native .bible-my-subtab.active,
+body.is-native .bible-pill-btn.is-active-filter,
+body.is-native .bible-stat-ico.is-amber,
+body.is-native .bible-sheet-action-btn:active {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .bible-fallback-banner,
+body.is-native .bible-plan-hero-cta,
+body.is-native .bible-plan-item.is-next,
+body.is-native .bible-plan-context-bar,
+body.is-native .bible-plan-complete-card {
+  background: linear-gradient(145deg, var(--native-accent-soft), var(--native-accent-soft-2));
+  border-color: var(--native-accent-border);
+}
+
+body.is-native .bible-stat-streak {
+  border-color: var(--native-accent-border) !important;
+  background: var(--native-accent-soft) !important;
+}
+
+body.is-native .bible-plan-fill {
+  background: var(--native-accent-grad);
+}
+
+body.is-native .bible-verse-num,
+body.is-native .bible-plan-hero-kicker,
+body.is-native .bible-saved-ref,
+body.is-native .bible-bm-open svg,
+body.is-native .bible-search-hit strong,
+body.is-native .bible-search-hit-head strong,
+body.is-native .bible-sheet-action-btn svg,
+body.is-native .bible-measure-popover strong,
+body.is-native .bible-stat-streak strong,
+body.is-native .bible-plan-complete-kicker {
+  color: var(--native-accent-text);
+}
+
+body.is-native .bible-verse-row.is-selected,
+body.is-native .bible-verses-body.is-flow .bible-verse-row.is-selected {
+  border-left-color: var(--native-accent);
+  background: var(--native-accent-soft);
+  box-shadow: inset 0 0 0 1px var(--native-accent-border);
+}
+
+body.is-native .bible-verse-row.is-selected .bible-verse-num {
+  color: var(--native-accent-strong);
+}
+
+body.is-native .bible-verse-row.is-speaking {
+  background: var(--native-accent-soft) !important;
+  box-shadow: inset 3px 0 0 var(--native-accent);
+}
+
+body.is-native .bible-verse-parallel {
+  border-left-color: var(--native-accent-border);
+}
+
+body.is-native .bible-measure-token {
+  border-bottom-color: var(--native-accent);
+}
+
+body.is-native .bible-measure-token:hover {
+  background: var(--native-accent-soft);
+}
+
+body.is-native .bible-search-mark {
+  background: var(--native-mark-bg);
+  color: var(--native-mark-color);
+}
+
+body.is-native .bible-stat-btn:hover,
+body.is-native .bible-search-result-card:hover {
+  border-color: var(--native-accent-border-strong);
+}
+
+body.is-native > .bible-mobile-sheet,
+body.is-native .bible-mobile-sheet,
+body.is-native > .bible-measure-popover,
+body.is-native .bible-measure-popover {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-accent-border);
+  color: var(--native-text);
+}
+
+body.is-native .bible-search-result-card,
+body.is-native .bible-saved-card,
+body.is-native .bible-plan-card,
+body.is-native .bible-plan-item:not(.is-next),
+body.is-native .bible-stat-btn:not(.bible-stat-streak),
+body.is-native .bible-aa-popover,
+body.is-native .bible-drawer {
+  background: var(--native-surface-1);
+  border-color: var(--native-hairline);
+}
+
+body.is-native.light-mode .bible-search-result-card,
+body.is-native.light-mode .bible-saved-card,
+body.is-native.light-mode .bible-plan-card,
+body.is-native.light-mode .bible-aa-popover,
+body.is-native.light-mode .bible-drawer {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode .bible-plan-tab-pill:not(.active),
+body.is-native.light-mode .bible-my-subtab:not(.active),
+body.is-native.light-mode .bible-aa-pills button:not(.active),
+body.is-native.light-mode .bible-testament-tabs button:not(.active) {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  color: var(--native-text-2);
+}
+
+body.is-native.light-mode .bible-sheet-action-btn,
+body.is-native.light-mode .bible-mobile-note-row input {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
+
 

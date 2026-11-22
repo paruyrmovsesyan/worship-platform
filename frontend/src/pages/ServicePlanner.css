@@ -605,3 +605,53 @@
     padding: 0;
   }
 }
+
+/* Native App 4-Way Theme Support */
+body.is-native .sp-new-plan-btn,
+body.is-native .sp-add-item-btn,
+body.is-native .sp-item-song-link {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+}
+
+body.is-native .sp-title-area h1 {
+  background: var(--native-accent-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body.is-native .sp-btn-primary {
+  background: var(--native-accent-grad);
+  color: var(--native-accent-on);
+  box-shadow: 0 5px 16px var(--native-accent-glow);
+}
+
+body.is-native .sp-item-time,
+body.is-native .sp-roster-person-input,
+body.is-native .sp-key-tag {
+  color: var(--native-accent-text);
+}
+
+body.is-native .sp-roster-person-input:focus {
+  border-bottom-color: var(--native-accent);
+}
+
+body.is-native.light-mode .sp-card,
+body.is-native.light-mode .sp-item-row,
+body.is-native.light-mode .sp-roster-row,
+body.is-native.light-mode .sp-modal {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+  box-shadow: var(--native-card-shadow);
+}
+
+body.is-native.light-mode .service-planner-page input,
+body.is-native.light-mode .service-planner-page select,
+body.is-native.light-mode .service-planner-page textarea {
+  background: var(--native-surface-2);
+  border-color: var(--native-hairline);
+  color: var(--native-text);
+}
