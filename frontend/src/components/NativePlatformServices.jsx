@@ -213,14 +213,42 @@ export default function NativePlatformServices() {
       if (permission.receive !== 'granted') return;
 
       if (Capacitor.getPlatform() === 'android') {
-        await PushNotifications.createChannel({
-          id: 'worship-default',
-          name: 'Worship Platform',
-          description: 'Հաղորդագրություններ և կարևոր թարմացումներ',
-          importance: 4,
-          visibility: 1,
-          vibration: true,
-        }).catch(() => {});
+        await Promise.all([
+          PushNotifications.createChannel({
+            id: 'worship-chat',
+            name: 'Չատ և Զանգեր',
+            description: 'Անձնական նամակներ, խմբային չատ և զանգերի ծանուցումներ',
+            importance: 5,
+            visibility: 1,
+            vibration: true,
+            lights: true,
+            lightColor: '#9D72FF',
+          }),
+          PushNotifications.createChannel({
+            id: 'worship-team',
+            name: 'Երգացանկ և Թիմ',
+            description: 'Երգացանկերի փոփոխություններ և ծառայությունների թարմացումներ',
+            importance: 4,
+            visibility: 1,
+            vibration: true,
+          }),
+          PushNotifications.createChannel({
+            id: 'worship-news',
+            name: 'Հայտարարություններ և Նորություններ',
+            description: 'Ընդհանուր հայտարարություններ և համակարգի նորություններ',
+            importance: 3,
+            visibility: 0,
+            vibration: false,
+          }),
+          PushNotifications.createChannel({
+            id: 'worship-default',
+            name: 'Worship Platform',
+            description: 'Հաղորդագրություններ և կարևոր թարմացումներ',
+            importance: 4,
+            visibility: 1,
+            vibration: true,
+          }),
+        ]).catch(() => {});
       }
 
       addHandle(PushNotifications.addListener('registration', ({ value }) => {
@@ -249,12 +277,23 @@ export default function NativePlatformServices() {
         }
         const localPermission = await LocalNotifications.checkPermissions().catch(() => ({ display: 'denied' }));
         if (localPermission.display !== 'granted') return;
+        const notifType = notification?.data?.type || '';
+        let channelId = 'worship-default';
+        if (Capacitor.getPlatform() === 'android') {
+          if (notifType === 'chat' || notifType === 'message' || targetPath?.startsWith('/chat/')) {
+            channelId = 'worship-chat';
+          } else if (notifType === 'setlist' || targetPath?.startsWith('/setlists/')) {
+            channelId = 'worship-team';
+          } else if (notifType === 'announcement' || targetPath?.startsWith('/news/')) {
+            channelId = 'worship-news';
+          }
+        }
         await LocalNotifications.schedule({
           notifications: [{
             id: Math.floor(Date.now() % 2147483647),
             title: notification.title || notification?.data?.title || 'Worship Platform',
             body: notification.body || notification?.data?.body || '',
-            channelId: Capacitor.getPlatform() === 'android' ? 'worship-default' : undefined,
+            channelId: Capacitor.getPlatform() === 'android' ? channelId : undefined,
             smallIcon: 'ic_stat_notification',
             iconColor: '#9D72FF',
             extra: notification.data || {},

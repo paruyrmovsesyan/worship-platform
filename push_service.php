@@ -1904,6 +1904,16 @@ function wp_push_send_fcm_token(string $fcmToken, string $title, string $body, s
         }
     }
 
+    $notifType = (string)($extra['type'] ?? '');
+    $channelId = 'worship-default';
+    if ($notifType === 'chat' || $notifType === 'message' || str_starts_with($url, '/chat/')) {
+        $channelId = 'worship-chat';
+    } elseif ($notifType === 'setlist' || str_starts_with($url, '/setlists/')) {
+        $channelId = 'worship-team';
+    } elseif ($notifType === 'announcement' || str_starts_with($url, '/news/')) {
+        $channelId = 'worship-news';
+    }
+
     $message = [
         'message' => [
             'token' => $fcmToken,
@@ -1915,7 +1925,7 @@ function wp_push_send_fcm_token(string $fcmToken, string $title, string $body, s
             'android' => [
                 'priority' => 'high',
                 'notification' => [
-                    'channel_id' => 'worship-default',
+                    'channel_id' => $channelId,
                     'sound'      => 'default',
                     'icon'       => 'ic_stat_notification',
                     'color'      => '#9D72FF',
