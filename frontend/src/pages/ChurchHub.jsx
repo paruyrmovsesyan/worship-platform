@@ -255,6 +255,20 @@ export default function ChurchHub() {
   }, [activeTab, churchQuery, loadChurches, loadCalendar, loadRehearsals]);
 
   useEffect(() => {
+    const handleNativeRefresh = (event) => {
+      const path = event?.detail?.pathname;
+      if (path && path !== '/church') return;
+      loadFeed();
+      loadMyChurch();
+      if (activeTab === 'calendar') loadCalendar();
+      if (activeTab === 'rehearsals') loadRehearsals();
+      if (activeTab === 'directory') loadChurches(churchQuery);
+    };
+    window.addEventListener('wp-native-refresh', handleNativeRefresh);
+    return () => window.removeEventListener('wp-native-refresh', handleNativeRefresh);
+  }, [activeTab, churchQuery, loadFeed, loadMyChurch, loadCalendar, loadRehearsals, loadChurches]);
+
+  useEffect(() => {
     if (!showRehearsalModal || !user) return;
     fetch('/setlists_api.php?action=get_setlists', { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : []))

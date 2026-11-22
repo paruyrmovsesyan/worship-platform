@@ -427,6 +427,13 @@ export default function WorshipStudioHub() {
     }
   }, [songs, selectedSong, initialSongId]);
 
+  const padPlayingRef = useRef(padPlaying);
+  const songDetailsCacheRef = useRef(songDetailsCache);
+  useEffect(() => {
+    padPlayingRef.current = padPlaying;
+    songDetailsCacheRef.current = songDetailsCache;
+  }, [padPlaying, songDetailsCache]);
+
   // Fetch full song details (lyrics, chords, stems)
   useEffect(() => {
     const songId = selectedSong?.id;
@@ -439,12 +446,12 @@ export default function WorshipStudioHub() {
     if (rawSongKey) {
       const cleanRoot = String(rawSongKey).replace(/m.*$/i, '').trim();
       const matchedPad = PAD_KEYS.find((k) => k.key.toLowerCase() === cleanRoot.toLowerCase());
-      if (matchedPad && !padPlaying) {
+      if (matchedPad && !padPlayingRef.current) {
         setPadKey(matchedPad.key);
       }
     }
 
-    if (songDetailsCache[songId]?.lyrics || songDetailsCache[songId]?.chords) {
+    if (songDetailsCacheRef.current[songId]?.lyrics || songDetailsCacheRef.current[songId]?.chords) {
       return;
     }
 
@@ -464,7 +471,7 @@ export default function WorshipStudioHub() {
     return () => {
       active = false;
     };
-  }, [selectedSong?.id]);
+  }, [selectedSong?.id, selectedSong?.song_key, selectedSong?.tonality]);
 
   const activeSongFull = useMemo(() => {
     if (!selectedSong) return null;

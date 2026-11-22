@@ -366,8 +366,16 @@ export default function SetlistEditorApp() {
       lastSync = now;
       fetchSetlist();
     };
+    const handleNativeRefresh = (event) => {
+      const path = event?.detail?.pathname;
+      if (!path || path.startsWith('/setlists/')) {
+        lastSync = Date.now();
+        fetchSetlist();
+      }
+    };
     window.addEventListener('focus', handleSync);
     window.addEventListener('worship:setlists-changed', handleSync);
+    window.addEventListener('wp-native-refresh', handleNativeRefresh);
     const handleVis = () => {
       if (document.visibilityState === 'visible') handleSync();
     };
@@ -375,6 +383,7 @@ export default function SetlistEditorApp() {
     return () => {
       window.removeEventListener('focus', handleSync);
       window.removeEventListener('worship:setlists-changed', handleSync);
+      window.removeEventListener('wp-native-refresh', handleNativeRefresh);
       document.removeEventListener('visibilitychange', handleVis);
     };
   }, [id]);
