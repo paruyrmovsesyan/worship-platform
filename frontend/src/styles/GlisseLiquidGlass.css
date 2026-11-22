@@ -470,21 +470,23 @@ body.is-app > .radio-mini-pill.lg-glass {
 
 /* ==========================================================================
    8. PAGE-TO-PAGE ROUTE TRANSITION & LIQUID GLASS TOP LOADER / SKELETON
+   Important: Never apply `transform` or `will-change: transform` to
+   `.route-animate` — doing so creates a transformed containing block that
+   breaks `position: sticky` and `position: fixed` elements (like the Bible
+   topbar and floating buttons) and causes flickering on iOS/Android.
    ========================================================================== */
 @keyframes wpLiquidRouteIn {
   0% {
     opacity: 0.01;
-    transform: translate3d(0, 6px, 0);
   }
   100% {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 
 body:not(.is-native):not(.reduce-motion) .route-animate {
-  animation: wpLiquidRouteIn 220ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
-  will-change: opacity, transform;
+  animation: wpLiquidRouteIn 180ms cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+  will-change: opacity;
 }
 
 /* Non-blocking Liquid Glass Top Progress Ribbon + Floating Pill Spinner */
