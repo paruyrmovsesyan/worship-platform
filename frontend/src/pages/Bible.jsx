@@ -8,7 +8,6 @@ import { lazyWithRetry } from '../utils/lazyWithRetry';
 import {
   BIBLE_BOOKS,
   BIBLE_BOOK_GENRES,
-  BIBLE_READING_PLAN,
   BIBLE_READING_PLANS,
   BIBLICAL_MEASURES,
   DEFAULT_BIBLE_TRANSLATIONS,
@@ -17,7 +16,7 @@ import {
   getBookName,
   matchMeasureToken,
 } from '../utils/bibleData';
-import { nativeShare } from '../utils/nativeFeatures';
+import { nativeShare, triggerHaptic } from '../utils/nativeFeatures';
 import './Bible.css';
 
 const VerseShareCardModal = lazyWithRetry(
@@ -27,6 +26,7 @@ const VerseShareCardModal = lazyWithRetry(
 
 const BIBLE_STREAK_KEY = 'wp_bible_streak_v1';
 const BIBLE_PLANS_PROGRESS_KEY = 'wp_bible_plans_progress_v1';
+const BIBLE_ACTIVE_PLAN_KEY = 'wp_bible_active_plan_v1';
 
 function getTodayIsoDate() {
   const d = new Date();
@@ -125,7 +125,9 @@ export default function Bible() {
     [language],
   );
 
-  const [activeTab, setActiveTab] = useState('read'); // 'read' | 'my'
+  const [activeTab, setActiveTab] = useState(() =>
+    searchParams.get('tab') === 'my' ? 'my' : 'read',
+  ); // 'read' | 'my'
   const [translations, setTranslations] = useState(DEFAULT_BIBLE_TRANSLATIONS);
   const [translation, setTranslation] = useState(() => {
     const paramTr = searchParams.get('tr');
@@ -170,7 +172,32 @@ export default function Bible() {
   const [offlineProgress, setOfflineProgress] = useState(null); // { done, total }
   const [offlineReadyTick, setOfflineReadyTick] = useState(0);
   const [showShareCardModal, setShowShareCardModal] = useState(false);
-  const [activePlanId, setActivePlanId] = useState('essentials_14');
+  const [activePlanId, setActivePlanId] = useState(() => {
+    const paramPlan = searchParams.get('plan');
+    if (paramPlan && BIBLE_READING_PLANS.some((p) => p.id === paramPlan)) {
+      return paramPlan;
+    }
+    try {
+      const saved = localStorage.getItem(BIBLE_ACTIVE_PLAN_KEY);
+      if (saved && BIBLE_READING_PLANS.some((p) => p.id === saved)) return saved;
+    } catch { /* ignore storage error */ }
+    return 'essentials_14';
+  });
+  const [activePlanSession, setActivePlanSession] = useState(() => {
+    const paramPlan = searchParams.get('plan');
+    const paramDay = Number(searchParams.get('day'));
+    if (paramPlan && paramDay > 0) {
+      const plan = BIBLE_READING_PLANS.find((p) => p.id === paramPlan);
+      const item = plan?.days.find((d) => d.day === paramDay);
+      if (plan && item) {
+        return { planId: plan.id, day: item.day, book: item.book, chapter: item.chapter };
+      }
+    }
+    return null;
+  }); // { planId, day, book, chapter } | null
+  const [mySubTab, setMySubTab] = useState('plans'); // 'plans' | 'saved'
+  const [savedFilter, setSavedFilter] = useState('all'); // 'all' | 'bookmarks' | 'notes' | 'highlights'
+  const [showAllPlanDays, setShowAllPlanDays] = useState(false);
   const [extraPlanProgress, setExtraPlanProgress] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(BIBLE_PLANS_PROGRESS_KEY) || '{}') || {};
@@ -777,10 +804,13 @@ export default function Bible() {
     });
   }, [bookId, chapter, userState.notes, multiSelectMode]);
 
-  const selectBookChapter = (bId, chNum = 1) => {
+  const selectBookChapter = (bId, chNum = 1, options = {}) => {
     const b = BIBLE_BOOKS.find((item) => item.id === bId);
     const maxCh = b?.chapters || 1;
     stopAudioRead();
+    if (!options.keepPlanSession) {
+      setActivePlanSession(null);
+    }
     setBookId(bId);
     setChapter(Math.max(1, Math.min(maxCh, chNum)));
     setSelectedVerse(null);
@@ -893,42 +923,136 @@ export default function Bible() {
     });
   };
 
+  const handleSelectPlan = useCallback((planId) => {
+    setActivePlanId(planId);
+    setShowAllPlanDays(false);
+    try {
+      localStorage.setItem(BIBLE_ACTIVE_PLAN_KEY, planId);
+    } catch { /* ignore storage error */ }
+  }, []);
+
   const activePlan = useMemo(
     () => BIBLE_READING_PLANS.find((p) => p.id === activePlanId) || BIBLE_READING_PLANS[0],
     [activePlanId],
   );
 
-  const activePlanCompletedDays = useMemo(() => {
-    if (activePlan.id === 'essentials_14') return userState.plan_days || [];
-    const arr = extraPlanProgress[activePlan.id];
-    return Array.isArray(arr) ? arr : [];
-  }, [activePlan.id, userState.plan_days, extraPlanProgress]);
+  const getPlanCompletedDays = useCallback(
+    (planId) => {
+      if (planId === 'essentials_14') return Array.isArray(userState.plan_days) ? userState.plan_days : [];
+      const arr = extraPlanProgress[planId];
+      return Array.isArray(arr) ? arr : [];
+    },
+    [userState.plan_days, extraPlanProgress],
+  );
 
-  const togglePlanDay = (day) => {
-    setReadingStreak(recordReadingStreak());
-    if (activePlan.id === 'essentials_14') {
+  const activePlanCompletedDays = useMemo(
+    () => getPlanCompletedDays(activePlan.id),
+    [activePlan.id, getPlanCompletedDays],
+  );
+
+  const activePlanPercent = useMemo(
+    () => Math.round((activePlanCompletedDays.length / Math.max(1, activePlan.days.length)) * 100),
+    [activePlanCompletedDays.length, activePlan.days.length],
+  );
+
+  const activePlanNextDay = useMemo(
+    () => activePlan.days.find((d) => !activePlanCompletedDays.includes(d.day)) || null,
+    [activePlan.days, activePlanCompletedDays],
+  );
+
+  const visiblePlanDays = useMemo(() => {
+    if (showAllPlanDays || activePlan.days.length <= 7) return activePlan.days;
+    const nextIdx = activePlanNextDay
+      ? activePlan.days.findIndex((d) => d.day === activePlanNextDay.day)
+      : 0;
+    const start = Math.max(0, Math.min(nextIdx - 2, activePlan.days.length - 7));
+    return activePlan.days.slice(start, start + 7);
+  }, [activePlan.days, activePlanNextDay, showAllPlanDays]);
+
+  const setPlanDayStatus = (planId, day, forceCompleted = null) => {
+    const currentList = getPlanCompletedDays(planId);
+    const exists = currentList.includes(day);
+    const shouldComplete = forceCompleted === null ? !exists : Boolean(forceCompleted);
+    if (shouldComplete) {
+      setReadingStreak(recordReadingStreak());
+      triggerHaptic('success');
+    } else {
+      triggerHaptic('light');
+    }
+
+    if (planId === 'essentials_14') {
       persistUserState((prev) => {
-        const exists = prev.plan_days.includes(day);
-        return {
-          ...prev,
-          plan_days: exists ? prev.plan_days.filter((d) => d !== day) : [...prev.plan_days, day],
-        };
+        const prevDays = Array.isArray(prev.plan_days) ? prev.plan_days : [];
+        const has = prevDays.includes(day);
+        const nextDays = shouldComplete
+          ? (has ? prevDays : [...prevDays, day])
+          : prevDays.filter((d) => d !== day);
+        return { ...prev, plan_days: nextDays };
       });
       return;
     }
+
     setExtraPlanProgress((prev) => {
-      const list = Array.isArray(prev[activePlan.id]) ? prev[activePlan.id] : [];
-      const exists = list.includes(day);
-      const next = {
-        ...prev,
-        [activePlan.id]: exists ? list.filter((d) => d !== day) : [...list, day],
-      };
+      const list = Array.isArray(prev[planId]) ? prev[planId] : [];
+      const has = list.includes(day);
+      const nextDays = shouldComplete
+        ? (has ? list : [...list, day])
+        : list.filter((d) => d !== day);
+      const next = { ...prev, [planId]: nextDays };
       try {
         localStorage.setItem(BIBLE_PLANS_PROGRESS_KEY, JSON.stringify(next));
-      } catch {}
+      } catch { /* ignore storage error */ }
       return next;
     });
   };
+
+  const togglePlanDay = (day) => {
+    setPlanDayStatus(activePlan.id, day, null);
+  };
+
+  const openPlanDay = (plan, item) => {
+    if (!plan || !item) return;
+    handleSelectPlan(plan.id);
+    setActivePlanSession({
+      planId: plan.id,
+      day: item.day,
+      book: item.book,
+      chapter: item.chapter,
+    });
+    selectBookChapter(item.book, item.chapter, { keepPlanSession: true });
+  };
+
+  const matchedPlanContext = useMemo(() => {
+    const buildContext = (plan, item) => {
+      const completedDays = getPlanCompletedDays(plan.id);
+      const isDone = completedDays.includes(item.day);
+      const nextUnread =
+        plan.days.find((d) => d.day > item.day && !completedDays.includes(d.day)) ||
+        plan.days.find((d) => d.day !== item.day && !completedDays.includes(d.day)) ||
+        null;
+      const doneCount = completedDays.length;
+      const totalDays = plan.days.length;
+      const percent = Math.round((doneCount / Math.max(1, totalDays)) * 100);
+      return { plan, item, completedDays, isDone, nextUnread, doneCount, totalDays, percent };
+    };
+
+    if (
+      activePlanSession &&
+      activePlanSession.book === bookId &&
+      activePlanSession.chapter === chapter
+    ) {
+      const plan = BIBLE_READING_PLANS.find((p) => p.id === activePlanSession.planId);
+      const item = plan?.days.find((d) => d.day === activePlanSession.day);
+      if (plan && item) return buildContext(plan, item);
+    }
+
+    const fallbackItem = activePlan?.days.find((d) => d.book === bookId && d.chapter === chapter);
+    if (activePlan && fallbackItem) {
+      return buildContext(activePlan, fallbackItem);
+    }
+
+    return null;
+  }, [activePlanSession, activePlan, bookId, chapter, getPlanCompletedDays]);
 
   const getSelectedFormattedPassage = () => {
     const nums = selectedVerses.length > 0 ? [...selectedVerses].sort((a, b) => a - b) : (selectedVerse ? [selectedVerse] : []);
@@ -1625,213 +1749,566 @@ export default function Bible() {
         </section>
       ) : activeTab === 'my' ? (
         <div className="bible-my-wrap">
-          <div className="bible-stats-row">
-            <div className="bible-stat-chip bible-stat-streak">
-              <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#f7b500" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
-                </svg>
-                {readingStreak.count || 0}
-              </strong>
-              <span>{language === 'ru' ? 'Дней подряд' : language === 'en' ? 'Day Streak' : 'Օր անընդմեջ'}</span>
-            </div>
-            <div className="bible-stat-chip">
-              <strong>{activePlanCompletedDays.length} / {activePlan.days.length}</strong>
-              <span>{language === 'ru' ? 'Дней плана' : language === 'en' ? 'Plan Days' : 'Պլանի օրեր'}</span>
-            </div>
-            <div className="bible-stat-chip">
-              <strong>{userState.bookmarks.length}</strong>
-              <span>{ui.bookmarks}</span>
-            </div>
-            <div className="bible-stat-chip">
-              <strong>{userState.notes.length + userState.highlights.length}</strong>
-              <span>{language === 'ru' ? 'Заметки' : language === 'en' ? 'Saved' : 'Նշումներ'}</span>
-            </div>
-          </div>
+          {(() => {
+            const totalSavedCount =
+              userState.bookmarks.length + userState.notes.length + userState.highlights.length;
+            const nextUnfinishedPlan = BIBLE_READING_PLANS.find(
+              (p) => p.id !== activePlan.id && getPlanCompletedDays(p.id).length < p.days.length,
+            );
+            const showBookmarks = savedFilter === 'all' || savedFilter === 'bookmarks';
+            const showNotes = savedFilter === 'all' || savedFilter === 'notes';
+            const showHighlights = savedFilter === 'all' || savedFilter === 'highlights';
+            const hasFilteredSaved =
+              (showBookmarks && userState.bookmarks.length > 0) ||
+              (showNotes && userState.notes.length > 0) ||
+              (showHighlights && userState.highlights.length > 0);
 
-        <div className="bible-my-grid">
-          {/* Multi Reading Plans */}
-          <section className="bible-card">
-            <div className="bible-card-head">
-              <div>
-                <h3>{activePlan.title[language] || activePlan.title.am}</h3>
-                <small className="bible-plan-subtitle">{activePlan.subtitle[language] || activePlan.subtitle.am}</small>
-              </div>
-              <span className="bible-badge-pill">
-                {activePlanCompletedDays.length} / {activePlan.days.length}
-              </span>
-            </div>
-
-            <div className="bible-plan-tabs" role="tablist" aria-label="Ընթերցման պլաններ">
-              {BIBLE_READING_PLANS.map((plan) => (
-                <button
-                  key={plan.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={activePlan.id === plan.id}
-                  className={`bible-plan-tab-pill ${activePlan.id === plan.id ? 'active' : ''}`}
-                  onClick={() => setActivePlanId(plan.id)}
-                >
-                  {plan.title[language] || plan.title.am}
-                </button>
-              ))}
-            </div>
-
-            <div className="bible-plan-progress">
-              <div
-                className="bible-plan-fill"
-                style={{ width: `${Math.round((activePlanCompletedDays.length / Math.max(1, activePlan.days.length)) * 100)}%` }}
-              />
-            </div>
-
-            {(() => {
-              const nextDay = activePlan.days.find((d) => !activePlanCompletedDays.includes(d.day));
-              if (!nextDay) return null;
-              return (
-                <button
-                  type="button"
-                  className="bible-plan-next-cta"
-                  onClick={() => selectBookChapter(nextDay.book, nextDay.chapter)}
-                >
-                  <span>
-                    {language === 'ru'
-                      ? `Читать день ${nextDay.day}: ${nextDay.label.ru}`
-                      : language === 'en'
-                      ? `Read Day ${nextDay.day}: ${nextDay.label.en}`
-                      : `Կարդալ Օր ${nextDay.day}՝ ${nextDay.label.am}`}
-                  </span>
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
-                </button>
-              );
-            })()}
-
-            <div className="bible-plan-list">
-              {activePlan.days.map((item) => {
-                const done = activePlanCompletedDays.includes(item.day);
-                return (
-                  <div key={`${activePlan.id}_${item.day}`} className={`bible-plan-item ${done ? 'is-done' : ''}`}>
-                    <button
-                      type="button"
-                      className="bible-plan-check"
-                      onClick={() => togglePlanDay(item.day)}
-                      aria-label={`Day ${item.day}`}
-                    >
-                      {done ? '✓' : item.day}
-                    </button>
-                    <button
-                      type="button"
-                      className="bible-plan-link"
-                      onClick={() => selectBookChapter(item.book, item.chapter)}
-                    >
-                      {item.label[language] || item.label.am}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Notes & Highlights & Bookmarks */}
-          <section className="bible-card">
-            <div className="bible-card-head">
-              <h3>
-                {ui.notes} ({userState.notes.length}) & {ui.highlights} ({userState.highlights.length})
-              </h3>
-            </div>
-
-            {userState.notes.length === 0 && userState.highlights.length === 0 && userState.bookmarks.length === 0 ? (
-              <p className="bible-empty-copy">{ui.emptyMy}</p>
-            ) : (
-              <div className="bible-saved-stack">
-                {userState.bookmarks.length > 0 && (
-                  <div className="bible-saved-group">
-                    <h4>{ui.bookmarks}</h4>
-                    <div className="bible-chip-wrap">
-                      {userState.bookmarks.map((bm) => (
-                        <div key={`${bm.book}_${bm.chapter}`} className="bible-bm-chip">
-                          <button
-                            type="button"
-                            className="bible-pill-btn"
-                            onClick={() => selectBookChapter(bm.book, bm.chapter)}
-                          >
-                            {getBookName(bm.book, language)} {bm.chapter}
-                          </button>
-                          <button
-                            type="button"
-                            className="bible-bm-del"
-                            onClick={(e) => removeSavedBookmark(bm.book, bm.chapter, e)}
-                            aria-label="Remove bookmark"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
+            return (
+              <>
+                <div className="bible-stats-row">
+                  <div className="bible-stat-chip bible-stat-streak">
+                    <div className="bible-stat-top">
+                      <span className="bible-stat-ico is-amber">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                        </svg>
+                      </span>
+                      <strong>{readingStreak.count || 0}</strong>
                     </div>
+                    <span>{language === 'ru' ? 'Дней подряд' : language === 'en' ? 'Day Streak' : 'Օր անընդմեջ'}</span>
                   </div>
-                )}
 
-                {userState.notes.map((n) => (
-                  <div
-                    key={`${n.book}_${n.chapter}_${n.verse}`}
-                    className="bible-saved-item"
+                  <button
+                    type="button"
+                    className={`bible-stat-chip bible-stat-btn ${activePlanPercent === 100 ? 'is-complete' : ''}`}
+                    onClick={() => setMySubTab('plans')}
+                  >
+                    <div className="bible-stat-top">
+                      <span className={`bible-stat-ico ${activePlanPercent === 100 ? 'is-emerald' : ''}`}>
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                          <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
+                      </span>
+                      <strong>{activePlanPercent}%</strong>
+                    </div>
+                    <span>
+                      {language === 'ru'
+                        ? `План (${activePlanCompletedDays.length}/${activePlan.days.length})`
+                        : language === 'en'
+                        ? `Plan (${activePlanCompletedDays.length}/${activePlan.days.length})`
+                        : `Պլան (${activePlanCompletedDays.length}/${activePlan.days.length})`}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="bible-stat-chip bible-stat-btn"
                     onClick={() => {
-                      selectBookChapter(n.book, n.chapter);
-                      setSelectedVerse(n.verse);
+                      setMySubTab('saved');
+                      setSavedFilter('bookmarks');
                     }}
                   >
-                    <div className="bible-saved-head">
-                      <span className="bible-saved-ref">
-                        {getBookName(n.book, language)} {n.chapter}:{n.verse}
+                    <div className="bible-stat-top">
+                      <span className="bible-stat-ico">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                        </svg>
                       </span>
+                      <strong>{userState.bookmarks.length}</strong>
+                    </div>
+                    <span>{ui.bookmarks}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="bible-stat-chip bible-stat-btn"
+                    onClick={() => {
+                      setMySubTab('saved');
+                      setSavedFilter('all');
+                    }}
+                  >
+                    <div className="bible-stat-top">
+                      <span className="bible-stat-ico">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                        </svg>
+                      </span>
+                      <strong>{userState.notes.length + userState.highlights.length}</strong>
+                    </div>
+                    <span>{language === 'ru' ? 'Заметки' : language === 'en' ? 'Notes & HL' : 'Նշումներ'}</span>
+                  </button>
+                </div>
+
+                {/* Mobile Sub-Tab Switcher so Bookmarks/Notes are 1 tap away */}
+                <div className="bible-my-subtabs" role="tablist" aria-label={ui.myStudy}>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={mySubTab === 'plans'}
+                    className={`bible-my-subtab ${mySubTab === 'plans' ? 'active' : ''}`}
+                    onClick={() => setMySubTab('plans')}
+                  >
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                    </svg>
+                    <span>{language === 'ru' ? 'Планы чтения' : language === 'en' ? 'Reading Plans' : 'Պլաններ'}</span>
+                    <em className="bible-subtab-count">
+                      {activePlanCompletedDays.length}/{activePlan.days.length}
+                    </em>
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={mySubTab === 'saved'}
+                    className={`bible-my-subtab ${mySubTab === 'saved' ? 'active' : ''}`}
+                    onClick={() => setMySubTab('saved')}
+                  >
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <span>{language === 'ru' ? 'Сохранённое' : language === 'en' ? 'Saved' : 'Պահպանված'}</span>
+                    <em className="bible-subtab-count">{totalSavedCount}</em>
+                  </button>
+                </div>
+
+                <div className={`bible-my-grid is-subtab-${mySubTab}`}>
+                  {/* Multi Reading Plans */}
+                  <section className="bible-card bible-my-plans-card">
+                    <div className="bible-plan-tabs" role="tablist" aria-label="Ընթերցման պլաններ">
+                      {BIBLE_READING_PLANS.map((plan) => {
+                        const pDone = getPlanCompletedDays(plan.id).length;
+                        const pTotal = plan.days.length;
+                        const pFinished = pDone >= pTotal && pTotal > 0;
+                        return (
+                          <button
+                            key={plan.id}
+                            type="button"
+                            role="tab"
+                            aria-selected={activePlan.id === plan.id}
+                            className={`bible-plan-tab-pill ${activePlan.id === plan.id ? 'active' : ''} ${pFinished ? 'is-finished' : ''}`}
+                            onClick={() => handleSelectPlan(plan.id)}
+                          >
+                            <span>{plan.title[language] || plan.title.am}</span>
+                            <em className="bible-plan-tab-meta">
+                              {pFinished ? '✓' : `${pDone}/${pTotal}`}
+                            </em>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="bible-card-head bible-plan-header">
+                      <div>
+                        <h3>{activePlan.title[language] || activePlan.title.am}</h3>
+                        <small className="bible-plan-subtitle">{activePlan.subtitle[language] || activePlan.subtitle.am}</small>
+                      </div>
+                      <span className={`bible-badge-pill ${activePlanPercent === 100 ? 'is-emerald' : ''}`}>
+                        {activePlanCompletedDays.length} / {activePlan.days.length} · {activePlanPercent}%
+                      </span>
+                    </div>
+
+                    <div className="bible-plan-progress">
+                      <div
+                        className={`bible-plan-fill ${activePlanPercent === 100 ? 'is-emerald' : ''}`}
+                        style={{ width: `${activePlanPercent}%` }}
+                      />
+                    </div>
+
+                    {activePlanNextDay ? (
                       <button
                         type="button"
-                        className="bible-saved-del"
-                        onClick={(e) => removeSavedNote(n.book, n.chapter, n.verse, e)}
-                        aria-label="Delete note"
+                        className="bible-plan-hero-cta"
+                        onClick={() => openPlanDay(activePlan, activePlanNextDay)}
                       >
-                        ✕
+                        <div className="bible-plan-hero-copy">
+                          <span className="bible-plan-hero-kicker">
+                            {language === 'ru'
+                              ? `СЛЕДУЮЩЕЕ ЧТЕНИЕ · ДЕНЬ ${activePlanNextDay.day}`
+                              : language === 'en'
+                              ? `NEXT READING · DAY ${activePlanNextDay.day}`
+                              : `ՀԱՋՈՐԴ ԸՆԹԵՐՑՈՒՄԸ · ՕՐ ${activePlanNextDay.day}`}
+                          </span>
+                          <strong>{activePlanNextDay.label[language] || activePlanNextDay.label.am}</strong>
+                        </div>
+                        <span className="bible-plan-hero-pill">
+                          {language === 'ru' ? 'Читать' : language === 'en' ? 'Read' : 'Կարդալ'}
+                          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 18 15 12 9 6" />
+                          </svg>
+                        </span>
+                      </button>
+                    ) : (
+                      <div className="bible-plan-done-banner">
+                        <div className="bible-plan-done-head">
+                          <span className="bible-plan-done-ico">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          </span>
+                          <div>
+                            <strong>
+                              {language === 'ru'
+                                ? 'План завершён!'
+                                : language === 'en'
+                                ? 'Plan Completed!'
+                                : 'Պլանն ամբողջությամբ ավարտված է'}
+                            </strong>
+                            <small>
+                              {language === 'ru'
+                                ? `Прочитаны все ${activePlan.days.length} дней`
+                                : language === 'en'
+                                ? `All ${activePlan.days.length} days read`
+                                : `Կարդացված են բոլոր ${activePlan.days.length} օրերը`}
+                            </small>
+                          </div>
+                        </div>
+                        {nextUnfinishedPlan && (
+                          <button
+                            type="button"
+                            className="bible-pill-btn bible-plan-next-plan-btn"
+                            onClick={() => handleSelectPlan(nextUnfinishedPlan.id)}
+                          >
+                            {language === 'ru'
+                              ? `Начать: ${nextUnfinishedPlan.title.ru}`
+                              : language === 'en'
+                              ? `Start: ${nextUnfinishedPlan.title.en}`
+                              : `Սկսել՝ ${nextUnfinishedPlan.title.am}`}
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="bible-plan-list">
+                      {visiblePlanDays.map((item) => {
+                        const done = activePlanCompletedDays.includes(item.day);
+                        const isNext = activePlanNextDay?.day === item.day;
+                        return (
+                          <div
+                            key={`${activePlan.id}_${item.day}`}
+                            className={`bible-plan-item ${done ? 'is-done' : ''} ${isNext ? 'is-next' : ''}`}
+                          >
+                            <button
+                              type="button"
+                              className="bible-plan-check"
+                              onClick={() => togglePlanDay(item.day)}
+                              aria-label={
+                                done
+                                  ? `Mark day ${item.day} unread`
+                                  : `Mark day ${item.day} read`
+                              }
+                              title={
+                                done
+                                  ? language === 'ru'
+                                    ? 'Прочитано (нажмите, чтобы снять)'
+                                    : language === 'en'
+                                    ? 'Completed (click to undo)'
+                                    : 'Կարդացված է (սեղմեք՝ չեղարկելու համար)'
+                                  : language === 'ru'
+                                  ? 'Отметить как прочитано'
+                                  : language === 'en'
+                                  ? 'Mark as read'
+                                  : 'Նշել որպես կարդացված'
+                              }
+                            >
+                              {done ? (
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              ) : (
+                                item.day
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              className="bible-plan-link"
+                              onClick={() => openPlanDay(activePlan, item)}
+                            >
+                              <span className="bible-plan-link-title">
+                                {item.label[language] || item.label.am}
+                              </span>
+                              <span className="bible-plan-link-meta">
+                                <span>
+                                  {language === 'ru'
+                                    ? `День ${item.day}`
+                                    : language === 'en'
+                                    ? `Day ${item.day}`
+                                    : `Օր ${item.day}`}
+                                </span>
+                                {done ? (
+                                  <em className="bible-plan-status is-done">
+                                    {language === 'ru'
+                                      ? 'Прочитано'
+                                      : language === 'en'
+                                      ? 'Read'
+                                      : 'Կարդացված է'}
+                                  </em>
+                                ) : isNext ? (
+                                  <em className="bible-plan-status is-next">
+                                    {language === 'ru'
+                                      ? 'Далее'
+                                      : language === 'en'
+                                      ? 'Up next'
+                                      : 'Հաջորդը'}
+                                  </em>
+                                ) : null}
+                              </span>
+                            </button>
+                            <button
+                              type="button"
+                              className="bible-plan-open-arrow"
+                              onClick={() => openPlanDay(activePlan, item)}
+                              aria-label={`Open day ${item.day}`}
+                            >
+                              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="9 18 15 12 9 6" />
+                              </svg>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {activePlan.days.length > 7 && (
+                      <button
+                        type="button"
+                        className="bible-plan-expand-btn"
+                        onClick={() => setShowAllPlanDays((v) => !v)}
+                      >
+                        <span>
+                          {showAllPlanDays
+                            ? language === 'ru'
+                              ? 'Свернуть список'
+                              : language === 'en'
+                              ? 'Show fewer days'
+                              : 'Ցույց տալ ավելի քիչ'
+                            : language === 'ru'
+                            ? `Показать все ${activePlan.days.length} дней`
+                            : language === 'en'
+                            ? `Show all ${activePlan.days.length} days`
+                            : `Ցույց տալ բոլոր ${activePlan.days.length} օրերը`}
+                        </span>
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="15"
+                          height="15"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          style={{ transform: showAllPlanDays ? 'rotate(180deg)' : 'none', transition: 'transform 0.18s ease' }}
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </button>
+                    )}
+                  </section>
+
+                  {/* Notes & Highlights & Bookmarks */}
+                  <section className="bible-card bible-my-saved-card">
+                    <div className="bible-card-head">
+                      <div>
+                        <h3>{language === 'ru' ? 'Сохранённое' : language === 'en' ? 'Saved Study' : 'Պահպանված'}</h3>
+                        <small className="bible-plan-subtitle">
+                          {language === 'ru'
+                            ? 'Закладки, заметки и выделения'
+                            : language === 'en'
+                            ? 'Bookmarks, notes & highlights'
+                            : 'Էջանիշներ, նշումներ և ընդգծումներ'}
+                        </small>
+                      </div>
+                      <span className="bible-badge-pill">{totalSavedCount}</span>
+                    </div>
+
+                    <div className="bible-saved-filters" role="tablist">
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={savedFilter === 'all'}
+                        className={`bible-plan-tab-pill ${savedFilter === 'all' ? 'active' : ''}`}
+                        onClick={() => setSavedFilter('all')}
+                      >
+                        <span>{language === 'ru' ? 'Все' : language === 'en' ? 'All' : 'Բոլորը'}</span>
+                        <em className="bible-plan-tab-meta">{totalSavedCount}</em>
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={savedFilter === 'bookmarks'}
+                        className={`bible-plan-tab-pill ${savedFilter === 'bookmarks' ? 'active' : ''}`}
+                        onClick={() => setSavedFilter('bookmarks')}
+                      >
+                        <span>{ui.bookmarks}</span>
+                        <em className="bible-plan-tab-meta">{userState.bookmarks.length}</em>
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={savedFilter === 'notes'}
+                        className={`bible-plan-tab-pill ${savedFilter === 'notes' ? 'active' : ''}`}
+                        onClick={() => setSavedFilter('notes')}
+                      >
+                        <span>{ui.notes}</span>
+                        <em className="bible-plan-tab-meta">{userState.notes.length}</em>
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={savedFilter === 'highlights'}
+                        className={`bible-plan-tab-pill ${savedFilter === 'highlights' ? 'active' : ''}`}
+                        onClick={() => setSavedFilter('highlights')}
+                      >
+                        <span>{ui.highlights}</span>
+                        <em className="bible-plan-tab-meta">{userState.highlights.length}</em>
                       </button>
                     </div>
-                    <p className="bible-saved-note">{n.text}</p>
-                    {n.verseText ? <small className="bible-saved-quote">«{n.verseText}»</small> : null}
-                  </div>
-                ))}
 
-                {userState.highlights.map((h) => {
-                  const col = HIGHLIGHT_COLORS.find((c) => c.id === h.color) || HIGHLIGHT_COLORS[0];
-                  return (
-                    <div
-                      key={`hl_${h.book}_${h.chapter}_${h.verse}`}
-                      className="bible-saved-item"
-                      style={{ borderLeft: `3px solid ${col.hex}` }}
-                      onClick={() => {
-                        selectBookChapter(h.book, h.chapter);
-                        setSelectedVerse(h.verse);
-                      }}
-                    >
-                      <div className="bible-saved-head">
-                        <span className="bible-saved-ref">
-                          {getBookName(h.book, language)} {h.chapter}:{h.verse}
+                    {!hasFilteredSaved ? (
+                      <div className="bible-saved-empty">
+                        <span className="bible-saved-empty-ico">
+                          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                          </svg>
                         </span>
+                        <p className="bible-empty-copy">
+                          {totalSavedCount === 0
+                            ? ui.emptyMy
+                            : language === 'ru'
+                            ? 'В этой категории пока ничего нет.'
+                            : language === 'en'
+                            ? 'Nothing saved in this category yet.'
+                            : 'Այս բաժնում դեռ պահպանված ոչինչ չկա։'}
+                        </p>
                         <button
                           type="button"
-                          className="bible-saved-del"
-                          onClick={(e) => removeSavedHighlight(h.book, h.chapter, h.verse, e)}
-                          aria-label="Delete highlight"
+                          className="bible-pill-btn"
+                          onClick={() => setActiveTab('read')}
                         >
-                          ✕
+                          {language === 'ru' ? 'Перейти к чтению' : language === 'en' ? 'Open Reader' : 'Անցնել ընթերցման'}
                         </button>
                       </div>
-                      <p className="bible-saved-quote">{h.text}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        </div>
+                    ) : (
+                      <div className="bible-saved-stack">
+                        {showBookmarks && userState.bookmarks.length > 0 && (
+                          <div className="bible-saved-group">
+                            <h4 className="bible-saved-group-title">{ui.bookmarks}</h4>
+                            <div className="bible-chip-wrap">
+                              {userState.bookmarks.map((bm) => (
+                                <div key={`${bm.book}_${bm.chapter}`} className="bible-bm-chip">
+                                  <button
+                                    type="button"
+                                    className="bible-pill-btn bible-bm-open"
+                                    onClick={() => selectBookChapter(bm.book, bm.chapter)}
+                                  >
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                                    </svg>
+                                    <span>{getBookName(bm.book, language)} {bm.chapter}</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="bible-bm-del"
+                                    onClick={(e) => removeSavedBookmark(bm.book, bm.chapter, e)}
+                                    aria-label="Remove bookmark"
+                                  >
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                                      <line x1="18" y1="6" x2="6" y2="18" />
+                                      <line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {showNotes && userState.notes.length > 0 && (
+                          <div className="bible-saved-group">
+                            {savedFilter === 'all' && <h4 className="bible-saved-group-title">{ui.notes}</h4>}
+                            {userState.notes.map((n) => (
+                              <div
+                                key={`${n.book}_${n.chapter}_${n.verse}`}
+                                className="bible-saved-item bible-saved-note-card"
+                                onClick={() => {
+                                  selectBookChapter(n.book, n.chapter);
+                                  setSelectedVerse(n.verse);
+                                }}
+                              >
+                                <div className="bible-saved-head">
+                                  <span className="bible-saved-ref">
+                                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M12 20h9" />
+                                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                    </svg>
+                                    {getBookName(n.book, language)} {n.chapter}:{n.verse}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="bible-saved-del"
+                                    onClick={(e) => removeSavedNote(n.book, n.chapter, n.verse, e)}
+                                    aria-label="Delete note"
+                                  >
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                                      <line x1="18" y1="6" x2="6" y2="18" />
+                                      <line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                  </button>
+                                </div>
+                                <p className="bible-saved-note">{n.text}</p>
+                                {n.verseText ? <small className="bible-saved-quote">«{n.verseText}»</small> : null}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {showHighlights && userState.highlights.length > 0 && (
+                          <div className="bible-saved-group">
+                            {savedFilter === 'all' && <h4 className="bible-saved-group-title">{ui.highlights}</h4>}
+                            {userState.highlights.map((h) => {
+                              const col = HIGHLIGHT_COLORS.find((c) => c.id === h.color) || HIGHLIGHT_COLORS[0];
+                              return (
+                                <div
+                                  key={`hl_${h.book}_${h.chapter}_${h.verse}`}
+                                  className="bible-saved-item"
+                                  style={{ borderLeft: `3px solid ${col.hex}` }}
+                                  onClick={() => {
+                                    selectBookChapter(h.book, h.chapter);
+                                    setSelectedVerse(h.verse);
+                                  }}
+                                >
+                                  <div className="bible-saved-head">
+                                    <span className="bible-saved-ref">
+                                      <span className="bible-saved-hl-dot" style={{ backgroundColor: col.hex }} />
+                                      {getBookName(h.book, language)} {h.chapter}:{h.verse}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      className="bible-saved-del"
+                                      onClick={(e) => removeSavedHighlight(h.book, h.chapter, h.verse, e)}
+                                      aria-label="Delete highlight"
+                                    >
+                                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                  <p className="bible-saved-quote">{h.text}</p>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </section>
+                </div>
+              </>
+            );
+          })()}
         </div>
       ) : (
         <div className="bible-workspace">
@@ -1921,6 +2398,37 @@ export default function Bible() {
           {/* Center Reading Surface */}
           <main className="bible-reader-col">
             <div className={`bible-reader-card tint-${prefs.paperTint || 'default'}`}>
+              {matchedPlanContext && (
+                <div className={`bible-plan-context-bar ${matchedPlanContext.isDone ? 'is-done' : ''}`}>
+                  <div className="bible-plan-context-info">
+                    <span className="bible-plan-context-dot" />
+                    <span className="bible-plan-context-text">
+                      <strong>{matchedPlanContext.plan.title[language] || matchedPlanContext.plan.title.am}</strong>
+                      {' · '}
+                      {language === 'ru'
+                        ? `День ${matchedPlanContext.item.day} из ${matchedPlanContext.totalDays}`
+                        : language === 'en'
+                        ? `Day ${matchedPlanContext.item.day} of ${matchedPlanContext.totalDays}`
+                        : `Օր ${matchedPlanContext.item.day} / ${matchedPlanContext.totalDays}`}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="bible-plan-context-back"
+                    onClick={() => {
+                      handleSelectPlan(matchedPlanContext.plan.id);
+                      setMySubTab('plans');
+                      setActiveTab('my');
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                    <span>{language === 'ru' ? 'План' : language === 'en' ? 'Plan' : 'Պլան'}</span>
+                  </button>
+                </div>
+              )}
+
               <div className="bible-reader-head">
                 <div>
                   <span className="bible-reader-kicker">{activeTranslationMeta?.name || effectiveTranslation || translation}</span>
@@ -2110,6 +2618,117 @@ export default function Bible() {
                       >
                         {language === 'ru' ? 'Дальше' : language === 'en' ? 'Next' : 'Հաջորդ'} ›
                       </button>
+                    </div>
+                  )}
+
+                  {matchedPlanContext && (
+                    <div className={`bible-plan-complete-card ${matchedPlanContext.isDone ? 'is-done' : ''}`}>
+                      <div className="bible-plan-complete-top">
+                        <div className="bible-plan-complete-meta">
+                          <span className="bible-plan-complete-kicker">
+                            {matchedPlanContext.plan.title[language] || matchedPlanContext.plan.title.am}
+                            {' · '}
+                            {language === 'ru'
+                              ? `День ${matchedPlanContext.item.day}/${matchedPlanContext.totalDays}`
+                              : language === 'en'
+                              ? `Day ${matchedPlanContext.item.day}/${matchedPlanContext.totalDays}`
+                              : `Օր ${matchedPlanContext.item.day}/${matchedPlanContext.totalDays}`}
+                          </span>
+                          <strong>
+                            {matchedPlanContext.isDone
+                              ? language === 'ru'
+                                ? 'Отлично! Этот день прочитан'
+                                : language === 'en'
+                                ? 'Great! This day is completed'
+                                : 'Գերազանց է։ Այս օրը կարդացված է'
+                              : matchedPlanContext.item.label[language] || matchedPlanContext.item.label.am}
+                          </strong>
+                        </div>
+                        {matchedPlanContext.isDone ? (
+                          <button
+                            type="button"
+                            className="bible-plan-undo-btn"
+                            onClick={() => setPlanDayStatus(matchedPlanContext.plan.id, matchedPlanContext.item.day, false)}
+                          >
+                            {language === 'ru' ? 'Отменить' : language === 'en' ? 'Undo' : 'Չեղարկել'}
+                          </button>
+                        ) : (
+                          <span className="bible-badge-pill">{matchedPlanContext.percent}%</span>
+                        )}
+                      </div>
+
+                      <div className="bible-plan-progress bible-plan-complete-progress">
+                        <div
+                          className={`bible-plan-fill ${matchedPlanContext.isDone || matchedPlanContext.percent === 100 ? 'is-emerald' : ''}`}
+                          style={{ width: `${matchedPlanContext.percent}%` }}
+                        />
+                      </div>
+
+                      {!matchedPlanContext.isDone ? (
+                        <button
+                          type="button"
+                          className="bible-plan-mark-btn"
+                          onClick={() => setPlanDayStatus(matchedPlanContext.plan.id, matchedPlanContext.item.day, true)}
+                        >
+                          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <polyline points="22 4 12 14.01 9 11.01" />
+                          </svg>
+                          <span>
+                            {language === 'ru'
+                              ? 'Отметить как прочитано'
+                              : language === 'en'
+                              ? 'Mark as Read'
+                              : 'Կարդացված է'}
+                          </span>
+                        </button>
+                      ) : (
+                        <div className="bible-plan-complete-actions">
+                          <span className="bible-plan-done-chip">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                            <span>
+                              {language === 'ru'
+                                ? `Прочитано · ${matchedPlanContext.doneCount}/${matchedPlanContext.totalDays}`
+                                : language === 'en'
+                                ? `Completed · ${matchedPlanContext.doneCount}/${matchedPlanContext.totalDays}`
+                                : `Կարդացված է · ${matchedPlanContext.doneCount}/${matchedPlanContext.totalDays}`}
+                            </span>
+                          </span>
+                          <div className="bible-plan-complete-btns">
+                            <button
+                              type="button"
+                              className="bible-pill-btn"
+                              onClick={() => {
+                                handleSelectPlan(matchedPlanContext.plan.id);
+                                setMySubTab('plans');
+                                setActiveTab('my');
+                              }}
+                            >
+                              {language === 'ru' ? 'К плану' : language === 'en' ? 'View Plan' : 'Դեպի պլան'}
+                            </button>
+                            {matchedPlanContext.nextUnread && (
+                              <button
+                                type="button"
+                                className="bible-cta-amber"
+                                onClick={() => openPlanDay(matchedPlanContext.plan, matchedPlanContext.nextUnread)}
+                              >
+                                <span>
+                                  {language === 'ru'
+                                    ? `День ${matchedPlanContext.nextUnread.day}`
+                                    : language === 'en'
+                                    ? `Day ${matchedPlanContext.nextUnread.day}`
+                                    : `Հաջորդը՝ Օր ${matchedPlanContext.nextUnread.day}`}
+                                </span>
+                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="9 18 15 12 9 6" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </>
