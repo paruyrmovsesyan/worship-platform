@@ -334,6 +334,18 @@ $searchPlaceholder = 'Search users...';
         </form>
       </div>
 
+      <?php
+        $qSuffix = $search !== '' ? '&q=' . urlencode($search) : '';
+      ?>
+      <div class="admin-chip-bar" style="margin-bottom:16px;">
+        <a class="admin-chip <?= $filter === 'all' ? 'active' : '' ?>" href="/admin_clients.php?filter=all<?= $qSuffix ?>">👥 Բոլորը</a>
+        <a class="admin-chip <?= $filter === 'active' ? 'active' : '' ?>" href="/admin_clients.php?filter=active<?= $qSuffix ?>">🟢 Ակտիվ (30 օր)</a>
+        <a class="admin-chip <?= $filter === 'new' ? 'active' : '' ?>" href="/admin_clients.php?filter=new<?= $qSuffix ?>">✨ Նոր (7 օր)</a>
+        <a class="admin-chip <?= $filter === 'blocked' ? 'active' : '' ?>" href="/admin_clients.php?filter=blocked<?= $qSuffix ?>">🚫 Արգելափակված</a>
+        <span style="flex:1;"></span>
+        <button type="button" class="admin-chip" onclick="exportClientsCsv()">📥 Արտահանել CSV</button>
+      </div>
+
       <?php if ($dbError): ?>
         <div style="background:var(--danger-bg); color:var(--danger); padding:16px 20px; border-radius:12px; margin-bottom:24px; font-weight:600;">
           <?= __('Database error:') ?> <?= htmlspecialchars($dbError) ?>
@@ -743,6 +755,30 @@ function deleteUserAccount() {
         }
     })
     .catch(err => alert('Սխալ: ' + err.message));
+}
+
+function exportClientsCsv() {
+    const rows = [['ID', 'Name', 'Email', 'Username', 'Registered']];
+    document.querySelectorAll('.table-card tbody tr').forEach(tr => {
+        const tds = tr.querySelectorAll('td');
+        if (tds.length < 4) return;
+        const id = (tds[0].textContent || '').trim();
+        const nameEl = tds[1].querySelector('div[style*="font-weight:600"]');
+        const name = (nameEl ? nameEl.textContent : tds[1].textContent || '').trim();
+        const emailDivs = tds[2].querySelectorAll('div');
+        const email = (emailDivs[0] ? emailDivs[0].textContent : tds[2].textContent || '').trim();
+        const username = (emailDivs[1] ? emailDivs[1].textContent : '').trim();
+        const reg = (tds[3].textContent || '').trim();
+        rows.push([id, name, email, username, reg]);
+    });
+    const csv = '\uFEFF' + rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'worship_clients_' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
 }
 </script>
 

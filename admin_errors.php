@@ -962,9 +962,17 @@ $activePage = 'errors';
             <input type="checkbox" id="toggleSound" checked>
             <span>🔔 <?= htmlspecialchars($t['sound']) ?></span>
           </label>
+
+          <label class="audio-pill" title="Խմբավորել նույն հաղորդագրությամբ սխալները">
+            <input type="checkbox" id="toggleGroupSimilar">
+            <span>📦 Խմբավորել նմանները</span>
+          </label>
         </div>
 
         <div class="filter-right">
+          <button class="btn-tool" id="btnResolveAllActive" title="Նշել բոլոր ֆիլտրված ակտիվ սխալները որպես լուծված" style="color:var(--success); border-color:var(--success);">
+            ✓ Լուծել բոլոր ակտիվները
+          </button>
           <div style="position:relative; display:inline-block;">
             <button class="btn-tool" id="btnTestError" title="Simulate sending a test error" onclick="window.toggleTestMenu(event)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
@@ -1212,9 +1220,35 @@ $activePage = 'errors';
     }
 
     emptyState.style.display = 'none';
+    const groupSimilar = Boolean(document.getElementById('toggleGroupSimilar')?.checked);
+    let displayLogs = logs;
+    if (groupSimilar) {
+      const map = new Map();
+      logs.forEach(function(item) {
+        const normMsg = String(item.message || '')
+          .replace(/^\[React ErrorBoundary\]\s*/i, '')
+          .replace(/^React Error:\s*/i, '')
+          .replace(/^Uncaught error in React ErrorBoundary:\s*/i, '')
+          .trim();
+        const isRes = (item.is_resolved == 1 || item.is_resolved === true) ? '1' : '0';
+        const key = normMsg + '||' + isRes;
+        if (!map.has(key)) {
+          map.set(key, Object.assign({}, item, {
+            _groupedCount: 1,
+            occurrences: parseInt(item.occurrences, 10) || 1
+          }));
+        } else {
+          const existing = map.get(key);
+          existing._groupedCount += 1;
+          existing.occurrences += (parseInt(item.occurrences, 10) || 1);
+        }
+      });
+      displayLogs = Array.from(map.values());
+    }
+
     let html = '';
 
-    logs.forEach(function(item) {
+    displayLogs.forEach(function(item) {
       const level = (item.level || 'error').toLowerCase();
       const env = (item.environment || 'web').toLowerCase();
       const occ = parseInt(item.occurrences, 10) || 1;
@@ -1235,6 +1269,7 @@ $activePage = 'errors';
               <span class="level-chip ${escapeHtml(level)}">${escapeHtml(level)}</span>
               ${renderEnvBadge(env)}
               ${occ > 1 ? `<span class="hits-badge">${occ} ${escapeHtml(t.occurrences)}</span>` : ''}
+              ${item._groupedCount && item._groupedCount > 1 ? `<span class="hits-badge" style="background:rgba(58,45,255,0.12); color:var(--primary);">📦 ${item._groupedCount} գրառում</span>` : ''}
               <span style="flex:1;"></span>
               <span class="error-stamp" title="${escapeHtml(item.last_seen)}">${formatRelativeTime(item.last_seen)}</span>
             </div>
@@ -1602,8 +1637,41 @@ $activePage = 'errors';
   document.getElementById('filterStatus').addEventListener('change', applyFilters);
   document.getElementById('filterEnv').addEventListener('change', applyFilters);
   document.getElementById('filterLevel').addEventListener('change', applyFilters);
+  document.getElementById('toggleGroupSimilar')?.addEventListener('change', applyFilters);
   document.getElementById('pollingInterval').addEventListener('change', setupPolling);
   document.getElementById('btnRefresh').addEventListener('click', fetchLatestErrors);
+
+  document.getElementById('btnResolveAllActive')?.addEventListener('click', async function() {
+    if (!confirm('Նշե՞լ բոլոր ֆիլտրված ակտիվ սխալները որպես լուծված։')) return;
+    const btn = this;
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Մշակվում է...';
+    try {
+      const env = document.getElementById('filterEnv')?.value || 'all';
+      const level = document.getElementById('filterLevel')?.value || 'all';
+      const search = document.getElementById('filterSearch')?.value?.trim() || '';
+      const resp = await fetch('/error_api.php?action=resolve_all_active', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          environment: env === 'all' ? '' : env,
+          level: level === 'all' ? '' : level,
+          search: search
+        })
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        if (data.stats) updateKpis(data.stats);
+        await fetchLatestErrors();
+        if (typeof showToast === 'function' && data.message) showToast(data.message, 'success');
+      }
+    } catch (_) {
+    } finally {
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
+  });
 
   document.getElementById('btnClear').addEventListener('click', async function() {
     if (!confirm('<?= htmlspecialchars($t['clear_confirm']) ?>')) return;

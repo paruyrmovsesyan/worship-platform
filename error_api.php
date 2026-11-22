@@ -92,6 +92,41 @@ if ($action === 'auto_verify') {
     exit;
 }
 
+if ($action === 'resolve_all_active') {
+    if (!wp_error_is_admin_request()) {
+        http_response_code(403);
+        echo json_encode(['ok' => false, 'error' => 'Unauthorized']);
+        exit;
+    }
+
+    $filters = [
+        'environment' => trim((string)($postData['environment'] ?? '')),
+        'level' => trim((string)($postData['level'] ?? '')),
+        'status' => 'active',
+        'search' => trim((string)($postData['search'] ?? '')),
+    ];
+    $activeLogs = wp_error_get_logs($filters, 500);
+    $resolvedCount = 0;
+    foreach ($activeLogs as $log) {
+        $fp = trim((string)($log['fingerprint'] ?? ''));
+        if ($fp !== '') {
+            wp_error_save_resolution($fp, true, 'Զանգվածային նշված է որպես լուծված ադմինի կողմից', 'admin_bulk');
+            $resolvedCount++;
+        }
+    }
+    if (function_exists('wp_admin_audit_log')) {
+        wp_admin_audit_log('errors_resolve_all_active', ['count' => $resolvedCount, 'filters' => $filters]);
+    }
+    $stats = wp_error_get_stats();
+    echo json_encode([
+        'ok' => true,
+        'resolved_count' => $resolvedCount,
+        'stats' => $stats,
+        'message' => "{$resolvedCount} ակտիվ սխալ նշվեց որպես լուծված։",
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
 if ($action === 'verify_item') {
     if (!wp_error_is_admin_request()) {
         http_response_code(403);

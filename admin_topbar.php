@@ -148,6 +148,19 @@ $adminEmail        = $adminEmail ?? '';
       <input type="search" id="topbarSearch" placeholder="<?= htmlspecialchars($searchPlaceholder) ?>" aria-label="<?= htmlspecialchars($searchPlaceholder) ?>">
     </div>
 
+    <!-- Command Palette (⌘K) -->
+    <button type="button" class="topbar-cmdk-btn" onclick="openAdminCmdk()" title="Արագ անցում (⌘K / Ctrl+K)" aria-label="Quick jump">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+      <span class="topbar-cmdk-label">Արագ անցում</span>
+      <span class="topbar-cmdk-kbd">⌘K</span>
+    </button>
+
+    <!-- Dark / Light Theme Toggle -->
+    <button type="button" class="topbar-icon-btn" id="adminThemeToggleBtn" onclick="toggleAdminTheme()" title="Փոխել գունային ռեժիմը (Dark / Light)" aria-label="Toggle theme">
+      <svg id="adminThemeIconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      <svg id="adminThemeIconSun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+    </button>
+
     <!-- Notification Bell -->
     <div class="notif-wrapper" id="topbarNotifWrapper">
       <button class="bell-btn" id="topbarBellBtn" title="<?= __('Notifications') ?>" aria-label="<?= __('Notifications') ?>" onclick="topbarToggleNotif(event)">
@@ -363,8 +376,190 @@ $adminEmail        = $adminEmail ?? '';
         if (badge) badge.textContent = items.length;
         if (dot)   dot.style.display = items.length > 0 ? '' : 'none';
         _notifCache = items;
+
+        var errBadge = document.getElementById('sidebarActiveErrorsBadge');
+        var activeErrors = Number(data.active_errors || 0);
+        if (errBadge) {
+          if (activeErrors > 0) {
+            errBadge.textContent = activeErrors > 99 ? '99+' : String(activeErrors);
+            errBadge.classList.add('visible');
+          } else {
+            errBadge.textContent = '';
+            errBadge.classList.remove('visible');
+          }
+        }
       })
       .catch(function() {});
+
+    syncAdminThemeIcon();
+  });
+
+  /* ── Dark / Light Theme Toggle ── */
+  function syncAdminThemeIcon() {
+    var isDark = document.documentElement.getAttribute('data-admin-theme') === 'dark';
+    var moon = document.getElementById('adminThemeIconMoon');
+    var sun = document.getElementById('adminThemeIconSun');
+    if (moon) moon.style.display = isDark ? 'none' : '';
+    if (sun) sun.style.display = isDark ? '' : 'none';
+  }
+  window.toggleAdminTheme = function() {
+    var isDark = document.documentElement.getAttribute('data-admin-theme') === 'dark';
+    var next = isDark ? 'light' : 'dark';
+    if (next === 'dark') {
+      document.documentElement.setAttribute('data-admin-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-admin-theme');
+    }
+    try { localStorage.setItem('wp_admin_theme', next); } catch (_) {}
+    var metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute('content', next === 'dark' ? '#0f172a' : '#f4f7fe');
+    syncAdminThemeIcon();
+  };
+
+  /* ── Command Palette (⌘K / Ctrl+K) ── */
+  var CMDK_ITEMS = [
+    { label: '🏠 Գլխավոր վահանակ', sub: 'Dashboard & KPIs', url: '/admin_dashboard.php', keys: 'dashboard գլխավոր home' },
+    { label: '🎵 Երգերի կառավարում', sub: 'Songs editor & catalog', url: '/songs.php', keys: 'songs երգեր lyrics chords' },
+    { label: '👥 Հաճախորդներ', sub: 'Users & accounts', url: '/admin_clients.php', keys: 'clients users հաճախորդներ' },
+    { label: '🎤 Թիմի դերեր', sub: 'Worship Roles', url: '/admin_worship_roles.php', keys: 'roles թիմի դերեր' },
+    { label: '📊 Վիճակագրություն', sub: 'Statistics & Analytics', url: '/admin_stats.php', keys: 'stats analytics վիճակագրություն' },
+    { label: '🔔 Հայտարարություններ և սահմանափակումներ', sub: 'Announcements & Maintenance', url: '/admin_announcements.php', keys: 'announcements maintenance հայտարարություններ' },
+    { label: '🚨 Սխալների Մոնիտորինգ', sub: 'Error Logs & Auto-Verify', url: '/admin_errors.php', keys: 'errors logs crash սխալներ' },
+    { label: '📱 iOS & Android Հավելվածներ', sub: 'Mobile versions & force update', url: '/admin_mobile.php', keys: 'mobile ios android app' },
+    { label: '🧪 Ֆունկցիաների Լաբորատորիա', sub: 'Feature Flags', url: '/admin_features.php', keys: 'features flags լաբ' },
+    { label: '📰 Նորություններ', sub: 'News & updates', url: '/admin_news.php', keys: 'news նորություններ' },
+    { label: '✉️ Հաղորդագրություններ', sub: 'Messages & support', url: '/admin_messages.php', keys: 'messages support հաղորդագրություններ' },
+    { label: '🔎 SEO & Search', sub: 'Meta tags & indexing', url: '/admin_seo.php', keys: 'seo search google' },
+    { label: '⚙️ Կարգավորումներ և Թարմացումներ', sub: 'Settings, Push & Moderation', url: '/admin_updates.php', keys: 'settings push moderation կարգավորումներ' },
+    { label: '❓ ՀՏՀ (FAQ)', sub: 'Frequently Asked Questions', url: '/admin_faq.php', keys: 'faq հտհ' },
+    { label: '🩺 Համակարգի Վիճակ', sub: 'System Status & Health', url: '/admin_status.php', keys: 'status health համակարգի վիճակ' },
+    { label: '🖥️ Սերվերի Ծանրաբեռնվածություն', sub: 'Server Load & Storage', url: '/admin_server_load.php', keys: 'server load cpu ram storage սերվեր' },
+    { label: '🌓 Փոխել գունային ռեժիմը (Dark / Light)', sub: 'Toggle admin theme', action: 'toggleTheme', keys: 'theme dark light մութ բաց' },
+    { label: '🌐 Բացել կայքը (Live)', sub: 'worship.pmstudio.am', url: '/', external: true, keys: 'site live website կայք' }
+  ];
+  var cmdkActiveIdx = 0;
+  var cmdkFiltered = CMDK_ITEMS.slice();
+
+  function renderCmdkList() {
+    var list = document.getElementById('adminCmdkList');
+    if (!list) return;
+    if (!cmdkFiltered.length) {
+      list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">Արդյունք չգտնվեց</div>';
+      return;
+    }
+    var html = '';
+    cmdkFiltered.forEach(function(item, idx) {
+      html += '<button type="button" class="cmdk-item' + (idx === cmdkActiveIdx ? ' active' : '') + '" data-cmdk-idx="' + idx + '">'
+        + '<span>' + escHtml(item.label) + '</span>'
+        + '<span class="cmdk-item-sub">' + escHtml(item.sub) + '</span>'
+        + '</button>';
+    });
+    list.innerHTML = html;
+    list.querySelectorAll('.cmdk-item').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        runCmdkItem(Number(btn.getAttribute('data-cmdk-idx')));
+      });
+    });
+  }
+
+  function runCmdkItem(idx) {
+    var item = cmdkFiltered[idx];
+    if (!item) return;
+    closeAdminCmdk();
+    if (item.action === 'toggleTheme') {
+      window.toggleAdminTheme();
+      return;
+    }
+    if (item.external) {
+      window.open(item.url, '_blank', 'noopener');
+      return;
+    }
+    if (item.url) {
+      window.location.href = item.url;
+    }
+  }
+
+  window.openAdminCmdk = function() {
+    var bd = document.getElementById('adminCmdkBackdrop');
+    var input = document.getElementById('adminCmdkInput');
+    if (!bd) return;
+    bd.classList.add('open');
+    cmdkFiltered = CMDK_ITEMS.slice();
+    cmdkActiveIdx = 0;
+    if (input) {
+      input.value = '';
+      setTimeout(function() { input.focus(); }, 20);
+    }
+    renderCmdkList();
+  };
+
+  window.closeAdminCmdk = function() {
+    var bd = document.getElementById('adminCmdkBackdrop');
+    if (bd) bd.classList.remove('open');
+  };
+
+  document.addEventListener('keydown', function(e) {
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+      e.preventDefault();
+      var bd = document.getElementById('adminCmdkBackdrop');
+      if (bd && bd.classList.contains('open')) {
+        closeAdminCmdk();
+      } else {
+        openAdminCmdk();
+      }
+      return;
+    }
+    var bd = document.getElementById('adminCmdkBackdrop');
+    if (!bd || !bd.classList.contains('open')) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeAdminCmdk();
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      cmdkActiveIdx = (cmdkActiveIdx + 1) % Math.max(1, cmdkFiltered.length);
+      renderCmdkList();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      cmdkActiveIdx = (cmdkActiveIdx - 1 + Math.max(1, cmdkFiltered.length)) % Math.max(1, cmdkFiltered.length);
+      renderCmdkList();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      runCmdkItem(cmdkActiveIdx);
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var input = document.getElementById('adminCmdkInput');
+    if (input) {
+      input.addEventListener('input', function() {
+        var q = input.value.trim().toLowerCase();
+        if (!q) {
+          cmdkFiltered = CMDK_ITEMS.slice();
+        } else {
+          cmdkFiltered = CMDK_ITEMS.filter(function(item) {
+            return (item.label + ' ' + item.sub + ' ' + item.keys).toLowerCase().indexOf(q) !== -1;
+          });
+        }
+        cmdkActiveIdx = 0;
+        renderCmdkList();
+      });
+    }
   });
 })();
 </script>
+
+<!-- Command Palette Modal -->
+<div class="cmdk-backdrop" id="adminCmdkBackdrop" onclick="if(event.target===this)closeAdminCmdk()">
+  <div class="cmdk-modal" role="dialog" aria-modal="true" aria-label="Quick Admin Navigation">
+    <div class="cmdk-head">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" class="cmdk-input" id="adminCmdkInput" placeholder="Որոնել բաժին կամ գործողություն (օր. Երգեր, Սխալներ, Dark)..." autocomplete="off">
+      <span class="topbar-cmdk-kbd">ESC</span>
+    </div>
+    <div class="cmdk-list" id="adminCmdkList"></div>
+    <div class="cmdk-foot">
+      <span>↑↓ ընտրել · Enter բացել</span>
+      <span>⌘K / Ctrl+K</span>
+    </div>
+  </div>
+</div>

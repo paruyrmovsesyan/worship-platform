@@ -421,10 +421,10 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
           <button id="songsSearchClear" class="songs-search-clear" type="button" aria-label="<?= htmlspecialchars(__('Մաքրել որոնումը')) ?>" hidden>&times;</button>
         </div>
 
-        <div class="toolbar" style="margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div class="toolbar" style="margin-bottom: 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
           <div class="toolbar-left" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-            <button id="refreshList" class="btn" style="background:white; border:1px solid var(--line);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg> <?= __('Refresh') ?></button>
-            <button id="exportAllPdf" class="btn" style="background:white; border:1px solid var(--line);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 18 15 15"></polyline></svg> <?= __('Export PDF') ?></button>
+            <button id="refreshList" class="btn" style="background:var(--surface); border:1px solid var(--line); color:var(--text);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg> <?= __('Refresh') ?></button>
+            <button id="exportAllPdf" class="btn" style="background:var(--surface); border:1px solid var(--line); color:var(--text);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><polyline points="9 15 12 18 15 15"></polyline></svg> <?= __('Export PDF') ?></button>
             <button id="toggleFiltersBtn" class="btn" style="display:none;"><?= __('Filters') ?></button>
 
             <button type="button" id="batchLyricsAssistantBtn" class="btn" style="background:linear-gradient(135deg, #7d40ff, #581fd9); color:white; border:none; font-weight:700; box-shadow:0 4px 14px rgba(125,64,255,0.25); display:inline-flex; align-items:center; gap:8px;">
@@ -433,17 +433,52 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
               <span id="statNoLyricsBadge" style="background:rgba(255,255,255,0.28); color:white; border-radius:12px; padding:2px 8px; font-size:11px; font-weight:800;">0</span>
             </button>
 
-            <button type="button" id="batchFileImportBtn" class="btn" style="background:white; border:1px solid var(--line); font-weight:600; display:inline-flex; align-items:center; gap:6px;">
+            <button type="button" id="batchFileImportBtn" class="btn" style="background:var(--surface); border:1px solid var(--line); color:var(--text); font-weight:600; display:inline-flex; align-items:center; gap:6px;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               <?= __('Իմպորտ ֆայլերից (PPTX/Word/TXT)') ?>
             </button>
 
-            <button type="button" id="lyricsAiSettingsBtn" class="btn" style="background:white; border:1px solid var(--line); padding:8px 12px;" title="<?= __('AI Կարգավորումներ (Gemini / ChatGPT)') ?>">
+            <button type="button" id="lyricsAiSettingsBtn" class="btn" style="background:var(--surface); border:1px solid var(--line); color:var(--text); padding:8px 12px;" title="<?= __('AI Կարգավորումներ (Gemini / ChatGPT)') ?>">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             </button>
           </div>
           <button id="newSongBtn" class="btn btn-primary" style="padding: 14px 28px;">+ <?= __('Add Song') ?></button>
         </div>
+
+        <!-- Quick Filter Chips -->
+        <div class="admin-chip-bar" id="songsQuickChips" style="margin-bottom: 18px;">
+          <button type="button" class="admin-chip active" data-song-chip="all" onclick="window.applySongQuickChip('all', this)">🎵 Բոլոր երգերը</button>
+          <button type="button" class="admin-chip" data-song-chip="no-lyrics" onclick="window.applySongQuickChip('no-lyrics', this)">📝 Առանց բառերի</button>
+          <button type="button" class="admin-chip" data-song-chip="no-key" onclick="window.applySongQuickChip('no-key', this)">🎸 Առանց տոնայնության</button>
+          <button type="button" class="admin-chip" data-song-chip="no-bpm" onclick="window.applySongQuickChip('no-bpm', this)">⏱️ Առանց տեմպի (BPM)</button>
+        </div>
+        <script>
+          window.applySongQuickChip = function(mode, btn) {
+            document.querySelectorAll('#songsQuickChips .admin-chip').forEach(function(b) { b.classList.remove('active'); });
+            if (btn) btn.classList.add('active');
+            var rows = document.querySelectorAll('#songsTable tr');
+            var visible = 0;
+            rows.forEach(function(tr) {
+              var tds = tr.querySelectorAll('td');
+              if (tds.length < 5) return;
+              var keyTxt = (tds[2].textContent || '').trim();
+              var bpmTxt = (tds[3].textContent || '').trim();
+              var statusTxt = (tds[4].textContent || '').trim().toLowerCase();
+              var show = true;
+              if (mode === 'no-lyrics') {
+                show = statusTxt.indexOf('no lyrics') !== -1 || statusTxt.indexOf('առանց') !== -1 || statusTxt.indexOf('draft') !== -1 || statusTxt.indexOf('без') !== -1 || statusTxt === '—' || statusTxt === '';
+              } else if (mode === 'no-key') {
+                show = !keyTxt || keyTxt === '—' || keyTxt === '-';
+              } else if (mode === 'no-bpm') {
+                show = !bpmTxt || bpmTxt === '—' || bpmTxt === '-' || bpmTxt === '0' || bpmTxt === '0 BPM';
+              }
+              tr.style.display = show ? '' : 'none';
+              if (show) visible++;
+            });
+            var visEl = document.getElementById('statVisibleSongs');
+            if (visEl && mode !== 'all') visEl.textContent = String(visible);
+          };
+        </script>
         
         <!-- Filters (Hidden by default in new design, but kept for JS compatibility) -->
         <div id="filtersPanel" class="hidden">

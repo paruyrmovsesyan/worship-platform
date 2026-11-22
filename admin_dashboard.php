@@ -303,6 +303,17 @@ $notifCount        = count($notifications);
         </div>
       </div>
 
+      <!-- QUICK ACTIONS BAR -->
+      <div class="admin-chip-bar" style="margin-bottom:20px;">
+        <a class="admin-chip" href="/songs.php">🎵 Երգերի կառավարում</a>
+        <a class="admin-chip" href="/admin_announcements.php">🔔 Հայտարարություններ</a>
+        <a class="admin-chip" href="/admin_errors.php">🚨 Սխալների Մոնիտոր</a>
+        <a class="admin-chip" href="/admin_clients.php">👥 Հաճախորդներ</a>
+        <a class="admin-chip" href="/admin_stats.php">📊 Վիճակագրություն</a>
+        <a class="admin-chip" href="/admin_server_load.php">🖥️ Սերվերի Վիճակ</a>
+        <button type="button" class="admin-chip" onclick="openAdminCmdk()">⚡ Արագ որոնում (⌘K)</button>
+      </div>
+
       <!-- STAT CARDS -->
       <div class="stats" id="statsGrid">
         <!-- Songs -->
