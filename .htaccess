@@ -15,6 +15,7 @@ ErrorDocument 500 /maintenance.html
 # Default index
 # =========================
 DirectoryIndex index.php index.html
+AddType application/vnd.android.package-archive .apk
 
 # Slow-query logs may contain SQL and parameter values.
 <FilesMatch "^slow_queries\.log(?:\.count)?$">

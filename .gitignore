@@ -4,6 +4,7 @@ Thumbs.db
 
 # Build & packaging artifacts
 *.apk
+!worship-platform.apk
 *.aab
 DerivedData/
 DerivedDataNative/
