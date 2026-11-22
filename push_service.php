@@ -1630,6 +1630,35 @@ function wp_push_send_notification(array $payload): array {
         }
     }
 
+    // Also deliver broadcast to native Android devices via Firebase Cloud Messaging (FCM HTTP v1)
+    try {
+        $fcmPdo = null;
+        if (function_exists('wp_runtime_open_pdo')) {
+            $fcmPdo = wp_runtime_open_pdo();
+        } elseif (function_exists('wp_db_get_pdo')) {
+            $fcmPdo = wp_db_get_pdo();
+        } elseif (isset($GLOBALS['pdo'])) {
+            $fcmPdo = $GLOBALS['pdo'];
+        }
+        if ($fcmPdo) {
+            $nativeRes = wp_push_send_native_android(
+                $fcmPdo,
+                null,
+                trim((string)($payload['title'] ?? 'Worship Platform')),
+                trim((string)($payload['body'] ?? '')),
+                trim((string)($payload['url'] ?? '/')),
+                is_array($payload) ? $payload : []
+            );
+            $success += (int)($nativeRes['success'] ?? 0);
+            $failed  += (int)($nativeRes['failed'] ?? 0);
+            $removed += (int)($nativeRes['removed'] ?? 0);
+            $queued  += (int)($nativeRes['total'] ?? 0);
+            foreach ((array)($nativeRes['errors'] ?? []) as $errMsg) {
+                if (count($errorSamples) < 3) $errorSamples[] = $errMsg;
+            }
+        }
+    } catch (\Throwable $_) {}
+
     wp_push_save_config([
         'last_sent_at'    => wp_version_now_iso(),
         'last_sent_title' => trim((string)($payload['title'] ?? '')),
@@ -1701,9 +1730,6 @@ function wp_push_send_to_user($pdo, int $user_id, string $title, string $body, s
         $st->fetchAll(\PDO::FETCH_ASSOC),
         'wp_push_is_active_subscription'
     ));
-    if (!$subs) {
-        return ['ok' => false, 'message' => 'No subscriptions found for user.'];
-    }
 
     $payload = array_merge([
         'title' => $title,
@@ -1713,44 +1739,59 @@ function wp_push_send_to_user($pdo, int $user_id, string $title, string $body, s
         'tag' => 'worship-direct'
     ], is_array($extra) ? $extra : []);
 
-    $subscriptionIds = array_map(static fn(array $row): string => (string)$row['id'], $subs);
-    wp_push_enqueue($subscriptionIds, $payload);
-
     $success = 0;
     $failed = 0;
     $removed = 0;
     $errorSamples = [];
-    $payloadJson = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-    foreach ($subs as $sub) {
-        $pubKey  = trim((string)($sub['public_key'] ?? ''));
-        $authKey = trim((string)($sub['auth_key'] ?? ''));
-        $encryptedBody  = '';
-        $encryptHeaders = [];
-        if ($pubKey !== '' && $authKey !== '') {
-            $encrypted = wp_push_encrypt_payload($payloadJson, $pubKey, $authKey);
-            if ($encrypted !== null) {
-                $encryptedBody  = $encrypted['body'];
-                $encryptHeaders = $encrypted['headers'];
+    if ($subs) {
+        $subscriptionIds = array_map(static fn(array $row): string => (string)$row['id'], $subs);
+        wp_push_enqueue($subscriptionIds, $payload);
+        $payloadJson = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        foreach ($subs as $sub) {
+            $pubKey  = trim((string)($sub['public_key'] ?? ''));
+            $authKey = trim((string)($sub['auth_key'] ?? ''));
+            $encryptedBody  = '';
+            $encryptHeaders = [];
+            if ($pubKey !== '' && $authKey !== '') {
+                $encrypted = wp_push_encrypt_payload($payloadJson, $pubKey, $authKey);
+                if ($encrypted !== null) {
+                    $encryptedBody  = $encrypted['body'];
+                    $encryptHeaders = $encrypted['headers'];
+                }
+            }
+            $result = wp_push_send_signal($sub, $config, $encryptedBody, $encryptHeaders);
+            if (!empty($result['ok'])) {
+                $success++;
+            } else {
+                $failed++;
+                $status = (int)($result['status'] ?? 0);
+                if (count($errorSamples) < 3) {
+                    $errorSamples[] = trim((string)($result['error'] ?? '')) !== ''
+                        ? ('#' . $status . ' ' . trim((string)$result['error']))
+                        : ('#' . $status . ' signal failed');
+                }
+            }
+
+            if (($result['status'] ?? 0) === 404 || ($result['status'] ?? 0) === 410) {
+                $removed++;
+                wp_push_remove_subscription_by_endpoint((string)($sub['endpoint'] ?? ''));
             }
         }
-        $result = wp_push_send_signal($sub, $config, $encryptedBody, $encryptHeaders);
-        if (!empty($result['ok'])) {
-            $success++;
-        } else {
-            $failed++;
-            $status = (int)($result['status'] ?? 0);
-            if (count($errorSamples) < 3) {
-                $errorSamples[] = trim((string)($result['error'] ?? '')) !== ''
-                    ? ('#' . $status . ' ' . trim((string)$result['error']))
-                    : ('#' . $status . ' signal failed');
-            }
-        }
+    }
 
-        if (($result['status'] ?? 0) === 404 || ($result['status'] ?? 0) === 410) {
-            $removed++;
-            wp_push_remove_subscription_by_endpoint((string)($sub['endpoint'] ?? ''));
-        }
+    // Deliver to Native Android devices via Firebase Cloud Messaging (FCM HTTP v1)
+    $nativeRes = wp_push_send_native_android($pdo, $user_id, $title, $body, $url, is_array($extra) ? $extra : []);
+    $success += (int)($nativeRes['success'] ?? 0);
+    $failed  += (int)($nativeRes['failed'] ?? 0);
+    $removed += (int)($nativeRes['removed'] ?? 0);
+    foreach ((array)($nativeRes['errors'] ?? []) as $errMsg) {
+        if (count($errorSamples) < 3) $errorSamples[] = $errMsg;
+    }
+
+    if (!$subs && empty($nativeRes['total'])) {
+        return ['ok' => false, 'message' => 'No subscriptions found for user.'];
     }
 
     return [
@@ -1763,4 +1804,205 @@ function wp_push_send_to_user($pdo, int $user_id, string $title, string $body, s
             ? 'Push sent to ' . $success . ' subscription(s).'
             : 'Push signal failed for all subscriptions.',
     ];
+}
+
+/**
+ * Obtains a cached OAuth2 access token for Firebase Cloud Messaging HTTP v1 API
+ * using the uploaded firebase_service_account.json credential.
+ */
+function wp_push_fcm_get_access_token(): ?array {
+    if (!function_exists('openssl_sign') || !function_exists('curl_init')) {
+        return null;
+    }
+    $credPath = wp_push_credential_path('firebase');
+    if ($credPath === '' || !is_file($credPath) || !is_readable($credPath)) {
+        return null;
+    }
+    $sa = json_decode((string)@file_get_contents($credPath), true);
+    if (!is_array($sa)) return null;
+
+    $projectId   = trim((string)($sa['project_id'] ?? ''));
+    $clientEmail = trim((string)($sa['client_email'] ?? ''));
+    $privateKey  = (string)($sa['private_key'] ?? '');
+    if ($projectId === '' || $clientEmail === '' || $privateKey === '') {
+        return null;
+    }
+
+    $cacheFile = rtrim(sys_get_temp_dir(), '/') . '/wp_fcm_oauth_' . md5($projectId . $clientEmail) . '.json';
+    if (is_file($cacheFile)) {
+        $cached = json_decode((string)@file_get_contents($cacheFile), true);
+        if (is_array($cached) && !empty($cached['access_token']) && (int)($cached['expires_at'] ?? 0) > time() + 120) {
+            return ['access_token' => (string)$cached['access_token'], 'project_id' => $projectId];
+        }
+    }
+
+    $now = time();
+    $header = wp_push_base64url_encode((string)json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
+    $claims = wp_push_base64url_encode((string)json_encode([
+        'iss'   => $clientEmail,
+        'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
+        'aud'   => 'https://oauth2.googleapis.com/token',
+        'iat'   => $now,
+        'exp'   => $now + 3600,
+    ]));
+    $signingInput = $header . '.' . $claims;
+    $signature = '';
+    if (!@openssl_sign($signingInput, $signature, $privateKey, OPENSSL_ALGO_SHA256)) {
+        return null;
+    }
+    $jwt = $signingInput . '.' . wp_push_base64url_encode($signature);
+
+    $ch = curl_init('https://oauth2.googleapis.com/token');
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 8,
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/x-www-form-urlencoded'],
+        CURLOPT_POSTFIELDS     => http_build_query([
+            'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            'assertion'  => $jwt,
+        ]),
+    ]);
+    $raw = curl_exec($ch);
+    $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($httpCode < 200 || $httpCode >= 300 || !$raw) {
+        error_log('[wp_push_fcm] OAuth2 token exchange failed HTTP ' . $httpCode);
+        return null;
+    }
+    $tokenJson = json_decode((string)$raw, true);
+    $accessToken = trim((string)($tokenJson['access_token'] ?? ''));
+    $expiresIn = max(300, (int)($tokenJson['expires_in'] ?? 3600));
+    if ($accessToken === '') return null;
+
+    @file_put_contents($cacheFile, json_encode([
+        'access_token' => $accessToken,
+        'expires_at'   => $now + $expiresIn,
+    ]), LOCK_EX);
+
+    return ['access_token' => $accessToken, 'project_id' => $projectId];
+}
+
+/**
+ * Sends a single Android push notification via Firebase Cloud Messaging HTTP v1.
+ */
+function wp_push_send_fcm_token(string $fcmToken, string $title, string $body, string $url, array $extra, array $fcmAuth): array {
+    $projectId = (string)$fcmAuth['project_id'];
+    $accessToken = (string)$fcmAuth['access_token'];
+    $endpoint = 'https://fcm.googleapis.com/v1/projects/' . rawurlencode($projectId) . '/messages:send';
+
+    $dataMap = [
+        'url'   => $url !== '' ? $url : '/',
+        'path'  => $url !== '' ? $url : '/',
+        'title' => $title !== '' ? $title : 'Worship Platform',
+        'body'  => $body,
+    ];
+    foreach ($extra as $k => $v) {
+        if (is_scalar($v) && !isset($dataMap[(string)$k])) {
+            $dataMap[(string)$k] = (string)$v;
+        }
+    }
+
+    $message = [
+        'message' => [
+            'token' => $fcmToken,
+            'notification' => [
+                'title' => $title !== '' ? $title : 'Worship Platform',
+                'body'  => $body,
+            ],
+            'data' => $dataMap,
+            'android' => [
+                'priority' => 'high',
+                'notification' => [
+                    'channel_id' => 'worship-default',
+                    'sound'      => 'default',
+                ],
+            ],
+        ],
+    ];
+
+    $ch = curl_init($endpoint);
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 8,
+        CURLOPT_HTTPHEADER     => [
+            'Authorization: Bearer ' . $accessToken,
+            'Content-Type: application/json; charset=UTF-8',
+        ],
+        CURLOPT_POSTFIELDS     => json_encode($message, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    ]);
+    $raw = curl_exec($ch);
+    $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlErr = curl_error($ch);
+    curl_close($ch);
+
+    if ($httpCode >= 200 && $httpCode < 300) {
+        return ['ok' => true, 'status' => $httpCode];
+    }
+
+    $unregistered = ($httpCode === 404) || str_contains((string)$raw, 'UNREGISTERED') || str_contains((string)$raw, 'INVALID_ARGUMENT');
+    return [
+        'ok'           => false,
+        'status'       => $httpCode,
+        'unregistered' => $unregistered,
+        'error'        => $curlErr !== '' ? $curlErr : ('FCM #' . $httpCode),
+    ];
+}
+
+/**
+ * Sends FCM push notifications to active Android tokens in native_push_tokens.
+ * If $userId is null, broadcasts to all active Android tokens.
+ */
+function wp_push_send_native_android($pdo, ?int $userId, string $title, string $body, string $url, array $extra = []): array {
+    $out = ['total' => 0, 'success' => 0, 'failed' => 0, 'removed' => 0, 'errors' => []];
+    if (!$pdo) return $out;
+
+    try {
+        if ($userId !== null && $userId > 0) {
+            $st = $pdo->prepare("SELECT id, token FROM native_push_tokens WHERE user_id = ? AND platform = 'android' AND is_active = 1");
+            $st->execute([$userId]);
+        } else {
+            $st = $pdo->query("SELECT id, token FROM native_push_tokens WHERE platform = 'android' AND is_active = 1");
+        }
+        $rows = $st ? $st->fetchAll(\PDO::FETCH_ASSOC) : [];
+    } catch (\Throwable $_) {
+        return $out;
+    }
+
+    if (!$rows) return $out;
+    $out['total'] = count($rows);
+
+    $fcmAuth = wp_push_fcm_get_access_token();
+    if (!$fcmAuth) {
+        $out['failed'] = count($rows);
+        $out['errors'][] = 'FCM auth unavailable';
+        return $out;
+    }
+
+    $seenTokens = [];
+    foreach ($rows as $row) {
+        $tok = trim((string)($row['token'] ?? ''));
+        if ($tok === '' || isset($seenTokens[$tok])) continue;
+        $seenTokens[$tok] = true;
+
+        $res = wp_push_send_fcm_token($tok, $title, $body, $url, $extra, $fcmAuth);
+        if (!empty($res['ok'])) {
+            $out['success']++;
+        } else {
+            $out['failed']++;
+            if (count($out['errors']) < 3 && !empty($res['error'])) {
+                $out['errors'][] = (string)$res['error'];
+            }
+            if (!empty($res['unregistered'])) {
+                $out['removed']++;
+                try {
+                    $pdo->prepare("UPDATE native_push_tokens SET is_active = 0 WHERE id = ?")->execute([(int)$row['id']]);
+                } catch (\Throwable $_) {}
+            }
+        }
+    }
+
+    return $out;
 }

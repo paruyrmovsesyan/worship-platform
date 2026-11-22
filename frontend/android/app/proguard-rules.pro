@@ -18,10 +18,9 @@
     @com.getcapacitor.PluginMethod <methods>;
 }
 
-# Keep FirebaseApp for runtime availability reflection check
--keep class com.google.firebase.FirebaseApp {
-    public static java.util.List getApps(android.content.Context);
-}
+# Keep FirebaseApp and Firebase Messaging for runtime push delivery & reflection check
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
 
 # Preserve line numbers for readable crash traces
 -keepattributes SourceFile,LineNumberTable

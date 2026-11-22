@@ -19,7 +19,7 @@ android {
         applicationId "am.pmstudio.worship"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 16
+        versionCode 17
         versionName "5.4.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {

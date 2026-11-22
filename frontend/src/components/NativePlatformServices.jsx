@@ -236,11 +236,15 @@ export default function NativePlatformServices() {
         performNativeNavigation(path);
       }));
       addHandle(PushNotifications.addListener('pushNotificationReceived', async (notification) => {
-        if (Capacitor.getPlatform() === 'android') return;
         // The in-app call screen owns the foreground ringtone. Scheduling a
         // second local notification here makes two call sounds overlap.
         if (notification?.data?.type === 'call') {
           window.dispatchEvent(new CustomEvent('wp-native-resume'));
+          return;
+        }
+        // If user is already actively viewing this exact chat thread, skip redundant banner
+        const targetPath = notificationPath(notification?.data || {});
+        if (targetPath && targetPath.startsWith('/chat/') && window.location.pathname === targetPath) {
           return;
         }
         const localPermission = await LocalNotifications.checkPermissions().catch(() => ({ display: 'denied' }));
@@ -248,10 +252,11 @@ export default function NativePlatformServices() {
         await LocalNotifications.schedule({
           notifications: [{
             id: Math.floor(Date.now() % 2147483647),
-            title: notification.title || 'Worship Platform',
-            body: notification.body || '',
+            title: notification.title || notification?.data?.title || 'Worship Platform',
+            body: notification.body || notification?.data?.body || '',
+            channelId: Capacitor.getPlatform() === 'android' ? 'worship-default' : undefined,
             extra: notification.data || {},
-            schedule: { at: new Date(Date.now() + 250) },
+            schedule: { at: new Date(Date.now() + 200) },
           }],
         }).catch(() => {});
       }));
