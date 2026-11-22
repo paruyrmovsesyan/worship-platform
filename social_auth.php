@@ -57,6 +57,28 @@ function wp_social_auth_decode_state(string $state): ?array {
     return is_array($data) ? $data : null;
 }
 
+function wp_social_auth_redirect_native_deep_link(string $pathWithQuery): void {
+    if ($pathWithQuery === '' || $pathWithQuery[0] !== '/') {
+        $pathWithQuery = '/' . ltrim($pathWithQuery, '/');
+    }
+    $deepLink = 'worship://open' . $pathWithQuery;
+    $safeHref = htmlspecialchars($deepLink, ENT_QUOTES, 'UTF-8');
+    $safeJs = json_encode($deepLink, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+    header('Content-Type: text/html; charset=utf-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    echo '<!doctype html><html lang="hy"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+        . '<title>Worship Platform</title>'
+        . '<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#05050A;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Inter,sans-serif;text-align:center;padding:24px;}'
+        . '.card{max-width:340px;width:100%;background:rgba(24,26,40,.94);border:1px solid rgba(255,255,255,.14);border-radius:24px;padding:28px 22px;}'
+        . 'a.btn{display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:46px;margin-top:16px;border-radius:999px;background:linear-gradient(135deg,#3a2dff,#00d4ff);color:#fff;font-weight:700;text-decoration:none;}</style>'
+        . '</head><body><div class="card"><h2 style="margin:0 0 8px;font-size:1.15rem;">Մուտքը հաստատվեց</h2>'
+        . '<p style="margin:0;color:rgba(226,232,240,.78);font-size:.9rem;">Վերադառնում ենք Worship Platform հավելված…</p>'
+        . '<a class="btn" href="' . $safeHref . '">Բացել հավելվածը</a></div>'
+        . '<script>window.location.replace(' . $safeJs . ');</script></body></html>';
+    exit;
+}
+
 function wp_social_auth_redirect_to_auth(string $mode, string $next, string $source, string $message = '', string $authTarget = 'user') {
     $authTarget = wp_social_auth_safe_target($authTarget);
     $target = $authTarget === 'admin'
@@ -70,7 +92,12 @@ function wp_social_auth_redirect_to_auth(string $mode, string $next, string $sou
         $query['social_error'] = $message;
     }
 
-    header('Location: ' . $target . '?' . http_build_query($query));
+    $fullTarget = $target . '?' . http_build_query($query);
+    if ($source === 'native' && $authTarget !== 'admin') {
+        wp_social_auth_redirect_native_deep_link($fullTarget);
+    }
+
+    header('Location: ' . $fullTarget);
     exit;
 }
 
@@ -302,6 +329,10 @@ function wp_social_auth_handle_google_callback(PDO $pdo, array $pending) {
             'social_registered' => 1,
             'password_hint' => 1,
         ]);
+    }
+
+    if (strtolower((string)($pending['source'] ?? '')) === 'native') {
+        wp_social_auth_redirect_native_deep_link($targetNext);
     }
 
     wp_social_auth_redirect_after_login($targetNext);

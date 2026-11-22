@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
+import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { Network } from '@capacitor/network';
 import { PushNotifications } from '@capacitor/push-notifications';
@@ -114,9 +115,33 @@ export default function NativePlatformServices() {
       else handles.push(handle);
     };
 
-    addHandle(CapacitorApp.addListener('appUrlOpen', ({ url }) => {
-      const path = notificationPath({ url });
-      performNativeNavigation(path);
+    addHandle(CapacitorApp.addListener('appUrlOpen', async ({ url }) => {
+      Browser.close().catch(() => {});
+      const rawPath = notificationPath({ url });
+      if (!rawPath) return;
+
+      try {
+        const parsed = new URL(rawPath, 'https://worship.pmstudio.am');
+        const socialToken = parsed.searchParams.get('social_login_token');
+        if (socialToken) {
+          parsed.searchParams.delete('social_login_token');
+          const cleanPath = `${parsed.pathname}${parsed.search}${parsed.hash}` || '/';
+          try {
+            const claimRes = await fetch('/social_auth.php?action=claim_token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: socialToken }),
+            });
+            if (claimRes.ok) {
+              await checkAuthRef.current?.();
+            }
+          } catch {}
+          performNativeNavigation(cleanPath);
+          return;
+        }
+      } catch {}
+
+      performNativeNavigation(rawPath);
     }));
 
     addHandle(CapacitorApp.addListener('appStateChange', ({ isActive }) => {

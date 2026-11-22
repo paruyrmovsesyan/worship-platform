@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+import { API_BASE_URL } from '../utils/nativeConfig';
 import { useIsAppMode } from '../hooks/useIsPWA';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -191,6 +194,13 @@ const Register = () => {
     event.preventDefault();
     if (!googleEnabled || isLoading) {
       setError(t('auth.googleDisabled'));
+      return;
+    }
+    if (Capacitor.isNativePlatform()) {
+      const nativeGoogleUrl = `${API_BASE_URL}/social_auth.php?provider=google&mode=register&next=${encodeURIComponent(next)}&source=native&remember=${rememberMe ? '1' : '0'}`;
+      Browser.open({ url: nativeGoogleUrl }).catch(() => {
+        window.open(nativeGoogleUrl, '_blank', 'noopener,noreferrer');
+      });
       return;
     }
     window.location.href = googleAuthUrl;
