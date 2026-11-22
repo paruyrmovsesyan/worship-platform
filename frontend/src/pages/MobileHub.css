@@ -10,7 +10,7 @@
 
 /* ── Top Header ── */
 .hub-header {
-  padding: 12px 16px 8px;
+  padding: 10px 16px 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -22,7 +22,7 @@
 
 body.is-app.is-android .hub-header,
 body.wp-standalone-app:not(.is-ios) .hub-header {
-  padding-top: 12px;
+  padding-top: 10px;
 }
 
 .hub-logo-btn {
@@ -32,55 +32,42 @@ body.wp-standalone-app:not(.is-ios) .hub-header {
   margin: 0;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   min-width: 0;
+  flex-shrink: 1;
   cursor: pointer;
 }
 
 .hub-logo-img {
   display: block;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   object-fit: cover;
-  border-radius: 12px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+  border-radius: 11px;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.28);
   flex-shrink: 0;
 }
 
 .hub-logo-img-square {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   max-width: none;
-  border-radius: 13px;
-}
-
-.hub-brand-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 0;
+  border-radius: 12px;
 }
 
 .hub-brand-name {
-  font-size: 0.96rem;
+  font-size: 1.04rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   color: var(--color-text-primary);
-  line-height: 1.1;
-}
-
-.hub-brand-date {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  text-transform: capitalize;
-  margin-top: 1px;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .hub-header-actions {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
@@ -89,10 +76,56 @@ body.wp-standalone-app:not(.is-ios) .hub-header {
   align-items: center;
 }
 
+.mobile-hub .hub-header .lang-switcher-pill {
+  padding: 3px;
+  height: 36px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+  align-items: center;
+}
+
+.mobile-hub .hub-header .lang-pill-btn {
+  padding: 0 7px;
+  min-width: 32px;
+  height: 28px;
+  line-height: 28px;
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.03em;
+  color: var(--color-text-secondary);
+}
+
+.mobile-hub .hub-header .lang-pill-btn.active {
+  color: #1f1402;
+  font-weight: 800;
+}
+
+.mobile-hub .hub-header .lang-pill-glider {
+  top: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / 3);
+  height: calc(100% - 6px);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.3);
+}
+
+body.light-mode .mobile-hub .hub-header .lang-switcher-pill {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.09);
+}
+
+body.light-mode .mobile-hub .hub-header .lang-pill-btn:not(.active) {
+  color: #4b5563;
+}
+
 .hub-header-icon-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.055);
   color: var(--color-text-primary);
@@ -102,6 +135,11 @@ body.wp-standalone-app:not(.is-ios) .hub-header {
   cursor: pointer;
   touch-action: manipulation;
   transition: transform 0.14s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.hub-header-icon-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .hub-header-icon-btn:active {
@@ -517,7 +555,7 @@ body.light-mode .hub-live-search-all {
 .hub-quick-dock {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 9px;
+  gap: 7px;
   margin-bottom: 11px;
   width: 100%;
   box-sizing: border-box;
@@ -528,9 +566,9 @@ body.light-mode .hub-live-search-all {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 12px 6px 10px;
-  border-radius: 18px;
+  gap: 6px;
+  padding: 11px 3px 9px;
+  border-radius: 17px;
   border: 1px solid rgba(255, 255, 255, 0.085);
   background: linear-gradient(165deg, rgba(28, 31, 43, 0.88), rgba(16, 18, 26, 0.94));
   color: var(--color-text-primary);
@@ -601,8 +639,9 @@ body.light-mode .hub-dock-ico.tone-indigo {
 }
 
 .hub-dock-label {
-  font-size: 0.72rem;
+  font-size: clamp(0.62rem, 2.65vw, 0.72rem);
   font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;

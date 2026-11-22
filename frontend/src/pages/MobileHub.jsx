@@ -546,10 +546,7 @@ export default function MobileHub() {
               }
             }}
           />
-          <div className="hub-brand-meta">
-            <span className="hub-brand-name">Worship</span>
-            <span className="hub-brand-date">{todayFormatted}</span>
-          </div>
+          <span className="hub-brand-name">Worship</span>
         </button>
 
         <div className="hub-header-actions">
@@ -591,6 +588,8 @@ export default function MobileHub() {
           <div className="hub-greeting-copy">
             <span className="hub-today-eyebrow">
               {language === 'ru' ? 'СЕГОДНЯ' : language === 'en' ? 'TODAY' : 'ԱՅՍՕՐ'}
+              {' · '}
+              {todayFormatted.toUpperCase()}
             </span>
             <h1 className="hub-today-title">{greetingText}</h1>
           </div>
