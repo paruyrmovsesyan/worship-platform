@@ -619,8 +619,8 @@ body.is-native .hub-votd-btn-primary {
 }
 
 body.is-native .hub-votd-btn-ghost {
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 body.is-native .hub-votd-btn-primary:active,
@@ -636,8 +636,24 @@ body.is-native .hub-week-card {
   padding: 11px 10px 12px;
   margin-bottom: 18px;
   box-shadow: var(--native-specular), var(--native-card-shadow);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Prevent iOS/Android WKWebView GPU flickering on scrollable buttons & sticky bars */
+body.is-native :is(
+  .hub-votd-card,
+  .hub-search-bar,
+  .hub-tool-pill,
+  .hub-quick-card,
+  .songs-search-bar,
+  .songs-filter-chip,
+  .church-hero-bar,
+  .sv-action-pill,
+  .sv-float-btn
+) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 body.is-native .hub-week-day {

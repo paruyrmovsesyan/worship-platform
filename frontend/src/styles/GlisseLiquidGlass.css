@@ -233,7 +233,16 @@ body.light-mode .wp-glisse-tabbar.lg-tab-bar[data-icons] {
 
 /* ==========================================================================
    4. GLISSE <SegmentedControl> SIZES ACROSS HEADER, PAGES & POPOVERS
+   Disable nested backdrop-filter on `.lg-segmented > .lg-tab-bar-glass` so
+   controls placed inside sticky headers, cards, or popovers never trigger
+   iOS/Android GPU compositor flickering while keeping full Liquid Glass rim
+   & 24×16px refractive lens droplet physics.
    ========================================================================== */
+.lg-segmented > .lg-tab-bar-glass {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
 .wp-glisse-lang.lg-segmented {
   --lg-tab-width: 38px;
   --lg-tab-height: 32px;

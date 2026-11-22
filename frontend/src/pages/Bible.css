@@ -45,6 +45,17 @@ body.is-native .bible-topbar-wrap {
   background: transparent;
 }
 
+body.is-native .bible-topbar {
+  background: var(--native-surface-elevated);
+  border-color: var(--native-hairline);
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+}
+
 body.light-mode.is-app .bible-topbar-wrap,
 body.light-mode.wp-standalone-app .bible-topbar-wrap {
   background: transparent;

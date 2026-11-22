@@ -430,5 +430,59 @@
         "resolved_at": "2026-11-07 22:22:18",
         "resolved_by": "auto_file_removed",
         "resolution_reason": "Ֆայլը (Command line code) հեռացված է նախագծից, խնդիրը վերացված է"
+    },
+    "2890d385f6d94d744ebbe0a1669b0548": {
+        "is_resolved": 1,
+        "resolved_at": "2026-11-22 23:15:49",
+        "resolved_by": "auto_file_removed",
+        "resolution_reason": "Ֆայլը (bible) հեռացված է նախագծից, խնդիրը վերացված է"
+    },
+    "30b7412a45c2d90dc5f39a0ec9286702": {
+        "is_resolved": 1,
+        "resolved_at": "2026-11-22 23:15:49",
+        "resolved_by": "auto_file_removed",
+        "resolution_reason": "Ֆայլը (bible) հեռացված է նախագծից, խնդիրը վերացված է"
+    },
+    "fc2770d44fcce52d741fe9111e51dbb6": {
+        "is_resolved": 1,
+        "resolved_at": "2026-11-22 23:15:49",
+        "resolved_by": "auto_file_removed",
+        "resolution_reason": "Ֆայլը (settings) հեռացված է նախագծից, խնդիրը վերացված է"
+    },
+    "f6a94a8565ce5cf324b538638ba4ba7c": {
+        "is_resolved": 1,
+        "resolved_at": "2026-11-22 23:15:49",
+        "resolved_by": "auto_file_removed",
+        "resolution_reason": "Ֆայլը (church) հեռացված է նախագծից, խնդիրը վերացված է"
+    },
+    "4b50c6ca226a2330424fca992f31ab1b": {
+        "is_resolved": 1,
+        "resolved_at": "2026-11-22 23:15:49",
+        "resolved_by": "auto_file_removed",
+        "resolution_reason": "Ֆայլը (media) հեռացված է նախագծից, խնդիրը վերացված է"
+    },
+    "babc55f36c2e9a30a753b74fdb4b9246": {
+        "is_resolved": 1,
+        "resolved_at": "2026-11-22 23:15:49",
+        "resolved_by": "auto_file_removed",
+        "resolution_reason": "Ֆայլը () հեռացված է նախագծից, խնդիրը վերացված է"
+    },
+    "9e79aabf4d70c55c5a5be21ebc394c7e": {
+        "is_resolved": 1,
+        "resolved_at": "2026-11-22 23:15:49",
+        "resolved_by": "auto_file_removed",
+        "resolution_reason": "Ֆայլը (songs) հեռացված է նախագծից, խնդիրը վերացված է"
+    },
+    "f252274fa936736fba74e7f92f380c33": {
+        "is_resolved": 1,
+        "resolved_at": "2026-11-22 23:15:49",
+        "resolved_by": "auto_file_removed",
+        "resolution_reason": "Ֆայլը (1) հեռացված է նախագծից, խնդիրը վերացված է"
+    },
+    "91d84e12e778e3d08b8a0733189f08be": {
+        "is_resolved": 1,
+        "resolved_at": "2026-11-22 23:15:49",
+        "resolved_by": "auto_test_verify",
+        "resolution_reason": "Թեստային սխալ (փորձարկումն ավարտված է)"
     }
 }
