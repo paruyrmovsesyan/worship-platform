@@ -116,6 +116,20 @@ if (!in_array($platform, ['ios', 'android', 'web', 'pwa'], true)) {
 
 $clientVersion = trim((string)($_GET['version'] ?? $postData['version'] ?? ''));
 $clientBuild = trim((string)($_GET['build'] ?? $postData['build'] ?? ''));
+$clientDeviceId = trim((string)($_GET['device_id'] ?? $postData['device_id'] ?? ''));
+$clientUserId = (int)($_GET['user_id'] ?? $postData['user_id'] ?? 0);
+$clientUserEmail = trim((string)($_GET['user_email'] ?? $postData['user_email'] ?? ''));
+
+if ($platform === 'ios' || $platform === 'android') {
+    wp_mobile_record_device([
+        'platform' => $platform,
+        'device_id' => $clientDeviceId,
+        'app_version' => $clientVersion,
+        'app_build' => $clientBuild,
+        'user_id' => $clientUserId > 0 ? $clientUserId : null,
+        'user_email' => $clientUserEmail,
+    ]);
+}
 
 $evaluation = wp_mobile_evaluate_client($platform, $clientVersion, $clientBuild);
 echo json_encode($evaluation, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

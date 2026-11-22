@@ -1326,20 +1326,32 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
                 <?php foreach ($registeredDevices as $dev): ?>
                   <tr>
                     <td>
-                      <div style="font-weight:600; color:#fff;">
-                        <?= str_contains(strtolower($dev['platform']), 'ios') ? '🍏 iOS' : (str_contains(strtolower($dev['platform']), 'android') ? '🤖 Android' : '📱 ' . htmlspecialchars($dev['platform'])) ?>
+                      <div style="font-weight:700; color:var(--text);">
+                        <?= str_contains(strtolower((string)$dev['platform']), 'ios') ? '🍏 iOS' : (str_contains(strtolower((string)$dev['platform']), 'android') ? '🤖 Android' : '📱 ' . htmlspecialchars((string)$dev['platform'])) ?>
+                        <?php if (!empty($dev['app_version'])): ?>
+                          <span style="font-size:0.75rem; font-weight:600; color:var(--primary); margin-left:6px;">v<?= htmlspecialchars((string)$dev['app_version']) ?><?= !empty($dev['app_build']) ? ' (' . htmlspecialchars((string)$dev['app_build']) . ')' : '' ?></span>
+                        <?php endif; ?>
                       </div>
-                      <div style="font-size:0.75rem; color:#64748b;"><?= htmlspecialchars(substr($dev['user_agent'], 0, 50)) ?></div>
+                      <div style="font-size:0.75rem; color:var(--muted);"><?= htmlspecialchars(substr((string)($dev['user_agent'] ?? ''), 0, 56)) ?></div>
                     </td>
-                    <td><code style="font-size:0.78rem; color:#38bdf8;"><?= htmlspecialchars(substr($dev['device_id'], 0, 16)) ?>...</code></td>
-                    <td><?= $dev['user_id'] ? '#' . (int)$dev['user_id'] : '<span style="color:#64748b;">Հյուր (Guest)</span>' ?></td>
+                    <td><code style="font-size:0.78rem; color:var(--primary);"><?= htmlspecialchars(substr((string)$dev['device_id'], 0, 18)) ?></code></td>
                     <td>
-                      <?= !empty($dev['has_token']) ? '<span class="badge badge--live">ԱԿՏԻՎ TOKEN</span>' : '<span style="color:#64748b; font-size:0.78rem;">Չկա</span>' ?>
+                      <?php if (!empty($dev['user_email'])): ?>
+                        <div style="font-weight:600; color:var(--text); font-size:0.82rem;"><?= htmlspecialchars((string)$dev['user_email']) ?></div>
+                        <?php if (!empty($dev['user_id'])): ?><div style="font-size:0.72rem; color:var(--muted);">#<?= (int)$dev['user_id'] ?></div><?php endif; ?>
+                      <?php elseif (!empty($dev['user_id'])): ?>
+                        <span style="font-weight:600; color:var(--text);">#<?= (int)$dev['user_id'] ?></span>
+                      <?php else: ?>
+                        <span style="color:var(--muted);">Հյուր (Guest)</span>
+                      <?php endif; ?>
                     </td>
                     <td>
-                      <?= !empty($dev['is_active']) ? '<span style="color:#4ade80;">● Online</span>' : '<span style="color:#64748b;">Offline</span>' ?>
+                      <?= !empty($dev['has_token']) ? '<span class="badge badge--live">ԱԿՏԻՎ TOKEN</span>' : '<span style="color:var(--muted); font-size:0.78rem;">Չկա</span>' ?>
                     </td>
-                    <td style="font-size:0.8rem; color:#94a3b8;"><?= htmlspecialchars($dev['last_seen']) ?></td>
+                    <td>
+                      <?= !empty($dev['is_active']) ? '<span style="color:var(--success); font-weight:700;">● Online</span>' : '<span style="color:var(--muted);">Offline</span>' ?>
+                    </td>
+                    <td style="font-size:0.8rem; color:var(--muted);"><?= htmlspecialchars((string)($dev['last_seen'] ?? '—')) ?></td>
                   </tr>
                 <?php endforeach; ?>
               </tbody>

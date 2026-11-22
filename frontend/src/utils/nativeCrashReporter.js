@@ -189,6 +189,23 @@ export async function reportMobileError(data, isFlushing = false) {
   }
 }
 
+const NATIVE_DEVICE_ID_KEY = 'wp_native_device_id_v1';
+
+function getOrCreateNativeDeviceId(platform) {
+  try {
+    let id = localStorage.getItem(NATIVE_DEVICE_ID_KEY);
+    if (id && id.length >= 8) return id;
+    const rand = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+      ? crypto.randomUUID().replace(/-/g, '').slice(0, 16)
+      : Math.random().toString(36).slice(2, 14) + Date.now().toString(36);
+    id = `${platform}_${rand}`;
+    localStorage.setItem(NATIVE_DEVICE_ID_KEY, id);
+    return id;
+  } catch {
+    return `${platform}_anon`;
+  }
+}
+
 /**
  * Checks server mobile configuration (Force Update, Maintenance, Announcements).
  */
@@ -202,12 +219,21 @@ export async function fetchMobileAppStatus() {
       appInfo = await App.getInfo();
     } catch (_) {}
 
-    const res = await fetch(
-      `${CONFIG_ENDPOINT}?platform=${encodeURIComponent(platform)}&version=${encodeURIComponent(appInfo.version)}&build=${encodeURIComponent(appInfo.build)}&_t=${Date.now()}`,
-      {
-        cache: 'no-store',
-      },
-    );
+    const deviceId = getOrCreateNativeDeviceId(platform);
+    const { userId, userEmail } = getUserMeta();
+    const params = new URLSearchParams({
+      platform,
+      version: String(appInfo.version || '1.0'),
+      build: String(appInfo.build || '1'),
+      device_id: deviceId,
+      _t: String(Date.now()),
+    });
+    if (userId) params.set('user_id', String(userId));
+    if (userEmail) params.set('user_email', String(userEmail));
+
+    const res = await fetch(`${CONFIG_ENDPOINT}?${params.toString()}`, {
+      cache: 'no-store',
+    });
     if (!res.ok) return null;
     return await res.json();
   } catch (_) {
