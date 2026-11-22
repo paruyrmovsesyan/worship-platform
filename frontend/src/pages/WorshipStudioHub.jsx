@@ -375,7 +375,7 @@ export default function WorshipStudioHub() {
   // Fetch songs list
   useEffect(() => {
     let active = true;
-    if (songs.length === 0) setLoadingSongs(true);
+    setLoadingSongs((prev) => prev || false);
 
     fetch('/api.php')
       .then((res) => (res.ok ? res.json() : []))

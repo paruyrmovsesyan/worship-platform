@@ -57,7 +57,7 @@ export default function SetlistPublicWeb() {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [token, setlistId]);
+  }, [token, setlistId, t]);
 
   const handleCopyLink = () => {
     const fullUrl = token

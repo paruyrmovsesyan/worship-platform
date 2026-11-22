@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import './LandingPage.css';
 import { useLanguage } from '../context/LanguageContext';
@@ -47,12 +47,12 @@ export default function LandingPage() {
     };
   }, [language]);
 
-  const mapSong = (song, index) => {
+  const mapSong = useCallback((song, index) => {
     let tags = [];
-    if (song.tags) tags = song.tags.split(',').map(t => t.trim()).filter(Boolean).slice(0, 2);
+    if (song.tags) tags = song.tags.split(',').map(tag => tag.trim()).filter(Boolean).slice(0, 2);
     if (tags.length === 0) tags = ['Worship'];
     return { id: song.id, title: getLocalizedTitle(song, language) || t('landing.unknownArtist'), artist: song.artist && song.artist !== 'Unknown' ? song.artist : t('landing.unknownArtist'), key: song.song_key || '?', bpm: song.bpm, tags, img: `bg-gradient-${(index % 9) + 1}` };
-  };
+  }, [language, t]);
 
   const [customHero, setCustomHero] = useState(null);
 
@@ -127,7 +127,7 @@ export default function LandingPage() {
     
     const start = songPage * SONGS_PER_PAGE;
     setPopularSongs(sorted.slice(start, start + SONGS_PER_PAGE).map((s, i) => mapSong(s, start + i)));
-  }, [activeFilter, allSongs, realPopularSongs, songPage]);
+  }, [activeFilter, allSongs, realPopularSongs, songPage, mapSong]);
 
   const goToPage = (dir) => {
     const totalPages = Math.ceil(allSongs.length / SONGS_PER_PAGE);
