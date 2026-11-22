@@ -18,12 +18,17 @@ import android.webkit.WebViewRenderProcess;
 import android.webkit.WebViewRenderProcessClient;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     private AudioFocusRequest callAudioFocusRequest;
     private boolean callAudioActive = false;
     private boolean callUsesSpeaker = false;
+    private int lastSafeTopDp = 0;
+    private int lastSafeBottomDp = 0;
     private final Handler callAudioHandler = new Handler(Looper.getMainLooper());
 
     @Override
@@ -49,6 +54,20 @@ public class MainActivity extends BridgeActivity {
             webView.addJavascriptInterface(new NativeAudioBridge(), "NativeAudio");
             webView.addJavascriptInterface(new NativeRuntimeBridge(), "NativeRuntime");
             webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+
+            View decorView = getWindow().getDecorView();
+            ViewCompat.setOnApplyWindowInsetsListener(decorView, (v, windowInsets) -> {
+                Insets bars = windowInsets.getInsets(
+                    WindowInsetsCompat.Type.statusBars() | WindowInsetsCompat.Type.displayCutout()
+                );
+                Insets nav = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars());
+                float density = Math.max(1f, getResources().getDisplayMetrics().density);
+                lastSafeTopDp = Math.round(bars.top / density);
+                lastSafeBottomDp = Math.round(nav.bottom / density);
+                injectSafeAreaInsets();
+                return windowInsets;
+            });
+            ViewCompat.requestApplyInsets(decorView);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 webView.setWebViewRenderProcessClient(new WebViewRenderProcessClient() {
@@ -89,7 +108,18 @@ public class MainActivity extends BridgeActivity {
         super.onResume();
         if (getBridge() != null && getBridge().getWebView() != null) {
             getBridge().getWebView().getSettings().setTextZoom(100);
+            injectSafeAreaInsets();
         }
+    }
+
+    private void injectSafeAreaInsets() {
+        if (getBridge() == null || getBridge().getWebView() == null) return;
+        final String js = "document.documentElement.style.setProperty('--native-safe-top','"
+            + lastSafeTopDp + "px');"
+            + "document.documentElement.style.setProperty('--native-safe-bottom','"
+            + lastSafeBottomDp + "px');";
+        WebView webView = getBridge().getWebView();
+        webView.post(() -> webView.evaluateJavascript(js, null));
     }
 
     private final class NativeRuntimeBridge {

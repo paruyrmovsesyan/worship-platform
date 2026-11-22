@@ -1,21 +1,27 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Worship Platform Android R8 / ProGuard Rules
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Preserve WebView JavascriptInterface bridges
+-keepattributes *Annotation*
+-keepclassmembers class am.pmstudio.worship.MainActivity$* {
+    @android.webkit.JavascriptInterface <methods>;
+    public *;
+}
+-keep class am.pmstudio.worship.MainActivity { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep Capacitor core & all Capacitor plugins (loaded via reflection)
+-keep class com.getcapacitor.** { *; }
+-keep class com.capacitorjs.** { *; }
+-keep class com.aparajita.** { *; }
+-keep class org.apache.cordova.** { *; }
+-keep @com.getcapacitor.annotation.CapacitorPlugin class * { *; }
+-keepclassmembers class * {
+    @com.getcapacitor.PluginMethod <methods>;
+}
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Keep FirebaseApp for runtime availability reflection check
+-keep class com.google.firebase.FirebaseApp {
+    public static java.util.List getApps(android.content.Context);
+}
+
+# Preserve line numbers for readable crash traces
+-keepattributes SourceFile,LineNumberTable

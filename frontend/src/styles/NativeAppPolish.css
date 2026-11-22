@@ -31,12 +31,16 @@ body.is-native .chat-page-container > .chat-header {
   min-height: calc(56px + env(safe-area-inset-top, 0px));
 }
 
+body.is-native.is-android #root {
+  padding-top: max(env(safe-area-inset-top, 0px), var(--native-safe-top, 0px)) !important;
+}
+
 body.is-native.is-android .chat-page-container > .chat-header {
-  padding-top: calc(max(env(safe-area-inset-top, 0px), 28px) + 10px) !important;
+  padding-top: calc(max(env(safe-area-inset-top, 0px), var(--native-safe-top, 28px)) + 10px) !important;
 }
 
 body.is-native .chat-page-container .chat-input-area {
-  padding: 10px 14px calc(max(env(safe-area-inset-bottom, 0px), 16px) + 12px) 14px !important;
+  padding: 10px 14px calc(max(env(safe-area-inset-bottom, 0px), var(--native-safe-bottom, 16px)) + 12px) 14px !important;
 }
 
 body.is-native.keyboard-open .chat-page-container .chat-input-area {

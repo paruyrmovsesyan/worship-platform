@@ -779,7 +779,11 @@ if (!in_array($activeTab, ['overview', 'ios', 'android', 'errors', 'announcement
           </p>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
             <a href="?tab=android" class="m-btn m-btn--primary">Կարգավորել Android</a>
-            <a href="/worship-platform.apk" download class="m-btn m-btn--secondary">Ներբեռնել APK (26.8 MB) ⬇</a>
+            <?php
+              $apkPath = __DIR__ . '/worship-platform.apk';
+              $apkSizeLabel = is_file($apkPath) ? sprintf('%.1f MB', filesize($apkPath) / 1048576) : 'APK';
+            ?>
+            <a href="/worship-platform.apk" download class="m-btn m-btn--secondary">Ներբեռնել APK (<?= $apkSizeLabel ?>) ⬇</a>
           </div>
         </div>
       </div>
