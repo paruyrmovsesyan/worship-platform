@@ -1,5 +1,4 @@
 import React, { Suspense, useEffect, useLayoutEffect } from 'react';
-import { usePageLoading } from './context/PageLoadingContext';
 import { Routes, Route, useLocation, useNavigate, useNavigationType, Navigate } from 'react-router-dom';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 
@@ -352,6 +351,9 @@ function App() {
       'route-animate', 'native-tab-transition',
       'native-push-transition', 'native-pop-transition'
     );
+    if (!isNativeApp) {
+      void route.offsetWidth;
+    }
     route.classList.add('route-animate');
 
     if (isNativeApp && nativeTransition === 'native-push-transition') {
@@ -376,7 +378,9 @@ function App() {
         const portalSurface = usesPortalSurface
           ? document.querySelector('body > .chat-page-container')
           : null;
-        const surfaceReady = usesPortalSurface ? Boolean(portalSurface) : Boolean(route.firstElementChild);
+        const surfaceReady = usesPortalSurface
+          ? Boolean(portalSurface)
+          : Boolean(route.firstElementChild && !route.querySelector('.route-lazy-fallback'));
         if (!surfaceReady && performance.now() - startedAt < 1200) {
           frame = window.requestAnimationFrame(beginPush);
           return;
@@ -477,7 +481,9 @@ function App() {
           const portalSurface = usesPortalSurface
             ? document.querySelector('body > .chat-page-container')
             : null;
-          const surfaceReady = usesPortalSurface ? Boolean(portalSurface) : Boolean(route.firstElementChild);
+          const surfaceReady = usesPortalSurface
+            ? Boolean(portalSurface)
+            : Boolean(route.firstElementChild && !route.querySelector('.route-lazy-fallback'));
           if (!surfaceReady && performance.now() - startedAt < 1200) {
             frame = window.requestAnimationFrame(beginPop);
             return;
@@ -602,7 +608,7 @@ function App() {
       const route = getSnapshotSurface();
       const routeIsReady = location.pathname.startsWith('/chat/')
         ? Boolean(route)
-        : Boolean(route?.firstElementChild);
+        : Boolean(route?.firstElementChild && !route.querySelector('.route-lazy-fallback'));
       if (!routeIsReady) return;
       if (!window.__wpNativeRouteSnapshots) window.__wpNativeRouteSnapshots = new Map();
       const snapshot = route.cloneNode(true);
@@ -644,7 +650,7 @@ function App() {
         const currentRoute = getSnapshotSurface();
         const routeIsReady = location.pathname.startsWith('/chat/')
           ? Boolean(currentRoute)
-          : Boolean(currentRoute?.firstElementChild);
+          : Boolean(currentRoute?.firstElementChild && !currentRoute.querySelector('.route-lazy-fallback'));
         if (!routeIsReady && performance.now() - startedAt < 5000) {
           frame = window.requestAnimationFrame(startCapture);
           return;
@@ -767,7 +773,6 @@ function App() {
     return <Navbar />;
   };
 
-  const { isLoading } = usePageLoading() || {};
   const isChatPage = location.pathname.startsWith('/chat/');
   const isProjectionPage = location.pathname.startsWith('/projection');
 
@@ -804,11 +809,6 @@ function App() {
       <main
         className={isAppMode && !isMobile && !isProjectionPage ? 'main-with-sidebar' : ''}
         style={{
-          // Never hide the entire native view while an API request is pending.
-          // A stalled request previously left only the bottom navigation visible.
-          opacity: isLoading && !isNativeApp ? 0 : 1,
-          transition: 'opacity 0.4s ease',
-          pointerEvents: isLoading && !isNativeApp ? 'none' : 'auto',
           padding: isProjectionPage ? 0 : undefined,
         }}
       >
@@ -831,7 +831,18 @@ function App() {
                 language={language}
               />
             ) : (
-            <Suspense fallback={<div className="route-lazy-fallback" style={{ minHeight: '60vh' }} />}>
+            <Suspense
+              fallback={
+                <div className="route-lazy-fallback" aria-busy="true">
+                  <div className="route-lazy-glass-hero" />
+                  <div className="route-lazy-glass-grid">
+                    <div className="route-lazy-glass-card" />
+                    <div className="route-lazy-glass-card" />
+                    <div className="route-lazy-glass-card" />
+                  </div>
+                </div>
+              }
+            >
             <Routes key={refreshKey}>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />

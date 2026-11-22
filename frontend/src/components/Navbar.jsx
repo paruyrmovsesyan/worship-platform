@@ -27,9 +27,9 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen]       = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
 
-  // Magic Pill sliding animation state
-  const [hoverStyle, setHoverStyle] = useState({ opacity: 0, width: 0, transform: 'translateX(0px)' });
+  // Liquid Glass pill ref (driven imperatively to avoid React re-renders on hover)
   const navMenuRef = useRef(null);
+  const pillRef = useRef(null);
 
   const [unreadCount, setUnreadCount] = useState(0);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -51,27 +51,53 @@ export default function Navbar() {
     }
   }, [user, location.pathname]);
 
-  // Calculate position of the pill
-  const updatePillPosition = (element) => {
-    if (!element || !navMenuRef.current) return;
-    const navRect = navMenuRef.current.getBoundingClientRect();
+  // Calculate position of the Liquid Glass pill
+  const updatePillPosition = (element, instant = false) => {
+    const pill = pillRef.current;
+    const menu = navMenuRef.current;
+    if (!pill || !menu) return;
+    if (!element) {
+      pill.style.opacity = '0';
+      return;
+    }
+    const navRect = menu.getBoundingClientRect();
     const itemRect = element.getBoundingClientRect();
-    
-    setHoverStyle({
-      opacity: 1,
-      width: itemRect.width,
-      transform: `translateX(${itemRect.left - navRect.left}px)`
-    });
+    if (!itemRect.width) {
+      pill.style.opacity = '0';
+      return;
+    }
+    if (instant) {
+      pill.style.transition = 'none';
+    }
+    pill.style.opacity = '1';
+    pill.style.width = `${itemRect.width}px`;
+    pill.style.transform = `translate3d(${itemRect.left - navRect.left}px, 0, 0)`;
+    if (instant) {
+      // Force reflow then restore spring transition
+      void pill.offsetWidth;
+      pill.style.transition = '';
+    }
   };
 
+  const syncPillToActiveItem = (instant = false) => {
+    const activeEl = navMenuRef.current?.querySelector('.nav-item.active');
+    updatePillPosition(activeEl || null, instant);
+  };
+
+  useEffect(() => {
+    syncPillToActiveItem(false);
+    const onResize = () => syncPillToActiveItem(true);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  });
+
   const handleMenuEnter = (e, menuName) => {
-    updatePillPosition(e.currentTarget);
+    updatePillPosition(e.currentTarget, false);
     if (menuName) onMenuEnter(menuName);
   };
 
   const handleMenuLeaveWrapper = () => {
-    // Hide pill when leaving the entire menu container
-    setHoverStyle(prev => ({ ...prev, opacity: 0 }));
+    syncPillToActiveItem(false);
   };
 
   const hideTimeout = useRef(null);
@@ -369,7 +395,7 @@ export default function Navbar() {
 
           {/* ── NAV LINKS (Desktop only) ── */}
           <div className="navbar-menu hide-mobile" ref={navMenuRef} onMouseLeave={handleMenuLeaveWrapper}>
-            <div className="nav-hover-pill" style={hoverStyle}></div>
+            <div className="nav-hover-pill" ref={pillRef} aria-hidden="true"></div>
 
             <Link 
               to="/" 

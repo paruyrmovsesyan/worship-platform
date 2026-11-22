@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useRef, useTransition } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { createPortal, flushSync } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -15,11 +15,11 @@ export default function MobileNav() {
   const { guardPath } = usePwaOfflineGuard();
   const location = useLocation();
   const navigate = useNavigate();
-  const [, startTransition] = useTransition();
   const isNativeApp = Capacitor.isNativePlatform();
 
   const [chatBadgeCount, setChatBadgeCount] = useState(0);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [optimisticTab, setOptimisticTab] = useState(null);
   const tabTransitionRef = useRef(null);
 
   useEffect(() => {
@@ -145,7 +145,10 @@ export default function MobileNav() {
     return null;
   };
 
-  const activeValue = getActiveValue();
+  const routeActiveValue = getActiveValue();
+  const activeValue = optimisticTab && optimisticTab.fromPath === location.pathname
+    ? optimisticTab.target
+    : routeActiveValue;
   const chatBadge = user && chatBadgeCount > 0 ? (chatBadgeCount > 9 ? '9+' : chatBadgeCount) : null;
 
   const mainTabs = [
@@ -200,7 +203,8 @@ export default function MobileNav() {
   ];
 
   const switchNativeTab = useCallback((path) => {
-    if (path === location.pathname || tabTransitionRef.current || window.__wpNativeTransitionInFlight) return;
+    const targetPathname = path.split('?')[0];
+    if (targetPathname === location.pathname || tabTransitionRef.current || window.__wpNativeTransitionInFlight) return;
     const performNavigation = () => navigate(path, { replace: true });
     if (!isNativeApp) {
       performNavigation();
@@ -213,9 +217,9 @@ export default function MobileNav() {
     document.body.classList.add('native-transition-running', 'native-tab-switching');
 
     let coverLayer = null;
-    const snapshot = window.__wpNativeRouteSnapshots?.get(path);
+    const snapshot = window.__wpNativeRouteSnapshots?.get(targetPathname);
     if (snapshot) {
-      window.__wpNativeRouteSnapshots.delete(path);
+      window.__wpNativeRouteSnapshots.delete(targetPathname);
       snapshot.classList.remove('native-tab-transition', 'native-push-transition', 'native-pop-transition');
       snapshot.classList.add('native-tab-cover-content');
       const savedY = Number(snapshot.dataset.nativeScrollY || 0);
@@ -231,7 +235,7 @@ export default function MobileNav() {
     let timeoutId = null;
     let completed = false;
     const finishTabSwitch = (event) => {
-      if (completed || (event?.detail?.pathname && event.detail.pathname !== path)) return;
+      if (completed || (event?.detail?.pathname && event.detail.pathname !== targetPathname)) return;
       completed = true;
       window.removeEventListener('wp-native-scroll-restored', finishTabSwitch);
       if (timeoutId !== null) window.clearTimeout(timeoutId);
@@ -247,7 +251,7 @@ export default function MobileNav() {
 
     window.addEventListener('wp-native-scroll-restored', finishTabSwitch);
     timeoutId = window.setTimeout(() => finishTabSwitch(), 250);
-    window.__wpNativeRestoreScrollPath = path;
+    window.__wpNativeRestoreScrollPath = targetPathname;
     flushSync(performNavigation);
   }, [isNativeApp, location.pathname, navigate]);
 
@@ -295,10 +299,16 @@ export default function MobileNav() {
     if (!nextPath || !guardPath(nextPath)) return;
     triggerHaptic('Light');
     if (location.pathname !== nextPath) {
+      // Synchronously commit the new tab value before glisse's next animation
+      // frame so its spring settles once on the target tab instead of bouncing
+      // back to the previous tab and animating a second time.
+      flushSync(() => {
+        setOptimisticTab({ fromPath: location.pathname, target: nextPath });
+      });
       if (isNativeApp) {
         switchNativeTab(nextPath);
       } else {
-        startTransition(() => navigate(nextPath));
+        navigate(nextPath);
       }
     } else {
       window.scrollTo({ top: 0, behavior: 'smooth' });

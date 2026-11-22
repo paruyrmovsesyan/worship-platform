@@ -53,7 +53,7 @@ function getCachedAppInfo() {
 
 export default function Settings() {
   const { user, logout, refetchUser } = useAuth();
-  const { t, language, setLanguage } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const isPWA = useIsAppMode();
@@ -699,20 +699,18 @@ export default function Settings() {
               </p>
 
               {isPWA && (
-                <div className="remember-device-card" style={{ marginBottom: '1.5rem' }}>
-                  <div className="remember-device-copy">
-                    <div className="remember-device-title-row">
-                      <strong>{t('settings.app.language', 'Լեզու')}</strong>
-                    </div>
+                <div className="app-theme-setting" style={{ marginBottom: '1.15rem' }}>
+                  <div className="app-theme-copy">
+                    <strong>{t('settings.app.language', 'Լեզու')}</strong>
                     <p className="text-muted">
                       {t('settings.app.languageDesc', 'Ընտրեք ծրագրի հիմնական լեզուն։')}
                     </p>
                   </div>
-                  <LanguageSwitcher />
+                  <LanguageSwitcher className="wp-glisse-settings-lang" />
                 </div>
               )}
 
-              <div className="app-theme-setting" style={{ marginBottom: '1.5rem' }}>
+              <div className="app-theme-setting" style={{ marginBottom: '1.15rem' }}>
                 <div className="app-theme-copy">
                   <strong>{t('settings.app.themeMode', 'Գունային ռեժիմ')}</strong>
                   <p className="text-muted">
@@ -720,7 +718,7 @@ export default function Settings() {
                   </p>
                 </div>
                 <SegmentedControl
-                  className="wp-glisse-segmented-2"
+                  className="wp-glisse-segmented-2 wp-glisse-settings-seg"
                   aria-label={t('settings.app.themeMode', 'Գունային ռեժիմ')}
                   items={[
                     { value: APP_THEMES.DARK, label: t('settings.app.darkTheme', 'Մութ') },
@@ -733,7 +731,7 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="app-theme-setting" style={{ marginBottom: '1.5rem' }}>
+              <div className="app-theme-setting" style={{ marginBottom: '1.15rem' }}>
                 <div className="app-theme-copy">
                   <strong>{language === 'ru' ? 'Стиль оформления' : language === 'en' ? 'Design Style' : 'Դիզայնի ոճ'}</strong>
                   <p className="text-muted">
@@ -745,7 +743,7 @@ export default function Settings() {
                   </p>
                 </div>
                 <SegmentedControl
-                  className="wp-glisse-segmented-2"
+                  className="wp-glisse-segmented-2 wp-glisse-settings-seg"
                   aria-label="Design Style"
                   items={[
                     { value: THEME_STYLES.CLASSIC, label: 'Classic' },
@@ -758,13 +756,10 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="remember-device-card" style={{ marginBottom: '1.5rem' }}>
+              <div className="remember-device-card settings-switch-card" style={{ marginBottom: '1.15rem' }}>
                 <div className="remember-device-copy">
                   <div className="remember-device-title-row">
                     <strong>{t('settings.app.keepAwake', 'Միշտ արթուն էկրան')}</strong>
-                    <span className={`badge ${keepAwake ? 'badge-success' : 'badge-warning'}`}>
-                      {keepAwake ? t('settings.app.enabled', 'Միացված է') : t('settings.app.disabled', 'Անջատված է')}
-                    </span>
                   </div>
                   <p className="text-muted">
                     {t('settings.app.keepAwakeDesc', 'Երգերի բառերը կարդալիս էկրանը չի անջատվի։')}
@@ -781,13 +776,10 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="remember-device-card" style={{ marginBottom: '1.5rem' }}>
+              <div className="remember-device-card settings-switch-card" style={{ marginBottom: '1.15rem' }}>
                 <div className="remember-device-copy">
                   <div className="remember-device-title-row">
                     <strong>{t('settings.app.reduceMotion', 'Պարզեցված անիմացիաներ')}</strong>
-                    <span className={`badge ${reduceMotion ? 'badge-success' : 'badge-warning'}`}>
-                      {reduceMotion ? t('settings.app.enabled', 'Միացված է') : t('settings.app.disabled', 'Անջատված է')}
-                    </span>
                   </div>
                   <p className="text-muted">
                     {t('settings.app.reduceMotionDesc', 'Անջատում է էջերի անցումների էֆեկտները ավելի արագ աշխատանքի համար։')}
@@ -805,13 +797,10 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="remember-device-card" style={{ marginBottom: '1.5rem' }}>
+              <div className="remember-device-card settings-switch-card" style={{ marginBottom: '1.15rem' }}>
                 <div className="remember-device-copy">
                   <div className="remember-device-title-row">
                     <strong>{t('settings.app.oledMode', 'OLED Մութ ռեժիմ (Իրական սև)')}</strong>
-                    <span className={`badge ${oledMode ? 'badge-success' : 'badge-warning'}`}>
-                      {oledMode ? t('settings.app.enabled', 'Միացված է') : t('settings.app.disabled', 'Անջատված է')}
-                    </span>
                   </div>
                   <p className="text-muted">
                     {t('settings.app.oledModeDesc', 'Օգտագործում է բացարձակ սև գույնը (OLED էկրանների համար՝ մարտկոց խնայելու նպատակով)։')}
@@ -834,13 +823,10 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="remember-device-card" style={{ marginBottom: '1.5rem' }}>
+              <div className="remember-device-card settings-switch-card" style={{ marginBottom: '1.35rem' }}>
                 <div className="remember-device-copy">
                   <div className="remember-device-title-row">
                     <strong>{t('settings.app.outlinedChords', 'Շրջանակված ակորդներ')}</strong>
-                    <span className={`badge ${outlinedChords ? 'badge-success' : 'badge-warning'}`}>
-                      {outlinedChords ? t('settings.app.enabled', 'Միացված է') : t('settings.app.disabled', 'Անջատված է')}
-                    </span>
                   </div>
                   <p className="text-muted">
                     {t('settings.app.outlinedChordsDesc', 'Ակորդները ցուցադրվում են որպես առանձին կոճակներ՝ ավելի հեշտ կարդալու համար։')}
