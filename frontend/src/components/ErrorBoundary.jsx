@@ -93,16 +93,17 @@ export default class ErrorBoundary extends React.Component {
     const message = String(error?.message || error || '');
     const isProviderMismatch =
       /Cannot destructure property ['"](?:user|t)['"]/.test(message) ||
-      /useNavigate\(\) may be used only in the context of a <Router>/.test(message);
+      /use(?:Navigate|Location)\(\) may be used only in the context of a <Router>/.test(message);
 
     if (!isProviderMismatch || navigator.onLine === false) return;
 
     const entryResource = performance
       .getEntriesByType('resource')
-      .find((entry) => entry.name.includes('/assets/index.js'));
+      .find((entry) => /\/assets\/index(?:-[a-zA-Z0-9_-]+)?\.js/.test(entry.name));
     let releaseToken = 'unknown';
     try {
-      releaseToken = new URL(entryResource?.name || window.location.href).searchParams.get('v') || 'unknown';
+      const parsed = new URL(entryResource?.name || window.location.href);
+      releaseToken = parsed.searchParams.get('v') || parsed.pathname.split('/').pop() || 'unknown';
     } catch {
       // An unknown token still receives one guarded recovery attempt.
     }

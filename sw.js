@@ -1,4 +1,4 @@
-const CACHE_VERSION = "worship-v641";
+const CACHE_VERSION = "worship-v642";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
@@ -37,8 +37,6 @@ const APP_SHELL = [
   "/app.js",
   "/site_guard.js",
   "/fav_bridge.js",
-  "/assets/index.css?v=v641",
-  "/assets/index.js?v=v641",
   "/manifest.json?v=13",
   "/favicon.png?v=2",
   "/apple-touch-icon-v8.png",
@@ -343,10 +341,8 @@ async function handleStaticAssetRequest(event) {
     return response;
   });
 
-  // The unhashed entry files define the shared React contexts used by all
-  // hashed lazy chunks. Serving an old entry with new chunks creates two
-  // incompatible context graphs (Auth/Language/Router). Keep these two files
-  // network-first so every online launch uses one coherent build.
+  // Keep any unhashed legacy entry files network-first; hashed entry assets
+  // (index-<hash>.js / index-<hash>.css) are immutable per build.
   const isEntryAsset =
     url.pathname === "/assets/index.js" ||
     url.pathname === "/assets/index.css";

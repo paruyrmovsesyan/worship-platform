@@ -544,8 +544,8 @@ $checks[] = [
 ];
 
 $assetsDir = __DIR__ . '/assets';
-$jsExists  = glob($assetsDir . '/index.js*');
-$cssExists = glob($assetsDir . '/index.css*');
+$jsExists  = glob($assetsDir . '/index*.js');
+$cssExists = glob($assetsDir . '/index*.css');
 $buildOk   = !empty($jsExists) && !empty($cssExists);
 $checks[] = [
     'group'  => 'app',
