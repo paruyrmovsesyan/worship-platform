@@ -840,10 +840,14 @@ export default function Profile() {
       const data = await res.json();
       if (data.ok) {
         setSaveMsg({ text: t('settings.profile.success', 'Տվյալները հաջողությամբ պահպանվեցին։'), type: 'ok' });
-        if (user) {
-          user.name = editName;
-          user.username = editUsername;
-        }
+        setUser((prev) => {
+          if (!prev) return prev;
+          const updated = { ...prev, name: editName, username: editUsername };
+          try {
+            localStorage.setItem('worship_user', JSON.stringify(updated));
+          } catch { /* ignore storage quota */ }
+          return updated;
+        });
         setTimeout(() => setSaveMsg({ text: '', type: '' }), 4000);
       } else {
         setSaveMsg({ text: data.error || 'Սխալ է տեղի ունեցել', type: 'err' });

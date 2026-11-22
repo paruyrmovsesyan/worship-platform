@@ -134,7 +134,14 @@ export const AuthProvider = ({ children }) => {
 
       const data = await res.json();
       if (data && data.loggedIn && data.user) {
-        setUser(data.user);
+        setUser((prev) => {
+          try {
+            if (prev && JSON.stringify(prev) === JSON.stringify(data.user)) {
+              return prev;
+            }
+          } catch (_) {}
+          return data.user;
+        });
         try {
           localStorage.setItem('worship_user', JSON.stringify(data.user));
         } catch (_) {}

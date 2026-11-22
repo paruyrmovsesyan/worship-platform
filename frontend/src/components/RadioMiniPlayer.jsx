@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useMediaPlayer } from '../utils/mediaData';
 import { useLanguage } from '../context/LanguageContext';
 import { Glass } from 'glisse';
@@ -9,8 +9,12 @@ export default function RadioMiniPlayer() {
   const player = useMediaPlayer();
   const { language } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
 
   if (!player || !player.activeStation) return null;
+  if (location.pathname.startsWith('/chat/') || location.pathname.startsWith('/projection')) {
+    return null;
+  }
 
   const { activeStation, isPlaying, isBuffering, muted, streamError, playStation, stopRadio, toggleMute } = player;
   const stationTitle = activeStation.name?.[language] || activeStation.name?.am || 'Radio';

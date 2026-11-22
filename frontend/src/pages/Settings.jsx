@@ -16,6 +16,7 @@ import {
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import OfflineStorageManager from '../components/OfflineStorageManager';
 import { SegmentedControl, Switch } from 'glisse';
+import { Capacitor } from '@capacitor/core';
 import {
   getBiometricStatus,
   isBiometricLoginEnabled,
@@ -850,7 +851,7 @@ export default function Settings() {
                   {(() => {
                     const isLightMode = document.body.classList.contains('light-mode') || appTheme === APP_THEMES.LIGHT;
                     return [
-                      { id: 'gold', label: t('settings.app.colorGold', 'Ոսկեգույն'), color: '#3A2DFF' },
+                      { id: 'gold', label: t('settings.app.colorGold', 'Ոսկեգույն'), color: '#F7B500' },
                       { id: 'blue', label: t('settings.app.colorBlue', 'Կապույտ'), color: '#00D4FF' },
                       { id: 'green', label: t('settings.app.colorGreen', 'Կանաչ'), color: '#4ADE80' },
                       { id: 'red', label: t('settings.app.colorRed', 'Կարմիր'), color: '#FF4A4A' },
@@ -915,7 +916,11 @@ export default function Settings() {
                 </div>
                 <div className="about-info-row">
                   <span>{t('settings.about.platform')}</span>
-                  <strong>PWA</strong>
+                  <strong>
+                    {Capacitor.isNativePlatform()
+                      ? (Capacitor.getPlatform() === 'ios' ? 'iOS App' : 'Android App')
+                      : 'PWA'}
+                  </strong>
                 </div>
                 <div className="about-info-row">
                   <span>{t('settings.about.offline')}</span>

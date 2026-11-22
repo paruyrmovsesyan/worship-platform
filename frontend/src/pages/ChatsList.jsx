@@ -69,12 +69,21 @@ export default function ChatsList({ isEmbedded = false }) {
         fetchChats();
         fetchFriends();
       }, 0);
+      const handleNativeRefresh = (event) => {
+        const path = event?.detail?.pathname;
+        if (!path || path === '/chats') {
+          fetchChats();
+          fetchFriends();
+        }
+      };
+      window.addEventListener('wp-native-refresh', handleNativeRefresh);
       const interval = setInterval(() => {
         fetchChats();
         fetchFriends();
       }, 5000);
       return () => {
         window.clearTimeout(initialFetch);
+        window.removeEventListener('wp-native-refresh', handleNativeRefresh);
         clearInterval(interval);
       };
     }

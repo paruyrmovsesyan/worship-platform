@@ -238,19 +238,32 @@ export default function SongsApp() {
       }
     } catch {}
 
+    const loadFreshSongs = () => {
+      fetch('/api.php')
+        .then(r => r.json())
+        .then(d => {
+          if (Array.isArray(d)) {
+            setSongs(d);
+            try {
+              localStorage.setItem('wp_songs_cache', JSON.stringify(d));
+            } catch {}
+          }
+          setIsLoading(false);
+        })
+        .catch(() => setIsLoading(false));
+    };
+
     // 2. Fetch fresh data from API
-    fetch('/api.php')
-      .then(r => r.json())
-      .then(d => {
-        if (Array.isArray(d)) {
-          setSongs(d);
-          try {
-            localStorage.setItem('wp_songs_cache', JSON.stringify(d));
-          } catch {}
-        }
-        setIsLoading(false);
-      })
-      .catch(() => setIsLoading(false));
+    loadFreshSongs();
+
+    const handleNativeRefresh = (event) => {
+      const path = event?.detail?.pathname;
+      if (!path || path === '/songs') {
+        loadFreshSongs();
+      }
+    };
+    window.addEventListener('wp-native-refresh', handleNativeRefresh);
+    return () => window.removeEventListener('wp-native-refresh', handleNativeRefresh);
 
     if (user) {
       fetch('/user_favorites_api.php?action=get_favorites')

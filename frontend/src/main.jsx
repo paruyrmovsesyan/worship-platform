@@ -7,6 +7,7 @@ import { PageLoadingProvider } from './context/PageLoadingContext.jsx'
 import { CallProvider } from './context/CallContext.jsx'
 import { MediaProvider } from './context/MediaContext.jsx'
 import { Capacitor } from '@capacitor/core'
+import { initNativeCrashReporter } from './utils/nativeCrashReporter.js'
 import App from './App.jsx'
 import './index.css'
 import './styles/LightTheme.css'
@@ -17,7 +18,7 @@ import './styles/GlisseLiquidGlass.css'
 const prepareNativeRuntime = Capacitor.isNativePlatform()
   ? Promise.all([
       import('./utils/nativeNetwork.js').then(({ setupNativeNetwork }) => setupNativeNetwork()),
-      import('./utils/nativeCrashReporter.js').then(({ initNativeCrashReporter }) => initNativeCrashReporter()),
+      Promise.resolve(initNativeCrashReporter()),
     ])
   : Promise.resolve();
 

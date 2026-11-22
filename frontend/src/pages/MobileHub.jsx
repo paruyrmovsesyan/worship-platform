@@ -178,6 +178,8 @@ export default function MobileHub() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
+  const userId = user?.id ?? null;
   const searchInputRef = useRef(null);
   const searchWrapRef = useRef(null);
 
@@ -257,6 +259,17 @@ export default function MobileHub() {
   }, []);
 
   useEffect(() => {
+    const onNativeRefresh = (event) => {
+      const path = event?.detail?.pathname;
+      if (!path || path === '/') {
+        setRefreshTick((prev) => prev + 1);
+      }
+    };
+    window.addEventListener('wp-native-refresh', onNativeRefresh);
+    return () => window.removeEventListener('wp-native-refresh', onNativeRefresh);
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
     const signal = controller ? controller.signal : undefined;
@@ -288,7 +301,7 @@ export default function MobileHub() {
       })
       .catch(() => { /* ignore optional calendar error */ });
 
-    if (user) {
+    if (userId) {
       fetch('/setlists_api.php?action=get_setlists', { credentials: 'include', cache: 'no-store', signal })
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
@@ -335,7 +348,7 @@ export default function MobileHub() {
       cancelled = true;
       controller?.abort();
     };
-  }, [user]);
+  }, [userId, refreshTick]);
 
   useEffect(() => {
     let cancelled = false;
@@ -351,7 +364,7 @@ export default function MobileHub() {
     return () => {
       cancelled = true;
     };
-  }, [language]);
+  }, [language, refreshTick]);
 
   const formatSetlistServiceDate = useCallback(
     (dateStr) => {

@@ -76,15 +76,15 @@ export default function NativePlatformServices() {
   const [isConnected, setIsConnected] = useState(true);
 
   const navigateRef = useRef(navigate);
-  navigateRef.current = navigate;
-
   const checkAuthRef = useRef(checkAuth);
-  checkAuthRef.current = checkAuth;
-
   const userRef = useRef(user);
-  userRef.current = user;
-
   const pushTokenRef = useRef(null);
+
+  useEffect(() => {
+    navigateRef.current = navigate;
+    checkAuthRef.current = checkAuth;
+    userRef.current = user;
+  }, [navigate, checkAuth, user]);
 
   // Sync push token with current user ID when user changes
   useEffect(() => {
