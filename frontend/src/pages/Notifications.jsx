@@ -121,6 +121,7 @@ function getNotificationCategory(n) {
 
 const NotificationCard = ({ notif, language, onAction, onDelete, onAcceptFriend, t }) => {
   const [translateX, setTranslateX] = useState(0);
+  const [dragging, setDragging] = useState(false);
   const startX = useRef(0);
   const currentX = useRef(0);
   const isDragging = useRef(false);
@@ -133,6 +134,7 @@ const NotificationCard = ({ notif, language, onAction, onDelete, onAcceptFriend,
     if (e.touches && e.touches[0]) {
       startX.current = e.touches[0].clientX;
       isDragging.current = true;
+      setDragging(true);
     }
   };
 
@@ -152,6 +154,7 @@ const NotificationCard = ({ notif, language, onAction, onDelete, onAcceptFriend,
 
   const handleTouchEnd = () => {
     isDragging.current = false;
+    setDragging(false);
     if (translateX < -45) {
       setTranslateX(-80);
     } else {
@@ -176,7 +179,7 @@ const NotificationCard = ({ notif, language, onAction, onDelete, onAcceptFriend,
         onClick={() => onAction(notif)}
         style={{
           transform: `translateX(${translateX}px)`,
-          transition: isDragging.current ? 'none' : 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)'
+          transition: dragging ? 'none' : 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)'
         }}
       >
         <div className={`notif-icon-box ${
@@ -286,6 +289,14 @@ export default function Notifications() {
 
   useEffect(() => {
     fetchNotifications();
+    const handleNativeRefresh = (event) => {
+      const path = event?.detail?.pathname;
+      if (!path || path === '/notifications') {
+        fetchNotifications();
+      }
+    };
+    window.addEventListener('wp-native-refresh', handleNativeRefresh);
+    return () => window.removeEventListener('wp-native-refresh', handleNativeRefresh);
   }, []);
 
   const markAsRead = (id) => {

@@ -8,6 +8,12 @@ import { fallbackNews, getCachedNewsList, fetchNewsList, formatNewsDate, formatN
 import { getTodayDevotional, TOPIC_COLLECTIONS } from '../utils/devotionalData';
 import { nativeShare } from '../utils/nativeFeatures';
 
+const ArrowIcon = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M5 12h14M14 7l5 5-5 5" />
+  </svg>
+);
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
@@ -138,12 +144,6 @@ export default function LandingPage() {
     setActiveFilter(filter);
     setSongPage(0);
   };
-
-  const ArrowIcon = () => (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 12h14M14 7l5 5-5 5" />
-    </svg>
-  );
 
   return (
     <div className="landing-page">

@@ -77,6 +77,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => readCachedUser());
   const [loading, setLoading] = useState(() => !readCachedUser());
   const retryTimerRef = useRef(null);
+  const checkAuthRef = useRef(null);
 
   const checkAuth = useCallback(async (retryCount = 0) => {
     if (retryTimerRef.current) {
@@ -88,7 +89,7 @@ export const AuthProvider = ({ children }) => {
       if (retryCount < 3) {
         const delayMs = retryCount === 0 ? 1000 : retryCount === 1 ? 2200 : 4000;
         retryTimerRef.current = setTimeout(() => {
-          checkAuth(retryCount + 1);
+          checkAuthRef.current?.(retryCount + 1);
         }, delayMs);
       }
     };
@@ -168,6 +169,10 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    checkAuthRef.current = checkAuth;
+  }, [checkAuth]);
 
   useEffect(() => {
     checkAuth(0);

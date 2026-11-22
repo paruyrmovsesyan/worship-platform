@@ -22,16 +22,6 @@ export default function Friends() {
 
   usePageReady(loading || authLoading);
 
-  useEffect(() => {
-    if (!user && !authLoading) {
-      navigate('/login?next=/friends');
-      return;
-    }
-    if (user) {
-      fetchFriends();
-    }
-  }, [user, authLoading, navigate]);
-
   const fetchFriends = async () => {
     try {
       const res = await fetch('/friends_api.php?action=list');
@@ -44,6 +34,23 @@ export default function Friends() {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (!user && !authLoading) {
+      navigate('/login?next=/friends');
+      return undefined;
+    }
+    if (!user) return undefined;
+    fetchFriends();
+    const handleNativeRefresh = (event) => {
+      const path = event?.detail?.pathname;
+      if (!path || path === '/friends') {
+        fetchFriends();
+      }
+    };
+    window.addEventListener('wp-native-refresh', handleNativeRefresh);
+    return () => window.removeEventListener('wp-native-refresh', handleNativeRefresh);
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (searchQuery.length < 2) {
