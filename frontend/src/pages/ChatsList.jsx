@@ -77,13 +77,26 @@ export default function ChatsList({ isEmbedded = false }) {
         }
       };
       window.addEventListener('wp-native-refresh', handleNativeRefresh);
+      let tickCount = 0;
       const interval = setInterval(() => {
+        if (document.visibilityState !== 'visible' || navigator.onLine === false) return;
+        tickCount += 1;
         fetchChats();
-        fetchFriends();
-      }, 5000);
+        if (tickCount % 3 === 0) {
+          fetchFriends();
+        }
+      }, 6000);
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible' && navigator.onLine !== false) {
+          fetchChats();
+          fetchFriends();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
       return () => {
         window.clearTimeout(initialFetch);
         window.removeEventListener('wp-native-refresh', handleNativeRefresh);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
         clearInterval(interval);
       };
     }

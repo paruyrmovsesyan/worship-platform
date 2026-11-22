@@ -9,7 +9,15 @@
      4. Warm Amber Light (editorial)  — Warm Parchment + Burnished Amber
    ========================================================================== */
 
+html.wp-native-bundle {
+  font-size: 16px !important;
+  -webkit-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
+}
+
 body.is-native {
+  -webkit-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
   /* Classic Dark (Default) */
   --native-bg: #05050a;
   --native-surface-1: rgba(20, 22, 34, 0.88);

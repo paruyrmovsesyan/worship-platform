@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
-import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { Network } from '@capacitor/network';
 import { PushNotifications } from '@capacitor/push-notifications';
@@ -10,22 +9,6 @@ import { Preferences } from '@capacitor/preferences';
 import { useAuth } from '../context/AuthContext';
 
 const DEVICE_ID_KEY = 'wp_native_device_id_v1';
-const UPDATE_CHECK_KEY = 'wp_native_update_check_v1';
-
-function versionParts(value) {
-  return String(value || '0').split('.').map((part) => Number.parseInt(part, 10) || 0);
-}
-
-function isNewerVersion(candidate, current) {
-  const left = versionParts(candidate);
-  const right = versionParts(current);
-  const length = Math.max(left.length, right.length);
-  for (let index = 0; index < length; index += 1) {
-    if ((left[index] || 0) > (right[index] || 0)) return true;
-    if ((left[index] || 0) < (right[index] || 0)) return false;
-  }
-  return false;
-}
 
 function notificationPath(data = {}) {
   const candidate = data.path || data.url || data.route || data.deepLink || '';
@@ -72,7 +55,6 @@ async function registerPushToken(token, userId) {
 export default function NativePlatformServices() {
   const navigate = useNavigate();
   const { user, checkAuth } = useAuth();
-  const [update, setUpdate] = useState(null);
   const [isConnected, setIsConnected] = useState(true);
 
   const navigateRef = useRef(navigate);
@@ -253,31 +235,18 @@ export default function NativePlatformServices() {
         performNativeNavigation(path);
       }));
 
+      if (Capacitor.getPlatform() === 'android') {
+        const hasFirebase = Boolean(window.NativeRuntime?.hasFirebase?.());
+        if (!hasFirebase) {
+          console.warn('[NativePush] Skipping FCM registration on Android: FirebaseApp not initialized (google-services.json absent).');
+          return;
+        }
+      }
+
       await PushNotifications.register().catch(() => {});
     };
 
     configurePush().catch(() => {});
-
-    const checkForUpdate = async () => {
-      try {
-        const appInfo = await CapacitorApp.getInfo();
-        const previous = await Preferences.get({ key: UPDATE_CHECK_KEY });
-        const lastCheck = Number(previous.value || 0);
-        if (Date.now() - lastCheck < 6 * 60 * 60 * 1000) return;
-        await Preferences.set({ key: UPDATE_CHECK_KEY, value: String(Date.now()) });
-
-        const response = await fetch('/native_version.json', { cache: 'no-store' });
-        if (!response.ok) return;
-        const manifest = await response.json();
-        const platformConfig = manifest?.[Capacitor.getPlatform()] || {};
-        const latest = platformConfig.version;
-        if (latest && isNewerVersion(latest, appInfo.version)) {
-          setUpdate({ current: appInfo.version, latest, storeUrl: platformConfig.storeUrl || '' });
-        }
-      } catch {}
-    };
-
-    checkForUpdate();
 
     return () => {
       cancelled = true;
@@ -286,43 +255,12 @@ export default function NativePlatformServices() {
     };
   }, []);
 
-  const openStore = () => {
-    const url = update.storeUrl || (Capacitor.getPlatform() === 'android'
-      ? 'https://play.google.com/store/apps/details?id=am.pmstudio.worship'
-      : 'https://apps.apple.com/us/search?term=Worship%20Platform');
-    Browser.open({ url }).catch(() => {});
-  };
-
   return (
     <>
       {!isConnected ? (
         <div role="status" style={{ position: 'fixed', top: 'calc(8px + env(safe-area-inset-top, 0px))', left: '50%', transform: 'translateX(-50%)', zIndex: 2147482001, padding: '8px 14px', borderRadius: '999px', background: '#f59e0b', color: '#17120a', fontWeight: 700 }}>
           Offline ռեժիմ · ցուցադրվում են պահված տվյալները
         </div>
-      ) : null}
-      {update ? (
-        <aside
-          role="status"
-          style={{
-            position: 'fixed',
-            left: '16px',
-            right: '16px',
-            bottom: 'calc(96px + env(safe-area-inset-bottom, 0px))',
-            zIndex: 2147482001,
-            padding: '14px',
-            borderRadius: '18px',
-            background: 'rgba(20,22,34,.96)',
-            border: '1px solid rgba(255,255,255,.14)',
-            boxShadow: '0 20px 50px rgba(0,0,0,.45)',
-            color: '#fff',
-          }}
-        >
-          <strong>Հասանելի է նոր տարբերակ՝ {update.latest}</strong>
-          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-            <button type="button" onClick={() => setUpdate(null)}>Հետո</button>
-            <button type="button" onClick={openStore}>Թարմացնել</button>
-          </div>
-        </aside>
       ) : null}
     </>
   );

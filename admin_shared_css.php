@@ -986,4 +986,306 @@ body.wp-admin-app {
     padding-bottom: max(6px, var(--sab)) !important;
   }
 }
+
+/* ── DARK MODE THEME ── */
+html[data-admin-theme="dark"] {
+  --bg: #0b1120;
+  --surface: #111827;
+  --line: #1f2937;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --success: #10b981;
+  --success-bg: rgba(16, 185, 129, 0.14);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245, 158, 11, 0.14);
+  --danger: #f87171;
+  --danger-bg: rgba(239, 68, 68, 0.15);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+html[data-admin-theme="dark"] .user-dropdown,
+html[data-admin-theme="dark"] .notif-panel,
+html[data-admin-theme="dark"] .cmdk-modal {
+  background: #111827 !important;
+  border-color: #1f2937 !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65) !important;
+}
+html[data-admin-theme="dark"] .ud-item:hover,
+html[data-admin-theme="dark"] .notif-item:hover,
+html[data-admin-theme="dark"] .mobile-menu-btn:hover {
+  background: rgba(99, 102, 241, 0.12) !important;
+}
+html[data-admin-theme="dark"] input,
+html[data-admin-theme="dark"] select,
+html[data-admin-theme="dark"] textarea {
+  background-color: #0f172a;
+  color: #f1f5f9;
+  border-color: #334155;
+}
+html[data-admin-theme="dark"] .app-bottom-nav {
+  background: rgba(17, 24, 39, 0.94) !important;
+  border-top-color: #1f2937 !important;
+}
+html[data-admin-theme="dark"] .app-sidebar {
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.35);
+}
+
+/* ── COLLAPSIBLE DESKTOP SIDEBAR ── */
+.sidebar-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.16s ease;
+}
+.sidebar-collapse-btn:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+@media (max-width: 992px) {
+  .sidebar-collapse-btn { display: none !important; }
+}
+@media (min-width: 993px) {
+  body.sidebar-collapsed .app-sidebar {
+    width: 78px !important;
+  }
+  body.sidebar-collapsed .app-sidebar .brand-text,
+  body.sidebar-collapsed .app-sidebar .sidebar-heading,
+  body.sidebar-collapsed .app-sidebar .nav-item span:not(.nav-badge-danger),
+  body.sidebar-collapsed .app-sidebar .lang-switcher-wrap {
+    display: none !important;
+  }
+  body.sidebar-collapsed .app-sidebar .brand {
+    padding: 18px 12px !important;
+    flex-direction: column;
+    gap: 10px;
+  }
+  body.sidebar-collapsed .app-sidebar .nav-item {
+    justify-content: center;
+    padding: 12px !important;
+    position: relative;
+  }
+  body.sidebar-collapsed .app-sidebar .nav-badge-danger {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    padding: 1px 5px;
+    font-size: 9px;
+  }
+  body.sidebar-collapsed .sidebar-collapse-btn svg {
+    transform: rotate(180deg);
+  }
+}
+
+/* ── LIVE SIDEBAR ERROR BADGE ── */
+.nav-badge-danger {
+  margin-left: auto;
+  background: var(--danger);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 3px 7px;
+  border-radius: 999px;
+  min-width: 20px;
+  text-align: center;
+  display: none;
+  box-shadow: 0 2px 8px rgba(238, 93, 80, 0.35);
+}
+.nav-badge-danger.visible {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── TOPBAR ACTION BUTTONS (THEME & CMD+K) ── */
+.topbar-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  flex-shrink: 0;
+}
+.topbar-icon-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-1px);
+}
+.topbar-cmdk-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  font-family: inherit;
+}
+.topbar-cmdk-btn:hover {
+  border-color: var(--primary);
+  color: var(--text);
+}
+.topbar-cmdk-kbd {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+@media (max-width: 768px) {
+  .topbar-cmdk-btn .topbar-cmdk-label,
+  .topbar-cmdk-btn .topbar-cmdk-kbd {
+    display: none;
+  }
+  .topbar-cmdk-btn {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    justify-content: center;
+  }
+}
+
+/* ── COMMAND PALETTE MODAL (⌘K) ── */
+.cmdk-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: min(14vh, 110px) 16px 24px;
+}
+.cmdk-backdrop.open {
+  display: flex;
+}
+.cmdk-modal {
+  width: 100%;
+  max-width: 560px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 24px 64px rgba(17, 28, 68, 0.28);
+  overflow: hidden;
+  animation: dropIn 0.16s ease;
+}
+.cmdk-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.cmdk-input {
+  flex: 1;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  font-family: inherit;
+}
+.cmdk-list {
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 8px;
+}
+.cmdk-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 11px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.1s;
+}
+.cmdk-item:hover,
+.cmdk-item.active {
+  background: rgba(58, 45, 255, 0.1);
+  color: var(--primary);
+}
+.cmdk-item-sub {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.cmdk-foot {
+  padding: 9px 16px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ── REUSABLE QUICK FILTER CHIPS ── */
+.admin-chip-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.admin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+.admin-chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.admin-chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
 </style>

@@ -76,8 +76,11 @@ try {
     $conn->close();
 
     // Recent Critical System Errors
+    $activeErrorsCount = 0;
     try {
         require_once __DIR__ . '/error_service.php';
+        $errStats = wp_error_get_stats();
+        $activeErrorsCount = (int)($errStats['active'] ?? 0);
         $recentErrors = wp_error_get_logs(['level' => 'fatal'], 3);
         foreach ($recentErrors as $err) {
             $items[] = [
@@ -95,8 +98,8 @@ try {
     $items = array_slice($items, 0, 20);
 
 } catch (Throwable $e) {
-    echo json_encode(['error' => $e->getMessage(), 'items' => []]);
+    echo json_encode(['error' => $e->getMessage(), 'items' => [], 'active_errors' => 0]);
     exit;
 }
 
-echo json_encode(['items' => $items]);
+echo json_encode(['items' => $items, 'active_errors' => $activeErrorsCount]);

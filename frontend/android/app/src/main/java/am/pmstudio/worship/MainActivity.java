@@ -1,6 +1,7 @@
 package am.pmstudio.worship;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.media.AudioDeviceInfo;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
@@ -11,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewRenderProcess;
 import android.webkit.WebViewRenderProcessClient;
@@ -26,6 +28,18 @@ public class MainActivity extends BridgeActivity {
     private final Handler callAudioHandler = new Handler(Looper.getMainLooper());
 
     @Override
+    protected void attachBaseContext(Context newBase) {
+        Configuration config = new Configuration(newBase.getResources().getConfiguration());
+        if (config.fontScale != 1.0f) {
+            config.fontScale = 1.0f;
+            Context context = newBase.createConfigurationContext(config);
+            super.attachBaseContext(context);
+            return;
+        }
+        super.attachBaseContext(newBase);
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().setFlags(
@@ -33,42 +47,70 @@ public class MainActivity extends BridgeActivity {
             WindowManager.LayoutParams.FLAG_SECURE
         );
 
-        getBridge().getWebView().addJavascriptInterface(new NativeAudioBridge(), "NativeAudio");
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (getBridge() != null && getBridge().getWebView() != null) {
             WebView webView = getBridge().getWebView();
+            WebSettings settings = webView.getSettings();
+            settings.setTextZoom(100);
+            webView.addJavascriptInterface(new NativeAudioBridge(), "NativeAudio");
+            webView.addJavascriptInterface(new NativeRuntimeBridge(), "NativeRuntime");
             webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
-            webView.setWebViewRenderProcessClient(new WebViewRenderProcessClient() {
-                private long lastRecoveryAt = 0L;
 
-                @Override
-                public void onRenderProcessUnresponsive(
-                    @NonNull WebView view,
-                    @Nullable WebViewRenderProcess renderer
-                ) {
-                    long now = System.currentTimeMillis();
-                    if (now - lastRecoveryAt < 60_000L) return;
-                    lastRecoveryAt = now;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                webView.setWebViewRenderProcessClient(new WebViewRenderProcessClient() {
+                    private long lastRecoveryAt = 0L;
 
-                    view.post(() -> {
-                        if (renderer != null && renderer.terminate()) {
-                            recreate();
-                        } else {
-                            view.reload();
-                        }
-                    });
+                    @Override
+                    public void onRenderProcessUnresponsive(
+                        @NonNull WebView view,
+                        @Nullable WebViewRenderProcess renderer
+                    ) {
+                        long now = System.currentTimeMillis();
+                        if (now - lastRecoveryAt < 60_000L) return;
+                        lastRecoveryAt = now;
+
+                        view.post(() -> {
+                            if (renderer != null && renderer.terminate()) {
+                                recreate();
+                            } else {
+                                view.reload();
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onRenderProcessResponsive(
+                        @NonNull WebView view,
+                        @Nullable WebViewRenderProcess renderer
+                    ) {
+                        // No action needed once the renderer responds again.
+                    }
+                });
+            }
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getBridge() != null && getBridge().getWebView() != null) {
+            getBridge().getWebView().getSettings().setTextZoom(100);
+        }
+    }
+
+    private final class NativeRuntimeBridge {
+        @JavascriptInterface
+        public boolean hasFirebase() {
+            try {
+                Class<?> firebaseAppClass = Class.forName("com.google.firebase.FirebaseApp");
+                java.lang.reflect.Method getAppsMethod = firebaseAppClass.getMethod("getApps", Context.class);
+                Object apps = getAppsMethod.invoke(null, getApplicationContext());
+                if (apps instanceof java.util.List) {
+                    return !((java.util.List<?>) apps).isEmpty();
                 }
-
-                @Override
-                public void onRenderProcessResponsive(
-                    @NonNull WebView view,
-                    @Nullable WebViewRenderProcess renderer
-                ) {
-                    // No action needed once the renderer responds again.
-                }
-            });
-        } else {
-            getBridge().getWebView().setOverScrollMode(View.OVER_SCROLL_NEVER);
+            } catch (Throwable ignored) {
+                return false;
+            }
+            return false;
         }
     }
 

@@ -699,9 +699,9 @@ export default function Profile() {
   }, [user?.notifications_enabled]);
 
   useEffect(() => {
-    let interval;
     const checkPush = () => {
       if (!window.WPPushManager) return;
+      if (document.visibilityState !== 'visible') return;
       window.WPPushManager.getStatus().then(status => {
         if (!status) return;
         setPushSupported(!!status.supported && status.enabledBySite && !status.adminRemoved);
@@ -712,10 +712,21 @@ export default function Profile() {
         }
       }).catch(console.error);
     };
-    interval = setInterval(checkPush, 3000);
     checkPush();
-    
-    return () => clearInterval(interval);
+    const interval = setInterval(checkPush, 30000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkPush();
+      }
+    };
+    window.addEventListener('focus', checkPush);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', checkPush);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const togglePush = async () => {

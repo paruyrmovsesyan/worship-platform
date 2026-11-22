@@ -29,8 +29,8 @@ function wp_mobile_default_config(): array {
             'update_message' => 'Խնդրում ենք թարմացնել Worship Platform-ը App Store-ից՝ շարունակելու համար:',
         ],
         'android' => [
-            'current_version' => '5.3.0',
-            'current_build' => '2',
+            'current_version' => '5.4.0',
+            'current_build' => '7',
             'min_version' => '1.0',
             'min_build' => '1',
             'force_update' => false,
@@ -542,6 +542,7 @@ function wp_mobile_evaluate_client(string $platform, string $clientVersion = '',
     $minVersion = (string)($platConfig['min_version'] ?? '1.0');
     $minBuild = (int)($platConfig['min_build'] ?? 1);
     $currentVersion = (string)($platConfig['current_version'] ?? '1.0');
+    $currentBuild = (int)($platConfig['current_build'] ?? 1);
     $forceUpdateConfig = $isNative && !empty($platConfig['force_update']);
 
     $clientBuildInt = (int)$clientBuild;
@@ -551,13 +552,15 @@ function wp_mobile_evaluate_client(string $platform, string $clientVersion = '',
     if ($isNative && $clientVersion !== '') {
         if (version_compare($clientVersion, $currentVersion, '<')) {
             $needsUpdate = true;
+        } elseif (version_compare($clientVersion, $currentVersion, '==') && $clientBuildInt > 0 && $currentBuild > $clientBuildInt) {
+            $needsUpdate = true;
         }
         if (version_compare($clientVersion, $minVersion, '<') || ($clientBuildInt > 0 && $clientBuildInt < $minBuild)) {
             $needsUpdate = true;
             $isMandatory = true;
         }
     }
-    if ($forceUpdateConfig) {
+    if ($forceUpdateConfig && $needsUpdate) {
         $isMandatory = true;
     }
 
@@ -594,6 +597,9 @@ function wp_mobile_evaluate_client(string $platform, string $clientVersion = '',
         ],
         'version' => [
             'current' => $currentVersion,
+            'current_build' => $currentBuild,
+            'client_version' => $clientVersion,
+            'client_build' => $clientBuildInt > 0 ? $clientBuildInt : null,
             'min_required' => $minVersion,
             'needs_update' => $needsUpdate,
             'force_update' => $isMandatory,

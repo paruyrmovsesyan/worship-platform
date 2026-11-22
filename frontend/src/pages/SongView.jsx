@@ -385,16 +385,39 @@ export default function SongView() {
     return unsubscribe;
   }, [id]);
 
-  // Auto-scroll effect
+  // Auto-scroll effect (60Hz/120Hz rAF with delta-time sub-pixel smoothing)
   useEffect(() => {
-    if (autoScrollActive) {
-      autoScrollRef.current = setInterval(() => {
-        window.scrollBy({ top: autoScrollSpeed * 1.2, behavior: 'auto' });
-      }, 50);
-    } else {
-      clearInterval(autoScrollRef.current);
+    if (!autoScrollActive) {
+      if (autoScrollRef.current) {
+        window.cancelAnimationFrame(autoScrollRef.current);
+        autoScrollRef.current = null;
+      }
+      return undefined;
     }
-    return () => clearInterval(autoScrollRef.current);
+
+    let lastTime = performance.now();
+    let carry = 0;
+    const pixelsPerSecond = autoScrollSpeed * 24;
+
+    const step = (now) => {
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+      carry += pixelsPerSecond * dt;
+      const wholePixels = Math.trunc(carry);
+      if (wholePixels >= 1) {
+        carry -= wholePixels;
+        window.scrollBy({ top: wholePixels, behavior: 'auto' });
+      }
+      autoScrollRef.current = window.requestAnimationFrame(step);
+    };
+
+    autoScrollRef.current = window.requestAnimationFrame(step);
+    return () => {
+      if (autoScrollRef.current) {
+        window.cancelAnimationFrame(autoScrollRef.current);
+        autoScrollRef.current = null;
+      }
+    };
   }, [autoScrollActive, autoScrollSpeed]);
 
   // Inject chord color CSS var for web-pro

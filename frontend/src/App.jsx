@@ -16,17 +16,17 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
-import Songs from './pages/Songs';
-import SongView from './pages/SongView';
-import Setlists from './pages/Setlists';
-import SetlistEditor from './pages/SetlistEditor';
-import Favorites from './pages/Favorites';
-import Login from './pages/Login';
 import { useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import RadioMiniPlayer from './components/RadioMiniPlayer';
 
-// Lazy-loaded secondary & heavy routes for dramatically faster initial startup
+// Lazy-loaded routes for dramatically faster initial startup
+const Songs = lazyWithRetry(() => import('./pages/Songs'), 'Songs');
+const SongView = lazyWithRetry(() => import('./pages/SongView'), 'SongView');
+const Setlists = lazyWithRetry(() => import('./pages/Setlists'), 'Setlists');
+const SetlistEditor = lazyWithRetry(() => import('./pages/SetlistEditor'), 'SetlistEditor');
+const Favorites = lazyWithRetry(() => import('./pages/Favorites'), 'Favorites');
+const Login = lazyWithRetry(() => import('./pages/Login'), 'Login');
 const SetlistLive = lazyWithRetry(() => import('./pages/SetlistLive'), 'SetlistLive');
 const SetlistPublicWeb = lazyWithRetry(() => import('./pages/SetlistPublicWeb'), 'SetlistPublicWeb');
 const Register = lazyWithRetry(() => import('./pages/Register'), 'Register');
@@ -582,11 +582,36 @@ function App() {
     };
   }, [isNativeApp, location.pathname, navigationType]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    let idleId = null;
+    const timer = window.setTimeout(() => {
+      if (navigator.onLine === false || document.visibilityState !== 'visible') return;
+      const prefetchCoreTabs = () => {
+        import('./pages/Songs').catch(() => {});
+        import('./pages/ChatsList').catch(() => {});
+      };
+      if (typeof window.requestIdleCallback === 'function') {
+        idleId = window.requestIdleCallback(prefetchCoreTabs, { timeout: 3000 });
+      } else {
+        prefetchCoreTabs();
+      }
+    }, 1500);
+
+    return () => {
+      window.clearTimeout(timer);
+      if (idleId !== null && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId);
+      }
+    };
+  }, []);
+
   useLayoutEffect(() => {
     if (!isNativeApp) return undefined;
     let cancelled = false;
     let frame = null;
     let captureTimer = null;
+    let idleId = null;
     let observer = null;
     let waitingForTransition = false;
     let scrollSurface = null;
@@ -598,6 +623,12 @@ function App() {
 
     const captureRoute = () => {
       if (cancelled) return;
+      if (document.visibilityState !== 'visible') return;
+      const activeEl = document.activeElement;
+      const activeTag = activeEl?.tagName;
+      if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeEl?.isContentEditable) {
+        return;
+      }
       if (window.__wpNativeTransitionInFlight) {
         if (!waitingForTransition) {
           waitingForTransition = true;
@@ -633,7 +664,21 @@ function App() {
     const scheduleCapture = () => {
       waitingForTransition = false;
       if (captureTimer !== null) window.clearTimeout(captureTimer);
-      captureTimer = window.setTimeout(captureRoute, 120);
+      if (idleId !== null && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId);
+        idleId = null;
+      }
+      captureTimer = window.setTimeout(() => {
+        captureTimer = null;
+        if (typeof window.requestIdleCallback === 'function') {
+          idleId = window.requestIdleCallback(() => {
+            idleId = null;
+            captureRoute();
+          }, { timeout: 1500 });
+        } else {
+          captureRoute();
+        }
+      }, 1200);
     };
 
     const recordNestedScroll = () => {
@@ -658,7 +703,7 @@ function App() {
         if (!routeIsReady) return;
         captureRoute();
         observer = new MutationObserver(scheduleCapture);
-        observer.observe(currentRoute, { childList: true, subtree: true, characterData: true });
+        observer.observe(currentRoute, { childList: true, subtree: true });
         scrollSurface = location.pathname.startsWith('/chat/')
           ? currentRoute.querySelector('.chat-messages-container')
           : null;
@@ -670,6 +715,9 @@ function App() {
     return () => {
       if (frame !== null) window.cancelAnimationFrame(frame);
       if (captureTimer !== null) window.clearTimeout(captureTimer);
+      if (idleId !== null && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId);
+      }
       observer?.disconnect();
       scrollSurface?.removeEventListener('scroll', recordNestedScroll);
       if (waitingForTransition) {

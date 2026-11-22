@@ -610,9 +610,22 @@ export default function Chat() {
 
   useEffect(() => {
     if (user && id && !loading) {
-      pollNewMessages();
-      const interval = setInterval(pollNewMessages, 3000);
-      return () => clearInterval(interval);
+      const pollIfActive = () => {
+        if (document.visibilityState !== 'visible' || navigator.onLine === false) return;
+        pollNewMessages();
+      };
+      pollIfActive();
+      const interval = setInterval(pollIfActive, 3000);
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          pollIfActive();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      return () => {
+        clearInterval(interval);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
     }
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps

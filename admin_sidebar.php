@@ -57,6 +57,18 @@ $menuLabel = ($adminLang === 'ru' ? 'Меню' : ($adminLang === 'en' ? 'Menu' :
     document.body.classList.toggle('sidebar-open');
   };
 
+  window.toggleAdminSidebarCollapse = function(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    var collapsed = document.body.classList.toggle('sidebar-collapsed');
+    try { localStorage.setItem('wp_admin_sidebar_collapsed', collapsed ? '1' : '0'); } catch (_) {}
+  };
+
+  try {
+    if (window.innerWidth > 992 && localStorage.getItem('wp_admin_sidebar_collapsed') === '1') {
+      document.body.classList.add('sidebar-collapsed');
+    }
+  } catch (_) {}
+
   // Close drawer on escape key or link click on mobile
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && document.body.classList.contains('sidebar-open')) {
@@ -97,6 +109,9 @@ $menuLabel = ($adminLang === 'ru' ? 'Меню' : ($adminLang === 'en' ? 'Menu' :
       </div>
       <div class="brand-text" style="font-size:13px; line-height:1.25; font-weight:800; letter-spacing:-0.2px;"><?= __('Worship<br>Platform Admin') ?></div>
     </div>
+    <button type="button" class="sidebar-collapse-btn" onclick="toggleAdminSidebarCollapse(event)" title="<?= ($adminLang === 'ru' ? 'Свернуть меню' : ($adminLang === 'en' ? 'Collapse sidebar' : 'Փակել/բացել ցանկը')) ?>" aria-label="Collapse sidebar">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </button>
     <button type="button" class="sidebar-close-btn" onclick="document.body.classList.remove('sidebar-open')" aria-label="Close menu">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
     </button>
@@ -106,13 +121,16 @@ $menuLabel = ($adminLang === 'ru' ? 'Меню' : ($adminLang === 'en' ? 'Menu' :
     <div class="sidebar-heading"><?= __('Menu') ?></div>
 
     <?php foreach ($navItems as $key => $item): ?>
-    <a class="nav-item <?= $activePage === $key ? 'active' : '' ?>" href="<?= $item['href'] ?>"<?= $activePage === $key ? ' aria-current="page"' : '' ?> onclick="if(window.innerWidth<=992){document.body.classList.remove('sidebar-open');}">
+    <a class="nav-item <?= $activePage === $key ? 'active' : '' ?>" href="<?= $item['href'] ?>" title="<?= htmlspecialchars($item['label']) ?>"<?= $activePage === $key ? ' aria-current="page"' : '' ?> onclick="if(window.innerWidth<=992){document.body.classList.remove('sidebar-open');}">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><?= $item['icon'] ?></svg>
       <span><?= htmlspecialchars($item['label']) ?></span>
+      <?php if ($key === 'errors'): ?>
+      <span class="nav-badge-danger" id="sidebarActiveErrorsBadge" title="<?= ($adminLang === 'ru' ? 'Активные ошибки' : ($adminLang === 'en' ? 'Active errors' : 'Ակտիվ սխալներ')) ?>"></span>
+      <?php endif; ?>
     </a>
     <?php endforeach; ?>
 
-    <div style="margin-top: 16px; padding: 0 16px;">
+    <div class="lang-switcher-wrap" style="margin-top: 16px; padding: 0 16px;">
       <div class="lang-switcher" style="display:inline-flex; width:100%;">
         <a href="?lang=hy" class="lang-btn <?= $adminLang === 'hy' ? 'active' : '' ?>" style="flex:1; text-align:center;">AM</a>
         <a href="?lang=ru" class="lang-btn <?= $adminLang === 'ru' ? 'active' : '' ?>" style="flex:1; text-align:center;">RU</a>

@@ -436,6 +436,12 @@ function wp_admin_require_access(string $next = '/songs.php'): array {
 
     wp_admin_set_access_cookie($user);
 
+    if (!headers_sent()) {
+        header('X-Frame-Options: SAMEORIGIN');
+        header('X-Content-Type-Options: nosniff');
+        header('Referrer-Policy: strict-origin-when-cross-origin');
+    }
+
     $user['access_mode'] = 'modern';
     $permissions = wp_admin_user_section_permissions($user, $config);
     $user['admin_section_permissions'] = $permissions;
@@ -445,4 +451,47 @@ function wp_admin_require_access(string $next = '/songs.php'): array {
         'config' => $config,
         'permissions' => $permissions,
     ];
+}
+
+function wp_admin_csrf_token(): string {
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+        session_start();
+    }
+    if (empty($_SESSION['wp_admin_csrf_token']) || !is_string($_SESSION['wp_admin_csrf_token'])) {
+        $_SESSION['wp_admin_csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['wp_admin_csrf_token'];
+}
+
+function wp_admin_verify_csrf(?string $token = null): bool {
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+        session_start();
+    }
+    $expected = (string)($_SESSION['wp_admin_csrf_token'] ?? '');
+    if ($expected === '') {
+        return false;
+    }
+    $provided = $token ?? (string)($_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+    return $provided !== '' && hash_equals($expected, $provided);
+}
+
+function wp_admin_audit_log(string $action, array $details = []): void {
+    try {
+        $dir = __DIR__ . '/data';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+        $logFile = $dir . '/admin_audit.jsonl';
+        $entry = [
+            'at' => date('c'),
+            'action' => $action,
+            'user_id' => (int)($_SESSION['user_id'] ?? 0),
+            'ip' => (string)($_SERVER['REMOTE_ADDR'] ?? ''),
+            'path' => (string)($_SERVER['REQUEST_URI'] ?? ''),
+            'details' => $details,
+        ];
+        @file_put_contents($logFile, json_encode($entry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n", FILE_APPEND | LOCK_EX);
+    } catch (Throwable $_) {
+        // Never break admin requests if audit log is unwritable.
+    }
 }

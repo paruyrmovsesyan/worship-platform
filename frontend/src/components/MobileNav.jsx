@@ -109,7 +109,11 @@ export default function MobileNav() {
     fetchBadgeCount();
 
     if (user) {
-      intervalId = window.setInterval(fetchBadgeCount, 8000);
+      intervalId = window.setInterval(() => {
+        const currentPath = window.location.pathname;
+        if (currentPath === '/chats' || currentPath.startsWith('/chat/')) return;
+        fetchBadgeCount();
+      }, 8000);
       const handleVisibilityChange = () => {
         if (document.visibilityState === 'visible') {
           fetchBadgeCount();
