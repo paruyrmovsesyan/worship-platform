@@ -919,8 +919,17 @@ export default function SongView() {
       navigator.serviceWorker.addEventListener('message', handleSwMessage);
     }
 
+    const handleNativeRefresh = (event) => {
+      const path = event?.detail?.pathname;
+      if (!path || path.startsWith('/song/')) {
+        fetchFullSongDetails(false);
+      }
+    };
+    window.addEventListener('wp-native-refresh', handleNativeRefresh);
+
     return () => {
       cancelled = true;
+      window.removeEventListener('wp-native-refresh', handleNativeRefresh);
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.removeEventListener('message', handleSwMessage);
       }
@@ -958,9 +967,12 @@ export default function SongView() {
           return;
         }
       }
-      if (urlCapo === null && currentItem.capo != null && cleanCapo !== capo) {
-        setCapo(cleanCapo);
-        setSemi((prev) => prev - capo + cleanCapo);
+      if (urlCapo === null && currentItem.capo != null) {
+        setCapo((prevCapo) => {
+          if (cleanCapo === prevCapo) return prevCapo;
+          setSemi((prev) => prev - prevCapo + cleanCapo);
+          return cleanCapo;
+        });
       }
     };
 
