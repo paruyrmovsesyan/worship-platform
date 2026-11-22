@@ -3,6 +3,18 @@ import { API_BASE_URL } from './nativeConfig';
 const fallbackNewsByLanguage = {
   am: [
     {
+      id: 104,
+      slug: 'performance-liquid-glass-and-stability-541',
+      date: '2026-11-23 01:00:00',
+      published_at: '2026-11-23 01:00:00',
+      release_version: '5.4.1',
+      tag: 'Թարմացում',
+      title: 'Worship Platform 5.4.1՝ ավելի արագ բեռնում, սահուն 120Hz սքրոլ և կայուն Liquid Glass',
+      excerpt: 'Խոշոր արագագործության օպտիմալացում, մարտկոցի խնայողություն, թռթռման վերացում Աստվածաշնչում և բոլոր էջերում, Pull-to-Refresh ու անվտանգության ուղղումներ։',
+      content: '5.4.1 թարմացումը նվազեցնում է սկզբնական բեռնման չափը (ավելի քան 20-30%), ներդնում է խելացի ֆոնային հարցումներ, սահուն 60Hz/120Hz ավտո-սքրոլ երգերի էջում, Pull-to-Refresh բոլոր հիմնական բաժիններում, կայուն վերևի պանել Աստվածաշնչում և կատարելագործված Liquid Glass անիմացիաներ։',
+      image_url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=1200',
+    },
+    {
       id: 101,
       slug: 'bible-new-ararat-parallel-reader',
       date: '2026-11-18 10:00:00',
@@ -41,6 +53,18 @@ const fallbackNewsByLanguage = {
   ],
   en: [
     {
+      id: 104,
+      slug: 'performance-liquid-glass-and-stability-541',
+      date: '2026-11-23 01:00:00',
+      published_at: '2026-11-23 01:00:00',
+      release_version: '5.4.1',
+      tag: 'Update',
+      title: 'Worship Platform 5.4.1: Faster Startup, 120Hz Auto-Scroll & Flicker-Free Liquid Glass',
+      excerpt: 'Major performance boost, battery-friendly background polling, flicker-free sticky headers, Pull-to-Refresh across all core pages, and security fixes.',
+      content: 'Version 5.4.1 trims initial bundle sizes by 21-32%, adds visibility-gated background polling, upgrades SongView auto-scroll to smooth 60Hz/120Hz requestAnimationFrame, brings Pull-to-Refresh to all main sections, and fixes sticky header & button flickering.',
+      image_url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=1200',
+    },
+    {
       id: 101,
       slug: 'bible-new-ararat-parallel-reader',
       date: '2026-11-18 10:00:00',
@@ -78,6 +102,18 @@ const fallbackNewsByLanguage = {
     },
   ],
   ru: [
+    {
+      id: 104,
+      slug: 'performance-liquid-glass-and-stability-541',
+      date: '2026-11-23 01:00:00',
+      published_at: '2026-11-23 01:00:00',
+      release_version: '5.4.1',
+      tag: 'Обновление',
+      title: 'Worship Platform 5.4.1: быстрый запуск, плавный 120Hz скролл и стабильный Liquid Glass',
+      excerpt: 'Крупная оптимизация скорости и расхода батареи, устранение мерцания в Библии и на кнопках, Pull-to-Refresh во всех разделах и исправления безопасности.',
+      content: 'Обновление 5.4.1 уменьшает размер начальной загрузки на 21-32%, оптимизирует фоновые запросы, переводит автопрокрутку песен на плавный 60Hz/120Hz requestAnimationFrame, добавляет Pull-to-Refresh и устраняет мерцание панелей.',
+      image_url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=1200',
+    },
     {
       id: 101,
       slug: 'bible-new-ararat-parallel-reader',
