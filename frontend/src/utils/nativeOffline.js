@@ -50,7 +50,7 @@ export function canCacheNativeRequest(url, method = 'GET') {
     const parsed = new URL(url, 'https://worship.pmstudio.am');
     return (
       CACHEABLE_PATHS.includes(parsed.pathname) &&
-      !/logout|delete|remove|send|create|update|poll|signal|call|badge_summary/i.test(parsed.search)
+      !/logout|delete|remove|send|create|update|poll|signal|call|badge_summary|search_users/i.test(parsed.search)
     );
   } catch {
     return false;

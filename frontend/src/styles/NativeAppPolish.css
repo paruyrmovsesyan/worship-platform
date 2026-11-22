@@ -23,6 +23,45 @@ body.is-native .hub-header .hub-logo-btn {
   gap: 0 !important;
 }
 
+/* Native Chat Page (portaled outside #root): apply safe-area insets directly
+   and prevent placeholder wrapping/clipping in the message input. */
+body.is-native .chat-page-container > .chat-header {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+  padding-bottom: 12px !important;
+  min-height: calc(56px + env(safe-area-inset-top, 0px));
+}
+
+body.is-native.is-android .chat-page-container > .chat-header {
+  padding-top: calc(max(env(safe-area-inset-top, 0px), 28px) + 10px) !important;
+}
+
+body.is-native .chat-page-container .chat-input-area {
+  padding: 10px 14px calc(max(env(safe-area-inset-bottom, 0px), 16px) + 12px) 14px !important;
+}
+
+body.is-native.keyboard-open .chat-page-container .chat-input-area {
+  padding-bottom: 10px !important;
+}
+
+body.is-native .chat-page-container .chat-input-form {
+  align-items: center !important;
+  padding: 6px 8px 6px 10px !important;
+  min-height: 48px;
+}
+
+body.is-native .chat-page-container .chat-input-field {
+  font-size: 0.95rem !important;
+  line-height: 1.35 !important;
+  padding: 8px 0 !important;
+  min-height: 36px !important;
+}
+
+body.is-native .chat-page-container .chat-input-field:placeholder-shown {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
 body.is-native {
   -webkit-text-size-adjust: 100% !important;
   text-size-adjust: 100% !important;

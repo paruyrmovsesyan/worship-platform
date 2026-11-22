@@ -9,6 +9,7 @@ import { API_BASE_URL } from './nativeConfig';
 
 const MAX_RAM_ENTRIES = 160;
 const ramCache = new Map(); // normalizedUrl -> { body, status, headers, cachedAt, pathname }
+const pathInvalidatedAt = new Map(); // pathname -> timestamp (invalidates stale Disk cache after mutations)
 const inflightGets = new Map(); // normalizedUrl -> Promise<{ body, status, headers }>
 const backgroundRevalidating = new Set();
 
@@ -71,6 +72,11 @@ export function invalidateNativeCacheForUrl(url) {
       related.add('/setlists_api.php');
       related.add('/favorites_api.php');
       related.add('/user_favorites_api.php');
+      related.add('/friends_api.php');
+    }
+    const now = Date.now();
+    for (const relPath of related) {
+      pathInvalidatedAt.set(relPath, now);
     }
     for (const [key, value] of ramCache.entries()) {
       if (related.has(value.pathname)) {
@@ -262,7 +268,8 @@ export function setupNativeNetwork() {
 
         // Tier 2: Fast local Disk cache hit (~5-15ms) with silent SWR
         const diskHit = await readNativeResponseCache(cacheKey);
-        if (diskHit && typeof diskHit.body === 'string') {
+        const invalidatedAt = pathInvalidatedAt.get(pathname) || 0;
+        if (diskHit && typeof diskHit.body === 'string' && Number(diskHit.cachedAt || 0) > invalidatedAt) {
           const age = Date.now() - Number(diskHit.cachedAt || 0);
           putRamCache(cacheKey, pathname, diskHit);
           if (age < swrMs) {
@@ -304,6 +311,9 @@ export function setupNativeNetwork() {
     // Non-cacheable request (mutations, live chat, calls, status checks)
     try {
       const payload = await performNetworkRequest(url, method, headers, data, '', '', false);
+      if (method !== 'GET' && method !== 'HEAD') {
+        invalidateNativeCacheForUrl(url);
+      }
       return buildResponse(payload, 'LIVE');
     } catch (err) {
       console.warn('[NativeHttp] Native request failed, falling back to original fetch:', err);
