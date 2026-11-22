@@ -25,6 +25,14 @@
       "resize": "none",
       "style": "DARK",
       "resizeOnFullScreen": false
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_notification",
+      "iconColor": "#9D72FF",
+      "sound": "default"
     }
   }
 }

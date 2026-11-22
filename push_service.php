@@ -1917,6 +1917,8 @@ function wp_push_send_fcm_token(string $fcmToken, string $title, string $body, s
                 'notification' => [
                     'channel_id' => 'worship-default',
                     'sound'      => 'default',
+                    'icon'       => 'ic_stat_notification',
+                    'color'      => '#9D72FF',
                 ],
             ],
         ],

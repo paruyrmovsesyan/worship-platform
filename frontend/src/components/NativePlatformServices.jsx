@@ -255,6 +255,8 @@ export default function NativePlatformServices() {
             title: notification.title || notification?.data?.title || 'Worship Platform',
             body: notification.body || notification?.data?.body || '',
             channelId: Capacitor.getPlatform() === 'android' ? 'worship-default' : undefined,
+            smallIcon: 'ic_stat_notification',
+            iconColor: '#9D72FF',
             extra: notification.data || {},
             schedule: { at: new Date(Date.now() + 200) },
           }],
