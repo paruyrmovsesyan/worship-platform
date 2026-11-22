@@ -424,7 +424,7 @@ export default function Chat() {
       root.style.removeProperty('--chat-vh');
       root.style.removeProperty('--chat-viewport-offset');
     };
-  }, []);
+  }, [isNativeApp]);
 
   // Ultimate iOS Pull-to-refresh blocker
   useEffect(() => {
@@ -509,24 +509,6 @@ export default function Chat() {
       document.removeEventListener('selectionchange', clearBubbleSelection);
     };
   }, [isNativeApp]);
-
-  useEffect(() => {
-    if (!user && !authLoading) {
-      navigate('/login');
-      return;
-    }
-    if (user && id) {
-      fetchInitialMessages();
-    }
-  }, [user, authLoading, id, navigate]);
-
-  useEffect(() => {
-    if (user && id && !loading) {
-      pollNewMessages();
-      const interval = setInterval(pollNewMessages, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [user, id, loading]);
 
   const fetchInitialMessages = async () => {
     try {
@@ -614,6 +596,27 @@ export default function Chat() {
       console.error(e);
     }
   };
+
+  useEffect(() => {
+    if (!user && !authLoading) {
+      navigate('/login');
+      return;
+    }
+    if (user && id) {
+      fetchInitialMessages();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading, id, navigate]);
+
+  useEffect(() => {
+    if (user && id && !loading) {
+      pollNewMessages();
+      const interval = setInterval(pollNewMessages, 3000);
+      return () => clearInterval(interval);
+    }
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, id, loading]);
 
   const fetchOlderMessages = async () => {
     if (isLoadingOlder || !hasMore || messages.length === 0) return;

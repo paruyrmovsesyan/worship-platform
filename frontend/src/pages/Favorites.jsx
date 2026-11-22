@@ -75,6 +75,14 @@ export default function Favorites() {
 
   useEffect(() => {
     loadFavorites();
+    const handleNativeRefresh = (event) => {
+      const path = event?.detail?.pathname;
+      if (!path || path === '/favorites') {
+        loadFavorites();
+      }
+    };
+    window.addEventListener('wp-native-refresh', handleNativeRefresh);
+    return () => window.removeEventListener('wp-native-refresh', handleNativeRefresh);
   }, [loadFavorites]);
 
   const availableKeys = useMemo(() => {

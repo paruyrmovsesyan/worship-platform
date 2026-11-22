@@ -11,18 +11,20 @@ import { usePageLoading } from '../context/PageLoadingContext';
  */
 export function usePageReady(isPageLoading) {
   const ctx = usePageLoading();
+  const startLoading = ctx?.startLoading;
+  const stopLoading = ctx?.stopLoading;
 
   useEffect(() => {
-    if (!ctx) return;
+    if (!startLoading || !stopLoading) return undefined;
     if (isPageLoading) {
-      ctx.startLoading();
+      startLoading();
     } else {
-      ctx.stopLoading();
+      stopLoading();
     }
 
     return () => {
       // Cleanup: always stop when component unmounts
-      ctx.stopLoading();
+      stopLoading();
     };
-  }, [isPageLoading]);
+  }, [isPageLoading, startLoading, stopLoading]);
 }

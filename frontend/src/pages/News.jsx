@@ -76,18 +76,31 @@ export default function News() {
     let cancelled = false;
     setArticles(getCachedNewsList(language));
 
-    fetchNewsList({ language, limit: 50 })
-      .then(items => {
-        if (!cancelled && Array.isArray(items) && items.length > 0) {
-          setArticles(items);
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    const loadNews = () => {
+      fetchNewsList({ language, limit: 50 })
+        .then(items => {
+          if (!cancelled && Array.isArray(items) && items.length > 0) {
+            setArticles(items);
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    };
+
+    loadNews();
+
+    const handleNativeRefresh = (event) => {
+      const path = event?.detail?.pathname;
+      if (!path || path === '/news') {
+        loadNews();
+      }
+    };
+    window.addEventListener('wp-native-refresh', handleNativeRefresh);
     return () => {
       cancelled = true;
+      window.removeEventListener('wp-native-refresh', handleNativeRefresh);
     };
   }, [language]);
 
