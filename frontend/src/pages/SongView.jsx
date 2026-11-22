@@ -9,7 +9,6 @@ import {
   renderLyricsWithStageNotes,
   stripStageNotes,
   transposeRoot,
-  extractChordsOnlyChart,
   isPureChordLine,
 } from '../utils/chordTransposer';
 import SmartMetronome from '../components/SmartMetronome';
@@ -85,26 +84,27 @@ function parseArrangementSections(rawText) {
   return sections;
 }
 
-function hasEmbeddedLyricsInChords(chordsText) {
-  if (!chordsText) return false;
-  const lines = String(chordsText).split(/\r?\n/);
+function extractPlainLyricsFromChords(chordsText) {
+  if (!chordsText) return '';
+  const kept = [];
   let lyricLines = 0;
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith('!') || line.startsWith('[')) continue;
-    if (/^(?:Տուն|Կրկներգ|Կամուրջ|Նախերգ|Նախակրկներգ|Ավարտ|Սոլո|Անցում|Ներածություն|Վերջաբան|Verse|Chorus|Pre[- ]?Chorus|Bridge|Intro|Outro|Tag|Ending|Interlude|Instrumental|Куплет|Припев|Предприпев|Бридж|Мост|Вступление|Конец|Кода|Проигрыш)\s*\d*\s*:?$/i.test(line)) {
+  for (const rawLine of String(chordsText).split(/\r?\n/)) {
+    const trimmed = rawLine.trim();
+    if (!trimmed) {
+      kept.push('');
       continue;
     }
-    if (isPureChordLine(line)) continue;
-    const withoutInline = line
-      .replace(/\[[A-G][#b]?[^\]]*\]/g, '')
-      .replace(/[|/\\–—\-.,:;!?()\d\s]+/g, '');
-    if (withoutInline.length >= 3) {
-      lyricLines += 1;
-      if (lyricLines >= 2) return true;
+    if (trimmed.startsWith('!')) continue;
+    if (isPureChordLine(trimmed)) continue;
+    const stripped = rawLine.replace(/\[[A-G][#b]?[^\]]*\]/g, '').trimEnd();
+    if (!stripped.trim()) continue;
+    kept.push(stripped);
+    if (!/^\[[^\]]+\]$/.test(trimmed)) {
+      const alpha = stripped.replace(/[|/\\–—\-.,:;!?()\d\s]+/g, '');
+      if (alpha.length >= 3) lyricLines += 1;
     }
   }
-  return false;
+  return lyricLines >= 2 ? kept.join('\n').replace(/\n{3,}/g, '\n\n').trim() : '';
 }
 
 function resolveMediaUrl(url) {
@@ -268,7 +268,10 @@ export default function SongView() {
   
   // Controls state
   const [fontSize, setFontSize] = useState(() => parseInt(localStorage.getItem('song_font_size') || '18', 10));
-  const [viewMode, setViewMode] = useState(() => localStorage.getItem('song_view_mode') || 'chords');
+  const [viewMode, setViewMode] = useState(() => {
+    const saved = localStorage.getItem('song_view_mode') || 'chords';
+    return ['chords', 'lyrics', 'both'].includes(saved) ? saved : 'chords';
+  });
   const [semi, setSemi] = useState(0);
   const [capo, setCapo] = useState(() => parseInt(localStorage.getItem(`capo_${id}`) || '0', 10));
   const [useFlats, setUseFlats] = useState(false);
@@ -1381,63 +1384,31 @@ export default function SongView() {
 
   const hasChords = Boolean(song?.chords && song.chords.trim());
   const hasLyrics = Boolean(song?.lyrics && song.lyrics.trim());
-  const chordsHasLyrics = useMemo(
-    () => hasEmbeddedLyricsInChords(song?.chords || ''),
-    [song?.chords]
-  );
 
   const currentChords = useMemo(
     () => (hasChords ? renderWithChords(song.chords, semi - capo, useFlats) : ''),
     [hasChords, song?.chords, semi, capo, useFlats]
   );
-  const chordsOnlySections = useMemo(
-    () => (hasChords ? extractChordsOnlyChart(song.chords, semi - capo, useFlats) : []),
-    [hasChords, song?.chords, semi, capo, useFlats]
+  const extractedChordsLyrics = useMemo(
+    () => (!hasLyrics && hasChords ? extractPlainLyricsFromChords(song.chords) : ''),
+    [hasLyrics, hasChords, song?.chords]
   );
   const arrangementSections = useMemo(
     () => parseArrangementSections(song?.chords || song?.lyrics || ''),
     [song?.chords, song?.lyrics]
   );
-  const currentLyrics = song?.lyrics || t('songView.noLyrics');
+  const currentLyrics = song?.lyrics || extractedChordsLyrics || t('songView.noLyrics');
   const displayTitle = song?.title ? getLocalizedTitle(song.title, language) : (song?.title_hy || song?.title || 'Worship Song');
 
-  // Build non-redundant view mode tabs based on actual song content
-  const viewModeTabs = useMemo(() => {
-    if (!hasChords || !hasLyrics) return [];
-    if (chordsHasLyrics) {
-      const tabs = [
-        { id: 'chords', label: t('songView.chordsOnly', 'Ակորդներ') },
-        { id: 'lyrics', label: t('songView.lyricsOnly', 'Բառեր') },
-      ];
-      if (chordsOnlySections.length > 0) {
-        tabs.push({
-          id: 'chords_chart',
-          label: language === 'ru' ? 'Схема' : language === 'en' ? 'Chart' : 'Սխեմա',
-        });
-      }
-      return tabs;
-    }
-    return [
-      { id: 'both', label: t('songView.bothModes', 'Երկուսն էլ') },
-      { id: 'chords', label: t('songView.chordsOnly', 'Ակորդներ') },
-      { id: 'lyrics', label: t('songView.lyricsOnly', 'Բառեր') },
-    ];
-  }, [hasChords, hasLyrics, chordsHasLyrics, chordsOnlySections.length, t, language]);
+  // Always show the exact same 3 consistent tabs across every song (normal, favorites, setlists)
+  const viewModeTabs = useMemo(() => [
+    { id: 'chords', label: t('songView.chordsOnly', 'Ակորդներ') },
+    { id: 'lyrics', label: t('songView.lyricsOnly', 'Բառեր') },
+    { id: 'both', label: t('songView.bothModes', 'Երկուսն էլ') },
+  ], [t]);
 
-  const effectiveViewMode = useMemo(() => {
-    if (!hasChords) return 'lyrics';
-    if (!hasLyrics) return 'chords';
-    if (chordsHasLyrics) {
-      if (viewMode === 'lyrics') return 'lyrics';
-      if (viewMode === 'chords_chart' && chordsOnlySections.length > 0) return 'chords_chart';
-      return 'chords';
-    }
-    if (viewMode === 'lyrics') return 'lyrics';
-    if (viewMode === 'chords' || viewMode === 'chords_chart') return 'chords';
-    return 'both';
-  }, [hasChords, hasLyrics, chordsHasLyrics, chordsOnlySections.length, viewMode]);
-
-  const defaultChordsViewMode = chordsHasLyrics ? 'chords' : 'both';
+  const effectiveViewMode = ['chords', 'lyrics', 'both'].includes(viewMode) ? viewMode : 'chords';
+  const defaultChordsViewMode = 'chords';
 
   const promptAddAttachment = () => {
     const title = window.prompt('Մուտքագրեք հղման անվանումը (օր.՝ YouTube Track)');
@@ -1531,7 +1502,7 @@ export default function SongView() {
 
   // Auto-highlight active arrangement section while scrolling
   useEffect(() => {
-    if (arrangementSections.length < 2 || effectiveViewMode === 'chords_chart') return undefined;
+    if (arrangementSections.length < 2) return undefined;
     let rafId = 0;
     const updateActiveSection = () => {
       rafId = 0;
@@ -1853,21 +1824,19 @@ export default function SongView() {
         </div>
       </div>
 
-      {/* Non-Redundant View Mode Segmented Control */}
-      {viewModeTabs.length > 1 && (
-        <div className="sv-segment-control">
-          {viewModeTabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              className={`sv-segment ${effectiveViewMode === tab.id ? 'active' : ''}`}
-              onClick={() => handleViewModeChange(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Consistent 3-Tab View Mode Segmented Control */}
+      <div className="sv-segment-control">
+        {viewModeTabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            className={`sv-segment ${effectiveViewMode === tab.id ? 'active' : ''}`}
+            onClick={() => handleViewModeChange(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       {/* Stage Modules Container (Single Unified Key & Capo Card + Inline Metronome + Stems) */}
       {((showToneCapo && hasChords) || showInlineMetronome || (stemsOpen && isEnabled('rehearsal_stems'))) && (
@@ -2017,7 +1986,7 @@ export default function SongView() {
       )}
 
       {/* Color-Coded Song Arrangement Ribbon (Auto-highlights active section on scroll) */}
-      {arrangementSections.length >= 2 && effectiveViewMode !== 'chords_chart' && (
+      {arrangementSections.length >= 2 && (
         <div ref={ribbonRef} className="sv-arrangement-ribbon" aria-label="Երգի կառուցվածք">
           {arrangementSections.map((sec, idx) => (
             <button
@@ -2053,41 +2022,26 @@ export default function SongView() {
         onMouseOut={closeChordPopover}
         onClick={openChordPopover}
       >
-        {effectiveViewMode === 'chords_chart' && hasChords ? (
-          <div className="sv-chords-only-grid">
-            {chordsOnlySections.length > 0 ? chordsOnlySections.map((sec, idx) => (
-              <section key={`${sec.label}_${idx}`} className="sv-chart-section">
-                <header className="sv-chart-sec-title">{sec.label}</header>
-                {sec.cues.map((cue, cIdx) => (
-                  <div key={cIdx} className="sv-chart-cue">{cue}</div>
-                ))}
-                <div className="sv-chart-bars">
-                  {sec.bars.map((bar, bIdx) => (
-                    <div key={bIdx} className="sv-chart-bar-row">
-                      {bar.map((ch, kIdx) => (
-                        <span
-                          key={kIdx}
-                          className={`${/^[A-G]/i.test(String(ch).trim()) ? 'chord ' : ''}sv-chart-chord-pill`}
-                        >
-                          {ch}
-                        </span>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )) : (
-              <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
-            )}
-          </div>
-        ) : effectiveViewMode === 'chords' && hasChords ? (
-          <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
-        ) : effectiveViewMode === 'both' && hasChords && hasLyrics ? (
-          <>
+        {effectiveViewMode === 'chords' ? (
+          hasChords ? (
             <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
-            <div className="sv-divider"></div>
+          ) : (
+            <p className="sv-empty-mode-msg">
+              {language === 'ru' ? 'Аккорды для этой песни пока не добавлены' : language === 'en' ? 'Chords are not available for this song yet' : 'Ակորդները դեռ ավելացված չեն'}
+            </p>
+          )
+        ) : effectiveViewMode === 'both' ? (
+          hasChords && hasLyrics ? (
+            <>
+              <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
+              <div className="sv-divider"></div>
+              <pre className="lyrics-block" dangerouslySetInnerHTML={{ __html: renderLyricsWithStageNotes(currentLyrics) }} />
+            </>
+          ) : hasChords ? (
+            <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
+          ) : (
             <pre className="lyrics-block" dangerouslySetInnerHTML={{ __html: renderLyricsWithStageNotes(currentLyrics) }} />
-          </>
+          )
         ) : (
           <pre className="lyrics-block">{stripStageNotes(currentLyrics)}</pre>
         )}

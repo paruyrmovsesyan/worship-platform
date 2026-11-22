@@ -492,6 +492,14 @@ body.light-mode .sv-segment.active {
   margin: 32px 0;
 }
 
+.sv-empty-mode-msg {
+  margin: 12px 0;
+  color: var(--color-text-secondary);
+  font-size: 0.94rem;
+  text-align: center;
+  opacity: 0.78;
+}
+
 .chords-block, .lyrics-block {
   font-family: 'Inter', monospace;
   line-height: 1.8;
