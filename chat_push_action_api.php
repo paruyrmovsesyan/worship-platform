@@ -10,6 +10,19 @@ header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 require_once __DIR__ . '/runtime_config.php';
 require_once __DIR__ . '/push_service.php';
 
+if (!function_exists('wp_chat_compact_push_title')) {
+    function wp_chat_compact_push_title(string $senderName): string {
+        $senderName = trim(preg_replace('/\s+/u', ' ', $senderName));
+        return $senderName !== '' ? mb_substr($senderName, 0, 60) : 'New message';
+    }
+}
+if (!function_exists('wp_chat_compact_push_body')) {
+    function wp_chat_compact_push_body(string $message, bool $isSetlistShare = false, string $setlistName = ''): string {
+        $message = trim(preg_replace('/\s+/u', ' ', $message));
+        return $message !== '' ? mb_substr($message, 0, 80) : 'Նոր հաղորդագրություն';
+    }
+}
+
 function out_json(array $data, int $code = 200): void {
     http_response_code($code);
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -36,14 +49,14 @@ if ($chatId <= 0 || $userId <= 0 || $action === '' || $signature === '') {
     out_json(['ok' => false, 'error' => 'Missing parameters'], 400);
 }
 
-// 1. Validate signature using APP_SECRET or fallback key
+// 1. Validate signature using persistent secret
 // Signature is valid for up to 7 days
 $now = time();
 if ($timestamp < ($now - 7 * 86400) || $timestamp > ($now + 3600)) {
     out_json(['ok' => false, 'error' => 'Action token expired'], 403);
 }
 
-$secret = wp_runtime_app_secret();
+$secret = function_exists('wp_runtime_get_secret') ? wp_runtime_get_secret('native_chat_action', 32) : 'worship_secret_key';
 $expectedSig = hash_hmac('sha256', "chat:{$chatId}:user:{$userId}:ts:{$timestamp}", $secret);
 if (!hash_equals($expectedSig, $signature)) {
     out_json(['ok' => false, 'error' => 'Invalid signature'], 403);
@@ -51,6 +64,11 @@ if (!hash_equals($expectedSig, $signature)) {
 
 try {
     $pdo = wp_runtime_open_pdo();
+    $st = $pdo->query("SHOW COLUMNS FROM chat_participants LIKE 'last_read_message_id'");
+    $hasColumn = $st && $st->fetch(PDO::FETCH_ASSOC);
+    if (!$hasColumn) {
+        $pdo->exec("ALTER TABLE chat_participants ADD COLUMN last_read_message_id BIGINT NULL DEFAULT NULL AFTER cleared_at");
+    }
 } catch (Throwable $e) {
     out_json(['ok' => false, 'error' => 'Database error'], 500);
 }

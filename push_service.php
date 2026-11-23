@@ -2016,7 +2016,7 @@ function wp_push_send_native_android($pdo, ?int $userId, string $title, string $
             }
             if ($chatId > 0) {
                 $ts = time();
-                $secret = function_exists('wp_runtime_app_secret') ? wp_runtime_app_secret() : 'worship_secret_key';
+                $secret = function_exists('wp_runtime_get_secret') ? wp_runtime_get_secret('native_chat_action', 32) : 'worship_secret_key';
                 $sig = hash_hmac('sha256', "chat:{$chatId}:user:{$userId}:ts:{$ts}", $secret);
                 $userSpecificExtra['action_chat_id'] = (string)$chatId;
                 $userSpecificExtra['action_ts'] = (string)$ts;
