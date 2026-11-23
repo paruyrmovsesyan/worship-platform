@@ -870,6 +870,15 @@ $renderHistoryCard = static function () use ($annHistory, $currentAnnHash, $isAn
 
 <script>
   window.WP_ANN_HISTORY = <?= json_encode($annHistory, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+  <?php if (!empty($flashMessage) && ($flashTone ?? '') === 'success'): ?>
+  try {
+    if (typeof BroadcastChannel !== 'undefined') {
+      var wpAnnBc = new BroadcastChannel('wp_platform_announcement');
+      wpAnnBc.postMessage({ type: 'ANNOUNCEMENT_UPDATED', timestamp: Date.now() });
+      setTimeout(function() { wpAnnBc.close(); }, 500);
+    }
+  } catch (_) {}
+  <?php endif; ?>
 
   function wpSwitchAcTab(tab, btn) {
     document.getElementById('acActiveTabInput').value = tab;

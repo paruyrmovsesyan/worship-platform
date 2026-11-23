@@ -5,6 +5,8 @@
  */
 
 import { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { API_BASE_URL } from './nativeConfig';
 
 let flagsCache = {};
 let catalogCache = {};
@@ -14,11 +16,36 @@ let activeAnnouncement = null;
 let announcementDismissed = false;
 let isInitialized = false;
 
+export function detectDefaultSurface() {
+  if (typeof window === 'undefined') return 'web';
+  try {
+    if (Capacitor.isNativePlatform()) {
+      return Capacitor.getPlatform() === 'ios' ? 'ios' : 'android';
+    }
+  } catch {
+    // Platform detection unavailable
+  }
+  try {
+    const isPWA = window.matchMedia?.('(display-mode: standalone)')?.matches ||
+      window.navigator?.standalone === true ||
+      document.referrer?.includes('android-app://');
+    if (isPWA) return 'pwa';
+  } catch {
+    // PWA detection unavailable
+  }
+  return 'web';
+}
+
 function isClientAnnouncementExpired(ann) {
   if (!ann || !ann.schedule_end_at) return false;
   const endMs = Date.parse(String(ann.schedule_end_at).trim().replace(' ', 'T'));
   if (Number.isNaN(endMs)) return false;
   return Date.now() >= endMs;
+}
+
+function getAnnouncementFingerprint(ann) {
+  if (!ann) return '';
+  return `${ann.title || ''}|${ann.message || ''}|${ann.type || ''}|${ann.target || ''}|${ann.action_url || ''}|${ann.schedule_end_at || ''}`;
 }
 
 export function setAnnouncementRestrictions({ announcement = null, restrictedFeatures = [], restrictedPages = [] } = {}) {
@@ -27,8 +54,8 @@ export function setAnnouncementRestrictions({ announcement = null, restrictedFea
     restrictedFeatures = [];
     restrictedPages = [];
   }
-  const prevKey = activeAnnouncement ? `${activeAnnouncement.title || ''}|${activeAnnouncement.message || ''}` : '';
-  const nextKey = announcement ? `${announcement.title || ''}|${announcement.message || ''}` : '';
+  const prevKey = getAnnouncementFingerprint(activeAnnouncement);
+  const nextKey = getAnnouncementFingerprint(announcement);
   activeAnnouncement = announcement || null;
   if (!announcement || prevKey !== nextKey) {
     announcementDismissed = false;
@@ -92,11 +119,13 @@ let inFlightAnnouncementPromise = null;
 
 export async function fetchPlatformAnnouncement(surface, baseUrl = '') {
   if (typeof window === 'undefined') return getAnnouncementRestrictions();
+  const effectiveSurface = surface || detectDefaultSurface();
+  const effectiveBaseUrl = baseUrl || API_BASE_URL || '';
   if (inFlightAnnouncementPromise) return inFlightAnnouncementPromise;
 
   inFlightAnnouncementPromise = (async () => {
     try {
-      const endpoint = `${baseUrl}/mobile_config_api.php?platform=${encodeURIComponent(surface)}&_t=${Date.now()}`;
+      const endpoint = `${effectiveBaseUrl}/mobile_config_api.php?platform=${encodeURIComponent(effectiveSurface)}&_t=${Date.now()}`;
       const res = await fetch(endpoint, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
@@ -125,6 +154,8 @@ export async function fetchPlatformAnnouncement(surface, baseUrl = '') {
 
 export function usePlatformAnnouncement(surface, baseUrl = '') {
   const [state, setState] = useState(() => getAnnouncementRestrictions());
+  const resolvedSurface = surface || detectDefaultSurface();
+  const resolvedBaseUrl = baseUrl || API_BASE_URL || '';
 
   useEffect(() => {
     let active = true;
@@ -135,29 +166,109 @@ export function usePlatformAnnouncement(surface, baseUrl = '') {
     listeners.add(handleStoreChange);
 
     const syncFromRemote = () => {
-      if (!surface) return;
-      fetchPlatformAnnouncement(surface, baseUrl).then((next) => {
+      fetchPlatformAnnouncement(resolvedSurface, resolvedBaseUrl).then((next) => {
         if (active) setState(next);
       });
     };
 
+    // Initial check
     syncFromRemote();
-    const timer = surface ? window.setInterval(syncFromRemote, 60_000) : null;
+
+    // 1. Responsive background polling every 12 seconds when visible & online
+    const timer = window.setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+      syncFromRemote();
+    }, 12_000);
+
+    // 2. Visibility change: instant check when tab/app becomes visible
     const onVisible = () => {
       if (document.visibilityState === 'visible') {
         syncFromRemote();
       }
     };
-    if (surface) {
-      document.addEventListener('visibilitychange', onVisible);
+    document.addEventListener('visibilitychange', onVisible);
+
+    // 3. Focus: instant check when window or mobile webview regains focus
+    const onFocus = () => {
+      syncFromRemote();
+    };
+    window.addEventListener('focus', onFocus);
+
+    // 4. Online: instant check when network connectivity is restored
+    const onOnline = () => {
+      syncFromRemote();
+    };
+    window.addEventListener('online', onOnline);
+
+    // 5. Pull-to-refresh: instant check when user pulls down to refresh on mobile
+    const onNativeRefresh = () => {
+      syncFromRemote();
+    };
+    window.addEventListener('wp-native-refresh', onNativeRefresh);
+
+    // 6. BroadcastChannel: instant 0ms cross-tab notification when admin saves in another tab
+    let bc = null;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        bc = new BroadcastChannel('wp_platform_announcement');
+        bc.onmessage = (event) => {
+          if (event?.data?.type === 'ANNOUNCEMENT_UPDATED') {
+            syncFromRemote();
+          }
+        };
+      }
+    } catch {
+      // BroadcastChannel unavailable
     }
+
+    // 7. Capacitor native app resume
+    let capAppListener = null;
+    try {
+      if (Capacitor.isNativePlatform()) {
+        import('@capacitor/app').then(({ App: CapApp }) => {
+          if (!active) return;
+          CapApp.addListener('appStateChange', (appState) => {
+            if (appState?.isActive) {
+              syncFromRemote();
+            }
+          }).then((handle) => {
+            capAppListener = handle;
+          }).catch(() => {
+            // Listener registration skipped
+          });
+        }).catch(() => {
+          // Plugin import skipped
+        });
+      }
+    } catch {
+      // Capacitor App unavailable
+    }
+
     return () => {
       active = false;
       listeners.delete(handleStoreChange);
       if (timer) window.clearInterval(timer);
-      if (surface) document.removeEventListener('visibilitychange', onVisible);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('wp-native-refresh', onNativeRefresh);
+      if (bc) {
+        try {
+          bc.close();
+        } catch {
+          // BroadcastChannel close error ignored
+        }
+      }
+      if (capAppListener) {
+        try {
+          capAppListener.remove?.();
+        } catch {
+          // Listener remove error ignored
+        }
+      }
     };
-  }, [surface, baseUrl]);
+  }, [resolvedSurface, resolvedBaseUrl]);
 
   useEffect(() => {
     const endRaw = state.announcement?.schedule_end_at;

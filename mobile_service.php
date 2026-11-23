@@ -830,6 +830,7 @@ function wp_mobile_evaluate_client(string $platform, string $clientVersion = '',
             'features' => $restrictedFeatures,
         ],
         'features' => $config['features'] ?? [],
+        'config_updated_at' => (string)($config['updated_at'] ?? ''),
         'timestamp' => date('Y-m-d H:i:s'),
     ];
 }

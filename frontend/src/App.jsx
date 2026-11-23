@@ -181,6 +181,20 @@ function App() {
   const location = useLocation();
   const platformAnnouncement = usePlatformAnnouncement(runtimeSurface, API_BASE_URL);
   const isRouteRestricted = matchesRestrictedPage(location.pathname, platformAnnouncement.restrictedPages);
+
+  // When navigating routes, ensure platform announcements & page restrictions are up-to-date
+  const lastAnnouncePathRef = React.useRef(location.pathname);
+  const lastAnnounceTimeRef = React.useRef(0);
+  useEffect(() => {
+    if (location.pathname !== lastAnnouncePathRef.current) {
+      lastAnnouncePathRef.current = location.pathname;
+      const now = Date.now();
+      if (now - lastAnnounceTimeRef.current > 4000) {
+        lastAnnounceTimeRef.current = now;
+        platformAnnouncement.recheck?.().catch(() => {});
+      }
+    }
+  }, [location.pathname, platformAnnouncement]);
   const { isOffline, canAccessPath } = usePwaOfflineGuard();
   const navigate = useNavigate();
   const navigationType = useNavigationType();
