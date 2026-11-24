@@ -244,7 +244,10 @@ export default function MobileNav() {
       window.removeEventListener('wp-native-scroll-restored', finishTabSwitch);
       if (timeoutId !== null) window.clearTimeout(timeoutId);
       if (coverLayer) {
-        coverLayer.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, fill: 'forwards' })
+        coverLayer.animate([
+          { opacity: 1, transform: 'translate3d(0, 0, 0)' },
+          { opacity: 0, transform: 'translate3d(0, 4px, 0)' }
+        ], { duration: 180, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' })
           .finished.then(() => coverLayer?.remove()).catch(() => coverLayer?.remove());
       }
       if (tabTransitionRef.current === transitionToken) tabTransitionRef.current = null;

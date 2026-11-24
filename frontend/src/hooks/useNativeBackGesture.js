@@ -6,7 +6,7 @@ const MIN_SWIPE_DISTANCE = 44;
 const DIRECTION_RATIO = 1.35;
 const COMMIT_PROGRESS = 0.22;
 const COMMIT_VELOCITY = 0.42;
-const BACK_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)';
+const BACK_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
 const UNDERLAY_OFFSET = 0.18;
 
 const isPrimaryTab = pathname => pathname === '/' ||

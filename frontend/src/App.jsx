@@ -91,8 +91,8 @@ import { matchesRestrictedPage, usePlatformAnnouncement } from './utils/featureF
 import { API_BASE_URL } from './utils/nativeConfig';
 
 const NATIVE_PRIMARY_PATHS = new Set(['/', '/songs', '/chats', '/profile', '/login']);
-const NATIVE_ROUTE_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)';
-const NATIVE_ROUTE_DURATION = 260;
+const NATIVE_ROUTE_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
+const NATIVE_ROUTE_DURATION = 320;
 
 const nativeMotionIsReduced = () => document.body.classList.contains('reduce-motion') ||
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -502,25 +502,36 @@ function App() {
           return;
         }
 
-        const incomingAnimation = animatedSurface.animate([
-          { transform: 'translate3d(100vw, 0, 0)' },
-          { transform: 'translate3d(0, 0, 0)' },
-        ], {
-          duration: NATIVE_ROUTE_DURATION,
-          easing: NATIVE_ROUTE_EASING,
-          fill: 'both',
-        });
-        routeAnimations.push(incomingAnimation);
         if (outgoingLayer) {
-          const outgoingAnimation = outgoingLayer.animate([
+          const incomingAnimation = animatedSurface.animate([
+            { transform: 'translate3d(100vw, 0, 0)' },
             { transform: 'translate3d(0, 0, 0)' },
-            { transform: 'translate3d(-20vw, 0, 0)' },
+          ], {
+            duration: NATIVE_ROUTE_DURATION,
+            easing: NATIVE_ROUTE_EASING,
+            fill: 'both',
+          });
+          routeAnimations.push(incomingAnimation);
+
+          const outgoingAnimation = outgoingLayer.animate([
+            { transform: 'translate3d(0, 0, 0)', filter: 'brightness(1)' },
+            { transform: 'translate3d(-24vw, 0, 0)', filter: 'brightness(0.9)' },
           ], {
             duration: NATIVE_ROUTE_DURATION,
             easing: NATIVE_ROUTE_EASING,
             fill: 'both',
           });
           routeAnimations.push(outgoingAnimation);
+        } else {
+          const incomingAnimation = animatedSurface.animate([
+            { opacity: 0.01, transform: 'translate3d(24px, 0, 0)' },
+            { opacity: 1, transform: 'translate3d(0, 0, 0)' },
+          ], {
+            duration: 250,
+            easing: NATIVE_ROUTE_EASING,
+            fill: 'both',
+          });
+          routeAnimations.push(incomingAnimation);
         }
         transitionTimer = window.setTimeout(finishPush, NATIVE_ROUTE_DURATION + 40);
         Promise.allSettled(routeAnimations.map(animation => animation.finished)).then(finishPush);
@@ -600,17 +611,17 @@ function App() {
             return;
           }
 
-          const incomingAnimation = animatedSurface.animate([
-            { transform: 'translate3d(-20vw, 0, 0)' },
-            { transform: 'translate3d(0, 0, 0)' },
-          ], {
-            duration: NATIVE_ROUTE_DURATION,
-            easing: NATIVE_ROUTE_EASING,
-            fill: 'both',
-          });
-          routeAnimations.push(incomingAnimation);
-
           if (outgoingLayer) {
+            const incomingAnimation = animatedSurface.animate([
+              { transform: 'translate3d(-24vw, 0, 0)', filter: 'brightness(0.9)' },
+              { transform: 'translate3d(0, 0, 0)', filter: 'brightness(1)' },
+            ], {
+              duration: NATIVE_ROUTE_DURATION,
+              easing: NATIVE_ROUTE_EASING,
+              fill: 'both',
+            });
+            routeAnimations.push(incomingAnimation);
+
             const outgoingAnimation = outgoingLayer.animate([
               { transform: 'translate3d(0, 0, 0)' },
               { transform: 'translate3d(100vw, 0, 0)' },
@@ -620,6 +631,16 @@ function App() {
               fill: 'both',
             });
             routeAnimations.push(outgoingAnimation);
+          } else {
+            const incomingAnimation = animatedSurface.animate([
+              { opacity: 0.01, transform: 'translate3d(-20px, 0, 0)' },
+              { opacity: 1, transform: 'translate3d(0, 0, 0)' },
+            ], {
+              duration: 240,
+              easing: NATIVE_ROUTE_EASING,
+              fill: 'both',
+            });
+            routeAnimations.push(incomingAnimation);
           }
           transitionTimer = window.setTimeout(finishPop, NATIVE_ROUTE_DURATION + 40);
           Promise.allSettled(routeAnimations.map(a => a.finished)).then(finishPop);
@@ -741,15 +762,8 @@ function App() {
       }
       captureTimer = window.setTimeout(() => {
         captureTimer = null;
-        if (typeof window.requestIdleCallback === 'function') {
-          idleId = window.requestIdleCallback(() => {
-            idleId = null;
-            captureRoute();
-          }, { timeout: 1500 });
-        } else {
-          captureRoute();
-        }
-      }, 1200);
+        captureRoute();
+      }, 220);
     };
 
     const recordNestedScroll = () => {
