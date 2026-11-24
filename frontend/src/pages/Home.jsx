@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { useIsAppMode } from '../hooks/useIsPWA';
 import { lazyWithRetry } from '../utils/lazyWithRetry';
+import { RouteSkeletonFallback } from '../components/NativeSkeletons';
 import MobileHub from './MobileHub';
 
 const LandingPage = lazyWithRetry(() => import('./LandingPage'), 'LandingPage');
@@ -13,7 +14,7 @@ export default function Home() {
   }
 
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<RouteSkeletonFallback pathname="/" />}>
       <LandingPage />
     </Suspense>
   );

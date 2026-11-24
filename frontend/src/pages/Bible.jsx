@@ -18,6 +18,7 @@ import {
 } from '../utils/bibleData';
 import { nativeShare, triggerHaptic } from '../utils/nativeFeatures';
 import { SegmentedControl } from 'glisse';
+import { BibleChapterSkeleton } from '../components/NativeSkeletons';
 import './Bible.css';
 
 const VerseShareCardModal = lazyWithRetry(
@@ -2507,12 +2508,7 @@ export default function Bible() {
               )}
 
               {loading ? (
-                <div className="bible-loading">
-                  <div className="bible-skeleton-line" />
-                  <div className="bible-skeleton-line short" />
-                  <div className="bible-skeleton-line" />
-                  <div className="bible-skeleton-line" />
-                </div>
+                <BibleChapterSkeleton />
               ) : unavailableNotice ? (
                 <div className="bible-unavailable-box">
                   <h3>{ui.unavailableTitle}</h3>

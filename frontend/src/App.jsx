@@ -66,6 +66,7 @@ const Forbidden = lazyWithRetry(() => import('./pages/Forbidden'), 'Forbidden');
 import { Capacitor } from '@capacitor/core';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useIsNativeApp, useIsPWA } from './hooks/useIsPWA';
+import { RouteSkeletonFallback } from './components/NativeSkeletons';
 import ScrollToTop from './components/ScrollToTop';
 import TopLoader from './components/TopLoader';
 import PullToRefresh from './components/PullToRefresh';
@@ -947,19 +948,7 @@ function App() {
                 language={language}
               />
             ) : (
-            <Suspense
-              fallback={
-                <div className="route-lazy-fallback" aria-busy="true">
-                  <div className="route-lazy-glass-hero" />
-                  <div className="route-lazy-glass-grid">
-                    <div className="route-lazy-glass-card" />
-                    <div className="route-lazy-glass-card" />
-                    <div className="route-lazy-glass-card" />
-                    <div className="route-lazy-glass-card" />
-                  </div>
-                </div>
-              }
-            >
+            <Suspense fallback={<RouteSkeletonFallback pathname={location.pathname} />}>
             <Routes key={refreshKey}>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
