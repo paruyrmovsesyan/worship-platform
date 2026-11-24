@@ -6,6 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { getSongCoverStyle } from '../utils/songCover';
 import { usePageReady } from '../hooks/usePageReady';
+import { useIsNativeApp } from '../hooks/useIsPWA';
+import { ModalListSkeleton } from '../components/NativeSkeletons';
 import { scoreSongSearch, highlightText } from '../utils/searchMatcher';
 import {
   getRecentSongSearches,
@@ -38,6 +40,7 @@ export default function SongsApp() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const isNativeApp = useIsNativeApp();
   const [restoreState] = useState(readSongsRestoreState);
   const initialQuery = new URLSearchParams(location.search).get('q') || '';
 
@@ -1108,10 +1111,14 @@ export default function SongsApp() {
             {/* Setlists List */}
             <div className="sla-modal-body">
               {setlistsLoading ? (
-                <div className="sla-modal-loading">
-                  <div className="sla-spinner"></div>
-                  <span>Բեռնվում են երգացանկերը...</span>
-                </div>
+                isNativeApp ? (
+                  <ModalListSkeleton rows={4} />
+                ) : (
+                  <div className="sla-modal-loading">
+                    <div className="sla-spinner"></div>
+                    <span>Բեռնվում են երգացանկերը...</span>
+                  </div>
+                )
               ) : filteredSetlists.length === 0 ? (
                 <div className="sla-modal-empty">
                   {userSetlists.length === 0 ? 'Դուք դեռ չունեք ստեղծած երգացանկեր:' : 'Երգացանկ չի գտնվել:'}

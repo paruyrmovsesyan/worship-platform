@@ -6,6 +6,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { usePageReady } from '../hooks/usePageReady';
 import { getSongCoverStyle } from '../utils/songCover';
 import { nativeShare } from '../utils/nativeFeatures';
+import { useIsNativeApp } from '../hooks/useIsPWA';
+import { SetlistsAppSkeleton } from '../components/NativeSkeletons';
 import './Setlists.css';
 
 const VIEW_MODE_KEY = 'pwa_setlists_view_mode_v1';
@@ -80,6 +82,7 @@ export default function SetlistsApp() {
   const [setlists, setSetlists] = useState(() => (Array.isArray(cachedSetlists) ? cachedSetlists : []));
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(() => !Array.isArray(cachedSetlists) || cachedSetlists.length === 0);
+  const isNativeApp = useIsNativeApp();
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   usePageReady(loading || authLoading);
@@ -1050,10 +1053,14 @@ export default function SetlistsApp() {
 
       {/* Setlists Grid / List */}
       {loading || authLoading ? (
-        <div className="sl-app-loading-state">
-          <div className="sl-app-spinner"></div>
-          <p>{language === 'am' ? 'Բեռնվում է...' : 'Loading...'}</p>
-        </div>
+        isNativeApp ? (
+          <SetlistsAppSkeleton />
+        ) : (
+          <div className="sl-app-loading-state">
+            <div className="sl-app-spinner"></div>
+            <p>{language === 'am' ? 'Բեռնվում է...' : 'Loading...'}</p>
+          </div>
+        )
       ) : filteredSetlists.length === 0 ? (
         <div className="sl-app-empty-state animate-fade-in">
           <div className="sl-app-empty-glow">

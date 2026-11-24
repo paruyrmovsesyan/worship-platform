@@ -7,6 +7,7 @@ import { usePageReady } from '../hooks/usePageReady';
 import { useCall } from '../context/CallContext';
 import { useIsAppMode, useIsNativeApp } from '../hooks/useIsPWA';
 import { triggerHaptic } from '../utils/nativeFeatures';
+import { ChatThreadSkeleton } from '../components/NativeSkeletons';
 import './Chat.css';
 
 const URL_REGEX = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s՝։֊]|www\.[^\s<]+[^<.,:;"')\]\s՝։֊])/gi;
@@ -1065,7 +1066,9 @@ export default function Chat() {
     );
   };
 
-  if (loading || authLoading) return null;
+  if (loading || authLoading) {
+    return isNativeApp ? <ChatThreadSkeleton /> : null;
+  }
 
   const lastOwnMessageId = getLastOwnMessageId();
   const otherLastReadMessageId = Number(chatInfo?.other_last_read_message_id || 0);

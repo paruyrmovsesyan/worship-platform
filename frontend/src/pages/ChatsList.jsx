@@ -3,9 +3,10 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { useIsAppMode } from '../hooks/useIsPWA';
+import { useIsAppMode, useIsNativeApp } from '../hooks/useIsPWA';
 import { usePageReady } from '../hooks/usePageReady';
 import { triggerHaptic } from '../utils/nativeFeatures';
+import { ChatsListSkeleton } from '../components/NativeSkeletons';
 import './ChatsList.css';
 
 export default function ChatsList({ isEmbedded = false }) {
@@ -13,6 +14,7 @@ export default function ChatsList({ isEmbedded = false }) {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const isPWA = useIsAppMode();
+  const isNativeApp = useIsNativeApp();
 
   const [chats, setChats] = useState([]);
   const [friends, setFriends] = useState([]);
@@ -228,7 +230,9 @@ export default function ChatsList({ isEmbedded = false }) {
     }
   };
 
-  if (loading || authLoading) return null;
+  if (loading || authLoading) {
+    return isNativeApp ? <ChatsListSkeleton /> : null;
+  }
 
   const formatChatDate = (value) => {
     if (!value) return '';

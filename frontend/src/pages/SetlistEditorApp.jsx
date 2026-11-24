@@ -10,6 +10,8 @@ import { usePageReady } from '../hooks/usePageReady';
 import { renderWithChords } from '../utils/chordTransposer';
 import PrintStudio from '../components/PrintStudio';
 import { nativeShare, triggerHaptic } from '../utils/nativeFeatures';
+import { useIsNativeApp } from '../hooks/useIsPWA';
+import { SetlistEditorSkeleton } from '../components/NativeSkeletons';
 import './Setlists.css';
 import './SongsApp.css';
 import './SetlistEditorApp.css';
@@ -84,6 +86,7 @@ export default function SetlistEditorApp() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
+  const isNativeApp = useIsNativeApp();
 
   const [cachedInitial] = useState(() => {
     try {
@@ -1615,7 +1618,7 @@ export default function SetlistEditorApp() {
   }, [items, language]);
 
   if (authLoading || loading) {
-    return null;
+    return isNativeApp ? <SetlistEditorSkeleton /> : null;
   }
 
   if (error || !setlistData) {

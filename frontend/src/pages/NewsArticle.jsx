@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { useIsAppMode } from '../hooks/useIsPWA';
+import { useIsAppMode, useIsNativeApp } from '../hooks/useIsPWA';
 import { getFallbackNews, fetchNewsDetail, formatNewsDate, formatNewsVersion, getNewsImageUrl } from '../utils/news';
+import { NewsArticleSkeleton } from '../components/NativeSkeletons';
 import './News.css';
 
 const copyByLanguage = {
@@ -163,6 +164,7 @@ export default function NewsArticle() {
   const navigate = useNavigate();
   const { language, t } = useLanguage();
   const isPWA = useIsAppMode();
+  const isNativeApp = useIsNativeApp();
   const progressRef = useRef(null);
   const articleBodyRef = useRef(null);
   const mobileContentsRef = useRef(null);
@@ -246,6 +248,9 @@ export default function NewsArticle() {
   };
 
   if (loading) {
+    if (isNativeApp) {
+      return <NewsArticleSkeleton />;
+    }
     return <div className={`news-page ${isPWA ? '' : 'web-news-article-state'}`}><div className="news-state">{t('newsState.loading')}</div></div>;
   }
 

@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useCall } from '../context/CallContext';
 import { usePageReady } from '../hooks/usePageReady';
-import { useIsAppMode } from '../hooks/useIsPWA';
+import { useIsAppMode, useIsNativeApp } from '../hooks/useIsPWA';
+import { UserProfileSkeleton } from '../components/NativeSkeletons';
 import './UserProfile.css';
 
 const WORSHIP_ROLES = [
@@ -23,6 +24,7 @@ export default function UserProfile() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { t, language } = useLanguage();
+  const isNativeApp = useIsNativeApp();
   const audioCall = useCall();
   const isPWA = useIsAppMode();
 
@@ -162,6 +164,9 @@ export default function UserProfile() {
   };
 
   if (loading || authLoading) {
+    if (isNativeApp) {
+      return <UserProfileSkeleton />;
+    }
     return (
       <div className="user-profile-page">
         <div className="user-profile-loading">

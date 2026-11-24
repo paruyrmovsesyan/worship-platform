@@ -2,8 +2,9 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { useIsAppMode } from '../hooks/useIsPWA';
+import { useIsAppMode, useIsNativeApp } from '../hooks/useIsPWA';
 import { usePageReady } from '../hooks/usePageReady';
+import { FriendsSkeleton } from '../components/NativeSkeletons';
 import ChatsList from './ChatsList';
 import './Friends.css';
 
@@ -12,6 +13,7 @@ export default function Friends() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const isPWA = useIsAppMode();
+  const isNativeApp = useIsNativeApp();
 
   const [loading, setLoading] = useState(true);
   const [friends, setFriends] = useState([]);
@@ -141,7 +143,9 @@ export default function Friends() {
     }
   };
 
-  if (loading || authLoading) return null;
+  if (loading || authLoading) {
+    return isNativeApp ? <FriendsSkeleton /> : null;
+  }
 
   const incomingRequests = friends.filter(f => f.status === 'pending' && Number(f.requester_id) !== Number(user.id));
   const outgoingRequests = friends.filter(f => f.status === 'pending' && Number(f.requester_id) === Number(user.id));

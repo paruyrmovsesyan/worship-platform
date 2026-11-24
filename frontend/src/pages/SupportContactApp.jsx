@@ -3,6 +3,8 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { usePageReady } from '../hooks/usePageReady';
+import { useIsNativeApp } from '../hooks/useIsPWA';
+import { SupportContactSkeleton } from '../components/NativeSkeletons';
 import './SupportContactApp.css';
 
 const CATEGORY_META = {
@@ -342,6 +344,7 @@ export default function SupportContactApp({ initialTab }) {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const { user } = useAuth();
+  const isNativeApp = useIsNativeApp();
   usePageReady(false);
 
   const txt = UI_TEXT[language] || UI_TEXT.am;
@@ -693,10 +696,14 @@ export default function SupportContactApp({ initialTab }) {
 
           {/* FAQ Accordion List */}
           {loadingFaqs ? (
-            <div className="sca-loading">
-              <div className="sca-spinner" />
-              <p>{txt.loading}</p>
-            </div>
+            isNativeApp ? (
+              <SupportContactSkeleton />
+            ) : (
+              <div className="sca-loading">
+                <div className="sca-spinner" />
+                <p>{txt.loading}</p>
+              </div>
+            )
           ) : Object.keys(groupedFaqs).length === 0 ? (
             <div className="sca-empty-box">
               <p>🔍 {txt.noResults(faqSearch)}</p>

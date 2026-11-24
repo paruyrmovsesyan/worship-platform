@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { useIsAppMode } from '../hooks/useIsPWA';
+import { useIsAppMode, useIsNativeApp } from '../hooks/useIsPWA';
 import { getFallbackNews, getCachedNewsList, fetchNewsList, formatNewsDate, formatNewsVersion, getNewsImageUrl } from '../utils/news';
 import { navigateWithNativeSharedElement } from '../utils/nativeSharedElement';
+import { NewsSkeleton } from '../components/NativeSkeletons';
 import './News.css';
 
 const copyByLanguage = {
@@ -66,6 +67,7 @@ export default function News() {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const isPWA = useIsAppMode();
+  const isNativeApp = useIsNativeApp();
   const [articles, setArticles] = useState(() => getCachedNewsList(language));
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
@@ -145,7 +147,7 @@ export default function News() {
           <h1>{t('news.title', 'Նորություններ և Թարմացումներ')}</h1>
         </header>
         {loading ? (
-          <div className="news-state">{t('newsState.loading')}</div>
+          isNativeApp ? <NewsSkeleton /> : <div className="news-state">{t('newsState.loading')}</div>
         ) : (
           <div className="news-list-grid">
             {articles.map((item, index) => (

@@ -32,7 +32,8 @@ import ChordDiagramPopover from '../components/ChordDiagramPopover';
 const PrintStudio = lazyWithRetry(() => import('../components/PrintStudio'), 'PrintStudio');
 const SongStemsMixer = lazyWithRetry(() => import('../components/SongStemsMixer'), 'SongStemsMixer');
 const WorshipAIStudioModal = lazyWithRetry(() => import('../components/WorshipAIStudioModal'), 'WorshipAIStudioModal');
-import { useIsAppMode } from '../hooks/useIsPWA';
+import { useIsAppMode, useIsNativeApp } from '../hooks/useIsPWA';
+import { SongViewSkeleton, ModalListSkeleton } from '../components/NativeSkeletons';
 import { nativeShare } from '../utils/nativeFeatures';
 import {
   getFullscreenElement,
@@ -235,6 +236,7 @@ export default function SongView() {
   const { user, loading: authLoading } = useAuth();
   const { t, language } = useLanguage();
   const { isEnabled, isBeta, isSoon, isVisible } = useFeatureFlags();
+  const isNativeApp = useIsNativeApp();
   
   const [song, setSong] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1631,7 +1633,7 @@ export default function SongView() {
   }, [setlistNavData, effectiveViewMode, defaultChordsViewMode, hasChords, hasLyrics, pedalMode]);
 
   if (loading || (!song && authLoading)) {
-    return null;
+    return isNativeApp ? <SongViewSkeleton /> : null;
   }
 
   if (error || !song) {
@@ -2578,9 +2580,13 @@ export default function SongView() {
 
           <div className="sv-modal-body">
             {setlistsLoading ? (
-              <div className="sv-modal-loading">
-                <div className="loading-spinner" />
-              </div>
+              isNativeApp ? (
+                <ModalListSkeleton rows={4} />
+              ) : (
+                <div className="sv-modal-loading">
+                  <div className="loading-spinner" />
+                </div>
+              )
             ) : filteredSetlists.length > 0 ? (
               filteredSetlists.map(sl => {
                 const isAdded = !!addedSetlistIds[sl.id];
