@@ -316,7 +316,11 @@ export default function SongView() {
   };
   const [autoScrollActive, setAutoScrollActive] = useState(false);
   const [autoScrollSpeed, setAutoScrollSpeed] = useState(1);
-  const [chordColor, setChordColor] = useState(() => localStorage.getItem('chordColor_web') || '#39d8ff');
+  const [chordColor, setChordColor] = useState(() => {
+    const saved = localStorage.getItem('chordColor_web');
+    if (!saved || saved === '#39d8ff') return '#ffffff';
+    return saved;
+  });
   const [isTwoColumn, setIsTwoColumn] = useState(() => localStorage.getItem('web_song_two_column') === 'true');
   const [keepAwakeActive, setKeepAwakeActive] = useState(() => localStorage.getItem('keepAwake') === 'true');
   const [isStageFullscreen, setIsStageFullscreen] = useState(false);
@@ -422,13 +426,11 @@ export default function SongView() {
     };
   }, [autoScrollActive, autoScrollSpeed]);
 
-  // Inject chord color CSS var for web-pro
+  // Inject chord color CSS var
   useEffect(() => {
-    if (!isPWA) {
-      document.documentElement.style.setProperty('--song-chord-color', chordColor);
-      localStorage.setItem('chordColor_web', chordColor);
-    }
-  }, [chordColor, isPWA]);
+    document.documentElement.style.setProperty('--song-chord-color', chordColor);
+    localStorage.setItem('chordColor_web', chordColor);
+  }, [chordColor]);
 
   useEffect(() => {
     if (isPWA) return undefined;

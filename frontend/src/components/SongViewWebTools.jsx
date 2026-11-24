@@ -2,6 +2,7 @@ import { useFeatureFlags } from '../utils/featureFlags';
 import { BetaBadge, ComingSoonBadge } from './BetaBadge';
 
 const CHORD_COLORS = [
+  { id: 'white', value: '#ffffff', label: 'White' },
   { id: 'cyan', value: '#39d8ff', label: 'Cyan' },
   { id: 'purple', value: '#9a73ff', label: 'Purple' },
   { id: 'green', value: '#62d98b', label: 'Green' },

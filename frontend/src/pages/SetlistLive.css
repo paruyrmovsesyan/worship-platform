@@ -1032,7 +1032,7 @@ body.wp-standalone-app:not(.is-ios) .sll-header {
   word-break: break-word;
 }
 .sll-chords-render .chord {
-  color: #38bdf8;
+  color: var(--song-chord-color, #ffffff);
   font-weight: 700;
 }
 
@@ -1126,7 +1126,7 @@ body.is-native .sll-modal-open-full {
 }
 
 body.is-native .sll-chords-render .chord {
-  color: var(--song-chord-color, var(--native-accent-text));
+  color: var(--song-chord-color, #ffffff);
 }
 
 body.is-native.light-mode .sll-page,
