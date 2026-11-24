@@ -147,7 +147,7 @@ export default function News() {
           <h1>{t('news.title', 'Նորություններ և Թարմացումներ')}</h1>
         </header>
         {loading ? (
-          isNativeApp ? <NewsSkeleton /> : <div className="news-state">{t('newsState.loading')}</div>
+          <NewsSkeleton />
         ) : (
           <div className="news-list-grid">
             {articles.map((item, index) => (

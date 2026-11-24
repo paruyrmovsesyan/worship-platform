@@ -144,7 +144,7 @@ export default function Friends() {
   };
 
   if (loading || authLoading) {
-    return isNativeApp ? <FriendsSkeleton /> : null;
+    return <FriendsSkeleton />;
   }
 
   const incomingRequests = friends.filter(f => f.status === 'pending' && Number(f.requester_id) !== Number(user.id));

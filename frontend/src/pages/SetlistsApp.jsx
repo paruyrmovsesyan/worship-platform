@@ -1053,14 +1053,7 @@ export default function SetlistsApp() {
 
       {/* Setlists Grid / List */}
       {loading || authLoading ? (
-        isNativeApp ? (
-          <SetlistsAppSkeleton />
-        ) : (
-          <div className="sl-app-loading-state">
-            <div className="sl-app-spinner"></div>
-            <p>{language === 'am' ? 'Բեռնվում է...' : 'Loading...'}</p>
-          </div>
-        )
+        <SetlistsAppSkeleton />
       ) : filteredSetlists.length === 0 ? (
         <div className="sl-app-empty-state animate-fade-in">
           <div className="sl-app-empty-glow">

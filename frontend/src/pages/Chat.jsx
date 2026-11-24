@@ -1067,7 +1067,7 @@ export default function Chat() {
   };
 
   if (loading || authLoading) {
-    return isNativeApp ? <ChatThreadSkeleton /> : null;
+    return <ChatThreadSkeleton />;
   }
 
   const lastOwnMessageId = getLastOwnMessageId();

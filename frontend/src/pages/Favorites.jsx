@@ -8,6 +8,7 @@ import { getSongCoverStyle } from '../utils/songCover';
 import { DEFAULT_SAVED_SONG_SORT, normalizeSavedSongSort, sortSavedSongs } from '../utils/savedSongs';
 import { usePageReady } from '../hooks/usePageReady';
 import { useIsAppMode } from '../hooks/useIsPWA';
+import { SongsListSkeleton } from '../components/NativeSkeletons';
 import './Favorites.css';
 
 export default function Favorites() {
@@ -341,17 +342,7 @@ export default function Favorites() {
         )}
 
         {loading ? (
-          <div className="fav-track-list">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="fav-track-item skeleton-item">
-                <div className="fav-track-img skeleton-box"></div>
-                <div className="fav-track-info">
-                  <div className="skeleton-line" style={{ width: '200px', height: '16px', marginBottom: '6px' }}></div>
-                  <div className="skeleton-line" style={{ width: '120px', height: '12px' }}></div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <SongsListSkeleton />
         ) : error ? (
           <div className="fav-empty animate-fade-in">
             <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" strokeWidth="1.5">

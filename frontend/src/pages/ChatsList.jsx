@@ -231,7 +231,7 @@ export default function ChatsList({ isEmbedded = false }) {
   };
 
   if (loading || authLoading) {
-    return isNativeApp ? <ChatsListSkeleton /> : null;
+    return <ChatsListSkeleton />;
   }
 
   const formatChatDate = (value) => {

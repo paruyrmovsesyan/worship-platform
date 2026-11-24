@@ -1633,7 +1633,7 @@ export default function SongView() {
   }, [setlistNavData, effectiveViewMode, defaultChordsViewMode, hasChords, hasLyrics, pedalMode]);
 
   if (loading || (!song && authLoading)) {
-    return isNativeApp ? <SongViewSkeleton /> : null;
+    return <SongViewSkeleton />;
   }
 
   if (error || !song) {
@@ -2580,13 +2580,7 @@ export default function SongView() {
 
           <div className="sv-modal-body">
             {setlistsLoading ? (
-              isNativeApp ? (
-                <ModalListSkeleton rows={4} />
-              ) : (
-                <div className="sv-modal-loading">
-                  <div className="loading-spinner" />
-                </div>
-              )
+              <ModalListSkeleton rows={4} />
             ) : filteredSetlists.length > 0 ? (
               filteredSetlists.map(sl => {
                 const isAdded = !!addedSetlistIds[sl.id];

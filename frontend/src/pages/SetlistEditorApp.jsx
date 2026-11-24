@@ -1618,7 +1618,7 @@ export default function SetlistEditorApp() {
   }, [items, language]);
 
   if (authLoading || loading) {
-    return isNativeApp ? <SetlistEditorSkeleton /> : null;
+    return <SetlistEditorSkeleton />;
   }
 
   if (error || !setlistData) {

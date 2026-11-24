@@ -1361,9 +1361,25 @@ body.light-mode .bible-saved-ref {
 }
 
 .bible-skeleton-line {
+  position: relative;
+  overflow: hidden;
   height: 16px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--skeleton-bg, rgba(255, 255, 255, 0.06));
+}
+
+.bible-skeleton-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--skeleton-shimmer, rgba(255, 255, 255, 0.13)) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: wpSkeletonWave 1.4s ease-in-out infinite;
 }
 
 .bible-skeleton-line.short {

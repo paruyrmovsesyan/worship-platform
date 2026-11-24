@@ -343,11 +343,11 @@ export function SupportContactSkeleton() {
   );
 }
 
-export function SongsListSkeleton() {
+export function SongsListSkeleton({ count = 7 }) {
   return (
-    <div className="wp-skeleton-root" style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '10px 14px 96px' }} aria-busy="true">
-      {[1, 2, 3, 4, 5, 6].map((i) => (
-        <div key={i} className="track-item skeleton-item" style={{ pointerEvents: 'none', display: 'flex', alignItems: 'center', gap: 14 }}>
+    <div className="wp-skeleton-root" style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '10px 0 96px' }} aria-busy="true">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="wp-skeleton-row" style={{ pointerEvents: 'none' }}>
           <Skeleton width={48} height={48} borderRadius={12} />
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <Skeleton width="65%" height={16} borderRadius={6} />

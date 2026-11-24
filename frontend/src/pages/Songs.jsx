@@ -11,7 +11,7 @@ export default function Songs() {
   const isNativeApp = useIsNativeApp();
 
   return (
-    <Suspense fallback={isNativeApp ? <SongsListSkeleton /> : null}>
+    <Suspense fallback={<SongsListSkeleton />}>
       {isAppMode ? <SongsApp /> : <SongsWeb />}
     </Suspense>
   );

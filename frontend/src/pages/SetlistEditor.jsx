@@ -15,7 +15,7 @@ export default function SetlistEditor() {
 
   if (isAppMode) {
     return (
-      <Suspense fallback={isNativeApp ? <SetlistEditorSkeleton /> : null}>
+      <Suspense fallback={<SetlistEditorSkeleton />}>
         <SetlistEditorApp />
       </Suspense>
     );

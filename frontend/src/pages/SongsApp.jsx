@@ -7,7 +7,7 @@ import { getLocalizedTitle } from '../utils/titleParser';
 import { getSongCoverStyle } from '../utils/songCover';
 import { usePageReady } from '../hooks/usePageReady';
 import { useIsNativeApp } from '../hooks/useIsPWA';
-import { ModalListSkeleton } from '../components/NativeSkeletons';
+import { ModalListSkeleton, SongsListSkeleton } from '../components/NativeSkeletons';
 import { scoreSongSearch, highlightText } from '../utils/searchMatcher';
 import {
   getRecentSongSearches,
@@ -901,20 +901,7 @@ export default function SongsApp() {
       {/* Track List */}
       <div className="track-list">
         {isLoading ? (
-          <>
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="track-item skeleton-item">
-                <div className="track-cover skeleton-box"></div>
-                <div className="track-info">
-                  <div className="skeleton-line title-line"></div>
-                  <div className="skeleton-line artist-line"></div>
-                </div>
-                <div className="track-meta">
-                  <div className="skeleton-box badge-line"></div>
-                </div>
-              </div>
-            ))}
-          </>
+          <SongsListSkeleton />
         ) : filtered.length === 0 ? (
           <div className="list-placeholder empty-state animate-fade-in">
             <div className="empty-icon-wrap">
@@ -1111,14 +1098,7 @@ export default function SongsApp() {
             {/* Setlists List */}
             <div className="sla-modal-body">
               {setlistsLoading ? (
-                isNativeApp ? (
-                  <ModalListSkeleton rows={4} />
-                ) : (
-                  <div className="sla-modal-loading">
-                    <div className="sla-spinner"></div>
-                    <span>Բեռնվում են երգացանկերը...</span>
-                  </div>
-                )
+                <ModalListSkeleton rows={4} />
               ) : filteredSetlists.length === 0 ? (
                 <div className="sla-modal-empty">
                   {userSetlists.length === 0 ? 'Դուք դեռ չունեք ստեղծած երգացանկեր:' : 'Երգացանկ չի գտնվել:'}

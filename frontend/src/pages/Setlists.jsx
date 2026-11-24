@@ -11,7 +11,7 @@ export default function Setlists() {
   const isNativeApp = useIsNativeApp();
 
   return (
-    <Suspense fallback={isNativeApp ? <SetlistsAppSkeleton /> : null}>
+    <Suspense fallback={<SetlistsAppSkeleton />}>
       {isAppMode ? <SetlistsApp /> : <SetlistsWeb />}
     </Suspense>
   );

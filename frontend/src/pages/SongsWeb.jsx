@@ -14,6 +14,7 @@ import {
   clearRecentSongSearches,
   DEFAULT_SEARCH_SUGGESTIONS
 } from '../utils/recentSearches';
+import { SongsListSkeleton } from '../components/NativeSkeletons';
 import './SongsWeb.css';
 
 export default function SongsWeb() {
@@ -787,10 +788,7 @@ export default function SongsWeb() {
 
         {/* ── MAIN CONTENT AREA ───────────────────────────────── */}
         {isLoading ? (
-          <div className="sw-loading-box">
-            <div className="sw-spinner"></div>
-            <span>{t('songs.loading', 'Բեռնվում են երգերը...')}</span>
-          </div>
+          <SongsListSkeleton />
         ) : filtered.length === 0 ? (
           <div className="sw-empty-box animate-fade-in">
             <div className="sw-empty-icon">🔍</div>

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { usePageReady } from '../hooks/usePageReady';
 import { getSongCoverStyle } from '../utils/songCover';
+import { SetlistsAppSkeleton } from '../components/NativeSkeletons';
 import './SetlistsWeb.css';
 
 function getNextSundayDate() {
@@ -693,6 +694,10 @@ export default function SetlistsWeb() {
         {error ? (
           <div className="web-error-card">
             <p>{error}</p>
+          </div>
+        ) : (isLoading || authLoading) ? (
+          <div style={{ marginTop: '20px' }}>
+            <SetlistsAppSkeleton />
           </div>
         ) : filteredSetlists.length === 0 ? (
           <div className="web-empty-state">

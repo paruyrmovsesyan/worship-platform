@@ -164,17 +164,7 @@ export default function UserProfile() {
   };
 
   if (loading || authLoading) {
-    if (isNativeApp) {
-      return <UserProfileSkeleton />;
-    }
-    return (
-      <div className="user-profile-page">
-        <div className="user-profile-loading">
-          <div className="user-profile-spinner" />
-          <p>{t('profile.loading')}</p>
-        </div>
-      </div>
-    );
+    return <UserProfileSkeleton />;
   }
 
   if (errorMsg || !profileData?.user) {

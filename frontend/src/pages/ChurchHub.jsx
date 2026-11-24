@@ -763,7 +763,7 @@ export default function ChurchHub() {
 
           <div className="church-posts-list">
             {loadingFeed ? (
-              isNativeApp ? <ChurchFeedSkeleton /> : <div className="church-card">Բեռնվում է...</div>
+              <ChurchFeedSkeleton />
             ) : posts.length === 0 ? (
               <div className="church-card church-empty">
                 <p>Այստեղ դեռ գրառումներ չկան։ Եղեք առաջինը՝ կիսվելով աղոթքի խնդրանքով կամ հայտարարությամբ։</p>
@@ -1004,7 +1004,7 @@ export default function ChurchHub() {
 
           <div className="church-posts-list">
             {loadingRehearsals ? (
-              isNativeApp ? <ChurchFeedSkeleton /> : <div className="church-card">Բեռնվում է...</div>
+              <ChurchFeedSkeleton />
             ) : rehearsals.length === 0 ? (
               <div className="church-card church-empty">
                 <p>Դեռ պլանավորված փորձեր չկան։ Պլանավորեք փորձ, կցեք երգացանկ և հավաքեք թիմի մասնակցությունը (RSVP)։</p>
@@ -1098,7 +1098,7 @@ export default function ChurchHub() {
 
           <div className="church-grid">
             {loadingChurches ? (
-              isNativeApp ? <ChurchFeedSkeleton /> : <div className="church-card">Բեռնվում է...</div>
+              <ChurchFeedSkeleton />
             ) : churches.length === 0 ? (
               <div className="church-card church-empty">
                 <p>Եկեղեցիներ դեռ չկան։ Կարող եք ստեղծել Ձեր եկեղեցու էջը հիմա։</p>
