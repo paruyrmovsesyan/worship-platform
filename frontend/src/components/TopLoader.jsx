@@ -25,9 +25,6 @@ export default function TopLoader() {
       <div className="wp-top-loader-bar">
         <div className="wp-top-loader-bar-fill" />
       </div>
-      <div className="wp-top-loader-pill">
-        <span className="wp-top-loader-spinner" />
-      </div>
     </div>
   );
 }

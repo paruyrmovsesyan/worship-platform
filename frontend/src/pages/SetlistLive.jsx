@@ -13,6 +13,7 @@ import {
   addFullscreenChangeListener,
 } from '../utils/fullscreen';
 import LiveStageBar from '../components/LiveStageBar';
+import { SetlistsAppSkeleton } from '../components/NativeSkeletons';
 import './SetlistLive.css';
 
 const KEY_SEMITONES = {
@@ -434,11 +435,7 @@ export default function SetlistLive() {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
-  if (loading) return (
-    <div className="sll-loading">
-      <div className="sll-spinner" />
-    </div>
-  );
+  if (loading) return <SetlistsAppSkeleton />;
   if (error) return <div className="sll-error">{error}</div>;
 
   const activeItem = activeMetronomeItemId ? items.find(i => i.id === activeMetronomeItemId) : null;

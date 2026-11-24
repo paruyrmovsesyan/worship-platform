@@ -338,12 +338,7 @@ body.is-native .mobile-bottom-nav .nav-item.active svg {
 }
 
 .nav-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #ffffff;
-  border-radius: 50%;
-  animation: navSpin 0.8s linear infinite;
+  display: none !important;
 }
 
 @keyframes navSpin {

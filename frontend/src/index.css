@@ -709,12 +709,7 @@ textarea.form-control {
 .list-placeholder .spinner,
 .sl-placeholder .spinner,
 .loading-state .spinner {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  margin: 0 !important;
-  z-index: 9999;
+  display: none !important;
 }
 
 .list-placeholder p,
@@ -962,12 +957,7 @@ html, body, #root, .app-container, .login-page-container {
 
 /* ── Premium TopLoader Spinner ── */
 .premium-spinner-container {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: none !important;
 }
 
 .premium-spinner-ring1 {
