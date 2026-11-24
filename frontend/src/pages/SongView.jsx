@@ -2028,14 +2028,14 @@ export default function SongView() {
       <div
         ref={sheetRef}
         className={`sv-sheet ${effectiveViewMode === 'lyrics' ? 'lyrics-mode' : ''} ${isTwoColumn ? 'web-two-column' : ''}`}
-        style={{ fontSize: `${fontSize}px` }}
+        style={{ fontSize: `${fontSize}px`, '--song-chord-color': chordColor || '#ffffff' }}
         onMouseOver={openChordPopover}
         onMouseOut={closeChordPopover}
         onClick={openChordPopover}
       >
         {effectiveViewMode === 'chords' ? (
           hasChords ? (
-            <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
+            <pre className="chords-block" style={{ '--song-chord-color': chordColor || '#ffffff' }} dangerouslySetInnerHTML={{ __html: currentChords }} />
           ) : (
             <p className="sv-empty-mode-msg">
               {language === 'ru' ? 'Аккорды недоступны' : language === 'en' ? 'Chords are unavailable' : 'Ակորդները հասանելի չեն'}
@@ -2044,13 +2044,13 @@ export default function SongView() {
         ) : effectiveViewMode === 'both' ? (
           hasChords && hasLyrics ? (
             <>
-              <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
+              <pre className="chords-block" style={{ '--song-chord-color': chordColor || '#ffffff' }} dangerouslySetInnerHTML={{ __html: currentChords }} />
               <div className="sv-divider"></div>
               <pre className="lyrics-block" dangerouslySetInnerHTML={{ __html: renderLyricsWithStageNotes(currentLyrics) }} />
             </>
           ) : hasChords ? (
             <>
-              <pre className="chords-block" dangerouslySetInnerHTML={{ __html: currentChords }} />
+              <pre className="chords-block" style={{ '--song-chord-color': chordColor || '#ffffff' }} dangerouslySetInnerHTML={{ __html: currentChords }} />
               <div className="sv-divider"></div>
               <p className="sv-empty-mode-msg">{t('songView.noLyrics', 'Բառերը հասանելի չեն')}</p>
             </>

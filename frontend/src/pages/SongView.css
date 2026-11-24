@@ -514,14 +514,16 @@ body.light-mode .sv-segment.active {
   overflow-x: auto;
 }
 
+.song-view-page .chords-block .chord,
 .chords-block .chord {
-  color: var(--song-chord-color, var(--sv-accent, #ffffff));
+  color: var(--song-chord-color, #ffffff) !important;
   font-weight: 700;
   display: inline-block;
 }
 
+body.light-mode .song-view-page .chords-block .chord,
 body.light-mode .chords-block .chord {
-  color: var(--song-chord-color, var(--sv-accent, #111827));
+  color: var(--song-chord-color, #111827) !important;
 }
 
 .lyrics-mode .lyrics-block {
@@ -2133,12 +2135,14 @@ body.is-native .song-view-container {
   --sv-accent-glow: var(--native-accent-soft);
 }
 
+body.is-native:not(.light-mode) .song-view-page .chords-block .chord,
 body.is-native:not(.light-mode) .chords-block .chord {
-  color: var(--song-chord-color, #ffffff);
+  color: var(--song-chord-color, #ffffff) !important;
 }
 
+body.is-native.light-mode .song-view-page .chords-block .chord,
 body.is-native.light-mode .chords-block .chord {
-  color: var(--song-chord-color, #111827);
+  color: var(--song-chord-color, #111827) !important;
 }
 
 body.is-native .sv-meta-pill.key-pill,

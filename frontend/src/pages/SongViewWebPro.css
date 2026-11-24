@@ -170,11 +170,15 @@ body.website-theme .web-song-pro :is(.chords-block, .lyrics-block) {
 body.website-theme .web-song-pro .chords-block .chord {
   position: relative;
   margin-inline: 1px;
-  color: var(--song-chord-color, var(--web-pro-accent));
+  color: var(--song-chord-color, #ffffff) !important;
   font-weight: 780;
   cursor: help;
   border-bottom: 1px solid transparent;
   transition: color 140ms ease, border-color 140ms ease, text-shadow 140ms ease;
+}
+
+body.light-mode.website-theme .web-song-pro .chords-block .chord {
+  color: var(--song-chord-color, #111827) !important;
 }
 
 body.website-theme .web-song-pro .chords-block .chord:hover {

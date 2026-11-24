@@ -166,9 +166,12 @@ function App() {
     if (localStorage.getItem('outlinedChords') === 'true') document.body.classList.add('outlined-chords');
     
     const cColor = localStorage.getItem('chordColor');
-    if (cColor) {
+    if (cColor === 'white') {
+      document.body.classList.add('chord-color-white');
+    } else if (cColor && cColor !== 'gold' && cColor !== 'blue') {
       document.body.classList.add(`chord-color-${cColor}`);
     } else {
+      localStorage.setItem('chordColor', 'white');
       document.body.classList.add('chord-color-white');
     }
   }, []);

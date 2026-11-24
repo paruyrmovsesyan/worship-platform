@@ -115,8 +115,16 @@ body.editorial-theme .chord {
   color: #F2B544;
 }
 
+body.editorial-theme .song-view-page .chord {
+  color: var(--song-chord-color, #ffffff) !important;
+}
+
 body.light-mode.editorial-theme .chord {
   color: #A15C00;
+}
+
+body.light-mode.editorial-theme .song-view-page .chord {
+  color: var(--song-chord-color, #111827) !important;
 }
 
 body.editorial-theme .mobile-bottom-nav .nav-item.active,
