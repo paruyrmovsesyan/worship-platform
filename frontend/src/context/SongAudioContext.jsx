@@ -61,28 +61,39 @@ export function SongAudioProvider({ children }) {
 
   // Native and System MediaSession Integration (Lock screen & background audio controls)
   useEffect(() => {
-    if (!('mediaSession' in navigator)) return;
+    if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return;
 
     if (!track) {
-      navigator.mediaSession.metadata = null;
-      navigator.mediaSession.playbackState = 'none';
+      try {
+        if ('playbackState' in navigator.mediaSession) {
+          navigator.mediaSession.playbackState = 'paused';
+        }
+      } catch (_) {}
       try {
         window.NativeAudio?.setBackgroundAudioActive?.(false);
       } catch (_) {}
       return;
     }
 
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: track.title || 'Worship Track',
-      artist: track.artist || 'Worship Platform',
-      album: track.songKey ? `Տոնայնություն: ${track.songKey}` : 'Worship Platform',
-      artwork: [
-        { src: 'https://worship.pmstudio.am/icon-192-v8.png', sizes: '192x192', type: 'image/png' },
-        { src: 'https://worship.pmstudio.am/icon-512-v8.png', sizes: '512x512', type: 'image/png' },
-      ],
-    });
+    try {
+      if (typeof MediaMetadata !== 'undefined') {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: track.title || 'Worship Track',
+          artist: track.artist || 'Worship Platform',
+          album: track.songKey ? `Տոնայնություն: ${track.songKey}` : 'Worship Platform',
+          artwork: [
+            { src: 'https://worship.pmstudio.am/icon-192-v8.png', sizes: '192x192', type: 'image/png' },
+            { src: 'https://worship.pmstudio.am/icon-512-v8.png', sizes: '512x512', type: 'image/png' },
+          ],
+        });
+      }
+    } catch (_) {}
 
-    navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    try {
+      if ('playbackState' in navigator.mediaSession) {
+        navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+      }
+    } catch (_) {}
 
     try {
       window.NativeAudio?.setBackgroundAudioActive?.(isPlaying);
@@ -95,7 +106,7 @@ export function SongAudioProvider({ children }) {
       [
         'seekto',
         (details) => {
-          if (details.seekTime !== undefined && audioRef.current) {
+          if (details?.seekTime !== undefined && audioRef.current) {
             audioRef.current.currentTime = details.seekTime;
           }
         },
@@ -106,7 +117,7 @@ export function SongAudioProvider({ children }) {
           if (audioRef.current) {
             audioRef.current.currentTime = Math.min(
               audioRef.current.duration || 0,
-              audioRef.current.currentTime + (details.seekOffset || 10)
+              audioRef.current.currentTime + (details?.seekOffset || 10)
             );
           }
         },
@@ -117,7 +128,7 @@ export function SongAudioProvider({ children }) {
           if (audioRef.current) {
             audioRef.current.currentTime = Math.max(
               0,
-              audioRef.current.currentTime - (details.seekOffset || 10)
+              audioRef.current.currentTime - (details?.seekOffset || 10)
             );
           }
         },
@@ -131,6 +142,9 @@ export function SongAudioProvider({ children }) {
     });
 
     return () => {
+      try {
+        window.NativeAudio?.setBackgroundAudioActive?.(false);
+      } catch (_) {}
       handlers.forEach(([action]) => {
         try {
           navigator.mediaSession.setActionHandler(action, null);
@@ -142,19 +156,21 @@ export function SongAudioProvider({ children }) {
   // Position state tracking for lock screen / notification scrub bar
   useEffect(() => {
     if (
+      typeof navigator === 'undefined' ||
       !('mediaSession' in navigator) ||
       !('setPositionState' in navigator.mediaSession) ||
       !track ||
       !duration ||
-      duration <= 0
+      duration <= 0 ||
+      !isFinite(duration)
     )
       return;
 
     try {
       navigator.mediaSession.setPositionState({
-        duration: duration,
-        playbackRate: playbackRate,
-        position: Math.min(currentTime, duration),
+        duration: Math.max(0, duration),
+        playbackRate: Math.max(0.1, playbackRate || 1),
+        position: Math.max(0, Math.min(currentTime || 0, duration)),
       });
     } catch (_) {}
   }, [track, currentTime, duration, playbackRate]);

@@ -1,8 +1,8 @@
 {
   "app_version": "5.4.1",
   "web_version": "5.4.1",
-  "asset_version": "657",
-  "build_timestamp": "2026-11-28T01:22:00+04:00",
+  "asset_version": "658",
+  "build_timestamp": "2026-11-28T01:29:00+04:00",
   "release_type": "patch",
-  "release_summary": "Ֆոնային աուդիոյի անխափան նվագարկում (Background Audio), MediaSession ղեկավարում էկրանից և Android deep link ինտենտների ուղղում Worship հավելվածի համար։"
+  "release_summary": "Սև էկրանի մեկնարկային խնդրի շտապ վերացում, MediaSession անվտանգ ինիցիալիզացիա, գլոբալ ErrorBoundary և Android ինտենտների կարգավորում։"
 }

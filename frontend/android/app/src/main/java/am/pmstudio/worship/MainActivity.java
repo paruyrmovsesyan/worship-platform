@@ -29,7 +29,7 @@ public class MainActivity extends BridgeActivity {
     private AudioFocusRequest callAudioFocusRequest;
     private boolean callAudioActive = false;
     private boolean callUsesSpeaker = false;
-    private boolean isBackgroundAudioAllowed = false;
+    private volatile boolean isBackgroundAudioAllowed = false;
     private int lastSafeTopDp = 0;
     private int lastSafeBottomDp = 0;
     private final Handler callAudioHandler = new Handler(Looper.getMainLooper());

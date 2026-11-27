@@ -10,6 +10,7 @@ import { SongAudioProvider } from './context/SongAudioContext.jsx'
 import { Capacitor } from '@capacitor/core'
 import { initNativeCrashReporter } from './utils/nativeCrashReporter.js'
 import App from './App.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 import './index.css'
 import './styles/LightTheme.css'
 import './styles/NativeAppPolish.css'
@@ -25,21 +26,23 @@ const prepareNativeRuntime = Capacitor.isNativePlatform()
 
 prepareNativeRuntime.finally(() => {
   const app = (
-    <LanguageProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <CallProvider>
-            <MediaProvider>
-              <SongAudioProvider>
-                <PageLoadingProvider>
-                  <App />
-                </PageLoadingProvider>
-              </SongAudioProvider>
-            </MediaProvider>
-          </CallProvider>
-        </BrowserRouter>
-      </AuthProvider>
-    </LanguageProvider>
+    <ErrorBoundary>
+      <LanguageProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <CallProvider>
+              <MediaProvider>
+                <SongAudioProvider>
+                  <PageLoadingProvider>
+                    <App />
+                  </PageLoadingProvider>
+                </SongAudioProvider>
+              </MediaProvider>
+            </CallProvider>
+          </BrowserRouter>
+        </AuthProvider>
+      </LanguageProvider>
+    </ErrorBoundary>
   );
 
   // React StrictMode intentionally mounts effects twice in development. In a
