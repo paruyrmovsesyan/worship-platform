@@ -29,6 +29,7 @@ public class MainActivity extends BridgeActivity {
     private AudioFocusRequest callAudioFocusRequest;
     private boolean callAudioActive = false;
     private boolean callUsesSpeaker = false;
+    private boolean isBackgroundAudioAllowed = false;
     private int lastSafeTopDp = 0;
     private int lastSafeBottomDp = 0;
     private final Handler callAudioHandler = new Handler(Looper.getMainLooper());
@@ -53,6 +54,7 @@ public class MainActivity extends BridgeActivity {
             WebView webView = getBridge().getWebView();
             WebSettings settings = webView.getSettings();
             settings.setTextZoom(100);
+            settings.setMediaPlaybackRequiresUserGesture(false);
             webView.addJavascriptInterface(new NativeAudioBridge(), "NativeAudio");
             webView.addJavascriptInterface(new NativeRuntimeBridge(), "NativeRuntime");
             webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
@@ -186,6 +188,21 @@ public class MainActivity extends BridgeActivity {
         @JavascriptInterface
         public void setCallAudioMode(String command) {
             runOnUiThread(() -> updateCallAudioMode(command));
+        }
+
+        @JavascriptInterface
+        public void setBackgroundAudioActive(boolean active) {
+            isBackgroundAudioAllowed = active;
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (isBackgroundAudioAllowed || callAudioActive) {
+            if (getBridge() != null && getBridge().getWebView() != null) {
+                getBridge().getWebView().onResume();
+            }
         }
     }
 

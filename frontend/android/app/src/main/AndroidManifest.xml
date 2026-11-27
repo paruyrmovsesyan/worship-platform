@@ -30,6 +30,9 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="worship.pmstudio.am" />
+                <data android:scheme="https" android:host="pmstudio.am" />
+                <data android:scheme="http" android:host="worship.pmstudio.am" />
                 <data android:scheme="https" android:host="worship.pmstudio.am" android:pathPrefix="/song/" />
                 <data android:scheme="https" android:host="worship.pmstudio.am" android:pathPrefix="/setlists/" />
                 <data android:scheme="https" android:host="worship.pmstudio.am" android:pathPrefix="/bible" />

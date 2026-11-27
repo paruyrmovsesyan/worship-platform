@@ -59,6 +59,106 @@ export function SongAudioProvider({ children }) {
     };
   }, [isLoopActive, loopA, loopB]);
 
+  // Native and System MediaSession Integration (Lock screen & background audio controls)
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+
+    if (!track) {
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.playbackState = 'none';
+      try {
+        window.NativeAudio?.setBackgroundAudioActive?.(false);
+      } catch (_) {}
+      return;
+    }
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: track.title || 'Worship Track',
+      artist: track.artist || 'Worship Platform',
+      album: track.songKey ? `Տոնայնություն: ${track.songKey}` : 'Worship Platform',
+      artwork: [
+        { src: 'https://worship.pmstudio.am/icon-192-v8.png', sizes: '192x192', type: 'image/png' },
+        { src: 'https://worship.pmstudio.am/icon-512-v8.png', sizes: '512x512', type: 'image/png' },
+      ],
+    });
+
+    navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+
+    try {
+      window.NativeAudio?.setBackgroundAudioActive?.(isPlaying);
+    } catch (_) {}
+
+    const handlers = [
+      ['play', () => audioRef.current?.play().catch(() => {})],
+      ['pause', () => audioRef.current?.pause()],
+      ['stop', () => stopTrack()],
+      [
+        'seekto',
+        (details) => {
+          if (details.seekTime !== undefined && audioRef.current) {
+            audioRef.current.currentTime = details.seekTime;
+          }
+        },
+      ],
+      [
+        'seekforward',
+        (details) => {
+          if (audioRef.current) {
+            audioRef.current.currentTime = Math.min(
+              audioRef.current.duration || 0,
+              audioRef.current.currentTime + (details.seekOffset || 10)
+            );
+          }
+        },
+      ],
+      [
+        'seekbackward',
+        (details) => {
+          if (audioRef.current) {
+            audioRef.current.currentTime = Math.max(
+              0,
+              audioRef.current.currentTime - (details.seekOffset || 10)
+            );
+          }
+        },
+      ],
+    ];
+
+    handlers.forEach(([action, handler]) => {
+      try {
+        navigator.mediaSession.setActionHandler(action, handler);
+      } catch (_) {}
+    });
+
+    return () => {
+      handlers.forEach(([action]) => {
+        try {
+          navigator.mediaSession.setActionHandler(action, null);
+        } catch (_) {}
+      });
+    };
+  }, [track, isPlaying, stopTrack]);
+
+  // Position state tracking for lock screen / notification scrub bar
+  useEffect(() => {
+    if (
+      !('mediaSession' in navigator) ||
+      !('setPositionState' in navigator.mediaSession) ||
+      !track ||
+      !duration ||
+      duration <= 0
+    )
+      return;
+
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: duration,
+        playbackRate: playbackRate,
+        position: Math.min(currentTime, duration),
+      });
+    } catch (_) {}
+  }, [track, currentTime, duration, playbackRate]);
+
   const playTrack = useCallback((newTrack) => {
     if (!audioRef.current || !newTrack?.audioUrl) return;
     const audio = audioRef.current;
