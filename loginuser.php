@@ -209,7 +209,8 @@ if ($error === '' && $socialError !== '') {
 if($_SERVER['REQUEST_METHOD']==='POST'){
   $login = trim($_POST['login'] ?? '');
   $password = (string)($_POST['password'] ?? '');
-  $remember = !empty($_POST['remember_me']);
+  $isNative = !empty($_SERVER['HTTP_X_WORSHIP_NATIVE']) || !empty($_POST['is_native']) || !empty($_GET['native']);
+  $remember = !empty($_POST['remember_me']) || $isNative;
 
   if($login === '' || $password === ''){
     $error = "Լրացրեք բոլոր դաշտերը";
@@ -249,7 +250,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 
 $expiresTs = $remember
   ? wp_auth_remember_cookie_expiry_ts()
-  : time() + 60*60*12;
+  : time() + 86400 * 90; // At least 90 days persistent session
 
 $expiresAt = date('Y-m-d H:i:s', $expiresTs);
 

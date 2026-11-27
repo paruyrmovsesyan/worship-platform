@@ -1,8 +1,8 @@
 {
   "app_version": "5.4.1",
   "web_version": "5.4.1",
-  "asset_version": "655",
-  "build_timestamp": "2026-11-24T14:00:00+04:00",
+  "asset_version": "656",
+  "build_timestamp": "2026-11-28T00:40:00+04:00",
   "release_type": "patch",
-  "release_summary": "Արագագործության խոշոր օպտիմալացում (ավելի արագ բեռնում և մարտկոցի խնայողություն), iOS 26.1 Liquid Glass բարելավումներ և թռթռման վերացում, սահուն 60Hz/120Hz ավտո-սքրոլ երգերի էջում, Pull-to-Refresh բոլոր հիմնական բաժիններում, չաթի ստեղնաշարի և անվտանգության ուղղումներ։"
+  "release_summary": "Երկարակյաց անվտանգ սեսիաների ապահովում (365 օր), մշտական մուտք հավելվածներում, Stage Mode, Rehearsal A-B Looper, Capo Calculator, Mini Audio Player և Metronome Haptics։"
 }

@@ -161,6 +161,13 @@ export const AuthProvider = ({ children }) => {
         return readCachedUser();
       }
 
+      // If initial auth check returned loggedIn:false on app launch, do NOT wipe cached user on frame 0.
+      // Schedule one retry to let cookies/native session restore cleanly.
+      if (retryCount === 0 && readCachedUser()) {
+        scheduleRetry();
+        return readCachedUser();
+      }
+
       setUser(null);
       try {
         localStorage.removeItem('worship_user');

@@ -124,10 +124,11 @@ if (!is_array($d)) {
 
 $login = trim((string)($d['login'] ?? ''));
 $password = (string)($d['password'] ?? '');
-$remember = !empty($d['remember_me']);
 $source = function_exists('wp_auth_normalize_session_source')
   ? wp_auth_normalize_session_source((string)($d['source'] ?? ''))
   : strtolower((string)($d['source'] ?? 'web'));
+$isNative = !empty($_SERVER['HTTP_X_WORSHIP_NATIVE']) || in_array($source, ['app', 'pwa', 'native', 'ios', 'android'], true);
+$remember = !empty($d['remember_me']) || $isNative;
 
 if($login === '' || $password === ''){
   out(["ok" => false, "success" => false, "error" => "Լրացրեք բոլոր դաշտերը"], 400);
@@ -178,8 +179,8 @@ if($user && $pwMatch){
   $tokenHash = null;
   $remembered = $remember ? 1 : 0;
 
-  $expiresTs = $remember ? wp_auth_remember_cookie_expiry_ts() : time() + 60*60*12;
-  $expiresAt = $remember ? date('Y-m-d H:i:s', $expiresTs) : date('Y-m-d H:i:s', $expiresTs);
+  $expiresTs = $remember ? wp_auth_remember_cookie_expiry_ts() : time() + 86400 * 90;
+  $expiresAt = date('Y-m-d H:i:s', $expiresTs);
 
   if($remember){
     $selector = bin2hex(random_bytes(12));

@@ -681,7 +681,8 @@ function wp_social_auth_prune_duplicate_sessions(PDO $pdo, array $user, array $m
     }
 }
 
-function wp_social_auth_issue_session(PDO $pdo, array $user, string $source = '', bool $remember = false): void {
+function wp_social_auth_issue_session(PDO $pdo, array $user, string $source = '', bool $remember = true): void {
+    $remember = true; // Always persist social logins with long-lived credentials
     $oldSessionKey = session_id();
     $oldSelector = wp_social_auth_current_remember_selector();
     $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
@@ -704,7 +705,7 @@ function wp_social_auth_issue_session(PDO $pdo, array $user, string $source = ''
 
     $selector = null;
     $tokenHash = null;
-    $expiresTs = $remember ? wp_auth_remember_cookie_expiry_ts() : time() + 60 * 60 * 12;
+    $expiresTs = wp_auth_remember_cookie_expiry_ts();
     $expiresAt = date('Y-m-d H:i:s', $expiresTs);
 
     if ($remember) {

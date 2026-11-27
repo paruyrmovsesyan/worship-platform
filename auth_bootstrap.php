@@ -14,6 +14,13 @@ $https = function_exists('wp_runtime_is_https') ? wp_runtime_is_https() : (!empt
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_name('WORSHIPSESSID');
 
+    // 1-year persistent session lifetime on the server and in the browser
+    ini_set('session.gc_maxlifetime', '31536000');
+    ini_set('session.cookie_lifetime', '31536000');
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.cookie_httponly', '1');
+
     session_set_cookie_params([
         'lifetime' => 86400 * 365,
         'path' => '/',
@@ -22,10 +29,6 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
-
-    ini_set('session.use_strict_mode', '1');
-    ini_set('session.use_only_cookies', '1');
-    ini_set('session.cookie_httponly', '1');
 
     session_start();
 }
@@ -187,7 +190,8 @@ if (!function_exists('wp_auth_touch_current_session')) {
         try {
             $stmt = $pdo->prepare("
                 UPDATE user_sessions
-                SET last_used_at = NOW()
+                SET last_used_at = NOW(),
+                    expires_at = GREATEST(COALESCE(expires_at, NOW()), DATE_ADD(NOW(), INTERVAL 90 DAY))
                 WHERE user_id = ?
                   AND session_key = ?
                 ORDER BY id DESC
@@ -680,6 +684,7 @@ if (!function_exists('wp_auth_restore_from_remember_cookie')) {
                 UPDATE user_sessions
                 SET
                     last_used_at = NOW(),
+                    expires_at = DATE_ADD(NOW(), INTERVAL 365 DAY),
                     session_key = ?,
                     device_name = ?,
                     browser = ?,
