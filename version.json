@@ -1,8 +1,8 @@
 {
   "app_version": "5.4.1",
   "web_version": "5.4.1",
-  "asset_version": "658",
-  "build_timestamp": "2026-11-28T01:29:00+04:00",
+  "asset_version": "659",
+  "build_timestamp": "2026-11-28T01:33:00+04:00",
   "release_type": "patch",
-  "release_summary": "Սև էկրանի մեկնարկային խնդրի շտապ վերացում, MediaSession անվտանգ ինիցիալիզացիա, գլոբալ ErrorBoundary և Android ինտենտների կարգավորում։"
+  "release_summary": "Շտկվել է stopTrack Temporal Dead Zone (ReferenceError: Cannot access before initialization) խնդիրը SongAudioContext-ում։"
 }

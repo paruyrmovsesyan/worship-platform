@@ -13,6 +13,18 @@ export function SongAudioProvider({ children }) {
   const [loopB, setLoopB] = useState(null);
   const [isLoopActive, setIsLoopActive] = useState(false);
 
+  const stopTrack = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setTrack(null);
+    setIsPlaying(false);
+    setLoopA(null);
+    setLoopB(null);
+    setIsLoopActive(false);
+  }, []);
+
   // Initialize persistent audio element
   useEffect(() => {
     const audio = new Audio();
@@ -237,18 +249,6 @@ export function SongAudioProvider({ children }) {
   }, [loopA]);
 
   const clearLoop = useCallback(() => {
-    setLoopA(null);
-    setLoopB(null);
-    setIsLoopActive(false);
-  }, []);
-
-  const stopTrack = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-    setTrack(null);
-    setIsPlaying(false);
     setLoopA(null);
     setLoopB(null);
     setIsLoopActive(false);
