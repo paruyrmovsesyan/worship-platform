@@ -62,20 +62,32 @@ function wp_social_auth_redirect_native_deep_link(string $pathWithQuery): void {
         $pathWithQuery = '/' . ltrim($pathWithQuery, '/');
     }
     $deepLink = 'worship://open' . $pathWithQuery;
+    $androidIntent = 'intent://open' . $pathWithQuery . '#Intent;scheme=worship;package=am.pmstudio.worship;end';
     $safeHref = htmlspecialchars($deepLink, ENT_QUOTES, 'UTF-8');
     $safeJs = json_encode($deepLink, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    $safeIntentJs = json_encode($androidIntent, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
     header('Content-Type: text/html; charset=utf-8');
     header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
     echo '<!doctype html><html lang="hy"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
         . '<title>Worship Platform</title>'
         . '<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#05050A;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Inter,sans-serif;text-align:center;padding:24px;}'
-        . '.card{max-width:340px;width:100%;background:rgba(24,26,40,.94);border:1px solid rgba(255,255,255,.14);border-radius:24px;padding:28px 22px;}'
-        . 'a.btn{display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:46px;margin-top:16px;border-radius:999px;background:linear-gradient(135deg,#3a2dff,#00d4ff);color:#fff;font-weight:700;text-decoration:none;}</style>'
+        . '.card{max-width:340px;width:100%;background:rgba(24,26,40,.94);border:1px solid rgba(255,255,255,.14);border-radius:24px;padding:28px 22px;box-shadow:0 12px 40px rgba(0,0,0,.6);}'
+        . 'a.btn{display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:46px;margin-top:16px;border-radius:999px;background:linear-gradient(135deg,#3a2dff,#00d4ff);color:#fff;font-weight:700;text-decoration:none;font-size:15px;}</style>'
         . '</head><body><div class="card"><h2 style="margin:0 0 8px;font-size:1.15rem;">Մուտքը հաստատվեց</h2>'
         . '<p style="margin:0;color:rgba(226,232,240,.78);font-size:.9rem;">Վերադառնում ենք Worship Platform հավելված…</p>'
         . '<a class="btn" href="' . $safeHref . '">Բացել հավելվածը</a></div>'
-        . '<script>window.location.replace(' . $safeJs . ');</script></body></html>';
+        . '<script>'
+        . 'const deepLink = ' . $safeJs . ';'
+        . 'const intentLink = ' . $safeIntentJs . ';'
+        . 'const isAndroid = /android/i.test(navigator.userAgent);'
+        . 'if (isAndroid) {'
+        . '  try { window.location.replace(intentLink); } catch(_) { window.location.href = deepLink; }'
+        . '  setTimeout(() => { window.location.href = deepLink; }, 400);'
+        . '} else {'
+        . '  try { window.location.replace(deepLink); } catch(_) { window.location.href = deepLink; }'
+        . '}'
+        . '</script></body></html>';
     exit;
 }
 
@@ -378,6 +390,17 @@ if ($endpointAction === 'claim_token' && $_SERVER['REQUEST_METHOD'] === 'POST') 
         $user = wp_social_auth_find_user_by_id($pdo, (int)$claim['user_id']);
         if ($user) {
             wp_social_auth_issue_session($pdo, $user, (string)($claim['device_name'] ?? 'pwa'), true); // Always issue with remember=true for PWA claim
+            echo json_encode([
+                "ok" => true,
+                "user" => [
+                    "id" => (int)$user['id'],
+                    "name" => trim((string)($user['name'] ?? '')) ?: ((string)($user['username'] ?? $user['email'] ?? 'User')),
+                    "email" => (string)($user['email'] ?? ''),
+                    "username" => (string)($user['username'] ?? ''),
+                    "role" => (string)($user['role'] ?? 'user'),
+                ]
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
         }
 
         echo json_encode(["ok" => true], JSON_UNESCAPED_UNICODE);
@@ -390,12 +413,21 @@ if ($endpointAction === 'claim_token' && $_SERVER['REQUEST_METHOD'] === 'POST') 
 }
 
 $provider = strtolower(trim((string)($_GET['provider'] ?? $_POST['provider'] ?? '')));
+$callbackState = trim((string)($_GET['state'] ?? $_POST['state'] ?? ''));
+
+// Fallback: if provider was not explicitly in query parameters (e.g. strict Google redirect URI), recover from signed state
+if (!in_array($provider, ['google'], true) && $callbackState !== '') {
+    $decodedState = wp_social_auth_decode_state($callbackState);
+    if ($decodedState && !empty($decodedState['p']) && in_array(strtolower((string)$decodedState['p']), ['google'], true)) {
+        $provider = strtolower((string)$decodedState['p']);
+    }
+}
+
 if (!in_array($provider, ['google'], true)) {
     wp_social_auth_redirect_to_auth('login', '/songs', '', 'Սոցիալական մուտքի provider-ը սխալ է։');
 }
 
 $pending = wp_social_auth_pending();
-$callbackState = trim((string)($_GET['state'] ?? $_POST['state'] ?? ''));
 $isCallback = isset($_GET['code'], $_GET['state']) || isset($_POST['code'], $_POST['state']) || isset($_GET['error']) || isset($_POST['error']);
 
 if (!$isCallback) {

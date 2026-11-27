@@ -6,6 +6,7 @@ import { LanguageProvider } from './context/LanguageContext.jsx'
 import { PageLoadingProvider } from './context/PageLoadingContext.jsx'
 import { CallProvider } from './context/CallContext.jsx'
 import { MediaProvider } from './context/MediaContext.jsx'
+import { SongAudioProvider } from './context/SongAudioContext.jsx'
 import { Capacitor } from '@capacitor/core'
 import { initNativeCrashReporter } from './utils/nativeCrashReporter.js'
 import App from './App.jsx'
@@ -29,9 +30,11 @@ prepareNativeRuntime.finally(() => {
         <BrowserRouter>
           <CallProvider>
             <MediaProvider>
-              <PageLoadingProvider>
-                <App />
-              </PageLoadingProvider>
+              <SongAudioProvider>
+                <PageLoadingProvider>
+                  <App />
+                </PageLoadingProvider>
+              </SongAudioProvider>
             </MediaProvider>
           </CallProvider>
         </BrowserRouter>

@@ -43,6 +43,8 @@ import {
   addFullscreenChangeListener,
 } from '../utils/fullscreen';
 import { API_BASE_URL } from '../utils/nativeConfig';
+import { useSongAudio } from '../context/SongAudioContext';
+import { triggerHaptic, triggerSelectionHaptic, triggerSuccessHaptic } from '../utils/nativeHaptics';
 import {
   requestKeepAwake,
   releaseKeepAwake,
@@ -244,6 +246,26 @@ export default function SongView() {
   const [error, setError] = useState(null);
   const userManuallyAdjustedKeyRef = useRef(false);
   const latestSongRef = useRef(null);
+  const songAudio = useSongAudio();
+  const [chordScale, setChordScale] = useState(() => parseFloat(localStorage.getItem('wp_chord_scale_v1') || '1.0'));
+  
+  const increaseChordScale = () => {
+    setChordScale((prev) => {
+      const next = Math.min(1.6, Number((prev + 0.1).toFixed(2)));
+      localStorage.setItem('wp_chord_scale_v1', String(next));
+      triggerHaptic();
+      return next;
+    });
+  };
+
+  const decreaseChordScale = () => {
+    setChordScale((prev) => {
+      const next = Math.max(0.8, Number((prev - 0.1).toFixed(2)));
+      localStorage.setItem('wp_chord_scale_v1', String(next));
+      triggerHaptic();
+      return next;
+    });
+  };
   
   // Controls state
   const [fontSize, setFontSize] = useState(() => parseInt(localStorage.getItem('song_font_size') || '18', 10));
@@ -1743,6 +1765,24 @@ export default function SongView() {
             </svg>
           </button>
 
+          <button
+            type="button"
+            className={`icon-btn sv-stage-btn ${isStageFullscreen ? 'active sv-stage-active' : ''}`}
+            onClick={() => {
+              triggerHaptic();
+              toggleStageFullscreen();
+            }}
+            title={language === 'ru' ? 'Сценический режим' : language === 'en' ? 'Stage Mode' : 'Բեմական ռեժիմ'}
+            aria-label={language === 'ru' ? 'Сценический режим' : language === 'en' ? 'Stage Mode' : 'Բեմական ռեժիմ'}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 3 21 3 21 9" />
+              <polyline points="9 21 3 21 3 15" />
+              <line x1="21" y1="3" x2="14" y2="10" />
+              <line x1="3" y1="21" x2="10" y2="14" />
+            </svg>
+          </button>
+
           <div className="sv-tools-menu-container">
             <button
               ref={toolsBtnRef}
@@ -1817,7 +1857,10 @@ export default function SongView() {
           <button
             type="button"
             className="sv-quick-font-btn"
-            onClick={decreaseFontSize}
+            onClick={() => {
+              triggerHaptic();
+              decreaseFontSize();
+            }}
             disabled={fontSize <= 14}
             aria-label="Փոքրացնել տառաչափը"
           >
@@ -1827,12 +1870,38 @@ export default function SongView() {
           <button
             type="button"
             className="sv-quick-font-btn"
-            onClick={increaseFontSize}
+            onClick={() => {
+              triggerHaptic();
+              increaseFontSize();
+            }}
             disabled={fontSize >= 40}
             aria-label="Մեծացնել տառաչափը"
           >
             A+
           </button>
+          {hasChords && effectiveViewMode !== 'lyrics' && (
+            <div className="sv-chord-scale-toggle" title="Ակկորդների չափ">
+              <button
+                type="button"
+                className="sv-quick-font-btn chord-scale-btn"
+                onClick={decreaseChordScale}
+                disabled={chordScale <= 0.8}
+                aria-label="Փոքրացնել ակկորդները"
+              >
+                C−
+              </button>
+              <span className="sv-quick-font-val chord-scale-val">{Math.round(chordScale * 100)}%</span>
+              <button
+                type="button"
+                className="sv-quick-font-btn chord-scale-btn"
+                onClick={increaseChordScale}
+                disabled={chordScale >= 1.6}
+                aria-label="Մեծացնել ակկորդները"
+              >
+                C+
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1902,12 +1971,23 @@ export default function SongView() {
                     key={cVal}
                     type="button"
                     className={`sv-capo-chip ${capo === cVal ? 'active' : ''}`}
-                    onClick={() => applyManualCapo(cVal)}
+                    onClick={() => {
+                      triggerSelectionHaptic();
+                      applyManualCapo(cVal);
+                    }}
                   >
                     {cVal === 0 ? 'Off' : cVal}
                   </button>
                 ))}
               </div>
+              {capo > 0 && (
+                <div className="sv-capo-calculator-card">
+                  <span className="sv-capo-calc-icon">🎸</span>
+                  <div className="sv-capo-calc-text">
+                    <strong>Capo {capo}</strong> · {language === 'ru' ? 'Аппликатура аккордов' : language === 'en' ? 'Play chord shapes' : 'Նվագել ակկորդների ձևով'}՝ <strong>{playingKey}</strong> ({language === 'ru' ? 'звучит как' : language === 'en' ? 'sounds as' : 'հնչում է'} <strong>{soundingKey}</strong>)
+                  </div>
+                </div>
+              )}
             </section>
           )}
 
@@ -2028,7 +2108,7 @@ export default function SongView() {
       <div
         ref={sheetRef}
         className={`sv-sheet ${effectiveViewMode === 'lyrics' ? 'lyrics-mode' : ''} ${isTwoColumn ? 'web-two-column' : ''}`}
-        style={{ fontSize: `${fontSize}px`, '--song-chord-color': chordColor || '#ffffff' }}
+        style={{ fontSize: `${fontSize}px`, '--song-chord-color': chordColor || '#ffffff', '--song-chord-size': `${chordScale}em` }}
         onMouseOver={openChordPopover}
         onMouseOut={closeChordPopover}
         onClick={openChordPopover}
@@ -2202,27 +2282,109 @@ export default function SongView() {
                     </div>
                   </div>
 
-                  {/* Inline Audio Player for Audio Tracks */}
+                  {/* Inline Pro Audio Player for Audio Tracks with Rehearsal A-B Looper */}
                   {!embedUrl && !driveEmbedUrl && attType === 'audio' && (
-                    <div className="sv-pwa-media-audio-box" style={{
-                      marginTop: '8px',
-                      padding: '8px 12px',
-                      background: 'rgba(0, 0, 0, 0.3)',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(57, 216, 255, 0.22)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '6px'
-                    }}>
-                      <audio
-                        controls
-                        playsInline
-                        src={resolvedUrl}
-                        preload="metadata"
-                        style={{ width: '100%', height: '40px', outline: 'none' }}
-                      >
-                        Ձեր դիտարկիչը չի աջակցում աուդիո նվագարկիչը:
-                      </audio>
+                    <div className="sv-pwa-media-audio-box sv-pro-audio-box">
+                      <div className="sv-pro-audio-top">
+                        <button
+                          type="button"
+                          className="sv-pro-play-btn"
+                          onClick={() => {
+                            triggerHaptic();
+                            if (songAudio.track?.audioUrl === resolvedUrl && songAudio.isPlaying) {
+                              songAudio.pauseTrack();
+                            } else {
+                              songAudio.playTrack({
+                                songId: song.id,
+                                title: displayTitle,
+                                artist: song.artist,
+                                audioUrl: resolvedUrl,
+                              });
+                            }
+                          }}
+                          aria-label={songAudio.track?.audioUrl === resolvedUrl && songAudio.isPlaying ? 'Դադարեցնել' : 'Նվագարկել'}
+                        >
+                          {songAudio.track?.audioUrl === resolvedUrl && songAudio.isPlaying ? (
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                              <rect x="6" y="4" width="4" height="16" rx="1.5" />
+                              <rect x="14" y="4" width="4" height="16" rx="1.5" />
+                            </svg>
+                          ) : (
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                              <polygon points="5 3 19 12 5 21 5 3" />
+                            </svg>
+                          )}
+                        </button>
+                        <div className="sv-pro-audio-info">
+                          <span className="sv-pro-audio-name">{att.title || 'Ձայնագրություն'}</span>
+                          <span className="sv-pro-audio-times">
+                            {songAudio.track?.audioUrl === resolvedUrl
+                              ? `${Math.floor(songAudio.currentTime / 60)}:${String(Math.floor(songAudio.currentTime % 60)).padStart(2, '0')} / ${Math.floor(songAudio.duration / 60)}:${String(Math.floor(songAudio.duration % 60)).padStart(2, '0')}`
+                              : 'Աուդիո նվագարկիչ'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {songAudio.track?.audioUrl === resolvedUrl && (
+                        <>
+                          <input
+                            type="range"
+                            min="0"
+                            max={songAudio.duration || 100}
+                            step="0.1"
+                            value={songAudio.currentTime || 0}
+                            onChange={(e) => songAudio.seek(Number(e.target.value))}
+                            className="sv-pro-audio-slider"
+                          />
+                          <div className="sv-pro-audio-looper">
+                            <span className="sv-looper-label">🔁 A-B Կրկնություն:</span>
+                            <button
+                              type="button"
+                              className={`sv-loop-btn ${songAudio.loopA !== null ? 'active' : ''}`}
+                              onClick={() => {
+                                triggerHaptic();
+                                songAudio.setLoopA(songAudio.currentTime);
+                              }}
+                            >
+                              {songAudio.loopA !== null ? `A: ${Math.floor(songAudio.loopA)}վ` : 'Դնել A'}
+                            </button>
+                            <button
+                              type="button"
+                              className={`sv-loop-btn ${songAudio.loopB !== null ? 'active' : ''}`}
+                              onClick={() => {
+                                triggerHaptic();
+                                songAudio.setLoopB(songAudio.currentTime);
+                              }}
+                            >
+                              {songAudio.loopB !== null ? `B: ${Math.floor(songAudio.loopB)}վ` : 'Դնել B'}
+                            </button>
+                            {songAudio.loopA !== null && songAudio.loopB !== null && (
+                              <button
+                                type="button"
+                                className={`sv-loop-btn loop-toggle ${songAudio.isLoopActive ? 'is-looping' : ''}`}
+                                onClick={() => {
+                                  triggerHaptic();
+                                  songAudio.toggleLoop();
+                                }}
+                              >
+                                {songAudio.isLoopActive ? '✓ Կրկնվում է' : 'Միացնել'}
+                              </button>
+                            )}
+                            {(songAudio.loopA !== null || songAudio.loopB !== null) && (
+                              <button
+                                type="button"
+                                className="sv-loop-clear"
+                                onClick={() => {
+                                  triggerHaptic();
+                                  songAudio.clearLoop();
+                                }}
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
 
@@ -3096,6 +3258,28 @@ export default function SongView() {
             }}
           />
         </Suspense>
+      )}
+
+      {/* Floating Exit Button for Stage Mode */}
+      {isStageFullscreen && createPortal(
+        <button
+          type="button"
+          className="sv-stage-floating-exit"
+          onClick={() => {
+            triggerHaptic();
+            toggleStageFullscreen();
+          }}
+          aria-label="Դուրս գալ բեմական ռեժիմից"
+        >
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="4 14 10 14 10 20" />
+            <polyline points="20 10 14 10 14 4" />
+            <line x1="14" y1="10" x2="21" y2="3" />
+            <line x1="3" y1="21" x2="10" y2="14" />
+          </svg>
+          <span>{language === 'ru' ? 'Выйти со сцены' : language === 'en' ? 'Exit Stage' : 'Դուրս գալ բեմից'}</span>
+        </button>,
+        document.body
       )}
 
     </>

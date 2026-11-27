@@ -129,10 +129,17 @@ export default function NativePlatformServices() {
           try {
             const claimRes = await fetch('/social_auth.php?action=claim_token', {
               method: 'POST',
+              credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ token: socialToken }),
             });
             if (claimRes.ok) {
+              const claimData = await claimRes.json().catch(() => null);
+              if (claimData?.user) {
+                try {
+                  localStorage.setItem('worship_user', JSON.stringify(claimData.user));
+                } catch (_) {}
+              }
               await checkAuthRef.current?.();
             }
           } catch {}

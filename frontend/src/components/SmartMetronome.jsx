@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useId, useRef } from 'react';
 import { metronomeEngine } from '../utils/metronomeEngine';
 import { useFeatureFlags } from '../utils/featureFlags';
+import { triggerHaptic } from '../utils/nativeHaptics';
+import { ImpactStyle } from '@capacitor/haptics';
 import { BetaBadge } from './BetaBadge';
 import './SmartMetronome.css';
 
@@ -54,6 +56,7 @@ export default function SmartMetronome({
           setScreenPulseActive(true);
           setTimeout(() => setScreenPulseActive(false), 120);
         }
+        triggerHaptic(event.isAccent ? ImpactStyle.Medium : ImpactStyle.Light);
       } else if (event.type === 'start') {
         setIsPlaying(true);
       } else if (event.type === 'stop') {

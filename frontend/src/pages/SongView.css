@@ -517,6 +517,7 @@ body.light-mode .sv-segment.active {
 .song-view-page .chords-block .chord,
 .chords-block .chord {
   color: var(--song-chord-color, #ffffff) !important;
+  font-size: var(--song-chord-size, 1em);
   font-weight: 700;
   display: inline-block;
 }
@@ -2256,6 +2257,249 @@ body.is-native.light-mode .sv-arr-pill {
 body.is-native.light-mode .sv-arr-pill.is-active {
   background: color-mix(in srgb, var(--arr-color, var(--native-accent)) 22%, var(--native-surface-elevated));
 }
+
+/* ==========================================================================
+   Stage Mode (Full-Screen Clean Performance Mode for Musicians)
+   ========================================================================== */
+.song-view-page.is-stage-fullscreen {
+  background: #000000 !important;
+  min-height: 100vh;
+  padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 32px) 16px !important;
+}
+
+.song-view-page.is-stage-fullscreen .sv-header,
+.song-view-page.is-stage-fullscreen .sv-meta-row,
+.song-view-page.is-stage-fullscreen .sv-segment-control-wrap,
+.song-view-page.is-stage-fullscreen .sv-stage-modules,
+.song-view-page.is-stage-fullscreen .sv-media-section,
+.song-view-page.is-stage-fullscreen .sv-arrangement-ribbon,
+.song-view-page.is-stage-fullscreen .sv-bottom-bar,
+.song-view-page.is-stage-fullscreen .pwa-install-banner,
+.song-view-page.is-stage-fullscreen .app-bottom-nav,
+.song-view-page.is-stage-fullscreen .native-tab-bar {
+  display: none !important;
+}
+
+.song-view-page.is-stage-fullscreen .sv-sheet-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.song-view-page.is-stage-fullscreen .sv-sheet {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  color: #f8fafc !important;
+  line-height: 2 !important;
+}
+
+.song-view-page.is-stage-fullscreen .chords-block .chord {
+  color: #ffffff !important;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.45);
+}
+
+.sv-stage-floating-exit {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 12px) + 16px);
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(28, 28, 38, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 99999;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.sv-stage-floating-exit:active {
+  transform: scale(0.94);
+  background: rgba(45, 45, 60, 0.95);
+}
+
+/* ==========================================================================
+   Capo Calculator Card
+   ========================================================================== */
+.sv-capo-calculator-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.05));
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 12px;
+  font-size: 13px;
+  color: #fbbf24;
+  line-height: 1.4;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.sv-capo-calc-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.sv-capo-calc-text {
+  flex: 1;
+}
+
+.sv-capo-calc-text strong {
+  color: #fef3c7;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   Independent Chord Scale Tool
+   ========================================================================== */
+.sv-chord-scale-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.sv-quick-font-btn.chord-scale-btn {
+  font-size: 11px;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.sv-quick-font-val.chord-scale-val {
+  min-width: 36px;
+  font-size: 11.5px;
+  color: #e0f2fe;
+}
+
+/* ==========================================================================
+   Pro Audio Player with Section Looper (A-B)
+   ========================================================================== */
+.sv-pro-audio-box {
+  background: rgba(18, 18, 28, 0.75) !important;
+  border: 1px solid rgba(56, 189, 248, 0.25) !important;
+  border-radius: 16px !important;
+  padding: 12px 14px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sv-pro-audio-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sv-pro-play-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #3a2dff, #00d4ff);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(0, 212, 255, 0.35);
+  transition: transform 0.15s ease;
+}
+
+.sv-pro-play-btn:active {
+  transform: scale(0.92);
+}
+
+.sv-pro-audio-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sv-pro-audio-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sv-pro-audio-times {
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.72);
+  margin-top: 2px;
+}
+
+.sv-pro-audio-slider {
+  width: 100%;
+  accent-color: #00d4ff;
+  height: 4px;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.sv-pro-audio-looper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sv-looper-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(226, 232, 240, 0.75);
+}
+
+.sv-loop-btn {
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sv-loop-btn.active {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.sv-loop-btn.loop-toggle.is-looping {
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+}
+
+.sv-loop-clear {
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  font-size: 11px;
+  cursor: pointer;
+}
+
 
 
 

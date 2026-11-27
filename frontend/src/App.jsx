@@ -81,6 +81,7 @@ import WebCommandPalette from './components/WebCommandPalette';
 import CreateAccountReminder from './components/CreateAccountReminder';
 import NativeAppLock from './components/NativeAppLock';
 import NativePlatformServices from './components/NativePlatformServices';
+import NativeMiniAudioPlayer from './components/NativeMiniAudioPlayer';
 import NativeRouteLoader from './components/NativeRouteLoader';
 import NativeRuntimeGuard from './components/NativeRuntimeGuard';
 import {
@@ -934,6 +935,7 @@ function App() {
         <>
           <NativeAppLock />
           <NativePlatformServices />
+          <NativeMiniAudioPlayer />
           <NativeRouteLoader refreshing={nativeRefreshing} />
           <NativeRuntimeGuard />
         </>

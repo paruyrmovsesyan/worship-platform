@@ -108,6 +108,12 @@ export const AuthProvider = ({ children }) => {
           });
           const claimData = await claimRes.json();
           if (claimData.ok) {
+            if (claimData.user) {
+              setUser(claimData.user);
+              try {
+                localStorage.setItem('worship_user', JSON.stringify(claimData.user));
+              } catch (_) {}
+            }
             const newUrl =
               window.location.pathname +
               window.location.search
