@@ -530,11 +530,11 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
           <h3 style="margin:0;"><?= __('Ավելացնել / Խմբագրել երգ') ?></h3>
           <span id="editorDraftBadge" hidden style="display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:999px; background:rgba(245,158,11,0.16); color:#d97706; border:1px solid rgba(245,158,11,0.35); font-size:12px; font-weight:800;">📝 Սևագիր (Չհրապարակված)</span>
         </div>
-        <div style="display: flex; gap: 8px;">
+        <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
           <button id="clearForm" class="btn compact-btn" title="<?= __('Մաքրել') ?>">🔄</button>
           <button id="downloadTxt" class="btn compact-btn">TXT</button>
           <button id="exportPdf" class="btn compact-btn">PDF</button>
-          <button id="cancelEdit" class="btn compact-btn" style="background:#fee2e2; color:#ef4444; border:none;"><?= __('Չեղարկել') ?></button>
+          <button id="cancelEdit" type="button" class="btn compact-btn" style="background:#fee2e2; color:#ef4444; border:1px solid #fecaca; font-weight:800; min-width:38px;" title="<?= __('Փակել') ?>" aria-label="<?= __('Փակել') ?>">✕</button>
         </div>
       </div>
       <div class="editor-body">
@@ -1933,7 +1933,7 @@ function setEditMode(song = null) {
   if (saveDraftBtn) {
     saveDraftBtn.textContent = isDraft ? '📝 Պահպանել սևագիրը' : '📝 Պահպանել սևագիր';
   }
-  cancelEditBtn.hidden = !editing;
+  cancelEditBtn.hidden = false;
   editingBadge.textContent = editing ? `Խմբագրվում է․ ${displayEditorSongTitle(song.title || '') || 'Անանուն'}` : 'Խմբագրվում է․ ոչինչ';
   statCurrentMode.textContent = editing ? (isDraft ? 'Սևագիր' : 'Խմբագրում') : 'Նոր երգ';
   renderSongMaterials();
@@ -2632,8 +2632,24 @@ saveDraftBtn?.addEventListener('click', async () => {
 
 cancelEditBtn?.addEventListener('click', () => {
   clearForm();
-  showNotice('Խմբագրումը չեղարկված է', 'info');
   activateWorkspaceTab('libraryPane');
+});
+
+document.getElementById('editorPane')?.addEventListener('click', (e) => {
+  if (e.target && e.target.id === 'editorPane') {
+    clearForm();
+    activateWorkspaceTab('libraryPane');
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const editorModal = document.getElementById('editorPane');
+    if (editorModal && editorModal.classList.contains('is-active')) {
+      clearForm();
+      activateWorkspaceTab('libraryPane');
+    }
+  }
 });
 
 clearBtn?.addEventListener('click', clearForm);
