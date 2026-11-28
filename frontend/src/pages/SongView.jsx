@@ -1141,6 +1141,7 @@ export default function SongView() {
   };
   
   const handleViewModeChange = (mode) => {
+    triggerSelectionHaptic();
     setViewMode(mode);
     localStorage.setItem('song_view_mode', mode);
     localStorage.setItem('view_mode_overridden', 'true');
@@ -1811,7 +1812,10 @@ export default function SongView() {
             <button
               type="button"
               className={`sv-meta-pill key-pill sv-meta-clickable ${showToneCapo ? 'is-open' : ''}`}
-              onClick={() => setShowToneCapo((v) => !v)}
+              onClick={() => {
+                triggerHaptic('light');
+                setShowToneCapo((v) => !v);
+              }}
               title={t('songView.transpose', 'Տոնայնություն և Կապո')}
             >
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -1830,14 +1834,17 @@ export default function SongView() {
           <button
             type="button"
             className={`sv-meta-pill sv-meta-clickable ${showInlineMetronome ? 'is-open' : ''}`}
-            onClick={() => setShowInlineMetronome((v) => !v)}
+            onClick={() => {
+              triggerHaptic('light');
+              setShowInlineMetronome((v) => !v);
+            }}
             title={language === 'ru' ? 'Метроном' : language === 'en' ? 'Metronome' : 'Մետրոնոմ'}
           >
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2L5 21h14L12 2z" />
               <line x1="12" y1="15" x2="17" y2="7" />
             </svg>
-            <span>{Number.parseInt(song.bpm, 10) > 0 ? `${song.bpm} BPM` : (language === 'ru' ? 'Метроном' : language === 'en' ? 'Metronome' : 'Մետրոնոմ')}</span>
+            <span>{Number.parseInt(song.bpm, 10) > 0 ? `${song.bpm} BPM` : 'BPM'}</span>
           </button>
 
           {pedalMode && (
