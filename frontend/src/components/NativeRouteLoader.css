@@ -30,15 +30,17 @@ body.light-mode.editorial-theme .native-route-loader {
 }
 
 .native-route-loader.is-refreshing {
-  /* Keep the current native screen visible while its route data remounts.
-     An opaque background here looked like a frozen black WebView. */
-  background: rgba(5, 5, 10, 0.1);
-  -webkit-backdrop-filter: blur(2px) saturate(110%);
-  backdrop-filter: blur(2px) saturate(110%);
+  /* Keep the shimmering native skeleton 100% visible while fresh route data loads. */
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  pointer-events: none !important;
 }
 
 body.light-mode .native-route-loader.is-refreshing {
-  background: rgba(15, 23, 42, 0.05);
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 .native-route-loader__card {

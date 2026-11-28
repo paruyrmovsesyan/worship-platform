@@ -207,6 +207,35 @@ function App() {
   const previousNativePathRef = React.useRef(location.pathname);
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [nativeRefreshing, setNativeRefreshing] = React.useState(false);
+  const [initialAppReady, setInitialAppReady] = React.useState(!isNativeApp);
+  const [routeTransitionLoading, setRouteTransitionLoading] = React.useState(false);
+  const routeTransitionTimerRef = React.useRef(null);
+  const activePathRef = React.useRef(location.pathname);
+
+  // Cold start or browser reload skeleton (ensures skeleton is consistently visible on reload)
+  useEffect(() => {
+    if (!isNativeApp) return undefined;
+    const timer = window.setTimeout(() => {
+      setInitialAppReady(true);
+    }, 220);
+    return () => window.clearTimeout(timer);
+  }, [isNativeApp]);
+
+  // Route transition skeleton between pages on native mobile apps
+  useEffect(() => {
+    if (!isNativeApp) return undefined;
+    if (activePathRef.current !== location.pathname) {
+      activePathRef.current = location.pathname;
+      setRouteTransitionLoading(true);
+      if (routeTransitionTimerRef.current) window.clearTimeout(routeTransitionTimerRef.current);
+      routeTransitionTimerRef.current = window.setTimeout(() => {
+        setRouteTransitionLoading(false);
+      }, 190);
+    }
+    return () => {
+      if (routeTransitionTimerRef.current) window.clearTimeout(routeTransitionTimerRef.current);
+    };
+  }, [location.pathname, isNativeApp]);
   const [rememberPromptOpen, setRememberPromptOpen] = React.useState(false);
   const [rememberPromptSaving, setRememberPromptSaving] = React.useState(false);
   const [rememberPromptError, setRememberPromptError] = React.useState('');
@@ -966,6 +995,8 @@ function App() {
                 onRecheck={platformAnnouncement.recheck}
                 language={language}
               />
+            ) : isNativeApp && (!initialAppReady || nativeRefreshing || routeTransitionLoading) ? (
+              <RouteSkeletonFallback pathname={location.pathname} />
             ) : (
             <Suspense fallback={<RouteSkeletonFallback pathname={location.pathname} />}>
             <Routes key={refreshKey}>

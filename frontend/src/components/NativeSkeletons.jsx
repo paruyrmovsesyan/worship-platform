@@ -905,7 +905,7 @@ export function RouteSkeletonFallback({ pathname }) {
   if (currentPath.startsWith('/song/')) {
     return <SongViewSkeleton />;
   }
-  if (currentPath.startsWith('/songs')) {
+  if (currentPath.startsWith('/songs') || currentPath === '/favorites' || currentPath === '/transpose') {
     return <SongsPageSkeleton />;
   }
   if (currentPath.startsWith('/setlist/') || currentPath.startsWith('/setlist-editor/')) {
@@ -920,10 +920,10 @@ export function RouteSkeletonFallback({ pathname }) {
   if (currentPath.startsWith('/chat/')) {
     return <ChatThreadSkeleton />;
   }
-  if (currentPath.startsWith('/chats')) {
+  if (currentPath.startsWith('/chats') || currentPath === '/notifications') {
     return <ChatsListSkeleton />;
   }
-  if (currentPath.startsWith('/profile') || currentPath.startsWith('/user/')) {
+  if (currentPath.startsWith('/profile') || currentPath.startsWith('/user/') || currentPath.startsWith('/settings')) {
     return <UserProfileSkeleton />;
   }
   if (currentPath.startsWith('/friends')) {
@@ -938,7 +938,7 @@ export function RouteSkeletonFallback({ pathname }) {
   if (currentPath.startsWith('/church')) {
     return <ChurchFeedSkeleton />;
   }
-  if (currentPath.startsWith('/support')) {
+  if (currentPath.startsWith('/support') || currentPath.startsWith('/song-request')) {
     return <SupportContactSkeleton />;
   }
 
