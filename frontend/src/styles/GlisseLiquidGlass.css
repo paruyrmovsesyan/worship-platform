@@ -233,15 +233,9 @@ body.light-mode .wp-glisse-tabbar.lg-tab-bar[data-icons] {
 
 /* ==========================================================================
    4. GLISSE <SegmentedControl> SIZES ACROSS HEADER, PAGES & POPOVERS
-   Disable nested backdrop-filter on `.lg-segmented > .lg-tab-bar-glass` so
-   controls placed inside sticky headers, cards, or popovers never trigger
-   iOS/Android GPU compositor flickering while keeping full Liquid Glass rim
-   & 24×16px refractive lens droplet physics.
+   Refined Liquid Glass capsules with crisp optical blur, specular glass rims,
+   and responsive widths across mobile and desktop.
    ========================================================================== */
-.lg-segmented > .lg-tab-bar-glass {
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
 
 .wp-glisse-lang.lg-segmented {
   --lg-tab-width: 38px;
@@ -267,8 +261,60 @@ body.light-mode .wp-glisse-tabbar.lg-tab-bar[data-icons] {
 }
 
 .wp-glisse-segmented-3.lg-segmented {
-  --lg-tab-width: clamp(86px, calc((100vw - 44px) / 3), 124px);
-  --lg-tab-height: 36px;
+  --lg-tab-width: clamp(92px, calc((100vw - 44px) / 3), 122px);
+  --lg-tab-height: 38px;
+  --lg-lens-grow-x: 20px;
+  --lg-lens-grow-y: 14px;
+  border-radius: 999px !important;
+}
+
+.wp-glisse-segmented-3.lg-segmented > .lg-tab-bar-glass {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+  border-radius: 999px !important;
+}
+
+body.light-mode .wp-glisse-segmented-3.lg-segmented > .lg-tab-bar-glass {
+  background: rgba(15, 23, 42, 0.06) !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+.wp-glisse-segmented-3.lg-segmented .lg-segmented-thumb {
+  background: rgba(56, 189, 248, 0.18) !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  box-shadow: 0 2px 10px rgba(56, 189, 248, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+  border-radius: 999px !important;
+}
+
+body.light-mode .wp-glisse-segmented-3.lg-segmented .lg-segmented-thumb {
+  background: #ffffff !important;
+  border: 1px solid rgba(2, 132, 199, 0.3) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 999px !important;
+}
+
+.wp-glisse-segmented-3.lg-segmented :is(.lg-tab, .lg-tab-copy) {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.65)) !important;
+  transition: color 0.15s ease !important;
+}
+
+.wp-glisse-segmented-3.lg-segmented :is(.lg-tab, .lg-tab-copy)[data-selected] {
+  color: #38bdf8 !important;
+  font-weight: 800 !important;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.4) !important;
+}
+
+body.light-mode .wp-glisse-segmented-3.lg-segmented :is(.lg-tab, .lg-tab-copy)[data-selected] {
+  color: #0284c7 !important;
+  text-shadow: none !important;
 }
 
 .wp-glisse-segmented-5.lg-segmented {

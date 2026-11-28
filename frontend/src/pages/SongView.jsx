@@ -1915,7 +1915,7 @@ export default function SongView() {
       </div>
 
       {/* Consistent 3-Tab View Mode Segmented Control */}
-      <div className="sv-segment-control-wrap" style={{ display: 'flex', justifyContent: 'center', margin: '10px 0 14px' }}>
+      <div className="sv-segment-control-wrap">
         <SegmentedControl
           className="wp-glisse-segmented-3"
           aria-label="Song view mode"

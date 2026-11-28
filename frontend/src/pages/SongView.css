@@ -2267,6 +2267,13 @@ body.is-native.light-mode .sv-arr-pill.is-active {
   padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 32px) 16px !important;
 }
 
+.sv-segment-control-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 10px 0 14px;
+}
+
 .song-view-page.is-stage-fullscreen .sv-header,
 .song-view-page.is-stage-fullscreen .sv-meta-row,
 .song-view-page.is-stage-fullscreen .sv-segment-control-wrap,
@@ -2617,9 +2624,9 @@ body.is-native .sv-meta-row {
   display: flex !important;
   flex-wrap: nowrap !important;
   align-items: center !important;
-  justify-content: flex-start !important;
-  gap: 6px !important;
-  padding: 0 16px !important;
+  justify-content: space-between !important;
+  gap: 5px !important;
+  padding: 0 12px !important;
   margin-bottom: 12px !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
@@ -2636,15 +2643,15 @@ body.is-native .sv-meta-row::-webkit-scrollbar {
 body.is-native .sv-meta-left {
   display: flex !important;
   align-items: center !important;
-  gap: 6px !important;
+  gap: 5px !important;
   flex-shrink: 0 !important;
 }
 
 body.is-native .sv-meta-pill {
-  height: 34px !important;
-  padding: 0 11px !important;
+  height: 32px !important;
+  padding: 0 9px !important;
   border-radius: 999px !important;
-  font-size: 13px !important;
+  font-size: 12px !important;
   font-weight: 700 !important;
   background: rgba(255, 255, 255, 0.08) !important;
   border: 1px solid rgba(255, 255, 255, 0.14) !important;
@@ -2657,7 +2664,7 @@ body.is-native .sv-meta-pill {
   box-sizing: border-box !important;
   display: inline-flex !important;
   align-items: center !important;
-  gap: 5px !important;
+  gap: 4px !important;
   transition: transform 0.12s ease, background 0.15s ease !important;
 }
 
@@ -2686,7 +2693,7 @@ body.is-native.light-mode .sv-meta-pill.key-pill {
 }
 
 body.is-native .sv-quick-font {
-  height: 34px !important;
+  height: 32px !important;
   border-radius: 999px !important;
   background: rgba(255, 255, 255, 0.08) !important;
   border: 1px solid rgba(255, 255, 255, 0.14) !important;
@@ -2698,6 +2705,7 @@ body.is-native .sv-quick-font {
   flex-shrink: 0 !important;
   white-space: nowrap !important;
   padding: 0 2px !important;
+  box-sizing: border-box !important;
 }
 
 body.is-native.light-mode .sv-quick-font {
@@ -2707,15 +2715,17 @@ body.is-native.light-mode .sv-quick-font {
 }
 
 body.is-native .sv-quick-font-btn {
-  min-width: 28px !important;
-  height: 32px !important;
-  padding: 0 6px !important;
-  font-size: 12px !important;
+  width: 26px !important;
+  min-width: 26px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  font-size: 11.5px !important;
   font-weight: 750 !important;
   border-radius: 999px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  box-sizing: border-box !important;
 }
 
 body.is-native .sv-quick-font-btn:active:not(:disabled) {
@@ -2724,12 +2734,14 @@ body.is-native .sv-quick-font-btn:active:not(:disabled) {
 }
 
 body.is-native .sv-quick-font-val {
-  min-width: 20px !important;
-  font-size: 12px !important;
+  min-width: 18px !important;
+  font-size: 11.5px !important;
   font-weight: 800 !important;
-  line-height: 32px !important;
-  padding: 0 3px !important;
+  line-height: 28px !important;
+  padding: 0 2px !important;
   border-inline: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
 }
 
 body.is-native.light-mode .sv-quick-font-val {
@@ -2739,10 +2751,11 @@ body.is-native.light-mode .sv-quick-font-val {
 body.is-native .sv-chord-scale-toggle {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 2px !important;
+  gap: 1px !important;
   margin-left: 2px !important;
-  padding-left: 3px !important;
+  padding-left: 2px !important;
   border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-sizing: border-box !important;
 }
 
 body.is-native.light-mode .sv-chord-scale-toggle {
@@ -2750,9 +2763,11 @@ body.is-native.light-mode .sv-chord-scale-toggle {
 }
 
 body.is-native .sv-quick-font-val.chord-scale-val {
-  min-width: 32px !important;
-  font-size: 11.5px !important;
+  min-width: 29px !important;
+  font-size: 11px !important;
   font-weight: 800 !important;
+  padding: 0 1px !important;
+  box-sizing: border-box !important;
 }
 
 /* ── Segmented Control (Tabs) — Pure Glisse Liquid Glass ── */
