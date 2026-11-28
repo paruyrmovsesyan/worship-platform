@@ -79,7 +79,13 @@ foreach ($staticPages as $page) {
 try {
     $pdo = wp_runtime_open_pdo();
     if (!empty($config['site_seo_index_song_pages'])) {
-        $stmt = $pdo->query("SELECT id, created_at FROM songs ORDER BY created_at DESC, id DESC");
+        $hasStatusCol = false;
+        try {
+            $chkCol = $pdo->query("SHOW COLUMNS FROM songs LIKE 'status'");
+            $hasStatusCol = $chkCol && (bool)$chkCol->fetch();
+        } catch (Throwable $_) {}
+        $songWhere = $hasStatusCol ? "WHERE COALESCE(status, 'published') != 'draft'" : '';
+        $stmt = $pdo->query("SELECT id, created_at FROM songs {$songWhere} ORDER BY created_at DESC, id DESC");
         $songs = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
 
         foreach ($songs as $song) {

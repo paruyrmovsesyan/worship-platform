@@ -88,6 +88,64 @@ function wp_api_song_bpm_column_present(mysqli $conn): bool {
     return $cached;
 }
 
+function wp_api_ensure_song_status_column(mysqli $conn): bool {
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+
+    $res = $conn->query("SHOW COLUMNS FROM songs LIKE 'status'");
+    if ($res instanceof mysqli_result && $res->num_rows > 0) {
+        $res->free();
+        $cached = true;
+        return true;
+    }
+    if ($res instanceof mysqli_result) {
+        $res->free();
+    }
+
+    try {
+        $ok = (bool)$conn->query("ALTER TABLE songs ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'published'");
+        if ($ok) {
+            @$conn->query("ALTER TABLE songs ADD INDEX idx_songs_status (status)");
+        }
+        $cached = $ok;
+        return $ok;
+    } catch (Throwable $_) {
+        $cached = false;
+        return false;
+    }
+}
+
+function wp_api_is_admin_authenticated(): bool {
+    static $checked = null;
+    if ($checked !== null) {
+        return $checked;
+    }
+    try {
+        require_once __DIR__ . '/admin_access.php';
+        $config = function_exists('wp_version_load') ? wp_version_load() : [];
+        $user = wp_admin_get_current_user();
+        if (!$user && !wp_admin_has_logout_lock(null)) {
+            $restoredUser = wp_admin_restore_user_from_access_cookie();
+            if ($restoredUser && wp_admin_is_authorized($restoredUser, $config)) {
+                $user = $restoredUser;
+            }
+        }
+        if (!$user || wp_admin_has_logout_lock($user) || !wp_admin_is_authorized($user, $config)) {
+            $checked = false;
+            return false;
+        }
+        $hasCookieTicket = wp_admin_has_valid_access_cookie($user);
+        $hasSessionTicket = wp_admin_has_session_ticket($user);
+        $checked = !empty($_SESSION['admin_access_granted']) || $hasCookieTicket || $hasSessionTicket;
+        return $checked;
+    } catch (Throwable $_) {
+        $checked = false;
+        return false;
+    }
+}
+
 function wp_api_json_error(string $message, int $status = 500): void {
     http_response_code($status);
     echo json_encode(["success" => false, "error" => $message], JSON_UNESCAPED_UNICODE);
@@ -120,6 +178,10 @@ function wp_api_require_admin_access(): void {
 
 $hasSeparateTitleColumns = wp_api_song_title_columns_present($conn);
 $hasBpmColumn = wp_api_song_bpm_column_present($conn);
+$hasStatusColumn = wp_api_ensure_song_status_column($conn);
+$includeDrafts = $hasStatusColumn && !empty($_GET['include_drafts']) && wp_api_is_admin_authenticated();
+$publishedFilterSql = $hasStatusColumn ? "COALESCE(status, 'published') != 'draft'" : "1=1";
+$publishedFilterAliasSql = $hasStatusColumn ? "COALESCE(s.status, 'published') != 'draft'" : "1=1";
 
 $method = $_SERVER['REQUEST_METHOD'];
 $lang = wp_translation_requested_lang();
@@ -159,6 +221,7 @@ if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'popular'
         LEFT JOIN {$viewSub} v ON v.song_id = s.id
         LEFT JOIN {$favSub} f ON f.song_id = s.id
         LEFT JOIN {$setlistSub} sl ON sl.song_id = s.id
+        WHERE {$publishedFilterAliasSql}
         ORDER BY popularity_score DESC, s.id DESC
         LIMIT 100
     ";
@@ -275,7 +338,8 @@ if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'search')
             $stmt = $conn->prepare("
                 SELECT id, title, title_hy, title_lat, title_en, title_ru, artist, song_key, tags, created_at, lyrics
                 FROM songs
-                WHERE lyrics LIKE ?
+                WHERE {$publishedFilterSql} AND (
+                   lyrics LIKE ?
                    OR title LIKE ?
                    OR title_hy LIKE ?
                    OR title_lat LIKE ?
@@ -283,6 +347,7 @@ if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'search')
                    OR title_ru LIKE ?
                    OR artist LIKE ?
                    OR tags LIKE ?
+                )
                 ORDER BY created_at DESC
                 LIMIT 200
             ");
@@ -291,10 +356,12 @@ if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === 'search')
             $stmt = $conn->prepare("
                 SELECT id, title, artist, song_key, tags, created_at, lyrics
                 FROM songs
-                WHERE lyrics LIKE ?
+                WHERE {$publishedFilterSql} AND (
+                   lyrics LIKE ?
                    OR title LIKE ?
                    OR artist LIKE ?
                    OR tags LIKE ?
+                )
                 ORDER BY created_at DESC
                 LIMIT 200
             ");
@@ -334,6 +401,9 @@ if ($method === "GET") {
         $stmt->execute();
         $res = $stmt->get_result();
         $song = $res ? $res->fetch_assoc() : null;
+        if (is_array($song) && $hasStatusColumn && !$includeDrafts && ($song['status'] ?? 'published') === 'draft') {
+            $song = null;
+        }
         if (is_array($song)) {
             $sourceTitle = trim((string)($song['title'] ?? ''));
             $song['title_variants'] = [
@@ -372,7 +442,8 @@ if ($method === "GET") {
         echo json_encode($song, JSON_UNESCAPED_UNICODE);
         exit;
     } else {
-        $res = $conn->query("SELECT * FROM songs ORDER BY created_at DESC");
+        $listWhere = ($hasStatusColumn && !$includeDrafts) ? "WHERE {$publishedFilterSql}" : "";
+        $res = $conn->query("SELECT * FROM songs {$listWhere} ORDER BY created_at DESC");
         $songs = [];
         if ($res instanceof mysqli_result) {
             while ($row = $res->fetch_assoc()) {
@@ -443,7 +514,17 @@ if ($method === "POST") {
     if (!$stmt->execute()) {
         wp_api_json_error('Չհաջողվեց պահպանել երգը: ' . $stmt->error);
     }
-    echo json_encode(["success" => true, "id" => $conn->insert_id]);
+    $newSongId = (int)$conn->insert_id;
+    $songStatus = (($data['status'] ?? 'published') === 'draft') ? 'draft' : 'published';
+    if ($hasStatusColumn && $newSongId > 0) {
+        $stStmt = $conn->prepare("UPDATE songs SET status=? WHERE id=?");
+        if ($stStmt) {
+            $stStmt->bind_param("si", $songStatus, $newSongId);
+            $stStmt->execute();
+            $stStmt->close();
+        }
+    }
+    echo json_encode(["success" => true, "id" => $newSongId, "status" => $songStatus]);
     exit;
 }
 
@@ -498,7 +579,18 @@ if ($method === "PUT") {
         if (!$ok) {
             wp_api_json_error('Չհաջողվեց թարմացնել երգը: ' . $stmt->error);
         }
-        echo json_encode(["success" => true]);
+        $songStatus = isset($data['status'])
+            ? ((($data['status'] ?? 'published') === 'draft') ? 'draft' : 'published')
+            : null;
+        if ($hasStatusColumn && $songStatus !== null) {
+            $stStmt = $conn->prepare("UPDATE songs SET status=? WHERE id=?");
+            if ($stStmt) {
+                $stStmt->bind_param("si", $songStatus, $id);
+                $stStmt->execute();
+                $stStmt->close();
+            }
+        }
+        echo json_encode(["success" => true, "status" => $songStatus ?? 'published']);
     } else {
         echo json_encode(["success" => false, "error" => "Missing ID or data"]);
     }

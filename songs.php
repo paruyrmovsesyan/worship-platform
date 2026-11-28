@@ -448,7 +448,8 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
         <!-- Quick Filter Chips -->
         <div class="admin-chip-bar" id="songsQuickChips" style="margin-bottom: 18px;">
           <button type="button" class="admin-chip active" data-song-chip="all" onclick="window.applySongQuickChip('all', this)">🎵 Բոլոր երգերը</button>
-          <button type="button" class="admin-chip" data-song-chip="no-lyrics" onclick="window.applySongQuickChip('no-lyrics', this)">📝 Առանց բառերի</button>
+          <button type="button" class="admin-chip" data-song-chip="drafts" onclick="window.applySongQuickChip('drafts', this)">📝 Սևագրեր <span id="statDraftsChipBadge" style="background:rgba(245,158,11,0.18); color:#d97706; border-radius:999px; padding:1px 7px; font-size:11px; font-weight:800; margin-left:4px;">0</span></button>
+          <button type="button" class="admin-chip" data-song-chip="no-lyrics" onclick="window.applySongQuickChip('no-lyrics', this)">📄 Առանց բառերի</button>
           <button type="button" class="admin-chip" data-song-chip="no-key" onclick="window.applySongQuickChip('no-key', this)">🎸 Առանց տոնայնության</button>
           <button type="button" class="admin-chip" data-song-chip="no-bpm" onclick="window.applySongQuickChip('no-bpm', this)">⏱️ Առանց տեմպի (BPM)</button>
         </div>
@@ -464,9 +465,12 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
               var keyTxt = (tds[2].textContent || '').trim();
               var bpmTxt = (tds[3].textContent || '').trim();
               var statusTxt = (tds[4].textContent || '').trim().toLowerCase();
+              var isDraftRow = tr.dataset.songStatus === 'draft';
               var show = true;
-              if (mode === 'no-lyrics') {
-                show = statusTxt.indexOf('no lyrics') !== -1 || statusTxt.indexOf('առանց') !== -1 || statusTxt.indexOf('draft') !== -1 || statusTxt.indexOf('без') !== -1 || statusTxt === '—' || statusTxt === '';
+              if (mode === 'drafts') {
+                show = isDraftRow;
+              } else if (mode === 'no-lyrics') {
+                show = statusTxt.indexOf('no lyrics') !== -1 || statusTxt.indexOf('առանց') !== -1 || statusTxt.indexOf('без') !== -1 || statusTxt === '—' || statusTxt === '';
               } else if (mode === 'no-key') {
                 show = !keyTxt || keyTxt === '—' || keyTxt === '-';
               } else if (mode === 'no-bpm') {
@@ -522,7 +526,10 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
   <div id="editorPane" class="editor-modal workspace-pane">
     <div class="editor-drawer">
       <div class="editor-header">
-        <h3 style="margin:0;"><?= __('Ավելացնել / Խմբագրել երգ') ?></h3>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <h3 style="margin:0;"><?= __('Ավելացնել / Խմբագրել երգ') ?></h3>
+          <span id="editorDraftBadge" hidden style="display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:999px; background:rgba(245,158,11,0.16); color:#d97706; border:1px solid rgba(245,158,11,0.35); font-size:12px; font-weight:800;">📝 Սևագիր (Չհրապարակված)</span>
+        </div>
         <div style="display: flex; gap: 8px;">
           <button id="clearForm" class="btn compact-btn" title="<?= __('Մաքրել') ?>">🔄</button>
           <button id="downloadTxt" class="btn compact-btn">TXT</button>
@@ -682,9 +689,10 @@ button.section-tab.nav-item.active svg { stroke:#fff; }
 
 
       </div>
-      <div class="editor-footer">
+      <div class="editor-footer" style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
         <button id="previewTrigger" class="btn" onclick="document.getElementById('previewPane').classList.add('is-active')"><?= __('Preview') ?></button>
-        <button id="saveSong" class="btn btn-primary"><?= __('Save Song') ?></button>
+        <button id="saveDraftBtn" type="button" class="btn" style="background:rgba(245,158,11,0.14); color:#b45309; border:1px solid rgba(245,158,11,0.45); font-weight:700;">📝 <?= __('Պահպանել սևագիր') ?></button>
+        <button id="saveSong" class="btn btn-primary">🚀 <?= __('Հրապարակել') ?></button>
       </div>
     </div>
   </div>
@@ -1010,6 +1018,8 @@ const useFlatsI = $('useFlats');
 const preview = $('preview');
 const keysGrid = $('keysGrid');
 const saveBtn = $('saveSong');
+const saveDraftBtn = $('saveDraftBtn');
+const editorDraftBadge = $('editorDraftBadge');
 const cancelEditBtn = $('cancelEdit');
 const clearBtn = $('clearForm');
 const downloadTxtBtn = $('downloadTxt');
@@ -1858,7 +1868,8 @@ window?.addEventListener('online', registerAdminInstall);
 function normalizeSong(song) {
   return {
     ...song,
-    song_key: song.song_key ?? song.key ?? ''
+    song_key: song.song_key ?? song.key ?? '',
+    status: song.status === 'draft' ? 'draft' : 'published'
   };
 }
 
@@ -1907,14 +1918,24 @@ function updateStats(totalCount, visibleCount) {
 function setEditMode(song = null) {
   currentEditId = song ? Number(song.id) : null;
   const editing = currentEditId !== null;
+  const isDraft = Boolean(song && song.status === 'draft');
   if (!editing) {
     currentSongAttachments = [];
     pendingMaterialFiles.clear();
   }
-  saveBtn.textContent = editing ? (window.I18N?.Update || 'Թարմացնել') : (window.I18N?.Save || 'Պահպանել');
+  if (editorDraftBadge) {
+    editorDraftBadge.hidden = !isDraft;
+    editorDraftBadge.style.display = isDraft ? 'inline-flex' : 'none';
+  }
+  saveBtn.textContent = editing
+    ? (isDraft ? '🚀 Հրապարակել' : '💾 ' + (window.I18N?.Update || 'Թարմացնել'))
+    : '🚀 Հրապարակել';
+  if (saveDraftBtn) {
+    saveDraftBtn.textContent = isDraft ? '📝 Պահպանել սևագիրը' : '📝 Պահպանել սևագիր';
+  }
   cancelEditBtn.hidden = !editing;
   editingBadge.textContent = editing ? `Խմբագրվում է․ ${displayEditorSongTitle(song.title || '') || 'Անանուն'}` : 'Խմբագրվում է․ ոչինչ';
-  statCurrentMode.textContent = editing ? 'Խմբագրում' : 'Նոր երգ';
+  statCurrentMode.textContent = editing ? (isDraft ? 'Սևագիր' : 'Խմբագրում') : 'Նոր երգ';
   renderSongMaterials();
   updateWorkspaceState();
 }
@@ -2011,10 +2032,12 @@ function getFormData() {
   };
 }
 
-function validateSong(song) {
+function validateSong(song, targetStatus = 'published') {
   if (!song.title) return 'Լրացրու երգի անունը';
   if (song.bpm && (song.bpm < 20 || song.bpm > 400)) return 'BPM-ը գրիր 20-ից 400 միջակայքում';
-  if (!song.chords.trim() && !song.lyrics.trim()) return 'Լրացրու գոնե ակորդները կամ բառերը';
+  if (targetStatus !== 'draft' && !song.chords.trim() && !song.lyrics.trim()) {
+    return 'Հրապարակելու համար լրացրու գոնե ակորդները կամ բառերը (կամ պահպանիր որպես սևագիր)';
+  }
   return '';
 }
 
@@ -2148,10 +2171,14 @@ function updateLoadMoreState(totalCount, shownCount) {
 function renderTable(songs = [], totalCount = songs.length) {
   tableBody.innerHTML = '';
   const withLyrics = ALL_SONGS.filter(song => (song.lyrics || '').trim()).length;
+  const draftCount = ALL_SONGS.filter(song => song.status === 'draft').length;
+  const draftBadgeEl = $('statDraftsChipBadge');
+  if (draftBadgeEl) draftBadgeEl.textContent = String(draftCount);
   songsCount.innerHTML = `
     <span style="font-weight:600; color:var(--text);">${ALL_SONGS.length}</span> ${window.I18N?.TotalSongs || 'ընդհանուր'} 
     <span style="margin:0 8px; color:var(--line);">|</span> 
     <span style="font-weight:600; color:var(--success);">${withLyrics}</span> ${window.I18N?.WithLyricsCount || 'բառերով'}
+    ${draftCount > 0 ? `<span style="margin:0 8px; color:var(--line);">|</span> <span style="font-weight:700; color:#d97706;">📝 ${draftCount} սևագիր</span>` : ''}
   `;
   tableInfo.textContent = `Ցուցադրվում է ${songs.length} երգ`;
   updateLoadMoreState(totalCount, songs.length);
@@ -2170,9 +2197,11 @@ function renderTable(songs = [], totalCount = songs.length) {
 
   for (const s of songs) {
     const hasLyrics = !!(s.lyrics && s.lyrics.trim());
+    const isDraft = s.status === 'draft';
     const tr = document.createElement('tr');
     tr.className = 'clickable-row';
     tr.dataset.songId = s.id;
+    tr.dataset.songStatus = isDraft ? 'draft' : 'published';
     tr.innerHTML = `
       <td>
         <div class="song-title" data-open-song="${s.id}">
@@ -2194,12 +2223,16 @@ function renderTable(songs = [], totalCount = songs.length) {
         </div>
       </td>
       <td>
-        <div class="mini-pills" style="margin-top:0;">
-          <span class="mini-pill status-pill ${hasLyrics ? 'has-lyrics' : 'no-lyrics'}" style="white-space: nowrap;">${hasLyrics ? (window.I18N?.Published || 'Բառերով') : (window.I18N?.Draft || 'Առանց բառերի')}</span>
+        <div class="mini-pills" style="margin-top:0; display:flex; gap:6px; flex-wrap:wrap;">
+          ${isDraft
+            ? `<span class="mini-pill" style="white-space:nowrap; background:rgba(245,158,11,0.16); color:#d97706; border:1px solid rgba(245,158,11,0.35); font-weight:700;">📝 Սևագիր</span>`
+            : `<span class="mini-pill status-pill ${hasLyrics ? 'has-lyrics' : 'no-lyrics'}" style="white-space: nowrap;">${hasLyrics ? (window.I18N?.Published || 'Բառերով') : (window.I18N?.Draft || 'Առանց բառերի')}</span>`
+          }
         </div>
       </td>
       <td>
         <div class="row-actions" style="display: flex; gap: 8px; align-items: center; white-space: nowrap;">
+          ${isDraft ? `<button class="btn" style="background:rgba(5,205,153,0.14); color:#047857; border-color:rgba(5,205,153,0.45); font-weight:700;" type="button" data-action="publish" data-id="${s.id}">🚀 Հրապարակել</button>` : ''}
           <button class="btn" type="button" data-action="edit" data-id="${s.id}">${window.I18N?.Edit || 'Խմբագրել'}</button>
           <button class="btn" style="color:var(--danger); border-color:#fca5a5;" type="button" data-action="delete" data-id="${s.id}">${window.I18N?.Delete || 'Ջնջել'}</button>
         </div>
@@ -2210,7 +2243,7 @@ function renderTable(songs = [], totalCount = songs.length) {
 }
 
 async function fetchSongs() {
-  const res = await fetch('api.php');
+  const res = await fetch('api.php?include_drafts=1');
   if (!res.ok) throw new Error('Չհաջողվեց բեռնել երգերը');
   const songs = await res.json();
   ALL_SONGS = Array.isArray(songs) ? songs.map(normalizeSong) : [];
@@ -2219,18 +2252,54 @@ async function fetchSongs() {
 }
 
 async function startEditSong(id) {
-  const res = await fetch('api.php?id=' + encodeURIComponent(id));
+  const res = await fetch('api.php?id=' + encodeURIComponent(id) + '&include_drafts=1');
   if (!res.ok) throw new Error('Չհաջողվեց բեռնել երգը');
   const song = normalizeSong(await res.json());
   fillForm(song);
   setEditMode(song);
   markCurrentSnapshotAsSaved();
-  showNotice('Խմբագրման ռեժիմը ակտիվացված է', 'info');
+  showNotice(song.status === 'draft' ? 'Բացված է սևագրի խմբագրումը' : 'Խմբագրման ռեժիմը ակտիվացված է', 'info');
 }
 
-async function saveCurrentSong() {
-  const song = getFormData();
-  const error = validateSong(song);
+async function publishDraftSong(id) {
+  const res = await fetch('api.php?id=' + encodeURIComponent(id) + '&include_drafts=1');
+  if (!res.ok) throw new Error('Չհաջողվեց բեռնել սևագիրը');
+  const song = normalizeSong(await res.json());
+  if (!(song.chords || '').trim() && !(song.lyrics || '').trim()) {
+    await startEditSong(id);
+    showNotice('Հրապարակելու համար ավելացրու գոնե բառերը կամ ակորդները', 'error');
+    return;
+  }
+  const payload = {
+    title: song.title || '',
+    title_hy: song.title_hy || '',
+    title_lat: song.title_lat || '',
+    title_en: song.title_en || '',
+    title_ru: song.title_ru || '',
+    artist: song.artist || '',
+    key: song.song_key || '',
+    bpm: Number(song.bpm || 0),
+    tags: song.tags || '',
+    chords: song.chords || '',
+    lyrics: song.lyrics || '',
+    status: 'published'
+  };
+  const putRes = await fetch('api.php?id=' + encodeURIComponent(id), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const result = await putRes.json().catch(() => ({}));
+  if (!putRes.ok || result.success === false) {
+    throw new Error(result.error || 'Չհաջողվեց հրապարակել երգը');
+  }
+  showNotice('🚀 Երգը հաջողությամբ հրապարակվեց', 'success');
+  await fetchSongs();
+}
+
+async function saveCurrentSong(targetStatus = 'published') {
+  const song = { ...getFormData(), status: targetStatus === 'draft' ? 'draft' : 'published' };
+  const error = validateSong(song, song.status);
   if (error) {
     showNotice(error, 'error');
     return;
@@ -2373,8 +2442,10 @@ async function saveCurrentSong() {
 
   if (uploadErrors.length > 0) {
     showNotice('Երգը պահպանվեց, սակայն ֆայլը կցելիս առաջացավ խնդիր: ' + uploadErrors.join('; '), 'error');
+  } else if (song.status === 'draft') {
+    showNotice('📝 Երգը պահպանվեց որպես սևագիր (տեսանելի է միայն ադմինում)', 'success');
   } else {
-    showNotice(window.I18N?.Saved || 'Երգը և կցված նյութերը պահպանված են ✅', 'success');
+    showNotice(window.I18N?.Saved || '🚀 Երգը և կցված նյութերը հրապարակված են ✅', 'success');
   }
   clearForm();
   await fetchSongs();
@@ -2545,7 +2616,15 @@ clearFiltersBtn?.addEventListener('click', () => {
 
 saveBtn?.addEventListener('click', async () => {
   try {
-    await saveCurrentSong();
+    await saveCurrentSong('published');
+  } catch (err) {
+    showNotice(err.message || 'Սխալ է տեղի ունեցել', 'error');
+  }
+});
+
+saveDraftBtn?.addEventListener('click', async () => {
+  try {
+    await saveCurrentSong('draft');
   } catch (err) {
     showNotice(err.message || 'Սխալ է տեղի ունեցել', 'error');
   }
@@ -2601,6 +2680,7 @@ tableBody?.addEventListener('click', async (e) => {
     const id = btn.dataset.id;
     const action = btn.dataset.action;
     try {
+      if (action === 'publish') await publishDraftSong(id);
       if (action === 'edit') await startEditSong(id);
       if (action === 'delete') await deleteSong(id);
     } catch (err) {

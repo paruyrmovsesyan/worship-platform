@@ -210,9 +210,12 @@ if (strpos($path, '/song_view.html') !== false && !empty($query['id'])) {
 if ($songId) {
     try {
         $pdo = wp_runtime_open_pdo();
-        $stmt = $pdo->prepare("SELECT id, title, title_hy, title_en, title_ru, artist, lyrics FROM songs WHERE id = ? LIMIT 1");
+        $stmt = $pdo->prepare("SELECT * FROM songs WHERE id = ? LIMIT 1");
         $stmt->execute([$songId]);
         $song = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (is_array($song) && ($song['status'] ?? 'published') === 'draft') {
+            $song = null;
+        }
         
         if ($song) {
             $songTitle = $song['title'] ?: $song['title_hy'] ?: $song['title_en'] ?: 'Unknown Song';
