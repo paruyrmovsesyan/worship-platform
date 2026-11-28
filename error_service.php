@@ -882,6 +882,19 @@ function wp_error_auto_verify_item(array &$item, bool $force = false): array {
     }
 
     // 6. Network connectivity / Load failed (Safari/Chrome client offline or navigation cancellation)
+    if (stripos($message, 'Unable to preload CSS') !== false ||
+        stripos($message, 'Failed to fetch dynamically imported module') !== false ||
+        stripos($stackTrace, 'Unable to preload CSS') !== false ||
+        stripos($stackTrace, 'Failed to fetch dynamically imported module') !== false) {
+        $reason = 'Vite-ի ստատիկ ռեսուրսների/CSS-ի բեռնման ժամանակավոր սխալ է (օգտատիրոջ օֆլայն/ցանցային անջատման պատճառով), ռեսուրսները հասանելի են սերվերում';
+        wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');
+        $item['is_resolved'] = 1;
+        $item['resolved_at'] = date('Y-m-d H:i:s');
+        $item['resolved_by'] = 'auto_code_analysis';
+        $item['resolution_reason'] = $reason;
+        return ['verified' => true, 'is_resolved' => true, 'reason' => $reason];
+    }
+
     if (stripos($message, 'Network Request Failed') !== false || stripos($message, 'Load failed') !== false || stripos($message, 'Failed to fetch') !== false) {
         $reason = 'Հաճախորդի ցանցային անջատում (Safari/Chrome Load failed) — ֆիլտրված է';
         wp_error_save_resolution($fingerprint, true, $reason, 'auto_code_analysis');

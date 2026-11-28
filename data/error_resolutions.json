@@ -484,5 +484,11 @@
         "resolved_at": "2026-11-22 23:15:49",
         "resolved_by": "auto_test_verify",
         "resolution_reason": "Թեստային սխալ (փորձարկումն ավարտված է)"
+    },
+    "test_css_preload": {
+        "is_resolved": 1,
+        "resolved_at": "2026-11-28 11:24:26",
+        "resolved_by": "auto_code_analysis",
+        "resolution_reason": "Vite-ի ստատիկ ռեսուրսների\/CSS-ի բեռնման ժամանակավոր սխալ է (օգտատիրոջ օֆլայն\/ցանցային անջատման պատճառով), ռեսուրսները հասանելի են սերվերում"
     }
 }

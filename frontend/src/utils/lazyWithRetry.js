@@ -19,17 +19,30 @@ export function lazyWithRetry(importer, chunkKey = '') {
         alreadyRetried = sessionStorage.getItem(storageKey) === '1';
       } catch {}
 
-      if (!alreadyRetried && typeof navigator !== 'undefined' && navigator.onLine) {
+      const isChunkOrCssError =
+        /Unable to preload CSS/i.test(err?.message || '') ||
+        /Failed to fetch dynamically imported module/i.test(err?.message || '') ||
+        /Loading chunk .* failed/i.test(err?.message || '');
+
+      if (!alreadyRetried) {
         try {
           sessionStorage.setItem(storageKey, '1');
         } catch {}
-        // Retry import once before falling back to reload
-        try {
-          const retryMod = await importer();
-          return retryMod;
-        } catch {
-          window.location.reload();
-          return new Promise(() => {});
+
+        if (typeof navigator !== 'undefined' && navigator.onLine) {
+          // Retry import once before falling back to reload
+          try {
+            const retryMod = await importer();
+            return retryMod;
+          } catch {
+            if (isChunkOrCssError) {
+              window.location.reload();
+              return new Promise(() => {});
+            }
+          }
+        } else if (isChunkOrCssError && typeof window !== 'undefined') {
+          // When offline and chunk/CSS preload fails, reload once network returns
+          window.addEventListener('online', () => window.location.reload(), { once: true });
         }
       }
       throw err;
