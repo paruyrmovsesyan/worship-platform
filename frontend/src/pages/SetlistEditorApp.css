@@ -95,22 +95,25 @@ body.wp-standalone-app:not(.is-ios) .sla-page {
 }
 
 .sla-action-btn--live {
-  background: rgba(255, 77, 109, 0.14);
-  border-color: rgba(255, 77, 109, 0.28);
-  color: #ff4d6d;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(5, 150, 105, 0.32));
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  color: #10b981;
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.2);
 }
 
 .sla-action-btn--live:active {
-  background: rgba(255, 77, 109, 0.25);
+  background: rgba(16, 185, 129, 0.35);
+  transform: scale(0.95);
 }
 
 .sla-live-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: #ff4d6d;
-  box-shadow: 0 0 8px #ff4d6d;
-  animation: sla-pulse 1.8s infinite;
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+  animation: sla-pulse 1.6s infinite;
 }
 
 @keyframes sla-pulse {
@@ -518,43 +521,163 @@ body.is-touch-dragging-active {
 .sla-badges-row {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .sla-key-pill {
-  padding: 2px 7px;
-  border-radius: 6px;
+  padding: 3px 8px;
+  border-radius: 8px;
   background: rgba(0, 212, 255, 0.12);
-  border: 1px solid rgba(0, 212, 255, 0.25);
+  border: 1px solid rgba(0, 212, 255, 0.28);
   color: #00d4ff;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.sla-key-pill--interactive {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sla-key-pill--interactive:active,
+.sla-key-pill--interactive.is-active {
+  background: rgba(0, 212, 255, 0.28);
+  border-color: #00d4ff;
+  transform: scale(0.95);
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.35);
 }
 
 .sla-bpm-pill {
-  padding: 2px 6px;
-  border-radius: 6px;
+  padding: 3px 7px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: #a2b0c3;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.sla-bpm-pill--interactive {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sla-bpm-pill--interactive:active {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  transform: scale(0.95);
 }
 
 .sla-capo-pill {
-  padding: 2px 6px;
-  border-radius: 6px;
+  padding: 3px 7px;
+  border-radius: 8px;
   background: rgba(255, 170, 0, 0.12);
-  border: 1px solid rgba(255, 170, 0, 0.25);
+  border: 1px solid rgba(255, 170, 0, 0.28);
   color: #ffaa00;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 600;
+}
+
+/* ── Inline Quick Key Transpose Popover ── */
+.sla-quick-key-popover {
+  margin: 6px 0 10px 0;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(18, 26, 40, 0.95);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 212, 255, 0.15);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 50;
+  position: relative;
+}
+
+.sla-quick-key-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.sla-quick-key-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #00d4ff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sla-quick-key-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #a2b0c3;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.sla-quick-key-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.sla-key-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.sla-key-btn:active {
+  transform: scale(0.92);
+}
+
+.sla-key-btn.active {
+  background: linear-gradient(135deg, #00d4ff, #0072ff) !important;
+  border-color: #00d4ff !important;
+  color: #fff !important;
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.45);
+}
+
+.sla-key-btn--orig {
+  grid-column: 1 / -1;
+  height: 32px;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: #8fa0b5;
+  margin-bottom: 2px;
 }
 
 /* ── Item Actions: Reorder, Edit, Delete ── */
 .sla-item-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
@@ -562,19 +685,20 @@ body.is-touch-dragging-active {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  color: #92a1b5;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #a2b0c3;
   cursor: pointer;
   transition: all 0.12s ease;
 }
 
 .sla-icon-action-btn:active {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.14);
   color: #fff;
+  transform: scale(0.92);
 }
 
 .sla-icon-action-btn--delete {
@@ -582,26 +706,35 @@ body.is-touch-dragging-active {
 }
 
 .sla-icon-action-btn--delete:active {
-  background: rgba(255, 77, 109, 0.2);
+  background: rgba(255, 77, 109, 0.25);
+  transform: scale(0.92);
 }
 
 .sla-reorder-pair {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .sla-reorder-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 18px;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  color: #8c9cb0;
+  width: 32px;
+  height: 20px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #a2b0c3;
   cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.sla-reorder-btn:active:not(:disabled) {
+  background: rgba(0, 212, 255, 0.2);
+  color: #00d4ff;
+  border-color: rgba(0, 212, 255, 0.4);
+  transform: scale(0.92);
 }
 
 .sla-reorder-btn:disabled {

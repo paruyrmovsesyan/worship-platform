@@ -25,6 +25,8 @@ const SECTION_PRESETS = [
   '✨ Ավարտ / Օրհնություն'
 ];
 
+const STANDARD_KEYS = ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'];
+
 const TEAM_ROLES = [
   'Առաջնորդ',
   'Վոկալ',
@@ -120,6 +122,7 @@ export default function SetlistEditorApp() {
   const [quickResults, setQuickResults] = useState([]);
   const [quickLoading, setQuickLoading] = useState(false);
   const [addedIds, setAddedIds] = useState({});
+  const [activeKeyPickerItemId, setActiveKeyPickerItemId] = useState(null);
   const quickSearchTimerRef = useRef(null);
 
   // In-App Add Section Modal
@@ -452,6 +455,8 @@ export default function SetlistEditorApp() {
 
   // Add Song
   const handleAddSong = async (songId, songKey = null) => {
+    triggerHaptic('success');
+    setAddedIds(prev => ({ ...prev, [songId]: true }));
     try {
       const res = await fetch('/setlists_api.php?action=add_song_to_setlist', {
         method: 'POST',
@@ -464,7 +469,7 @@ export default function SetlistEditorApp() {
       });
       const data = await res.json();
       if (data.ok) {
-        setAddedIds(prev => ({ ...prev, [songId]: true }));
+        showToast('✓ Երգն ավելացվեց երգացանկում');
         fetchSetlist();
       } else {
         alert(data.error || t('setlists.errorOccurred'));
@@ -472,6 +477,61 @@ export default function SetlistEditorApp() {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  // Quick Inline Key Transpose
+  const handleQuickKeyChange = async (item, newKey, e) => {
+    if (e) e.stopPropagation();
+    triggerHaptic('success');
+    const updatedKey = newKey === 'ORIGINAL' ? '' : newKey;
+
+    setItems(prev => {
+      const next = prev.map(i => i.id === item.id ? { ...i, target_key: updatedKey } : i);
+      updateCachedItems(next);
+      return next;
+    });
+    setActiveKeyPickerItemId(null);
+    showToast(updatedKey ? `✓ Տոնայնությունը փոխվեց՝ ${updatedKey}` : '✓ Տոնայնությունը վերականգնվեց (բնօրինակ)');
+
+    try {
+      const res = await fetch('/setlists_api.php?action=update_setlist_item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          item_id: item.id,
+          title: item.title || '',
+          duration: item.duration || '',
+          bpm: item.bpm || '',
+          capo: item.capo || '',
+          target_key: updatedKey,
+          notes: item.notes || '',
+          transition_type: item.transition_type || ''
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        fetchSetlist();
+      }
+    } catch (err) {
+      console.error(err);
+      fetchSetlist();
+    }
+  };
+
+  // Quick BPM Tap / Metronome Pulse
+  const handleQuickBpmPulse = (bpm, e) => {
+    if (e) e.stopPropagation();
+    const numBpm = Number.parseInt(bpm, 10);
+    if (!numBpm || numBpm <= 0) return;
+    triggerHaptic('medium');
+    showToast(`⏱ ${numBpm} BPM (տեմպի ազդանշան)`);
+    const intervalMs = Math.round(60000 / numBpm);
+    let count = 0;
+    const pulseTimer = setInterval(() => {
+      count++;
+      triggerHaptic(count % 4 === 0 ? 'heavy' : 'light');
+      if (count >= 3) clearInterval(pulseTimer);
+    }, intervalMs);
   };
 
   // Add Section
@@ -1680,7 +1740,10 @@ export default function SetlistEditorApp() {
           <button
             type="button"
             className="sla-action-btn sla-action-btn--live"
-            onClick={() => navigate(`/setlists/${id}/live`)}
+            onClick={() => {
+              triggerHaptic('medium');
+              navigate(`/setlists/${id}/live`);
+            }}
             title="Բացել Live Ռեժիմ"
           >
             <span className="sla-live-dot" />
@@ -1690,7 +1753,10 @@ export default function SetlistEditorApp() {
           <button
             type="button"
             className="sla-action-btn"
-            onClick={copySetlistAsText}
+            onClick={() => {
+              triggerHaptic('light');
+              copySetlistAsText();
+            }}
             title="Պատճենել տեքստով (WhatsApp / Telegram)"
           >
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1703,7 +1769,19 @@ export default function SetlistEditorApp() {
           <button
             type="button"
             className="sla-action-btn sla-action-btn--icon-only"
-            onClick={openShareModal}
+            onClick={async () => {
+              triggerHaptic('light');
+              if (isNativeApp) {
+                const res = await nativeShare({
+                  title: setlistData?.name || 'Երգացանկ',
+                  text: `🎵 ${setlistData?.name || 'Երգացանկ'}${setlistData?.service_date ? ` (${setlistData.service_date})` : ''}`,
+                  url: `${window.location.origin}/setlists/${id}`,
+                  dialogTitle: 'Կիսվել երգացանկով'
+                });
+                if (res) return;
+              }
+              openShareModal();
+            }}
             title="Կիսվել"
             aria-label="Կիսվել"
           >
@@ -1719,7 +1797,10 @@ export default function SetlistEditorApp() {
           <button
             type="button"
             className="sla-action-btn sla-action-btn--icon-only"
-            onClick={() => setIsPrintOpen(true)}
+            onClick={() => {
+              triggerHaptic('light');
+              setIsPrintOpen(true);
+            }}
             title="Տպել / PDF"
             aria-label="Տպել"
           >
@@ -1734,7 +1815,10 @@ export default function SetlistEditorApp() {
             <button
               type="button"
               className="sla-action-btn sla-action-btn--icon-only"
-              onClick={openEditSettings}
+              onClick={() => {
+                triggerHaptic('light');
+                openEditSettings();
+              }}
               title="Կարգավորումներ"
               aria-label="Կարգավորումներ"
             >
@@ -1932,6 +2016,7 @@ export default function SetlistEditorApp() {
             type="button"
             className="sla-hero-add-btn"
             onClick={() => {
+              triggerHaptic('medium');
               setQuickQuery('');
               setIsQuickDrawerOpen(true);
             }}
@@ -1944,7 +2029,14 @@ export default function SetlistEditorApp() {
           </button>
 
           <div className="sla-sub-actions-grid">
-            <button type="button" className="sla-sub-btn" onClick={openTeamModal}>
+            <button
+              type="button"
+              className="sla-sub-btn"
+              onClick={() => {
+                triggerHaptic('light');
+                openTeamModal();
+              }}
+            >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="9" cy="7" r="4"></circle>
@@ -1959,7 +2051,10 @@ export default function SetlistEditorApp() {
               <button
                 type="button"
                 className="sla-sub-btn"
-                onClick={() => navigate(`/chat/${teamChatId}`)}
+                onClick={() => {
+                  triggerHaptic('light');
+                  navigate(`/chat/${teamChatId}`);
+                }}
                 style={{ color: '#00d4ff' }}
               >
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1969,7 +2064,14 @@ export default function SetlistEditorApp() {
               </button>
             ) : null}
 
-            <button type="button" className="sla-sub-btn" onClick={() => setIsAddSectionOpen(true)}>
+            <button
+              type="button"
+              className="sla-sub-btn"
+              onClick={() => {
+                triggerHaptic('light');
+                setIsAddSectionOpen(true);
+              }}
+            >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="4" y1="6" x2="20" y2="6"></line>
                 <line x1="4" y1="12" x2="20" y2="12"></line>
@@ -1978,7 +2080,14 @@ export default function SetlistEditorApp() {
               <span>Բաժին</span>
             </button>
 
-            <button type="button" className="sla-sub-btn" onClick={openEditSettings}>
+            <button
+              type="button"
+              className="sla-sub-btn"
+              onClick={() => {
+                triggerHaptic('light');
+                openEditSettings();
+              }}
+            >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -1990,7 +2099,10 @@ export default function SetlistEditorApp() {
               <button
                 type="button"
                 className={`sla-sub-btn ${isReorderMode ? 'sla-sub-btn--active' : ''}`}
-                onClick={() => setIsReorderMode(prev => !prev)}
+                onClick={() => {
+                  triggerHaptic('medium');
+                  setIsReorderMode(prev => !prev);
+                }}
                 title="Երգերի վերադասավորման ռեժիմ"
               >
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
@@ -2108,7 +2220,10 @@ export default function SetlistEditorApp() {
                           <button
                             type="button"
                             className="sla-reorder-quick-btn"
-                            onClick={e => moveToExtremity(idx, 'top', e)}
+                            onClick={e => {
+                              triggerHaptic('medium');
+                              moveToExtremity(idx, 'top', e);
+                            }}
                             disabled={idx === 0}
                             title="Ամենասկիզբ"
                           >
@@ -2119,25 +2234,38 @@ export default function SetlistEditorApp() {
                           <button
                             type="button"
                             className="sla-reorder-quick-btn"
-                            onClick={e => moveItem(idx, 'up', e)}
+                            onClick={e => {
+                              triggerHaptic('light');
+                              moveItem(idx, 'up', e);
+                            }}
                             disabled={idx === 0}
                             title="Վերև"
                           >
-                            ▲
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="18 15 12 9 6 15"></polyline>
+                            </svg>
                           </button>
                           <button
                             type="button"
                             className="sla-reorder-quick-btn"
-                            onClick={e => moveItem(idx, 'down', e)}
+                            onClick={e => {
+                              triggerHaptic('light');
+                              moveItem(idx, 'down', e);
+                            }}
                             disabled={idx === items.length - 1}
                             title="Ներքև"
                           >
-                            ▼
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
                           </button>
                           <button
                             type="button"
                             className="sla-reorder-quick-btn"
-                            onClick={e => moveToExtremity(idx, 'bottom', e)}
+                            onClick={e => {
+                              triggerHaptic('medium');
+                              moveToExtremity(idx, 'bottom', e);
+                            }}
                             disabled={idx === items.length - 1}
                             title="Ամենավերջ"
                           >
@@ -2151,28 +2279,44 @@ export default function SetlistEditorApp() {
                           <div className="sla-reorder-pair">
                             <button
                               type="button"
-                              className="sla-reorder-btn"
-                              onClick={e => moveItem(idx, 'up', e)}
+                              className="sla-reorder-btn sla-reorder-btn--up"
+                              onClick={e => {
+                                triggerHaptic('light');
+                                moveItem(idx, 'up', e);
+                              }}
                               disabled={idx === 0}
                               title="Վերև"
+                              aria-label="Վերև"
                             >
-                              ▲
+                              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.4">
+                                <polyline points="18 15 12 9 6 15"></polyline>
+                              </svg>
                             </button>
                             <button
                               type="button"
-                              className="sla-reorder-btn"
-                              onClick={e => moveItem(idx, 'down', e)}
+                              className="sla-reorder-btn sla-reorder-btn--down"
+                              onClick={e => {
+                                triggerHaptic('light');
+                                moveItem(idx, 'down', e);
+                              }}
                               disabled={idx === items.length - 1}
                               title="Ներքև"
+                              aria-label="Ներքև"
                             >
-                              ▼
+                              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.4">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                              </svg>
                             </button>
                           </div>
                           <button
                             type="button"
                             className="sla-icon-action-btn"
-                            onClick={e => openItemEdit(item, e)}
+                            onClick={e => {
+                              triggerHaptic('light');
+                              openItemEdit(item, e);
+                            }}
                             title="Խմբագրել բաժինը"
+                            aria-label="Խմբագրել բաժինը"
                           >
                             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M12 20h9"></path>
@@ -2182,10 +2326,17 @@ export default function SetlistEditorApp() {
                           <button
                             type="button"
                             className="sla-icon-action-btn sla-icon-action-btn--delete"
-                            onClick={e => removeItem(item.id, e)}
+                            onClick={e => {
+                              triggerHaptic('warning');
+                              removeItem(item.id, e);
+                            }}
                             title="Հեռացնել"
+                            aria-label="Հեռացնել"
                           >
-                            ✕
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2">
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
                           </button>
                         </div>
                       )
@@ -2264,10 +2415,27 @@ export default function SetlistEditorApp() {
                         </span>
                         <div className="sla-badges-row">
                           {(item.target_key || item.song_key) && (
-                            <span className="sla-key-pill">{item.target_key || item.song_key}</span>
+                            <span
+                              className={`sla-key-pill sla-key-pill--interactive ${activeKeyPickerItemId === item.id ? 'is-active' : ''}`}
+                              onClick={(e) => {
+                                if (!canEdit) return;
+                                e.stopPropagation();
+                                triggerHaptic('light');
+                                setActiveKeyPickerItemId(activeKeyPickerItemId === item.id ? null : item.id);
+                              }}
+                              title={canEdit ? "Սեղմեք տոնայնությունը արագ փոխելու համար" : "Տոնայնություն"}
+                            >
+                              🎹 {item.target_key || item.song_key}
+                            </span>
                           )}
                           {Number.parseInt(item.bpm, 10) > 0 && (
-                            <span className="sla-bpm-pill">{item.bpm} BPM</span>
+                            <span
+                              className="sla-bpm-pill sla-bpm-pill--interactive"
+                              onClick={(e) => handleQuickBpmPulse(item.bpm, e)}
+                              title="Սեղմեք տեմպը (BPM) զգալու համար"
+                            >
+                              ⏱ {item.bpm} BPM
+                            </span>
                           )}
                           {item.capo && (
                             <span className="sla-capo-pill">Capo {item.capo}</span>
@@ -2285,7 +2453,10 @@ export default function SetlistEditorApp() {
                           <button
                             type="button"
                             className="sla-reorder-quick-btn"
-                            onClick={e => moveToExtremity(idx, 'top', e)}
+                            onClick={e => {
+                              triggerHaptic('medium');
+                              moveToExtremity(idx, 'top', e);
+                            }}
                             disabled={idx === 0}
                             title="Ամենասկիզբ"
                           >
@@ -2296,25 +2467,38 @@ export default function SetlistEditorApp() {
                           <button
                             type="button"
                             className="sla-reorder-quick-btn"
-                            onClick={e => moveItem(idx, 'up', e)}
+                            onClick={e => {
+                              triggerHaptic('light');
+                              moveItem(idx, 'up', e);
+                            }}
                             disabled={idx === 0}
                             title="Վերև"
                           >
-                            ▲
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="18 15 12 9 6 15"></polyline>
+                            </svg>
                           </button>
                           <button
                             type="button"
                             className="sla-reorder-quick-btn"
-                            onClick={e => moveItem(idx, 'down', e)}
+                            onClick={e => {
+                              triggerHaptic('light');
+                              moveItem(idx, 'down', e);
+                            }}
                             disabled={idx === items.length - 1}
                             title="Ներքև"
                           >
-                            ▼
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
                           </button>
                           <button
                             type="button"
                             className="sla-reorder-quick-btn"
-                            onClick={e => moveToExtremity(idx, 'bottom', e)}
+                            onClick={e => {
+                              triggerHaptic('medium');
+                              moveToExtremity(idx, 'bottom', e);
+                            }}
                             disabled={idx === items.length - 1}
                             title="Ամենավերջ"
                           >
@@ -2328,28 +2512,44 @@ export default function SetlistEditorApp() {
                           <div className="sla-reorder-pair">
                             <button
                               type="button"
-                              className="sla-reorder-btn"
-                              onClick={e => moveItem(idx, 'up', e)}
+                              className="sla-reorder-btn sla-reorder-btn--up"
+                              onClick={e => {
+                                triggerHaptic('light');
+                                moveItem(idx, 'up', e);
+                              }}
                               disabled={idx === 0}
                               title="Վերև"
+                              aria-label="Վերև"
                             >
-                              ▲
+                              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.4">
+                                <polyline points="18 15 12 9 6 15"></polyline>
+                              </svg>
                             </button>
                             <button
                               type="button"
-                              className="sla-reorder-btn"
-                              onClick={e => moveItem(idx, 'down', e)}
+                              className="sla-reorder-btn sla-reorder-btn--down"
+                              onClick={e => {
+                                triggerHaptic('light');
+                                moveItem(idx, 'down', e);
+                              }}
                               disabled={idx === items.length - 1}
                               title="Ներքև"
+                              aria-label="Ներքև"
                             >
-                              ▼
+                              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.4">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                              </svg>
                             </button>
                           </div>
                           <button
                             type="button"
                             className="sla-icon-action-btn"
-                            onClick={e => openItemEdit(item, e)}
+                            onClick={e => {
+                              triggerHaptic('light');
+                              openItemEdit(item, e);
+                            }}
                             title="Խմբագրել երգը"
+                            aria-label="Խմբագրել երգը"
                           >
                             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M12 20h9"></path>
@@ -2359,15 +2559,62 @@ export default function SetlistEditorApp() {
                           <button
                             type="button"
                             className="sla-icon-action-btn sla-icon-action-btn--delete"
-                            onClick={e => removeItem(item.id, e)}
+                            onClick={e => {
+                              triggerHaptic('warning');
+                              removeItem(item.id, e);
+                            }}
                             title="Հեռացնել"
+                            aria-label="Հեռացնել"
                           >
-                            ✕
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2">
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
                           </button>
                         </div>
                       )
                     )}
                   </div>
+
+                  {activeKeyPickerItemId === item.id && (
+                    <div className="sla-quick-key-popover animate-fade-in" onClick={e => e.stopPropagation()}>
+                      <div className="sla-quick-key-header">
+                        <span className="sla-quick-key-title">⚡ Արագ փոխել տոնայնությունը</span>
+                        <button
+                          type="button"
+                          className="sla-quick-key-close"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveKeyPickerItemId(null);
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <div className="sla-quick-key-grid">
+                        <button
+                          type="button"
+                          className={`sla-key-btn sla-key-btn--orig ${!item.target_key ? 'active' : ''}`}
+                          onClick={(e) => handleQuickKeyChange(item, 'ORIGINAL', e)}
+                        >
+                          Բնօրինակ {item.song_key ? `(${item.song_key})` : ''}
+                        </button>
+                        {STANDARD_KEYS.map(k => {
+                          const isCurrent = (item.target_key === k || (!item.target_key && item.song_key === k));
+                          return (
+                            <button
+                              key={k}
+                              type="button"
+                              className={`sla-key-btn ${isCurrent ? 'active' : ''}`}
+                              onClick={(e) => handleQuickKeyChange(item, k, e)}
+                            >
+                              {k}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {(() => {
                     const nextSong = items.slice(idx + 1).find(i => i.item_type !== 'section');

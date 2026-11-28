@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { usePageReady } from '../hooks/usePageReady';
 import { getSongCoverStyle } from '../utils/songCover';
-import { nativeShare } from '../utils/nativeFeatures';
+import { nativeShare, triggerHaptic } from '../utils/nativeFeatures';
 import { useIsNativeApp } from '../hooks/useIsPWA';
 import { SetlistsAppSkeleton } from '../components/NativeSkeletons';
 import './Setlists.css';
@@ -805,7 +805,10 @@ export default function SetlistsApp() {
           <button
             type="button"
             className="btn btn-primary btn-new-set sl-app-new-btn"
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => {
+              triggerHaptic('medium');
+              setShowCreateModal(true);
+            }}
             aria-label={t('setlists.newSetlist')}
             title={t('setlists.newSetlist')}
           >
@@ -864,7 +867,10 @@ export default function SetlistsApp() {
           {stats.upcoming && (
             <div
               className="sl-app-stat-card upcoming-card"
-              onClick={() => navigate(`/setlists/${stats.upcoming.id}`)}
+              onClick={() => {
+                triggerHaptic('light');
+                navigate(`/setlists/${stats.upcoming.id}`);
+              }}
               title={language === 'am' ? 'Բացել առաջիկա ծառայությունը' : 'Open upcoming service'}
             >
               <div className="sl-app-stat-icon upcoming-icon">
@@ -915,7 +921,10 @@ export default function SetlistsApp() {
             <button
               type="button"
               className="sl-app-search-clear"
-              onClick={() => setSearchQuery('')}
+              onClick={() => {
+                triggerHaptic('light');
+                setSearchQuery('');
+              }}
               aria-label="Clear"
             >
               ✕
@@ -929,7 +938,10 @@ export default function SetlistsApp() {
             <select
               className="sl-app-sort-select"
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              onChange={(e) => {
+                triggerHaptic('light');
+                setSortBy(e.target.value);
+              }}
               aria-label="Sort setlists"
             >
               <option value="newest">{sortLabels.newest}</option>
@@ -946,7 +958,10 @@ export default function SetlistsApp() {
             <button
               type="button"
               className={`sl-view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-              onClick={() => changeViewMode('grid')}
+              onClick={() => {
+                triggerHaptic('light');
+                changeViewMode('grid');
+              }}
               title={language === 'am' ? 'Ցանցային տեսք' : 'Grid view'}
               aria-label="Grid view"
             >
@@ -960,7 +975,10 @@ export default function SetlistsApp() {
             <button
               type="button"
               className={`sl-view-btn ${viewMode === 'list' ? 'active' : ''}`}
-              onClick={() => changeViewMode('list')}
+              onClick={() => {
+                triggerHaptic('light');
+                changeViewMode('list');
+              }}
               title={language === 'am' ? 'Ցուցակային տեսք' : 'List view'}
               aria-label="List view"
             >
@@ -982,7 +1000,10 @@ export default function SetlistsApp() {
         <button
           type="button"
           className={`sl-timeframe-tab ${timeframeFilter === 'all' ? 'active' : ''}`}
-          onClick={() => setTimeframeFilter('all')}
+          onClick={() => {
+            triggerHaptic('light');
+            setTimeframeFilter('all');
+          }}
         >
           {timeframeLabels.all}
           <span className="sl-tab-badge">{timeframeCounts.all}</span>
@@ -990,7 +1011,10 @@ export default function SetlistsApp() {
         <button
           type="button"
           className={`sl-timeframe-tab ${timeframeFilter === 'upcoming' ? 'active' : ''}`}
-          onClick={() => setTimeframeFilter('upcoming')}
+          onClick={() => {
+            triggerHaptic('light');
+            setTimeframeFilter('upcoming');
+          }}
         >
           {timeframeLabels.upcoming}
           <span className="sl-tab-badge">{timeframeCounts.upcoming}</span>
@@ -998,7 +1022,10 @@ export default function SetlistsApp() {
         <button
           type="button"
           className={`sl-timeframe-tab ${timeframeFilter === 'past' ? 'active' : ''}`}
-          onClick={() => setTimeframeFilter('past')}
+          onClick={() => {
+            triggerHaptic('light');
+            setTimeframeFilter('past');
+          }}
         >
           {timeframeLabels.past}
           <span className="sl-tab-badge">{timeframeCounts.past}</span>
@@ -1010,7 +1037,10 @@ export default function SetlistsApp() {
         <button
           type="button"
           className={`sl-app-cat-chip ${categoryFilter === 'all' ? 'active' : ''}`}
-          onClick={() => setCategoryFilter('all')}
+          onClick={() => {
+            triggerHaptic('light');
+            setCategoryFilter('all');
+          }}
         >
           {categoryLabels.all}
           <span className="sl-chip-badge">{categoryCounts.all}</span>
@@ -1018,7 +1048,10 @@ export default function SetlistsApp() {
         <button
           type="button"
           className={`sl-app-cat-chip ${categoryFilter === 'personal' ? 'active' : ''}`}
-          onClick={() => setCategoryFilter('personal')}
+          onClick={() => {
+            triggerHaptic('light');
+            setCategoryFilter('personal');
+          }}
         >
           {categoryLabels.personal}
           <span className="sl-chip-badge">{categoryCounts.personal}</span>
@@ -1027,7 +1060,10 @@ export default function SetlistsApp() {
           <button
             type="button"
             className={`sl-app-cat-chip ${categoryFilter === 'team' ? 'active' : ''}`}
-            onClick={() => setCategoryFilter('team')}
+            onClick={() => {
+              triggerHaptic('light');
+              setCategoryFilter('team');
+            }}
           >
             {categoryLabels.team}
             <span className="sl-chip-badge">{categoryCounts.team}</span>
@@ -1037,7 +1073,10 @@ export default function SetlistsApp() {
           <button
             type="button"
             className={`sl-app-cat-chip ${categoryFilter === 'shared' ? 'active' : ''}`}
-            onClick={() => setCategoryFilter('shared')}
+            onClick={() => {
+              triggerHaptic('light');
+              setCategoryFilter('shared');
+            }}
           >
             {categoryLabels.shared}
             <span className="sl-chip-badge">{categoryCounts.shared}</span>
@@ -1112,7 +1151,10 @@ export default function SetlistsApp() {
                 key={list.id}
                 className={`sl-card sl-app-card animate-fade-in ${viewMode === 'grid' ? 'sl-card-grid' : 'sl-card-row'}`}
                 style={{ animationDelay: `${Math.min(idx * 0.04, 0.4)}s` }}
-                onClick={() => navigate(`/setlists/${list.id}`)}
+                onClick={() => {
+                  triggerHaptic('light');
+                  navigate(`/setlists/${list.id}`);
+                }}
               >
                 {/* Cover / Icon */}
                 <div
@@ -1211,6 +1253,7 @@ export default function SetlistsApp() {
                         className="sl-app-btn-live"
                         onClick={(e) => {
                           e.stopPropagation();
+                          triggerHaptic('medium');
                           navigate(`/setlists/${list.id}/live`);
                         }}
                         title="Live ռեժիմ"
@@ -1229,6 +1272,7 @@ export default function SetlistsApp() {
                           className="sl-app-menu-btn"
                           onClick={(e) => {
                             e.stopPropagation();
+                            triggerHaptic('light');
                             setActiveMenuId(isMenuOpen ? null : list.id);
                           }}
                           aria-label="Setlist actions"

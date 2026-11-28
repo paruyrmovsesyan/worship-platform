@@ -1,8 +1,8 @@
 {
   "app_version": "5.4.1",
   "web_version": "5.4.1",
-  "asset_version": "660",
-  "build_timestamp": "2026-11-28T11:24:00+04:00",
-  "release_type": "patch",
-  "release_summary": "Ավելացվել է Vite CSS preload և dynamic chunk բեռնման ավտո-վերականգնում lazyWithRetry-ում և ավտո-ստուգում error_service-ում:"
+  "asset_version": "661",
+  "build_timestamp": "2026-11-28T12:25:00+04:00",
+  "release_type": "feature",
+  "release_summary": "Արդիականացվել է բջջային սեթլիստի (Setlist) ամբողջ դիզայնը, կոճակները, արագ տոնայնության փոփոխիչը (Inline Key Transpose), տեմպի ազդանշանը (BPM pulse), Native Share-ը և Haptic Touch-ը:"
 }

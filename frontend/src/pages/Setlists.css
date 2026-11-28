@@ -1447,45 +1447,51 @@ body.wp-standalone-app:not(.is-ios) .setlists-page.sl-pwa-enhanced {
 .sl-app-btn-live {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 5px 9px;
-  border-radius: 9px;
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  color: #ff5c77;
-  font-size: 0.78rem;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.16), rgba(5, 150, 105, 0.28));
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #10b981;
+  font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s, transform 0.15s;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+  transition: all 0.15s ease;
 }
 .sl-app-btn-live:hover {
-  background: rgba(239, 68, 68, 0.22);
+  background: rgba(16, 185, 129, 0.28);
+  border-color: #10b981;
   transform: scale(1.03);
 }
 .sl-app-btn-live:active {
-  transform: scale(0.96);
+  transform: scale(0.95);
+  background: rgba(16, 185, 129, 0.35);
 }
 
 .sl-app-menu-wrap {
   position: relative;
 }
 .sl-app-menu-btn {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   color: var(--color-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: all 0.15s ease;
 }
 .sl-app-menu-btn:hover {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
+}
+.sl-app-menu-btn:active {
+  transform: scale(0.92);
 }
 
 /* Context Menu Dropdown */
@@ -1494,17 +1500,17 @@ body.wp-standalone-app:not(.is-ios) .setlists-page.sl-pwa-enhanced {
   right: 0;
   bottom: calc(100% + 6px);
   z-index: 100;
-  min-width: 170px;
-  background: rgba(18, 26, 38, 0.96);
+  min-width: 180px;
+  background: rgba(16, 24, 38, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 6px;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 20px rgba(0, 212, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 .sl-app-dropdown-item {
   display: flex;
