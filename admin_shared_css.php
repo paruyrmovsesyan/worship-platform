@@ -10,6 +10,7 @@
 :root {
   --bg: #f4f7fe;
   --surface: #ffffff;
+  --card: #ffffff;
   --line: #e2e8f0;
   --text: #111c44;
   --muted: #a3aed1;
@@ -991,6 +992,7 @@ body.wp-admin-app {
 html[data-admin-theme="dark"] {
   --bg: #0b1120;
   --surface: #111827;
+  --card: #111827;
   --line: #1f2937;
   --text: #f1f5f9;
   --muted: #94a3b8;

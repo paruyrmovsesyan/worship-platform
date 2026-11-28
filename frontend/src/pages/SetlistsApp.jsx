@@ -550,7 +550,7 @@ export default function SetlistsApp() {
       const body = { name: newSetName.trim() };
       if (newSetTeamId) body.team_id = newSetTeamId;
       if (newSetDate) body.service_date = newSetDate;
-      if (isNativeApp && newSetIsRange && newSetDateEnd && newSetDateEnd !== newSetDate) {
+      if (newSetIsRange && newSetDateEnd && newSetDateEnd !== newSetDate) {
         body.service_date_end = newSetDateEnd;
       }
       if (newSetDesc.trim()) body.description = newSetDesc.trim();
@@ -613,7 +613,7 @@ export default function SetlistsApp() {
           const formattedDate = formatSetlistDate(s.service_date, s.service_date_end, isNativeApp).toLowerCase();
           const dateMatch =
             s.service_date?.toLowerCase().includes(q) ||
-            (isNativeApp && s.service_date_end?.toLowerCase().includes(q)) ||
+            s.service_date_end?.toLowerCase().includes(q) ||
             formattedDate.includes(q);
           return nameMatch || teamMatch || dateMatch;
         }
@@ -1394,58 +1394,54 @@ export default function SetlistsApp() {
                   >
                     {language === 'am' ? 'Հաջորդ կիրակին' : language === 'ru' ? 'След. воскресенье' : 'Next Sunday'}
                   </button>
-                  {isNativeApp && (
-                    <button
-                      type="button"
-                      className="sl-app-quick-date-btn sl-app-quick-date-btn--weekend"
-                      onClick={() => {
-                        triggerHaptic('light');
-                        const { start, end } = getNextWeekendDates();
-                        setNewSetIsRange(true);
-                        setNewSetDate(start);
-                        setNewSetDateEnd(end);
-                      }}
-                    >
-                      {language === 'am' ? 'Շաբաթ–Կիրակի' : language === 'ru' ? 'Сб–Вс' : 'Sat–Sun'}
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className="sl-app-quick-date-btn sl-app-quick-date-btn--weekend"
+                    onClick={() => {
+                      triggerHaptic('light');
+                      const { start, end } = getNextWeekendDates();
+                      setNewSetIsRange(true);
+                      setNewSetDate(start);
+                      setNewSetDateEnd(end);
+                    }}
+                  >
+                    {language === 'am' ? 'Շաբաթ–Կիրակի' : language === 'ru' ? 'Сб–Вс' : 'Sat–Sun'}
+                  </button>
                 </div>
               </div>
 
-              {isNativeApp && (
-                <div className="sl-native-date-mode-toggle" role="tablist" aria-label="Date mode">
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={!newSetIsRange}
-                    className={`sl-native-date-mode-btn ${!newSetIsRange ? 'active' : ''}`}
-                    onClick={() => {
-                      triggerHaptic('light');
-                      setNewSetIsRange(false);
-                      setNewSetDateEnd('');
-                    }}
-                  >
-                    {language === 'am' ? '1 օր' : language === 'ru' ? '1 день' : '1 day'}
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={newSetIsRange}
-                    className={`sl-native-date-mode-btn ${newSetIsRange ? 'active' : ''}`}
-                    onClick={() => {
-                      triggerHaptic('light');
-                      setNewSetIsRange(true);
-                      if (newSetDate && (!newSetDateEnd || newSetDateEnd <= newSetDate)) {
-                        setNewSetDateEnd(addDaysToIsoDate(newSetDate, 1));
-                      }
-                    }}
-                  >
-                    {language === 'am' ? '2 օր (միջակայք)' : language === 'ru' ? '2 дня (диапазон)' : '2 days (range)'}
-                  </button>
-                </div>
-              )}
+              <div className="sl-native-date-mode-toggle" role="tablist" aria-label="Date mode">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={!newSetIsRange}
+                  className={`sl-native-date-mode-btn ${!newSetIsRange ? 'active' : ''}`}
+                  onClick={() => {
+                    triggerHaptic('light');
+                    setNewSetIsRange(false);
+                    setNewSetDateEnd('');
+                  }}
+                >
+                  {language === 'am' ? '1 օր' : language === 'ru' ? '1 день' : '1 day'}
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={newSetIsRange}
+                  className={`sl-native-date-mode-btn ${newSetIsRange ? 'active' : ''}`}
+                  onClick={() => {
+                    triggerHaptic('light');
+                    setNewSetIsRange(true);
+                    if (newSetDate && (!newSetDateEnd || newSetDateEnd <= newSetDate)) {
+                      setNewSetDateEnd(addDaysToIsoDate(newSetDate, 1));
+                    }
+                  }}
+                >
+                  {language === 'am' ? '2 օր (միջակայք)' : language === 'ru' ? '2 дня (диапазон)' : '2 days (range)'}
+                </button>
+              </div>
 
-              {isNativeApp && newSetIsRange ? (
+              {newSetIsRange ? (
                 <>
                   <div className="sl-native-date-range-grid">
                     <div className="sl-native-date-col">

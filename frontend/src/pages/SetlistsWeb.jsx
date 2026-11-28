@@ -6,65 +6,15 @@ import { useLanguage } from '../context/LanguageContext';
 import { usePageReady } from '../hooks/usePageReady';
 import { getSongCoverStyle } from '../utils/songCover';
 import { SetlistsAppSkeleton } from '../components/NativeSkeletons';
+import {
+  addDaysToIsoDate,
+  formatSetlistDate,
+  getEffectiveEndDate,
+  getNextSundayDate,
+  getNextWeekendDates,
+  getRelativeDateLabel,
+} from '../utils/setlistDate';
 import './SetlistsWeb.css';
-
-function getNextSundayDate() {
-  const d = new Date();
-  const day = d.getDay(); // 0 = Sunday
-  const addDays = day === 0 ? 7 : 7 - day;
-  d.setDate(d.getDate() + addDays);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const date = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${date}`;
-}
-
-function getRelativeDateLabel(dateStr, lang) {
-  if (!dateStr) return null;
-  const target = new Date(dateStr + 'T00:00:00');
-  if (isNaN(target.getTime())) return null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const diffMs = target.getTime() - today.getTime();
-  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
-
-  const dict = {
-    am: {
-      today: 'Այսօր',
-      tomorrow: 'Վաղը',
-      yesterday: 'Երեկ',
-      inDays: (n) => `${n} օրից`,
-      daysAgo: (n) => `${n} օր առաջ`,
-    },
-    en: {
-      today: 'Today',
-      tomorrow: 'Tomorrow',
-      yesterday: 'Yesterday',
-      inDays: (n) => `in ${n}d`,
-      daysAgo: (n) => `${n}d ago`,
-    },
-    ru: {
-      today: 'Сегодня',
-      tomorrow: 'Завтра',
-      yesterday: 'Вчера',
-      inDays: (n) => `через ${n} дн.`,
-      daysAgo: (n) => `${n} дн. назад`,
-    },
-  }[lang] || {
-    today: 'Այսօր',
-    tomorrow: 'Վաղը',
-    yesterday: 'Երեկ',
-    inDays: (n) => `${n} օրից`,
-    daysAgo: (n) => `${n} օր առաջ`,
-  };
-
-  if (diffDays === 0) return { text: dict.today, tone: 'highlight' };
-  if (diffDays === 1) return { text: dict.tomorrow, tone: 'soon' };
-  if (diffDays === -1) return { text: dict.yesterday, tone: 'past' };
-  if (diffDays > 1 && diffDays <= 7) return { text: dict.inDays(diffDays), tone: 'soon' };
-  if (diffDays < -1 && diffDays >= -7) return { text: dict.daysAgo(Math.abs(diffDays)), tone: 'past' };
-  return null;
-}
 
 export default function SetlistsWeb() {
   const { user, loading: authLoading } = useAuth();
@@ -89,6 +39,8 @@ export default function SetlistsWeb() {
   const [newSetName, setNewSetName] = useState('');
   const [newSetTeamId, setNewSetTeamId] = useState('');
   const [newSetDate, setNewSetDate] = useState('');
+  const [newSetDateEnd, setNewSetDateEnd] = useState('');
+  const [newSetIsRange, setNewSetIsRange] = useState(false);
   const [newSetDesc, setNewSetDesc] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
@@ -218,6 +170,9 @@ export default function SetlistsWeb() {
       const body = { name: newSetName.trim() };
       if (newSetTeamId) body.team_id = newSetTeamId;
       if (newSetDate) body.service_date = newSetDate;
+      if (newSetIsRange && newSetDateEnd && newSetDateEnd !== newSetDate) {
+        body.service_date_end = newSetDateEnd;
+      }
       if (newSetDesc.trim()) body.description = newSetDesc.trim();
 
       const res = await fetch('/setlists_api.php?action=create_setlist', {
@@ -232,6 +187,8 @@ export default function SetlistsWeb() {
         setNewSetName('');
         setNewSetTeamId('');
         setNewSetDate('');
+        setNewSetDateEnd('');
+        setNewSetIsRange(false);
         setNewSetDesc('');
         fetchSetlists();
         navigate(`/setlists/${data.id}`);
@@ -410,11 +367,12 @@ export default function SetlistsWeb() {
     return setlists
       .filter(s => {
         // Timeframe Filter (Upcoming vs Past)
+        const effectiveEnd = getEffectiveEndDate(s.service_date, s.service_date_end);
         if (timeframeFilter === 'upcoming') {
-          const isUpcoming = s.service_date ? s.service_date >= todayStr : true;
+          const isUpcoming = effectiveEnd ? effectiveEnd >= todayStr : true;
           if (!isUpcoming) return false;
         } else if (timeframeFilter === 'past') {
-          const isPast = s.service_date ? s.service_date < todayStr : false;
+          const isPast = effectiveEnd ? effectiveEnd < todayStr : false;
           if (!isPast) return false;
         }
 
@@ -428,7 +386,11 @@ export default function SetlistsWeb() {
           const q = searchQuery.toLowerCase().trim();
           const nameMatch = s.name?.toLowerCase().includes(q);
           const teamMatch = s.team_name?.toLowerCase().includes(q);
-          const dateMatch = s.service_date?.toLowerCase().includes(q);
+          const formattedDate = formatSetlistDate(s.service_date, s.service_date_end).toLowerCase();
+          const dateMatch =
+            s.service_date?.toLowerCase().includes(q) ||
+            s.service_date_end?.toLowerCase().includes(q) ||
+            formattedDate.includes(q);
           return nameMatch || teamMatch || dateMatch;
         }
 
@@ -452,15 +414,19 @@ export default function SetlistsWeb() {
     const personalCount = setlists.filter(s => s.access_role !== 'team' && s.access_role !== 'shared').length;
 
     const sortedUpcoming = setlists
-      .filter((s) => s.service_date && s.service_date >= todayStr)
+      .filter((s) => {
+        const effectiveEnd = getEffectiveEndDate(s.service_date, s.service_date_end);
+        return effectiveEnd && effectiveEnd >= todayStr;
+      })
       .sort((a, b) => (a.service_date || '').localeCompare(b.service_date || ''));
     const upcoming = sortedUpcoming[0] || null;
 
     let upcomingCount = 0;
     let pastCount = 0;
     for (const s of setlists) {
-      if (s.service_date) {
-        if (s.service_date >= todayStr) upcomingCount++;
+      const effectiveEnd = getEffectiveEndDate(s.service_date, s.service_date_end);
+      if (effectiveEnd) {
+        if (effectiveEnd >= todayStr) upcomingCount++;
         else pastCount++;
       } else {
         upcomingCount++;
@@ -570,7 +536,9 @@ export default function SetlistsWeb() {
                     <span className="stat-upcoming-badge">
                       {language === 'am' ? 'Առաջիկա ծառայություն' : language === 'ru' ? 'Ближайшее служение' : 'Upcoming service'}
                     </span>
-                    <span className="stat-upcoming-date">{stats.upcoming.service_date}</span>
+                    <span className="stat-upcoming-date">
+                      {formatSetlistDate(stats.upcoming.service_date, stats.upcoming.service_date_end)}
+                    </span>
                   </div>
                   <span className="stat-upcoming-title">{stats.upcoming.name}</span>
                 </div>
@@ -724,7 +692,8 @@ export default function SetlistsWeb() {
           /* GRID VIEW */
           <div className="setlists-grid">
             {filteredSetlists.map((list, idx) => {
-              const relDate = getRelativeDateLabel(list.service_date, language);
+              const relDate = getRelativeDateLabel(list.service_date, language, list.service_date_end);
+              const displayDate = formatSetlistDate(list.service_date, list.service_date_end);
               return (
                 <div
                   key={list.id}
@@ -866,7 +835,7 @@ export default function SetlistsWeb() {
                             <line x1="8" y1="2" x2="8" y2="6"></line>
                             <line x1="3" y1="10" x2="21" y2="10"></line>
                           </svg>
-                          {list.service_date || t('setlists.noDate', 'Առանց ամսաթվի')}
+                          {displayDate || t('setlists.noDate', 'Առանց ամսաթվի')}
                         </span>
                         {relDate && (
                           <span className={`sl-rel-badge tone-${relDate.tone}`}>
@@ -900,7 +869,8 @@ export default function SetlistsWeb() {
             </div>
 
             {filteredSetlists.map((list, idx) => {
-              const relDate = getRelativeDateLabel(list.service_date, language);
+              const relDate = getRelativeDateLabel(list.service_date, language, list.service_date_end);
+              const displayDate = formatSetlistDate(list.service_date, list.service_date_end);
               return (
                 <div
                   key={list.id}
@@ -921,7 +891,7 @@ export default function SetlistsWeb() {
                   </div>
                   <div className="lh-col date">
                     <div className="row-date-group">
-                      <span className="text-secondary">{list.service_date || '—'}</span>
+                      <span className="text-secondary">{displayDate || '—'}</span>
                       {relDate && (
                         <span className={`sl-rel-badge tone-${relDate.tone} small`}>
                           {relDate.text}
@@ -1032,24 +1002,114 @@ export default function SetlistsWeb() {
                 </div>
               </div>
 
-              {/* Service Date & Quick Sunday Button */}
+              {/* Service Date & Quick Shortcuts */}
               <div className="web-form-group">
                 <div className="label-with-action">
                   <label>{t('setlists.dateField', 'Ծառայության ամսաթիվ')}</label>
+                  <div className="web-date-quick-actions">
+                    <button
+                      type="button"
+                      className="quick-date-btn"
+                      onClick={() => {
+                        setNewSetIsRange(false);
+                        setNewSetDate(getNextSundayDate());
+                        setNewSetDateEnd('');
+                      }}
+                    >
+                      📅 {language === 'am' ? 'Հաջորդ կիրակին' : language === 'ru' ? 'След. воскресенье' : 'Next Sunday'}
+                    </button>
+                    <button
+                      type="button"
+                      className="quick-date-btn"
+                      onClick={() => {
+                        const { start, end } = getNextWeekendDates();
+                        setNewSetIsRange(true);
+                        setNewSetDate(start);
+                        setNewSetDateEnd(end);
+                      }}
+                    >
+                      🗓 {language === 'am' ? 'Շաբաթ–Կիրակի' : language === 'ru' ? 'Сб–Вс' : 'Sat–Sun'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="web-date-mode-toggle" role="tablist" aria-label="Date mode">
                   <button
                     type="button"
-                    className="quick-date-btn"
-                    onClick={() => setNewSetDate(getNextSundayDate())}
+                    role="tab"
+                    aria-selected={!newSetIsRange}
+                    className={`web-date-mode-btn ${!newSetIsRange ? 'active' : ''}`}
+                    onClick={() => {
+                      setNewSetIsRange(false);
+                      setNewSetDateEnd('');
+                    }}
                   >
-                    📅 {language === 'am' ? 'Հաջորդ կիրակին' : language === 'ru' ? 'След. воскресенье' : 'Next Sunday'}
+                    {language === 'am' ? '1 օր' : language === 'ru' ? '1 день' : '1 day'}
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={newSetIsRange}
+                    className={`web-date-mode-btn ${newSetIsRange ? 'active' : ''}`}
+                    onClick={() => {
+                      setNewSetIsRange(true);
+                      if (newSetDate && (!newSetDateEnd || newSetDateEnd <= newSetDate)) {
+                        setNewSetDateEnd(addDaysToIsoDate(newSetDate, 1));
+                      }
+                    }}
+                  >
+                    {language === 'am' ? '2 օր (միջակայք)' : language === 'ru' ? '2 дня (диапазон)' : '2 days (range)'}
                   </button>
                 </div>
-                <input
-                  type="date"
-                  className="web-inp"
-                  value={newSetDate}
-                  onChange={e => setNewSetDate(e.target.value)}
-                />
+
+                {newSetIsRange ? (
+                  <>
+                    <div className="web-date-range-grid">
+                      <div className="web-date-col">
+                        <span className="web-date-sublabel">
+                          {language === 'am' ? '1-ին օր' : language === 'ru' ? '1-й день' : 'Start day'}
+                        </span>
+                        <input
+                          type="date"
+                          className="web-inp"
+                          value={newSetDate}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setNewSetDate(val);
+                            if (val && (!newSetDateEnd || newSetDateEnd <= val)) {
+                              setNewSetDateEnd(addDaysToIsoDate(val, 1));
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="web-date-col">
+                        <span className="web-date-sublabel">
+                          {language === 'am' ? '2-րդ օր' : language === 'ru' ? '2-й день' : 'End day'}
+                        </span>
+                        <input
+                          type="date"
+                          className="web-inp"
+                          value={newSetDateEnd}
+                          min={newSetDate || undefined}
+                          onChange={e => setNewSetDateEnd(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    {newSetDate && newSetDateEnd && newSetDateEnd !== newSetDate && (
+                      <div className="web-date-preview">
+                        <span>📅</span>
+                        <span>{formatSetlistDate(newSetDate, newSetDateEnd)}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <input
+                    type="date"
+                    className="web-inp"
+                    value={newSetDate}
+                    onChange={e => setNewSetDate(e.target.value)}
+                  />
+                )}
               </div>
 
               {/* Team Selector */}

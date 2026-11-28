@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useParams, useNavigate, Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { formatSetlistDate } from '../utils/setlistDate';
 import { useAuth } from '../context/AuthContext';
 import { usePageReady } from '../hooks/usePageReady';
 import { getSongCoverStyle } from '../utils/songCover';
@@ -187,7 +188,7 @@ export default function SetlistPublicWeb() {
                     <line x1="8" y1="2" x2="8" y2="6"></line>
                     <line x1="3" y1="10" x2="21" y2="10"></line>
                   </svg>
-                  <span>{setlist.service_date}</span>
+                  <span>{formatSetlistDate(setlist.service_date, setlist.service_date_end)}</span>
                 </div>
               )}
 

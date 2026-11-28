@@ -989,10 +989,10 @@ export default function SongView() {
     let cancelled = false;
     const params = new URLSearchParams(location.search);
     const listQuery = params.get('list') || '';
-    const setlistId = params.get('setlist_id') || (listQuery.startsWith('setlist_') ? listQuery.slice(8) : '');
+    const setlistId = params.get('setlist_id') || params.get('setlist') || (listQuery.startsWith('setlist_') ? listQuery.slice(8) : '');
     const setlistToken = params.get('setlist_token');
-    const setlistItemId = params.get('setlist_item_id');
-    const urlTkey = params.get('tkey');
+    const setlistItemId = params.get('setlist_item_id') || params.get('item_id');
+    const urlTkey = params.get('tkey') || params.get('target_key') || params.get('key');
     const urlCapo = params.get('capo');
 
     const applyNavKeyIfNeeded = (currentItem) => {
@@ -1292,7 +1292,7 @@ export default function SongView() {
       return;
     }
 
-    const setlistId = params.get('setlist_id') || (list.startsWith('setlist_') ? list.slice(8) : '');
+    const setlistId = params.get('setlist_id') || params.get('setlist') || setlistNavData?.setlist?.id || (list.startsWith('setlist_') ? list.slice(8) : '');
     if (setlistId) {
       if (fromLive) {
         navigate(`/setlists/${setlistId}/live`, { replace: true });
@@ -1318,8 +1318,8 @@ export default function SongView() {
   // Save current transposed key / capo directly into the setlist item
   const handleSaveKeyToSetlist = async () => {
     const searchParams = new URLSearchParams(location.search);
-    const setlistId = setlistNavData?.setlist?.id || setlistNavData?.current?.setlist_id || searchParams.get('setlist_id');
-    let itemId = setlistNavData?.current?.item_id || searchParams.get('setlist_item_id');
+    const setlistId = setlistNavData?.setlist?.id || setlistNavData?.current?.setlist_id || searchParams.get('setlist_id') || searchParams.get('setlist');
+    let itemId = setlistNavData?.current?.item_id || searchParams.get('setlist_item_id') || searchParams.get('item_id');
 
     // If itemId wasn't in URL or setlistNavData yet, look up in cached setlist items
     if (!itemId && setlistId) {
@@ -1408,7 +1408,9 @@ export default function SongView() {
   const searchParams = new URLSearchParams(location.search);
   const isFromSetlist = Boolean(
     searchParams.get('setlist_id') ||
+    searchParams.get('setlist') ||
     searchParams.get('setlist_item_id') ||
+    searchParams.get('item_id') ||
     setlistNavData?.setlist?.id ||
     setlistNavData?.current?.setlist_id
   );

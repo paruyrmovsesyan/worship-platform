@@ -2500,6 +2500,236 @@ body.is-native.light-mode .sv-arr-pill.is-active {
   cursor: pointer;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   NATIVE MOBILE APP (iOS & Android) — Modern Tactile Song View Refinements
+   ══════════════════════════════════════════════════════════════════════════ */
+body.is-native .song-view-page {
+  padding-bottom: calc(var(--bottom-nav-total-offset, 76px) + 32px) !important;
+}
+
+body.is-native .sv-header {
+  padding: 8px 16px 12px !important;
+  gap: 12px;
+}
+
+body.is-native .sv-back-btn {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: transform 0.12s ease, background 0.12s ease !important;
+}
+
+body.is-native .sv-back-btn:active {
+  transform: scale(0.92) !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
+body.is-native.light-mode .sv-back-btn {
+  background: rgba(15, 23, 42, 0.06) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+/* ── Meta & Quick Controls Bar: Fluid & Ergonomic ── */
+body.is-native .sv-meta-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  padding: 0 16px !important;
+  margin-bottom: 12px !important;
+}
+
+body.is-native .sv-meta-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-shrink: 0 !important;
+}
+
+body.is-native .sv-meta-pill.key-pill {
+  height: 38px !important;
+  padding: 0 14px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(14, 165, 233, 0.1)) !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  color: #38bdf8 !important;
+  box-shadow: 0 2px 10px rgba(56, 189, 248, 0.15) !important;
+  transition: transform 0.12s ease, background 0.15s ease !important;
+}
+
+body.is-native .sv-meta-pill.key-pill:active {
+  transform: scale(0.95) !important;
+}
+
+body.is-native .sv-quick-font {
+  height: 38px !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0 2px !important;
+  max-width: 100% !important;
+}
+
+body.is-native.light-mode .sv-quick-font {
+  background: rgba(15, 23, 42, 0.05) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.is-native .sv-quick-font-btn {
+  min-width: 34px !important;
+  height: 36px !important;
+  padding: 0 8px !important;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+  border-radius: 8px !important;
+}
+
+body.is-native .sv-quick-font-btn:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15) !important;
+  transform: scale(0.92) !important;
+}
+
+body.is-native .sv-quick-font-val {
+  min-width: 26px !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  line-height: 36px !important;
+  padding: 0 2px !important;
+}
+
+body.is-native .sv-chord-scale-toggle {
+  margin-left: 4px !important;
+  padding-left: 4px !important;
+  border-left-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.is-native.light-mode .sv-chord-scale-toggle {
+  border-left-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+body.is-native .sv-quick-font-val.chord-scale-val {
+  min-width: 32px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+/* ── Segmented Control (Tabs) ── */
+body.is-native .sv-segment-control-wrap {
+  margin: 8px 16px 14px !important;
+}
+
+body.is-native .wp-glisse-segmented-3 {
+  height: 40px !important;
+  border-radius: 14px !important;
+  padding: 3px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+body.is-native.light-mode .wp-glisse-segmented-3 {
+  background: rgba(15, 23, 42, 0.05) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+/* ── Arrangement Ribbon Chips ── */
+body.is-native .sv-arrangement-ribbon {
+  padding: 2px 16px 10px !important;
+  margin-bottom: 6px !important;
+}
+
+body.is-native .sv-arr-pill {
+  height: 34px !important;
+  padding: 0 12px 0 6px !important;
+  border-radius: 12px !important;
+  font-size: 12.5px !important;
+  font-weight: 750 !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+body.is-native .sv-arr-pill:active {
+  transform: scale(0.94) !important;
+}
+
+/* ── Sheet Music & Chords View: Mobile Typography ── */
+body.is-native .sv-sheet {
+  border-radius: 20px !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+}
+
+body.is-native.light-mode .sv-sheet {
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
+}
+
+body.is-native .chords-block {
+  line-height: 1.85 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  letter-spacing: 0.3px !important;
+}
+
+/* ── Setlist Sequential Navigation (Seq-Nav) Floating Dock ── */
+body.is-native .seq-nav {
+  bottom: calc(var(--bottom-nav-total-offset, 76px) + 12px) !important;
+  width: min(350px, calc(100vw - 32px)) !important;
+  height: 52px !important;
+  border-radius: 999px !important;
+  background: rgba(18, 22, 34, 0.94) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  z-index: 9999 !important;
+}
+
+body.is-native.light-mode .seq-nav {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+body.is-native .seq-btn {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 50% !important;
+  transition: transform 0.12s ease !important;
+}
+
+body.is-native .seq-btn:active:not(:disabled) {
+  transform: scale(0.9) !important;
+}
+
+/* ── Sticky Save Transposed Key Bar ── */
+body.is-native .sv-sticky-save-bar {
+  bottom: calc(var(--bottom-nav-total-offset, 76px) + 16px) !important;
+  z-index: 10000 !important;
+}
+
+body.is-native .sv-sticky-save-bar.has-seq-nav {
+  bottom: calc(var(--bottom-nav-total-offset, 76px) + 72px) !important;
+}
+
 
 
 

@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { getLocalizedTitle } from '../utils/titleParser';
 import { scoreSongSearch } from '../utils/searchMatcher';
 import { useLanguage } from '../context/LanguageContext';
+import { formatSetlistDate } from '../utils/setlistDate';
 import './WebCommandPalette.css';
 
 const ACCENTS = [
@@ -247,7 +248,7 @@ export default function WebCommandPalette() {
         group: 'Երգացանկեր',
         type: 'setlist',
         title: setlist.name,
-        meta: [setlist.items_count != null ? `${setlist.items_count} երգ` : '', setlist.service_date || ''].filter(Boolean).join(' · '),
+        meta: [setlist.items_count != null ? `${setlist.items_count} երգ` : '', formatSetlistDate(setlist.service_date, setlist.service_date_end)].filter(Boolean).join(' · '),
         run: () => {
           setIsOpen(false);
           navigate(`/setlists/${setlist.id}`);

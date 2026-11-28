@@ -10,6 +10,12 @@ import { useIsPWA } from '../hooks/useIsPWA';
 import { renderWithChords } from '../utils/chordTransposer';
 import PrintStudio from '../components/PrintStudio';
 import { broadcastTabMessage, subscribeToTabMessages } from '../utils/webPwaEnhancements';
+import {
+  addDaysToIsoDate,
+  formatSetlistDate,
+  getNextSundayDate,
+  getNextWeekendDates,
+} from '../utils/setlistDate';
 import './Setlists.css';
 import './SongsApp.css'; // ensure track-list styles are loaded
 import './SetlistEditorWebPro.css';
@@ -85,6 +91,8 @@ export default function SetlistEditorWeb() {
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDate, setEditDate] = useState('');
+  const [editDateEnd, setEditDateEnd] = useState('');
+  const [editIsDateRange, setEditIsDateRange] = useState(false);
   const [editDesc, setEditDesc] = useState('');
   const [editSaving, setEditSaving] = useState(false);
   const [isSavingToAccount, setIsSavingToAccount] = useState(false);
@@ -742,6 +750,7 @@ export default function SetlistEditorWeb() {
           name: editName,
           description: editDesc,
           service_date: editDate,
+          service_date_end: editIsDateRange && editDateEnd && editDateEnd !== editDate ? editDateEnd : '',
           service_type: setlistData.service_type || ''
         })
       });
@@ -763,7 +772,11 @@ export default function SetlistEditorWeb() {
   const prepareEditModal = () => {
     if (!setlistData || !canEdit) return;
     setEditName(setlistData.name || '');
-    setEditDate(String(setlistData.service_date || '').slice(0, 10));
+    const startVal = String(setlistData.service_date || '').slice(0, 10);
+    const endVal = String(setlistData.service_date_end || '').slice(0, 10);
+    setEditDate(startVal);
+    setEditDateEnd(endVal);
+    setEditIsDateRange(Boolean(endVal && endVal !== startVal));
     setEditDesc(setlistData.description || '');
     setIsEditingSettings(true);
   };
@@ -786,7 +799,11 @@ export default function SetlistEditorWeb() {
       return;
     }
     setEditName(setlistData.name || '');
-    setEditDate(String(setlistData.service_date || '').slice(0, 10));
+    const startVal = String(setlistData.service_date || '').slice(0, 10);
+    const endVal = String(setlistData.service_date_end || '').slice(0, 10);
+    setEditDate(startVal);
+    setEditDateEnd(endVal);
+    setEditIsDateRange(Boolean(endVal && endVal !== startVal));
     setEditDesc(setlistData.description || '');
     setIsEditingSettings(true);
   }, [canEdit, id, isEditRoute, navigate, setlistData]);
@@ -924,7 +941,7 @@ export default function SetlistEditorWeb() {
             <div className="sle-meta-row">
               {setlistData.service_date && (
                 <span className="sle-date-text">
-                  📅 {setlistData.service_date}
+                  📅 {formatSetlistDate(setlistData.service_date, setlistData.service_date_end)}
                 </span>
               )}
               {totalDuration > 0 && (
@@ -1405,13 +1422,112 @@ export default function SetlistEditorWeb() {
               </div>
 
               <div className="sl-form-group">
-                <label>{t('setlists.dateField')}</label>
-                <input 
-                  type="date" 
-                  className="sl-input" 
-                  value={editDate} 
-                  onChange={e => setEditDate(e.target.value)} 
-                />
+                <div className="sl-app-date-label-row">
+                  <label>{t('setlists.dateField')}</label>
+                  <div className="sl-app-quick-date-group">
+                    <button
+                      type="button"
+                      className="sl-app-quick-date-btn"
+                      onClick={() => {
+                        setEditIsDateRange(false);
+                        setEditDate(getNextSundayDate());
+                        setEditDateEnd('');
+                      }}
+                    >
+                      {language === 'am' ? 'Հաջորդ կիրակին' : language === 'ru' ? 'След. вск' : 'Next Sun'}
+                    </button>
+                    <button
+                      type="button"
+                      className="sl-app-quick-date-btn"
+                      onClick={() => {
+                        const { start, end } = getNextWeekendDates();
+                        setEditIsDateRange(true);
+                        setEditDate(start);
+                        setEditDateEnd(end);
+                      }}
+                    >
+                      {language === 'am' ? 'Շաբաթ–Կիրակի' : language === 'ru' ? 'Сб–Вс' : 'Sat–Sun'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="sl-native-date-mode-toggle" role="tablist" aria-label="Date mode">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={!editIsDateRange}
+                    className={`sl-native-date-mode-btn ${!editIsDateRange ? 'active' : ''}`}
+                    onClick={() => {
+                      setEditIsDateRange(false);
+                      setEditDateEnd('');
+                    }}
+                  >
+                    {language === 'am' ? '1 օր' : language === 'ru' ? '1 день' : '1 day'}
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={editIsDateRange}
+                    className={`sl-native-date-mode-btn ${editIsDateRange ? 'active' : ''}`}
+                    onClick={() => {
+                      setEditIsDateRange(true);
+                      if (editDate && (!editDateEnd || editDateEnd <= editDate)) {
+                        setEditDateEnd(addDaysToIsoDate(editDate, 1));
+                      }
+                    }}
+                  >
+                    {language === 'am' ? '2 օր (միջակայք)' : language === 'ru' ? '2 дня (диапазон)' : '2 days (range)'}
+                  </button>
+                </div>
+
+                {editIsDateRange ? (
+                  <>
+                    <div className="sl-native-date-range-grid">
+                      <div className="sl-native-date-col">
+                        <span className="sl-native-date-sublabel">
+                          {language === 'am' ? '1-ին օր' : language === 'ru' ? '1-й день' : 'Start day'}
+                        </span>
+                        <input
+                          type="date"
+                          className="sl-input"
+                          value={editDate}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setEditDate(val);
+                            if (val && (!editDateEnd || editDateEnd <= val)) {
+                              setEditDateEnd(addDaysToIsoDate(val, 1));
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="sl-native-date-col">
+                        <span className="sl-native-date-sublabel">
+                          {language === 'am' ? '2-րդ օր' : language === 'ru' ? '2-й день' : 'End day'}
+                        </span>
+                        <input
+                          type="date"
+                          className="sl-input"
+                          value={editDateEnd}
+                          min={editDate || undefined}
+                          onChange={e => setEditDateEnd(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    {editDate && editDateEnd && editDateEnd !== editDate && (
+                      <div className="sl-native-date-preview">
+                        <span>📅</span>
+                        <span>{formatSetlistDate(editDate, editDateEnd)}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <input 
+                    type="date" 
+                    className="sl-input" 
+                    value={editDate} 
+                    onChange={e => setEditDate(e.target.value)} 
+                  />
+                )}
               </div>
 
               <div className="sl-form-group">

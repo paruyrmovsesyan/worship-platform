@@ -51,14 +51,13 @@ export function formatShortDate(isoDate) {
 
 /**
  * Formats a setlist date or 2-day date range for display.
- * When native app mode is active and both dates are set and distinct,
- * formats as `DD.MM.YY-DD.MM.YY` (e.g. `28.11.26-29.11.26`).
+ * When both dates are set and distinct, formats as `DD.MM.YY-DD.MM.YY` (e.g. `28.11.26-29.11.26`).
  */
-export function formatSetlistDate(serviceDate, serviceDateEnd = null, isNative = false) {
+export function formatSetlistDate(serviceDate, serviceDateEnd = null) {
   const start = serviceDate ? String(serviceDate).slice(0, 10) : '';
   const end = serviceDateEnd ? String(serviceDateEnd).slice(0, 10) : '';
   if (!start) return '';
-  if (isNative && end && end !== start) {
+  if (end && end !== start) {
     const [first, second] = end < start ? [end, start] : [start, end];
     return `${formatShortDate(first)}-${formatShortDate(second)}`;
   }
@@ -68,15 +67,15 @@ export function formatSetlistDate(serviceDate, serviceDateEnd = null, isNative =
 /**
  * Returns the effective end date used for upcoming/past comparisons.
  */
-export function getEffectiveEndDate(serviceDate, serviceDateEnd = null, isNative = false) {
+export function getEffectiveEndDate(serviceDate, serviceDateEnd = null) {
   const start = serviceDate ? String(serviceDate).slice(0, 10) : '';
   const end = serviceDateEnd ? String(serviceDateEnd).slice(0, 10) : '';
   if (!start) return '';
-  if (isNative && end && end > start) return end;
+  if (end && end > start) return end;
   return start;
 }
 
-export function getRelativeDateLabel(dateStr, lang, endDateStr = null, isNative = false) {
+export function getRelativeDateLabel(dateStr, lang, endDateStr = null) {
   if (!dateStr) return null;
   const startClean = String(dateStr).slice(0, 10);
   const target = new Date(`${startClean}T00:00:00`);
@@ -85,7 +84,7 @@ export function getRelativeDateLabel(dateStr, lang, endDateStr = null, isNative 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const endClean = isNative && endDateStr ? String(endDateStr).slice(0, 10) : '';
+  const endClean = endDateStr ? String(endDateStr).slice(0, 10) : '';
   const endTarget = endClean ? new Date(`${endClean}T00:00:00`) : null;
 
   const dict = {

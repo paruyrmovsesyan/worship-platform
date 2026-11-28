@@ -455,7 +455,7 @@ $activePage = 'errors';
       font-size: 13px;
       font-weight: 600;
       border: 1px solid var(--line);
-      background: var(--card);
+      background: var(--surface, #ffffff);
       color: var(--text);
       cursor: pointer;
       transition: all 0.15s;
@@ -742,27 +742,26 @@ $activePage = 'errors';
       display: flex;
     }
     .inspector-card {
-      background: var(--card);
+      background: var(--surface, #ffffff);
       border-radius: var(--radius-lg);
       width: 100%;
       max-width: 860px;
       max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
       border: 1px solid var(--line);
       display: flex;
       flex-direction: column;
     }
     .inspector-header {
-      padding: 20px 24px;
+      padding: 18px 24px;
       border-bottom: 1px solid var(--line);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      position: sticky;
-      top: 0;
-      background: var(--card);
-      z-index: 2;
+      background: var(--surface, #ffffff);
+      flex-shrink: 0;
+      z-index: 10;
     }
     .inspector-header h3 {
       margin: 0;
@@ -777,6 +776,9 @@ $activePage = 'errors';
       display: flex;
       flex-direction: column;
       gap: 20px;
+      overflow-y: auto;
+      flex: 1 1 auto;
+      -webkit-overflow-scrolling: touch;
     }
     .inspector-grid {
       display: grid;
@@ -824,10 +826,9 @@ $activePage = 'errors';
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: var(--card);
-      position: sticky;
-      bottom: 0;
-      z-index: 2;
+      background: var(--surface, #ffffff);
+      flex-shrink: 0;
+      z-index: 10;
     }
   </style>
 </head>
@@ -1626,6 +1627,9 @@ $activePage = 'errors';
     };
 
     document.getElementById('inspectModal').classList.add('open');
+    if (!isResolved && item.fingerprint) {
+      window.verifySingleItem(item.fingerprint);
+    }
   };
 
   window.closeInspectModal = function() {
