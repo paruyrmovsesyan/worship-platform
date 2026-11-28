@@ -32,7 +32,7 @@ body.wp-standalone-app .bible-topbar-wrap {
 
 body.is-app.is-ios:not(.is-native) .bible-topbar-wrap,
 body.wp-standalone-app.is-ios:not(.is-native) .bible-topbar-wrap {
-  top: max(env(safe-area-inset-top, 54px), 54px);
+  top: calc(max(env(safe-area-inset-top, 54px), 54px) + 16px) !important;
   margin: 0 0 14px;
   padding: 0;
   background: transparent;

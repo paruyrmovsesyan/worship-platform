@@ -93,9 +93,9 @@ body.live-mode-active .app-content {
   padding-right: 16px;
 }
 
-body.is-app.is-ios .sll-header,
-body.wp-standalone-app.is-ios .sll-header {
-  padding-top: calc(max(env(safe-area-inset-top, 0px), 44px) + 20px) !important;
+body.is-app.is-ios:not(.is-native) .sll-header,
+body.wp-standalone-app.is-ios:not(.is-native) .sll-header {
+  padding-top: calc(max(env(safe-area-inset-top, 0px), 50px) + 28px) !important;
 }
 
 body.is-app.is-android .sll-header,

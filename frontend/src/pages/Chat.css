@@ -62,9 +62,9 @@ body.website-theme.mobile-theme .chat-page-container {
   flex-shrink: 0;
 }
 
-body.is-app.is-ios .chat-header,
-body.wp-standalone-app.is-ios .chat-header {
-  padding-top: calc(max(env(safe-area-inset-top, 0px), 44px) + 16px) !important;
+body.is-app.is-ios:not(.is-native) .chat-header,
+body.wp-standalone-app.is-ios:not(.is-native) .chat-header {
+  padding-top: calc(max(env(safe-area-inset-top, 0px), 50px) + 24px) !important;
 }
 
 body.is-app.is-android .chat-header,
