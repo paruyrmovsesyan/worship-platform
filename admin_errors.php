@@ -742,7 +742,7 @@ $activePage = 'errors';
       display: flex;
     }
     .inspector-card {
-      background: var(--surface, #ffffff);
+      background: var(--surface, #ffffff) !important;
       border-radius: var(--radius-lg);
       width: 100%;
       max-width: 860px;
@@ -759,7 +759,7 @@ $activePage = 'errors';
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: var(--surface, #ffffff);
+      background: var(--surface, #ffffff) !important;
       flex-shrink: 0;
       z-index: 10;
     }
@@ -826,7 +826,7 @@ $activePage = 'errors';
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: var(--surface, #ffffff);
+      background: var(--surface, #ffffff) !important;
       flex-shrink: 0;
       z-index: 10;
     }
