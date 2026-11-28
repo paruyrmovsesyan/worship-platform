@@ -1888,29 +1888,6 @@ export default function SongView() {
           >
             A+
           </button>
-          {hasChords && effectiveViewMode !== 'lyrics' && (
-            <div className="sv-chord-scale-toggle" title="Ակկորդների չափ">
-              <button
-                type="button"
-                className="sv-quick-font-btn chord-scale-btn"
-                onClick={decreaseChordScale}
-                disabled={chordScale <= 0.8}
-                aria-label="Փոքրացնել ակկորդները"
-              >
-                C−
-              </button>
-              <span className="sv-quick-font-val chord-scale-val">{Math.round(chordScale * 100)}%</span>
-              <button
-                type="button"
-                className="sv-quick-font-btn chord-scale-btn"
-                onClick={increaseChordScale}
-                disabled={chordScale >= 1.6}
-                aria-label="Մեծացնել ակկորդները"
-              >
-                C+
-              </button>
-            </div>
-          )}
         </div>
       </div>
 

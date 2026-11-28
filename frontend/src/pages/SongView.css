@@ -2591,7 +2591,9 @@ body.is-native.light-mode .sv-header-actions .icon-btn {
   border-color: rgba(15, 23, 42, 0.1) !important;
 }
 
-body.is-native .sv-header-actions .sv-stage-btn {
+body.is-native .sv-header-actions .sv-stage-btn,
+body.is-app .sv-header-actions .sv-stage-btn,
+body.wp-standalone-app .sv-header-actions .sv-stage-btn {
   display: none !important;
 }
 
@@ -2625,8 +2627,8 @@ body.is-native .sv-meta-row {
   flex-wrap: nowrap !important;
   align-items: center !important;
   justify-content: space-between !important;
-  gap: 5px !important;
-  padding: 0 12px !important;
+  gap: 8px !important;
+  padding: 0 16px !important;
   margin-bottom: 12px !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
@@ -2643,15 +2645,15 @@ body.is-native .sv-meta-row::-webkit-scrollbar {
 body.is-native .sv-meta-left {
   display: flex !important;
   align-items: center !important;
-  gap: 5px !important;
+  gap: 8px !important;
   flex-shrink: 0 !important;
 }
 
 body.is-native .sv-meta-pill {
-  height: 32px !important;
-  padding: 0 9px !important;
+  height: 34px !important;
+  padding: 0 12px !important;
   border-radius: 999px !important;
-  font-size: 12px !important;
+  font-size: 13px !important;
   font-weight: 700 !important;
   background: rgba(255, 255, 255, 0.08) !important;
   border: 1px solid rgba(255, 255, 255, 0.14) !important;
@@ -2664,7 +2666,7 @@ body.is-native .sv-meta-pill {
   box-sizing: border-box !important;
   display: inline-flex !important;
   align-items: center !important;
-  gap: 4px !important;
+  gap: 5px !important;
   transition: transform 0.12s ease, background 0.15s ease !important;
 }
 
@@ -2693,7 +2695,7 @@ body.is-native.light-mode .sv-meta-pill.key-pill {
 }
 
 body.is-native .sv-quick-font {
-  height: 32px !important;
+  height: 34px !important;
   border-radius: 999px !important;
   background: rgba(255, 255, 255, 0.08) !important;
   border: 1px solid rgba(255, 255, 255, 0.14) !important;
@@ -2704,7 +2706,7 @@ body.is-native .sv-quick-font {
   align-items: center !important;
   flex-shrink: 0 !important;
   white-space: nowrap !important;
-  padding: 0 2px !important;
+  padding: 0 3px !important;
   box-sizing: border-box !important;
 }
 
@@ -2715,11 +2717,11 @@ body.is-native.light-mode .sv-quick-font {
 }
 
 body.is-native .sv-quick-font-btn {
-  width: 26px !important;
-  min-width: 26px !important;
+  width: 30px !important;
+  min-width: 30px !important;
   height: 28px !important;
   padding: 0 !important;
-  font-size: 11.5px !important;
+  font-size: 12.5px !important;
   font-weight: 750 !important;
   border-radius: 999px !important;
   display: inline-flex !important;
@@ -2734,11 +2736,11 @@ body.is-native .sv-quick-font-btn:active:not(:disabled) {
 }
 
 body.is-native .sv-quick-font-val {
-  min-width: 18px !important;
-  font-size: 11.5px !important;
+  min-width: 24px !important;
+  font-size: 12.5px !important;
   font-weight: 800 !important;
   line-height: 28px !important;
-  padding: 0 2px !important;
+  padding: 0 4px !important;
   border-inline: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-sizing: border-box !important;
   text-align: center !important;
@@ -2746,28 +2748,6 @@ body.is-native .sv-quick-font-val {
 
 body.is-native.light-mode .sv-quick-font-val {
   border-inline-color: rgba(15, 23, 42, 0.08) !important;
-}
-
-body.is-native .sv-chord-scale-toggle {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 1px !important;
-  margin-left: 2px !important;
-  padding-left: 2px !important;
-  border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-sizing: border-box !important;
-}
-
-body.is-native.light-mode .sv-chord-scale-toggle {
-  border-left-color: rgba(15, 23, 42, 0.1) !important;
-}
-
-body.is-native .sv-quick-font-val.chord-scale-val {
-  min-width: 29px !important;
-  font-size: 11px !important;
-  font-weight: 800 !important;
-  padding: 0 1px !important;
-  box-sizing: border-box !important;
 }
 
 /* ── Segmented Control (Tabs) — Pure Glisse Liquid Glass ── */
