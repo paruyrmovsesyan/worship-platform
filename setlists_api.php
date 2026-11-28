@@ -58,6 +58,33 @@ function normalizeNullable($value){
   return $v === '' ? null : $v;
 }
 
+function normalizeDateOrNull($value): ?string {
+  $v = trim((string)$value);
+  if ($v === '') return null;
+  $v = substr($v, 0, 10);
+  if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)) return null;
+  return $v;
+}
+
+function normalizeServiceDateRange($startRaw, $endRaw): array {
+  $start = normalizeDateOrNull($startRaw);
+  $end = normalizeDateOrNull($endRaw);
+  if ($start === null && $end !== null) {
+    $start = $end;
+    $end = null;
+  }
+  if ($start !== null && $end !== null) {
+    if ($end === $start) {
+      $end = null;
+    } elseif ($end < $start) {
+      $tmp = $start;
+      $start = $end;
+      $end = $tmp;
+    }
+  }
+  return [$start, $end];
+}
+
 function requireSetlistOwner(PDO $pdo, int $setlistId, int $uid){
   $st = $pdo->prepare("SELECT * FROM setlists WHERE id=? LIMIT 1");
   $st->execute([$setlistId]);
@@ -309,6 +336,23 @@ function ensureTeamArchitectureUpdates(PDO $pdo): void {
 }
 ensureTeamArchitectureUpdates($pdo);
 
+function ensureSetlistDateRangeColumn(PDO $pdo): void {
+  static $done = false;
+  if ($done) return;
+  $done = true;
+
+  $lockFile = __DIR__ . '/data/.setlist_date_end_v1.lock';
+  if (is_file($lockFile)) return;
+
+  try {
+    try {
+      $pdo->exec("ALTER TABLE setlists ADD COLUMN service_date_end DATE NULL DEFAULT NULL AFTER service_date");
+    } catch (Throwable $e) {}
+    @file_put_contents($lockFile, '1');
+  } catch (Throwable $e) {}
+}
+ensureSetlistDateRangeColumn($pdo);
+
 /* CREATE SETLIST */
 if ($action === 'create_setlist' && $method === 'POST') {
     try {
@@ -320,11 +364,11 @@ if ($action === 'create_setlist' && $method === 'POST') {
             out(["error" => "Name required"], 400);
         }
 
-        $service_date = normalizeNullable($d['service_date'] ?? '');
+        [$service_date, $service_date_end] = normalizeServiceDateRange($d['service_date'] ?? '', $d['service_date_end'] ?? '');
         $description = normalizeNullable($d['description'] ?? '');
 
-        $st = $pdo->prepare("INSERT INTO setlists (user_id, team_id, name, service_date, description) VALUES (?, ?, ?, ?, ?)");
-        $st->execute([$uid, $team_id, $name, $service_date, $description]);
+        $st = $pdo->prepare("INSERT INTO setlists (user_id, team_id, name, service_date, service_date_end, description) VALUES (?, ?, ?, ?, ?, ?)");
+        $st->execute([$uid, $team_id, $name, $service_date, $service_date_end, $description]);
 
         out([
             "ok" => true,
@@ -784,21 +828,28 @@ if ($action === 'update_setlist' && $method === 'POST') {
   $setlist_id = (int)($d['setlist_id'] ?? 0);
   $name = trim((string)($d['name'] ?? ''));
   $description = normalizeNullable($d['description'] ?? '');
-  $service_date = normalizeNullable($d['service_date'] ?? '');
+  $hasEndDate = array_key_exists('service_date_end', $d);
+  $service_date = normalizeDateOrNull($d['service_date'] ?? '');
   $service_type = normalizeNullable($d['service_type'] ?? '');
 
   if ($setlist_id <= 0) out(["error" => "Invalid setlist_id"], 400);
   if ($name === '') out(["error" => "Name required"], 400);
   if (mb_strlen($name) > 150) out(["error" => "Name too long"], 400);
 
-  requireSetlistEditable($pdo, $setlist_id, $uid);
+  $existingSetlist = requireSetlistEditable($pdo, $setlist_id, $uid);
+
+  if ($hasEndDate) {
+    [$service_date, $service_date_end] = normalizeServiceDateRange($d['service_date'] ?? '', $d['service_date_end'] ?? '');
+  } else {
+    $service_date_end = $service_date !== null ? ($existingSetlist['service_date_end'] ?? null) : null;
+  }
 
   $st = $pdo->prepare("
     UPDATE setlists
-    SET name=?, description=?, service_date=?, service_type=?
+    SET name=?, description=?, service_date=?, service_date_end=?, service_type=?
     WHERE id=?
   ");
-  $st->execute([$name, $description, $service_date, $service_type, $setlist_id]);
+  $st->execute([$name, $description, $service_date, $service_date_end, $service_type, $setlist_id]);
 
   try {
     $pdo->prepare("UPDATE chats SET name = ? WHERE type = 'group' AND setlist_id = ?")->execute(["«{$name}» (Թիմ)", $setlist_id]);
@@ -1016,14 +1067,15 @@ if ($action === 'duplicate_setlist' && $method === 'POST') {
     $newName = !empty($d['name']) ? trim((string)$d['name']) : ($src['name'] . $defaultSuffix);
 
     $ins = $pdo->prepare("
-      INSERT INTO setlists (user_id, name, description, service_date, service_type, status)
-      VALUES (?, ?, ?, ?, ?, 'active')
+      INSERT INTO setlists (user_id, name, description, service_date, service_date_end, service_type, status)
+      VALUES (?, ?, ?, ?, ?, ?, 'active')
     ");
     $ins->execute([
       $uid,
       $newName,
       $src['description'],
       $src['service_date'],
+      $src['service_date_end'] ?? null,
       $src['service_type']
     ]);
 
@@ -1206,6 +1258,7 @@ if ($action === 'get_setlist_items' && $method === 'GET') {
     "name" => $setlist['name'],
     "description" => $setlist['description'],
     "service_date" => $setlist['service_date'],
+    "service_date_end" => $setlist['service_date_end'] ?? null,
     "service_type" => $setlist['service_type'],
     "status" => $setlist['status'],
     "created_at" => $setlist['created_at'] ?? null,
@@ -1801,6 +1854,7 @@ if ($action === 'get_public_setlist' && $method === 'GET') {
     "name" => $setlist['name'],
     "description" => $setlist['description'],
     "service_date" => $setlist['service_date'],
+    "service_date_end" => $setlist['service_date_end'] ?? null,
     "service_type" => $setlist['service_type'],
     "status" => $setlist['status']
   ], [

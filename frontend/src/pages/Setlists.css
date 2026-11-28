@@ -2016,3 +2016,97 @@ body.is-native.light-mode .sl-meta-info {
   color: var(--native-text-2);
 }
 
+/* Native-only 2-day / date-range picker controls */
+body.is-native .sl-app-quick-date-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+body.is-native .sl-native-date-mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  background: var(--native-surface-2, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--native-hairline, rgba(255, 255, 255, 0.09));
+}
+
+body.is-native .sl-native-date-mode-btn {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--native-text-2, rgba(255, 255, 255, 0.72));
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease, transform 0.12s ease;
+}
+
+body.is-native .sl-native-date-mode-btn:active {
+  transform: scale(0.97);
+}
+
+body.is-native .sl-native-date-mode-btn.active {
+  background: var(--native-accent-soft);
+  border-color: var(--native-accent-border);
+  color: var(--native-accent-text);
+  font-weight: 700;
+}
+
+body.is-native .sl-native-date-range-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+body.is-native .sl-native-date-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+body.is-native .sl-native-date-sublabel {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--native-text-2, rgba(255, 255, 255, 0.65));
+  padding-left: 2px;
+}
+
+body.is-native .sl-native-date-col .sl-input,
+body.is-native .sl-native-date-col .sla-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font-size: 0.88rem;
+  padding-left: 10px;
+  padding-right: 8px;
+}
+
+body.is-native .sl-native-date-preview {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--native-accent-soft);
+  border: 1px solid var(--native-accent-border);
+  color: var(--native-accent-text);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+@media (max-width: 360px) {
+  body.is-native .sl-native-date-range-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

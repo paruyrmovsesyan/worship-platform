@@ -8,67 +8,17 @@ import { getSongCoverStyle } from '../utils/songCover';
 import { nativeShare, triggerHaptic } from '../utils/nativeFeatures';
 import { useIsNativeApp } from '../hooks/useIsPWA';
 import { SetlistsAppSkeleton } from '../components/NativeSkeletons';
+import {
+  addDaysToIsoDate,
+  formatSetlistDate,
+  getEffectiveEndDate,
+  getNextSundayDate,
+  getNextWeekendDates,
+  getRelativeDateLabel,
+} from '../utils/setlistDate';
 import './Setlists.css';
 
 const VIEW_MODE_KEY = 'pwa_setlists_view_mode_v1';
-
-function getNextSundayDate() {
-  const d = new Date();
-  const day = d.getDay(); // 0 = Sunday
-  const addDays = day === 0 ? 7 : 7 - day;
-  d.setDate(d.getDate() + addDays);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const date = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${date}`;
-}
-
-function getRelativeDateLabel(dateStr, lang) {
-  if (!dateStr) return null;
-  const target = new Date(dateStr + 'T00:00:00');
-  if (isNaN(target.getTime())) return null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const diffMs = target.getTime() - today.getTime();
-  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
-
-  const dict = {
-    am: {
-      today: 'Այսօր',
-      tomorrow: 'Վաղը',
-      yesterday: 'Երեկ',
-      inDays: (n) => `${n} օրից`,
-      daysAgo: (n) => `${n} օր առաջ`,
-    },
-    en: {
-      today: 'Today',
-      tomorrow: 'Tomorrow',
-      yesterday: 'Yesterday',
-      inDays: (n) => `in ${n}d`,
-      daysAgo: (n) => `${n}d ago`,
-    },
-    ru: {
-      today: 'Сегодня',
-      tomorrow: 'Завтра',
-      yesterday: 'Вчера',
-      inDays: (n) => `через ${n} дн.`,
-      daysAgo: (n) => `${n} дн. назад`,
-    },
-  }[lang] || {
-    today: 'Այսօր',
-    tomorrow: 'Վաղը',
-    yesterday: 'Երեկ',
-    inDays: (n) => `${n} օրից`,
-    daysAgo: (n) => `${n} օր առաջ`,
-  };
-
-  if (diffDays === 0) return { text: dict.today, tone: 'highlight' };
-  if (diffDays === 1) return { text: dict.tomorrow, tone: 'soon' };
-  if (diffDays === -1) return { text: dict.yesterday, tone: 'past' };
-  if (diffDays > 1 && diffDays <= 7) return { text: dict.inDays(diffDays), tone: 'soon' };
-  if (diffDays < -1 && diffDays >= -7) return { text: dict.daysAgo(Math.abs(diffDays)), tone: 'past' };
-  return null;
-}
 
 export default function SetlistsApp() {
   const [cachedSetlists] = useState(() => {
@@ -93,6 +43,8 @@ export default function SetlistsApp() {
   const [newSetName, setNewSetName] = useState('');
   const [newSetTeamId, setNewSetTeamId] = useState('');
   const [newSetDate, setNewSetDate] = useState('');
+  const [newSetDateEnd, setNewSetDateEnd] = useState('');
+  const [newSetIsRange, setNewSetIsRange] = useState(false);
   const [newSetDesc, setNewSetDesc] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
@@ -598,6 +550,9 @@ export default function SetlistsApp() {
       const body = { name: newSetName.trim() };
       if (newSetTeamId) body.team_id = newSetTeamId;
       if (newSetDate) body.service_date = newSetDate;
+      if (isNativeApp && newSetIsRange && newSetDateEnd && newSetDateEnd !== newSetDate) {
+        body.service_date_end = newSetDateEnd;
+      }
       if (newSetDesc.trim()) body.description = newSetDesc.trim();
 
       const res = await fetch('/setlists_api.php?action=create_setlist', {
@@ -611,6 +566,8 @@ export default function SetlistsApp() {
         setNewSetName('');
         setNewSetTeamId('');
         setNewSetDate('');
+        setNewSetDateEnd('');
+        setNewSetIsRange(false);
         setNewSetDesc('');
         fetchSetlists();
         navigate(`/setlists/${data.id}`);
@@ -633,11 +590,12 @@ export default function SetlistsApp() {
     return setlists
       .filter((s) => {
         // Timeframe Filter (Upcoming vs Past)
+        const effectiveEnd = getEffectiveEndDate(s.service_date, s.service_date_end, isNativeApp);
         if (timeframeFilter === 'upcoming') {
-          const isUpcoming = s.service_date ? s.service_date >= todayStr : true;
+          const isUpcoming = effectiveEnd ? effectiveEnd >= todayStr : true;
           if (!isUpcoming) return false;
         } else if (timeframeFilter === 'past') {
-          const isPast = s.service_date ? s.service_date < todayStr : false;
+          const isPast = effectiveEnd ? effectiveEnd < todayStr : false;
           if (!isPast) return false;
         }
 
@@ -652,7 +610,11 @@ export default function SetlistsApp() {
           const q = searchQuery.toLowerCase().trim();
           const nameMatch = s.name?.toLowerCase().includes(q);
           const teamMatch = s.team_name?.toLowerCase().includes(q);
-          const dateMatch = s.service_date?.toLowerCase().includes(q);
+          const formattedDate = formatSetlistDate(s.service_date, s.service_date_end, isNativeApp).toLowerCase();
+          const dateMatch =
+            s.service_date?.toLowerCase().includes(q) ||
+            (isNativeApp && s.service_date_end?.toLowerCase().includes(q)) ||
+            formattedDate.includes(q);
           return nameMatch || teamMatch || dateMatch;
         }
 
@@ -665,22 +627,23 @@ export default function SetlistsApp() {
         if (sortBy === 'items') return (b.items_count || 0) - (a.items_count || 0);
         return 0;
       });
-  }, [setlists, timeframeFilter, categoryFilter, searchQuery, sortBy, todayStr]);
+  }, [setlists, timeframeFilter, categoryFilter, searchQuery, sortBy, todayStr, isNativeApp]);
 
   // Timeframe counts (Upcoming vs Past vs All)
   const timeframeCounts = useMemo(() => {
     let upcoming = 0;
     let past = 0;
     for (const s of setlists) {
-      if (s.service_date) {
-        if (s.service_date >= todayStr) upcoming++;
+      const effectiveEnd = getEffectiveEndDate(s.service_date, s.service_date_end, isNativeApp);
+      if (effectiveEnd) {
+        if (effectiveEnd >= todayStr) upcoming++;
         else past++;
       } else {
         upcoming++;
       }
     }
     return { all: setlists.length, upcoming, past };
-  }, [setlists, todayStr]);
+  }, [setlists, todayStr, isNativeApp]);
 
   const timeframeLabels = {
     am: { all: 'Բոլորը', upcoming: 'Առաջիկա', past: 'Անցած / Պատմություն' },
@@ -693,14 +656,17 @@ export default function SetlistsApp() {
     const totalSongs = setlists.reduce((sum, s) => sum + Number(s.items_count || 0), 0);
     const todayStr = new Date().toISOString().split('T')[0];
     const upcoming = setlists
-      .filter((s) => s.service_date && s.service_date >= todayStr)
+      .filter((s) => {
+        const effectiveEnd = getEffectiveEndDate(s.service_date, s.service_date_end, isNativeApp);
+        return effectiveEnd && effectiveEnd >= todayStr;
+      })
       .sort((a, b) => a.service_date.localeCompare(b.service_date))[0];
     return {
       totalSets: setlists.length,
       totalSongs,
       upcoming,
     };
-  }, [setlists]);
+  }, [setlists, isNativeApp]);
 
   // Categories with counts
   const categoryCounts = useMemo(() => {
@@ -886,7 +852,9 @@ export default function SetlistsApp() {
                   {language === 'am' ? 'Առաջիկա' : language === 'ru' ? 'Ближайший' : 'Upcoming'}
                 </div>
                 <span className="sl-app-stat-val upcoming-title">{stats.upcoming.name}</span>
-                <span className="sl-app-stat-lbl">{stats.upcoming.service_date}</span>
+                <span className="sl-app-stat-lbl">
+                  {formatSetlistDate(stats.upcoming.service_date, stats.upcoming.service_date_end, isNativeApp)}
+                </span>
               </div>
               <svg className="sl-app-upcoming-arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <polyline points="9 18 15 12 9 6"></polyline>
@@ -1142,7 +1110,8 @@ export default function SetlistsApp() {
       ) : (
         <div className={`sl-grid sl-app-container sl-view-${viewMode}`}>
           {filteredSetlists.map((list, idx) => {
-            const relDate = getRelativeDateLabel(list.service_date, language);
+            const relDate = getRelativeDateLabel(list.service_date, language, list.service_date_end, isNativeApp);
+            const displayDate = formatSetlistDate(list.service_date, list.service_date_end, isNativeApp);
             const isMenuOpen = activeMenuId === list.id;
             const isActionBusy = actionLoadingId === list.id;
 
@@ -1181,7 +1150,7 @@ export default function SetlistsApp() {
 
                   {/* Dates & Subtitle */}
                   <div className="sl-app-meta-row">
-                    {list.service_date ? (
+                    {displayDate ? (
                       <span className="sl-app-date-chip">
                         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2">
                           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -1189,7 +1158,7 @@ export default function SetlistsApp() {
                           <line x1="8" y1="2" x2="8" y2="6"></line>
                           <line x1="3" y1="10" x2="21" y2="10"></line>
                         </svg>
-                        {list.service_date}
+                        {displayDate}
                       </span>
                     ) : (
                       <span className="sl-app-date-chip dim">
@@ -1408,24 +1377,122 @@ export default function SetlistsApp() {
               />
             </div>
 
-            {/* Service Date + Next Sunday Shortcut */}
+            {/* Service Date + Quick Date Shortcuts */}
             <div className="sl-form-group">
               <div className="sl-app-date-label-row">
                 <label>{t('setlists.dateField', 'Ծառայության ամսաթիվ')}</label>
-                <button
-                  type="button"
-                  className="sl-app-quick-date-btn"
-                  onClick={() => setNewSetDate(getNextSundayDate())}
-                >
-                  {language === 'am' ? 'Հաջորդ կիրակին' : language === 'ru' ? 'След. воскресенье' : 'Next Sunday'}
-                </button>
+                <div className="sl-app-quick-date-group">
+                  <button
+                    type="button"
+                    className="sl-app-quick-date-btn"
+                    onClick={() => {
+                      triggerHaptic('light');
+                      setNewSetIsRange(false);
+                      setNewSetDate(getNextSundayDate());
+                      setNewSetDateEnd('');
+                    }}
+                  >
+                    {language === 'am' ? 'Հաջորդ կիրակին' : language === 'ru' ? 'След. воскресенье' : 'Next Sunday'}
+                  </button>
+                  {isNativeApp && (
+                    <button
+                      type="button"
+                      className="sl-app-quick-date-btn sl-app-quick-date-btn--weekend"
+                      onClick={() => {
+                        triggerHaptic('light');
+                        const { start, end } = getNextWeekendDates();
+                        setNewSetIsRange(true);
+                        setNewSetDate(start);
+                        setNewSetDateEnd(end);
+                      }}
+                    >
+                      {language === 'am' ? 'Շաբաթ–Կիրակի' : language === 'ru' ? 'Сб–Вс' : 'Sat–Sun'}
+                    </button>
+                  )}
+                </div>
               </div>
-              <input
-                type="date"
-                className="sl-input"
-                value={newSetDate}
-                onChange={(e) => setNewSetDate(e.target.value)}
-              />
+
+              {isNativeApp && (
+                <div className="sl-native-date-mode-toggle" role="tablist" aria-label="Date mode">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={!newSetIsRange}
+                    className={`sl-native-date-mode-btn ${!newSetIsRange ? 'active' : ''}`}
+                    onClick={() => {
+                      triggerHaptic('light');
+                      setNewSetIsRange(false);
+                      setNewSetDateEnd('');
+                    }}
+                  >
+                    {language === 'am' ? '1 օր' : language === 'ru' ? '1 день' : '1 day'}
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={newSetIsRange}
+                    className={`sl-native-date-mode-btn ${newSetIsRange ? 'active' : ''}`}
+                    onClick={() => {
+                      triggerHaptic('light');
+                      setNewSetIsRange(true);
+                      if (newSetDate && (!newSetDateEnd || newSetDateEnd <= newSetDate)) {
+                        setNewSetDateEnd(addDaysToIsoDate(newSetDate, 1));
+                      }
+                    }}
+                  >
+                    {language === 'am' ? '2 օր (միջակայք)' : language === 'ru' ? '2 дня (диапазон)' : '2 days (range)'}
+                  </button>
+                </div>
+              )}
+
+              {isNativeApp && newSetIsRange ? (
+                <>
+                  <div className="sl-native-date-range-grid">
+                    <div className="sl-native-date-col">
+                      <span className="sl-native-date-sublabel">
+                        {language === 'am' ? '1-ին օր' : language === 'ru' ? '1-й день' : 'Start day'}
+                      </span>
+                      <input
+                        type="date"
+                        className="sl-input"
+                        value={newSetDate}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setNewSetDate(val);
+                          if (val && (!newSetDateEnd || newSetDateEnd <= val)) {
+                            setNewSetDateEnd(addDaysToIsoDate(val, 1));
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="sl-native-date-col">
+                      <span className="sl-native-date-sublabel">
+                        {language === 'am' ? '2-րդ օր' : language === 'ru' ? '2-й день' : 'End day'}
+                      </span>
+                      <input
+                        type="date"
+                        className="sl-input"
+                        value={newSetDateEnd}
+                        min={newSetDate || undefined}
+                        onChange={(e) => setNewSetDateEnd(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  {newSetDate && newSetDateEnd && newSetDateEnd !== newSetDate && (
+                    <div className="sl-native-date-preview">
+                      <span>📅</span>
+                      <span>{formatSetlistDate(newSetDate, newSetDateEnd, true)}</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <input
+                  type="date"
+                  className="sl-input"
+                  value={newSetDate}
+                  onChange={(e) => setNewSetDate(e.target.value)}
+                />
+              )}
             </div>
 
             {/* Team Selection */}

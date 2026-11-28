@@ -1,8 +1,8 @@
 {
   "app_version": "5.4.1",
   "web_version": "5.4.1",
-  "asset_version": "661",
-  "build_timestamp": "2026-11-28T12:25:00+04:00",
+  "asset_version": "662",
+  "build_timestamp": "2026-11-28T12:46:00+04:00",
   "release_type": "feature",
-  "release_summary": "Արդիականացվել է բջջային սեթլիստի (Setlist) ամբողջ դիզայնը, կոճակները, արագ տոնայնության փոփոխիչը (Inline Key Transpose), տեմպի ազդանշանը (BPM pulse), Native Share-ը և Haptic Touch-ը:"
+  "release_summary": "Ավելացվել է սեթլիստում երկու օրվա ծառայության ամսաթիվ (միջակայք, օր.՝ 28.11.26-29.11.26) և «Շաբաթ–Կիրակի» արագ ընտրություն նեյթիվ բջջային հավելվածների համար:"
 }

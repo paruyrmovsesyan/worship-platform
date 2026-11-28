@@ -12,6 +12,12 @@ import PrintStudio from '../components/PrintStudio';
 import { nativeShare, triggerHaptic } from '../utils/nativeFeatures';
 import { useIsNativeApp } from '../hooks/useIsPWA';
 import { SetlistEditorSkeleton } from '../components/NativeSkeletons';
+import {
+  addDaysToIsoDate,
+  formatSetlistDate,
+  getNextSundayDate,
+  getNextWeekendDates,
+} from '../utils/setlistDate';
 import './Setlists.css';
 import './SongsApp.css';
 import './SetlistEditorApp.css';
@@ -162,6 +168,8 @@ export default function SetlistEditorApp() {
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDate, setEditDate] = useState('');
+  const [editDateEnd, setEditDateEnd] = useState('');
+  const [editIsDateRange, setEditIsDateRange] = useState(false);
   const [editDesc, setEditDesc] = useState('');
   const [editSaving, setEditSaving] = useState(false);
 
@@ -404,7 +412,11 @@ export default function SetlistEditorApp() {
       return;
     }
     setEditName(setlistData.name || '');
-    setEditDate(String(setlistData.service_date || '').slice(0, 10));
+    const startVal = String(setlistData.service_date || '').slice(0, 10);
+    const endVal = String(setlistData.service_date_end || '').slice(0, 10);
+    setEditDate(startVal);
+    setEditDateEnd(endVal);
+    setEditIsDateRange(Boolean(endVal && endVal !== startVal));
     setEditDesc(setlistData.description || '');
     setIsEditingSettings(true);
   }, [canEdit, id, isEditRoute, navigate, setlistData]);
@@ -937,7 +949,8 @@ export default function SetlistEditorApp() {
   // Copy setlist formatted cleanly as text for WhatsApp / Telegram
   const copySetlistAsText = async () => {
     if (!setlistData || !items.length) return;
-    const dateStr = setlistData.service_date ? `📅 ${setlistData.service_date}\n` : '';
+    const formattedDate = formatSetlistDate(setlistData.service_date, setlistData.service_date_end, isNativeApp);
+    const dateStr = formattedDate ? `📅 ${formattedDate}\n` : '';
     const header = `🎵 ${setlistData.name || 'Երգացանկ'}\n${dateStr}\n`;
     
     let songNum = 0;
@@ -1044,7 +1057,11 @@ export default function SetlistEditorApp() {
   const openEditSettings = () => {
     if (!setlistData || !canEdit) return;
     setEditName(setlistData.name || '');
-    setEditDate(String(setlistData.service_date || '').slice(0, 10));
+    const startVal = String(setlistData.service_date || '').slice(0, 10);
+    const endVal = String(setlistData.service_date_end || '').slice(0, 10);
+    setEditDate(startVal);
+    setEditDateEnd(endVal);
+    setEditIsDateRange(Boolean(endVal && endVal !== startVal));
     setEditDesc(setlistData.description || '');
     setIsEditingSettings(true);
   };
@@ -1061,16 +1078,21 @@ export default function SetlistEditorApp() {
     if (!editName.trim() || editSaving) return;
     setEditSaving(true);
     try {
+      const payload = {
+        setlist_id: id,
+        name: editName,
+        description: editDesc,
+        service_date: editDate,
+        service_type: setlistData.service_type || ''
+      };
+      if (isNativeApp) {
+        payload.service_date_end =
+          editIsDateRange && editDateEnd && editDateEnd !== editDate ? editDateEnd : '';
+      }
       const res = await fetch('/setlists_api.php?action=update_setlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          setlist_id: id,
-          name: editName,
-          description: editDesc,
-          service_date: editDate,
-          service_type: setlistData.service_type || ''
-        })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (data.ok) {
@@ -1772,9 +1794,14 @@ export default function SetlistEditorApp() {
             onClick={async () => {
               triggerHaptic('light');
               if (isNativeApp) {
+                const formattedShareDate = formatSetlistDate(
+                  setlistData?.service_date,
+                  setlistData?.service_date_end,
+                  true
+                );
                 const res = await nativeShare({
                   title: setlistData?.name || 'Երգացանկ',
-                  text: `🎵 ${setlistData?.name || 'Երգացանկ'}${setlistData?.service_date ? ` (${setlistData.service_date})` : ''}`,
+                  text: `🎵 ${setlistData?.name || 'Երգացանկ'}${formattedShareDate ? ` (${formattedShareDate})` : ''}`,
                   url: `${window.location.origin}/setlists/${id}`,
                   dialogTitle: 'Կիսվել երգացանկով'
                 });
@@ -1838,7 +1865,7 @@ export default function SetlistEditorApp() {
           {setlistData.service_date && (
             <span className="sla-chip sla-chip--date">
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              <span>{setlistData.service_date}</span>
+              <span>{formatSetlistDate(setlistData.service_date, setlistData.service_date_end, isNativeApp)}</span>
             </span>
           )}
           {durationStats.total > 0 && (
@@ -3588,13 +3615,120 @@ export default function SetlistEditorApp() {
                 </div>
 
                 <div className="sla-form-group">
-                  <label className="sla-form-label">{t('setlists.dateField', 'Ծառայության ամսաթիվ')}</label>
-                  <input
-                    type="date"
-                    className="sla-input"
-                    value={editDate}
-                    onChange={e => setEditDate(e.target.value)}
-                  />
+                  <div className="sl-app-date-label-row">
+                    <label className="sla-form-label">{t('setlists.dateField', 'Ծառայության ամսաթիվ')}</label>
+                    {isNativeApp && (
+                      <div className="sl-app-quick-date-group">
+                        <button
+                          type="button"
+                          className="sl-app-quick-date-btn"
+                          onClick={() => {
+                            triggerHaptic('light');
+                            setEditIsDateRange(false);
+                            setEditDate(getNextSundayDate());
+                            setEditDateEnd('');
+                          }}
+                        >
+                          {language === 'am' ? 'Հաջորդ կիրակին' : language === 'ru' ? 'След. вск' : 'Next Sun'}
+                        </button>
+                        <button
+                          type="button"
+                          className="sl-app-quick-date-btn sl-app-quick-date-btn--weekend"
+                          onClick={() => {
+                            triggerHaptic('light');
+                            const { start, end } = getNextWeekendDates();
+                            setEditIsDateRange(true);
+                            setEditDate(start);
+                            setEditDateEnd(end);
+                          }}
+                        >
+                          {language === 'am' ? 'Շաբաթ–Կիրակի' : language === 'ru' ? 'Сб–Вс' : 'Sat–Sun'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {isNativeApp && (
+                    <div className="sl-native-date-mode-toggle" role="tablist" aria-label="Date mode">
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={!editIsDateRange}
+                        className={`sl-native-date-mode-btn ${!editIsDateRange ? 'active' : ''}`}
+                        onClick={() => {
+                          triggerHaptic('light');
+                          setEditIsDateRange(false);
+                          setEditDateEnd('');
+                        }}
+                      >
+                        {language === 'am' ? '1 օր' : language === 'ru' ? '1 день' : '1 day'}
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={editIsDateRange}
+                        className={`sl-native-date-mode-btn ${editIsDateRange ? 'active' : ''}`}
+                        onClick={() => {
+                          triggerHaptic('light');
+                          setEditIsDateRange(true);
+                          if (editDate && (!editDateEnd || editDateEnd <= editDate)) {
+                            setEditDateEnd(addDaysToIsoDate(editDate, 1));
+                          }
+                        }}
+                      >
+                        {language === 'am' ? '2 օր (միջակայք)' : language === 'ru' ? '2 дня (диапазон)' : '2 days (range)'}
+                      </button>
+                    </div>
+                  )}
+
+                  {isNativeApp && editIsDateRange ? (
+                    <>
+                      <div className="sl-native-date-range-grid">
+                        <div className="sl-native-date-col">
+                          <span className="sl-native-date-sublabel">
+                            {language === 'am' ? '1-ին օր' : language === 'ru' ? '1-й день' : 'Start day'}
+                          </span>
+                          <input
+                            type="date"
+                            className="sla-input"
+                            value={editDate}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setEditDate(val);
+                              if (val && (!editDateEnd || editDateEnd <= val)) {
+                                setEditDateEnd(addDaysToIsoDate(val, 1));
+                              }
+                            }}
+                          />
+                        </div>
+                        <div className="sl-native-date-col">
+                          <span className="sl-native-date-sublabel">
+                            {language === 'am' ? '2-րդ օր' : language === 'ru' ? '2-й день' : 'End day'}
+                          </span>
+                          <input
+                            type="date"
+                            className="sla-input"
+                            value={editDateEnd}
+                            min={editDate || undefined}
+                            onChange={e => setEditDateEnd(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      {editDate && editDateEnd && editDateEnd !== editDate && (
+                        <div className="sl-native-date-preview">
+                          <span>📅</span>
+                          <span>{formatSetlistDate(editDate, editDateEnd, true)}</span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <input
+                      type="date"
+                      className="sla-input"
+                      value={editDate}
+                      onChange={e => setEditDate(e.target.value)}
+                    />
+                  )}
                 </div>
 
                 <div className="sla-form-group">
