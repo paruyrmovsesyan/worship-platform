@@ -1507,3 +1507,109 @@ body.is-native.light-mode .songs-page .track-title {
 body.is-native.light-mode .songs-page .track-artist {
   color: var(--native-text-2);
 }
+
+/* ==========================================================================
+   SONGBOOK 4-WAY THEME HARMONY (Classic / Editorial × Dark / Light)
+   App mode only (native + PWA) — website is untouched.
+   ========================================================================== */
+body.is-app {
+  --wps-accent: #00d4ff;
+  --wps-text: #7ee8ff;
+  --wps-soft: rgba(0, 212, 255, 0.14);
+  --wps-soft-strong: rgba(0, 212, 255, 0.26);
+  --wps-border: rgba(0, 212, 255, 0.36);
+  --wps-ring: rgba(0, 212, 255, 0.2);
+  --wps-grad: linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%);
+  --wps-on: #ffffff;
+}
+body.is-app.light-mode {
+  --wps-accent: #0284c7;
+  --wps-text: #0369a1;
+  --wps-soft: rgba(2, 132, 199, 0.1);
+  --wps-soft-strong: rgba(2, 132, 199, 0.18);
+  --wps-border: rgba(2, 132, 199, 0.32);
+  --wps-ring: rgba(2, 132, 199, 0.16);
+  --wps-grad: linear-gradient(135deg, #2563eb 0%, #0284c7 100%);
+  --wps-on: #ffffff;
+}
+body.is-app.editorial-theme {
+  --wps-accent: #fbbf24;
+  --wps-text: #fcd34d;
+  --wps-soft: rgba(247, 181, 0, 0.14);
+  --wps-soft-strong: rgba(247, 181, 0, 0.26);
+  --wps-border: rgba(247, 181, 0, 0.38);
+  --wps-ring: rgba(247, 181, 0, 0.2);
+  --wps-grad: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  --wps-on: #1f1402;
+}
+body.is-app.light-mode.editorial-theme {
+  --wps-accent: #b45309;
+  --wps-text: #92400e;
+  --wps-soft: rgba(180, 83, 9, 0.1);
+  --wps-soft-strong: rgba(180, 83, 9, 0.18);
+  --wps-border: rgba(180, 83, 9, 0.3);
+  --wps-ring: rgba(180, 83, 9, 0.16);
+  --wps-grad: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  --wps-on: #ffffff;
+}
+
+body.is-app .songs-page .count-badge,
+body.is-app .songs-page .random-song-btn,
+body.is-app .track-key-badge,
+body.is-app .track-bpm-badge,
+body.is-app .track-matched-title,
+body.is-app .track-snippet,
+body.is-app .sug-chip-preset,
+body.is-app .sla-modal-key-pill,
+body.is-app .sla-add-btn:not(.added) {
+  background: var(--wps-soft);
+  border-color: var(--wps-border);
+  color: var(--wps-text);
+}
+body.is-app .songs-page .random-song-btn:active,
+body.is-app .sla-add-btn:not(.added):active:not(:disabled),
+body.is-app .sug-chip:hover,
+body.is-app .sug-chip:active {
+  background: var(--wps-soft-strong);
+  border-color: var(--wps-border);
+  color: var(--wps-text);
+}
+
+body.is-app .songs-page .search-box:focus-within,
+body.is-app .songs-page .songs-search-box:focus-within,
+body.is-app .songs-search-box:focus-within {
+  border-color: var(--wps-border) !important;
+  box-shadow: 0 0 0 3px var(--wps-ring), 0 6px 24px rgba(0, 0, 0, 0.18) !important;
+}
+
+body.is-app .songs-tab.active { color: var(--wps-text); }
+body.is-app .songs-tab.active::after { background: var(--wps-grad); }
+
+body.is-app .cat-pill.active,
+body.is-app .kp.active,
+body.is-app .sla-btn-submit {
+  background: var(--wps-grad);
+  border-color: transparent;
+  color: var(--wps-on);
+  box-shadow: 0 4px 14px var(--wps-ring);
+}
+body.is-app .cat-pill.active .cat-counter {
+  background: rgba(255, 255, 255, 0.24);
+  color: var(--wps-on);
+}
+body.is-app.editorial-theme:not(.light-mode) .cat-pill.active .cat-counter {
+  background: rgba(31, 20, 2, 0.18);
+}
+
+body.is-app .modern-select:focus,
+body.is-app .sla-modal-search input:focus,
+body.is-app .sla-input:focus {
+  border-color: var(--wps-accent);
+}
+body.is-app .setlist-quick-btn:hover,
+body.is-app .setlist-quick-btn:active,
+body.is-app .sla-plus-circle {
+  color: var(--wps-accent);
+}
+body.is-app .sla-spinner { border-top-color: var(--wps-accent); }
+body.is-app .songs-app-toast { border-color: var(--wps-border); }

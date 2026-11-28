@@ -2845,3 +2845,58 @@ body.is-native .sv-sticky-save-bar.has-seq-nav {
 
 
 
+
+/* ==========================================================================
+   SONG VIEW 4-WAY THEME HARMONY (Classic / Editorial × Dark / Light)
+   App mode only (native + PWA) — website is untouched.
+   ========================================================================== */
+body.is-app .song-view-page {
+  --sv-accent: #00d4ff;
+  --sv-accent-glow: rgba(0, 212, 255, 0.14);
+  --sv-accent-border: rgba(0, 212, 255, 0.4);
+  --sv-accent-on: #04121a;
+}
+body.is-app.light-mode .song-view-page {
+  --sv-accent: #0284c7;
+  --sv-accent-glow: rgba(2, 132, 199, 0.1);
+  --sv-accent-border: rgba(2, 132, 199, 0.34);
+  --sv-accent-on: #ffffff;
+}
+body.is-app.editorial-theme .song-view-page {
+  --sv-accent: #fbbf24;
+  --sv-accent-glow: rgba(247, 181, 0, 0.15);
+  --sv-accent-border: rgba(247, 181, 0, 0.42);
+  --sv-accent-on: #1f1402;
+}
+body.is-app.light-mode.editorial-theme .song-view-page {
+  --sv-accent: #b45309;
+  --sv-accent-glow: rgba(180, 83, 9, 0.1);
+  --sv-accent-border: rgba(180, 83, 9, 0.32);
+  --sv-accent-on: #ffffff;
+}
+
+body.is-app .song-view-page :is(.sv-meta-pill.key-pill, .sv-save-key-pill, .sv-capo-chip.active, .sv-tone-flats-btn.active) {
+  background: var(--sv-accent-glow);
+  border-color: var(--sv-accent-border);
+  color: var(--sv-accent);
+  box-shadow: none;
+}
+body.is-app .song-view-page .sv-tone-key-chip.active {
+  background: var(--sv-accent);
+  border-color: var(--sv-accent);
+  color: var(--sv-accent-on);
+}
+body.is-app .song-view-page .sv-tone-capo-head > span { color: var(--sv-accent); }
+
+/* Chords / Lyrics / Both segmented control */
+body.is-app .song-view-page .wp-glisse-segmented-3.lg-segmented .lg-segmented-thumb {
+  background: var(--sv-accent-glow) !important;
+  border-color: var(--sv-accent-border) !important;
+}
+body.is-app .song-view-page .wp-glisse-segmented-3.lg-segmented :is(.lg-tab, .lg-tab-copy)[data-selected] {
+  color: var(--sv-accent) !important;
+  text-shadow: none !important;
+}
+body.is-app.light-mode .song-view-page .wp-glisse-segmented-3.lg-segmented .lg-segmented-thumb {
+  background: #ffffff !important;
+}
