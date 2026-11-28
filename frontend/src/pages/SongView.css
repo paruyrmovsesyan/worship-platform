@@ -2511,14 +2511,14 @@ body.is-native .sv-header {
   padding: calc(var(--sat, 0px) + 6px) 16px 10px !important;
   display: flex !important;
   justify-content: space-between !important;
-  align-items: center !important;
+  align-items: flex-start !important;
   gap: 12px !important;
 }
 
 body.is-native .sv-header-left {
   display: flex !important;
-  align-items: center !important;
-  gap: 12px !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
   flex: 1 1 auto !important;
   min-width: 0 !important;
 }
@@ -2529,15 +2529,16 @@ body.is-native .sv-title-area {
   display: flex !important;
   flex-direction: column !important;
   justify-content: center !important;
+  padding-top: 1px !important;
 }
 
 body.is-native .sv-title {
-  font-size: 1.35rem !important;
+  font-size: 1.28rem !important;
   font-weight: 800 !important;
-  line-height: 1.22 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  line-height: 1.24 !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
   color: var(--color-text-primary) !important;
 }
 
@@ -2546,9 +2547,9 @@ body.is-native .sv-artist {
   font-weight: 600 !important;
   color: var(--color-text-secondary) !important;
   margin-top: 2px !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
 }
 
 body.is-native .sv-header-actions {
@@ -2556,6 +2557,7 @@ body.is-native .sv-header-actions {
   align-items: center !important;
   gap: 8px !important;
   flex-shrink: 0 !important;
+  padding-top: 1px !important;
 }
 
 body.is-native .sv-header-actions .icon-btn {
